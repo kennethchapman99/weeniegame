@@ -43,6 +43,7 @@ export interface Dog {
   dryT: number; // wet coat after a shake
   stunT: number; // remaining stun (while mode === 'stunned')
   shakeT: number; // remaining shake (while mode === 'shaking')
+  barkT: number; // united-front bark animation (cosmetic overlay)
 
   // cooldowns
   bumpCD: number;
@@ -82,6 +83,7 @@ export function makeDog(id: DogId, x: number, y: number, seed = 0): Dog {
     dryT: 0,
     stunT: 0,
     shakeT: 0,
+    barkT: 0,
     bumpCD: 0,
     wrestleCD: 0,
     hist: [],

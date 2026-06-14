@@ -22,6 +22,7 @@ describe('AI sibling (M3)', () => {
     d.y = 400;
     s.toys = [{ x: 800, y: 400, room: '', fl: -1, ox: 0, oy: 0, tug: false, type: 'ball', t: 0, scale: 1 }];
     s.spot = null;
+    s.sunbeam = null; // isolate pure toy-seeking
     const [ax] = aiThink(s, d, DT);
     expect(ax).toBeGreaterThan(0); // toward the toy on the right
   });
@@ -52,6 +53,7 @@ describe('AI sibling (M3)', () => {
     ai.y = 400;
     s.toys = [{ x: 900, y: 400, room: '', fl: -1, ox: 0, oy: 0, tug: false, type: 'ball', t: 0, scale: 1 }];
     s.spot = null;
+    s.sunbeam = null; // isolate pure toy-seeking (else the sunbeam can win the target)
     let peak = 0;
     for (let i = 0; i < 60; i++) {
       s.toys = [{ x: 900, y: 400, room: '', fl: -1, ox: 0, oy: 0, tug: false, type: 'ball', t: 0, scale: 1 }];

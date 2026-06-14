@@ -66,23 +66,30 @@ Legend: 🎯 goal · ✅ done-when · ⚠️ watch-out
 ✅ Tug starts when both reach a rope and resolves to a winner or stalemate; zoomies + jump feel right.
 ⚠️ Tug locks both dogs (a `tug` mode) — make sure scene reset clears it and `busy()` includes it.
 
-## M7 — The House round
+> **Order note (owner decision, 2026-06-14):** M7 and M8 were **swapped**. Predators + events
+> are built first (no floor-plan dependency); the House is deferred to last so the owner can
+> supply real photos/floor-plans for the data-driven room schema. Numbering below reflects the
+> swap.
+
+## M7 — Predators + ambient events (the co-op centerpiece)
+🎯 Backyard danger that demands teamwork, plus the bonus events.
+- `systems/predators.ts`: coyote (charge) + eagle (circle→dive→carry) FSMs; lone-dog targeting; **united-front** huddle defense (bark-off); grab/drag/carry + sibling rescue; jump/zoom dodge; score penalty on carry-off.
+- **Hilarious bark animation** (owner ask): the united-front bark-off should read as comically over-the-top — exaggerated lunge/recoil, big "WOOF!" speech bursts, spit specks, ear/tail flail.
+- `systems/events.ts`: squirrel chase (+3), treat drop with telegraph (+2), belly-rub power-up (3s wrestle immunity).
+- AI predator response (flee to sibling, dodge, rescue) + event targeting.
+✅ Predators threaten lone dogs and are repelled by huddling; AI cooperates in 1P; all events fire and resolve. Validate with the predator + event sims.
+⚠️ Predators are backyard-only; ensure they never spawn/persist in pool/house. Reset on scene change.
+
+## M8 — The House round
 🎯 Three connected rooms modeled on the real house.
 - `scenes/house/rooms.ts` room graph (foyer/family/rec), doors, **stairs with Cheddar-faster traversal**, furniture obstacles + `pushOut` collision.
 - Per-room background painters (stone fireplace, gallery wall, brick wall, the **dog couch**, etc.).
 - `systems/couch.ts` (premium hold spot, +5, cooldown), `systems/squish.ts` (squishmallow naps), room-aware toys/sunbeam.
 - HUD sibling-locator pill; room-filtered rendering + transit hiding.
 - AI cross-room navigation via door waypoints.
+- **Data-driven room schema + `docs/ROOM-SCHEMA.md`** so the owner's photos/floor-plans drop in as map data (the art/map-data separation seam).
 ✅ House round plays across all three rooms; stairs, couch, squishmallows, doors all work; AI roams and scores room-to-room.
 ⚠️ Rendering must only draw the player's current room (or transit target); entities are room-tagged. Port the filtering carefully.
-
-## M8 — Predators + ambient events (the co-op centerpiece)
-🎯 Backyard danger that demands teamwork, plus the bonus events.
-- `systems/predators.ts`: coyote (charge) + eagle (circle→dive→carry) FSMs; lone-dog targeting; **united-front** huddle defense (bark-off); grab/drag/carry + sibling rescue; jump/zoom dodge; score penalty on carry-off.
-- `systems/events.ts`: squirrel chase (+3), treat drop with telegraph (+2), belly-rub power-up (3s wrestle immunity).
-- AI predator response (flee to sibling, dodge, rescue) + event targeting.
-✅ Predators threaten lone dogs and are repelled by huddling; AI cooperates in 1P; all events fire and resolve. Validate with the predator + event sims.
-⚠️ Predators are backyard-only; ensure they never spawn/persist in pool/house. Reset on scene change.
 
 ---
 

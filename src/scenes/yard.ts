@@ -12,6 +12,8 @@ import type { GameState } from '../state/gameState.js';
 import { updateToys, drawToys } from '../systems/toys.js';
 import { updateSpot, drawSpot, placeSpot } from '../systems/spot.js';
 import { updateSunbeam, drawSunbeam, placeSunbeam } from '../systems/sunbeam.js';
+import { updatePredator, drawPredator } from '../systems/predators.js';
+import { updateEvents, drawEvents } from '../systems/events.js';
 
 const W = WORLD.w;
 const H = WORLD.h;
@@ -138,7 +140,7 @@ export function paintYard(g: G, rng: Rng): void {
   }
 }
 
-/** The backyard round (M2 scope: toys + cuddle spot; zoomies/predators/events arrive later). */
+/** The backyard round: toys, cuddle spot, sunbeam, zoomies, predators + ambient events. */
 export const yardScene: SceneDef = {
   config: {
     key: 'yard',
@@ -160,10 +162,14 @@ export const yardScene: SceneDef = {
     updateToys(s, dt);
     updateSpot(s, dt);
     updateSunbeam(s, dt);
+    updatePredator(s, dt);
+    updateEvents(s, dt);
   },
   drawWorld(g: G, s: GameState): void {
     drawSunbeam(g, s);
     drawSpot(g, s);
     drawToys(g, s);
+    drawEvents(g, s);
+    drawPredator(g, s);
   },
 };

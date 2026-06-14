@@ -19,7 +19,7 @@ import { updateTug, tugPull } from '../systems/tug.js';
 import { tryJump } from '../systems/jump.js';
 import { player, ai } from './gameState.js';
 import { aiThink } from '../ai/sibling.js';
-import { SPEED } from '../config/balance.js';
+import { SPEED, PREDATOR, EVENTS } from '../config/balance.js';
 import { yardScene } from '../scenes/yard.js';
 import { poolScene } from '../scenes/pool.js';
 
@@ -57,6 +57,14 @@ export function beginScene(s: GameState): void {
   s.sounds = [];
   s.spawnTimer = 1.2;
   s.toast = null;
+  // predators + ambient events reset per scene (predators are backyard-only)
+  s.predator = null;
+  s.predatorTimer = s.rng.range(PREDATOR.firstSpawn[0], PREDATOR.firstSpawn[1]);
+  s.carriedDog = null;
+  s.squirrel = null;
+  s.treat = null;
+  s.bellyRub = null;
+  s.eventTimer = s.rng.range(EVENTS.schedule[0], EVENTS.schedule[1]);
   for (const id of ['cheddar', 'cocoa'] as const) {
     const d = s.dogs[id];
     d.mode = 'free';
@@ -64,6 +72,7 @@ export function beginScene(s: GameState): void {
     d.immune = 0;
     d.dryT = 0;
     d.jumpT = 0;
+    d.barkT = 0;
     d.trail = [];
     d.hist = [];
   }

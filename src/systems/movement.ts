@@ -134,6 +134,7 @@ export function moveDog(s: GameState, d: Dog, ax: number, ay: number, dt: number
     d.trail.length = 0;
   }
   if (d.immune > 0) d.immune -= dt;
+  if (d.barkT > 0) d.barkT -= dt;
 
   sp *= clamp(arrive, 0, 1); // ease in near the target — no overshoot jitter
 

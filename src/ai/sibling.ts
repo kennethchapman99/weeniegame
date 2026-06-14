@@ -21,8 +21,9 @@
  */
 
 import type { GameState } from '../state/gameState.js';
+import { busy } from '../state/dog.js';
 import type { Dog } from '../state/dog.js';
-import { BOUNDS } from '../config/balance.js';
+import { BOUNDS, JUMP } from '../config/balance.js';
 import {
   nearestDeck,
   sideOf,
@@ -42,6 +43,32 @@ export function aiThink(s: GameState, d: Dog, dt: number): [number, number] {
     return [e.x - d.x, e.y - d.y];
   }
   if (d.mode !== 'free') return [0, 0]; // stunned / shaking / transit / tug
+
+  // PREDATOR RESPONSE (yard) — cooperate to survive: rescue a grabbed sibling, dodge + run to
+  // the sibling for a united front when targeted, or buddy up early.
+  const pred = s.predator;
+  if (pred && s.sceneKey === 'yard') {
+    const other = d.id === 'cheddar' ? s.dogs.cocoa : s.dogs.cheddar;
+    if (s.carriedDog && s.carriedDog !== d.id) {
+      return [pred.x - d.x, pred.y + 20 - d.y]; // rush to rescue
+    }
+    if (pred.targetId === d.id && (pred.state === 'charge' || pred.state === 'dive')) {
+      const close = Math.hypot(pred.x - d.x, pred.y - d.y);
+      if (close < 70 && d.jumpT <= 0 && d.zoom <= 0 && s.rng.next() < 0.5) {
+        d.jumpT = JUMP.duration; // panic hop to dodge
+      }
+      if (!busy(other)) return [other.x - d.x, other.y - d.y]; // run to the sibling
+      const ang = Math.atan2(pred.y - d.y, pred.x - d.x) + Math.PI / 2;
+      return [Math.cos(ang) * 100, Math.sin(ang) * 100]; // juke perpendicular
+    }
+    if (
+      (pred.state === 'enter' || pred.state === 'circle') &&
+      !busy(other) &&
+      Math.hypot(d.x - other.x, d.y - other.y) > 70
+    ) {
+      return [other.x - d.x, other.y - d.y]; // buddy up before it commits
+    }
+  }
 
   const pool = s.sceneKey === 'pool';
   let tx = d.aiTx;

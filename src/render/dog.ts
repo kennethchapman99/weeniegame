@@ -69,6 +69,17 @@ export function drawDog(g: G, d: Dog, t: number): void {
     g.restore();
   }
 
+  // BARK! exaggerated lunge: big forward thrusts, full-body recoil jitter, and a squash/stretch
+  // puff pulse — deliberately over-the-top (the united-front bark-off should look hilarious).
+  if (d.barkT > 0) {
+    const bp = Math.min(1, d.barkT / 0.55); // 1 → 0
+    const chomp = Math.sin(t * 0.05); // synced with the mouth gape
+    g.translate(dir * (4 + chomp * 12) * bp, Math.sin(t * 0.11 + d.seed) * 5 * bp);
+    g.rotate(dir * chomp * 0.08 * bp); // nose-up lunge
+    const puff = 1 + 0.2 * bp * (0.5 + 0.5 * chomp); // squash-stretch
+    g.scale(puff, 1 + 0.16 * bp * (0.5 - 0.5 * chomp));
+  }
+
   if (stunned) {
     g.rotate(Math.sin(t * 0.035 + d.seed) * 0.12);
     g.scale(dir, -1);
@@ -247,6 +258,58 @@ export function drawDog(g: G, d: Dog, t: number): void {
     g.stroke();
     g.restore();
   }
+
+  if (d.barkT > 0) drawBarkMouth(g, d, t);
+}
+
+/** A chomping open gape + tongue + radiating impact lines at the snout while barking. */
+function drawBarkMouth(g: G, d: Dog, t: number): void {
+  const bp = Math.min(1, d.barkT / 0.55);
+  const open = (0.4 + 0.6 * Math.abs(Math.sin(t * 0.05))) * bp; // rapid chomp, synced to lunge
+  g.save();
+  g.translate(d.x, d.y - 2);
+  g.scale(d.face, 1);
+  const hx = 70;
+  const hy = -24;
+  const gape = 8 + open * 18; // big cartoon gape
+  // gaping mouth (dark maw)
+  g.fillStyle = '#3a1418';
+  g.beginPath();
+  g.ellipse(hx, hy, 14, gape, 0, 0, 7);
+  g.fill();
+  // upper + lower fangs
+  g.fillStyle = '#fff';
+  for (const sx of [-8, 4]) {
+    g.beginPath();
+    g.moveTo(hx + sx, hy - gape * 0.6);
+    g.lineTo(hx + sx + 3, hy - gape * 0.6 + 6);
+    g.lineTo(hx + sx - 3, hy - gape * 0.6 + 6);
+    g.closePath();
+    g.fill();
+    g.beginPath();
+    g.moveTo(hx + sx, hy + gape * 0.6);
+    g.lineTo(hx + sx + 3, hy + gape * 0.6 - 6);
+    g.lineTo(hx + sx - 3, hy + gape * 0.6 - 6);
+    g.closePath();
+    g.fill();
+  }
+  // lolling tongue
+  g.fillStyle = '#e2768a';
+  g.beginPath();
+  g.ellipse(hx + 3, hy + gape * 0.45, 6, 4 + open * 6, 0, 0, 7);
+  g.fill();
+  // radiating spittle/impact lines
+  g.strokeStyle = `rgba(255,255,255,${0.6 * bp})`;
+  g.lineWidth = 2.5;
+  g.lineCap = 'round';
+  for (let i = -2; i <= 2; i++) {
+    const a = i * 0.34;
+    g.beginPath();
+    g.moveTo(hx + 14, hy);
+    g.lineTo(hx + 14 + Math.cos(a) * (18 + open * 10), hy + Math.sin(a) * (18 + open * 10));
+    g.stroke();
+  }
+  g.restore();
 }
 
 function gaitOf(t: number, d: Dog, trot: number, stunned: boolean): number {

@@ -87,10 +87,26 @@ export const PREDATOR = {
   firstSpawn: [11, 17] as const,
   respawn: [13, 20] as const,
   minTimeLeft: 9,
-  coyote: { warn: 1.4, chargeSpeed: 5.6, missAfter: 2.4, dragTime: 2.0 },
-  eagle:  { warn: 1.6, diveSpeed: 11, diveWindow: 2.6, carryTime: 2.6 },
+  dodgeJumpHeight: 0.3, // jumpHeight above this at the strike = dodged
+  coyote: {
+    warn: 1.4, enterSpeed: 1.6, chargeSpeed: 5.6, missAfter: 2.4,
+    grabRange: 40, grabStun: 2.2, dragTime: 2.0, dragSpeed: 1.2, dragStun: 1.5,
+    dropStun: 0.5, fleeSpeed: 7,
+  },
+  eagle: {
+    warn: 1.6, diveSpeed: 11, diveWindow: 2.6, grabRange: 44, grabStun: 3,
+    carryTime: 2.6, carryStun: 2, liftSpeed: 22, driftSpeed: 18, dropStun: 0.6,
+    climbSpeed: 6, orbitRX: 120, orbitRY: 40, orbitSpeed: 2.2,
+  },
   unitedFrontRange: 86, scareRange: 150,
-  rescueRange: 70
+  rescueRange: 70,
+  rescueStun: 0.3, // brief settle after a rescue
 } as const;
 
-export const EVENTS = { schedule: [6, 10] as const, bellyImmunity: 3 } as const;
+export const EVENTS = {
+  schedule: [6, 10] as const,
+  bellyImmunity: 3,
+  squirrelChance: 0.4, // of the event roll (yard); else treat (<0.72) or belly
+  treatChance: 0.72,
+  squirrelReward: 3, treatReward: 2,
+} as const;

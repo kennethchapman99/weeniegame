@@ -88,8 +88,12 @@ export function drawParticles(g: G, s: GameState): void {
 export function drawPopups(g: G, s: GameState): void {
   for (const p of s.popups) {
     g.globalAlpha = Math.max(0, Math.min(1, p.life * 1.6));
-    g.font = '800 17px -apple-system, sans-serif';
+    if (p.burst) {
+      drawBarkBurst(g, p.x, p.y, p.text, p.col, p.life, p.rot ?? 0);
+      continue;
+    }
     g.textAlign = 'center';
+    g.font = '800 17px -apple-system, sans-serif';
     g.lineWidth = 4;
     g.strokeStyle = 'rgba(30,20,10,.7)';
     g.strokeText(p.text, p.x, p.y);
@@ -97,4 +101,52 @@ export function drawPopups(g: G, s: GameState): void {
     g.fillText(p.text, p.x, p.y);
   }
   g.globalAlpha = 1;
+}
+
+/** A comic-book "WOOF!" speech burst: jagged starburst + chunky text that pops in then shrinks. */
+function drawBarkBurst(
+  g: G,
+  x: number,
+  y: number,
+  text: string,
+  col: string,
+  life: number,
+  rot: number,
+): void {
+  // pop in fast (life 1→.8), then drift/shrink. Clamp life so a stray value can't blow up.
+  const lf = Math.max(0, Math.min(1, life));
+  const pop = lf > 0.8 ? (1 - lf) / 0.2 : 1;
+  const scale = (0.6 + pop * 0.55) * (0.7 + lf * 0.4);
+  g.save();
+  g.translate(x, y);
+  g.rotate(rot);
+  g.scale(scale, scale);
+  // jagged starburst behind the text
+  const spikes = 11;
+  g.beginPath();
+  for (let i = 0; i < spikes * 2; i++) {
+    const ang = (i / (spikes * 2)) * Math.PI * 2;
+    const r = i % 2 === 0 ? 42 : 26;
+    const px = Math.cos(ang) * r;
+    const py = Math.sin(ang) * r;
+    if (i === 0) g.moveTo(px, py);
+    else g.lineTo(px, py);
+  }
+  g.closePath();
+  g.fillStyle = '#ffd23a';
+  g.fill();
+  g.lineWidth = 3;
+  g.strokeStyle = '#3a2a10';
+  g.stroke();
+  // chunky text
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.font = '900 20px Georgia, serif';
+  g.lineWidth = 5;
+  g.strokeStyle = '#3a2a10';
+  g.strokeText(text, 0, 1);
+  g.fillStyle = col;
+  g.fillText(text, 0, 1);
+  g.textBaseline = 'alphabetic';
+  g.restore();
 }

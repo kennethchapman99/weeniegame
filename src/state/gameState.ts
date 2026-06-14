@@ -76,6 +76,64 @@ export interface Popup {
   text: string;
   col: string;
   life: number;
+  /** comic "WOOF!" burst: bigger font + jagged starburst behind it */
+  burst?: boolean;
+  rot?: number;
+}
+
+export type PredatorState =
+  | 'enter'
+  | 'charge'
+  | 'grab'
+  | 'flee'
+  | 'circle'
+  | 'dive'
+  | 'carry'
+  | 'climb';
+
+export interface Predator {
+  kind: 'coyote' | 'eagle';
+  x: number;
+  y: number;
+  state: PredatorState;
+  t: number;
+  targetId: DogId;
+  grabId: DogId | null;
+  warn: number;
+  seed: number;
+  face: 1 | -1;
+  // eagle-only orbit/dive scratch
+  cx: number;
+  cy: number;
+  ang: number;
+  carry: number;
+  dx: number;
+  dy: number;
+}
+
+export interface Squirrel {
+  x: number;
+  y: number;
+  vx: number;
+  dir: 1 | -1;
+  seed: number;
+  got: boolean;
+}
+
+export interface Treat {
+  x: number;
+  y: number;
+  room: string;
+  telegraph: number;
+  glow: number;
+}
+
+export interface BellyRub {
+  x: number;
+  y: number;
+  room: string;
+  r: number;
+  life: number;
 }
 
 export interface Tug {
@@ -105,6 +163,14 @@ export interface GameState {
   sunbeam: Sunbeam | null;
   floaters: Floater[];
   tug: Tug | null;
+  // predators + ambient events (yard danger / bonuses)
+  predator: Predator | null;
+  predatorTimer: number;
+  carriedDog: DogId | null;
+  squirrel: Squirrel | null;
+  treat: Treat | null;
+  bellyRub: BellyRub | null;
+  eventTimer: number;
   particles: Particle[];
   popups: Popup[];
   /** sound requests drained + played by the host each frame (keeps the sim audio-free) */
@@ -139,6 +205,13 @@ export function makeGameState(rng: Rng, playerId: DogId = 'cheddar'): GameState 
     sunbeam: null,
     floaters: [],
     tug: null,
+    predator: null,
+    predatorTimer: 14,
+    carriedDog: null,
+    squirrel: null,
+    treat: null,
+    bellyRub: null,
+    eventTimer: 8,
     particles: [],
     popups: [],
     sounds: [],
