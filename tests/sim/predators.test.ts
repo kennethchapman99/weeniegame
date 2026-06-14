@@ -4,7 +4,7 @@ import { makeGameState } from '../../src/state/gameState.js';
 import { startGame, updateGame } from '../../src/state/sceneManager.js';
 import { spawnPredator, unitedFront, updatePredator } from '../../src/systems/predators.js';
 import { updateEvents } from '../../src/systems/events.js';
-import { EVENTS } from '../../src/config/balance.js';
+import { EVENTS, YARD } from '../../src/config/balance.js';
 
 const DT = 1 / 60;
 const noIntent = { ax: 0, ay: 0, arrive: 0 };
@@ -86,12 +86,36 @@ describe('predators (M7)', () => {
 describe('ambient events (M7)', () => {
   it('a dog on the squirrel scores +3', () => {
     const s = yardPlay(4);
-    s.squirrel = { x: 300, y: 224, vx: 4.4, dir: 1, seed: 0, got: false };
+    s.squirrel = { x: 300, y: 240, vx: 4.4, dir: 1, seed: 0, got: false, mode: 'run', climbT: 0 };
     s.dogs.cheddar.x = 300;
-    s.dogs.cheddar.y = 224;
+    s.dogs.cheddar.y = 240;
     const before = s.dogs.cheddar.score;
     updateEvents(s, DT);
     expect(s.dogs.cheddar.score).toBe(before + EVENTS.squirrelReward);
+  });
+
+  it('an untagged squirrel scampers up the magnolia and escapes (no points)', () => {
+    const s = yardPlay(4);
+    // start it right at the magnolia trunk so it climbs immediately
+    s.squirrel = {
+      x: YARD.magnolia.x,
+      y: YARD.magnolia.trunkBaseY,
+      vx: 0,
+      dir: 1,
+      seed: 0,
+      got: false,
+      mode: 'run',
+      climbT: 0,
+    };
+    // keep both dogs far away so it can't be tagged
+    s.dogs.cheddar.x = 80;
+    s.dogs.cheddar.y = 540;
+    s.dogs.cocoa.x = 880;
+    s.dogs.cocoa.y = 540;
+    const before = s.dogs.cheddar.score + s.dogs.cocoa.score;
+    for (let i = 0; i < 60 * 3 && s.squirrel; i++) updateEvents(s, DT);
+    expect(s.squirrel).toBeNull(); // vanished up the tree
+    expect(s.dogs.cheddar.score + s.dogs.cocoa.score).toBe(before); // nobody scored
   });
 
   it('a dog on a landed treat picks it up for +2', () => {

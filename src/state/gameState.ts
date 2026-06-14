@@ -118,6 +118,9 @@ export interface Squirrel {
   dir: 1 | -1;
   seed: number;
   got: boolean;
+  /** 'run' = scurrying toward the magnolia; 'climb' = going up the trunk to vanish */
+  mode: 'run' | 'climb';
+  climbT: number;
 }
 
 export interface Treat {

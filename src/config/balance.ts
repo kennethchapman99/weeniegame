@@ -83,6 +83,15 @@ export const HOUSE = {
 
 export const SUNBEAM = { baskTime: 3.5, relocate: [9, 13] as const } as const;
 
+/**
+ * Yard features modelled on the real backyard (Burnet St). The magnolia is the squirrels'
+ * hideout: a squirrel scampers to the trunk and vanishes up into the canopy if no dog tags it.
+ */
+export const YARD = {
+  magnolia: { x: 726, y: 250, canopyR: 64, trunkBaseY: 326 },
+  squirrelClimb: 0.85, // seconds to scurry up the trunk and disappear
+} as const;
+
 export const PREDATOR = {
   firstSpawn: [11, 17] as const,
   respawn: [13, 20] as const,

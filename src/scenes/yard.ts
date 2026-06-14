@@ -6,7 +6,7 @@
  */
 
 import type { Rng } from '../core/rng.js';
-import { WORLD } from '../config/balance.js';
+import { WORLD, YARD } from '../config/balance.js';
 import type { SceneDef } from './types.js';
 import type { GameState } from '../state/gameState.js';
 import { updateToys, drawToys } from '../systems/toys.js';
@@ -137,6 +137,67 @@ export function paintYard(g: G, rng: Rng): void {
     g.moveTo(W - 200 + i * 14, 210);
     g.lineTo(W - 130 + i * 7, H);
     g.stroke();
+  }
+
+  paintMagnolia(g, rng);
+}
+
+/** The magnolia — the squirrels' hideout (modelled on the real backyard tree). */
+function paintMagnolia(g: G, rng: Rng): void {
+  const m = YARD.magnolia;
+  // ground shadow
+  g.fillStyle = 'rgba(20,40,15,.18)';
+  g.beginPath();
+  g.ellipse(m.x, m.trunkBaseY + 8, m.canopyR * 0.8, 16, 0, 0, 7);
+  g.fill();
+  // trunk
+  g.fillStyle = '#6e4a30';
+  g.fillRect(m.x - 9, m.y, 18, m.trunkBaseY - m.y);
+  g.strokeStyle = 'rgba(40,26,16,.4)';
+  g.lineWidth = 2;
+  g.beginPath();
+  g.moveTo(m.x - 2, m.y + 8);
+  g.lineTo(m.x - 2, m.trunkBaseY);
+  g.stroke();
+  // a couple of low branches into the canopy
+  g.strokeStyle = '#6e4a30';
+  g.lineWidth = 7;
+  g.lineCap = 'round';
+  g.beginPath();
+  g.moveTo(m.x, m.y + 20);
+  g.lineTo(m.x - 34, m.y - 6);
+  g.moveTo(m.x, m.y + 30);
+  g.lineTo(m.x + 30, m.y - 2);
+  g.stroke();
+  // lush rounded canopy
+  for (const [ox, oy, r, c] of [
+    [0, -8, m.canopyR, '#5f9148'],
+    [-40, 6, m.canopyR * 0.7, '#558540'],
+    [40, 2, m.canopyR * 0.72, '#69a050'],
+    [-6, -40, m.canopyR * 0.62, '#73aa58'],
+  ] as const) {
+    g.fillStyle = c;
+    g.beginPath();
+    g.arc(m.x + ox, m.y + oy, r, 0, 7);
+    g.fill();
+  }
+  // big creamy magnolia blossoms dotted through the leaves
+  for (let i = 0; i < 16; i++) {
+    const a = rng.range(0, 7);
+    const rr = rng.range(8, m.canopyR - 12);
+    const bx = m.x + Math.cos(a) * rr;
+    const by = m.y - 10 + Math.sin(a) * rr * 0.8;
+    g.fillStyle = ['#fbeef2', '#f7e2ea', '#fff6f2'][i % 3]!;
+    for (let p = 0; p < 5; p++) {
+      const pa = p * 1.256;
+      g.beginPath();
+      g.ellipse(bx + Math.cos(pa) * 4, by + Math.sin(pa) * 4, 3.4, 2.2, pa, 0, 7);
+      g.fill();
+    }
+    g.fillStyle = '#e8c86a';
+    g.beginPath();
+    g.arc(bx, by, 1.8, 0, 7);
+    g.fill();
   }
 }
 

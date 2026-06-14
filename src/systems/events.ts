@@ -9,7 +9,7 @@
 import type { GameState, Treat, BellyRub, Squirrel } from '../state/gameState.js';
 import { addScore, cap, playSound } from '../state/gameState.js';
 import { busy } from '../state/dog.js';
-import { WORLD, EVENTS } from '../config/balance.js';
+import { WORLD, EVENTS, YARD } from '../config/balance.js';
 import { burst, heartBurst, popup } from './particles.js';
 import { rounded } from '../core/math.js';
 import { HOUSE_MAP } from '../scenes/house/rooms.js';
@@ -27,16 +27,19 @@ function eventRoom(s: GameState): string {
 
 function spawnSquirrel(s: GameState): void {
   const rng = s.rng;
-  const dir = rng.next() < 0.5 ? 1 : -1;
+  // enter from whichever side is farther from the magnolia, then make a break for the tree
+  const dir = YARD.magnolia.x > W / 2 ? 1 : -1;
   s.squirrel = {
     x: dir > 0 ? -30 : W + 30,
-    y: rng.range(216, 232),
+    y: rng.range(232, 250),
     vx: dir * 4.4,
     dir,
     seed: rng.range(0, 9),
     got: false,
+    mode: 'run',
+    climbT: 0,
   };
-  s.toast = '🐿️ SQUIRREL! Go go go!';
+  s.toast = '🐿️ SQUIRREL! Catch it before it hits the magnolia!';
   playSound(s, 'yip');
 }
 
@@ -81,17 +84,42 @@ export function updateEvents(s: GameState, dt: number): void {
 
   if (s.squirrel) {
     const q = s.squirrel;
-    q.x += q.vx * dt * 60;
-    for (const d of dogs) {
-      if (!busy(d) && !q.got && Math.hypot(q.x - d.x, q.y - d.y) < 40) {
-        q.got = true;
-        addScore(s, d, EVENTS.squirrelReward);
-        playSound(s, 'bark');
-        burst(s, q.x, q.y, '#a8835c', 16, 3);
-        popup(s, q.x, q.y - 30, `${cap(d.id)} got the squirrel! +3`, '#ffe24a');
+    const mag = YARD.magnolia;
+    if (q.mode === 'run') {
+      // scurry toward the base of the magnolia trunk
+      const dx = mag.x - q.x;
+      const dy = mag.trunkBaseY - q.y;
+      const m = Math.hypot(dx, dy) || 1;
+      q.x += (dx / m) * 4.4 * dt * 60;
+      q.y += (dy / m) * 4.4 * dt * 60;
+      q.dir = dx >= 0 ? 1 : -1;
+      if (m < 22) {
+        q.mode = 'climb'; // reached the trunk — up it goes
+        q.climbT = 0;
+        s.toast = 'the squirrel made it to the magnolia!';
+      }
+    } else {
+      // climbing the trunk into the canopy, then gone (escaped — no points)
+      q.climbT += dt;
+      q.y = mag.trunkBaseY - (q.climbT / YARD.squirrelClimb) * (mag.trunkBaseY - mag.y);
+      if (q.climbT >= YARD.squirrelClimb) {
+        s.squirrel = null;
+        return;
       }
     }
-    if (q.got || q.x < -60 || q.x > W + 60) s.squirrel = null;
+    // dogs can tag it only while it's still on the ground (running)
+    if (q.mode === 'run') {
+      for (const d of dogs) {
+        if (!busy(d) && !q.got && Math.hypot(q.x - d.x, q.y - d.y) < 40) {
+          q.got = true;
+          addScore(s, d, EVENTS.squirrelReward);
+          playSound(s, 'bark');
+          burst(s, q.x, q.y, '#a8835c', 16, 3);
+          popup(s, q.x, q.y - 30, `${cap(d.id)} got the squirrel! +3`, '#ffe24a');
+        }
+      }
+    }
+    if (q.got) s.squirrel = null;
   }
 
   if (s.treat) {
@@ -143,9 +171,10 @@ export function drawEvents(g: G, s: GameState): void {
 
 function drawSquirrel(g: G, q: Squirrel, T: number): void {
   g.save();
+  if (q.mode === 'climb') g.globalAlpha = Math.max(0, 1 - q.climbT / YARD.squirrelClimb); // fades into the canopy
   g.translate(q.x, q.y);
   g.scale(q.dir, 1);
-  const hop = Math.abs(Math.sin(T * 0.02 + q.seed)) * 4;
+  const hop = q.mode === 'climb' ? 0 : Math.abs(Math.sin(T * 0.02 + q.seed)) * 4;
   g.translate(0, -hop);
   g.fillStyle = 'rgba(20,14,8,.25)';
   g.beginPath();
