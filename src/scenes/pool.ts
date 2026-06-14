@@ -207,7 +207,9 @@ export const poolScene: SceneDef = {
     sub: 'Round 2 of 3 — floaters only. Water is SLOW.',
     time: 45,
   },
-  painter: paintPool,
+  bgKey: () => 'pool',
+  paint: () => paintPool,
+  visibleDogs: (s) => [s.dogs.cheddar, s.dogs.cocoa],
   enter(s: GameState): void {
     for (const id of ['cheddar', 'cocoa'] as const) {
       const d = s.dogs[id];

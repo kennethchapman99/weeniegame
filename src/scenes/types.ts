@@ -5,6 +5,7 @@
  */
 
 import type { GameState } from '../state/gameState.js';
+import type { Dog } from '../state/dog.js';
 import type { ScenePainter } from '../render/backdrop.js';
 
 export interface SceneConfig {
@@ -16,12 +17,16 @@ export interface SceneConfig {
 
 export interface SceneDef {
   config: SceneConfig;
-  /** background painter (drawn once into the cached backdrop) */
-  painter: ScenePainter;
+  /** backdrop cache key for the current frame (varies by visible room for the house) */
+  bgKey(s: GameState): string;
+  /** the painter for the current backdrop (the visible room's painter for the house) */
+  paint(s: GameState): ScenePainter;
   /** per-entry (re)initialisation — the ONE explicit reset point per scene (CLAUDE.md) */
   enter(s: GameState): void;
   /** scene-specific simulation for one fixed step (toys, spot, round mechanics) */
   update(s: GameState, dt: number): void;
-  /** scene-specific world-space drawing (toys, spot, etc.) */
+  /** scene-specific world-space drawing (props: spot/sunbeam/toys/events/couch/squish…) */
   drawWorld(g: CanvasRenderingContext2D, s: GameState): void;
+  /** which dogs are currently visible (room-filtered for the house) */
+  visibleDogs(s: GameState): Dog[];
 }

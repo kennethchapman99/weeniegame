@@ -15,6 +15,7 @@ import { BOUNDS, SCORE, TUG } from '../config/balance.js';
 import { burst, popup } from './particles.js';
 import { rounded } from '../core/math.js';
 import { sampleDeckBand } from '../scenes/poolGeometry.js';
+import { sampleHouseToy, visibleRoom } from './house.js';
 import { startTug } from './tug.js';
 
 type G = CanvasRenderingContext2D;
@@ -22,6 +23,17 @@ const TOYTYPES = ['ball', 'bone', 'duck'] as const;
 
 export function spawnToy(s: GameState): void {
   const rng = s.rng;
+
+  // House: random room, clear of furniture/couch/doors. Ropes allowed.
+  if (s.sceneKey === 'house') {
+    const p = sampleHouseToy(s);
+    const isTug = rng.next() < TUG.ropeSpawnChance;
+    s.toys.push({
+      x: p.x, y: p.y, room: p.room, fl: -1, ox: 0, oy: 0,
+      tug: isTug, type: isTug ? 'rope' : TOYTYPES[(rng.next() * 3) | 0]!, t: rng.range(0, 9), scale: 0,
+    });
+    return;
+  }
 
   // Pool: most toys ride a floater; the rest sample the deck bands (never the water). No ropes.
   if (s.sceneKey === 'pool') {
@@ -72,8 +84,12 @@ export function spawnToy(s: GameState): void {
 export function updateToys(s: GameState, dt: number): void {
   const dogs = [s.dogs.cheddar, s.dogs.cocoa];
 
+  const house = s.sceneKey === 'house';
+  // in the house, a toy and dog only interact when in the same room
+  const sameRoom = (d: Dog, o: Toy): boolean => !house || (o.room === d.room && !d.transit);
+
   s.spawnTimer -= dt;
-  const toyCap = 3;
+  const toyCap = house ? 4 : 3;
   if (s.spawnTimer <= 0 && s.toys.length < toyCap) {
     spawnToy(s);
     s.spawnTimer = s.rng.range(2.6, 4.2);
@@ -90,7 +106,7 @@ export function updateToys(s: GameState, dt: number): void {
   for (let i = s.toys.length - 1; i >= 0; i--) {
     const o = s.toys[i]!;
     if (o.tug) {
-      const near = (d: Dog): boolean => !busy(d) && Math.hypot(o.x - d.x, o.y - d.y) < TUG.grabRange;
+      const near = (d: Dog): boolean => !busy(d) && sameRoom(d, o) && Math.hypot(o.x - d.x, o.y - d.y) < TUG.grabRange;
       // both dogs reach the rope, both free → TUG OF WAR
       if (!s.tug && near(s.dogs.cheddar) && near(s.dogs.cocoa)) {
         startTug(s, o);
@@ -110,7 +126,7 @@ export function updateToys(s: GameState, dt: number): void {
       continue;
     }
     for (const d of dogs) {
-      if (!busy(d) && Math.hypot(o.x - d.x, o.y - d.y) < 34) {
+      if (!busy(d) && sameRoom(d, o) && Math.hypot(o.x - d.x, o.y - d.y) < 34) {
         addScore(s, d, SCORE.toy);
         burst(s, o.x, o.y, d.id === 'cheddar' ? '#f4d3a4' : '#a86d42', 12, 2.6);
         popup(s, o.x, o.y - 26, '+1', '#fff');
@@ -122,7 +138,11 @@ export function updateToys(s: GameState, dt: number): void {
 }
 
 export function drawToys(g: G, s: GameState): void {
-  for (const o of s.toys) drawToy(g, o, s.elapsedMs);
+  const vroom = s.sceneKey === 'house' ? visibleRoom(s) : '';
+  for (const o of s.toys) {
+    if (s.sceneKey === 'house' && o.room !== vroom) continue;
+    drawToy(g, o, s.elapsedMs);
+  }
 }
 
 function drawToy(g: G, o: Toy, T: number): void {

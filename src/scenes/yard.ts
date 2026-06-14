@@ -148,7 +148,9 @@ export const yardScene: SceneDef = {
     sub: 'Round 1 of 3 — zoomies, squirrels & predators. Stick together!',
     time: 45,
   },
-  painter: paintYard,
+  bgKey: () => 'yard',
+  paint: () => paintYard,
+  visibleDogs: (s) => [s.dogs.cheddar, s.dogs.cocoa],
   enter(s: GameState): void {
     for (const id of ['cheddar', 'cocoa'] as const) {
       const d = s.dogs[id];

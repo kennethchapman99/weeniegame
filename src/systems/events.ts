@@ -12,9 +12,18 @@ import { busy } from '../state/dog.js';
 import { WORLD, EVENTS } from '../config/balance.js';
 import { burst, heartBurst, popup } from './particles.js';
 import { rounded } from '../core/math.js';
+import { HOUSE_MAP } from '../scenes/house/rooms.js';
+import { visibleRoom } from './house.js';
 
 type G = CanvasRenderingContext2D;
 const W = WORLD.w;
+
+/** Pick a random room id in the house (for treat/belly placement), or '' outside. */
+function eventRoom(s: GameState): string {
+  if (s.sceneKey !== 'house') return '';
+  const ids = Object.keys(HOUSE_MAP.rooms);
+  return ids[(s.rng.next() * ids.length) | 0]!;
+}
 
 function spawnSquirrel(s: GameState): void {
   const rng = s.rng;
@@ -34,8 +43,8 @@ function spawnSquirrel(s: GameState): void {
 function spawnTreat(s: GameState): void {
   s.treat = {
     x: s.rng.range(180, 800),
-    y: s.rng.range(280, 520),
-    room: '',
+    y: s.rng.range(s.sceneKey === 'house' ? 300 : 280, 520),
+    room: eventRoom(s),
     telegraph: 1.1,
     glow: 0,
   };
@@ -45,8 +54,8 @@ function spawnTreat(s: GameState): void {
 function spawnBelly(s: GameState): void {
   s.bellyRub = {
     x: s.rng.range(180, 800),
-    y: s.rng.range(280, 520),
-    room: '',
+    y: s.rng.range(s.sceneKey === 'house' ? 300 : 280, 520),
+    room: eventRoom(s),
     r: 36,
     life: 9,
   };
@@ -92,6 +101,7 @@ export function updateEvents(s: GameState, dt: number): void {
       tr.glow = tr.telegraph;
     } else {
       for (const d of dogs) {
+        if (s.sceneKey === 'house' && d.room !== tr.room) continue;
         if (!busy(d) && Math.hypot(tr.x - d.x, tr.y - d.y) < 32) {
           addScore(s, d, EVENTS.treatReward);
           playSound(s, 'yip');
@@ -109,6 +119,7 @@ export function updateEvents(s: GameState, dt: number): void {
     bl.life -= dt;
     let taken = false;
     for (const d of dogs) {
+      if (s.sceneKey === 'house' && d.room !== bl.room) continue;
       if (!busy(d) && Math.hypot(bl.x - d.x, bl.y - d.y) < bl.r) {
         d.immune = EVENTS.bellyImmunity;
         heartBurst(s, bl.x, bl.y - 10);
@@ -123,9 +134,11 @@ export function updateEvents(s: GameState, dt: number): void {
 }
 
 export function drawEvents(g: G, s: GameState): void {
-  if (s.squirrel) drawSquirrel(g, s.squirrel, s.elapsedMs);
-  if (s.treat) drawTreat(g, s.treat);
-  if (s.bellyRub) drawBelly(g, s.bellyRub, s.elapsedMs);
+  const vroom = s.sceneKey === 'house' ? visibleRoom(s) : '';
+  const here = (room: string): boolean => s.sceneKey !== 'house' || room === vroom;
+  if (s.squirrel) drawSquirrel(g, s.squirrel, s.elapsedMs); // yard-only anyway
+  if (s.treat && here(s.treat.room)) drawTreat(g, s.treat);
+  if (s.bellyRub && here(s.bellyRub.room)) drawBelly(g, s.bellyRub, s.elapsedMs);
 }
 
 function drawSquirrel(g: G, q: Squirrel, T: number): void {

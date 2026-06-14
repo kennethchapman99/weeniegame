@@ -17,14 +17,16 @@ import { updateParticles } from '../systems/particles.js';
 import { doWrestle, maybeAiWrestle } from '../systems/wrestle.js';
 import { updateTug, tugPull } from '../systems/tug.js';
 import { tryJump } from '../systems/jump.js';
+import { tickTransit, doorTriggers } from '../systems/house.js';
 import { player, ai } from './gameState.js';
 import { aiThink } from '../ai/sibling.js';
 import { SPEED, PREDATOR, EVENTS } from '../config/balance.js';
 import { yardScene } from '../scenes/yard.js';
 import { poolScene } from '../scenes/pool.js';
+import { houseScene } from '../scenes/house/index.js';
 
-/** Ordered, registered rounds. M7 pushes the house. */
-const REGISTRY: SceneDef[] = [yardScene, poolScene];
+/** Ordered, registered rounds: Backyard → Pool → House. */
+const REGISTRY: SceneDef[] = [yardScene, poolScene, houseScene];
 
 export function sceneDefs(): readonly SceneDef[] {
   return REGISTRY;
@@ -65,6 +67,9 @@ export function beginScene(s: GameState): void {
   s.treat = null;
   s.bellyRub = null;
   s.eventTimer = s.rng.range(EVENTS.schedule[0], EVENTS.schedule[1]);
+  // house entities (the scene's enter() repopulates them when it's the house round)
+  s.squishies = [];
+  s.couch = null;
   for (const id of ['cheddar', 'cocoa'] as const) {
     const d = s.dogs[id];
     d.mode = 'free';
@@ -73,6 +78,8 @@ export function beginScene(s: GameState): void {
     d.dryT = 0;
     d.jumpT = 0;
     d.barkT = 0;
+    d.transit = null;
+    d.room = '';
     d.trail = [];
     d.hist = [];
   }
@@ -111,7 +118,13 @@ export function updateGame(
   }
   if (s.phase !== 'play') return;
 
-  // player movement
+  // house: advance any in-flight door/stair traversal first (a transiting dog can't steer)
+  if (s.sceneKey === 'house') {
+    tickTransit(player(s), dt);
+    tickTransit(ai(s), dt);
+  }
+
+  // player movement (moveDog no-ops while transiting)
   moveDog(s, player(s), intent.ax, intent.ay, dt, intent.arrive);
 
   // AI sibling — full speed (aiFactor 0.88 is inert; see balance.ts / owner decision)
@@ -119,6 +132,8 @@ export function updateGame(
   const [aax, aay] = aiThink(s, aiDog, dt);
   const aiTd = Math.hypot(aax, aay);
   moveDog(s, aiDog, aax, aay, dt, Math.min(1, (aiTd - SPEED.aiArriveRadius) / SPEED.arriveFalloff));
+
+  if (s.sceneKey === 'house') doorTriggers(s); // walking into a doorway starts a transit
 
   // player action: mash the tug if locked into one, else wrestle
   if (wrestle) {

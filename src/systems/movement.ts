@@ -16,6 +16,7 @@ import { clamp } from './../core/math.js';
 import { burst, popup } from './particles.js';
 import { inPoolRect, inWater, onAnyFloater } from '../scenes/poolGeometry.js';
 import { splashIn, startShake } from '../scenes/pool.js';
+import { pushOut } from './house.js';
 
 /**
  * Apply a steering intent to a dog for one fixed step.
@@ -159,6 +160,7 @@ export function moveDog(s: GameState, d: Dog, ax: number, ay: number, dt: number
   if (Math.abs(d.vx) > SPEED.faceFlipThreshold) d.face = d.vx > 0 ? 1 : -1;
   d.x = clamp(d.x, BOUNDS.minX, BOUNDS.maxX);
   d.y = clamp(d.y, BOUNDS.minY, BOUNDS.maxY);
+  if (s.sceneKey === 'house') pushOut(d); // furniture collision
 
   // zoomies trail fade
   for (const tr of d.trail) tr.life -= dt * 2.2;
@@ -192,6 +194,8 @@ export function moveDog(s: GameState, d: Dog, ax: number, ay: number, dt: number
 export function collideDogs(s: GameState): void {
   const d1 = s.dogs.cheddar;
   const d2 = s.dogs.cocoa;
+  // house: dogs in different rooms (or mid-transit) don't collide
+  if (s.sceneKey === 'house' && (d1.room !== d2.room || d1.transit || d2.transit)) return;
   const dd = Math.hypot(d1.x - d2.x, d1.y - d2.y);
   if (dd >= SPOT.dogCollideDist || dd <= 0.01) return;
 
@@ -204,7 +208,7 @@ export function collideDogs(s: GameState): void {
   d2.y += ny * ov;
 
   const rel = Math.hypot(d1.vx - d2.vx, d1.vy - d2.vy);
-  const sObj = s.spot;
+  const sObj = s.spot ?? s.couch; // the cuddle spot (yard/pool) or the dog couch (house)
   if (rel > SPOT.stealRelSpeed && sObj && sObj.holder) {
     const sp1 = Math.hypot(d1.vx, d1.vy);
     const sp2 = Math.hypot(d2.vx, d2.vy);

@@ -82,9 +82,8 @@ function render(): void {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, canvas!.width, canvas!.height);
 
-  const sceneKey = state.sceneKey || 'yard';
   const def = currentScene(state);
-  const bg = backdrop.get(sceneKey, def.painter, camera.view);
+  const bg = backdrop.get(def.bgKey(state), def.paint(state), camera.view);
   ctx.drawImage(bg, 0, 0);
 
   camera.applyTransform();
@@ -106,8 +105,8 @@ function render(): void {
     ctx.stroke();
   }
 
-  // draw both dogs back-to-front by y
-  const dogs = [state.dogs.cheddar, state.dogs.cocoa].sort((a, b) => a.y - b.y);
+  // draw the visible dogs (room-filtered for the house) back-to-front by y
+  const dogs = def.visibleDogs(state).sort((a, b) => a.y - b.y);
   for (const d of dogs) drawDog(ctx, d, state.elapsedMs);
 
   drawParticles(ctx, state);

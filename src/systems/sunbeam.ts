@@ -13,16 +13,39 @@ import { addScore } from '../state/gameState.js';
 import { busy } from '../state/dog.js';
 import { SUNBEAM, SCORE } from '../config/balance.js';
 import { popup } from './particles.js';
+import { HOUSE_MAP } from '../scenes/house/rooms.js';
+import { visibleRoom } from './house.js';
 
 type G = CanvasRenderingContext2D;
 
-/** Place (or relocate) the yard sunbeam, kept clear of the cuddle spot. House placement: M7. */
+/** Place (or relocate) the sunbeam. Yard: clear of the cuddle spot. House: in a sun room (solarium). */
 export function placeSunbeam(s: GameState): void {
   if (s.sceneKey === 'pool') {
     s.sunbeam = null;
     return;
   }
   const rng = s.rng;
+  const make = (x: number, y: number, room: string): Sunbeam => ({
+    x,
+    y,
+    room,
+    r: 62,
+    relocate: rng.range(SUNBEAM.relocate[0], SUNBEAM.relocate[1]),
+    accA: 0,
+    accB: 0,
+    age: 0,
+  });
+
+  if (s.sceneKey === 'house') {
+    // prefer rooms that declare a sun zone (the solarium); the sun streams in there
+    const sunny = Object.values(HOUSE_MAP.rooms).filter((r) => r.sunbeamZone);
+    const pool = sunny.length ? sunny : Object.values(HOUSE_MAP.rooms);
+    const room = pool[(rng.next() * pool.length) | 0]!;
+    const z = room.sunbeamZone ?? { x: 180, y: 300, w: 620, h: 220 };
+    s.sunbeam = make(rng.range(z.x, z.x + z.w), rng.range(z.y, z.y + z.h), room.id);
+    return;
+  }
+
   let x = 0;
   let y = 0;
   let ok = false;
@@ -32,16 +55,7 @@ export function placeSunbeam(s: GameState): void {
     y = rng.range(290, 530);
     ok = !s.spot || Math.hypot(x - s.spot.x, y - s.spot.y) > 170;
   }
-  s.sunbeam = {
-    x,
-    y,
-    room: '',
-    r: 62,
-    relocate: rng.range(SUNBEAM.relocate[0], SUNBEAM.relocate[1]),
-    accA: 0,
-    accB: 0,
-    age: 0,
-  };
+  s.sunbeam = make(x, y, '');
 }
 
 export function updateSunbeam(s: GameState, dt: number): void {
@@ -57,7 +71,8 @@ export function updateSunbeam(s: GameState, dt: number): void {
     placeSunbeam(s);
     return;
   }
-  const inBeam = (d: typeof a): boolean => !busy(d) && Math.hypot(sb.x - d.x, sb.y - d.y) < sb.r;
+  const inBeam = (d: typeof a): boolean =>
+    !busy(d) && (s.sceneKey !== 'house' || d.room === sb.room) && Math.hypot(sb.x - d.x, sb.y - d.y) < sb.r;
   const bA = inBeam(a);
   const bB = inBeam(b);
   if (bA && bB) {
@@ -99,6 +114,7 @@ export function updateSunbeam(s: GameState, dt: number): void {
 export function drawSunbeam(g: G, s: GameState): void {
   const sb = s.sunbeam;
   if (!sb) return;
+  if (s.sceneKey === 'house' && sb.room !== visibleRoom(s)) return; // only the visible room
   drawSunbeamShape(g, sb, s.elapsedMs, s.rng.next());
 }
 

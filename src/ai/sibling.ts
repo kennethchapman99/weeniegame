@@ -24,6 +24,7 @@ import type { GameState } from '../state/gameState.js';
 import { busy } from '../state/dog.js';
 import type { Dog } from '../state/dog.js';
 import { BOUNDS, JUMP } from '../config/balance.js';
+import { HOUSE_MAP } from '../scenes/house/rooms.js';
 import {
   nearestDeck,
   sideOf,
@@ -35,6 +36,7 @@ import {
 
 const YARD_WOBBLE = 0.35;
 const POOL_WOBBLE = 0.1;
+const HOUSE_WOBBLE = 0.15;
 
 export function aiThink(s: GameState, d: Dog, dt: number): [number, number] {
   // swimming: make a beeline for the nearest deck exit (never tread water)
@@ -69,6 +71,8 @@ export function aiThink(s: GameState, d: Dog, dt: number): [number, number] {
       return [other.x - d.x, other.y - d.y]; // buddy up before it commits
     }
   }
+
+  if (s.sceneKey === 'house') return houseThink(s, d);
 
   const pool = s.sceneKey === 'pool';
   let tx = d.aiTx;
@@ -135,6 +139,84 @@ export function aiThink(s: GameState, d: Dog, dt: number): [number, number] {
   const ax = tx - d.x;
   const ay = ty - d.y;
   const wob = Math.sin(s.elapsedMs * 0.003 + d.seed * 3) * (pool ? POOL_WOBBLE : YARD_WOBBLE);
+  const c = Math.cos(wob);
+  const sn = Math.sin(wob);
+  return [ax * c - ay * sn, ax * sn + ay * c];
+}
+
+/**
+ * House brain: chase in-room toys/squishmallows/sunbeam, contest the dog couch, and navigate
+ * room-to-room via door waypoints (nextHop graph). Ported from the prototype's house aiThink.
+ */
+function houseThink(s: GameState, d: Dog): [number, number] {
+  const room = d.room ?? 'foyer';
+  let tx = d.aiTx;
+  let ty = d.aiTy;
+  let best: { x: number; y: number } | null = null;
+  let bd = 1e9;
+
+  for (const o of s.toys) {
+    if (o.room !== room) continue;
+    const dd = Math.hypot(o.x - d.x, o.y - d.y);
+    if (dd < bd) {
+      bd = dd;
+      best = o;
+    }
+  }
+  for (const sq of s.squishies) {
+    if (!sq.active || sq.room !== room) continue;
+    const dd = Math.hypot(sq.x - d.x, sq.y - d.y) * 1.1;
+    if (dd < bd) {
+      bd = dd;
+      best = sq;
+    }
+  }
+  if (s.sunbeam && s.sunbeam.room === room) {
+    const ud = Math.hypot(s.sunbeam.x - d.x, s.sunbeam.y - d.y) * 1.3;
+    if (ud < bd) {
+      bd = ud;
+      best = s.sunbeam;
+    }
+  }
+
+  let goalRoom: string | null = null;
+  const couch = s.couch;
+  const couchOpen = couch && couch.cool <= 0;
+  if (couchOpen && couch.holder !== d.id && (couch.holder || bd > 240)) {
+    if (room === couch.room && Math.hypot(couch.x - d.x, couch.y - d.y) * 0.8 < bd) {
+      best = couch;
+      bd = 0;
+    } else if (room !== couch.room && !best) {
+      goalRoom = couch.room;
+    }
+  }
+  if (!best && !goalRoom) {
+    // nothing here — head to where the toys are, else the family room
+    const counts: Record<string, number> = {};
+    for (const o of s.toys) counts[o.room] = (counts[o.room] ?? 0) + 1;
+    let bestRoom: string | null = null;
+    let n = 0;
+    for (const rk in counts) {
+      if (rk !== room && counts[rk]! > n) {
+        n = counts[rk]!;
+        bestRoom = rk;
+      }
+    }
+    goalRoom = bestRoom ?? (room === 'family' ? 'foyer' : 'family');
+  }
+  if (goalRoom) {
+    const hop = HOUSE_MAP.nextHop[room]?.[goalRoom] ?? goalRoom;
+    const door = HOUSE_MAP.rooms[room]?.doors.find((dr) => dr.to === hop);
+    if (door) best = { x: door.cx, y: door.cy };
+  }
+  if (best) {
+    tx = best.x;
+    ty = best.y;
+  }
+
+  const ax = tx - d.x;
+  const ay = ty - d.y;
+  const wob = Math.sin(s.elapsedMs * 0.003 + d.seed * 3) * HOUSE_WOBBLE;
   const c = Math.cos(wob);
   const sn = Math.sin(wob);
   return [ax * c - ay * sn, ax * sn + ay * c];

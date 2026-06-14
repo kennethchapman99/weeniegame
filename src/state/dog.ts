@@ -12,6 +12,7 @@
  */
 
 import type { DogId } from '../config/dogs.js';
+import type { TransitState } from '../scenes/mapdef.js';
 
 export type { DogId };
 
@@ -58,6 +59,7 @@ export interface Dog {
 
   // house
   room?: string;
+  transit: TransitState | null; // in-flight door/stair traversal (mode === 'transit')
 
   // AI scratch (used from M3 on)
   aiTx: number;
@@ -89,6 +91,7 @@ export function makeDog(id: DogId, x: number, y: number, seed = 0): Dog {
     hist: [],
     trail: [],
     onFloater: false,
+    transit: null,
     aiTx: x,
     aiTy: y,
     aiWanderT: 0,

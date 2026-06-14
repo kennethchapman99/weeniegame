@@ -136,6 +136,28 @@ export interface BellyRub {
   life: number;
 }
 
+export interface Squishmallow {
+  room: string;
+  x: number;
+  y: number;
+  active: boolean;
+  respawn: number;
+  prog: number;
+  who: DogId | null;
+  hue: number;
+  seed: number;
+}
+
+export interface Couch {
+  room: string;
+  x: number;
+  y: number;
+  r: number;
+  holder: DogId | null;
+  prog: number;
+  cool: number;
+}
+
 export interface Tug {
   toy: Toy;
   rope: number; // -1..+1; + = Cheddar (mashA) winning, - = Cocoa (mashB)
@@ -171,6 +193,9 @@ export interface GameState {
   treat: Treat | null;
   bellyRub: BellyRub | null;
   eventTimer: number;
+  // house
+  squishies: Squishmallow[];
+  couch: Couch | null;
   particles: Particle[];
   popups: Popup[];
   /** sound requests drained + played by the host each frame (keeps the sim audio-free) */
@@ -212,6 +237,8 @@ export function makeGameState(rng: Rng, playerId: DogId = 'cheddar'): GameState 
     treat: null,
     bellyRub: null,
     eventTimer: 8,
+    squishies: [],
+    couch: null,
     particles: [],
     popups: [],
     sounds: [],

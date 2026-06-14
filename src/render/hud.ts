@@ -6,10 +6,13 @@
 
 import type { GameState } from '../state/gameState.js';
 import type { Point } from '../core/math.js';
+import { cap } from '../state/gameState.js';
 import { DOGS } from '../config/dogs.js';
 import { WORLD } from '../config/balance.js';
 import { rounded } from '../core/math.js';
 import { wrestleOnCooldown } from '../systems/wrestle.js';
+import { visibleRoom } from '../systems/house.js';
+import { HOUSE_MAP } from '../scenes/house/rooms.js';
 
 type G = CanvasRenderingContext2D;
 const W = WORLD.w;
@@ -80,6 +83,27 @@ export function drawHUD(g: G, s: GameState): void {
 
   scorePill(g, 16, 16, s.dogs.cheddar.score, DOGS.cheddar.dry.body[1], 'CHEDDAR', 'left', s.playerId === 'cheddar');
   scorePill(g, W - 16, 16, s.dogs.cocoa.score, DOGS.cocoa.dry.body[1], 'COCOA', 'right', s.playerId === 'cocoa');
+
+  if (s.sceneKey === 'house') drawSiblingLocator(g, s);
+}
+
+/** House: a pill telling you which room (or stair) your sibling is in, when out of view. */
+function drawSiblingLocator(g: G, s: GameState): void {
+  const v = visibleRoom(s);
+  const aiDog = s.dogs[s.aiId];
+  const aiRoom = aiDog.transit ? aiDog.transit.to : aiDog.room;
+  if (aiRoom === v && !aiDog.transit) return;
+  const label =
+    aiDog.transit && aiDog.transit.stair ? 'on the stairs' : (HOUSE_MAP.rooms[aiRoom ?? '']?.label ?? aiRoom ?? '');
+  const msg = `${cap(aiDog.id)} → ${label}`;
+  g.font = '800 13px -apple-system, sans-serif';
+  g.textAlign = 'left';
+  const tw = g.measureText(msg).width;
+  g.fillStyle = 'rgba(38,28,18,.75)';
+  rounded(g, 16, 224, tw + 26, 28, 14);
+  g.fill();
+  g.fillStyle = '#f6ead2';
+  g.fillText(msg, 29, 243);
 }
 
 function sceneLabel(s: GameState): string {

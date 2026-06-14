@@ -91,6 +91,18 @@ export function doWrestle(s: GameState, att: Dog, def: Dog): void {
     s.steals[w.id]++;
     popup(s, s.spot.x, s.spot.y - 70, `${cap(w.id)} took the spot!`, '#ffd98c');
   }
+  // …or the dog couch (house)
+  if (
+    s.couch &&
+    s.couch.cool <= 0 &&
+    s.couch.holder === l.id &&
+    Math.hypot(s.couch.x - l.x, s.couch.y - l.y) < s.couch.r + WRESTLE.stealReach
+  ) {
+    s.couch.holder = w.id;
+    s.couch.prog = 0;
+    s.steals[w.id]++;
+    popup(s, s.couch.x, s.couch.y - 70, `${cap(w.id)} took the dog couch!`, '#ffd98c');
+  }
 
   if (win) {
     popup(s, mx, my - 58, `${cap(w.id)} flipped ${cap(l.id)}!`, '#fff');
