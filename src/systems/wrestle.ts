@@ -9,8 +9,9 @@
 import type { GameState } from '../state/gameState.js';
 import { cap } from '../state/gameState.js';
 import type { Dog } from '../state/dog.js';
-import { WRESTLE } from '../config/balance.js';
+import { WRESTLE, WORLD } from '../config/balance.js';
 import { popup } from './particles.js';
+import { inPoolRect } from '../scenes/poolGeometry.js';
 
 /** Can `att` start a wrestle on `def` right now? Centralised gate. */
 export function canWrestle(s: GameState, att: Dog, def: Dog): boolean {
@@ -62,8 +63,17 @@ export function doWrestle(s: GameState, att: Dog, def: Dog): void {
 
   l.mode = 'stunned';
   l.stunT = WRESTLE.loserStun;
-  const kx = l.x - w.x || 1;
-  const ky = l.y - w.y || 0.5;
+  let kx = l.x - w.x || 1;
+  let ky = l.y - w.y || 0.5;
+  // pool dunk: if the loser is on the deck and the water is close, aim them straight in
+  if (s.sceneKey === 'pool' && !inPoolRect(l.x, l.y)) {
+    const px = Math.max(140, Math.min(WORLD.w - 140, l.x));
+    const py = Math.max(290, Math.min(WORLD.h - 80, l.y));
+    if (Math.hypot(px - l.x, py - l.y) < 150) {
+      kx = px - l.x;
+      ky = py - l.y;
+    }
+  }
   const km = Math.hypot(kx, ky) || 1;
   l.vx = (kx / km) * WRESTLE.knockback;
   l.vy = (ky / km) * WRESTLE.knockback;

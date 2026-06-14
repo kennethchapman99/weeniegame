@@ -28,6 +28,12 @@ input.attach(canvas, camera);
 const backdrop = new Backdrop();
 const state = makeGameState(makeRng(0xc0ffee));
 
+// Dev-only inspection hook (stripped from production builds): lets the headless
+// verification harness read/poke live game state without shipping a global.
+if (import.meta.env.DEV) {
+  (globalThis as unknown as { __game: typeof state }).__game = state;
+}
+
 addEventListener('resize', () => camera.fit());
 
 // Discrete taps for title / end screens (movement drag is handled by Input).

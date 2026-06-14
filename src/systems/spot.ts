@@ -10,6 +10,7 @@ import { addScore } from '../state/gameState.js';
 import { busy } from '../state/dog.js';
 import { BOUNDS, SPOT } from '../config/balance.js';
 import { heartBurst, popup } from './particles.js';
+import { sampleDeckBand } from '../scenes/poolGeometry.js';
 
 type G = CanvasRenderingContext2D;
 
@@ -19,11 +20,19 @@ export function placeSpot(s: GameState): void {
   let y = 0;
   let tries = 0;
   const prev = s.spot;
+  const pool = s.sceneKey === 'pool';
   do {
-    x = rng.range(BOUNDS.minX + 70, BOUNDS.maxX - 70);
-    y = rng.range(BOUNDS.minY + 50, BOUNDS.maxY - 25);
+    if (pool) {
+      // sample the four deck bands around the water — never inside the water rect
+      const p = sampleDeckBand(rng);
+      x = p.x;
+      y = p.y;
+    } else {
+      x = rng.range(BOUNDS.minX + 70, BOUNDS.maxX - 70);
+      y = rng.range(BOUNDS.minY + 50, BOUNDS.maxY - 25);
+    }
     tries++;
-  } while (tries < 80 && prev && Math.hypot(x - prev.x, y - prev.y) < 240);
+  } while (tries < 80 && prev && Math.hypot(x - prev.x, y - prev.y) < (pool ? 220 : 240));
   s.spot = { x, y, r: SPOT.radius, holder: null, prog: 0, pulse: 0 };
 }
 

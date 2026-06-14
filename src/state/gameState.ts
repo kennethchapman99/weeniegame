@@ -36,6 +36,16 @@ export interface Spot {
   pulse: number;
 }
 
+export interface Floater {
+  x: number;
+  y: number;
+  rx: number;
+  ry: number;
+  vx: number;
+  style: 'donut' | 'leaf' | 'ring' | 'donut2';
+  ph: number;
+}
+
 export interface Sunbeam {
   x: number;
   y: number;
@@ -83,6 +93,7 @@ export interface GameState {
   toys: Toy[];
   spot: Spot | null;
   sunbeam: Sunbeam | null;
+  floaters: Floater[];
   particles: Particle[];
   popups: Popup[];
 
@@ -113,6 +124,7 @@ export function makeGameState(rng: Rng, playerId: DogId = 'cheddar'): GameState 
     toys: [],
     spot: null,
     sunbeam: null,
+    floaters: [],
     particles: [],
     popups: [],
     spawnTimer: 1.2,

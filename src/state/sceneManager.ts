@@ -19,9 +19,10 @@ import { player, ai } from './gameState.js';
 import { aiThink } from '../ai/sibling.js';
 import { SPEED } from '../config/balance.js';
 import { yardScene } from '../scenes/yard.js';
+import { poolScene } from '../scenes/pool.js';
 
-/** Ordered, registered rounds. Later milestones push pool/house. */
-const REGISTRY: SceneDef[] = [yardScene];
+/** Ordered, registered rounds. M7 pushes the house. */
+const REGISTRY: SceneDef[] = [yardScene, poolScene];
 
 export function sceneDefs(): readonly SceneDef[] {
   return REGISTRY;
@@ -91,13 +92,13 @@ export function updateGame(s: GameState, intent: Intent, wrestle: boolean, dt: n
   if (s.phase !== 'play') return;
 
   // player movement
-  moveDog(player(s), intent.ax, intent.ay, dt, intent.arrive);
+  moveDog(s, player(s), intent.ax, intent.ay, dt, intent.arrive);
 
   // AI sibling — full speed (aiFactor 0.88 is inert; see balance.ts / owner decision)
   const aiDog = ai(s);
   const [aax, aay] = aiThink(s, aiDog, dt);
   const aiTd = Math.hypot(aax, aay);
-  moveDog(aiDog, aax, aay, dt, Math.min(1, (aiTd - SPEED.aiArriveRadius) / SPEED.arriveFalloff));
+  moveDog(s, aiDog, aax, aay, dt, Math.min(1, (aiTd - SPEED.aiArriveRadius) / SPEED.arriveFalloff));
 
   // wrestle: player-initiated this step, then the AI's own trigger
   if (wrestle) doWrestle(s, player(s), ai(s));

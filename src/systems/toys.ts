@@ -14,23 +14,46 @@ import { busy } from '../state/dog.js';
 import { BOUNDS, SCORE, TUG } from '../config/balance.js';
 import { burst, popup } from './particles.js';
 import { rounded } from '../core/math.js';
+import { sampleDeckBand } from '../scenes/poolGeometry.js';
 
 type G = CanvasRenderingContext2D;
 const TOYTYPES = ['ball', 'bone', 'duck'] as const;
 
 export function spawnToy(s: GameState): void {
   const rng = s.rng;
+
+  // Pool: most toys ride a floater; the rest sample the deck bands (never the water). No ropes.
+  if (s.sceneKey === 'pool') {
+    if (rng.next() < 0.6 && s.floaters.length) {
+      const fl = (rng.next() * s.floaters.length) | 0;
+      const f = s.floaters[fl]!;
+      const ox = rng.range(-f.rx * 0.45, f.rx * 0.45);
+      const oy = rng.range(-f.ry * 0.35, f.ry * 0.35);
+      s.toys.push({
+        x: f.x + ox, y: f.y + oy, room: '', fl, ox, oy,
+        tug: false, type: TOYTYPES[(rng.next() * 3) | 0]!, t: rng.range(0, 9), scale: 0,
+      });
+    } else {
+      const p = sampleDeckBand(rng);
+      s.toys.push({
+        x: p.x, y: p.y, room: '', fl: -1, ox: 0, oy: 0,
+        tug: false, type: TOYTYPES[(rng.next() * 3) | 0]!, t: rng.range(0, 9), scale: 0,
+      });
+    }
+    return;
+  }
+
+  // Yard land placement: keep clear of the cuddle spot.
   let x = 0;
   let y = 0;
   let ok = false;
   let tries = 0;
-  // Yard land placement: keep clear of the cuddle spot.
   while (!ok && tries++ < 40) {
     x = rng.range(BOUNDS.minX + 30, BOUNDS.maxX - 30);
     y = rng.range(BOUNDS.minY + 20, BOUNDS.maxY - 15);
     ok = !s.spot || Math.hypot(x - s.spot.x, y - s.spot.y) > 110;
   }
-  const isTug = s.sceneKey !== 'pool' && rng.next() < TUG.ropeSpawnChance;
+  const isTug = rng.next() < TUG.ropeSpawnChance;
   s.toys.push({
     x,
     y,
@@ -55,7 +78,13 @@ export function updateToys(s: GameState, dt: number): void {
     s.spawnTimer = s.rng.range(2.6, 4.2);
   }
 
-  for (const o of s.toys) o.scale += dt * 4;
+  for (const o of s.toys) {
+    o.scale += dt * 4;
+    if (o.fl >= 0 && s.floaters[o.fl]) {
+      o.x = s.floaters[o.fl]!.x + o.ox;
+      o.y = s.floaters[o.fl]!.y + o.oy;
+    }
+  }
 
   for (let i = s.toys.length - 1; i >= 0; i--) {
     const o = s.toys[i]!;

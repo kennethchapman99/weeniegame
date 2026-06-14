@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { makeRng } from '../../src/core/rng.js';
 import { makeGameState, addScore } from '../../src/state/gameState.js';
-import { startGame, updateGame, endRound } from '../../src/state/sceneManager.js';
+import { startGame, updateGame, sceneDefs } from '../../src/state/sceneManager.js';
 import { spawnToy, updateToys } from '../../src/systems/toys.js';
 import { updateSpot } from '../../src/systems/spot.js';
 import { ZOOMIES, SCORE, SPOT } from '../../src/config/balance.js';
@@ -17,26 +17,29 @@ function freshPlay() {
   return s;
 }
 
-describe('scene flow (M2)', () => {
-  it('title -> inter -> play -> end across the registered round', () => {
+describe('scene flow', () => {
+  it('title -> inter -> play through every registered round -> end', () => {
     const s = makeGameState(makeRng(7));
     expect(s.phase).toBe('title');
     startGame(s);
     expect(s.phase).toBe('inter');
-    for (let i = 0; i < 120 && s.phase === 'inter'; i++) updateGame(s, noIntent, false, DT);
-    expect(s.phase).toBe('play');
-    // burn the round timer down
-    for (let i = 0; i < 60 * 60 && s.phase === 'play'; i++) updateGame(s, noIntent, false, DT);
+    // play long enough to clear every round (each ~45-75s + interstitial)
+    let playRounds = 0;
+    let wasPlay = false;
+    for (let i = 0; i < 60 * 300 && s.phase !== 'end'; i++) {
+      updateGame(s, noIntent, false, DT);
+      if (s.phase === 'play' && !wasPlay) playRounds++;
+      wasPlay = s.phase === 'play';
+    }
     expect(s.phase).toBe('end');
+    expect(playRounds).toBe(sceneDefs().length); // entered each registered round once
   });
 
-  it('reaches end without throwing and the timer actually counts down', () => {
+  it('the round timer counts down during play', () => {
     const s = freshPlay();
     const t0 = s.timeLeft;
     for (let i = 0; i < 60; i++) updateGame(s, noIntent, false, DT);
     expect(s.timeLeft).toBeLessThan(t0);
-    expect(() => endRound(s)).not.toThrow();
-    expect(s.phase).toBe('end'); // only one round registered in M2
   });
 });
 

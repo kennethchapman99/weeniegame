@@ -44,7 +44,7 @@ describe('wrestle (M4)', () => {
     d.mode = 'stunned';
     d.stunT = WRESTLE.loserStun;
     const steps = Math.ceil(WRESTLE.loserStun / DT) + 2;
-    for (let i = 0; i < steps; i++) moveDog(d, 0, 0, DT, 0);
+    for (let i = 0; i < steps; i++) moveDog(s, d, 0, 0, DT, 0);
     expect(d.mode).toBe('free');
     expect(d.stunT).toBe(0);
   });

@@ -11,16 +11,53 @@
 import type { Dog } from '../state/dog.js';
 import type { GameState } from '../state/gameState.js';
 import { cap } from '../state/gameState.js';
-import { BOUNDS, SPEED, SPOT, WRESTLE } from '../config/balance.js';
+import { BOUNDS, SPEED, SPOT, WRESTLE, WORLD, POOL } from '../config/balance.js';
 import { clamp } from './../core/math.js';
 import { burst, popup } from './particles.js';
+import { inPoolRect, inWater, onAnyFloater } from '../scenes/poolGeometry.js';
+import { splashIn, startShake } from '../scenes/pool.js';
 
 /**
  * Apply a steering intent to a dog for one fixed step.
  * @param ax,ay  desired direction (un-normalised; magnitude ignored)
  * @param arrive 0..1 arrival-easing factor (1 = full speed, 0 = stop)
  */
-export function moveDog(d: Dog, ax: number, ay: number, dt: number, arrive = 1): void {
+export function moveDog(s: GameState, d: Dog, ax: number, ay: number, dt: number, arrive = 1): void {
+  const pool = s.sceneKey === 'pool';
+
+  // Shaking (post-swim): rooted, vigorous shake → then dry off and step clear of the edge.
+  if (d.mode === 'shaking') {
+    d.shakeT -= dt;
+    if (d.shakeT <= 0) {
+      d.mode = 'free';
+      d.shakeT = 0;
+      d.dryT = POOL.wetTimer; // freshly dried — AI stays off the floaties for a beat
+      const cx = WORLD.w / 2;
+      const cy = 405;
+      const dx = d.x - cx;
+      const dy = d.y - cy;
+      const mm = Math.hypot(dx, dy) || 1;
+      d.x += (dx / mm) * 30;
+      d.y += (dy / mm) * 30;
+      d.x = clamp(d.x, BOUNDS.minX, BOUNDS.maxX);
+      d.y = clamp(d.y, BOUNDS.minY, BOUNDS.maxY);
+    }
+    if (s.rng.next() < 0.7) {
+      s.particles.push({
+        x: d.x + s.rng.range(-26, 26),
+        y: d.y + s.rng.range(-26, 6),
+        vx: s.rng.range(-2.4, 2.4),
+        vy: s.rng.range(-2.6, -0.4),
+        life: s.rng.range(0.4, 0.8),
+        size: s.rng.range(2, 4),
+        col: 'rgba(225,245,253,.95)',
+      });
+    }
+    if (d.bumpCD > 0) d.bumpCD -= dt;
+    if (d.wrestleCD > 0) d.wrestleCD -= dt;
+    return;
+  }
+
   // Stunned (flipped): no steering — just skid, drift, and count down. (M4)
   if (d.mode === 'stunned') {
     d.stunT -= dt;
@@ -30,20 +67,49 @@ export function moveDog(d: Dog, ax: number, ay: number, dt: number, arrive = 1):
     d.y += d.vy * dt * 60;
     d.x = clamp(d.x, BOUNDS.minX, BOUNDS.maxX);
     d.y = clamp(d.y, BOUNDS.minY, BOUNDS.maxY);
+    if (pool && inWater(s.floaters, d.x, d.y)) splashIn(s, d); // wrestled into the pool!
     if (d.bumpCD > 0) d.bumpCD -= dt;
     if (d.wrestleCD > 0) d.wrestleCD -= dt;
-    if (d.stunT <= 0) {
+    if (d.stunT <= 0 && d.mode === 'stunned') {
       d.stunT = 0;
       d.mode = 'free';
     }
     return;
   }
 
-  // Later milestones intercept the other non-free modes here (swim/shake/transit/tug).
-  if (d.mode !== 'free') return;
+  // transit / tug are owned by later milestones (M7 / M6)
+  if (d.mode === 'transit' || d.mode === 'tug') return;
 
-  let sp = SPEED.free;
+  // FREE or SWIMMING → steerable.
+  let sp: number = SPEED.free;
   d.onFloater = false;
+
+  if (pool) {
+    if (d.mode === 'swimming') {
+      sp = SPEED.water;
+      if (s.rng.next() < 0.3) {
+        s.particles.push({
+          x: d.x + s.rng.range(-16, 16),
+          y: d.y + s.rng.range(4, 14),
+          vx: s.rng.range(-0.6, 0.6),
+          vy: s.rng.range(-1.2, -0.3),
+          life: 0.7,
+          size: s.rng.range(2, 4),
+          col: 'rgba(220,240,250,.9)',
+        });
+      }
+      if (!inPoolRect(d.x, d.y)) {
+        startShake(s, d); // reached the side → now shaking, rooted this step
+        return;
+      }
+    } else if (onAnyFloater(s.floaters, d.x, d.y)) {
+      d.onFloater = true;
+      sp = SPEED.floater;
+    } else if (inWater(s.floaters, d.x, d.y)) {
+      splashIn(s, d); // fell off a floatie
+      sp = SPEED.water;
+    }
+  }
 
   // jump arc is cosmetic; movement continues underneath
   if (d.jumpT > 0) d.jumpT -= dt;
@@ -88,7 +154,20 @@ export function moveDog(d: Dog, ax: number, ay: number, dt: number, arrive = 1):
 
   if (d.bumpCD > 0) d.bumpCD -= dt;
   if (d.wrestleCD > 0) d.wrestleCD -= dt;
-  if (d.dryT > 0) d.dryT -= dt; // wet→dry (drip particles added in M5)
+  if (d.dryT > 0) {
+    d.dryT -= dt; // drip… drip…
+    if (s.rng.next() < dt * 7) {
+      s.particles.push({
+        x: d.x + s.rng.range(-26, 26),
+        y: d.y + s.rng.range(-6, 12),
+        vx: s.rng.range(-0.2, 0.2),
+        vy: s.rng.range(0.4, 1),
+        life: s.rng.range(0.4, 0.7),
+        size: s.rng.range(1.6, 2.8),
+        col: 'rgba(175,215,235,.85)',
+      });
+    }
+  }
 }
 
 /**
