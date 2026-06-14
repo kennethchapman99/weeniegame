@@ -11,6 +11,7 @@ import type { SceneDef } from './types.js';
 import type { GameState } from '../state/gameState.js';
 import { updateToys, drawToys } from '../systems/toys.js';
 import { updateSpot, drawSpot, placeSpot } from '../systems/spot.js';
+import { updateSunbeam, drawSunbeam, placeSunbeam } from '../systems/sunbeam.js';
 
 const W = WORLD.w;
 const H = WORLD.h;
@@ -153,12 +154,15 @@ export const yardScene: SceneDef = {
       d.mode = 'free';
     }
     placeSpot(s);
+    placeSunbeam(s);
   },
   update(s: GameState, dt: number): void {
     updateToys(s, dt);
     updateSpot(s, dt);
+    updateSunbeam(s, dt);
   },
   drawWorld(g: G, s: GameState): void {
+    drawSunbeam(g, s);
     drawSpot(g, s);
     drawToys(g, s);
   },

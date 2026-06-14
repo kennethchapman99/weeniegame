@@ -14,7 +14,9 @@ import type { SceneDef } from '../scenes/types.js';
 import { makeDog } from './dog.js';
 import { moveDog, collideDogs } from '../systems/movement.js';
 import { updateParticles } from '../systems/particles.js';
-import { player } from './gameState.js';
+import { player, ai } from './gameState.js';
+import { aiThink } from '../ai/sibling.js';
+import { SPEED } from '../config/balance.js';
 import { yardScene } from '../scenes/yard.js';
 
 /** Ordered, registered rounds. Later milestones push pool/house. */
@@ -87,8 +89,14 @@ export function updateGame(s: GameState, intent: Intent, dt: number): void {
   }
   if (s.phase !== 'play') return;
 
-  // player movement (AI sibling movement arrives in M3)
+  // player movement
   moveDog(player(s), intent.ax, intent.ay, dt, intent.arrive);
+
+  // AI sibling — full speed (aiFactor 0.88 is inert; see balance.ts / owner decision)
+  const aiDog = ai(s);
+  const [aax, aay] = aiThink(s, aiDog, dt);
+  const aiTd = Math.hypot(aax, aay);
+  moveDog(aiDog, aax, aay, dt, Math.min(1, (aiTd - SPEED.aiArriveRadius) / SPEED.arriveFalloff));
 
   collideDogs(s);
   currentScene(s).update(s, dt);

@@ -37,7 +37,7 @@ Legend: 🎯 goal · ✅ done-when · ⚠️ watch-out
 
 ## M3 — The AI sibling (1P opponent)
 🎯 The second dog plays on its own.
-- `ai/sibling.ts`: target selection (nearest toy vs. spot), wander fallback, the **0.88× speed factor**, and dog-vs-dog collision/separation.
+- `ai/sibling.ts`: target selection (nearest toy vs. spot), wander fallback, and dog-vs-dog collision/separation. (The **0.88× speed factor** is inert in the prototype — normalised away in `moveDog` — so the AI runs at full speed; matched per owner decision. See MECHANICS.md.)
 - AI contests the cuddle spot.
 ✅ In 1P the AI dog competes for toys and the spot and feels like a sibling, matching prototype behavior.
 ⚠️ Keep AI logic out of render. AI reads state, returns an intent vector; movement system applies it.

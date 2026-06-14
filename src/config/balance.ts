@@ -16,7 +16,12 @@ export const SPEED = {
   floater: 4.9,
   water: 1.6,
   zoomMult: 1.85,
+  // NOTE: aiFactor is INERT. The prototype scales the AI's pre-normalised intent vector by
+  // 0.88, but moveDog normalises that vector, cancelling the factor — so the AI actually runs
+  // at full player speed. Matching the prototype's observed behaviour (owner decision); kept
+  // here as the documented hook if a real difficulty slider is wanted later. See MECHANICS.md.
   aiFactor: 0.88,
+  aiArriveRadius: 8,     // AI arrival-easing radius (prototype uses 8, vs 10 for touch)
   arriveRadius: 10,      // px within which speed eases to 0
   arriveFalloff: 60,     // px over which arrive ramps 0->1 beyond arriveRadius (prototype's /60)
   faceFlipThreshold: 0.8,// |vx| needed to flip facing

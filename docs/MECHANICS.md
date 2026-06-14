@@ -18,7 +18,7 @@ These are the **playtested, simulation-validated** constants from the prototype.
 | On a floater | 4.9 | slightly faster than land |
 | Swimming / in water | 1.6 | the penalty for falling in |
 | Zoomies | base × 1.85 | turbo after a hot streak |
-| AI sibling | player-equivalent × **0.88** | the "feels fair but beatable" factor |
+| AI sibling | player-equivalent (**full speed**) | ⚠️ The documented `0.88×` factor is **inert** in the prototype: it scales the AI's pre-normalised intent vector, which `moveDog` then normalises, cancelling it. The AI actually runs at full player speed. The port matches the prototype (owner decision, 2026-06-13); `aiFactor` is retained in `balance.ts` as a hook for a future real difficulty slider. |
 | Arrival easing | speed scales to 0 within ~10px of target; hard stop inside | kills on-spot jitter |
 | Facing flip threshold | |vx| > 0.8 | prevents left/right flicker when parked |
 

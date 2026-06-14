@@ -36,6 +36,17 @@ export interface Spot {
   pulse: number;
 }
 
+export interface Sunbeam {
+  x: number;
+  y: number;
+  room: string;
+  r: number;
+  relocate: number;
+  accA: number; // cheddar bask accumulator
+  accB: number; // cocoa bask accumulator
+  age: number;
+}
+
 export interface Particle {
   x: number;
   y: number;
@@ -71,6 +82,7 @@ export interface GameState {
 
   toys: Toy[];
   spot: Spot | null;
+  sunbeam: Sunbeam | null;
   particles: Particle[];
   popups: Popup[];
 
@@ -100,6 +112,7 @@ export function makeGameState(rng: Rng, playerId: DogId = 'cheddar'): GameState 
     },
     toys: [],
     spot: null,
+    sunbeam: null,
     particles: [],
     popups: [],
     spawnTimer: 1.2,
