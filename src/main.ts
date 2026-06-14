@@ -9,10 +9,17 @@ import { Camera } from './core/camera.js';
 import { startLoop } from './core/loop.js';
 import { Input } from './core/input.js';
 import { makeRng } from './core/rng.js';
+import { AudioBus } from './core/audio.js';
 import { makeGameState, player } from './state/gameState.js';
 import { startGame, updateGame, currentScene } from './state/sceneManager.js';
 import { drawDog } from './render/dog.js';
-import { drawHUD, drawWrestleButton, wrestleButtonHit } from './render/hud.js';
+import {
+  drawHUD,
+  drawWrestleButton,
+  wrestleButtonHit,
+  drawJumpButton,
+  jumpButtonHit,
+} from './render/hud.js';
 import { drawParticles, drawPopups } from './systems/particles.js';
 import { drawTitle, drawInterstitial, drawEnd, titleHit, endHit } from './render/overlays.js';
 import { Backdrop } from './render/backdrop.js';
@@ -26,6 +33,7 @@ const camera = new Camera(canvas, ctx);
 const input = new Input();
 input.attach(canvas, camera);
 const backdrop = new Backdrop();
+const audio = new AudioBus();
 const state = makeGameState(makeRng(0xc0ffee));
 
 // Dev-only inspection hook (stripped from production builds): lets the headless
@@ -38,6 +46,7 @@ addEventListener('resize', () => camera.fit());
 
 // Discrete taps for title / end screens (movement drag is handled by Input).
 canvas.addEventListener('pointerdown', (e) => {
+  audio.resume(); // first user gesture unlocks Web Audio (autoplay policy)
   const p = camera.screenToWorld(e.clientX, e.clientY);
   if (state.phase === 'title') {
     const hit = titleHit(p);
@@ -50,6 +59,9 @@ canvas.addEventListener('pointerdown', (e) => {
     if (wrestleButtonHit(p)) {
       input.queueWrestle();
       input.touch = null; // a button tap shouldn't also set a move target
+    } else if (jumpButtonHit(p)) {
+      input.queueJump();
+      input.touch = null;
     }
   } else if (state.phase === 'end') {
     if (endHit(p)) {
@@ -61,7 +73,8 @@ canvas.addEventListener('pointerdown', (e) => {
 function update(dt: number): void {
   const intent = input.intentFor(player(state));
   const wrestle = input.consumeWrestle();
-  updateGame(state, intent, wrestle, dt);
+  const jump = input.consumeJump();
+  updateGame(state, intent, wrestle, jump, dt);
 }
 
 function render(): void {
@@ -101,10 +114,19 @@ function render(): void {
   drawPopups(ctx, state);
 
   drawHUD(ctx, state);
-  if (state.phase === 'play') drawWrestleButton(ctx, state);
+  if (state.phase === 'play') {
+    drawWrestleButton(ctx, state);
+    drawJumpButton(ctx);
+  }
 
   if (state.phase === 'inter') drawInterstitial(ctx, state);
   if (state.phase === 'end') drawEnd(ctx, state);
+
+  // drain queued sounds (host layer plays them; systems stay audio-free)
+  if (state.sounds.length) {
+    for (const id of state.sounds) audio.play(id);
+    state.sounds.length = 0;
+  }
 }
 
 startLoop({ update, render });

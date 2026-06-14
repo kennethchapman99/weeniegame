@@ -12,7 +12,7 @@ const noIntent = { ax: 0, ay: 0, arrive: 0 };
 function freshPlay(seed = 5) {
   const s = makeGameState(makeRng(seed));
   startGame(s);
-  for (let i = 0; i < 120 && s.phase !== 'play'; i++) updateGame(s, noIntent, false, DT);
+  for (let i = 0; i < 120 && s.phase !== 'play'; i++) updateGame(s, noIntent, false, false, DT);
   // park both dogs, clear scene props so only wrestle is under test
   s.toys = [];
   s.spot = null;

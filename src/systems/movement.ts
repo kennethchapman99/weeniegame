@@ -77,8 +77,19 @@ export function moveDog(s: GameState, d: Dog, ax: number, ay: number, dt: number
     return;
   }
 
-  // transit / tug are owned by later milestones (M7 / M6)
-  if (d.mode === 'transit' || d.mode === 'tug') return;
+  // Tug: both dogs anchored, yanking — tiny strain wobble only. (M6)
+  if (d.mode === 'tug') {
+    if (d.jumpT > 0) d.jumpT -= dt;
+    d.vx *= 0.6;
+    d.vy *= 0.6;
+    d.x += s.rng.range(-1.1, 1.1);
+    d.y += s.rng.range(-0.7, 0.7);
+    if (d.bumpCD > 0) d.bumpCD -= dt;
+    if (d.wrestleCD > 0) d.wrestleCD -= dt;
+    return;
+  }
+  // transit is owned by M7 (house door/stair traversal)
+  if (d.mode === 'transit') return;
 
   // FREE or SWIMMING → steerable.
   let sp: number = SPEED.free;

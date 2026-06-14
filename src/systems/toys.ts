@@ -15,6 +15,7 @@ import { BOUNDS, SCORE, TUG } from '../config/balance.js';
 import { burst, popup } from './particles.js';
 import { rounded } from '../core/math.js';
 import { sampleDeckBand } from '../scenes/poolGeometry.js';
+import { startTug } from './tug.js';
 
 type G = CanvasRenderingContext2D;
 const TOYTYPES = ['ball', 'bone', 'duck'] as const;
@@ -89,11 +90,16 @@ export function updateToys(s: GameState, dt: number): void {
   for (let i = s.toys.length - 1; i >= 0; i--) {
     const o = s.toys[i]!;
     if (o.tug) {
-      // Solo grab if a single dog reaches it uncontested. (Both-dog TUG lands in M6.)
       const near = (d: Dog): boolean => !busy(d) && Math.hypot(o.x - d.x, o.y - d.y) < TUG.grabRange;
+      // both dogs reach the rope, both free → TUG OF WAR
+      if (!s.tug && near(s.dogs.cheddar) && near(s.dogs.cocoa)) {
+        startTug(s, o);
+        continue;
+      }
+      // otherwise a single dog grabs it uncontested (+2)
       for (const d of dogs) {
         const opp = d === s.dogs.cheddar ? s.dogs.cocoa : s.dogs.cheddar;
-        if (near(d) && !near(opp)) {
+        if (!s.tug && near(d) && !near(opp)) {
           addScore(s, d, SCORE.ropeSolo);
           burst(s, o.x, o.y, '#d96a6a', 12, 2.6);
           popup(s, o.x, o.y - 26, '+2 rope!', '#fff');

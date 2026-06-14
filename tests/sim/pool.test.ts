@@ -18,7 +18,7 @@ function poolPlay(seed = 3) {
   startGame(s); // yard inter
   s.sceneIdx = 1; // jump to the pool
   beginScene(s); // pool inter
-  for (let i = 0; i < 120 && s.phase !== 'play'; i++) updateGame(s, idle, false, DT);
+  for (let i = 0; i < 120 && s.phase !== 'play'; i++) updateGame(s, idle, false, false, DT);
   return s;
 }
 
@@ -100,7 +100,7 @@ describe('pool AI does not dunk-loop (M5)', () => {
     let dunks = 0;
     let prevSwim = false;
     for (let i = 0; i < 60 * 45 && s.phase === 'play'; i++) {
-      updateGame(s, idle, false, DT);
+      updateGame(s, idle, false, false, DT);
       const swimming = s.dogs.cocoa.mode === 'swimming';
       if (swimming && !prevSwim) dunks++;
       prevSwim = swimming;

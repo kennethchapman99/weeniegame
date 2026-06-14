@@ -15,6 +15,8 @@ import { makeDog } from './dog.js';
 import { moveDog, collideDogs } from '../systems/movement.js';
 import { updateParticles } from '../systems/particles.js';
 import { doWrestle, maybeAiWrestle } from '../systems/wrestle.js';
+import { updateTug, tugPull } from '../systems/tug.js';
+import { tryJump } from '../systems/jump.js';
 import { player, ai } from './gameState.js';
 import { aiThink } from '../ai/sibling.js';
 import { SPEED } from '../config/balance.js';
@@ -51,6 +53,8 @@ export function beginScene(s: GameState): void {
   s.toys = [];
   s.particles = [];
   s.popups = [];
+  s.tug = null;
+  s.sounds = [];
   s.spawnTimer = 1.2;
   s.toast = null;
   for (const id of ['cheddar', 'cocoa'] as const) {
@@ -59,6 +63,7 @@ export function beginScene(s: GameState): void {
     d.zoom = 0;
     d.immune = 0;
     d.dryT = 0;
+    d.jumpT = 0;
     d.trail = [];
     d.hist = [];
   }
@@ -81,7 +86,13 @@ export function endRound(s: GameState): void {
  * pipeline for the active round. Player intent comes from the input layer; AI movement is
  * wired in M3.
  */
-export function updateGame(s: GameState, intent: Intent, wrestle: boolean, dt: number): void {
+export function updateGame(
+  s: GameState,
+  intent: Intent,
+  wrestle: boolean,
+  jump: boolean,
+  dt: number,
+): void {
   s.elapsedMs += dt * 1000; // animation/streak clock advances in every phase
 
   if (s.phase === 'inter') {
@@ -100,12 +111,18 @@ export function updateGame(s: GameState, intent: Intent, wrestle: boolean, dt: n
   const aiTd = Math.hypot(aax, aay);
   moveDog(s, aiDog, aax, aay, dt, Math.min(1, (aiTd - SPEED.aiArriveRadius) / SPEED.arriveFalloff));
 
-  // wrestle: player-initiated this step, then the AI's own trigger
-  if (wrestle) doWrestle(s, player(s), ai(s));
+  // player action: mash the tug if locked into one, else wrestle
+  if (wrestle) {
+    const p = player(s);
+    if (s.tug && p.mode === 'tug') tugPull(s, p);
+    else doWrestle(s, p, ai(s));
+  }
+  if (jump) tryJump(s, player(s));
   maybeAiWrestle(s, dt);
 
   collideDogs(s);
-  currentScene(s).update(s, dt);
+  currentScene(s).update(s, dt); // toys may start a tug here
+  updateTug(s, dt);
   updateParticles(s, dt);
 
   s.timeLeft -= dt;

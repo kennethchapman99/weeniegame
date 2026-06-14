@@ -92,6 +92,7 @@ Legend: 🎯 goal · ✅ done-when · ⚠️ watch-out
 - **Settings:** mute toggle, round-length options, difficulty (AI speed factor).
 - **Persistence:** high scores via the artifact storage API or localStorage (note: localStorage is blocked in the chat artifact sandbox but fine in a real deploy).
 - **Polish:** screen shake, win celebration, more squishmallow variety, weather/time-of-day on the yard.
+- **New levels:** see `docs/LEVEL-IDEAS.md` (e.g. the 🍗 Kitchen "food drop" round with asymmetric dog abilities — Cheddar eats fast but barfs + can chair-leap; Cocoa chews slow but safe). Queued, owner to promote.
 
 ## Definition of project-done
 

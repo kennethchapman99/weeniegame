@@ -14,11 +14,34 @@ import { wrestleOnCooldown } from '../systems/wrestle.js';
 type G = CanvasRenderingContext2D;
 const W = WORLD.w;
 
-/** On-screen WRESTLE button (world coords, bottom-right). */
+/** On-screen action buttons (world coords, bottom-right). */
 export const WRESTLE_BTN = { x: 888, y: 552, r: 40 } as const;
+export const JUMP_BTN = { x: 792, y: 556, r: 32 } as const;
 
 export function wrestleButtonHit(p: Point): boolean {
   return Math.hypot(p.x - WRESTLE_BTN.x, p.y - WRESTLE_BTN.y) < WRESTLE_BTN.r + 6;
+}
+
+export function jumpButtonHit(p: Point): boolean {
+  return Math.hypot(p.x - JUMP_BTN.x, p.y - JUMP_BTN.y) < JUMP_BTN.r + 6;
+}
+
+export function drawJumpButton(g: G): void {
+  g.save();
+  g.fillStyle = '#a9d08a';
+  g.beginPath();
+  g.arc(JUMP_BTN.x, JUMP_BTN.y, JUMP_BTN.r, 0, 7);
+  g.fill();
+  g.strokeStyle = 'rgba(47,74,34,.5)';
+  g.lineWidth = 2;
+  g.stroke();
+  g.fillStyle = '#2f4a22';
+  g.textAlign = 'center';
+  g.font = '18px -apple-system, sans-serif';
+  g.fillText('⬆', JUMP_BTN.x, JUMP_BTN.y - 1);
+  g.font = '800 8px -apple-system, sans-serif';
+  g.fillText('JUMP', JUMP_BTN.x, JUMP_BTN.y + 14);
+  g.restore();
 }
 
 export function drawWrestleButton(g: G, s: GameState): void {

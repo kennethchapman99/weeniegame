@@ -22,6 +22,7 @@ export class Input {
   readonly keys: Record<string, boolean> = {};
   touch: Point | null = null;
   private wrestleQueued = false;
+  private jumpQueued = false;
 
   /** Queue a wrestle action (from a key edge or the on-screen WRESTLE button). */
   queueWrestle(): void {
@@ -35,6 +36,18 @@ export class Input {
     return q;
   }
 
+  /** Queue a jump action (J key or the on-screen JUMP button). */
+  queueJump(): void {
+    this.jumpQueued = true;
+  }
+
+  /** Read-and-clear the queued jump action (one per press). */
+  consumeJump(): boolean {
+    const q = this.jumpQueued;
+    this.jumpQueued = false;
+    return q;
+  }
+
   /** Attach DOM listeners. Returns a detach function. */
   attach(canvas: HTMLCanvasElement, camera: Camera): () => void {
     const onKeyDown = (e: KeyboardEvent): void => {
@@ -43,6 +56,10 @@ export class Input {
       if (k === ' ' || k === 'e') {
         e.preventDefault();
         this.queueWrestle();
+      }
+      if (k === 'j') {
+        e.preventDefault();
+        this.queueJump();
       }
     };
     const onKeyUp = (e: KeyboardEvent): void => {

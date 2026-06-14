@@ -13,7 +13,7 @@ function freshPlay() {
   const s = makeGameState(makeRng(1234));
   startGame(s); // -> inter
   // advance past the interstitial into play
-  for (let i = 0; i < 120 && s.phase !== 'play'; i++) updateGame(s, noIntent, false, DT);
+  for (let i = 0; i < 120 && s.phase !== 'play'; i++) updateGame(s, noIntent, false, false, DT);
   return s;
 }
 
@@ -27,7 +27,7 @@ describe('scene flow', () => {
     let playRounds = 0;
     let wasPlay = false;
     for (let i = 0; i < 60 * 300 && s.phase !== 'end'; i++) {
-      updateGame(s, noIntent, false, DT);
+      updateGame(s, noIntent, false, false, DT);
       if (s.phase === 'play' && !wasPlay) playRounds++;
       wasPlay = s.phase === 'play';
     }
@@ -38,7 +38,7 @@ describe('scene flow', () => {
   it('the round timer counts down during play', () => {
     const s = freshPlay();
     const t0 = s.timeLeft;
-    for (let i = 0; i < 60; i++) updateGame(s, noIntent, false, DT);
+    for (let i = 0; i < 60; i++) updateGame(s, noIntent, false, false, DT);
     expect(s.timeLeft).toBeLessThan(t0);
   });
 });

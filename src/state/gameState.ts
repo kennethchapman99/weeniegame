@@ -9,6 +9,7 @@
 import type { Dog, DogId } from './dog.js';
 import { makeDog } from './dog.js';
 import type { Rng } from '../core/rng.js';
+import type { SoundId } from '../core/audio.js';
 import { ZOOMIES } from '../config/balance.js';
 
 export type Phase = 'title' | 'inter' | 'play' | 'end';
@@ -77,6 +78,15 @@ export interface Popup {
   life: number;
 }
 
+export interface Tug {
+  toy: Toy;
+  rope: number; // -1..+1; + = Cheddar (mashA) winning, - = Cocoa (mashB)
+  mashA: number; // Cheddar's recent pull
+  mashB: number; // Cocoa's recent pull
+  growlT: number; // growl-bed cadence timer
+  dur: number; // elapsed (for the stalemate timeout)
+}
+
 export interface GameState {
   phase: Phase;
   sceneIdx: number;
@@ -94,8 +104,11 @@ export interface GameState {
   spot: Spot | null;
   sunbeam: Sunbeam | null;
   floaters: Floater[];
+  tug: Tug | null;
   particles: Particle[];
   popups: Popup[];
+  /** sound requests drained + played by the host each frame (keeps the sim audio-free) */
+  sounds: SoundId[];
 
   spawnTimer: number;
   steals: Record<DogId, number>;
@@ -125,8 +138,10 @@ export function makeGameState(rng: Rng, playerId: DogId = 'cheddar'): GameState 
     spot: null,
     sunbeam: null,
     floaters: [],
+    tug: null,
     particles: [],
     popups: [],
+    sounds: [],
     spawnTimer: 1.2,
     steals: { cheddar: 0, cocoa: 0 },
     rng,
@@ -140,6 +155,11 @@ export const other = (s: GameState, d: Dog): Dog => (d.id === 'cheddar' ? s.dogs
 
 export function cap(id: string): string {
   return id[0]!.toUpperCase() + id.slice(1);
+}
+
+/** Queue a sound for the host to play this frame (systems stay audio-free + deterministic). */
+export function playSound(s: GameState, id: SoundId): void {
+  s.sounds.push(id);
 }
 
 /** The single score mutation point. Adds n to dog, flashes, and fires the zoomies streak. */
