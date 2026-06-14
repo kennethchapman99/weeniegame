@@ -48,6 +48,9 @@ export interface Dog {
   bumpCD: number;
   wrestleCD: number;
 
+  // scoring streak window (ms timestamps) for the zoomies trigger in addScore
+  hist: number[];
+
   // cosmetic
   trail: TrailNode[];
   onFloater: boolean;
@@ -81,6 +84,7 @@ export function makeDog(id: DogId, x: number, y: number, seed = 0): Dog {
     shakeT: 0,
     bumpCD: 0,
     wrestleCD: 0,
+    hist: [],
     trail: [],
     onFloater: false,
     aiTx: x,

@@ -1,19 +1,21 @@
 /**
- * main.ts — M1 bootstrap. A single controllable dog on the backyard:
- *   Camera (DPR letterbox) + fixed-timestep loop + input + movement + dog/yard renderers.
- *
- * No scene flow, scoring, AI or other dogs yet (M2/M3+). This proves the core loop,
- * movement feel (arrival easing, no on-spot jitter) and yard render parity.
+ * main.ts — M2 bootstrap. A full single-round game: title → backyard → end.
+ * Wires camera + loop + input + scene manager + renderers. Player drives one dog; the AI
+ * sibling is static until M3. Scoring (toys + cuddle spot), HUD, particles and scene flow
+ * are live.
  */
 
 import { Camera } from './core/camera.js';
 import { startLoop } from './core/loop.js';
 import { Input } from './core/input.js';
-import { makeDog } from './state/dog.js';
-import { moveDog } from './systems/movement.js';
+import { makeRng } from './core/rng.js';
+import { makeGameState, player } from './state/gameState.js';
+import { startGame, updateGame, currentScene } from './state/sceneManager.js';
 import { drawDog } from './render/dog.js';
+import { drawHUD } from './render/hud.js';
+import { drawParticles, drawPopups } from './systems/particles.js';
+import { drawTitle, drawInterstitial, drawEnd, titleHit, endHit } from './render/overlays.js';
 import { Backdrop } from './render/backdrop.js';
-import { paintYard } from './scenes/yard.js';
 
 const canvas = document.getElementById('game') as HTMLCanvasElement | null;
 if (!canvas) throw new Error('main: #game canvas not found');
@@ -24,39 +26,72 @@ const camera = new Camera(canvas, ctx);
 const input = new Input();
 input.attach(canvas, camera);
 const backdrop = new Backdrop();
-
-const player = makeDog('cheddar', 300, 400, 3.2);
+const state = makeGameState(makeRng(0xc0ffee));
 
 addEventListener('resize', () => camera.fit());
 
-let elapsedMs = 0;
+// Discrete taps for title / end screens (movement drag is handled by Input).
+canvas.addEventListener('pointerdown', (e) => {
+  const p = camera.screenToWorld(e.clientX, e.clientY);
+  if (state.phase === 'title') {
+    const hit = titleHit(p);
+    if (hit.pick) {
+      state.playerId = hit.pick;
+      state.aiId = hit.pick === 'cheddar' ? 'cocoa' : 'cheddar';
+    }
+    if (hit.play) startGame(state);
+  } else if (state.phase === 'end') {
+    if (endHit(p)) {
+      state.phase = 'title';
+    }
+  }
+});
 
 function update(dt: number): void {
-  elapsedMs += dt * 1000;
-  const intent = input.intentFor(player);
-  moveDog(player, intent.ax, intent.ay, dt, intent.arrive);
+  const intent = input.intentFor(player(state));
+  updateGame(state, intent, dt);
 }
 
 function render(): void {
   if (!ctx) return;
-  // backdrop is pre-rendered at device resolution; blit it 1:1 then draw world-space.
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, canvas!.width, canvas!.height);
-  const bg = backdrop.get('yard', paintYard, camera.view);
+
+  const sceneKey = state.sceneKey || 'yard';
+  const def = currentScene(state);
+  const bg = backdrop.get(sceneKey, def.painter, camera.view);
   ctx.drawImage(bg, 0, 0);
 
   camera.applyTransform();
 
-  // touch target marker
-  if (input.touch) {
+  if (state.phase === 'title') {
+    drawTitle(ctx, state);
+    return;
+  }
+
+  // world: scene props, dogs, particles
+  def.drawWorld(ctx, state);
+
+  // touch target marker (during play)
+  if (state.phase === 'play' && input.touch) {
     ctx.strokeStyle = 'rgba(255,255,255,.5)';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.arc(input.touch.x, input.touch.y, 12 + Math.sin(elapsedMs * 0.012) * 3, 0, 7);
+    ctx.arc(input.touch.x, input.touch.y, 12 + Math.sin(state.elapsedMs * 0.012) * 3, 0, 7);
     ctx.stroke();
   }
 
-  drawDog(ctx, player, elapsedMs);
+  // draw both dogs back-to-front by y
+  const dogs = [state.dogs.cheddar, state.dogs.cocoa].sort((a, b) => a.y - b.y);
+  for (const d of dogs) drawDog(ctx, d, state.elapsedMs);
+
+  drawParticles(ctx, state);
+  drawPopups(ctx, state);
+
+  drawHUD(ctx, state);
+
+  if (state.phase === 'inter') drawInterstitial(ctx, state);
+  if (state.phase === 'end') drawEnd(ctx, state);
 }
 
 startLoop({ update, render });

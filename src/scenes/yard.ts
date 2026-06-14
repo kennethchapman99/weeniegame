@@ -7,6 +7,10 @@
 
 import type { Rng } from '../core/rng.js';
 import { WORLD } from '../config/balance.js';
+import type { SceneDef } from './types.js';
+import type { GameState } from '../state/gameState.js';
+import { updateToys, drawToys } from '../systems/toys.js';
+import { updateSpot, drawSpot, placeSpot } from '../systems/spot.js';
 
 const W = WORLD.w;
 const H = WORLD.h;
@@ -132,3 +136,30 @@ export function paintYard(g: G, rng: Rng): void {
     g.stroke();
   }
 }
+
+/** The backyard round (M2 scope: toys + cuddle spot; zoomies/predators/events arrive later). */
+export const yardScene: SceneDef = {
+  config: {
+    key: 'yard',
+    name: 'The Backyard',
+    sub: 'Round 1 of 3 — zoomies, squirrels & predators. Stick together!',
+    time: 45,
+  },
+  painter: paintYard,
+  enter(s: GameState): void {
+    for (const id of ['cheddar', 'cocoa'] as const) {
+      const d = s.dogs[id];
+      d.room = '';
+      d.mode = 'free';
+    }
+    placeSpot(s);
+  },
+  update(s: GameState, dt: number): void {
+    updateToys(s, dt);
+    updateSpot(s, dt);
+  },
+  drawWorld(g: G, s: GameState): void {
+    drawSpot(g, s);
+    drawToys(g, s);
+  },
+};

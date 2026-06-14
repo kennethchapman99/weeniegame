@@ -37,6 +37,14 @@ export const SCORE = {
   squish: 1, sunbeam: 1, treat: 2, squirrel: 3, carriedPenalty: 1
 } as const;
 
+export const SPOT = {
+  radius: 52,        // cuddle-spot bed radius
+  hold: 3,           // seconds of solo occupancy to score
+  stealBumpCD: 1.4,  // attacker cooldown after a steal
+  stealRelSpeed: 2.2,// min relative speed for a contact to count as a steal
+  dogCollideDist: 54 // dog-vs-dog separation distance
+} as const;
+
 export const WRESTLE = {
   winChance: { cocoa: 0.78, cheddar: 0.70 },
   cooldown: 2.6, whiffCooldown: 0.5, loserStun: 1.35, range: 95
