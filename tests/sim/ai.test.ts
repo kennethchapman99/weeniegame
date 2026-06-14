@@ -10,7 +10,7 @@ const noIntent = { ax: 0, ay: 0, arrive: 0 };
 function freshPlay(seed = 99) {
   const s = makeGameState(makeRng(seed));
   startGame(s);
-  for (let i = 0; i < 120 && s.phase !== 'play'; i++) updateGame(s, noIntent, DT);
+  for (let i = 0; i < 120 && s.phase !== 'play'; i++) updateGame(s, noIntent, false, DT);
   return s;
 }
 
@@ -40,7 +40,7 @@ describe('AI sibling (M3)', () => {
     // suppress fresh toy spawns from changing the AI target mid-test
     for (let i = 0; i < 60 * 6; i++) {
       s.toys = [];
-      updateGame(s, noIntent, DT);
+      updateGame(s, noIntent, false, DT);
     }
     expect(ai.score).toBeGreaterThan(before); // the AI reached and held the spot
   });
@@ -56,7 +56,7 @@ describe('AI sibling (M3)', () => {
     for (let i = 0; i < 60; i++) {
       s.toys = [{ x: 900, y: 400, room: '', fl: -1, ox: 0, oy: 0, tug: false, type: 'ball', t: 0, scale: 1 }];
       const px = ai.x;
-      updateGame(s, noIntent, DT);
+      updateGame(s, noIntent, false, DT);
       peak = Math.max(peak, ai.x - px);
     }
     // full free speed ~4.4 px/step; if 0.88 were applied it would cap ~3.9.

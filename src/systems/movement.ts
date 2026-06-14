@@ -11,7 +11,7 @@
 import type { Dog } from '../state/dog.js';
 import type { GameState } from '../state/gameState.js';
 import { cap } from '../state/gameState.js';
-import { BOUNDS, SPEED, SPOT } from '../config/balance.js';
+import { BOUNDS, SPEED, SPOT, WRESTLE } from '../config/balance.js';
 import { clamp } from './../core/math.js';
 import { burst, popup } from './particles.js';
 
@@ -21,7 +21,25 @@ import { burst, popup } from './particles.js';
  * @param arrive 0..1 arrival-easing factor (1 = full speed, 0 = stop)
  */
 export function moveDog(d: Dog, ax: number, ay: number, dt: number, arrive = 1): void {
-  // Later milestones intercept non-free modes here (swim/stun/shake/transit/tug).
+  // Stunned (flipped): no steering — just skid, drift, and count down. (M4)
+  if (d.mode === 'stunned') {
+    d.stunT -= dt;
+    d.vx *= WRESTLE.stunSkidDecay;
+    d.vy *= WRESTLE.stunSkidDecay;
+    d.x += d.vx * dt * 60;
+    d.y += d.vy * dt * 60;
+    d.x = clamp(d.x, BOUNDS.minX, BOUNDS.maxX);
+    d.y = clamp(d.y, BOUNDS.minY, BOUNDS.maxY);
+    if (d.bumpCD > 0) d.bumpCD -= dt;
+    if (d.wrestleCD > 0) d.wrestleCD -= dt;
+    if (d.stunT <= 0) {
+      d.stunT = 0;
+      d.mode = 'free';
+    }
+    return;
+  }
+
+  // Later milestones intercept the other non-free modes here (swim/shake/transit/tug).
   if (d.mode !== 'free') return;
 
   let sp = SPEED.free;

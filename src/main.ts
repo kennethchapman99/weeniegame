@@ -12,7 +12,7 @@ import { makeRng } from './core/rng.js';
 import { makeGameState, player } from './state/gameState.js';
 import { startGame, updateGame, currentScene } from './state/sceneManager.js';
 import { drawDog } from './render/dog.js';
-import { drawHUD } from './render/hud.js';
+import { drawHUD, drawWrestleButton, wrestleButtonHit } from './render/hud.js';
 import { drawParticles, drawPopups } from './systems/particles.js';
 import { drawTitle, drawInterstitial, drawEnd, titleHit, endHit } from './render/overlays.js';
 import { Backdrop } from './render/backdrop.js';
@@ -40,6 +40,11 @@ canvas.addEventListener('pointerdown', (e) => {
       state.aiId = hit.pick === 'cheddar' ? 'cocoa' : 'cheddar';
     }
     if (hit.play) startGame(state);
+  } else if (state.phase === 'play') {
+    if (wrestleButtonHit(p)) {
+      input.queueWrestle();
+      input.touch = null; // a button tap shouldn't also set a move target
+    }
   } else if (state.phase === 'end') {
     if (endHit(p)) {
       state.phase = 'title';
@@ -49,7 +54,8 @@ canvas.addEventListener('pointerdown', (e) => {
 
 function update(dt: number): void {
   const intent = input.intentFor(player(state));
-  updateGame(state, intent, dt);
+  const wrestle = input.consumeWrestle();
+  updateGame(state, intent, wrestle, dt);
 }
 
 function render(): void {
@@ -89,6 +95,7 @@ function render(): void {
   drawPopups(ctx, state);
 
   drawHUD(ctx, state);
+  if (state.phase === 'play') drawWrestleButton(ctx, state);
 
   if (state.phase === 'inter') drawInterstitial(ctx, state);
   if (state.phase === 'end') drawEnd(ctx, state);

@@ -21,11 +21,29 @@ export interface Intent {
 export class Input {
   readonly keys: Record<string, boolean> = {};
   touch: Point | null = null;
+  private wrestleQueued = false;
+
+  /** Queue a wrestle action (from a key edge or the on-screen WRESTLE button). */
+  queueWrestle(): void {
+    this.wrestleQueued = true;
+  }
+
+  /** Read-and-clear the queued wrestle action (one per press). */
+  consumeWrestle(): boolean {
+    const q = this.wrestleQueued;
+    this.wrestleQueued = false;
+    return q;
+  }
 
   /** Attach DOM listeners. Returns a detach function. */
   attach(canvas: HTMLCanvasElement, camera: Camera): () => void {
     const onKeyDown = (e: KeyboardEvent): void => {
-      this.keys[e.key.toLowerCase()] = true;
+      const k = e.key.toLowerCase();
+      this.keys[k] = true;
+      if (k === ' ' || k === 'e') {
+        e.preventDefault();
+        this.queueWrestle();
+      }
     };
     const onKeyUp = (e: KeyboardEvent): void => {
       this.keys[e.key.toLowerCase()] = false;

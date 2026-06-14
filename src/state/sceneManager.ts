@@ -14,6 +14,7 @@ import type { SceneDef } from '../scenes/types.js';
 import { makeDog } from './dog.js';
 import { moveDog, collideDogs } from '../systems/movement.js';
 import { updateParticles } from '../systems/particles.js';
+import { doWrestle, maybeAiWrestle } from '../systems/wrestle.js';
 import { player, ai } from './gameState.js';
 import { aiThink } from '../ai/sibling.js';
 import { SPEED } from '../config/balance.js';
@@ -79,7 +80,7 @@ export function endRound(s: GameState): void {
  * pipeline for the active round. Player intent comes from the input layer; AI movement is
  * wired in M3.
  */
-export function updateGame(s: GameState, intent: Intent, dt: number): void {
+export function updateGame(s: GameState, intent: Intent, wrestle: boolean, dt: number): void {
   s.elapsedMs += dt * 1000; // animation/streak clock advances in every phase
 
   if (s.phase === 'inter') {
@@ -97,6 +98,10 @@ export function updateGame(s: GameState, intent: Intent, dt: number): void {
   const [aax, aay] = aiThink(s, aiDog, dt);
   const aiTd = Math.hypot(aax, aay);
   moveDog(aiDog, aax, aay, dt, Math.min(1, (aiTd - SPEED.aiArriveRadius) / SPEED.arriveFalloff));
+
+  // wrestle: player-initiated this step, then the AI's own trigger
+  if (wrestle) doWrestle(s, player(s), ai(s));
+  maybeAiWrestle(s, dt);
 
   collideDogs(s);
   currentScene(s).update(s, dt);

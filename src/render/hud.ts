@@ -5,12 +5,41 @@
  */
 
 import type { GameState } from '../state/gameState.js';
+import type { Point } from '../core/math.js';
 import { DOGS } from '../config/dogs.js';
 import { WORLD } from '../config/balance.js';
 import { rounded } from '../core/math.js';
+import { wrestleOnCooldown } from '../systems/wrestle.js';
 
 type G = CanvasRenderingContext2D;
 const W = WORLD.w;
+
+/** On-screen WRESTLE button (world coords, bottom-right). */
+export const WRESTLE_BTN = { x: 888, y: 552, r: 40 } as const;
+
+export function wrestleButtonHit(p: Point): boolean {
+  return Math.hypot(p.x - WRESTLE_BTN.x, p.y - WRESTLE_BTN.y) < WRESTLE_BTN.r + 6;
+}
+
+export function drawWrestleButton(g: G, s: GameState): void {
+  const cd = wrestleOnCooldown(s);
+  g.save();
+  g.globalAlpha = cd ? 0.45 : 1;
+  g.fillStyle = '#f4c87a';
+  g.beginPath();
+  g.arc(WRESTLE_BTN.x, WRESTLE_BTN.y, WRESTLE_BTN.r, 0, 7);
+  g.fill();
+  g.strokeStyle = 'rgba(74,48,21,.5)';
+  g.lineWidth = 2;
+  g.stroke();
+  g.fillStyle = '#4a3015';
+  g.textAlign = 'center';
+  g.font = '22px -apple-system, sans-serif';
+  g.fillText('🤼', WRESTLE_BTN.x, WRESTLE_BTN.y - 2);
+  g.font = '800 9px -apple-system, sans-serif';
+  g.fillText('WRESTLE', WRESTLE_BTN.x, WRESTLE_BTN.y + 16);
+  g.restore();
+}
 
 export function drawHUD(g: G, s: GameState): void {
   // timer bar across the very top

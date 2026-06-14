@@ -52,7 +52,15 @@ export const SPOT = {
 
 export const WRESTLE = {
   winChance: { cocoa: 0.78, cheddar: 0.70 },
-  cooldown: 2.6, whiffCooldown: 0.5, loserStun: 1.35, range: 95
+  cooldown: 2.6, whiffCooldown: 0.5, loserStun: 1.35, range: 95,
+  immuneBlockedCD: 0.6, // attacker cooldown when the target is belly-rub immune
+  lungeSpeed: 8,        // lunge velocity when target is just out of range
+  knockback: 8.2,       // loser launch speed
+  winnerDamp: 0.2,      // winner's velocity damping on a flip
+  stealReach: 30,       // extra px beyond spot/couch radius for a steal-on-win
+  aiRange: 82,          // AI engages a wrestle within this distance
+  aiRandomRate: 0.25,   // AI's per-second chance to start trouble when nothing else
+  stunSkidDecay: 0.9    // velocity decay per step while stunned
 } as const;
 
 export const ZOOMIES = { streak: 3, windowMs: 8000, duration: 4 } as const;

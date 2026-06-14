@@ -13,7 +13,7 @@ function freshPlay() {
   const s = makeGameState(makeRng(1234));
   startGame(s); // -> inter
   // advance past the interstitial into play
-  for (let i = 0; i < 120 && s.phase !== 'play'; i++) updateGame(s, noIntent, DT);
+  for (let i = 0; i < 120 && s.phase !== 'play'; i++) updateGame(s, noIntent, false, DT);
   return s;
 }
 
@@ -23,17 +23,17 @@ describe('scene flow (M2)', () => {
     expect(s.phase).toBe('title');
     startGame(s);
     expect(s.phase).toBe('inter');
-    for (let i = 0; i < 120 && s.phase === 'inter'; i++) updateGame(s, noIntent, DT);
+    for (let i = 0; i < 120 && s.phase === 'inter'; i++) updateGame(s, noIntent, false, DT);
     expect(s.phase).toBe('play');
     // burn the round timer down
-    for (let i = 0; i < 60 * 60 && s.phase === 'play'; i++) updateGame(s, noIntent, DT);
+    for (let i = 0; i < 60 * 60 && s.phase === 'play'; i++) updateGame(s, noIntent, false, DT);
     expect(s.phase).toBe('end');
   });
 
   it('reaches end without throwing and the timer actually counts down', () => {
     const s = freshPlay();
     const t0 = s.timeLeft;
-    for (let i = 0; i < 60; i++) updateGame(s, noIntent, DT);
+    for (let i = 0; i < 60; i++) updateGame(s, noIntent, false, DT);
     expect(s.timeLeft).toBeLessThan(t0);
     expect(() => endRound(s)).not.toThrow();
     expect(s.phase).toBe('end'); // only one round registered in M2
