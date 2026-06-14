@@ -1,0 +1,134 @@
+/**
+ * scenes/yard.ts — backyard background painter (fence, maple, lawn, flowers, patio).
+ * Faithful port of the prototype's `bgYard`. Pure: paints into the given context in WORLD
+ * units. Cosmetic scatter (grass tufts, flowers) draws from an injected seedable rng so the
+ * backdrop is deterministic and lint-clean (no bare Math.random in src).
+ */
+
+import type { Rng } from '../core/rng.js';
+import { WORLD } from '../config/balance.js';
+
+const W = WORLD.w;
+const H = WORLD.h;
+type G = CanvasRenderingContext2D;
+
+export function paintYard(g: G, rng: Rng): void {
+  const rnd = (a: number, b: number): number => rng.range(a, b);
+
+  // late-afternoon sky
+  const sg = g.createLinearGradient(0, 0, 0, 230);
+  sg.addColorStop(0, '#aecfdd');
+  sg.addColorStop(1, '#e8d9b4');
+  g.fillStyle = sg;
+  g.fillRect(0, 0, W, 230);
+
+  // soft clouds
+  g.fillStyle = 'rgba(255,255,255,.55)';
+  for (const [cx, cy, r] of [
+    [170, 70, 30],
+    [210, 80, 40],
+    [250, 68, 26],
+    [700, 55, 34],
+    [745, 66, 42],
+    [800, 52, 24],
+  ] as const) {
+    g.beginPath();
+    g.arc(cx, cy, r, 0, 7);
+    g.fill();
+  }
+
+  // big maple
+  g.fillStyle = '#6b4a2e';
+  g.fillRect(70, 90, 22, 120);
+  g.beginPath();
+  g.moveTo(81, 95);
+  g.lineTo(60, 60);
+  g.lineTo(74, 90);
+  g.closePath();
+  g.fill();
+  for (const [cx, cy, r, c] of [
+    [80, 70, 55, '#5d8c46'],
+    [45, 95, 40, '#527e3d'],
+    [120, 90, 44, '#679a4e'],
+    [80, 40, 38, '#71a557'],
+  ] as const) {
+    g.fillStyle = c;
+    g.beginPath();
+    g.arc(cx, cy, r, 0, 7);
+    g.fill();
+  }
+
+  // fence
+  g.fillStyle = '#b78c5d';
+  for (let x = 0; x < W; x += 46) {
+    g.fillRect(x + 4, 138, 30, 76);
+    g.beginPath();
+    g.moveTo(x + 4, 138);
+    g.lineTo(x + 19, 128);
+    g.lineTo(x + 34, 138);
+    g.closePath();
+    g.fill();
+  }
+  g.fillStyle = '#a3794d';
+  g.fillRect(0, 156, W, 10);
+  g.fillRect(0, 188, W, 10);
+  g.fillStyle = 'rgba(60,40,20,.18)';
+  for (let x = 0; x < W; x += 46) g.fillRect(x + 4, 138, 3, 76);
+
+  // lawn
+  const lg = g.createLinearGradient(0, 210, 0, H);
+  lg.addColorStop(0, '#86b25c');
+  lg.addColorStop(1, '#5d8a3e');
+  g.fillStyle = lg;
+  g.fillRect(0, 210, W, H - 210);
+
+  // mow stripes
+  g.fillStyle = 'rgba(255,255,255,.05)';
+  for (let i = 0; i < 6; i++) g.fillRect(0, 225 + i * 64, W, 32);
+
+  // grass tufts + flowers
+  g.strokeStyle = 'rgba(40,80,30,.5)';
+  g.lineWidth = 2;
+  g.lineCap = 'round';
+  for (let i = 0; i < 120; i++) {
+    const x = rnd(20, W - 20);
+    const y = rnd(225, H - 30);
+    g.beginPath();
+    g.moveTo(x, y);
+    g.quadraticCurveTo(x + rnd(-3, 3), y - 8, x + rnd(-5, 5), y - 13);
+    g.stroke();
+  }
+  for (let i = 0; i < 14; i++) {
+    const x = rnd(40, W - 40);
+    const y = rnd(235, H - 40);
+    g.fillStyle = ['#f0e15e', '#f1f1f1', '#e98ab4'][i % 3] as string;
+    for (let p2 = 0; p2 < 5; p2++) {
+      const a = p2 * 1.256;
+      g.beginPath();
+      g.arc(x + Math.cos(a) * 4, y + Math.sin(a) * 4, 3, 0, 7);
+      g.fill();
+    }
+    g.fillStyle = '#e0a32e';
+    g.beginPath();
+    g.arc(x, y, 2.4, 0, 7);
+    g.fill();
+  }
+
+  // patio corner
+  g.fillStyle = '#c9b8a0';
+  g.beginPath();
+  g.moveTo(W, 210);
+  g.lineTo(W - 200, 210);
+  g.lineTo(W - 130, H);
+  g.lineTo(W, H);
+  g.closePath();
+  g.fill();
+  g.strokeStyle = 'rgba(90,70,50,.3)';
+  g.lineWidth = 2;
+  for (let i = 1; i < 5; i++) {
+    g.beginPath();
+    g.moveTo(W - 200 + i * 14, 210);
+    g.lineTo(W - 130 + i * 7, H);
+    g.stroke();
+  }
+}

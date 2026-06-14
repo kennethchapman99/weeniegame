@@ -1,14 +1,19 @@
 /**
- * main.ts — M0 bootstrap. Opens the DPR-scaled letterboxed canvas via Camera and draws
- * a single static frame in world units (no game loop yet — that arrives in M1).
+ * main.ts — M1 bootstrap. A single controllable dog on the backyard:
+ *   Camera (DPR letterbox) + fixed-timestep loop + input + movement + dog/yard renderers.
  *
- * Proves the foundational transform: the play-bounds rectangle and centre marker land
- * correctly regardless of viewport size / devicePixelRatio.
+ * No scene flow, scoring, AI or other dogs yet (M2/M3+). This proves the core loop,
+ * movement feel (arrival easing, no on-spot jitter) and yard render parity.
  */
 
 import { Camera } from './core/camera.js';
-import { rounded } from './core/math.js';
-import { WORLD, BOUNDS } from './config/balance.js';
+import { startLoop } from './core/loop.js';
+import { Input } from './core/input.js';
+import { makeDog } from './state/dog.js';
+import { moveDog } from './systems/movement.js';
+import { drawDog } from './render/dog.js';
+import { Backdrop } from './render/backdrop.js';
+import { paintYard } from './scenes/yard.js';
 
 const canvas = document.getElementById('game') as HTMLCanvasElement | null;
 if (!canvas) throw new Error('main: #game canvas not found');
@@ -16,40 +21,42 @@ const ctx = canvas.getContext('2d');
 if (!ctx) throw new Error('main: 2d context unavailable');
 
 const camera = new Camera(canvas, ctx);
+const input = new Input();
+input.attach(canvas, camera);
+const backdrop = new Backdrop();
 
-function renderStaticFrame(): void {
-  if (!ctx) return;
-  camera.applyTransform();
-  ctx.clearRect(0, 0, WORLD.w, WORLD.h);
+const player = makeDog('cheddar', 300, 400, 3.2);
 
-  // World backdrop
-  ctx.fillStyle = '#1c1812';
-  ctx.fillRect(0, 0, WORLD.w, WORLD.h);
+addEventListener('resize', () => camera.fit());
 
-  // Play bounds (x∈[50,910], y∈[215,555])
-  ctx.strokeStyle = 'rgba(180,150,110,.6)';
-  ctx.lineWidth = 2;
-  rounded(ctx, BOUNDS.minX, BOUNDS.minY, BOUNDS.maxX - BOUNDS.minX, BOUNDS.maxY - BOUNDS.minY, 14);
-  ctx.stroke();
+let elapsedMs = 0;
 
-  // Centre marker
-  const cx = WORLD.w / 2;
-  const cy = WORLD.h / 2;
-  ctx.fillStyle = '#e3ab63';
-  ctx.beginPath();
-  ctx.arc(cx, cy, 10, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Label
-  ctx.fillStyle = '#cfe0ea';
-  ctx.font = '20px Georgia, serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('Cheddar & Cocoa — M0 scaffold', cx, BOUNDS.minY - 24);
+function update(dt: number): void {
+  elapsedMs += dt * 1000;
+  const intent = input.intentFor(player);
+  moveDog(player, intent.ax, intent.ay, dt, intent.arrive);
 }
 
-window.addEventListener('resize', () => {
-  camera.fit();
-  renderStaticFrame();
-});
+function render(): void {
+  if (!ctx) return;
+  // backdrop is pre-rendered at device resolution; blit it 1:1 then draw world-space.
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, canvas!.width, canvas!.height);
+  const bg = backdrop.get('yard', paintYard, camera.view);
+  ctx.drawImage(bg, 0, 0);
 
-renderStaticFrame();
+  camera.applyTransform();
+
+  // touch target marker
+  if (input.touch) {
+    ctx.strokeStyle = 'rgba(255,255,255,.5)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(input.touch.x, input.touch.y, 12 + Math.sin(elapsedMs * 0.012) * 3, 0, 7);
+    ctx.stroke();
+  }
+
+  drawDog(ctx, player, elapsedMs);
+}
+
+startLoop({ update, render });

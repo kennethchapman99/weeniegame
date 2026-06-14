@@ -18,7 +18,12 @@ export const SPEED = {
   zoomMult: 1.85,
   aiFactor: 0.88,
   arriveRadius: 10,      // px within which speed eases to 0
-  faceFlipThreshold: 0.8 // |vx| needed to flip facing
+  arriveFalloff: 60,     // px over which arrive ramps 0->1 beyond arriveRadius (prototype's /60)
+  faceFlipThreshold: 0.8,// |vx| needed to flip facing
+  steerLerp: 0.18,       // velocity approach rate (land)
+  steerLerpZoom: 0.24,   // velocity approach rate during zoomies
+  idleDecay: 0.78,       // velocity decay when no input
+  idleSnap: 0.15         // |v| below which velocity hard-stops to 0
 } as const;
 
 export const ROUNDS = [
