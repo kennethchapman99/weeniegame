@@ -1,0 +1,28 @@
+{
+  "name": "cheddar-and-cocoa",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "2D arcade game starring Cheddar & Cocoa, two mini dachshunds. Ported from a validated single-file prototype.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "test": "vitest run",
+    "sim": "vitest run tests/sim",
+    "verify": "npm run typecheck && npm run lint && npm run test"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "eslint": "^9.0.0",
+    "typescript-eslint": "^8.0.0",
+    "prettier": "^3.3.0",
+    "typescript": "^5.5.0",
+    "vite": "^5.4.0",
+    "vite-plugin-singlefile": "^2.0.0",
+    "vitest": "^2.0.0"
+  }
+}
