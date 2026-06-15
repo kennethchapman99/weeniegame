@@ -35,7 +35,7 @@ function scrim(g: G, a = 0.72): void {
   g.fillRect(0, 0, W, H);
 }
 
-export function drawTitle(g: G, s: GameState, padCount = 0, muted = false): void {
+export function drawTitle(g: G, s: GameState, padCount = 0, muted = false, focus = -1): void {
   scrim(g, 0.82);
 
   // mute toggle (top-right)
@@ -86,6 +86,23 @@ export function drawTitle(g: G, s: GameState, padCount = 0, muted = false): void
   g.fillStyle = '#3a2c20';
   g.font = '800 22px -apple-system, sans-serif';
   g.fillText('PLAY', W / 2, PLAY.y + 35);
+
+  // controller focus ring (0=mode, 1=players, 2=dog, 3=PLAY)
+  if (focus >= 0) {
+    const rings = [
+      { x: GMODE_VS.x - 6, y: GMODE.y - 6, w: GMODE.w * 2 + GMODE.gap + 12, h: GMODE.h + 12 },
+      { x: MODE_AI.x - 6, y: MODE.y - 6, w: MODE.w * 2 + MODE.gap + 12, h: MODE.h + 12 },
+      { x: W / 2 - PICK.dx - PICK.r - 8, y: PICK.y - PICK.r - 8, w: (PICK.dx + PICK.r) * 2 + 16, h: PICK.r * 2 + 56 },
+      { x: PLAY.x - 6, y: PLAY.y - 6, w: PLAY.w + 12, h: PLAY.h + 12 },
+    ];
+    const rr = rings[focus]!;
+    g.save();
+    g.strokeStyle = '#ffe24a';
+    g.lineWidth = 3;
+    rounded(g, rr.x, rr.y, rr.w, rr.h, 14);
+    g.stroke();
+    g.restore();
+  }
 }
 
 function modeButton(g: G, r: { x: number; y: number; w: number; h: number }, label: string, on: boolean): void {

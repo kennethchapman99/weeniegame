@@ -15,8 +15,26 @@
 
 import type { Intent } from './input.js';
 
-/** Standard-mapping face-button indices we react to. */
-export const PAD = { wrestle: 0, jump: 1 } as const;
+/** Standard-mapping button indices we react to (face buttons + D-pad for menus). */
+export const PAD = {
+  wrestle: 0, // A — also "confirm" in menus
+  jump: 1, // B — also "back" in menus
+  up: 12,
+  down: 13,
+  left: 14,
+  right: 15,
+} as const;
+
+/** One-shot menu navigation edges (D-pad), for driving the title/end overlays from a controller. */
+export interface MenuNav {
+  up: boolean;
+  down: boolean;
+  left: boolean;
+  right: boolean;
+  confirm: boolean;
+  back: boolean;
+}
+export const NO_NAV: MenuNav = { up: false, down: false, left: false, right: false, confirm: false, back: false };
 
 /**
  * Left-stick deflection → steering Intent.
@@ -40,11 +58,25 @@ export interface GamepadResult {
   intent: Intent | null;
   wrestle: boolean;
   jump: boolean;
+  /** One-shot D-pad/confirm/back edges for menu navigation. */
+  nav: MenuNav;
   /** True while at least one gamepad is connected (drives HUD button hiding). */
   connected: boolean;
 }
 
-const IDLE: GamepadResult = { intent: null, wrestle: false, jump: false, connected: false };
+const IDLE: GamepadResult = { intent: null, wrestle: false, jump: false, nav: NO_NAV, connected: false };
+
+/** Build the menu-nav edges from this poll's button rising-edges. */
+export function navFromEdges(edges: boolean[]): MenuNav {
+  return {
+    up: !!edges[PAD.up],
+    down: !!edges[PAD.down],
+    left: !!edges[PAD.left],
+    right: !!edges[PAD.right],
+    confirm: !!edges[PAD.wrestle],
+    back: !!edges[PAD.jump],
+  };
+}
 
 /**
  * Per-frame poller for one connected gamepad, selected by `slot` (0 = first connected, 1 =
@@ -88,6 +120,7 @@ export class GamepadSource {
       intent: intent.arrive > 0 ? intent : null,
       wrestle: !!edges[PAD.wrestle],
       jump: !!edges[PAD.jump],
+      nav: navFromEdges(edges),
       connected: true,
     };
   }

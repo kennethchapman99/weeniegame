@@ -18,7 +18,7 @@
 import type { Point } from './math.js';
 import type { Camera } from './camera.js';
 import { SPEED, INPUT } from '../config/balance.js';
-import { GamepadSource, type GamepadResult } from './gamepad.js';
+import { GamepadSource, type GamepadResult, type MenuNav, NO_NAV } from './gamepad.js';
 
 export interface Intent {
   ax: number;
@@ -33,7 +33,7 @@ export interface DogCmd {
   jump: boolean;
 }
 
-const NO_PAD: GamepadResult = { intent: null, wrestle: false, jump: false, connected: false };
+const NO_PAD: GamepadResult = { intent: null, wrestle: false, jump: false, nav: NO_NAV, connected: false };
 
 interface Queue {
   wrestle: boolean;
@@ -72,6 +72,11 @@ export class Input {
   /** True while any gamepad is connected — lets the host hide the on-screen touch buttons. */
   get gamepadActive(): boolean {
     return this.padCount > 0;
+  }
+
+  /** P1's controller menu-navigation edges this poll (for driving the title/end overlays). */
+  get menuNav(): MenuNav {
+    return this.r1.connected ? this.r1.nav : NO_NAV;
   }
 
   /** Queue a P1 wrestle (space/E key edge or the on-screen WRESTLE button). */

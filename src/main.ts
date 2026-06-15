@@ -46,16 +46,30 @@ if (import.meta.env.DEV) {
 
 addEventListener('resize', () => camera.fit());
 
+function selectDog(id: 'cheddar' | 'cocoa'): void {
+  state.playerId = id;
+  state.aiId = id === 'cheddar' ? 'cocoa' : 'cheddar';
+}
+
+/** Activate the end-screen button (NEXT / RETRY / back to title). */
+function endAction(): void {
+  if (state.mode === 'coop' && state.mission) {
+    const st = state.mission.status;
+    if (st === 'success' && coopHasNext(state)) advanceCoop(state); // onward in the campaign
+    else if (st === 'fail') retryScene(state); // retry the current mission
+    else state.phase = 'title'; // campaign cleared
+  } else {
+    state.phase = 'title';
+  }
+}
+
 // Discrete taps for title / end screens (movement drag is handled by Input).
 canvas.addEventListener('pointerdown', (e) => {
   audio.resume(); // first user gesture unlocks Web Audio (autoplay policy)
   const p = camera.screenToWorld(e.clientX, e.clientY);
   if (state.phase === 'title') {
     const hit = titleHit(p);
-    if (hit.pick) {
-      state.playerId = hit.pick;
-      state.aiId = hit.pick === 'cheddar' ? 'cocoa' : 'cheddar';
-    }
+    if (hit.pick) selectDog(hit.pick);
     if (hit.mode) state.partner = hit.mode;
     if (hit.gameMode) state.mode = hit.gameMode;
     if (hit.mute) audio.toggleMuted();
@@ -69,18 +83,29 @@ canvas.addEventListener('pointerdown', (e) => {
       input.touch = null;
     }
   } else if (state.phase === 'end') {
-    if (endHit(p)) {
-      if (state.mode === 'coop' && state.mission) {
-        const st = state.mission.status;
-        if (st === 'success' && coopHasNext(state)) advanceCoop(state); // onward in the campaign
-        else if (st === 'fail') retryScene(state); // retry the current mission
-        else state.phase = 'title'; // campaign cleared
-      } else {
-        state.phase = 'title';
-      }
-    }
+    if (endHit(p)) endAction();
   }
 });
+
+// Title focus row for controller navigation: 0=mode, 1=players, 2=dog, 3=PLAY.
+let titleFocus = 3;
+
+/** Drive the title overlay from P1's controller (couch/TV play with no pointer). */
+function handleTitleNav(): void {
+  const n = input.menuNav;
+  if (n.down) titleFocus = (titleFocus + 1) % 4;
+  if (n.up) titleFocus = (titleFocus + 3) % 4;
+  const change = n.left || n.right || (n.confirm && titleFocus !== 3);
+  if (change) {
+    if (titleFocus === 0) state.mode = state.mode === 'versus' ? 'coop' : 'versus';
+    else if (titleFocus === 1) state.partner = state.partner === 'ai' ? 'human' : 'ai';
+    else if (titleFocus === 2) selectDog(state.playerId === 'cheddar' ? 'cocoa' : 'cheddar');
+  }
+  if (n.confirm && titleFocus === 3) {
+    audio.resume();
+    startGame(state);
+  }
+}
 
 // best score/stars for the just-finished mission, recorded once when it ends (host-side, so
 // the deterministic sim stays storage-free).
@@ -90,8 +115,13 @@ let recorded = false;
 function update(dt: number): void {
   input.poll(); // read both gamepads before computing intents / draining actions
 
-  // Title: a button on controller 2 = "press to join" → switch to two-player co-op.
-  if (state.phase === 'title' && input.takeP2Join()) state.partner = 'human';
+  // Title: controller navigation + "press a button on pad 2 to join" two-player co-op.
+  if (state.phase === 'title') {
+    handleTitleNav();
+    if (input.takeP2Join()) state.partner = 'human';
+  } else if (state.phase === 'end' && input.menuNav.confirm) {
+    endAction(); // confirm the end-screen button from a controller
+  }
 
   const twoPlayer = state.partner === 'human';
   const p1 = input.p1Command(player(state), twoPlayer);
@@ -126,7 +156,7 @@ function render(): void {
   camera.applyTransform();
 
   if (state.phase === 'title') {
-    drawTitle(ctx, state, input.padCount, audio.isMuted);
+    drawTitle(ctx, state, input.padCount, audio.isMuted, input.gamepadActive ? titleFocus : -1);
     return;
   }
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { stickIntent, pressedEdges, GamepadSource, PAD } from '../../src/core/gamepad.js';
+import { stickIntent, pressedEdges, GamepadSource, PAD, NO_NAV, navFromEdges } from '../../src/core/gamepad.js';
 import { INPUT } from '../../src/config/balance.js';
 
 const DZ = INPUT.gamepadDeadzone;
@@ -63,7 +63,7 @@ describe('GamepadSource', () => {
   it('is inert with no gamepad connected', () => {
     withGamepads([null], () => {
       const r = new GamepadSource().poll(DZ);
-      expect(r).toEqual({ intent: null, wrestle: false, jump: false, connected: false });
+      expect(r).toEqual({ intent: null, wrestle: false, jump: false, nav: NO_NAV, connected: false });
     });
   });
 
@@ -92,3 +92,20 @@ function setBtn(arr: boolean[], i: number, v: boolean): boolean[] {
   arr[i] = v;
   return arr.slice();
 }
+
+describe('navFromEdges (controller menu navigation)', () => {
+  it('maps D-pad + A/B button edges to menu nav', () => {
+    const edges = new Array(16).fill(false);
+    edges[PAD.down] = true;
+    edges[PAD.wrestle] = true; // A = confirm
+    const nav = navFromEdges(edges);
+    expect(nav.down).toBe(true);
+    expect(nav.up).toBe(false);
+    expect(nav.confirm).toBe(true);
+    expect(nav.back).toBe(false);
+  });
+
+  it('is all-false with no edges', () => {
+    expect(navFromEdges([])).toEqual(NO_NAV);
+  });
+});
