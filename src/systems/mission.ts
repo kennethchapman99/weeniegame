@@ -42,6 +42,7 @@ export function startMission(
     pads: m.pads ?? [],
     gate: m.gate ?? null,
     goal: m.goal ?? null,
+    data: m.data ?? {},
   };
 }
 

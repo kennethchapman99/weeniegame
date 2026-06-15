@@ -142,9 +142,9 @@ export function drawInterstitial(g: G, s: GameState): void {
   g.fillText(coop ? 'Co-op mission — work together! 🐾' : sceneSub(s.sceneKey), W / 2, H / 2 + 24);
 }
 
-export function drawEnd(g: G, s: GameState): void {
+export function drawEnd(g: G, s: GameState, coopHasNext = false): void {
   if (s.mode === 'coop' && s.mission) {
-    drawMissionEnd(g, s);
+    drawMissionEnd(g, s, coopHasNext);
     return;
   }
   scrim(g, 0.82);
@@ -178,7 +178,7 @@ export function drawEnd(g: G, s: GameState): void {
 }
 
 /** Co-op mission result: SUCCESS (with stars) or FAILED, combined score, and replay. */
-function drawMissionEnd(g: G, s: GameState): void {
+function drawMissionEnd(g: G, s: GameState, hasNext: boolean): void {
   const m = s.mission!;
   const win = m.status === 'success';
   scrim(g, 0.84);
@@ -212,7 +212,8 @@ function drawMissionEnd(g: G, s: GameState): void {
   g.fill();
   g.fillStyle = '#3a2c20';
   g.font = '800 20px -apple-system, sans-serif';
-  g.fillText(win ? 'PLAY AGAIN' : 'RETRY', W / 2, PLAY.y + 34);
+  const label = win ? (hasNext ? 'NEXT MISSION ▸' : 'PLAY AGAIN') : 'RETRY';
+  g.fillText(label, W / 2, PLAY.y + 34);
 }
 
 /** Title-screen tap: returns the picked dog, the toggles hit, and whether PLAY was pressed. */

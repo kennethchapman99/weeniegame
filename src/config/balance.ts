@@ -54,6 +54,15 @@ export const MISSION = {
   timeBonus: 2, // combined-score points per whole second left at success
 } as const;
 
+// "Sneak the Snack" distract+grab mission tuning.
+export const SNEAK = {
+  grabR: 42, // how close a dog must be to a treat to grab it
+  lungeStun: 0.7, // stun on the grabber when the guard catches it undistracted
+  lungeKnockback: 7, // knockback speed away from the guard
+  lungeCD: 0.7, // min seconds between guard lunges
+  treatScore: 4, // combined-score per treat
+} as const;
+
 export const ROUNDS = [
   { key: 'yard',  name: 'The Backyard', time: 45 },
   { key: 'pool',  name: 'The Pool',     time: 45 },

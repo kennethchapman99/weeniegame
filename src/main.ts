@@ -11,7 +11,7 @@ import { Input } from './core/input.js';
 import { makeRng } from './core/rng.js';
 import { AudioBus } from './core/audio.js';
 import { makeGameState, player, ai } from './state/gameState.js';
-import { startGame, updateGame, currentScene } from './state/sceneManager.js';
+import { startGame, updateGame, currentScene, coopHasNext, advanceCoop, retryScene } from './state/sceneManager.js';
 import { drawDog } from './render/dog.js';
 import {
   drawHUD,
@@ -67,8 +67,14 @@ canvas.addEventListener('pointerdown', (e) => {
     }
   } else if (state.phase === 'end') {
     if (endHit(p)) {
-      if (state.mode === 'coop') startGame(state); // retry / replay the mission immediately
-      else state.phase = 'title';
+      if (state.mode === 'coop' && state.mission) {
+        const st = state.mission.status;
+        if (st === 'success' && coopHasNext(state)) advanceCoop(state); // onward in the campaign
+        else if (st === 'fail') retryScene(state); // retry the current mission
+        else state.phase = 'title'; // campaign cleared
+      } else {
+        state.phase = 'title';
+      }
     }
   }
 });
@@ -128,7 +134,7 @@ function render(): void {
   }
 
   if (state.phase === 'inter') drawInterstitial(ctx, state);
-  if (state.phase === 'end') drawEnd(ctx, state);
+  if (state.phase === 'end') drawEnd(ctx, state, coopHasNext(state));
 
   // drain queued sounds (host layer plays them; systems stay audio-free)
   if (state.sounds.length) {

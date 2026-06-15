@@ -234,6 +234,8 @@ export interface MissionState {
   pads: Pad[];
   gate: CoopGate | null;
   goal: GoalZone | null;
+  /** mission-specific entity bag (each mission defines + casts its own shape). */
+  data: unknown;
 }
 
 export interface GameState {

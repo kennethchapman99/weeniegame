@@ -26,12 +26,13 @@ import { yardScene } from '../scenes/yard.js';
 import { poolScene } from '../scenes/pool.js';
 import { houseScene } from '../scenes/house/index.js';
 import { gateMission } from '../scenes/missions/gate.js';
+import { sneakMission } from '../scenes/missions/sneak.js';
 import { tickMission } from '../systems/mission.js';
 
 /** Versus rounds (M2–M8): Backyard → Pool → House. */
 const VERSUS_REGISTRY: SceneDef[] = [yardScene, poolScene, houseScene];
-/** Co-op missions (M12+): currently the single "Through the Gate" mission. */
-const COOP_REGISTRY: SceneDef[] = [gateMission];
+/** Co-op mission campaign (M12+), played in order. */
+const COOP_REGISTRY: SceneDef[] = [gateMission, sneakMission];
 
 /** The active registry for the current game mode. */
 function registry(s: GameState): SceneDef[] {
@@ -119,6 +120,22 @@ export function endRound(s: GameState): void {
   } else {
     s.phase = 'end';
   }
+}
+
+/** Co-op campaign: is there a next mission after the current one? */
+export function coopHasNext(s: GameState): boolean {
+  return s.mode === 'coop' && s.sceneIdx < COOP_REGISTRY.length - 1;
+}
+
+/** Advance to the next co-op mission (after a success). */
+export function advanceCoop(s: GameState): void {
+  s.sceneIdx++;
+  beginScene(s);
+}
+
+/** Restart the current scene (co-op mission retry after a fail). */
+export function retryScene(s: GameState): void {
+  beginScene(s);
 }
 
 /**
