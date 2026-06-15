@@ -167,6 +167,7 @@ export function updateGame(
 
   const sibling = ai(s);
   const siblingHuman = s.partner === 'human';
+  const siblingCoopAi = !siblingHuman && s.mode === 'coop'; // AI partner in a co-op mission
 
   // house: advance any in-flight door/stair traversal first (a transiting dog can't steer)
   if (s.sceneKey === 'house') {
@@ -177,13 +178,16 @@ export function updateGame(
   // P1 movement (moveDog no-ops while transiting)
   moveDog(s, player(s), intent.ax, intent.ay, dt, intent.arrive);
 
-  // sibling movement: P2 (human) drives it directly, else the AI brain steers it.
+  // sibling movement: P2 (human) drives it; else an AI brain — the co-op partner in a mission,
+  // or the competitive sibling in versus.
   if (siblingHuman) {
     const c = p2 ?? IDLE_CMD;
     moveDog(s, sibling, c.intent.ax, c.intent.ay, dt, c.intent.arrive);
   } else {
-    // AI sibling — full speed (aiFactor 0.88 is inert; see balance.ts / owner decision)
-    const [aax, aay] = aiThink(s, sibling, dt);
+    const def = currentScene(s);
+    // co-op partner cooperates with the mission (it may trigger its own jump inside coopAi);
+    // versus AI runs the competitive brain. aiFactor 0.88 is inert (balance.ts / owner decision).
+    const [aax, aay] = siblingCoopAi && def.coopAi ? def.coopAi(s, sibling) : siblingCoopAi ? [0, 0] : aiThink(s, sibling, dt);
     const aiTd = Math.hypot(aax, aay);
     moveDog(s, sibling, aax, aay, dt, Math.min(1, (aiTd - SPEED.aiArriveRadius) / SPEED.arriveFalloff));
   }
@@ -192,10 +196,11 @@ export function updateGame(
 
   // P1 action: mash the tug if locked into one, else wrestle the sibling
   applyAction(s, player(s), wrestle, jump);
-  // sibling action: P2's edges in co-op, else the AI starts its own trouble
+  // sibling action: P2's edges in two-player; the co-op partner acts inside coopAi; the versus
+  // AI starts its own wrestling trouble.
   if (siblingHuman) {
     if (p2) applyAction(s, sibling, p2.wrestle, p2.jump);
-  } else {
+  } else if (!siblingCoopAi) {
     maybeAiWrestle(s, dt);
   }
 

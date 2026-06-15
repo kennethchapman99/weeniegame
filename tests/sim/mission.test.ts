@@ -17,6 +17,7 @@ const noIntent = { ax: 0, ay: 0, arrive: 0 };
 function startGateMission(seed = 1) {
   const s = makeGameState(makeRng(seed));
   s.mode = 'coop';
+  s.partner = 'human'; // pin the sibling (no cooperative AI) so manual positioning is authoritative
   startGame(s);
   for (let i = 0; i < 200 && s.phase !== 'play'; i++) updateGame(s, noIntent, false, false, DT);
   return s;

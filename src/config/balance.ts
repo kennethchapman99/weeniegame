@@ -67,6 +67,7 @@ export const KITCHEN = {
 // "Sneak the Snack" distract+grab mission tuning.
 export const SNEAK = {
   grabR: 42, // how close a dog must be to a treat to grab it
+  settleSpeed: 2, // the cat only lunges a dog SETTLED on a treat (slower than this) — not one running past
   lungeStun: 0.7, // stun on the grabber when the guard catches it undistracted
   lungeKnockback: 7, // knockback speed away from the guard
   lungeCD: 0.7, // min seconds between guard lunges

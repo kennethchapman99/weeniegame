@@ -105,6 +105,22 @@ export const gateMission: SceneDef = {
     }
   },
 
+  coopAi(s: GameState): [number, number] {
+    const m = s.mission;
+    const d = s.dogs[s.aiId];
+    if (!m) return [0, 0];
+    // gate shut: cover the pad the player ISN'T going for (one dog can't cover both)
+    if (m.gate && !m.gate.open && m.pads.length >= 2) {
+      const p = s.dogs[s.playerId];
+      const near0 = Math.hypot(p.x - m.pads[0]!.x, p.y - m.pads[0]!.y);
+      const near1 = Math.hypot(p.x - m.pads[1]!.x, p.y - m.pads[1]!.y);
+      const target = near0 < near1 ? m.pads[1]! : m.pads[0]!;
+      return [target.x - d.x, target.y - d.y];
+    }
+    if (m.goal) return [m.goal.x - d.x, m.goal.y - d.y]; // then regroup at the den
+    return [0, 0];
+  },
+
   drawWorld(g: G, s: GameState): void {
     const m = s.mission;
     if (!m) return;

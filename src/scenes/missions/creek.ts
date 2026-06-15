@@ -124,6 +124,17 @@ export const creekMission: SceneDef = {
     }
   },
 
+  coopAi(s: GameState): [number, number] {
+    const m = s.mission;
+    const d = s.dogs[s.aiId];
+    if (!m) return [0, 0];
+    const data = m.data as CreekData;
+    // brace the boost pad so the player can launch across; once the bridge is down, follow to the den
+    if (!data.bridge.down && m.boostPad) return [m.boostPad.x - d.x, m.boostPad.y - d.y];
+    if (m.goal) return [m.goal.x - d.x, m.goal.y - d.y];
+    return [0, 0];
+  },
+
   drawWorld(g: G, s: GameState): void {
     const m = s.mission;
     if (!m) return;

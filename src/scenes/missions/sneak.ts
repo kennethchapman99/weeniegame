@@ -95,13 +95,23 @@ export const sneakMission: SceneDef = {
         addCombined(s, SNEAK.treatScore);
         burst(s, t.x, t.y, '#ffd98c', 12, 2.6);
         popup(s, t.x, t.y - 24, 'sneaky! 🍪', '#9effa0');
-      } else if (d.guard.lunge <= 0) {
+      } else if (d.guard.lunge <= 0 && Math.hypot(grabber.vx, grabber.vy) < SNEAK.settleSpeed) {
+        // only pounce on a dog SETTLED on the treat — a pup just running past is safe
         guardLunge(s, d.guard, grabber);
       }
     }
 
     const got = d.treats.filter((t) => t.got).length;
     setProgress(s, 0, got / d.treats.length);
+  },
+
+  coopAi(s: GameState): [number, number] {
+    const m = s.mission;
+    const d = s.dogs[s.aiId];
+    if (!m) return [0, 0];
+    const data = m.data as SneakData;
+    // park on the cat to keep it distracted, so the player can sneak the treats
+    return [data.guard.x - d.x, data.guard.y - d.y];
   },
 
   drawWorld(g: G, s: GameState): void {

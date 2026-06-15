@@ -24,6 +24,7 @@ const FLOOR_Y = 384;
 function startKitchen(seed = 1) {
   const s = makeGameState(makeRng(seed));
   s.mode = 'coop';
+  s.partner = 'human'; // pin the sibling so manual positioning drives the test
   s.sceneIdx = 3;
   beginScene(s);
   for (let i = 0; i < 200 && s.phase !== 'play'; i++) updateGame(s, noIntent, false, false, DT);

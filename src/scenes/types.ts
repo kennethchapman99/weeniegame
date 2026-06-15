@@ -29,4 +29,11 @@ export interface SceneDef {
   drawWorld(g: CanvasRenderingContext2D, s: GameState): void;
   /** which dogs are currently visible (room-filtered for the house) */
   visibleDogs(s: GameState): Dog[];
+  /**
+   * Co-op solo fallback (M13): steer the AI partner to cooperate with THIS mission's objectives
+   * (cover a pad, distract a guard, brace a boost, knock snacks…). Returns an un-normalised
+   * intent vector; may trigger the dog's own actions (e.g. a jump) internally. Only called in
+   * co-op mode when the sibling is AI-driven. Missions without it leave the partner idle.
+   */
+  coopAi?(s: GameState, d: Dog): [number, number];
 }

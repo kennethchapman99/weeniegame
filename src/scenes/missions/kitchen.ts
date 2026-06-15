@@ -17,6 +17,7 @@ import type { GameState } from '../../state/gameState.js';
 import { paintYard } from '../yard.js';
 import { KITCHEN } from '../../config/balance.js';
 import { startMission, setProgress, addCombined, completeObjective, objective } from '../../systems/mission.js';
+import { tryJump } from '../../systems/jump.js';
 import { burst, popup } from '../../systems/particles.js';
 
 type G = CanvasRenderingContext2D;
@@ -121,6 +122,42 @@ export const kitchenMission: SceneDef = {
 
     setProgress(s, 0, d.eaten / KITCHEN.target);
     if (d.eaten >= KITCHEN.target && !m.objectives[0]!.done) completeObjective(s, 0);
+  },
+
+  coopAi(s: GameState): [number, number] {
+    const m = s.mission;
+    const d = s.dogs[s.aiId];
+    if (!m) return [0, 0];
+    const data = m.data as KitchenData;
+    if (d.id === 'cheddar') {
+      // the knocker: go under the nearest counter snack and chair-leap to knock it down
+      let best: { x: number; knocked: boolean } | null = null;
+      let bd = 1e9;
+      for (const f of data.onCounter) {
+        if (f.knocked) continue;
+        const dd = Math.abs(d.x - f.x);
+        if (dd < bd) {
+          bd = dd;
+          best = f;
+        }
+      }
+      if (!best) return data.floor[0] ? [data.floor[0].x - d.x, data.floor[0].y - d.y] : [0, 0];
+      const belowY = COUNTER.y + 52;
+      if (Math.abs(d.x - best.x) < 26 && Math.abs(d.y - belowY) < 36 && d.jumpT <= 0) tryJump(s, d);
+      return [best.x - d.x, belowY - d.y];
+    }
+    // the eater: gobble the nearest fallen snack, else wait under the counter for drops
+    let f: FloorFood | null = null;
+    let bd = 1e9;
+    for (const ff of data.floor) {
+      const dd = Math.hypot(d.x - ff.x, d.y - ff.y);
+      if (dd < bd) {
+        bd = dd;
+        f = ff;
+      }
+    }
+    if (f) return [f.x - d.x, f.y - d.y];
+    return [(COUNTER.x0 + COUNTER.x1) / 2 - d.x, COUNTER.y + 130 - d.y];
   },
 
   drawWorld(g: G, s: GameState): void {

@@ -20,6 +20,7 @@ interface SneakData {
 function startSneak(seed = 1) {
   const s = makeGameState(makeRng(seed));
   s.mode = 'coop';
+  s.partner = 'human'; // pin the sibling so manual positioning drives the test
   s.sceneIdx = 1;
   beginScene(s);
   for (let i = 0; i < 200 && s.phase !== 'play'; i++) updateGame(s, noIntent, false, false, DT);
@@ -82,6 +83,7 @@ describe('co-op campaign chain', () => {
   it('a gate-mission success advances to the next mission', () => {
     const s = makeGameState(makeRng(1));
     s.mode = 'coop';
+    s.partner = 'human'; // pin the sibling for deterministic manual positioning
     startGame(s); // mission 0 = the gate
     for (let i = 0; i < 200 && s.phase !== 'play'; i++) updateGame(s, noIntent, false, false, DT);
     expect(s.mission!.key).toBe('mission-gate');
