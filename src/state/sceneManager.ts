@@ -25,16 +25,26 @@ import { SPEED, PREDATOR, EVENTS } from '../config/balance.js';
 import { yardScene } from '../scenes/yard.js';
 import { poolScene } from '../scenes/pool.js';
 import { houseScene } from '../scenes/house/index.js';
+import { gateMission } from '../scenes/missions/gate.js';
+import { tickMission } from '../systems/mission.js';
 
-/** Ordered, registered rounds: Backyard → Pool → House. */
-const REGISTRY: SceneDef[] = [yardScene, poolScene, houseScene];
+/** Versus rounds (M2–M8): Backyard → Pool → House. */
+const VERSUS_REGISTRY: SceneDef[] = [yardScene, poolScene, houseScene];
+/** Co-op missions (M12+): currently the single "Through the Gate" mission. */
+const COOP_REGISTRY: SceneDef[] = [gateMission];
+
+/** The active registry for the current game mode. */
+function registry(s: GameState): SceneDef[] {
+  return s.mode === 'coop' ? COOP_REGISTRY : VERSUS_REGISTRY;
+}
 
 export function sceneDefs(): readonly SceneDef[] {
-  return REGISTRY;
+  return VERSUS_REGISTRY;
 }
 
 function currentScene(s: GameState): SceneDef {
-  return REGISTRY[s.sceneIdx] ?? REGISTRY[0]!;
+  const r = registry(s);
+  return r[s.sceneIdx] ?? r[0]!;
 }
 
 /** Fresh game from the title screen: reset both dogs and start at the first round. */
@@ -60,6 +70,7 @@ export function beginScene(s: GameState): void {
   s.sounds = [];
   s.spawnTimer = 1.2;
   s.toast = null;
+  s.mission = null; // co-op scenes rebuild it in enter(); versus scenes leave it null
   // predators + ambient events reset per scene (predators are backyard-only)
   s.predator = null;
   s.predatorTimer = s.rng.range(PREDATOR.firstSpawn[0], PREDATOR.firstSpawn[1]);
@@ -103,7 +114,7 @@ function applyAction(s: GameState, d: Dog, wrestle: boolean, jump: boolean): voi
 
 export function endRound(s: GameState): void {
   s.sceneIdx++;
-  if (s.sceneIdx < REGISTRY.length) {
+  if (s.sceneIdx < registry(s).length) {
     beginScene(s);
   } else {
     s.phase = 'end';
@@ -170,12 +181,23 @@ export function updateGame(
   }
 
   collideDogs(s);
-  currentScene(s).update(s, dt); // toys may start a tug here
+  currentScene(s).update(s, dt); // toys may start a tug here / mission mechanics tick
   updateTug(s, dt);
   updateParticles(s, dt);
 
-  s.timeLeft -= dt;
-  if (s.timeLeft <= 0) endRound(s);
+  if (s.mode === 'coop') {
+    // missions end on objective success/fail, not a round timer
+    tickMission(s, dt);
+    const m = s.mission;
+    if (m) {
+      s.sceneTime = m.timeLimit;
+      s.timeLeft = Math.max(0, m.timeLimit - m.elapsed);
+      if (m.status !== 'active') s.phase = 'end';
+    }
+  } else {
+    s.timeLeft -= dt;
+    if (s.timeLeft <= 0) endRound(s);
+  }
 }
 
 export { currentScene };

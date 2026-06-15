@@ -55,6 +55,7 @@ canvas.addEventListener('pointerdown', (e) => {
       state.aiId = hit.pick === 'cheddar' ? 'cocoa' : 'cheddar';
     }
     if (hit.mode) state.partner = hit.mode;
+    if (hit.gameMode) state.mode = hit.gameMode;
     if (hit.play) startGame(state);
   } else if (state.phase === 'play') {
     if (wrestleButtonHit(p)) {
@@ -66,7 +67,8 @@ canvas.addEventListener('pointerdown', (e) => {
     }
   } else if (state.phase === 'end') {
     if (endHit(p)) {
-      state.phase = 'title';
+      if (state.mode === 'coop') startGame(state); // retry / replay the mission immediately
+      else state.phase = 'title';
     }
   }
 });

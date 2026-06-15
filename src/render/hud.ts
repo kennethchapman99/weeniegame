@@ -81,6 +81,12 @@ export function drawHUD(g: G, s: GameState): void {
   g.fillStyle = 'rgba(20,14,10,.85)';
   g.fillText(s.sceneKey ? sceneLabel(s) : '', W / 2, 30);
 
+  // co-op missions show an objective checklist + combined score instead of rival pills
+  if (s.mode === 'coop' && s.mission) {
+    drawMissionHud(g, s);
+    return;
+  }
+
   const twoP = s.partner === 'human';
   const role = (id: 'cheddar' | 'cocoa'): string =>
     s.playerId === id ? 'P1' : twoP ? 'P2' : 'CPU';
@@ -88,6 +94,45 @@ export function drawHUD(g: G, s: GameState): void {
   scorePill(g, W - 16, 16, s.dogs.cocoa.score, DOGS.cocoa.dry.body[1], 'COCOA', 'right', s.playerId === 'cocoa', role('cocoa'));
 
   if (s.sceneKey === 'house') drawSiblingLocator(g, s);
+}
+
+/** Co-op mission HUD: the objective checklist (left) + a combined-score pill (right). */
+function drawMissionHud(g: G, s: GameState): void {
+  const m = s.mission!;
+  // objective checklist
+  g.textAlign = 'left';
+  let y = 52;
+  for (const o of m.objectives) {
+    const box = o.done ? '☑' : '☐';
+    g.font = '800 14px -apple-system, sans-serif';
+    const label = `${box}  ${o.label}`;
+    const tw = g.measureText(label).width;
+    g.fillStyle = 'rgba(38,28,18,.7)';
+    rounded(g, 16, y - 16, tw + 24, 26, 13);
+    g.fill();
+    g.fillStyle = o.done ? '#9effa0' : '#f6ead2';
+    g.fillText(label, 28, y + 2);
+    // progress sliver for the active objective
+    if (!o.done && o.progress > 0) {
+      g.fillStyle = 'rgba(158,255,160,.5)';
+      g.fillRect(28, y + 8, (tw - 4) * o.progress, 3);
+    }
+    y += 34;
+  }
+
+  // combined-score pill (right)
+  const text = `CO-OP  ${m.combinedScore}`;
+  g.font = '800 16px -apple-system, sans-serif';
+  const w = g.measureText(text).width + 28;
+  g.fillStyle = 'rgba(255,250,242,.92)';
+  rounded(g, W - 16 - w, 16, w, 34, 10);
+  g.fill();
+  g.strokeStyle = '#f4d3a4';
+  g.lineWidth = 2.5;
+  rounded(g, W - 16 - w, 16, w, 34, 10);
+  g.stroke();
+  g.fillStyle = '#3a2c20';
+  g.fillText(text, W - 16 - w + 14, 38);
 }
 
 /** House: a pill telling you which room (or stair) your sibling is in, when out of view. */
@@ -111,7 +156,8 @@ function drawSiblingLocator(g: G, s: GameState): void {
 
 function sceneLabel(s: GameState): string {
   const left = Math.max(0, Math.ceil(s.timeLeft));
-  return `${nameFor(s.sceneKey)}  ·  ${left}s`;
+  const name = s.mode === 'coop' && s.mission ? s.mission.title : nameFor(s.sceneKey);
+  return `${name}  ·  ${left}s`;
 }
 
 function nameFor(key: string): string {

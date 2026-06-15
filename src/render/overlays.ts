@@ -4,7 +4,7 @@
  * the prototype's DOM overlays; rendered on-canvas so input stays in one coordinate space.
  */
 
-import type { GameState, Partner } from '../state/gameState.js';
+import type { GameState, Partner, GameMode } from '../state/gameState.js';
 import type { DogId } from '../state/dog.js';
 import type { Point } from '../core/math.js';
 import { drawDog } from './dog.js';
@@ -17,10 +17,14 @@ type G = CanvasRenderingContext2D;
 const W = WORLD.w;
 const H = WORLD.h;
 
-const PICK = { y: 300, dx: 150, r: 70 };
-const PLAY = { x: W / 2 - 90, y: 492, w: 180, h: 54 };
-// 1P / 2P segmented toggle (couch co-op lobby, M10)
-const MODE = { y: 420, w: 156, h: 42, gap: 14 };
+const PICK = { y: 316, dx: 150, r: 64 };
+const PLAY = { x: W / 2 - 90, y: 500, w: 180, h: 52 };
+// Game-mode segmented toggle: Versus rounds vs Co-op missions (M12).
+const GMODE = { y: 196, w: 150, h: 32, gap: 12 };
+const GMODE_VS = { x: W / 2 - GMODE.w - GMODE.gap / 2, y: GMODE.y, w: GMODE.w, h: GMODE.h };
+const GMODE_COOP = { x: W / 2 + GMODE.gap / 2, y: GMODE.y, w: GMODE.w, h: GMODE.h };
+// 1P / 2P segmented toggle (couch co-op lobby, M10).
+const MODE = { y: 438, w: 156, h: 38, gap: 14 };
 const MODE_AI = { x: W / 2 - MODE.w - MODE.gap / 2, y: MODE.y, w: MODE.w, h: MODE.h };
 const MODE_HUMAN = { x: W / 2 + MODE.gap / 2, y: MODE.y, w: MODE.w, h: MODE.h };
 
@@ -34,10 +38,14 @@ export function drawTitle(g: G, s: GameState, padCount = 0): void {
   g.textAlign = 'center';
   g.fillStyle = '#f6e6c8';
   g.font = "900 56px Georgia, 'Times New Roman', serif";
-  g.fillText('Cheddar & Cocoa', W / 2, 150);
+  g.fillText('Cheddar & Cocoa', W / 2, 142);
   g.fillStyle = '#cfe0ea';
-  g.font = '600 18px -apple-system, sans-serif';
-  g.fillText('Two dachshunds. One couch. Pick your dog.', W / 2, 188);
+  g.font = '600 17px -apple-system, sans-serif';
+  g.fillText('Two dachshunds. One couch.', W / 2, 172);
+
+  // game mode: competitive rounds vs cooperative missions
+  modeButton(g, GMODE_VS, 'VERSUS', s.mode === 'versus');
+  modeButton(g, GMODE_COOP, 'CO-OP', s.mode === 'coop');
 
   const twoP = s.partner === 'human';
   // P1 picks a dog; the other dog goes to P2 (co-op) or the CPU (solo).
@@ -53,8 +61,8 @@ export function drawTitle(g: G, s: GameState, padCount = 0): void {
   // press-to-join hint when a second controller is plugged in but P2 hasn't joined yet
   if (padCount >= 2 && !twoP) {
     g.fillStyle = '#9effa0';
-    g.font = '700 14px -apple-system, sans-serif';
-    g.fillText('Controller 2 ready — press Ⓐ to join', W / 2, MODE.y + MODE.h + 24);
+    g.font = '700 13px -apple-system, sans-serif';
+    g.fillText('Controller 2 ready — press Ⓐ to join', W / 2, 580);
   }
 
   // play button
@@ -127,13 +135,18 @@ export function drawInterstitial(g: G, s: GameState): void {
   g.textAlign = 'center';
   g.fillStyle = '#f6e6c8';
   g.font = "900 46px Georgia, 'Times New Roman', serif";
-  g.fillText(sceneName(s.sceneKey), W / 2, H / 2 - 16);
+  const coop = s.mode === 'coop' && s.mission;
+  g.fillText(coop ? s.mission!.title : sceneName(s.sceneKey), W / 2, H / 2 - 16);
   g.fillStyle = '#cfe0ea';
   g.font = '600 18px -apple-system, sans-serif';
-  g.fillText(sceneSub(s.sceneKey), W / 2, H / 2 + 24);
+  g.fillText(coop ? 'Co-op mission — work together! 🐾' : sceneSub(s.sceneKey), W / 2, H / 2 + 24);
 }
 
 export function drawEnd(g: G, s: GameState): void {
+  if (s.mode === 'coop' && s.mission) {
+    drawMissionEnd(g, s);
+    return;
+  }
   scrim(g, 0.82);
   const a = s.dogs.cheddar.score;
   const b = s.dogs.cocoa.score;
@@ -164,10 +177,55 @@ export function drawEnd(g: G, s: GameState): void {
   g.fillText('PLAY AGAIN', W / 2, PLAY.y + 35);
 }
 
-/** Title-screen tap: returns the picked dog, a mode toggle, and whether PLAY was pressed. */
-export function titleHit(p: Point): { pick?: DogId; mode?: Partner; play: boolean } {
+/** Co-op mission result: SUCCESS (with stars) or FAILED, combined score, and replay. */
+function drawMissionEnd(g: G, s: GameState): void {
+  const m = s.mission!;
+  const win = m.status === 'success';
+  scrim(g, 0.84);
+  g.textAlign = 'center';
+  g.fillStyle = '#f6e6c8';
+  g.font = "900 46px Georgia, 'Times New Roman', serif";
+  g.fillText(m.title, W / 2, 130);
+
+  g.font = '800 40px -apple-system, sans-serif';
+  g.fillStyle = win ? '#9effa0' : '#ff9d7a';
+  g.fillText(win ? 'MISSION COMPLETE!' : 'MISSION FAILED', W / 2, 200);
+
+  if (win) {
+    // stars
+    g.font = '44px -apple-system, sans-serif';
+    let stars = '';
+    for (let i = 0; i < 3; i++) stars += i < m.stars ? '★' : '☆';
+    g.fillStyle = '#ffd98c';
+    g.fillText(stars, W / 2, 262);
+    g.fillStyle = '#cfe0ea';
+    g.font = '700 22px -apple-system, sans-serif';
+    g.fillText(`Combined score: ${m.combinedScore}`, W / 2, 312);
+  } else {
+    g.fillStyle = '#cfe0ea';
+    g.font = "700 20px Georgia, 'Times New Roman', serif";
+    g.fillText('The pups couldn’t crack it in time. Try again — together!', W / 2, 262);
+  }
+
+  g.fillStyle = '#f4d3a4';
+  rounded(g, PLAY.x, PLAY.y, PLAY.w, PLAY.h, 14);
+  g.fill();
+  g.fillStyle = '#3a2c20';
+  g.font = '800 20px -apple-system, sans-serif';
+  g.fillText(win ? 'PLAY AGAIN' : 'RETRY', W / 2, PLAY.y + 34);
+}
+
+/** Title-screen tap: returns the picked dog, the toggles hit, and whether PLAY was pressed. */
+export function titleHit(p: Point): {
+  pick?: DogId;
+  mode?: Partner;
+  gameMode?: GameMode;
+  play: boolean;
+} {
   if (Math.hypot(p.x - (W / 2 - PICK.dx), p.y - PICK.y) < PICK.r) return { pick: 'cheddar', play: false };
   if (Math.hypot(p.x - (W / 2 + PICK.dx), p.y - PICK.y) < PICK.r) return { pick: 'cocoa', play: false };
+  if (inRect(p, GMODE_VS)) return { gameMode: 'versus', play: false };
+  if (inRect(p, GMODE_COOP)) return { gameMode: 'coop', play: false };
   if (inRect(p, MODE_AI)) return { mode: 'ai', play: false };
   if (inRect(p, MODE_HUMAN)) return { mode: 'human', play: false };
   if (inRect(p, PLAY)) return { play: true };

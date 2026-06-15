@@ -37,6 +37,23 @@ export const INPUT = {
   gamepadDeadzone: 0.25,
 } as const;
 
+// Co-op "needs both dogs" gate primitives + missions (M12).
+export const GATES = {
+  padR: 38, // pressure-pad press radius
+  goalR: 52, // goal-zone occupancy radius
+  gateOpenRate: 3, // gate open-animation speed (prog/sec once latched)
+  boostPadR: 34, // booster must be within this of the boost pad
+  boostReach: 70, // jumper must be within this of the pad to be launched
+  boostJumpMult: 1.7, // boosted arc duration vs a solo jump
+  boostLaunchSpeed: 7.5, // launch velocity off the booster
+  distractR: 120, // a threat is distracted while a dog is within this
+} as const;
+
+export const MISSION = {
+  defaultTime: 90, // generous fail timer for a v1 mission
+  timeBonus: 2, // combined-score points per whole second left at success
+} as const;
+
 export const ROUNDS = [
   { key: 'yard',  name: 'The Backyard', time: 45 },
   { key: 'pool',  name: 'The Pool',     time: 45 },

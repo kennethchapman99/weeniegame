@@ -172,7 +172,7 @@ All of M0–M8 shipped and green; the built game matches the prototype across al
 
 ## Phase 2 — The co-op design turn
 
-## M12 — Mission framework + "needs both dogs" primitives
+## M12 — Mission framework + "needs both dogs" primitives ✅ BUILT (2026-06-15)
 🎯 The structural shift from competitive rounds to cooperative missions.
 - `systems/mission.ts`: objectives (reach/collect/survive/escort), success/fail, checkpoint
   + retry, combined score, optional 1–3 star rating. Data-driven, layered on `SceneDef`.
@@ -183,6 +183,17 @@ All of M0–M8 shipped and green; the built game matches the prototype across al
    to success/fail; combined score correct; sim covers each gate primitive.
 ⚠️ Objectives mutate via a single point like `addScore` did — don't scatter completion flags.
    Gates must be testable headless (drive both dogs in the sim, assert the gate opens).
+
+> **Shipped.** `mode: 'versus' | 'coop'` on `GameState` switches the scene registry (versus rounds
+> kept intact). `systems/mission.ts` owns the framework: objectives with a single mutation point
+> (`completeObjective`/`addCombined`/`setProgress`), success-when-all-done + time-bonus + 1–3★,
+> fail-on-timeout, replay/retry. `systems/gates.ts` has the interdependence primitives — pressure
+> pads (`updatePads`/`allPadsPressed`, one dog can't cover two), boost-jump (`canBoost`/
+> `boostLaunch`), distract+grab (`isDistracted`). Minimal mission `scenes/missions/gate.ts`
+> ("Through the Gate"): two pads latch a wall open, both pups reach the den. Title VERSUS/CO-OP
+> toggle; co-op HUD (objective checklist + combined score) + mission success/fail screen with
+> stars. Tests: `tests/sim/gates.test.ts`, `tests/sim/mission.test.ts` (95 green). The other
+> three gate primitives are built + tested but not yet placed in a mission — that's M13 content.
 
 ## M13+ — Missions as content
 🎯 Build the actual missions, one shippable mission per milestone.

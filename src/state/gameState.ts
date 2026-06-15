@@ -17,6 +17,9 @@ export type Phase = 'title' | 'inter' | 'play' | 'end';
 /** Who controls the sibling dog: a second human (couch co-op) or the AI brain (solo). */
 export type Partner = 'human' | 'ai';
 
+/** Game mode: the competitive rounds (M2–M8) or the cooperative missions (M12+). */
+export type GameMode = 'versus' | 'coop';
+
 export interface Toy {
   x: number;
   y: number;
@@ -173,6 +176,66 @@ export interface Tug {
   dur: number; // elapsed (for the stalemate timeout)
 }
 
+// ── Co-op missions (M12) ────────────────────────────────────────────────────────────────
+// A pressure pad: a dog standing on it presses it. Two pads that must be pressed *at once*
+// are a "needs both dogs" gate (one dog can't cover two pads).
+export interface Pad {
+  x: number;
+  y: number;
+  r: number;
+  on: boolean; // pressed this step
+  by: DogId | null; // who's pressing
+}
+
+/** A latching barrier: blocks crossing until `open`, then stays open. */
+export interface CoopGate {
+  x: number; // vertical barrier line
+  y0: number;
+  y1: number;
+  open: boolean; // latched open
+  prog: number; // open animation 0..1
+}
+
+/** A goal zone both dogs must occupy to clear a "reach together" objective. */
+export interface GoalZone {
+  x: number;
+  y: number;
+  r: number;
+  cheddar: boolean; // inside this step
+  cocoa: boolean;
+}
+
+export type ObjectiveKind = 'gate' | 'reachTogether' | 'collectTogether' | 'survive' | 'escort';
+
+/** One tracked mission goal. Completion flips `done` exactly once (via mission.ts). */
+export interface Objective {
+  kind: ObjectiveKind;
+  label: string;
+  done: boolean;
+  progress: number; // 0..1 for the HUD checklist
+  target: number;
+  count: number;
+  reward: number; // combined-score points awarded on completion
+}
+
+export type MissionStatus = 'active' | 'success' | 'fail';
+
+export interface MissionState {
+  key: string;
+  title: string;
+  objectives: Objective[];
+  status: MissionStatus;
+  combinedScore: number;
+  stars: number; // 0..3, scored on success
+  elapsed: number; // seconds since mission start
+  timeLimit: number; // fail when elapsed exceeds this
+  starTime: [number, number]; // finish under [0] → 3★, under [1] → 2★, else 1★
+  // interdependence entities (subset used per mission)
+  pads: Pad[];
+  gate: CoopGate | null;
+  goal: GoalZone | null;
+}
+
 export interface GameState {
   phase: Phase;
   sceneIdx: number;
@@ -186,6 +249,10 @@ export interface GameState {
   aiId: DogId;
   /** P1 drives `playerId`; the sibling (`aiId`) is a 2nd human when 'human', else the AI. */
   partner: Partner;
+  /** 'versus' = competitive rounds; 'coop' = cooperative missions (M12). */
+  mode: GameMode;
+  /** active co-op mission (null in versus mode). */
+  mission: MissionState | null;
   dogs: Record<DogId, Dog>;
 
   toys: Toy[];
@@ -230,6 +297,8 @@ export function makeGameState(rng: Rng, playerId: DogId = 'cheddar'): GameState 
     playerId,
     aiId,
     partner: 'ai',
+    mode: 'versus',
+    mission: null,
     dogs: {
       cheddar: makeDog('cheddar', 300, 400, 3.2),
       cocoa: makeDog('cocoa', 660, 400, 6.1),
