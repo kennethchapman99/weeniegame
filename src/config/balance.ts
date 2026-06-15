@@ -31,6 +31,12 @@ export const SPEED = {
   idleSnap: 0.15         // |v| below which velocity hard-stops to 0
 } as const;
 
+export const INPUT = {
+  // Gamepad left-stick deadzone: deflection below this reads as no input; above it,
+  // the remaining 0..1 range maps to `arrive` (analog speed), mirroring touch's arrive ramp.
+  gamepadDeadzone: 0.25,
+} as const;
+
 export const ROUNDS = [
   { key: 'yard',  name: 'The Backyard', time: 45 },
   { key: 'pool',  name: 'The Pool',     time: 45 },

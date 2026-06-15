@@ -101,6 +101,82 @@ Legend: 🎯 goal · ✅ done-when · ⚠️ watch-out
 - **Polish:** screen shake, win celebration, more squishmallow variety, weather/time-of-day on the yard.
 - **New levels:** see `docs/LEVEL-IDEAS.md` (e.g. the 🍗 Kitchen "food drop" round with asymmetric dog abilities — Cheddar eats fast but barfs + can chair-leap; Cocoa chews slow but safe). Queued, owner to promote.
 
-## Definition of project-done
+## Definition of project-done (parity)
 
 All of M0–M8 shipped and green; the built game matches the prototype across all three rounds in a side-by-side playtest; `npm run verify` (typecheck + lint + unit + full-game sim) passes; bundle is a single self-contained artifact with zero runtime network requests; prototype archived for reference.
+
+---
+
+# Co-op track (M9+) — the couch game
+
+> Owner decision, 2026-06-15: evolve the parity build into a **local two-player cooperative**
+> game for TV + iOS, keeping the TypeScript/Canvas stack (no engine port, no console dev-program
+> gate). See `docs/COOP-VISION.md` for the why and the platform reality. Same rules apply: each
+> milestone is independently shippable and ends green; **zero runtime network requests** holds
+> for the desktop/iOS wrappers too.
+
+## Phase 1 — Couch-playable
+
+## M9 — Gamepad input
+🎯 Play the existing game with a controller on a TV.
+- New `GamepadSource` adapter feeding the same `Intent` shape `core/input.ts` already exposes
+  (analog stick → `ax/ay/arrive`; A/B → `queueWrestle`/`queueJump`; D-pad fallback).
+- Input abstraction: a player reads from *an* input source (touch | keyboard | gamepad), chosen
+  per device. Touch stays the iOS-solo default.
+- HUD: when a gamepad is active, hide the on-screen WRESTLE/JUMP buttons (controller-driven).
+✅ One player completes a full game on a gamepad in landscape on a TV; touch/keyboard unchanged.
+⚠️ Gamepad polling is per-frame (no events) — read it in the input phase of the fixed-step loop,
+   not in render. Keep `computeIntent` pure; the gamepad adapter just produces its arguments.
+
+## M10 — Local two-player
+🎯 Two humans, two dogs, same screen.
+- Player 2 drives the second `Dog` via a second input source; `ai/sibling.ts` becomes the
+  **solo fallback** (a `partner: 'human' | 'ai'` choice at start).
+- Controller assignment (P1/P2) + a lobby/"press a button to join" on the title overlay.
+- Both dogs are player-eligible for every interaction (wrestle/tug/jump already symmetric).
+✅ Two controllers play all existing rounds couch co-op; solo still works with the AI partner.
+⚠️ Don't fork the dog update path per-controller — both dogs run the same systems; only the
+   *intent source* differs. Scene reset must reassign inputs cleanly (the per-scene-reset rule).
+
+## M11 — Wrappers: desktop (TV) + iOS
+🎯 Install and play off the web — on the TV and on the iPad.
+- Tauri (preferred) or Electron desktop build for Mac/PC-at-the-TV; verify two gamepads.
+- Capacitor iOS wrapper; install via Xcode; verify touch (solo) + paired controllers.
+- CI/scripts: `npm run build:desktop`, `npm run build:ios` (or documented steps).
+✅ A double-clickable desktop app and an installable iOS build run the M10 game; **zero network
+   requests** confirmed in both (offline test).
+⚠️ Re-verify the hard rule in each shell — wrappers can silently reintroduce remote assets.
+   Everything stays bundled/inlined, same as the web artifact.
+
+> **End of Phase 1: the owner and his wife can play the current mechanics on the couch.**
+
+## Phase 2 — The co-op design turn
+
+## M12 — Mission framework + "needs both dogs" primitives
+🎯 The structural shift from competitive rounds to cooperative missions.
+- `systems/mission.ts`: objectives (reach/collect/survive/escort), success/fail, checkpoint
+  + retry, combined score, optional 1–3 star rating. Data-driven, layered on `SceneDef`.
+- Reusable interdependence gates: `bothOnSpots`, `boostJump` (one dog launches the other),
+  `distract+grab`, paired pressure pads. Each is a small system with its own sim test.
+- A **co-op mode toggle** on the title; competitive M2–M8 rounds kept as "versus / chaos" mode.
+✅ A minimal co-op mission (reach the goal with both dogs through one gate) plays and resolves
+   to success/fail; combined score correct; sim covers each gate primitive.
+⚠️ Objectives mutate via a single point like `addScore` did — don't scatter completion flags.
+   Gates must be testable headless (drive both dogs in the sim, assert the gate opens).
+
+## M13+ — Missions as content
+🎯 Build the actual missions, one shippable mission per milestone.
+- **Kitchen "food drop"** (promote `docs/LEVEL-IDEAS.md`): asymmetric abilities — Cheddar
+  chair-leaps + barfs, Cocoa steady; co-op angle (Cheddar knocks table food down for Cocoa).
+- **Car trip**, **house rescue**, **yard predator escort**, … (owner to prioritize).
+- Each mission = `SceneDef` + painter + objective config + any net-new gate system + sim test.
+✅ Per mission: plays start→success/fail with both dogs, needs genuine teamwork, sim-green.
+⚠️ Asymmetric abilities are a balance shift — budget a sim + playtest pass per new ability,
+   the way AI speed / wrestle odds were tuned. New constants go in `config/balance.ts`.
+
+## Co-op definition-of-done
+
+Phase 1 shipped and green (two controllers, TV + iOS, zero-network in every shell); the mission
+framework + gate primitives are tested headless; at least the first co-op mission plays
+start-to-finish requiring both dogs; `npm run verify` stays green throughout; competitive mode
+preserved.
