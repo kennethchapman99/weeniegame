@@ -156,9 +156,9 @@ export function drawInterstitial(g: G, s: GameState): void {
   g.fillText(coop ? 'Co-op mission — work together! 🐾' : sceneSub(s.sceneKey), W / 2, H / 2 + 24);
 }
 
-export function drawEnd(g: G, s: GameState, coopHasNext = false): void {
+export function drawEnd(g: G, s: GameState, coopHasNext = false, best?: { score: number; stars: number } | null): void {
   if (s.mode === 'coop' && s.mission) {
-    drawMissionEnd(g, s, coopHasNext);
+    drawMissionEnd(g, s, coopHasNext, best);
     return;
   }
   scrim(g, 0.82);
@@ -192,7 +192,7 @@ export function drawEnd(g: G, s: GameState, coopHasNext = false): void {
 }
 
 /** Co-op mission result: SUCCESS (with stars) or FAILED, combined score, and replay. */
-function drawMissionEnd(g: G, s: GameState, hasNext: boolean): void {
+function drawMissionEnd(g: G, s: GameState, hasNext: boolean, best?: { score: number; stars: number } | null): void {
   const m = s.mission!;
   const win = m.status === 'success';
   scrim(g, 0.84);
@@ -225,6 +225,15 @@ function drawMissionEnd(g: G, s: GameState, hasNext: boolean): void {
     g.fillStyle = '#cfe0ea';
     g.font = "700 20px Georgia, 'Times New Roman', serif";
     g.fillText('The pups couldn’t crack it in time. Try again — together!', W / 2, 262);
+  }
+
+  // best-ever for this mission (persisted)
+  if (best && best.score > 0) {
+    let bs = '';
+    for (let i = 0; i < 3; i++) bs += i < best.stars ? '★' : '☆';
+    g.fillStyle = '#9b8e7a';
+    g.font = '700 16px -apple-system, sans-serif';
+    g.fillText(`Best: ${best.score}   ${bs}`, W / 2, 400);
   }
 
   g.fillStyle = '#f4d3a4';

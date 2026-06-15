@@ -22,6 +22,8 @@ import {
 } from './render/hud.js';
 import { drawParticles, drawPopups } from './systems/particles.js';
 import { drawTitle, drawInterstitial, drawEnd, titleHit, endHit } from './render/overlays.js';
+import { loadBest, saveBest } from './core/scores.js';
+import type { Best } from './core/scores.js';
 import { Backdrop } from './render/backdrop.js';
 
 const canvas = document.getElementById('game') as HTMLCanvasElement | null;
@@ -80,6 +82,11 @@ canvas.addEventListener('pointerdown', (e) => {
   }
 });
 
+// best score/stars for the just-finished mission, recorded once when it ends (host-side, so
+// the deterministic sim stays storage-free).
+let endBest: Best | null = null;
+let recorded = false;
+
 function update(dt: number): void {
   input.poll(); // read both gamepads before computing intents / draining actions
 
@@ -90,6 +97,21 @@ function update(dt: number): void {
   const p1 = input.p1Command(player(state), twoPlayer);
   const p2 = twoPlayer ? input.p2Command(ai(state)) : null;
   updateGame(state, p1.intent, p1.wrestle, p1.jump, dt, p2);
+
+  // record a co-op mission result once, when it lands on the end screen
+  if (state.phase === 'end' && state.mode === 'coop' && state.mission) {
+    if (!recorded) {
+      recorded = true;
+      const m = state.mission;
+      endBest =
+        m.status === 'success'
+          ? saveBest(m.key, m.combinedScore, m.stars)
+          : loadBest(m.key);
+    }
+  } else {
+    recorded = false;
+    endBest = null;
+  }
 }
 
 function render(): void {
@@ -135,7 +157,7 @@ function render(): void {
   }
 
   if (state.phase === 'inter') drawInterstitial(ctx, state);
-  if (state.phase === 'end') drawEnd(ctx, state, coopHasNext(state));
+  if (state.phase === 'end') drawEnd(ctx, state, coopHasNext(state), endBest);
 
   // drain queued sounds (host layer plays them; systems stay audio-free)
   if (state.sounds.length) {
