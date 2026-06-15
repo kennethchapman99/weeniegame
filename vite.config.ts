@@ -7,6 +7,8 @@ import { viteSingleFile } from 'vite-plugin-singlefile';
 // future image/font asset is base64-inlined at build time, never fetched.
 export default defineConfig({
   plugins: [viteSingleFile()],
+  // Fixed dev port so the Tauri desktop shell (M11) reliably attaches to `npm run dev`.
+  server: { port: 5173, strictPort: true },
   build: {
     target: 'es2022',
     assetsInlineLimit: 100_000_000,

@@ -149,15 +149,24 @@ All of M0–M8 shipped and green; the built game matches the prototype across al
 > (versus mode); combined co-op scoring is M12. Tests: `tests/sim/coop.test.ts`,
 > `tests/core/input.test.ts` (79 green total).
 
-## M11 — Wrappers: desktop (TV) + iOS
+## M11 — Wrappers: desktop (TV) + iOS — 🟡 SCAFFOLDED (2026-06-15)
 🎯 Install and play off the web — on the TV and on the iPad.
-- Tauri (preferred) or Electron desktop build for Mac/PC-at-the-TV; verify two gamepads.
-- Capacitor iOS wrapper; install via Xcode; verify touch (solo) + paired controllers.
-- CI/scripts: `npm run build:desktop`, `npm run build:ios` (or documented steps).
+- **Tauri v2 for both desktop AND iOS** (Tauri v2 added native iOS — supersedes the original
+  Tauri-desktop + Capacitor-iOS split; one shell, one CSP). Verify two gamepads.
+- iOS via `tauri ios` (built from the same crate); install via Xcode; verify touch + controllers.
+- Scripts: `npm run build:desktop` (`tauri build`), `npm run desktop:dev`; see `docs/WRAPPERS.md`.
 ✅ A double-clickable desktop app and an installable iOS build run the M10 game; **zero network
    requests** confirmed in both (offline test).
 ⚠️ Re-verify the hard rule in each shell — wrappers can silently reintroduce remote assets.
    Everything stays bundled/inlined, same as the web artifact.
+
+> **Scaffolded & validated, build pending toolchain.** `src-tauri/` (Cargo.toml, tauri.conf.json,
+> build.rs, src/{main,lib}.rs, capabilities, generated icons) + npm scripts are committed; the web
+> payload is `dist/index.html` (zero-network, already audited) and the CSP allows no http(s)
+> origin. `npm run tauri info` parses the config and detects the Vite bundler. **Remaining (owner
+> machine):** one-time `rustup` install (no Rust in CI/sandbox) to produce the desktop binary,
+> and full Xcode + devices for the iOS build + offline on-device verification. Steps in
+> `docs/WRAPPERS.md`.
 
 > **End of Phase 1: the owner and his wife can play the current mechanics on the couch.**
 

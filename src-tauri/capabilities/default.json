@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Main-window capability. Core defaults only — no network, fs, shell or other plugins are enabled (the game is fully self-contained).",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}

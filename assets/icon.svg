@@ -1,0 +1,35 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6f9a4e"/>
+      <stop offset="1" stop-color="#4e7838"/>
+    </linearGradient>
+    <linearGradient id="ched" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f7dcab"/>
+      <stop offset="1" stop-color="#e3b277"/>
+    </linearGradient>
+    <linearGradient id="coco" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8a5a34"/>
+      <stop offset="1" stop-color="#5e3a20"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="220" fill="url(#bg)"/>
+  <!-- Cheddar (front dachshund) -->
+  <g transform="translate(150 470)">
+    <ellipse cx="300" cy="250" rx="300" ry="120" fill="url(#ched)"/>
+    <ellipse cx="560" cy="170" rx="120" ry="110" fill="url(#ched)"/>
+    <path d="M470 110 q-30 -90 30 -120 q20 70 -10 130 z" fill="#d9a86b"/>
+    <circle cx="610" cy="150" r="16" fill="#2a1c12"/>
+    <circle cx="650" cy="195" r="18" fill="#2a1c12"/>
+    <rect x="60" y="330" width="50" height="120" rx="22" fill="#d9a86b"/>
+    <rect x="470" y="330" width="50" height="120" rx="22" fill="#d9a86b"/>
+  </g>
+  <!-- Cocoa (back dachshund) -->
+  <g transform="translate(120 250) scale(0.78)">
+    <ellipse cx="300" cy="250" rx="300" ry="120" fill="url(#coco)"/>
+    <ellipse cx="40" cy="170" rx="120" ry="110" fill="url(#coco)"/>
+    <path d="M120 110 q30 -90 -30 -120 q-20 70 10 130 z" fill="#7a4e2c"/>
+    <circle cx="-10" cy="150" r="16" fill="#1c120a"/>
+    <circle cx="-50" cy="195" r="18" fill="#1c120a"/>
+  </g>
+</svg>
