@@ -56,6 +56,7 @@ canvas.addEventListener('pointerdown', (e) => {
     }
     if (hit.mode) state.partner = hit.mode;
     if (hit.gameMode) state.mode = hit.gameMode;
+    if (hit.mute) audio.toggleMuted();
     if (hit.play) startGame(state);
   } else if (state.phase === 'play') {
     if (wrestleButtonHit(p)) {
@@ -103,7 +104,7 @@ function render(): void {
   camera.applyTransform();
 
   if (state.phase === 'title') {
-    drawTitle(ctx, state, input.padCount);
+    drawTitle(ctx, state, input.padCount, audio.isMuted);
     return;
   }
 

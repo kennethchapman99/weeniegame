@@ -18,6 +18,32 @@ type Win = typeof globalThis & {
 export class AudioBus {
   private ac: AudioContext | null = null;
   private ok = true;
+  private muted = false;
+
+  constructor() {
+    // restore the mute preference (localStorage is blocked in some sandboxes — fail soft)
+    try {
+      this.muted = globalThis.localStorage?.getItem('cc-muted') === '1';
+    } catch {
+      /* ignore */
+    }
+  }
+
+  /** Whether sound is currently muted. */
+  get isMuted(): boolean {
+    return this.muted;
+  }
+
+  /** Flip mute and persist the choice. Returns the new state. */
+  toggleMuted(): boolean {
+    this.muted = !this.muted;
+    try {
+      globalThis.localStorage?.setItem('cc-muted', this.muted ? '1' : '0');
+    } catch {
+      /* ignore */
+    }
+    return this.muted;
+  }
 
   /** Resume/create the context — call from a user gesture. */
   resume(): void {
@@ -25,6 +51,7 @@ export class AudioBus {
   }
 
   play(id: SoundId): void {
+    if (this.muted) return;
     switch (id) {
       case 'growl':
         this.growl();

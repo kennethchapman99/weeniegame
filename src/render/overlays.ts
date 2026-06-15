@@ -27,14 +27,28 @@ const GMODE_COOP = { x: W / 2 + GMODE.gap / 2, y: GMODE.y, w: GMODE.w, h: GMODE.
 const MODE = { y: 438, w: 156, h: 38, gap: 14 };
 const MODE_AI = { x: W / 2 - MODE.w - MODE.gap / 2, y: MODE.y, w: MODE.w, h: MODE.h };
 const MODE_HUMAN = { x: W / 2 + MODE.gap / 2, y: MODE.y, w: MODE.w, h: MODE.h };
+// mute toggle (top-right corner of the title)
+const MUTE = { x: W - 46, y: 40, r: 22 };
 
 function scrim(g: G, a = 0.72): void {
   g.fillStyle = `rgba(18,14,10,${a})`;
   g.fillRect(0, 0, W, H);
 }
 
-export function drawTitle(g: G, s: GameState, padCount = 0): void {
+export function drawTitle(g: G, s: GameState, padCount = 0, muted = false): void {
   scrim(g, 0.82);
+
+  // mute toggle (top-right)
+  g.save();
+  g.fillStyle = 'rgba(255,255,255,.10)';
+  g.beginPath();
+  g.arc(MUTE.x, MUTE.y, MUTE.r, 0, 7);
+  g.fill();
+  g.fillStyle = '#f6e6c8';
+  g.textAlign = 'center';
+  g.font = '20px -apple-system, sans-serif';
+  g.fillText(muted ? '🔇' : '🔊', MUTE.x, MUTE.y + 7);
+  g.restore();
   g.textAlign = 'center';
   g.fillStyle = '#f6e6c8';
   g.font = "900 56px Georgia, 'Times New Roman', serif";
@@ -227,8 +241,10 @@ export function titleHit(p: Point): {
   pick?: DogId;
   mode?: Partner;
   gameMode?: GameMode;
+  mute?: boolean;
   play: boolean;
 } {
+  if (Math.hypot(p.x - MUTE.x, p.y - MUTE.y) < MUTE.r + 6) return { mute: true, play: false };
   if (Math.hypot(p.x - (W / 2 - PICK.dx), p.y - PICK.y) < PICK.r) return { pick: 'cheddar', play: false };
   if (Math.hypot(p.x - (W / 2 + PICK.dx), p.y - PICK.y) < PICK.r) return { pick: 'cocoa', play: false };
   if (inRect(p, GMODE_VS)) return { gameMode: 'versus', play: false };
