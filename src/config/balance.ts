@@ -54,6 +54,16 @@ export const MISSION = {
   timeBonus: 2, // combined-score points per whole second left at success
 } as const;
 
+// "Kitchen Counter Caper" co-op mission — asymmetric abilities (Cheddar knocks, both eat).
+export const KITCHEN = {
+  leapRange: 76, // how close Cheddar must be to a counter item to knock it off
+  knockCD: 0.5, // min seconds between knock-offs (one per chair-leap)
+  eatR: 40, // proximity to gobble a floor item
+  foodScore: 4, // combined-score per item eaten
+  floorTtl: 6, // seconds a fallen item survives before it's swept up
+  target: 5, // items to eat to win
+} as const;
+
 // "Sneak the Snack" distract+grab mission tuning.
 export const SNEAK = {
   grabR: 42, // how close a dog must be to a treat to grab it
