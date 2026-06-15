@@ -103,6 +103,6 @@ describe('co-op campaign chain', () => {
     advanceCoop(s);
     expect(s.sceneIdx).toBe(1);
     expect(s.mission!.key).toBe('mission-sneak');
-    expect(coopHasNext(s)).toBe(false); // last mission in the campaign
+    expect(coopHasNext(s)).toBe(true); // the creek mission still follows
   });
 });

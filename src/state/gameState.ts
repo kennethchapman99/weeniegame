@@ -8,6 +8,7 @@
 
 import type { Dog, DogId } from './dog.js';
 import { makeDog } from './dog.js';
+import type { Point } from '../core/math.js';
 import type { Rng } from '../core/rng.js';
 import type { SoundId } from '../core/audio.js';
 import { ZOOMIES } from '../config/balance.js';
@@ -234,6 +235,9 @@ export interface MissionState {
   pads: Pad[];
   gate: CoopGate | null;
   goal: GoalZone | null;
+  /** boost-jump: a brace pad + where the launched dog is flung (one dog launches the other). */
+  boostPad: Point | null;
+  boostTarget: Point | null;
   /** mission-specific entity bag (each mission defines + casts its own shape). */
   data: unknown;
 }

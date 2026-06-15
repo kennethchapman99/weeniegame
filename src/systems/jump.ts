@@ -8,9 +8,15 @@ import type { GameState } from '../state/gameState.js';
 import { playSound } from '../state/gameState.js';
 import type { Dog } from '../state/dog.js';
 import { JUMP } from '../config/balance.js';
+import { tryMissionBoost } from './gates.js';
 
 /** Start a jump if eligible. Returns true if it fired. */
 export function tryJump(s: GameState, d: Dog): boolean {
+  // co-op: a jump next to a teammate's boost pad becomes a launch across (one dog flings the other)
+  if (s.mode === 'coop' && tryMissionBoost(s, d)) {
+    playSound(s, 'yip');
+    return true;
+  }
   if (d.mode !== 'free' && d.mode !== 'tug') return false;
   if (d.jumpT > 0) return false; // already mid-hop
   d.jumpT = JUMP.duration;

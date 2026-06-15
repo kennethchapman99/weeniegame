@@ -15,7 +15,7 @@
  */
 
 import type { Dog } from '../state/dog.js';
-import type { Pad } from '../state/gameState.js';
+import type { Pad, GameState } from '../state/gameState.js';
 import type { Point } from '../core/math.js';
 import { GATES, JUMP } from '../config/balance.js';
 
@@ -70,4 +70,17 @@ export function boostLaunch(jumper: Dog, toward: Point): boolean {
 /** A threat is distracted while any *other* dog is within `r` of it (so a teammate can sneak in). */
 export function isDistracted(threat: Point, dogs: Dog[], r = GATES.distractR): boolean {
   return dogs.some((d) => Math.hypot(d.x - threat.x, d.y - threat.y) <= r);
+}
+
+/**
+ * If the current mission has a boost pad and `jumper`'s teammate is bracing on it, launch the
+ * jumper toward the boost target and report true (the host should treat this as the jump action).
+ * Returns false when no boost is available, so the caller falls through to a normal jump.
+ */
+export function tryMissionBoost(s: GameState, jumper: Dog): boolean {
+  const m = s.mission;
+  if (!m || !m.boostPad || !m.boostTarget) return false;
+  const booster = jumper.id === 'cheddar' ? s.dogs.cocoa : s.dogs.cheddar;
+  if (!canBoost(booster, jumper, m.boostPad)) return false;
+  return boostLaunch(jumper, m.boostTarget);
 }

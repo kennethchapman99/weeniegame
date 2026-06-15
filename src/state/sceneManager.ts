@@ -27,12 +27,13 @@ import { poolScene } from '../scenes/pool.js';
 import { houseScene } from '../scenes/house/index.js';
 import { gateMission } from '../scenes/missions/gate.js';
 import { sneakMission } from '../scenes/missions/sneak.js';
+import { creekMission } from '../scenes/missions/creek.js';
 import { tickMission } from '../systems/mission.js';
 
 /** Versus rounds (M2–M8): Backyard → Pool → House. */
 const VERSUS_REGISTRY: SceneDef[] = [yardScene, poolScene, houseScene];
 /** Co-op mission campaign (M12+), played in order. */
-const COOP_REGISTRY: SceneDef[] = [gateMission, sneakMission];
+const COOP_REGISTRY: SceneDef[] = [gateMission, sneakMission, creekMission];
 
 /** The active registry for the current game mode. */
 function registry(s: GameState): SceneDef[] {

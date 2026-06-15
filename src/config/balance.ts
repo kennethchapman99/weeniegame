@@ -45,7 +45,7 @@ export const GATES = {
   boostPadR: 34, // booster must be within this of the boost pad
   boostReach: 70, // jumper must be within this of the pad to be launched
   boostJumpMult: 1.7, // boosted arc duration vs a solo jump
-  boostLaunchSpeed: 7.5, // launch velocity off the booster
+  boostLaunchSpeed: 50, // catapult impulse off the booster (decays ~0.78/frame → ~225px of travel)
   distractR: 120, // a threat is distracted while a dog is within this
 } as const;
 
