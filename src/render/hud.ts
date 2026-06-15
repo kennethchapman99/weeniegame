@@ -81,8 +81,11 @@ export function drawHUD(g: G, s: GameState): void {
   g.fillStyle = 'rgba(20,14,10,.85)';
   g.fillText(s.sceneKey ? sceneLabel(s) : '', W / 2, 30);
 
-  scorePill(g, 16, 16, s.dogs.cheddar.score, DOGS.cheddar.dry.body[1], 'CHEDDAR', 'left', s.playerId === 'cheddar');
-  scorePill(g, W - 16, 16, s.dogs.cocoa.score, DOGS.cocoa.dry.body[1], 'COCOA', 'right', s.playerId === 'cocoa');
+  const twoP = s.partner === 'human';
+  const role = (id: 'cheddar' | 'cocoa'): string =>
+    s.playerId === id ? 'P1' : twoP ? 'P2' : 'CPU';
+  scorePill(g, 16, 16, s.dogs.cheddar.score, DOGS.cheddar.dry.body[1], 'CHEDDAR', 'left', s.playerId === 'cheddar', role('cheddar'));
+  scorePill(g, W - 16, 16, s.dogs.cocoa.score, DOGS.cocoa.dry.body[1], 'COCOA', 'right', s.playerId === 'cocoa', role('cocoa'));
 
   if (s.sceneKey === 'house') drawSiblingLocator(g, s);
 }
@@ -126,6 +129,7 @@ function scorePill(
   name: string,
   align: 'left' | 'right',
   isPlayer: boolean,
+  role: string,
 ): void {
   const w = 116;
   const h = 34;
@@ -134,12 +138,18 @@ function scorePill(
   g.fillStyle = 'rgba(255,250,242,.92)';
   rounded(g, px, y, w, h, 10);
   g.fill();
-  if (isPlayer) {
+  // outline human-controlled dogs (P1 always; P2 in co-op)
+  if (isPlayer || role === 'P2') {
     g.strokeStyle = '#f4d3a4';
     g.lineWidth = 2.5;
     rounded(g, px, y, w, h, 10);
     g.stroke();
   }
+  // role tag (P1 / P2 / CPU) in the pill corner
+  g.fillStyle = role === 'CPU' ? '#9b8e7a' : '#c98a2b';
+  g.textAlign = align === 'left' ? 'right' : 'left';
+  g.font = '800 9px -apple-system, sans-serif';
+  g.fillText(role, align === 'left' ? px + w - 8 : px + 8, y + 12);
   // swatch
   g.fillStyle = swatch;
   g.beginPath();

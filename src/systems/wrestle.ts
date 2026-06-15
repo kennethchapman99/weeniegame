@@ -7,7 +7,7 @@
  */
 
 import type { GameState } from '../state/gameState.js';
-import { cap } from '../state/gameState.js';
+import { cap, isHuman } from '../state/gameState.js';
 import type { Dog } from '../state/dog.js';
 import { WRESTLE, WORLD } from '../config/balance.js';
 import { popup } from './particles.js';
@@ -30,17 +30,17 @@ export function doWrestle(s: GameState, att: Dog, def: Dog): void {
 
   // belly-rub immunity blocks the flip
   if (def.immune > 0) {
-    if (att.id === s.playerId) {
+    if (isHuman(s, att.id)) {
       popup(s, def.x, def.y - 46, 'too cozy to flip!', '#9effa0');
       att.wrestleCD = WRESTLE.immuneBlockedCD;
     }
     return;
   }
 
-  // just out of range: lunge toward the sibling (player only), small cooldown
+  // just out of range: lunge toward the sibling (human-controlled attackers only), small cooldown
   const d = Math.hypot(att.x - def.x, att.y - def.y);
   if (d > WRESTLE.range) {
-    if (att.id === s.playerId) {
+    if (isHuman(s, att.id)) {
       const dx = def.x - att.x;
       const dy = def.y - att.y;
       const m = Math.hypot(dx, dy) || 1;

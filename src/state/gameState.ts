@@ -14,6 +14,9 @@ import { ZOOMIES } from '../config/balance.js';
 
 export type Phase = 'title' | 'inter' | 'play' | 'end';
 
+/** Who controls the sibling dog: a second human (couch co-op) or the AI brain (solo). */
+export type Partner = 'human' | 'ai';
+
 export interface Toy {
   x: number;
   y: number;
@@ -181,6 +184,8 @@ export interface GameState {
 
   playerId: DogId;
   aiId: DogId;
+  /** P1 drives `playerId`; the sibling (`aiId`) is a 2nd human when 'human', else the AI. */
+  partner: Partner;
   dogs: Record<DogId, Dog>;
 
   toys: Toy[];
@@ -224,6 +229,7 @@ export function makeGameState(rng: Rng, playerId: DogId = 'cheddar'): GameState 
     elapsedMs: 0,
     playerId,
     aiId,
+    partner: 'ai',
     dogs: {
       cheddar: makeDog('cheddar', 300, 400, 3.2),
       cocoa: makeDog('cocoa', 660, 400, 6.1),
@@ -255,6 +261,10 @@ export function makeGameState(rng: Rng, playerId: DogId = 'cheddar'): GameState 
 export const player = (s: GameState): Dog => s.dogs[s.playerId];
 export const ai = (s: GameState): Dog => s.dogs[s.aiId];
 export const other = (s: GameState, d: Dog): Dog => (d.id === 'cheddar' ? s.dogs.cocoa : s.dogs.cheddar);
+
+/** Is this dog under human control? P1 always; the sibling only in two-player mode. */
+export const isHuman = (s: GameState, id: DogId): boolean =>
+  id === s.playerId || (s.partner === 'human' && id === s.aiId);
 
 export function cap(id: string): string {
   return id[0]!.toUpperCase() + id.slice(1);

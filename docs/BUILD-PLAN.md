@@ -128,7 +128,7 @@ All of M0–M8 shipped and green; the built game matches the prototype across al
 ⚠️ Gamepad polling is per-frame (no events) — read it in the input phase of the fixed-step loop,
    not in render. Keep `computeIntent` pure; the gamepad adapter just produces its arguments.
 
-## M10 — Local two-player
+## M10 — Local two-player ✅ BUILT (2026-06-15)
 🎯 Two humans, two dogs, same screen.
 - Player 2 drives the second `Dog` via a second input source; `ai/sibling.ts` becomes the
   **solo fallback** (a `partner: 'human' | 'ai'` choice at start).
@@ -137,6 +137,17 @@ All of M0–M8 shipped and green; the built game matches the prototype across al
 ✅ Two controllers play all existing rounds couch co-op; solo still works with the AI partner.
 ⚠️ Don't fork the dog update path per-controller — both dogs run the same systems; only the
    *intent source* differs. Scene reset must reassign inputs cleanly (the per-scene-reset rule).
+
+> **Shipped.** `partner: 'human' | 'ai'` on `GameState` is the source of truth (default `'ai'`).
+> `updateGame` takes an optional `p2?: DogCmd` (6th arg, zero churn to existing sims): in co-op
+> the sibling is steered by P2 and runs the *same* movement/action systems as P1; in solo it
+> falls back to `aiThink` + `maybeAiWrestle`. Human-only affordances (wrestle lunge/immune
+> popup) gate on `isHuman(s,id)`; tug auto-mash is disabled in co-op (each dog mashes its own
+> side). Input: `core/gamepad.ts` `GamepadSource(slot)` (P1=pad0, P2=pad1); `core/input.ts`
+> `p1Command`/`p2Command` + keyboard split (P1 WASD, P2 arrows + `/`,`.`). Title lobby: 1P/2P
+> toggle + press-Ⓐ-on-pad-2 to join; HUD/title show P1/P2/CPU tags. Competitive scoring kept
+> (versus mode); combined co-op scoring is M12. Tests: `tests/sim/coop.test.ts`,
+> `tests/core/input.test.ts` (79 green total).
 
 ## M11 — Wrappers: desktop (TV) + iOS
 🎯 Install and play off the web — on the TV and on the iPad.

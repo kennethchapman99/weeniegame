@@ -74,12 +74,15 @@ export function updateTug(s: GameState, dt: number): void {
   t.dur += dt;
   t.growlT -= dt;
 
-  // AI mashes automatically (Cocoa the veteran pulls a touch harder)
-  const aiDog = s.dogs[s.aiId];
-  const aiStr = aiDog.id === 'cocoa' ? TUG.aiMash.cocoa : TUG.aiMash.cheddar;
-  const yank = aiStr * dt * 8 * s.rng.range(0.6, 1.2);
-  if (aiDog.id === 'cheddar') t.mashA += yank;
-  else t.mashB += yank;
+  // The AI sibling mashes automatically (Cocoa the veteran pulls a touch harder). In two-player
+  // co-op both dogs are human, so the sibling mashes manually via tugPull — skip the auto-yank.
+  if (s.partner === 'ai') {
+    const aiDog = s.dogs[s.aiId];
+    const aiStr = aiDog.id === 'cocoa' ? TUG.aiMash.cocoa : TUG.aiMash.cheddar;
+    const yank = aiStr * dt * 8 * s.rng.range(0.6, 1.2);
+    if (aiDog.id === 'cheddar') t.mashA += yank;
+    else t.mashB += yank;
+  }
 
   // resolve toward whoever mashed more recently; decay both
   const net = t.mashA - t.mashB;

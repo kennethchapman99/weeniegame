@@ -4,7 +4,7 @@
  * the prototype's DOM overlays; rendered on-canvas so input stays in one coordinate space.
  */
 
-import type { GameState } from '../state/gameState.js';
+import type { GameState, Partner } from '../state/gameState.js';
 import type { DogId } from '../state/dog.js';
 import type { Point } from '../core/math.js';
 import { drawDog } from './dog.js';
@@ -17,26 +17,45 @@ type G = CanvasRenderingContext2D;
 const W = WORLD.w;
 const H = WORLD.h;
 
-const PICK = { y: 320, dx: 150, r: 70 };
-const PLAY = { x: W / 2 - 90, y: 470, w: 180, h: 54 };
+const PICK = { y: 300, dx: 150, r: 70 };
+const PLAY = { x: W / 2 - 90, y: 492, w: 180, h: 54 };
+// 1P / 2P segmented toggle (couch co-op lobby, M10)
+const MODE = { y: 420, w: 156, h: 42, gap: 14 };
+const MODE_AI = { x: W / 2 - MODE.w - MODE.gap / 2, y: MODE.y, w: MODE.w, h: MODE.h };
+const MODE_HUMAN = { x: W / 2 + MODE.gap / 2, y: MODE.y, w: MODE.w, h: MODE.h };
 
 function scrim(g: G, a = 0.72): void {
   g.fillStyle = `rgba(18,14,10,${a})`;
   g.fillRect(0, 0, W, H);
 }
 
-export function drawTitle(g: G, s: GameState): void {
+export function drawTitle(g: G, s: GameState, padCount = 0): void {
   scrim(g, 0.82);
   g.textAlign = 'center';
   g.fillStyle = '#f6e6c8';
-  g.font = "900 58px Georgia, 'Times New Roman', serif";
-  g.fillText('Cheddar & Cocoa', W / 2, 180);
+  g.font = "900 56px Georgia, 'Times New Roman', serif";
+  g.fillText('Cheddar & Cocoa', W / 2, 150);
   g.fillStyle = '#cfe0ea';
   g.font = '600 18px -apple-system, sans-serif';
-  g.fillText('Two dachshunds. One couch. Pick your dog.', W / 2, 220);
+  g.fillText('Two dachshunds. One couch. Pick your dog.', W / 2, 188);
 
-  drawPortrait(g, 'cheddar', W / 2 - PICK.dx, PICK.y, s.playerId === 'cheddar', s.elapsedMs);
-  drawPortrait(g, 'cocoa', W / 2 + PICK.dx, PICK.y, s.playerId === 'cocoa', s.elapsedMs);
+  const twoP = s.partner === 'human';
+  // P1 picks a dog; the other dog goes to P2 (co-op) or the CPU (solo).
+  const cheddarRole = s.playerId === 'cheddar' ? 'P1' : twoP ? 'P2' : 'CPU';
+  const cocoaRole = s.playerId === 'cocoa' ? 'P1' : twoP ? 'P2' : 'CPU';
+  drawPortrait(g, 'cheddar', W / 2 - PICK.dx, PICK.y, s.playerId === 'cheddar', s.elapsedMs, cheddarRole);
+  drawPortrait(g, 'cocoa', W / 2 + PICK.dx, PICK.y, s.playerId === 'cocoa', s.elapsedMs, cocoaRole);
+
+  // 1P / 2P toggle
+  modeButton(g, MODE_AI, '1 PLAYER', !twoP);
+  modeButton(g, MODE_HUMAN, '2 PLAYERS', twoP);
+
+  // press-to-join hint when a second controller is plugged in but P2 hasn't joined yet
+  if (padCount >= 2 && !twoP) {
+    g.fillStyle = '#9effa0';
+    g.font = '700 14px -apple-system, sans-serif';
+    g.fillText('Controller 2 ready — press Ⓐ to join', W / 2, MODE.y + MODE.h + 24);
+  }
 
   // play button
   g.fillStyle = '#f4d3a4';
@@ -47,7 +66,31 @@ export function drawTitle(g: G, s: GameState): void {
   g.fillText('PLAY', W / 2, PLAY.y + 35);
 }
 
-function drawPortrait(g: G, id: DogId, x: number, y: number, selected: boolean, t: number): void {
+function modeButton(g: G, r: { x: number; y: number; w: number; h: number }, label: string, on: boolean): void {
+  g.fillStyle = on ? '#f4d3a4' : 'rgba(255,255,255,.08)';
+  rounded(g, r.x, r.y, r.w, r.h, 12);
+  g.fill();
+  if (on) {
+    g.strokeStyle = '#f4d3a4';
+    g.lineWidth = 2.5;
+    rounded(g, r.x, r.y, r.w, r.h, 12);
+    g.stroke();
+  }
+  g.fillStyle = on ? '#3a2c20' : '#cfe0ea';
+  g.textAlign = 'center';
+  g.font = '800 17px -apple-system, sans-serif';
+  g.fillText(label, r.x + r.w / 2, r.y + r.h / 2 + 6);
+}
+
+function drawPortrait(
+  g: G,
+  id: DogId,
+  x: number,
+  y: number,
+  selected: boolean,
+  t: number,
+  role: string,
+): void {
   g.save();
   g.beginPath();
   g.arc(x, y, PICK.r, 0, 7);
@@ -71,6 +114,11 @@ function drawPortrait(g: G, id: DogId, x: number, y: number, selected: boolean, 
   g.textAlign = 'center';
   g.font = '800 14px -apple-system, sans-serif';
   g.fillText(cap(id), x, y + PICK.r + 22);
+  // role tag (P1 / P2 / CPU)
+  const isCpu = role === 'CPU';
+  g.fillStyle = isCpu ? '#cfe0ea' : '#9effa0';
+  g.font = '800 12px -apple-system, sans-serif';
+  g.fillText(role, x, y + PICK.r + 40);
   g.restore();
 }
 
@@ -116,10 +164,12 @@ export function drawEnd(g: G, s: GameState): void {
   g.fillText('PLAY AGAIN', W / 2, PLAY.y + 35);
 }
 
-/** Title-screen tap: returns the picked dog (and whether PLAY was pressed). */
-export function titleHit(p: Point): { pick?: DogId; play: boolean } {
+/** Title-screen tap: returns the picked dog, a mode toggle, and whether PLAY was pressed. */
+export function titleHit(p: Point): { pick?: DogId; mode?: Partner; play: boolean } {
   if (Math.hypot(p.x - (W / 2 - PICK.dx), p.y - PICK.y) < PICK.r) return { pick: 'cheddar', play: false };
   if (Math.hypot(p.x - (W / 2 + PICK.dx), p.y - PICK.y) < PICK.r) return { pick: 'cocoa', play: false };
+  if (inRect(p, MODE_AI)) return { mode: 'ai', play: false };
+  if (inRect(p, MODE_HUMAN)) return { mode: 'human', play: false };
   if (inRect(p, PLAY)) return { play: true };
   return { play: false };
 }

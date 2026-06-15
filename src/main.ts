@@ -10,7 +10,7 @@ import { startLoop } from './core/loop.js';
 import { Input } from './core/input.js';
 import { makeRng } from './core/rng.js';
 import { AudioBus } from './core/audio.js';
-import { makeGameState, player } from './state/gameState.js';
+import { makeGameState, player, ai } from './state/gameState.js';
 import { startGame, updateGame, currentScene } from './state/sceneManager.js';
 import { drawDog } from './render/dog.js';
 import {
@@ -54,6 +54,7 @@ canvas.addEventListener('pointerdown', (e) => {
       state.playerId = hit.pick;
       state.aiId = hit.pick === 'cheddar' ? 'cocoa' : 'cheddar';
     }
+    if (hit.mode) state.partner = hit.mode;
     if (hit.play) startGame(state);
   } else if (state.phase === 'play') {
     if (wrestleButtonHit(p)) {
@@ -71,11 +72,15 @@ canvas.addEventListener('pointerdown', (e) => {
 });
 
 function update(dt: number): void {
-  input.poll(); // read the gamepad (if any) before computing intent / draining actions
-  const intent = input.intentFor(player(state));
-  const wrestle = input.consumeWrestle();
-  const jump = input.consumeJump();
-  updateGame(state, intent, wrestle, jump, dt);
+  input.poll(); // read both gamepads before computing intents / draining actions
+
+  // Title: a button on controller 2 = "press to join" → switch to two-player co-op.
+  if (state.phase === 'title' && input.takeP2Join()) state.partner = 'human';
+
+  const twoPlayer = state.partner === 'human';
+  const p1 = input.p1Command(player(state), twoPlayer);
+  const p2 = twoPlayer ? input.p2Command(ai(state)) : null;
+  updateGame(state, p1.intent, p1.wrestle, p1.jump, dt, p2);
 }
 
 function render(): void {
@@ -90,7 +95,7 @@ function render(): void {
   camera.applyTransform();
 
   if (state.phase === 'title') {
-    drawTitle(ctx, state);
+    drawTitle(ctx, state, input.padCount);
     return;
   }
 

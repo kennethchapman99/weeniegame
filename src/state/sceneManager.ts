@@ -9,16 +9,17 @@
  */
 
 import type { GameState } from './gameState.js';
-import type { Intent } from '../core/input.js';
+import type { Intent, DogCmd } from '../core/input.js';
 import type { SceneDef } from '../scenes/types.js';
 import { makeDog } from './dog.js';
+import type { Dog } from './dog.js';
 import { moveDog, collideDogs } from '../systems/movement.js';
 import { updateParticles } from '../systems/particles.js';
 import { doWrestle, maybeAiWrestle } from '../systems/wrestle.js';
 import { updateTug, tugPull } from '../systems/tug.js';
 import { tryJump } from '../systems/jump.js';
 import { tickTransit, doorTriggers } from '../systems/house.js';
-import { player, ai } from './gameState.js';
+import { player, ai, other } from './gameState.js';
 import { aiThink } from '../ai/sibling.js';
 import { SPEED, PREDATOR, EVENTS } from '../config/balance.js';
 import { yardScene } from '../scenes/yard.js';
@@ -88,6 +89,18 @@ export function beginScene(s: GameState): void {
   s.interTimer = 1.6;
 }
 
+/** A no-op command (P2 idle, or two-player mode without a host-supplied P2 source). */
+const IDLE_CMD: DogCmd = { intent: { ax: 0, ay: 0, arrive: 0 }, wrestle: false, jump: false };
+
+/** Apply one dog's discrete actions: mash the tug if locked into one, else wrestle / jump. */
+function applyAction(s: GameState, d: Dog, wrestle: boolean, jump: boolean): void {
+  if (wrestle) {
+    if (s.tug && d.mode === 'tug') tugPull(s, d);
+    else doWrestle(s, d, other(s, d));
+  }
+  if (jump) tryJump(s, d);
+}
+
 export function endRound(s: GameState): void {
   s.sceneIdx++;
   if (s.sceneIdx < REGISTRY.length) {
@@ -99,8 +112,11 @@ export function endRound(s: GameState): void {
 
 /**
  * Advance the whole game one fixed step. Owns phase transitions and the ordered system
- * pipeline for the active round. Player intent comes from the input layer; AI movement is
- * wired in M3.
+ * pipeline for the active round.
+ *
+ * P1 intent/actions come from the input layer. The sibling is driven by P2 in two-player
+ * mode (`s.partner === 'human'`, host supplies `p2`) or by the AI brain otherwise (M10).
+ * Both dogs run the identical movement/action systems — only the *intent source* differs.
  */
 export function updateGame(
   s: GameState,
@@ -108,6 +124,7 @@ export function updateGame(
   wrestle: boolean,
   jump: boolean,
   dt: number,
+  p2?: DogCmd | null,
 ): void {
   s.elapsedMs += dt * 1000; // animation/streak clock advances in every phase
 
@@ -118,31 +135,39 @@ export function updateGame(
   }
   if (s.phase !== 'play') return;
 
+  const sibling = ai(s);
+  const siblingHuman = s.partner === 'human';
+
   // house: advance any in-flight door/stair traversal first (a transiting dog can't steer)
   if (s.sceneKey === 'house') {
     tickTransit(player(s), dt);
-    tickTransit(ai(s), dt);
+    tickTransit(sibling, dt);
   }
 
-  // player movement (moveDog no-ops while transiting)
+  // P1 movement (moveDog no-ops while transiting)
   moveDog(s, player(s), intent.ax, intent.ay, dt, intent.arrive);
 
-  // AI sibling — full speed (aiFactor 0.88 is inert; see balance.ts / owner decision)
-  const aiDog = ai(s);
-  const [aax, aay] = aiThink(s, aiDog, dt);
-  const aiTd = Math.hypot(aax, aay);
-  moveDog(s, aiDog, aax, aay, dt, Math.min(1, (aiTd - SPEED.aiArriveRadius) / SPEED.arriveFalloff));
+  // sibling movement: P2 (human) drives it directly, else the AI brain steers it.
+  if (siblingHuman) {
+    const c = p2 ?? IDLE_CMD;
+    moveDog(s, sibling, c.intent.ax, c.intent.ay, dt, c.intent.arrive);
+  } else {
+    // AI sibling — full speed (aiFactor 0.88 is inert; see balance.ts / owner decision)
+    const [aax, aay] = aiThink(s, sibling, dt);
+    const aiTd = Math.hypot(aax, aay);
+    moveDog(s, sibling, aax, aay, dt, Math.min(1, (aiTd - SPEED.aiArriveRadius) / SPEED.arriveFalloff));
+  }
 
   if (s.sceneKey === 'house') doorTriggers(s); // walking into a doorway starts a transit
 
-  // player action: mash the tug if locked into one, else wrestle
-  if (wrestle) {
-    const p = player(s);
-    if (s.tug && p.mode === 'tug') tugPull(s, p);
-    else doWrestle(s, p, ai(s));
+  // P1 action: mash the tug if locked into one, else wrestle the sibling
+  applyAction(s, player(s), wrestle, jump);
+  // sibling action: P2's edges in co-op, else the AI starts its own trouble
+  if (siblingHuman) {
+    if (p2) applyAction(s, sibling, p2.wrestle, p2.jump);
+  } else {
+    maybeAiWrestle(s, dt);
   }
-  if (jump) tryJump(s, player(s));
-  maybeAiWrestle(s, dt);
 
   collideDogs(s);
   currentScene(s).update(s, dt); // toys may start a tug here

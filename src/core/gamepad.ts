@@ -46,20 +46,30 @@ export interface GamepadResult {
 
 const IDLE: GamepadResult = { intent: null, wrestle: false, jump: false, connected: false };
 
-/** Per-frame poller for the first connected gamepad. Holds button state for edge detection. */
+/**
+ * Per-frame poller for one connected gamepad, selected by `slot` (0 = first connected, 1 =
+ * second, …) so two players each read their own controller (M10). Holds button state for
+ * edge detection.
+ */
 export class GamepadSource {
   private prev: boolean[] = [];
+
+  /** @param slot which connected pad to read (0-based, in connection order). */
+  constructor(private readonly slot = 0) {}
 
   /** Poll once per fixed update step. Safe to call when no gamepad / no navigator exists. */
   poll(deadzone: number): GamepadResult {
     const pads =
       typeof navigator !== 'undefined' && navigator.getGamepads ? navigator.getGamepads() : [];
     let pad: Gamepad | null = null;
+    let seen = 0;
     for (const p of pads) {
-      if (p) {
+      if (!p) continue;
+      if (seen === this.slot) {
         pad = p;
         break;
       }
+      seen++;
     }
     if (!pad) {
       this.prev = [];
