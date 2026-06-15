@@ -195,18 +195,25 @@ All of M0–M8 shipped and green; the built game matches the prototype across al
 > stars. Tests: `tests/sim/gates.test.ts`, `tests/sim/mission.test.ts` (95 green). The other
 > three gate primitives are built + tested but not yet placed in a mission — that's M13 content.
 
-## M13+ — Missions as content — 🟢 IN PROGRESS (4 missions shipped, 2026-06-15)
+## M13+ — Missions as content — 🟢 IN PROGRESS (5 missions + AI + polish, 2026-06-15)
 🎯 Build the actual missions, one shippable mission per milestone.
 
-> **Shipped so far** — a 4-mission co-op campaign (`COOP_REGISTRY`, chained NEXT MISSION →):
+> **Shipped so far** — a 5-mission co-op campaign (`COOP_REGISTRY`, chained NEXT MISSION → with
+> a 🏆 finale; per-mission best score/stars persisted, `core/scores.ts`):
 > 1. **Through the Gate** (M12) — pressure pads / bothOnSpots.
-> 2. **Sneak the Snack** — distract+grab (a teammate taunts the guard cat).
+> 2. **Sneak the Snack** — distract+grab (a teammate taunts the guard cat; cat only pounces a
+>    pup *settled* on a treat, not one running past).
 > 3. **Over the Creek** — boost-jump (one pup catapults the other across; the bridge drop).
-> 4. **Kitchen Counter Caper** — first ASYMMETRIC abilities: Cheddar chair-leaps to knock
->    snacks down, the team gobbles them (swept up if ignored). Promotes `docs/LEVEL-IDEAS.md`.
-> Each = `scenes/missions/*.ts` + a sim test (gates/mission/sneak/creek/kitchen, 109 green).
-> NEXT: a mission-aware AI partner so solo co-op is playable (the AI must cover a pad / distract
-> / brace a boost / knock counter food), then more missions (car trip, house rescue, …).
+> 4. **Kitchen Counter Caper** — first ASYMMETRIC abilities: Cheddar chair-leaps to knock snacks
+>    down, the team gobbles them (swept if ignored). Promotes `docs/LEVEL-IDEAS.md`.
+> 5. **Stay Together** — a SURVIVE mission (`surviveMode`): a hawk dives at the strayed pup;
+>    huddle to stay safe, last 45s to win.
+> **Mission-aware AI partner** (`SceneDef.coopAi`) makes solo co-op playable — the partner covers
+> a pad / distracts / braces the boost / plays its kitchen role / huddles. **Polish:** mission
+> audio (woof/yip/screech/splash), a mute toggle (persisted), best-score persistence.
+> Each mission = `scenes/missions/*.ts` + a sim test (gates/mission/sneak/creek/kitchen/hawk/
+> coop-ai, +audio/scores units = 123 green). NEXT: more missions (car trip, house rescue, …),
+> in-play mute, or controller-driven menus.
 
 - **Kitchen "food drop"** (promote `docs/LEVEL-IDEAS.md`): asymmetric abilities — Cheddar
   chair-leaps + barfs, Cocoa steady; co-op angle (Cheddar knocks table food down for Cocoa).
