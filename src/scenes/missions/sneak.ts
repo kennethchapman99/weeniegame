@@ -12,6 +12,7 @@
 
 import type { SceneDef } from '../types.js';
 import type { GameState } from '../../state/gameState.js';
+import { playSound } from '../../state/gameState.js';
 import type { Dog } from '../../state/dog.js';
 import { paintYard } from '../yard.js';
 import { GATES, SNEAK } from '../../config/balance.js';
@@ -95,6 +96,7 @@ export const sneakMission: SceneDef = {
         addCombined(s, SNEAK.treatScore);
         burst(s, t.x, t.y, '#ffd98c', 12, 2.6);
         popup(s, t.x, t.y - 24, 'sneaky! 🍪', '#9effa0');
+        playSound(s, 'yip');
       } else if (d.guard.lunge <= 0 && Math.hypot(grabber.vx, grabber.vy) < SNEAK.settleSpeed) {
         // only pounce on a dog SETTLED on the treat — a pup just running past is safe
         guardLunge(s, d.guard, grabber);
@@ -187,4 +189,5 @@ function guardLunge(s: GameState, guard: { x: number; y: number; lunge: number }
   dog.vx = (dx / mlen) * SNEAK.lungeKnockback;
   dog.vy = (dy / mlen) * SNEAK.lungeKnockback;
   popup(s, dog.x, dog.y - 30, 'HSSSS! 🐱', '#ff9d7a');
+  playSound(s, 'screech');
 }

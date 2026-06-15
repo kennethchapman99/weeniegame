@@ -12,6 +12,7 @@
 
 import type { SceneDef } from '../types.js';
 import type { GameState } from '../../state/gameState.js';
+import { playSound } from '../../state/gameState.js';
 import { paintYard } from '../yard.js';
 import { GATES } from '../../config/balance.js';
 import { updatePads, allPadsPressed } from '../../systems/gates.js';
@@ -79,6 +80,7 @@ export const gateMission: SceneDef = {
         m.gate.open = true;
         popup(s, m.gate.x, m.gate.y0 + 30, 'GATE OPEN! 🐾', '#ffd98c');
         burst(s, m.gate.x, (m.gate.y0 + m.gate.y1) / 2, '#f4d3a4', 18, 3);
+        playSound(s, 'bark');
       }
     }
     if (m.gate?.open && m.gate.prog < 1) m.gate.prog = Math.min(1, m.gate.prog + dt * GATES.gateOpenRate);

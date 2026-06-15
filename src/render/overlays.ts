@@ -187,9 +187,10 @@ function drawMissionEnd(g: G, s: GameState, hasNext: boolean): void {
   g.font = "900 46px Georgia, 'Times New Roman', serif";
   g.fillText(m.title, W / 2, 130);
 
+  const finale = win && !hasNext; // cleared the last mission in the campaign
   g.font = '800 40px -apple-system, sans-serif';
   g.fillStyle = win ? '#9effa0' : '#ff9d7a';
-  g.fillText(win ? 'MISSION COMPLETE!' : 'MISSION FAILED', W / 2, 200);
+  g.fillText(finale ? '🏆 CAMPAIGN COMPLETE!' : win ? 'MISSION COMPLETE!' : 'MISSION FAILED', W / 2, 200);
 
   if (win) {
     // stars
@@ -201,6 +202,11 @@ function drawMissionEnd(g: G, s: GameState, hasNext: boolean): void {
     g.fillStyle = '#cfe0ea';
     g.font = '700 22px -apple-system, sans-serif';
     g.fillText(`Combined score: ${m.combinedScore}`, W / 2, 312);
+    if (finale) {
+      g.fillStyle = '#ffd98c';
+      g.font = "700 20px Georgia, 'Times New Roman', serif";
+      g.fillText('Cheddar & Cocoa did it — together. 💕', W / 2, 348);
+    }
   } else {
     g.fillStyle = '#cfe0ea';
     g.font = "700 20px Georgia, 'Times New Roman', serif";

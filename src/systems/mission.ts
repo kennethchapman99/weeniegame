@@ -12,6 +12,7 @@
  */
 
 import type { GameState, MissionState, Objective, ObjectiveKind } from '../state/gameState.js';
+import { playSound } from '../state/gameState.js';
 import { MISSION } from '../config/balance.js';
 
 /** Build a fresh objective (count/progress at 0, not yet done). */
@@ -88,6 +89,7 @@ export function tickMission(s: GameState, dt: number): void {
     const left = Math.max(0, m.timeLimit - m.elapsed);
     addCombined(s, Math.floor(left) * MISSION.timeBonus);
     m.stars = m.elapsed < m.starTime[0] ? 3 : m.elapsed < m.starTime[1] ? 2 : 1;
+    playSound(s, 'bark'); // a happy victory woof
     return;
   }
 

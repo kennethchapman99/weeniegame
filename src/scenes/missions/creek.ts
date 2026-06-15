@@ -13,6 +13,7 @@
 
 import type { SceneDef } from '../types.js';
 import type { GameState } from '../../state/gameState.js';
+import { playSound } from '../../state/gameState.js';
 import { paintYard } from '../yard.js';
 import { GATES } from '../../config/balance.js';
 import { updatePads } from '../../systems/gates.js';
@@ -95,6 +96,7 @@ export const creekMission: SceneDef = {
       completeObjective(s, 1);
       popup(s, CREEK.cx, GAP.y0 - 14, 'BRIDGE DOWN! 🌉', '#ffd98c');
       burst(s, CREEK.cx, (GAP.y0 + GAP.y1) / 2, '#caa05a', 16, 2.8);
+      playSound(s, 'splash');
     }
     if (d.bridge.down && d.bridge.prog < 1) d.bridge.prog = Math.min(1, d.bridge.prog + dt * 3);
 

@@ -14,6 +14,7 @@
 
 import type { SceneDef } from '../types.js';
 import type { GameState } from '../../state/gameState.js';
+import { playSound } from '../../state/gameState.js';
 import { paintYard } from '../yard.js';
 import { KITCHEN } from '../../config/balance.js';
 import { startMission, setProgress, addCombined, completeObjective, objective } from '../../systems/mission.js';
@@ -99,6 +100,7 @@ export const kitchenMission: SceneDef = {
         d.knockCD = KITCHEN.knockCD;
         popup(s, best.x, COUNTER.y - 16, 'knocked it down! 🦴', '#ffd98c');
         burst(s, best.x, COUNTER.y, '#caa05a', 10, 2.4);
+        playSound(s, 'bark');
       }
     }
 
@@ -114,6 +116,7 @@ export const kitchenMission: SceneDef = {
         addCombined(s, KITCHEN.foodScore);
         burst(s, f.x, f.y, '#f4d3a4', 12, 2.6);
         popup(s, f.x, f.y - 22, 'om nom! 😋', '#9effa0');
+        playSound(s, 'yip');
       } else if (f.ttl <= 0) {
         d.floor.splice(i, 1);
         popup(s, f.x, f.y - 18, 'swept up! 🧹', '#ff9d7a');
