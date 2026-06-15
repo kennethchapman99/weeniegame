@@ -10,7 +10,8 @@
 
 import type { Point } from './math.js';
 import type { Camera } from './camera.js';
-import { SPEED } from '../config/balance.js';
+import { SPEED, INPUT } from '../config/balance.js';
+import { GamepadSource } from './gamepad.js';
 
 export interface Intent {
   ax: number;
@@ -21,8 +22,25 @@ export interface Intent {
 export class Input {
   readonly keys: Record<string, boolean> = {};
   touch: Point | null = null;
+  /** True while a gamepad is connected — lets the host hide the on-screen touch buttons. */
+  gamepadActive = false;
+  private readonly gamepad = new GamepadSource();
+  private padIntent: Intent | null = null;
   private wrestleQueued = false;
   private jumpQueued = false;
+
+  /**
+   * Poll the gamepad once per fixed update step (call before intentFor / consume*).
+   * Gamepad button edges queue the same actions as keys; its stick intent (when pushed past
+   * the deadzone) takes precedence over touch/keyboard for that step.
+   */
+  poll(): void {
+    const r = this.gamepad.poll(INPUT.gamepadDeadzone);
+    this.gamepadActive = r.connected;
+    this.padIntent = r.intent;
+    if (r.wrestle) this.queueWrestle();
+    if (r.jump) this.queueJump();
+  }
 
   /** Queue a wrestle action (from a key edge or the on-screen WRESTLE button). */
   queueWrestle(): void {
@@ -98,6 +116,8 @@ export class Input {
 
   /** Compute the steering intent for a dog at `pos` (the player). */
   intentFor(pos: Point): Intent {
+    // A pushed stick wins over touch/keyboard for this step; otherwise fall back to them.
+    if (this.padIntent) return this.padIntent;
     return computeIntent(this.keys, this.touch, pos);
   }
 }

@@ -71,6 +71,7 @@ canvas.addEventListener('pointerdown', (e) => {
 });
 
 function update(dt: number): void {
+  input.poll(); // read the gamepad (if any) before computing intent / draining actions
   const intent = input.intentFor(player(state));
   const wrestle = input.consumeWrestle();
   const jump = input.consumeJump();
@@ -113,7 +114,8 @@ function render(): void {
   drawPopups(ctx, state);
 
   drawHUD(ctx, state);
-  if (state.phase === 'play') {
+  // On-screen WRESTLE/JUMP are touch affordances — hide them when a controller is driving.
+  if (state.phase === 'play' && !input.gamepadActive) {
     drawWrestleButton(ctx, state);
     drawJumpButton(ctx);
   }
