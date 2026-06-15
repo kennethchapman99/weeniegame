@@ -39,6 +39,7 @@ export function startMission(
     stars: 0,
     elapsed: 0,
     timeLimit: m.timeLimit ?? MISSION.defaultTime,
+    surviveMode: m.surviveMode ?? false,
     starTime: m.starTime ?? [30, 60],
     pads: m.pads ?? [],
     gate: m.gate ?? null,
@@ -81,17 +82,21 @@ export function setProgress(s: GameState, i: number, progress: number): void {
  */
 export function tickMission(s: GameState, dt: number): void {
   const m = s.mission;
-  if (!m || m.status !== 'active') return;
+  if (!m || m.status !== 'active') return; // a mission may have set 'fail' in its own update()
   m.elapsed += dt;
+
+  // survive missions: lasting the full timeLimit completes the objectives (= success below).
+  if (m.surviveMode && m.elapsed >= m.timeLimit) for (const o of m.objectives) o.done = true;
 
   if (m.objectives.every((o) => o.done)) {
     m.status = 'success';
-    const left = Math.max(0, m.timeLimit - m.elapsed);
-    addCombined(s, Math.floor(left) * MISSION.timeBonus);
-    m.stars = m.elapsed < m.starTime[0] ? 3 : m.elapsed < m.starTime[1] ? 2 : 1;
+    // survive missions reward the FULL time; objective missions reward the time saved.
+    const bonus = m.surviveMode ? m.timeLimit : Math.max(0, m.timeLimit - m.elapsed);
+    addCombined(s, Math.floor(bonus) * MISSION.timeBonus);
+    m.stars = m.surviveMode ? 3 : m.elapsed < m.starTime[0] ? 3 : m.elapsed < m.starTime[1] ? 2 : 1;
     playSound(s, 'bark'); // a happy victory woof
     return;
   }
 
-  if (m.elapsed >= m.timeLimit) m.status = 'fail';
+  if (!m.surviveMode && m.elapsed >= m.timeLimit) m.status = 'fail';
 }

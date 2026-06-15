@@ -229,7 +229,8 @@ export interface MissionState {
   combinedScore: number;
   stars: number; // 0..3, scored on success
   elapsed: number; // seconds since mission start
-  timeLimit: number; // fail when elapsed exceeds this
+  timeLimit: number; // fail when elapsed exceeds this…
+  surviveMode: boolean; // …unless this is a survive mission, where lasting the timeLimit WINS
   starTime: [number, number]; // finish under [0] → 3★, under [1] → 2★, else 1★
   // interdependence entities (subset used per mission)
   pads: Pad[];

@@ -54,6 +54,17 @@ export const MISSION = {
   timeBonus: 2, // combined-score points per whole second left at success
 } as const;
 
+// "Stay Together" survive mission — a hawk dives at whichever pup strays from its sibling.
+export const HAWK = {
+  huddleR: 116, // pups within this of each other are safe — the hawk won't commit
+  circleR: 150, // orbit radius above the yard
+  circleSpeed: 1.0, // orbit angular speed (rad/s)
+  diveSpeed: 8.5, // dive velocity toward the lone pup (px/frame)
+  diveEvery: [2.2, 3.6] as [number, number], // seconds between dive attempts
+  grabR: 32, // a dive connecting within this of the target grabs it (→ fail)
+  retreat: 1.1, // seconds spent retreating after a dive before re-circling
+} as const;
+
 // "Kitchen Counter Caper" co-op mission — asymmetric abilities (Cheddar knocks, both eat).
 export const KITCHEN = {
   leapRange: 76, // how close Cheddar must be to a counter item to knock it off
