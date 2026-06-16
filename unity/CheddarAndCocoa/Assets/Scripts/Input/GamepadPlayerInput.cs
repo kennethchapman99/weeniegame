@@ -28,9 +28,13 @@ namespace CheddarAndCocoa.Input
 
         private void Awake() => _dog = GetComponent<DogController>();
 
-        // Read in FixedUpdate so intent lands on the same cadence as DogController.Tick (the
-        // prototype reads the pad in the fixed-step input phase, never in render).
-        private void FixedUpdate()
+        /// <summary>Assign this player's controller slot (0 = P1, 1 = P2). Set by GameBootstrap.</summary>
+        public void SetSlot(int slot) => gamepadSlot = slot;
+
+        // Read in Update: button edges (wasPressedThisFrame) are sampled on the Input System's
+        // default dynamic update, so they're reliable here. Movement is velocity-based, so the
+        // Rigidbody2D integrates it on the physics step regardless.
+        private void Update()
         {
             Gamepad pad = ResolvePad();
             if (pad == null) return;
@@ -47,7 +51,7 @@ namespace CheddarAndCocoa.Input
                 interact = pad.buttonNorth.wasPressedThisFrame, // Y
             };
 
-            _dog.Tick(intent, Time.fixedDeltaTime);
+            _dog.Tick(intent, Time.deltaTime);
         }
 
         private Gamepad ResolvePad()

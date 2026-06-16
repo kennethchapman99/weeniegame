@@ -29,5 +29,12 @@ namespace CheddarAndCocoa.Dogs
 
         /// <summary>The other dog's id — handy for "needs both dogs" gates and the shared camera.</summary>
         public DogId Sibling => id == DogId.Cheddar ? DogId.Cocoa : DogId.Cheddar;
+
+        /// <summary>Runtime setup (used by GameBootstrap when spawning placeholder dogs from code).</summary>
+        public void Configure(DogId newId, DogTuning newTuning)
+        {
+            id = newId;
+            tuning = newTuning;
+        }
     }
 }

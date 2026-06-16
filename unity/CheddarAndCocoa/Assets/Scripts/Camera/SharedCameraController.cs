@@ -37,6 +37,13 @@ namespace CheddarAndCocoa.CameraRig
 
         private void Awake() => _cam = GetComponent<Camera>();
 
+        /// <summary>Runtime setup — point the camera at both dogs (used by GameBootstrap).</summary>
+        public void SetTargets(Transform cheddarT, Transform cocoaT)
+        {
+            cheddar = cheddarT;
+            cocoa = cocoaT;
+        }
+
         private void LateUpdate()
         {
             if (cheddar == null || cocoa == null) return;

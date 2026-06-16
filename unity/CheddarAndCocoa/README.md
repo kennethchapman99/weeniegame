@@ -6,9 +6,17 @@ beside the original web/Canvas build (repo root: `src/`, `prototype/`), which re
 
 > ⚠️ This folder is a **hand-authored scaffold**, not yet a Unity-generated project. It has the
 > folder layout, `Packages/manifest.json`, a pinned `ProjectSettings/ProjectVersion.txt`, an
-> assembly definition, and compiling C# stubs. The first time you open it, Unity will generate
-> `Library/`, `.meta` files, default `ProjectSettings/*`, and resolve packages. Nothing here
-> assumes Unity is installed — these are plain files you open later.
+> assembly definition, compiling C# scripts, and a runnable `ControllerTestScene`. The first time
+> you open it, Unity will generate `Library/`, the remaining `.meta` files, and default
+> `ProjectSettings/*`, then resolve packages. Nothing here assumes Unity is installed.
+
+> ▶️ **First playable:** open `Assets/Scenes/ControllerTestScene.unity` and press Play to drive two
+> dogs with two controllers. Full instructions: **`../../docs/UNITY-FIRST-PLAYABLE.md`**.
+
+> 📦 **Packages are trimmed to the first-playable minimum** (Input System + 2D physics + IMGUI).
+> URP, Cinemachine, and the 2D animation/tilemap packages from the pivot plan are **not** added
+> yet — they get added in the phase that needs them, to avoid version-resolution failures before
+> first use. The test scene runs on the built-in render pipeline.
 
 ## Opening it (first time)
 
@@ -16,12 +24,13 @@ beside the original web/Canvas build (repo root: `src/`, `prototype/`), which re
    Include the **Mac** and (optionally) **Windows** build support modules. If your installed
    patch differs, Unity Hub will offer to open with the closest version — that's fine.
 2. In Unity Hub: **Add → Add project from disk →** select `unity/CheddarAndCocoa`.
-3. Open it. Unity resolves the packages in `Packages/manifest.json` (Input System, URP,
-   Cinemachine, 2D, Test Framework). If a pinned package version doesn't resolve, open
-   **Window → Package Manager** and let it pick the version compatible with your editor.
+3. Open it. Unity resolves the packages in `Packages/manifest.json` (Input System, Test Framework,
+   IDE + built-in 2D physics/IMGUI). If a pinned version doesn't resolve, open **Window → Package
+   Manager** and let it pick the version compatible with your editor.
 4. When prompted to enable the **new Input System** backend, choose **Yes** (restarts the editor).
-5. Set up URP if not auto-configured: **Assets → Create → Rendering → URP Asset (with 2D Renderer)**,
-   then assign it in **Project Settings → Graphics** and **Quality**.
+5. Open `Assets/Scenes/ControllerTestScene.unity` and press **Play** (see
+   `../../docs/UNITY-FIRST-PLAYABLE.md`). URP/Cinemachine setup is **not** needed yet — the test
+   scene uses the built-in pipeline.
 
 ## Layout
 

@@ -2,8 +2,7 @@
   "name": "CheddarAndCocoa",
   "rootNamespace": "CheddarAndCocoa",
   "references": [
-    "Unity.InputSystem",
-    "Unity.Cinemachine"
+    "Unity.InputSystem"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

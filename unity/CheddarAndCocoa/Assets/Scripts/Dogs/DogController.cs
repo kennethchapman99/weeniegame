@@ -47,7 +47,7 @@ namespace CheddarAndCocoa.Dogs
             public bool interact;     // Y button — grab/sniff/use a CoopInteraction
         }
 
-        [SerializeField] private float pixelsPerUnit = 100f; // world-unit conversion for prototype speeds
+        [SerializeField] private float pixelsPerUnit = 50f; // world-unit conversion for prototype speeds
         [SerializeField] private DogTuning tuning;
 
         private Rigidbody2D _body;
@@ -55,6 +55,14 @@ namespace CheddarAndCocoa.Dogs
 
         public MovementMode Mode { get; private set; } = MovementMode.Free;
         public bool Busy => Mode != MovementMode.Free; // prototype's busy() — gates wrestle/tug/interact
+
+        /// <summary>Fired when this dog barks (debug UI / SFX / united-front defense subscribe).</summary>
+        public event System.Action<DogId> OnBark;
+        /// <summary>Fired on the grab/interact button (placeholder until interactions are wired).</summary>
+        public event System.Action<DogId> OnInteract;
+
+        private Vector3 _baseScale = Vector3.one;
+        private float _barkPop; // cosmetic squash-stretch timer after a bark
 
         // Overlays (do not change Mode):
         public bool Zoomies { get; private set; }
@@ -69,17 +77,24 @@ namespace CheddarAndCocoa.Dogs
             _identity = GetComponent<DogIdentity>();
             if (tuning == null) tuning = _identity.Tuning;
             _body.gravityScale = 0f; // top-down / 2.5D orthographic; no falling
+            _body.freezeRotation = true;
+            _baseScale = transform.localScale;
         }
 
-        /// <summary>Call once per FixedUpdate from the input source with the latest intent.</summary>
+        /// <summary>Call once per frame from the input source with the latest intent.</summary>
         public void Tick(in MoveIntent intent, float dt)
         {
             UpdateOverlays(dt);
+
+            // Action buttons resolve even while moving (bark/interact are not blocked by Free).
+            if (intent.bark) Bark();
+            if (intent.interact) Interact();
 
             if (Busy)
             {
                 // Stunned/swimming/etc. still need their own per-mode update; stubbed for now.
                 // TODO: port per-mode handling (swim toward nearest deck, shake timer, transit lerp).
+                _body.linearVelocity = Vector2.zero;
                 return;
             }
 
@@ -93,6 +108,34 @@ namespace CheddarAndCocoa.Dogs
 
             // TODO: jump arc (B): _jumpT ramps over tuning.jumpDuration; expose Height for the
             // renderer + predator dodge check (height > 0.3 at the strike).
+        }
+
+        /// <summary>Bark: the core verb. For the first playable this logs + pops the sprite + fires
+        /// an event. Later this drives the united-front predator scare-off (systems/predators.ts).</summary>
+        public void Bark()
+        {
+            _barkPop = 0.18f;
+            Debug.Log($"[{_identity.Id}] WOOF!");
+            OnBark?.Invoke(_identity.Id);
+        }
+
+        /// <summary>Grab/interact placeholder — logs + fires an event. Later: pick up a toy / use a
+        /// CoopInteraction / sniff a ScentTrail.</summary>
+        public void Interact()
+        {
+            Debug.Log($"[{_identity.Id}] interact (grab placeholder)");
+            OnInteract?.Invoke(_identity.Id);
+        }
+
+        // Cosmetic only: decay the bark squash-stretch. Logic stays in Tick (logic/render split).
+        private void Update()
+        {
+            if (_barkPop > 0f)
+            {
+                _barkPop = Mathf.Max(0f, _barkPop - Time.deltaTime);
+                float s = 1f + _barkPop * 1.2f; // brief puff-up
+                transform.localScale = new Vector3(_baseScale.x * s, _baseScale.y * s, _baseScale.z);
+            }
         }
 
         private float CurrentSpeed()
