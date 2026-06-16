@@ -1,5 +1,14 @@
 # Build Plan
 
+> 🔱 **PROJECT DIRECTION SHIFT (2026-06-15): pivoting to Unity.** Milestones M0–M14 below built and
+> validated the game on the TypeScript/Canvas stack. That build has done its job — it **proved the
+> game is fun and locked the balance**. The product is now being **rebuilt in Unity** (C#, local
+> couch co-op for desktop→TV, later tvOS). The TS build + `prototype/` + `docs/` are **preserved as
+> the design / balance / behavior spec and a runnable test oracle** — not deleted, not expanded as
+> the long-term product. See **`docs/UNITY-PIVOT-PLAN.md`** for the full plan, and the
+> **"Unity rebuild roadmap"** section at the bottom of this file. The TS history below stays as the
+> record of how the design was built and tuned.
+
 Each milestone is independently shippable and must end green (typecheck + lint + tests + full-game sim). Ship in order — later milestones assume the scaffolding of earlier ones. **The prototype is the acceptance reference for every milestone.**
 
 Legend: 🎯 goal · ✅ done-when · ⚠️ watch-out
@@ -229,3 +238,38 @@ Phase 1 shipped and green (two controllers, TV + iOS, zero-network in every shel
 framework + gate primitives are tested headless; at least the first co-op mission plays
 start-to-finish requiring both dogs; `npm run verify` stays green throughout; competitive mode
 preserved.
+
+---
+
+# Unity rebuild roadmap (2026-06-15 →)
+
+> The TS milestones above are **complete as a spec**. New product work happens in Unity under
+> `unity/CheddarAndCocoa/`. Full rationale, package list, system mapping, risks, and non-goals are
+> in **`docs/UNITY-PIVOT-PLAN.md`** — this is the short roadmap view.
+
+**Stack:** Unity 6 LTS · C# · URP (2D Renderer) · Unity Input System · Cinemachine · 2D Animation ·
+ScriptableObjects for tuning/level/hazard/objective data · Prefab-based level objects · scene-based
+loading. Target: macOS/Windows desktop → TV with two controllers; tvOS later.
+
+**Preserved as spec (never deleted, never expanded as product):** `prototype/`, `src/`, `tests/`,
+`docs/`. Balance lives in `src/config/balance.ts` ⇄ `docs/MECHANICS.md`; the TS sims are the
+acceptance oracle. Keep `npm run verify` green while the TS build is the oracle.
+
+| Phase | Goal | Done-when |
+|---|---|---|
+| **UP0 — Scaffold** ✅ | Unity project shell, package manifest, C# stubs, pivot docs. | `unity/CheddarAndCocoa/` opens in Unity 6; stubs compile; plan + roadmap committed. *(this change)* |
+| **UP1 — Walking dog** | One dog, one controller, empty Backyard; URP + shared camera. | Right *feel* vs prototype; camera follows. |
+| **UP2 — Two dogs, two pads** | Both dogs, two controllers, bark + grab, shared frame. | Two humans move both dogs on a TV; toys/treats score. |
+| **UP3 — Tug + squirrel** | Rope tug minigame + squirrel chase event. | Tug matches `balance.ts`; squirrel +3. |
+| **UP4 — Predator + defense** | One predator: telegraph, united-front huddle, rescue. | Lone-dog threat; huddle/rescue defends; comedy reads; carry-off penalty. |
+| **UP5 — Slice polish + result** | HUD (objectives/combined score), result + stars, juice. | **Vertical slice done-when** met. **Playtest sign-off.** |
+| **UP6 — Content + parity** | Port remaining levels/missions one at a time vs the oracle. | Each plays start→finish, needs teamwork, matches the oracle. |
+| **UP7 — tvOS** | Apple TV build + on-device input/perf pass. | Slice runs on Apple TV with paired controllers at target FPS. |
+
+**Vertical slice (UP1–UP5) = the gate before breadth:** the Backyard, both dogs on two controllers,
+shared camera, move/bark/grab/tug, a squirrel chase, one predator co-op moment, and a score/result
+screen. Out of slice: pool, house, full campaign, asymmetric kitchen abilities, AI partner, tvOS/iOS.
+
+**Unity definition-of-done (slice):** two people play the Backyard start-to-finish on a TV with two
+controllers; it needs genuine teamwork (the predator beat); it's charming/funny; it ends on a result
+screen; movement/tug/predator numbers match the TS oracle.
