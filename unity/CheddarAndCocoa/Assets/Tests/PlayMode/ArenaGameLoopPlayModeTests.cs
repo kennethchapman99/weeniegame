@@ -34,6 +34,11 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(game.SquirrelObject);
             Assert.IsNotNull(game.PredatorObject);
             Assert.IsNotNull(game.RopeObject);
+            Assert.IsNotEmpty(game.LastCue);
+            Assert.IsNotNull(game.SquirrelObject.GetComponent<MissionActorFeedback>());
+            Assert.IsNotNull(game.PredatorObject.GetComponent<MissionActorFeedback>());
+            Assert.IsNotNull(game.RopeObject.GetComponent<MissionActorFeedback>());
+            Assert.IsNotNull(game.GetComponent<AudioSource>());
 
             var treats = Object.FindObjectsByType<Treat>(FindObjectsSortMode.None);
             Assert.Greater(treats.Length, 0);
@@ -66,6 +71,7 @@ namespace CheddarAndCocoa.Tests
             scoreBefore = game.Score;
             cheddar.Bark();
             Assert.Greater(game.Score, scoreBefore, "Barking near squirrel should affect game state.");
+            Assert.That(game.LastCue, Does.Contain("squirrel").IgnoreCase);
 
             // Predator warning/attack can be resolved by united bark.
             game.ForcePredatorWarning();
@@ -73,6 +79,7 @@ namespace CheddarAndCocoa.Tests
             cocoa.transform.position = cheddar.transform.position + Vector3.right;
             cheddar.Bark(); cocoa.Bark();
             Assert.IsTrue(game.PredatorResolved);
+            Assert.That(game.LastCue, Does.Contain("predator").IgnoreCase);
 
             // Failed predator attack stuns/grabs, then the partner rescues by coming close and barking.
             game.Restart();
@@ -91,6 +98,7 @@ namespace CheddarAndCocoa.Tests
             guard = 0f;
             while (!game.TugComplete && guard < 4f) { guard += Time.deltaTime; yield return null; }
             Assert.IsTrue(game.TugComplete);
+            Assert.That(game.RopeObject.GetComponent<MissionActorFeedback>().Label, Does.Contain("COMPLETE"));
 
             // Level clear requires food, tug, and predator resolution.
             game.ForcePredatorWarning();

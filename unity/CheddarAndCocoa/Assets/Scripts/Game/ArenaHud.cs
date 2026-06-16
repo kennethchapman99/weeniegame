@@ -41,6 +41,7 @@ namespace CheddarAndCocoa.Game
             GUI.Label(new Rect(0, 34, Screen.width, 26), $"⏱  {secs}s", _mid);
             GUI.Label(new Rect(0, 58, Screen.width, 24), $"Mission: {_game.Phase} | {_game.BreakfastRecovered}/{_game.BreakfastGoal} Breakfast/Weenies | Stolen {_game.StolenFood}/{_game.MaxStolenFood}", _mid);
             GUI.Label(new Rect(0, 82, Screen.width, 24), $"United barks: {_game.UnitedBarks} | Tug {Mathf.RoundToInt(_game.TugProgress * 100f)}% | Modifier: {_game.ActiveModifierLabel}", _mid);
+            GUI.Label(new Rect(0, 106, Screen.width, 24), _game.LastCue, _mid);
 
             if (_game.IsGameOver || _game.IsLevelClear)
             {

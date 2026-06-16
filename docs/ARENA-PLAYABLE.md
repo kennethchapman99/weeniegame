@@ -11,7 +11,7 @@ Clear the mission by completing all required objectives before the timer expires
 3. Resolve the **Predator Warning / Predator Attack** with a united-front bark or a rescue.
 4. Complete the **Rope/Tug** shared-object objective.
 
-The round can end in **LevelClear** or **GameOver**, and either result can be restarted.
+The round can end in **LevelClear** or **GameOver**, and either result can be restarted. Current pacing is hand-tuned for a first manual pass: a 75-second timer, an early predator telegraph, and slower tug charge so both players have to stay committed for a moment.
 
 ## Controls
 
@@ -20,11 +20,11 @@ The round can end in **LevelClear** or **GameOver**, and either result can be re
 | P1 | Cheddar | Gamepad slot 0 | WASD | Space / X button | Y button |
 | P2 | Cocoa | Gamepad slot 1 | Arrow keys | Enter / Right Shift / X button | Y button |
 
-Cheddar is the chaos puppy and Cocoa is the steadier veteran. The placeholder sprites are simple colored blocks for now, but HUD/debug labels call out **Cheddar**, **Cocoa**, **Squirrel**, **Predator Warning**, **Rope/Tug**, and **Breakfast/Weenies** so the slice is readable in a manual playtest.
+Cheddar is the chaos puppy and Cocoa is the steadier veteran. The placeholder sprites are still simple generated shapes, but mission actors now include world labels, pulse/rotation feedback, HUD callouts, and tiny procedural sound cues so the first manual playtest is readable without external assets.
 
 ## Squirrel pressure
 
-A visible **Squirrel** periodically picks a breakfast/weenie and runs to steal it. If it reaches the item, the squirrel escapes with food, the team loses score, and the stolen-food counter rises. A single nearby bark interrupts/scares the squirrel briefly; a united bark scares it longer and adds teamwork score.
+A visible, labeled **Squirrel** periodically picks a breakfast/weenie and runs to steal it. If it reaches the item, the squirrel escapes with food, the team loses score, and the stolen-food counter rises. A single nearby bark interrupts/scares the squirrel briefly; a united bark scares it longer and adds teamwork score.
 
 ## Predator scare
 
@@ -32,7 +32,7 @@ Once per round, a **Predator Warning** telegraphs danger and targets one dog. If
 
 ## Rope/Tug shared-object mechanic
 
-The **Rope/Tug** object is a required co-op objective. Either dog can interact near the rope for progress, but the main completion path is both dogs standing together at the rope to charge the tug meter. Finishing tug awards a major score bonus and is required for LevelClear.
+The labeled, pulsing **Rope/Tug** object is a required co-op objective. Either dog can interact near the rope for progress, but the main completion path is both dogs standing together at the rope to charge the tug meter. Finishing tug awards a major score bonus and is required for LevelClear.
 
 ## United bark
 
@@ -68,11 +68,11 @@ Each restart deterministically selects one seeded modifier for tests/HUD:
 
 ## Known limitations
 
-- All mission actors use placeholder square sprites generated at runtime; there are no external art assets yet.
+- All mission actors use placeholder sprites/text labels generated at runtime; there are no external art assets yet.
 - The squirrel and predator use intentionally simple movement/state rules so the PlayMode tests remain deterministic.
 - Tug is proximity/progress based, not a full physics rope.
 - Predator targeting and modifier selection are seeded but still prototype-simple.
-- The scene is now a real co-op mission skeleton, but balancing, audio, animation, UI polish, and richer rescue/tug feel are still future work.
+- The scene now has basic procedural sound cues and simple placeholder animation, but real prefab art, authored animation, better SFX, and richer rescue/tug feel are still future work.
 
 ## Test coverage
 
