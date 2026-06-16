@@ -26,6 +26,13 @@ namespace CheddarAndCocoa.Dogs
         private DogIdentity _identity;
         private SpriteRenderer _body;
         private SpriteRenderer _chest;
+        private SpriteRenderer _head;
+        private SpriteRenderer _snout;
+        private SpriteRenderer _ear;
+        private SpriteRenderer _collar;
+        private SpriteRenderer _eye;
+        private SpriteRenderer _frontFeet;
+        private SpriteRenderer _backFeet;
         private SpriteRenderer _tail;
         private SpriteRenderer _marker;
         private TextMesh _label;
@@ -37,6 +44,11 @@ namespace CheddarAndCocoa.Dogs
         public Pose CurrentPose { get; private set; } = Pose.Idle;
         public string CurrentPoseLabel => CurrentPose.ToString();
         public string IdentityLabel => _label != null ? _label.text : string.Empty;
+        public string ArtDirectionSignature => _identity == null
+            ? string.Empty
+            : _identity.Id == DogId.Cheddar
+                ? "long-low-golden-chaos-puppy-red-collar"
+                : "long-low-chocolate-spot-queen-teal-collar";
 
         public void Init(Sprite sprite)
         {
@@ -110,7 +122,7 @@ namespace CheddarAndCocoa.Dogs
                 };
             }
 
-            if (_marker != null) _marker.enabled = pose == Pose.Bark || pose == Pose.Proud || pose == Pose.Rescued;
+            if (_marker != null) _marker.enabled = pose == Pose.Bark || pose == Pose.Proud || pose == Pose.Rescued || pose == Pose.Stunned;
         }
 
         private void AnimatePose(Pose pose)
@@ -148,32 +160,104 @@ namespace CheddarAndCocoa.Dogs
                 _tail.transform.localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(t * speed) * amount);
             }
 
+            if (_eye != null)
+            {
+                _eye.transform.localScale = pose switch
+                {
+                    Pose.Stunned => new Vector3(0.05f, 0.18f, 1f),
+                    Pose.Sad => new Vector3(0.08f, 0.08f, 1f),
+                    Pose.Bark => new Vector3(0.13f, 0.12f, 1f),
+                    Pose.Proud => new Vector3(0.12f, 0.12f, 1f),
+                    _ => new Vector3(0.1f, 0.1f, 1f)
+                };
+                _eye.transform.localRotation = pose == Pose.Stunned ? Quaternion.Euler(0f, 0f, 45f) : Quaternion.identity;
+            }
+
+            if (_snout != null)
+            {
+                float chew = pose == Pose.Bark ? Mathf.Sin(t * 40f) * 0.04f : 0f;
+                _snout.transform.localPosition = new Vector3(0.78f + chew, 0.03f, -0.05f);
+            }
+
+            if (_head != null)
+            {
+                float headTilt = pose switch
+                {
+                    Pose.Bark => -8f,
+                    Pose.Proud => 5f,
+                    Pose.Sad => -5f,
+                    _ => 0f
+                };
+                _head.transform.localRotation = Quaternion.Euler(0f, 0f, headTilt);
+            }
+
+            if (_ear != null)
+            {
+                float flop = pose == Pose.Run || pose == Pose.Bark ? Mathf.Sin(t * 18f) * 10f : -8f;
+                _ear.transform.localRotation = Quaternion.Euler(0f, 0f, flop);
+            }
+
+            if (_frontFeet != null && _backFeet != null)
+            {
+                float step = pose == Pose.Run ? Mathf.Sin(t * 16f) * 0.04f : 0f;
+                _frontFeet.transform.localPosition = new Vector3(0.38f, -0.53f + step, 0f);
+                _backFeet.transform.localPosition = new Vector3(-0.42f, -0.53f - step, 0f);
+            }
+
+            if (_collar != null)
+            {
+                float collarPop = pose == Pose.Bark || pose == Pose.Proud ? 1.08f : 1f;
+                _collar.transform.localScale = new Vector3(0.12f, 0.7f * collarPop, 1f);
+            }
+
             if (_label != null) _label.transform.rotation = Quaternion.identity;
         }
 
         private void BuildIdentityArt(Sprite sprite)
         {
             bool cheddar = _identity.Id == DogId.Cheddar;
-            if (_body != null) _body.color = cheddar ? new Color(1f, 0.68f, 0.26f) : new Color(0.31f, 0.16f, 0.08f);
+            Color body = cheddar ? new Color(1f, 0.67f, 0.22f) : new Color(0.28f, 0.13f, 0.06f);
+            Color muzzle = cheddar ? new Color(1f, 0.82f, 0.42f) : new Color(0.7f, 0.43f, 0.24f);
+            if (_body != null) _body.color = body;
 
-            _chest = MakePart("Chest", sprite, cheddar ? new Color(1f, 0.88f, 0.5f) : new Color(0.98f, 0.86f, 0.65f),
-                new Vector3(0.12f, -0.05f, -0.02f), new Vector3(0.35f, 0.62f, 1f), 12);
-            _tail = MakePart("Tail", sprite, cheddar ? new Color(1f, 0.82f, 0.32f) : new Color(0.18f, 0.09f, 0.04f),
-                new Vector3(-0.63f, 0.12f, 0f), new Vector3(0.18f, 0.5f, 1f), 9);
-            _marker = MakePart("Marker", sprite, cheddar ? new Color(1f, 0.95f, 0.35f) : new Color(0.95f, 0.82f, 0.55f),
-                new Vector3(0.36f, 0.3f, -0.03f), new Vector3(0.2f, 0.2f, 1f), 13);
+            _head = MakePart("DachshundHead", sprite, body,
+                new Vector3(0.52f, 0.1f, -0.03f), new Vector3(0.38f, 0.52f, 1f), 14);
+            _snout = MakePart("LongDogSnout", sprite, muzzle,
+                new Vector3(0.78f, 0.03f, -0.05f), new Vector3(0.34f, 0.22f, 1f), 15);
+            _ear = MakePart(cheddar ? "CheddarFloppyEar" : "CocoaVelvetEar", sprite,
+                cheddar ? new Color(0.91f, 0.44f, 0.08f) : new Color(0.13f, 0.06f, 0.03f),
+                new Vector3(0.38f, 0.3f, -0.06f), new Vector3(0.2f, 0.46f, 1f), 16);
+            _collar = MakePart(cheddar ? "CheddarRedCollar" : "CocoaTealCollar", sprite,
+                cheddar ? new Color(0.95f, 0.18f, 0.1f) : new Color(0.08f, 0.78f, 0.84f),
+                new Vector3(0.2f, 0.02f, -0.07f), new Vector3(0.12f, 0.7f, 1f), 17);
+            _eye = MakePart("ExpressionEye", sprite, Color.black,
+                new Vector3(0.62f, 0.18f, -0.08f), new Vector3(0.1f, 0.1f, 1f), 18);
+            _chest = MakePart("ChestPatch", sprite, cheddar ? new Color(1f, 0.9f, 0.52f) : new Color(0.96f, 0.84f, 0.64f),
+                new Vector3(0.08f, -0.08f, -0.02f), new Vector3(0.28f, 0.52f, 1f), 12);
+            _frontFeet = MakePart("TinyFrontFeet", sprite, cheddar ? new Color(0.87f, 0.41f, 0.08f) : new Color(0.12f, 0.06f, 0.03f),
+                new Vector3(0.38f, -0.53f, 0f), new Vector3(0.18f, 0.22f, 1f), 8);
+            _backFeet = MakePart("TinyBackFeet", sprite, cheddar ? new Color(0.87f, 0.41f, 0.08f) : new Color(0.12f, 0.06f, 0.03f),
+                new Vector3(-0.42f, -0.53f, 0f), new Vector3(0.2f, 0.22f, 1f), 8);
+            _tail = MakePart("TailFlag", sprite, cheddar ? new Color(1f, 0.82f, 0.28f) : new Color(0.16f, 0.07f, 0.03f),
+                new Vector3(-0.68f, 0.16f, 0f), new Vector3(0.16f, 0.58f, 1f), 9);
+            _marker = MakePart("MoodSpark", sprite, cheddar ? new Color(1f, 0.95f, 0.25f) : new Color(0.95f, 0.82f, 0.55f),
+                new Vector3(0.24f, 0.54f, -0.08f), new Vector3(0.18f, 0.18f, 1f), 19);
 
             if (!cheddar)
             {
-                MakePart("CocoaSpot", sprite, new Color(0.12f, 0.06f, 0.03f),
-                    new Vector3(-0.22f, 0.18f, -0.04f), new Vector3(0.28f, 0.24f, 1f), 13);
+                MakePart("CocoaQueenSpotA", sprite, new Color(0.08f, 0.035f, 0.02f),
+                    new Vector3(-0.2f, 0.2f, -0.04f), new Vector3(0.26f, 0.22f, 1f), 13);
+                MakePart("CocoaQueenSpotB", sprite, new Color(0.74f, 0.47f, 0.28f),
+                    new Vector3(-0.48f, -0.04f, -0.04f), new Vector3(0.22f, 0.18f, 1f), 13);
                 MakePart("CocoaQueenCrown", sprite, new Color(1f, 0.86f, 0.18f),
-                    new Vector3(0.28f, 0.48f, -0.04f), new Vector3(0.34f, 0.12f, 1f), 14);
+                    new Vector3(0.46f, 0.58f, -0.08f), new Vector3(0.34f, 0.12f, 1f), 20);
             }
             else
             {
-                MakePart("CheddarChaosEar", sprite, new Color(0.94f, 0.5f, 0.12f),
-                    new Vector3(0.18f, 0.45f, -0.04f), new Vector3(0.22f, 0.24f, 1f), 14);
+                MakePart("CheddarChaosTuft", sprite, new Color(1f, 0.88f, 0.22f),
+                    new Vector3(0.52f, 0.54f, -0.08f), new Vector3(0.14f, 0.24f, 1f), 20);
+                MakePart("CheddarMischiefFlash", sprite, new Color(1f, 0.32f, 0.08f),
+                    new Vector3(-0.18f, 0.25f, -0.04f), new Vector3(0.34f, 0.12f, 1f), 13);
             }
 
             var labelGo = new GameObject("DogReadabilityLabel");
@@ -201,10 +285,10 @@ namespace CheddarAndCocoa.Dogs
 
         private string DogTitle() => _identity.Id == DogId.Cheddar ? "CHEDDAR CHAOS PUP" : "COCOA SPOT QUEEN";
 
-        private static string PoseCopy(Pose pose) => pose switch
+        private string PoseCopy(Pose pose) => pose switch
         {
-            Pose.Idle => "READY",
-            Pose.Run => "ZOOM",
+            Pose.Idle => _identity.Id == DogId.Cheddar ? "WIGGLE READY" : "QUEEN READY",
+            Pose.Run => _identity.Id == DogId.Cheddar ? "CHAOS ZOOM" : "SPOT PATROL",
             Pose.Bark => "WOOF!",
             Pose.Tug => "TUG!",
             Pose.Stunned => "STUNNED",

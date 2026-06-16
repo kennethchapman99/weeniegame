@@ -1,0 +1,201 @@
+# Cheddar & Cocoa Art Direction
+
+This is the global visual bible for the playable prototypes. It applies across the full game, not
+only Backyard Mission. The current Unity arena proves the direction with generated placeholder
+shapes; authored sprites and animation should preserve these readability rules.
+
+## Visual Promise
+
+Cheddar & Cocoa should look like bold, funny, readable miniature dachshunds living through dog-life
+adventures at human scale. The style is simple and chunky: long low bodies, oversized emotional
+markers, bright accents, direct pose reads, and props that explain the joke at gameplay zoom.
+
+The goal is not realistic dog anatomy. The goal is instant co-op recognition:
+
+- "That is Cheddar, the golden chaos puppy."
+- "That is Cocoa, the chocolate spot queen."
+- "That object is food, threat, rope, squirrel, rescue, score, or replay."
+
+## Character Silhouette Rules
+
+Both dogs:
+
+- Always read as long, low dachshunds before labels are considered.
+- Body should be a horizontal sausage shape, with tiny feet low on the silhouette.
+- Snout should be visible and forward-facing in gameplay sprites.
+- Tail should act as a pose/excitement flag.
+- Ears should be floppy and simple; avoid perky generic-dog triangles.
+- Keep the silhouette clean. No tiny costume clutter that disappears at gameplay zoom.
+
+Cheddar:
+
+- Golden, bright, restless, slightly messy.
+- Reads like forward momentum: head up, tail busy, body leaning into trouble.
+- Use a warm red/orange collar or accent as the consistent player read.
+- Markings can be chaotic: forelock, bright flash, warm ear, mischief stripe.
+- Cheddar should look lovable even when failing. His danger state should feel like "oops, too far."
+
+Cocoa:
+
+- Chocolate, grounded, expressive, capable, slightly over it.
+- Reads like control and judgment: steadier posture, cleaner stance, queenly markers.
+- Use a cool teal/blue collar or accent as the consistent player read.
+- Markings should emphasize spots, chest patch, velvet ear, tiny crown/queen marker when useful.
+- Cocoa should look competent even when annoyed. Her danger state should feel like "I warned you."
+
+## Color And Accent Rules
+
+- Cheddar body: golden/yellow-orange family.
+- Cheddar accents: red/orange collar, brighter yellow mood sparks, warm ear/tuft.
+- Cocoa body: dark chocolate/brown family.
+- Cocoa accents: teal/blue collar, cream chest, darker/lighter spots, small gold queen marker.
+- UI arrows and dog-specific callouts should echo collar/accent colors when possible.
+- Do not make Cheddar and Cocoa differ only by label. Body color, collar, markings, and silhouette
+  energy must all carry identity.
+- Avoid one-hue screens. Backyard grass, food reds/yellows, predator reds, teal Cocoa accents, and
+  Cheddar gold should all separate cleanly.
+
+## Expression And Pose Language
+
+Idle:
+
+- Cheddar: "WIGGLE READY" - slightly eager, tail busy, head searching for trouble.
+- Cocoa: "QUEEN READY" - calm stance, readable eyes, controlled tail.
+
+Run:
+
+- Cheddar: "CHAOS ZOOM" - body tilt, fast wag, loose ear/tuft motion.
+- Cocoa: "SPOT PATROL" - purposeful trot, steadier head, alert spot-queen read.
+
+Bark:
+
+- Both dogs pop larger and show WOOF clearly.
+- Cheddar's bark is explosive and enthusiastic.
+- Cocoa's bark is authoritative and unimpressed.
+- Bark effects must remain readable as gameplay feedback, not only personality animation.
+
+Tug:
+
+- Both dogs should look locked into the same rope problem.
+- Cheddar reads as overcommitted excitement.
+- Cocoa reads as anchor strength.
+- The rope must show progress and partner waiting state clearly.
+
+Stunned:
+
+- Body compresses or tilts; eye/expression marker changes.
+- The grabbed dog should be instantly readable as unable to act.
+- Partner rescue callout should be more visually important than decorative distress.
+
+Rescued:
+
+- Rescued dog gets a hopeful pop.
+- Rescuer gets a proud moment.
+- The state should feel funny and warm, not grim.
+
+Proud:
+
+- Cheddar: bright, bouncing victory.
+- Cocoa: royal satisfaction, "obviously."
+- Used for clear and major teamwork wins.
+
+Sad:
+
+- Low, flopped, readable fail pose.
+- Should be funny and recoverable. Avoid harsh punishment visuals.
+
+## Personality Feedback Rules
+
+- Cheddar feedback should be noisy in shape language but not unreadable: fast wag, bright sparks,
+  overexcited pose labels, and silly score/cue copy.
+- Cocoa feedback should be expressive and declarative: steadier motion, cooler accent, spot/crown
+  identity, and cue copy that suggests capable judgment.
+- Failure and rescue should reinforce co-op affection. The game is about two dogs recovering from
+  nonsense together.
+- Bark, rescue, tug, squirrel, predator, clear, fail, score, and replay must each have a distinct
+  visual state.
+
+## UI And Callout Tone
+
+Cheddar callouts:
+
+- Short, eager, impulsive.
+- Good examples: "CHAOS ZOOM", "WOOF!", "WEENIE!", "oops still heroic".
+- Avoid generic hero language unless it is undercut by puppy nonsense.
+
+Cocoa callouts:
+
+- Capable, dry, slightly queenly.
+- Good examples: "SPOT PATROL", "QUEEN READY", "BARK RESCUE", "obviously saved it".
+- Avoid making Cocoa merely slow or grumpy. She is competent and expressive.
+
+Shared callouts:
+
+- Should make co-op intent obvious: "HUDDLE + BARK", "BOTH TUG", "PARTNER BARK".
+- Use funny phrases after the action is understood, not instead of clarity.
+- Score labels should stay arcade-readable: signed number plus plain cause.
+
+## Backyard Mission Implementation
+
+The current Unity proof lives in `unity/CheddarAndCocoa/Assets/Scenes/ArenaScene.unity`, built by
+`ArenaBootstrap`. It uses generated runtime shapes only.
+
+Current implementation rules:
+
+- Dog bodies are longer and lower than generic rectangles.
+- Both dogs have generated heads, long snouts, floppy ears, tiny feet, tails, collars, and expression
+  eyes.
+- Cheddar has a golden body, red collar, bright chaos tuft/flash, and "CHEDDAR CHAOS PUP" identity.
+- Cocoa has a chocolate body, teal collar, cream chest, spot markings, tiny crown marker, and
+  "COCOA SPOT QUEEN" identity.
+- Pose labels are intentionally direct: WIGGLE READY, QUEEN READY, CHAOS ZOOM, SPOT PATROL, WOOF,
+  TUG, STUNNED, RESCUED, PROUD, SAD FLOP.
+- Objective arrows stay dog-accent colored and hide when the target is close.
+
+## Backyard Prop Readability
+
+Weenie/breakfast:
+
+- Reads red/yellow at small size with bun and mustard markers.
+- Label remains "Weenie" until authored food art can carry the read alone.
+- Must never be confused with squirrel or rope.
+
+Squirrel:
+
+- Small brown thief with tail, nose, eye, and clear steal/scare labels.
+- Stealing state must be more urgent than idle/waiting.
+- Bark response must visibly change the squirrel state.
+
+Predator:
+
+- Red/dark warning shadow, wing/eye shape, offscreen/warning/attack/yeeted labels.
+- Should read as a pressure event, not a normal collectible.
+- During attack, grabbed dog pose plus partner rescue arrow must dominate the read.
+
+Rope:
+
+- Yellow/brown striped horizontal tug object with distinct ends.
+- Labels must name whether it needs both dogs, is waiting for one dog, is charging, or is complete.
+- Tug should feel like shared dog work, not a generic progress bar.
+
+## Score And Replay Visual Tone
+
+- Score swings are plain, signed, and cause-first: "+100 UNITED BARK", "-50 SQUIRREL GOT ONE".
+- Clear is celebratory and silly: proud dog poses, bright banner, funny rank, replay prompt.
+- Fail is recoverable: sad flop poses, clear reason, replay prompt.
+- Replay should feel like "try the weenie rescue again," not a menu-heavy reset.
+
+## Prototype Limitations
+
+This is not final art:
+
+- All art is generated with runtime sprites and TextMesh labels.
+- Shapes are intentionally chunky and replaceable.
+- There are no external, paid, or remote assets.
+- There is no full character rig, sprite sheet, animation controller, VFX pipeline, or final UI skin.
+- Text labels are still carrying some clarity that authored art and SFX should eventually carry.
+- Future levels should reuse the same dog identity rules before inventing new costumes or UI
+  language.
+
+Until final art exists, every placeholder must remain playable, readable, and aligned with the dog
+fantasy.

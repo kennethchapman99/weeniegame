@@ -47,6 +47,9 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(game.SquirrelObject.GetComponent<MissionActorFeedback>());
             Assert.IsNotNull(game.PredatorObject.GetComponent<MissionActorFeedback>());
             Assert.IsNotNull(game.RopeObject.GetComponent<MissionActorFeedback>());
+            Assert.IsNotNull(game.SquirrelObject.transform.Find("SquirrelFlagTail"));
+            Assert.IsNotNull(game.PredatorObject.transform.Find("PredatorWarningEyeA"));
+            Assert.IsNotNull(game.RopeObject.transform.Find("RopeStripeA"));
             Assert.IsNotNull(game.GetComponent<AudioSource>());
             Assert.IsNotNull(Camera.main.GetComponent<AudioListener>());
 
@@ -56,6 +59,13 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(cocoaFeedback);
             Assert.That(cheddarFeedback.IdentityLabel, Does.Contain("CHEDDAR CHAOS PUP"));
             Assert.That(cocoaFeedback.IdentityLabel, Does.Contain("COCOA SPOT QUEEN"));
+            Assert.That(cheddarFeedback.ArtDirectionSignature, Does.Contain("golden-chaos"));
+            Assert.That(cocoaFeedback.ArtDirectionSignature, Does.Contain("chocolate-spot"));
+            Assert.IsNotNull(cheddar.transform.Find("LongDogSnout"));
+            Assert.IsNotNull(cheddar.transform.Find("CheddarRedCollar"));
+            Assert.IsNotNull(cocoa.transform.Find("LongDogSnout"));
+            Assert.IsNotNull(cocoa.transform.Find("CocoaTealCollar"));
+            Assert.IsNotNull(cocoa.transform.Find("CocoaQueenSpotA"));
             Assert.IsNotNull(game.ObjectiveArrows);
             Assert.AreEqual(2, game.ObjectiveArrows.Length);
             Assert.IsNotNull(game.ObjectiveArrows[0]);
@@ -77,6 +87,7 @@ namespace CheddarAndCocoa.Tests
 
             var treats = Object.FindObjectsByType<Treat>(FindObjectsSortMode.None);
             Assert.Greater(treats.Length, 0);
+            Assert.IsNotNull(treats[0].transform.Find("WeenieMustard"));
             int scoreBefore = game.Score;
             treats[0].CollectBy(cheddar);
             Assert.AreEqual(scoreBefore + 50, game.Score);

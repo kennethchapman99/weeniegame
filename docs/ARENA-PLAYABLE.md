@@ -2,6 +2,9 @@
 
 `unity/CheddarAndCocoa/Assets/Scenes/ArenaScene.unity` is now a small co-op vertical slice instead of a flat treat loop. The scene still builds itself from `ArenaBootstrap`, but the round objective is a backyard rescue mission: Cheddar and Cocoa must recover breakfast/weenies, stop a squirrel from stealing too much food, complete a shared rope tug, and stand together against one predator scare before time runs out.
 
+For current global character art direction, read `docs/ART-DIRECTION.md`. Backyard Mission is the
+playable proof of that direction, not the only place the direction applies.
+
 ## Objective
 
 Clear the mission by completing all required objectives before the timer expires:
@@ -26,7 +29,13 @@ The replay loop is intentionally simple: players see current score, the latest s
 
 After LevelClear or GameOver, replay with **R**, **Enter**, gamepad **Start**, gamepad **South button**, or the on-screen **Replay** button.
 
-Cheddar is the chaos puppy and Cocoa is the steadier veteran. The placeholder sprites are still simple generated shapes, but the dogs now have generated identity markings and pose labels: Cheddar reads as **CHEDDAR CHAOS PUP** with warmer golden markings, a faster wag, and louder bark/proud poses; Cocoa reads as **COCOA SPOT QUEEN** with darker chocolate body, chest/spot markings, and a tiny crown marker. Idle, run, bark, tug, stunned, rescued, proud, and sad states are exposed through body squash/rotation, tail motion, color-shifted labels, and deterministic PlayMode assertions.
+Cheddar is the chaos puppy and Cocoa is the steadier veteran. The placeholder sprites are still simple generated shapes, but the dogs now have a reusable global identity direction proven in the arena: both read as long, low miniature dachshunds with visible head, long snout, floppy ear, tiny feet, tail, collar, and expression markers. Cheddar reads as **CHEDDAR CHAOS PUP** with a golden body, red collar, bright chaos tuft/flash, faster wag, and more explosive bark/proud motion. Cocoa reads as **COCOA SPOT QUEEN** with a chocolate body, teal collar, cream chest, spot markings, steadier expression, and tiny queen marker. Idle, run, bark, tug, stunned, rescued, proud, and sad states are exposed through body squash/rotation, tail/head/ear motion, color-shifted labels, and deterministic PlayMode assertions.
+
+Current pose labels:
+
+- Cheddar idle/run: **WIGGLE READY** / **CHAOS ZOOM**.
+- Cocoa idle/run: **QUEEN READY** / **SPOT PATROL**.
+- Shared action states: **WOOF!**, **TUG!**, **STUNNED**, **RESCUED!**, **PROUD!**, **SAD FLOP**.
 
 Each dog also gets a small objective arrow that appears only when useful. It points to the next actionable target and hides when the dog is already close enough, so it should guide without becoming permanent screen noise. Current arrow priorities are:
 
@@ -40,7 +49,7 @@ Manual first-20-seconds check: start the scene with two players and do nothing f
 
 ## Squirrel pressure
 
-A visible, labeled **Squirrel** periodically picks a breakfast/weenie and runs to steal it. If it reaches the item, the squirrel escapes with food, the team loses score, and the stolen-food counter rises. A single nearby bark interrupts/scares the squirrel briefly; a united bark scares it longer and adds teamwork score.
+A visible, labeled **Squirrel** periodically picks a breakfast/weenie and runs to steal it. The placeholder now has a tail/nose/eye silhouette so it reads as a small thief before labels are considered. If it reaches the item, the squirrel escapes with food, the team loses score, and the stolen-food counter rises. A single nearby bark interrupts/scares the squirrel briefly; a united bark scares it longer and adds teamwork score.
 
 Current squirrel labels/cues:
 
@@ -53,13 +62,13 @@ Manual readability check: let the squirrel start stealing once, then bark near i
 
 ## Predator scare
 
-Once per round, a **Predator Warning** telegraphs danger and targets one dog. If both dogs are close together and bark within the united-bark timing window, the predator is driven away for a large score reward. If the team fails the warning, **Predator Attack** grabs/stuns the target dog. The other dog can rescue by coming close and barking; failure costs score/time pressure but does not instantly end the game.
+Once per round, a **Predator Warning** telegraphs danger and targets one dog. The placeholder is a dark/red wing-and-eye shadow, not a normal arena object. If both dogs are close together and bark within the united-bark timing window, the predator is driven away for a large score reward. If the team fails the warning, **Predator Attack** grabs/stuns the target dog. The other dog can rescue by coming close and barking; failure costs score/time pressure but does not instantly end the game.
 
 Manual readability check: when the warning starts, the HUD says a shadow is over the targeted dog, the predator label becomes **HUDDLE + BARK!**, and both dogs' arrows should point toward each other with **HUDDLE + BARK** if they are separated. A successful huddle bark should show **DOUBLE WOOF drove the predator away!** and move the predator to **PREDATOR YEETED** offscreen. During an attack, the grabbed dog should read **STUNNED**, the partner arrow should say **BARK RESCUE**, and a successful partner bark should show a distinct rescue cue: **bark-rescued their sibling - heroic nonsense!** The rescue cue is deliberately separate from united bark feedback.
 
 ## Rope/Tug shared-object mechanic
 
-The labeled, pulsing **Rope/Tug** object is a required co-op objective. Either dog can interact near the rope for progress, but the main completion path is both dogs standing together at the rope to charge the tug meter. Finishing tug awards a major score bonus and is required for LevelClear.
+The labeled, pulsing **Rope/Tug** object is a required co-op objective. Its placeholder is a horizontal yellow/brown striped tug rope with visible ends so it is not confused with food. Either dog can interact near the rope for progress, but the main completion path is both dogs standing together at the rope to charge the tug meter. Finishing tug awards a major score bonus and is required for LevelClear.
 
 Manual readability check: after early food recovery, objective arrows should switch to **BOTH TUG** while dogs are away from the rope. If only one dog reaches the rope, the rope label should call out **WAITING FOR CHEDDAR** or **WAITING FOR COCOA** and the HUD should say both dogs must commit together. When both dogs stand on the rope, their labels briefly read **TUG!**, the rope label changes to **BOTH TUGGING X%**, and completion flips the rope label to **ROPE COMPLETE!**.
 
@@ -98,19 +107,23 @@ Ranks are deterministic and intentionally funny:
 
 LevelClear displays a 1-3 star rating based on final score, the center banner reads **BACKYARD SAVED! [rank]**, and both dogs hold a **PROUD!** pose. GameOver displays **MISSION FAILED! [rank]**, applies the game-over penalty, and both dogs hold a **SAD FLOP** pose. The end card includes `Outcome: Score - Rank`, the last score swing, stars, and **Press R / Enter / Start to replay the weenie rescue**.
 
+Manual score/replay readability check: during both clear and fail, confirm the final dog poses are still visible behind/around the end card, the score swing label remains signed and cause-first, the funny rank is readable, and the replay prompt clearly refers back to the weenie rescue.
+
 ## Two-player playtest script
 
 Use this short script before starting a new level:
 
 1. Start `ArenaScene` with two players and read the opening at gameplay zoom. Confirm both players can answer: who am I, where is my first weenie, what is the shared mission?
-2. Let the first squirrel steal attempt start. Have one player bark near it; confirm the steal/scare cause and effect is obvious.
-3. Recover at least three weenies. Confirm arrows switch toward **BOTH TUG** and stop feeling noisy once players are close to targets.
-4. Send only one dog to the rope. Confirm the waiting-for-partner label makes the required cooperation obvious.
-5. Send both dogs to the rope. Confirm both dog pose labels and rope progress communicate a shared tug.
-6. On the predator warning, first try the correct huddle + bark. Restart and then intentionally fail the warning once to see the grab/rescue path.
-7. Watch score event labels during each major action: weenie, squirrel scare/steal, united bark, predator hit/defense, rescue, tug, clear, and fail.
-8. Finish a clear run and a failed run. Confirm the clear/fail banners, dog poses, final score, funny rank, and replay instructions are impossible to miss.
-9. Press **R**, **Enter**, gamepad **Start**, gamepad **South**, or the **Replay** button. Confirm the run resets to score `0`, `Outcome: InProgress`, no replay prompt, and the intro banner returns.
+2. Before moving, confirm Cheddar and Cocoa are distinct without reading only text: long low bodies, Cheddar's golden/red chaos read, Cocoa's chocolate/teal spot-queen read, visible snouts, ears, tiny feet, and collars.
+3. Move both dogs and bark with each. Confirm Cheddar's run reads like **CHAOS ZOOM**, Cocoa's like **SPOT PATROL**, and both bark poses still pop without covering objective arrows.
+4. Let the first squirrel steal attempt start. Have one player bark near it; confirm the tail/nose/eye squirrel silhouette and steal/scare labels make cause and effect obvious.
+5. Recover at least three weenies. Confirm the weenie bun/mustard marker reads as food and arrows switch toward **BOTH TUG** without feeling noisy once players are close to targets.
+6. Send only one dog to the rope. Confirm the striped rope object and waiting-for-partner label make the required cooperation obvious.
+7. Send both dogs to the rope. Confirm both dog pose labels and rope progress communicate a shared tug.
+8. On the predator warning, first try the correct huddle + bark. Restart and then intentionally fail the warning once to see the grab/rescue path. Confirm the predator reads as a red/dark wing-and-eye threat, the grabbed dog reads **STUNNED**, and the partner rescue arrow is more important than decorative motion.
+9. Watch score event labels during each major action: weenie, squirrel scare/steal, united bark, predator hit/defense, rescue, tug, clear, and fail.
+10. Finish a clear run and a failed run. Confirm the clear/fail banners, proud/sad dog poses, final score, funny rank, and replay instructions are impossible to miss.
+11. Press **R**, **Enter**, gamepad **Start**, gamepad **South**, or the **Replay** button. Confirm the run resets to score `0`, `Outcome: InProgress`, no replay prompt, and the intro banner returns.
 
 ## Round modifiers
 
@@ -123,7 +136,7 @@ Each restart deterministically selects one seeded modifier for tests/HUD:
 ## Known limitations
 
 - All mission actors use placeholder sprites/text labels generated at runtime; there are no external art assets yet.
-- Dog identity art, pose labels, and objective arrows are generated placeholders. They are intentionally readable and easy to delete once authored sprites/animation exist.
+- Dog identity art, pose labels, collars, expression markers, prop silhouettes, and objective arrows are generated placeholders. They are intentionally readable and easy to delete once authored sprites/animation exist.
 - The squirrel and predator use intentionally simple movement/state rules so the PlayMode tests remain deterministic.
 - The intro, bark, squirrel, predator, tug, clear, and fail feedback are still text/scale/audio-placeholder driven; they are designed to be replaced by authored animation/SFX later.
 - Scoring is intentionally flat and local-only. There is no save file, leaderboard, unlock economy, or persistent progression yet.

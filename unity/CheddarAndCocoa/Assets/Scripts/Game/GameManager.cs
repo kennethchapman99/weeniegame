@@ -760,12 +760,18 @@ namespace CheddarAndCocoa.Game
             var go = new GameObject("Breakfast/Weenie");
             go.transform.SetParent(_treatRoot);
             go.transform.position = new Vector3(x, y, 0f);
-            go.transform.localScale = new Vector3(0.5f, 0.5f, 1f);
+            go.transform.localScale = new Vector3(0.72f, 0.32f, 1f);
 
             var sr = go.AddComponent<SpriteRenderer>();
             sr.sprite = _sprite;
-            sr.color = new Color(0.92f, 0.4f, 0.32f);
+            sr.color = new Color(0.9f, 0.28f, 0.18f);
             sr.sortingOrder = 5;
+            AddActorPart(go, "WeenieBunLeft", _sprite, new Color(0.98f, 0.76f, 0.4f),
+                new Vector3(-0.5f, 0f, -0.03f), new Vector3(0.2f, 0.9f, 1f), 6);
+            AddActorPart(go, "WeenieBunRight", _sprite, new Color(0.98f, 0.76f, 0.4f),
+                new Vector3(0.5f, 0f, -0.03f), new Vector3(0.2f, 0.9f, 1f), 6);
+            AddActorPart(go, "WeenieMustard", _sprite, new Color(1f, 0.9f, 0.12f),
+                new Vector3(0f, 0.18f, -0.04f), new Vector3(0.8f, 0.18f, 1f), 7);
 
             var col = go.AddComponent<CircleCollider2D>();
             col.isTrigger = true;
@@ -775,7 +781,7 @@ namespace CheddarAndCocoa.Game
             treat.Bind(this);
             _treats.Add(treat);
 
-            AddWorldLabel(go, "Weenie", Vector3.up * 0.7f, 16, Color.white);
+            AddWorldLabel(go, "Weenie", Vector3.up * 2.2f, 16, Color.white);
         }
 
         private void ClearTreats()
@@ -804,9 +810,73 @@ namespace CheddarAndCocoa.Game
             sr.color = color;
             sr.sortingOrder = 6;
 
-            AddWorldLabel(go, label, Vector3.up * 0.85f, 24, Color.white);
+            BuildActorArt(go, name, sr);
+            AddWorldLabel(go, label, ActorLabelOffset(name), 24, Color.white);
             go.AddComponent<MissionActorFeedback>().Init(sr, label, pulse);
             return go;
+        }
+
+        private static Vector3 ActorLabelOffset(string name)
+        {
+            if (name.Contains("Squirrel") || name.Contains("Predator") || name.Contains("Rope"))
+                return Vector3.up * 1.8f;
+            return Vector3.up * 0.85f;
+        }
+
+        private void BuildActorArt(GameObject go, string name, SpriteRenderer root)
+        {
+            if (name.Contains("Squirrel"))
+            {
+                root.transform.localScale = new Vector3(0.78f, 0.48f, 1f);
+                AddActorPart(go, "SquirrelFlagTail", _sprite, new Color(0.72f, 0.42f, 0.12f),
+                    new Vector3(-0.55f, 0.22f, -0.02f), new Vector3(0.32f, 0.9f, 1f), 7);
+                AddActorPart(go, "SquirrelPointNose", _sprite, new Color(0.36f, 0.18f, 0.07f),
+                    new Vector3(0.52f, 0.04f, -0.03f), new Vector3(0.28f, 0.22f, 1f), 8);
+                AddActorPart(go, "SquirrelBeadyEye", _sprite, Color.black,
+                    new Vector3(0.28f, 0.2f, -0.04f), new Vector3(0.09f, 0.09f, 1f), 9);
+                return;
+            }
+
+            if (name.Contains("Predator"))
+            {
+                root.transform.localScale = new Vector3(1.25f, 0.48f, 1f);
+                AddActorPart(go, "PredatorWingLeft", _sprite, new Color(0.18f, 0.03f, 0.04f),
+                    new Vector3(-0.62f, 0.04f, -0.02f), new Vector3(0.55f, 0.28f, 1f), 7);
+                AddActorPart(go, "PredatorWingRight", _sprite, new Color(0.18f, 0.03f, 0.04f),
+                    new Vector3(0.62f, 0.04f, -0.02f), new Vector3(0.55f, 0.28f, 1f), 7);
+                AddActorPart(go, "PredatorWarningEyeA", _sprite, new Color(1f, 0.1f, 0.06f),
+                    new Vector3(-0.16f, 0.16f, -0.04f), new Vector3(0.12f, 0.12f, 1f), 9);
+                AddActorPart(go, "PredatorWarningEyeB", _sprite, new Color(1f, 0.1f, 0.06f),
+                    new Vector3(0.16f, 0.16f, -0.04f), new Vector3(0.12f, 0.12f, 1f), 9);
+                return;
+            }
+
+            if (name.Contains("Rope"))
+            {
+                root.transform.localScale = new Vector3(1.45f, 0.24f, 1f);
+                AddActorPart(go, "RopeStripeA", _sprite, new Color(0.55f, 0.27f, 0.08f),
+                    new Vector3(-0.36f, 0f, -0.02f), new Vector3(0.16f, 1.1f, 1f), 7);
+                AddActorPart(go, "RopeStripeB", _sprite, new Color(0.55f, 0.27f, 0.08f),
+                    new Vector3(0.36f, 0f, -0.02f), new Vector3(0.16f, 1.1f, 1f), 7);
+                AddActorPart(go, "RopeEndLeft", _sprite, new Color(1f, 0.82f, 0.3f),
+                    new Vector3(-0.76f, 0f, -0.03f), new Vector3(0.16f, 1.5f, 1f), 8);
+                AddActorPart(go, "RopeEndRight", _sprite, new Color(1f, 0.82f, 0.3f),
+                    new Vector3(0.76f, 0f, -0.03f), new Vector3(0.16f, 1.5f, 1f), 8);
+            }
+        }
+
+        private static SpriteRenderer AddActorPart(GameObject parent, string name, Sprite sprite, Color color,
+            Vector3 localPosition, Vector3 localScale, int sortingOrder)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent.transform);
+            go.transform.localPosition = localPosition;
+            go.transform.localScale = localScale;
+            var sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = sprite;
+            sr.color = color;
+            sr.sortingOrder = sortingOrder;
+            return sr;
         }
 
         private static TextMesh AddWorldLabel(GameObject parent, string text, Vector3 offset, int size, Color color)

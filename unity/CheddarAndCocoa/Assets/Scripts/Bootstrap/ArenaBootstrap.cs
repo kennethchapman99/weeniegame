@@ -107,7 +107,7 @@ namespace CheddarAndCocoa.Bootstrap
             var go = new GameObject(id.ToString());
             go.SetActive(false);
             go.transform.position = pos;
-            go.transform.localScale = new Vector3(1.4f, 0.8f, 1f); // dachshund-ish placeholder
+            go.transform.localScale = new Vector3(1.6f, 0.62f, 1f); // long, low dachshund placeholder
 
             var sr = go.AddComponent<SpriteRenderer>();
             sr.sprite = _square;
