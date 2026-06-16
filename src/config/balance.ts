@@ -75,6 +75,17 @@ export const KITCHEN = {
   target: 5, // items to eat to win
 } as const;
 
+// "Buried Treasure" co-op mission — Cocoa sniffs, Cheddar digs, either pup collects.
+export const BURROW = {
+  sniffR: 48, // Cocoa must stay within this radius to investigate a mound
+  sniffTime: 0.75, // seconds of Cocoa sniffing to reveal a mound
+  digR: 56, // Cheddar's jump must land within this distance to dig
+  digCD: 0.45, // min seconds between successful digs
+  collectR: 38, // proximity to pick up a dug-up treat
+  treatScore: 5, // combined-score per treasure collected
+  target: 4, // real buried treats to collect to win
+} as const;
+
 // "Sneak the Snack" distract+grab mission tuning.
 export const SNEAK = {
   grabR: 42, // how close a dog must be to a treat to grab it
