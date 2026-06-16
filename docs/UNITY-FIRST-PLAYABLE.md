@@ -30,8 +30,9 @@ Only what this milestone needs (pinned in `unity/CheddarAndCocoa/Packages/manife
 
 1. Install **Unity Hub** + **Unity 6 LTS** (Mac and/or Windows build support).
 2. Unity Hub → **Add → Add project from disk →** select `unity/CheddarAndCocoa`.
-3. Open it. Unity generates `Library/`, `.meta` files, and default `ProjectSettings`, then resolves
-   the packages above. First import takes a minute.
+3. Open it. `.meta` files (stable GUIDs) are committed, so the scripts/asmdef bind on import; Unity
+   generates `Library/` and the default `ProjectSettings` (only `ProjectVersion.txt` is committed),
+   then resolves the packages above. First import takes a minute.
 4. **When prompted to enable the new Input System backend, click Yes** (the editor restarts). This
    sets *Project Settings → Player → Active Input Handling* to *Input System Package* (or *Both*).
    Without it the gamepads compile fine but send no input. If you missed the prompt, set it
@@ -62,9 +63,33 @@ Only what this milestone needs (pinned in `unity/CheddarAndCocoa/Packages/manife
 | **Y** (north button) | Grab/interact **placeholder** — logs only |
 | A / B | Reserved (wrestle / jump) — wired into `MoveIntent`, not yet implemented |
 
+## Verification status
+
+- **C# compile — VERIFIED.** All 13 scripts were compiled headlessly with Unity 6's bundled Roslyn
+  against the editor's real `UnityEngine.*` module assemblies + the Input System API → an assembly
+  was produced with **0 errors** (two benign warnings only: `DogController._jumpT` and
+  `LevelObjective.surviveSeconds` are documented stub fields for not-yet-built features). The
+  Package Manager also resolved the manifest (Input System loaded) during a batch-mode import.
+- **Opens / Play / movement / bark — automated test ready, blocked only on license.** There's a
+  PlayMode test (`Assets/Tests/PlayMode/ControllerCoopPlayModeTests.cs`) that runs the real
+  `GameBootstrap`, injects **two virtual gamepads**, and asserts the two dogs move *independently*
+  (opposite directions per pad) and that bark fires `OnBark` — i.e. it proves the three runtime
+  criteria with **no hardware and no manual Play**. The test assembly also compiles clean (verified
+  with Roslyn against NUnit + the Input System TestFramework).
+- **To get the green runtime proof:** the editor must be *licensed*. This machine has a Unity
+  **Personal** seat whose **offline period has lapsed** (`LicenseGroupOfflineValidityPeriodIsExpired`,
+  `Token not found in cache`), so the headless run aborts at the license gate. Open **Unity Hub and
+  sign in once** to refresh the license, then run:
+
+  ```sh
+  ./unity/run-playmode-tests.sh      # headless PlayMode test → playmode-results.xml
+  ```
+
+  Or just open `ControllerTestScene` in the signed-in editor and press **Play** with two pads.
+
 ## What works
 
-- Project imports with **no compiler errors** (no Safe Mode).
+- Project imports with **no compiler errors** (no Safe Mode) — compile verified headlessly (above).
 - `ControllerTestScene` can be pressed **Play** and self-assembles.
 - **Two dogs move independently** on two controllers, contained by the field walls.
 - **Bark** produces a visible response (sprite pop + floating "WOOF!") **and** a console log.
