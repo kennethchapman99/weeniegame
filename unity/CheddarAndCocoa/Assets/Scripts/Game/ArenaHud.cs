@@ -41,21 +41,22 @@ namespace CheddarAndCocoa.Game
             GUI.Label(new Rect(0, 34, Screen.width, 26), $"⏱  {secs}s", _mid);
             GUI.Label(new Rect(0, 58, Screen.width, 24), $"Mission: {_game.Phase} | {_game.BreakfastRecovered}/{_game.BreakfastGoal} Breakfast/Weenies | Stolen {_game.StolenFood}/{_game.MaxStolenFood}", _mid);
             GUI.Label(new Rect(0, 82, Screen.width, 24), $"United barks: {_game.UnitedBarks} | Tug {Mathf.RoundToInt(_game.TugProgress * 100f)}% | Modifier: {_game.ActiveModifierLabel}", _mid);
-            GUI.Label(new Rect(0, 106, Screen.width, 24), _game.LastCue, _mid);
+            GUI.Label(new Rect(0, 106, Screen.width, 24), _game.LastScoreEventLabel, _mid);
+            GUI.Label(new Rect(0, 130, Screen.width, 24), _game.LastCue, _mid);
             if (!string.IsNullOrEmpty(_game.MissionBanner) && !_game.IsGameOver && !_game.IsLevelClear)
-                GUI.Label(new Rect(0, 138, Screen.width, 34), _game.MissionBanner, _big);
+                GUI.Label(new Rect(0, 162, Screen.width, 34), _game.MissionBanner, _big);
 
             if (_game.IsGameOver || _game.IsLevelClear)
             {
-                float w = 420, h = 150;
+                float w = 520, h = 178;
                 var box = new Rect((Screen.width - w) * 0.5f, (Screen.height - h) * 0.5f, w, h);
                 GUI.Box(box, GUIContent.none);
                 GUI.Label(new Rect(box.x, box.y + 14, w, 40), _game.MissionBanner, _big);
-                GUI.Label(new Rect(box.x, box.y + 62, w, 30), $"Final score: {_game.Score}   Stars: {_game.StarRating}/3", _mid);
-                GUI.Label(new Rect(box.x, box.y + 96, w, 26),
-                    "Press R / Enter / (start) to play again", _mid);
+                GUI.Label(new Rect(box.x, box.y + 58, w, 30), _game.EndSummaryLabel, _mid);
+                GUI.Label(new Rect(box.x, box.y + 88, w, 28), $"Last swing: {_game.LastScoreEventLabel}   Stars: {_game.StarRating}/3", _mid);
+                GUI.Label(new Rect(box.x, box.y + 118, w, 26), _game.ReplayPromptLabel, _mid);
 
-                if (GUI.Button(new Rect(box.x + w * 0.5f - 70, box.y + h - 36, 140, 28), "Restart"))
+                if (GUI.Button(new Rect(box.x + w * 0.5f - 70, box.y + h - 36, 140, 28), "Replay"))
                     _game.Restart();
             }
         }

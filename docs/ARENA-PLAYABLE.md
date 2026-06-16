@@ -15,12 +15,16 @@ The round can end in **LevelClear** or **GameOver**, and either result can be re
 
 The opening HUD banner says: **Cheddar + Cocoa must protect the weenies together.** For the first few seconds, the squirrel is labeled **Squirrel: WAITING**, the predator is **Predator: OFFSCREEN**, and the rope is **Rope/Tug - BOTH DOGS**. This is intentional: players should first read their spawn, dog identity, first weenie arrows, and shared fantasy before the first threat competes for attention.
 
+The replay loop is intentionally simple: players see current score, the latest score swing, and an end-of-run summary with outcome, final score, funny rank, and replay prompt. The exposed deterministic state is `Score`, `LastScoreDelta`, `LastScoreEventLabel`, `Outcome`, `EndRank`, `EndSummaryLabel`, and `ReplayPromptVisible`.
+
 ## Controls
 
 | Player | Dog | Controller | Keyboard | Bark | Interact |
 | --- | --- | --- | --- | --- | --- |
 | P1 | Cheddar | Gamepad slot 0 | WASD | Space / X button | Y button |
 | P2 | Cocoa | Gamepad slot 1 | Arrow keys | Enter / Right Shift / X button | Y button |
+
+After LevelClear or GameOver, replay with **R**, **Enter**, gamepad **Start**, gamepad **South button**, or the on-screen **Replay** button.
 
 Cheddar is the chaos puppy and Cocoa is the steadier veteran. The placeholder sprites are still simple generated shapes, but the dogs now have generated identity markings and pose labels: Cheddar reads as **CHEDDAR CHAOS PUP** with warmer golden markings, a faster wag, and louder bark/proud poses; Cocoa reads as **COCOA SPOT QUEEN** with darker chocolate body, chest/spot markings, and a tiny crown marker. Idle, run, bark, tug, stunned, rescued, proud, and sad states are exposed through body squash/rotation, tail motion, color-shifted labels, and deterministic PlayMode assertions.
 
@@ -70,20 +74,29 @@ Bark remains visible through expanding bark rings, but now affects gameplay:
 
 Manual readability check: each bark should pop the dog into a **WOOF!** pose label and still show the expanding bark ring. A solo bark away from targets gives a joking solo-bark cue. A successful united bark gives a **DOUBLE WOOF** cue and is protected for a short moment so the second same-moment bark does not visually downgrade it back to solo feedback. During predator warning, the united bark should drive the predator away immediately.
 
-## Scoring and stars
+## Scoring, ranks, and replay
 
-Score is no longer flat +1 only:
+The score model is deliberately readable and arcade-simple. Score changes appear as short HUD labels like **+100 UNITED BARK** or **-50 SQUIRREL GOT ONE**:
 
-- breakfast/weenie recovery: +10;
-- single-dog squirrel scare: +3;
-- united bark teamwork: +5;
-- predator defended: +30;
-- rescue after failed predator attack: +8;
-- tug objective: +25;
-- LevelClear time remaining bonus: remaining seconds;
-- squirrel steal / predator failure: score penalties.
+- breakfast/weenie recovery: **+50 WEENIE SAVED**;
+- single-dog squirrel scare: **+25 SQUIRREL SCARED**;
+- united bark teamwork: **+100 UNITED BARK**;
+- predator defended: **+300 PREDATOR YEETED**;
+- rescue after failed predator attack: **+250 PARTNER RESCUE**;
+- tug objective: **+200 TUG COMPLETE**;
+- LevelClear: **+500 LEVEL CLEAR** plus `5 x remaining seconds`;
+- squirrel steal: **-50 SQUIRREL GOT ONE** or **-80 SQUIRREL GOT ONE** during Pancake Panic;
+- predator hit after missed warning: **-150 PREDATOR HIT**;
+- GameOver: **-100 GAME OVER**.
 
-LevelClear displays a 1–3 star rating based on the final score. On clear, the center banner reads **BACKYARD SAVED! PROUD DOG PARADE!** and both dogs hold a **PROUD!** pose. On fail, the center banner reads **MISSION FAILED! SAD FLOP RESET!** and both dogs hold a **SAD FLOP** pose so the two end states read differently even before final art.
+Ranks are deterministic and intentionally funny:
+
+- **Pawfect Yard** — clear with `1500+` score.
+- **Backyard Heroes** — clear with `1000+` score.
+- **Snack Survivors** — any run with `350+` score that does not hit the higher clear ranks.
+- **Needs More Bark** — low-score clear or fail.
+
+LevelClear displays a 1-3 star rating based on final score, the center banner reads **BACKYARD SAVED! [rank]**, and both dogs hold a **PROUD!** pose. GameOver displays **MISSION FAILED! [rank]**, applies the game-over penalty, and both dogs hold a **SAD FLOP** pose. The end card includes `Outcome: Score - Rank`, the last score swing, stars, and **Press R / Enter / Start to replay the weenie rescue**.
 
 ## Two-player playtest script
 
@@ -95,7 +108,9 @@ Use this short script before starting a new level:
 4. Send only one dog to the rope. Confirm the waiting-for-partner label makes the required cooperation obvious.
 5. Send both dogs to the rope. Confirm both dog pose labels and rope progress communicate a shared tug.
 6. On the predator warning, first try the correct huddle + bark. Restart and then intentionally fail the warning once to see the grab/rescue path.
-7. Finish a clear run and a failed run. Confirm the clear/fail banners, dog poses, and restart instructions are impossible to miss.
+7. Watch score event labels during each major action: weenie, squirrel scare/steal, united bark, predator hit/defense, rescue, tug, clear, and fail.
+8. Finish a clear run and a failed run. Confirm the clear/fail banners, dog poses, final score, funny rank, and replay instructions are impossible to miss.
+9. Press **R**, **Enter**, gamepad **Start**, gamepad **South**, or the **Replay** button. Confirm the run resets to score `0`, `Outcome: InProgress`, no replay prompt, and the intro banner returns.
 
 ## Round modifiers
 
@@ -111,10 +126,12 @@ Each restart deterministically selects one seeded modifier for tests/HUD:
 - Dog identity art, pose labels, and objective arrows are generated placeholders. They are intentionally readable and easy to delete once authored sprites/animation exist.
 - The squirrel and predator use intentionally simple movement/state rules so the PlayMode tests remain deterministic.
 - The intro, bark, squirrel, predator, tug, clear, and fail feedback are still text/scale/audio-placeholder driven; they are designed to be replaced by authored animation/SFX later.
+- Scoring is intentionally flat and local-only. There is no save file, leaderboard, unlock economy, or persistent progression yet.
+- The end rank is based only on final score and clear/fail state; it does not yet account for style, dog-specific contributions, or advanced co-op medals.
 - Tug is proximity/progress based, not a full physics rope.
 - Predator targeting and modifier selection are seeded but still prototype-simple.
 - The scene now has basic procedural sound cues, an arena `AudioListener`, and simple placeholder animation, but real prefab art, authored animation, better SFX, and richer rescue/tug feel are still future work.
 
 ## Test coverage
 
-`unity/Assets/Tests/PlayMode/ArenaGameLoopPlayModeTests.cs` loads ArenaScene and verifies dogs, mission state, intro prompt/banner, delayed first squirrel steal window, item recovery, squirrel steal/scare labels, solo/united bark feedback, predator defense, failed predator rescue, tug waiting/together feedback, LevelClear, GameOver/restart, exposed modifier state, dog identity labels, dog pose labels, objective-arrow labels, and the generated arena audio listener.
+`unity/Assets/Tests/PlayMode/ArenaGameLoopPlayModeTests.cs` loads ArenaScene and verifies dogs, mission state, intro prompt/banner, delayed first squirrel steal window, initial score state, item recovery scoring, squirrel steal/scare labels and score events, solo/united bark feedback and scoring, predator defense scoring, failed predator hit and rescue scoring, tug waiting/together feedback and scoring, LevelClear score/rank/summary, GameOver score/rank/summary, replay prompt visibility, restart reset state, exposed modifier state, dog identity labels, dog pose labels, objective-arrow labels, and the generated arena audio listener.

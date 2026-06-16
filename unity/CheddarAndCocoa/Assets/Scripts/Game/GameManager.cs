@@ -14,6 +14,7 @@ namespace CheddarAndCocoa.Game
     {
         public enum State { Intro, Playing, PredatorWarning, PredatorAttack, LevelClear, GameOver }
         public enum RoundModifier { SquirrelTrouble, ZoomiesSurge, PancakePanic }
+        public enum MissionOutcome { InProgress, Clear, Failed }
         public enum FeedbackKind
         {
             Intro,
@@ -31,15 +32,18 @@ namespace CheddarAndCocoa.Game
             GameOver
         }
 
-        private const int ItemScore = 10;
-        private const int SquirrelScareScore = 3;
-        private const int UnitedBarkScore = 5;
-        private const int PredatorDefendedScore = 30;
-        private const int RescueScore = 8;
-        private const int TugScore = 25;
-        private const int PredatorFailurePenalty = 10;
-        private const int SquirrelPenalty = 5;
-        private const int PancakePenalty = 8;
+        private const int ItemScore = 50;
+        private const int SquirrelScareScore = 25;
+        private const int UnitedBarkScore = 100;
+        private const int PredatorDefendedScore = 300;
+        private const int RescueScore = 250;
+        private const int TugScore = 200;
+        private const int ClearScore = 500;
+        private const int TimeBonusMultiplier = 5;
+        private const int PredatorFailurePenalty = 150;
+        private const int SquirrelPenalty = 50;
+        private const int PancakePenalty = 80;
+        private const int GameOverPenalty = 100;
 
         [Header("Mission pacing")]
         [SerializeField] private float roundDuration = 75f;
@@ -67,6 +71,7 @@ namespace CheddarAndCocoa.Game
         [SerializeField] private float tugChargePerSecond = 0.38f;
 
         public int Score { get; private set; }
+        public int LastScoreDelta { get; private set; }
         public float TimeRemaining { get; private set; }
         public float RoundDuration => roundDuration;
         public State Phase { get; private set; } = State.Intro;
@@ -83,6 +88,7 @@ namespace CheddarAndCocoa.Game
         public float TugProgress { get; private set; }
         public bool TugComplete { get; private set; }
         public int StarRating { get; private set; }
+        public MissionOutcome Outcome { get; private set; } = MissionOutcome.InProgress;
         public RoundModifier ActiveModifier { get; private set; }
         public string ActiveModifierLabel => ActiveModifier switch
         {
@@ -91,8 +97,13 @@ namespace CheddarAndCocoa.Game
             _ => "Pancake Panic"
         };
         public string LastCue { get; private set; } = "Ready";
+        public string LastScoreEventLabel { get; private set; } = "Score ready";
         public string MissionIntroPrompt => "Cheddar + Cocoa must protect the weenies together.";
         public string MissionBanner { get; private set; } = string.Empty;
+        public string EndRank { get; private set; } = "Needs More Bark";
+        public string EndSummaryLabel { get; private set; } = string.Empty;
+        public bool ReplayPromptVisible => IsGameOver || IsLevelClear;
+        public string ReplayPromptLabel => ReplayPromptVisible ? "Press R / Enter / Start to replay the weenie rescue" : string.Empty;
         public FeedbackKind LastFeedback { get; private set; } = FeedbackKind.Intro;
         public GameObject SquirrelObject { get; private set; }
         public GameObject PredatorObject { get; private set; }
@@ -160,7 +171,7 @@ namespace CheddarAndCocoa.Game
         {
             if (!MissionActive() || treat == null) return;
 
-            Score += ItemScore;
+            AddScore(ItemScore, "WEENIE SAVED");
             BreakfastRecovered++;
             LastCue = $"{DogName(dog)} recovered breakfast!";
             Pulse(dog != null ? dog.gameObject : null, 1.2f);
@@ -195,6 +206,7 @@ namespace CheddarAndCocoa.Game
         private void BeginRound()
         {
             Score = 0;
+            LastScoreDelta = 0;
             UnitedBarks = 0;
             BreakfastRecovered = 0;
             StolenFood = 0;
@@ -203,10 +215,14 @@ namespace CheddarAndCocoa.Game
             TugProgress = 0f;
             TugComplete = false;
             StarRating = 0;
+            Outcome = MissionOutcome.InProgress;
             TimeRemaining = roundDuration;
             Phase = State.Playing;
             LastCue = MissionIntroPrompt;
+            LastScoreEventLabel = "0 READY TO PROTECT WEENIES";
             MissionBanner = MissionIntroPrompt;
+            EndRank = "Needs More Bark";
+            EndSummaryLabel = string.Empty;
             LastFeedback = FeedbackKind.Intro;
 
             ActiveModifier = (RoundModifier)_rng.Next(0, 3);
@@ -322,7 +338,7 @@ namespace CheddarAndCocoa.Game
             }
 
             StolenFood++;
-            Score -= ActiveModifier == RoundModifier.PancakePanic ? PancakePenalty : SquirrelPenalty;
+            AddScore(-(ActiveModifier == RoundModifier.PancakePanic ? PancakePenalty : SquirrelPenalty), "SQUIRREL GOT ONE");
             _squirrelTarget = null;
             _squirrelTimer = SquirrelDelay();
             LastFeedback = FeedbackKind.SquirrelStoleFood;
@@ -368,7 +384,7 @@ namespace CheddarAndCocoa.Game
             _grabbedDog = _predatorTarget;
             _dogs[_grabbedDog].SetMode(MovementMode.Stunned);
             PredatorFailed = true;
-            Score -= PredatorFailurePenalty;
+            AddScore(-PredatorFailurePenalty, "PREDATOR HIT");
             LastFeedback = FeedbackKind.PredatorAttack;
             LastCue = $"{DogName(_dogs[_grabbedDog])} got yoinked! Partner bark rescue!";
             PlayCue(_dangerCue);
@@ -379,7 +395,7 @@ namespace CheddarAndCocoa.Game
             PredatorResolved = true;
             PredatorFailed = false;
             Phase = State.Playing;
-            Score += PredatorDefendedScore;
+            AddScore(PredatorDefendedScore, "PREDATOR YEETED");
             LastFeedback = FeedbackKind.UnitedBark;
             LastCue = "DOUBLE WOOF drove the predator away!";
             PredatorObject.name = "Predator Driven Away";
@@ -436,7 +452,7 @@ namespace CheddarAndCocoa.Game
         private void CompleteTug()
         {
             TugComplete = true;
-            Score += TugScore;
+            AddScore(TugScore, "TUG COMPLETE");
             LastFeedback = FeedbackKind.TugTogether;
             LastCue = "Rope tug complete - dramatic victory chomps!";
             RopeObject.name = "Rope/Tug Complete";
@@ -480,7 +496,7 @@ namespace CheddarAndCocoa.Game
             }
 
             UnitedBarks++;
-            Score += UnitedBarkScore;
+            AddScore(UnitedBarkScore, "UNITED BARK");
             _nextUnitedBarkAt = Time.time + unitedBarkCooldown;
             _teamBarkFeedbackUntil = Time.time + 0.35f;
             LastFeedback = FeedbackKind.UnitedBark;
@@ -496,7 +512,7 @@ namespace CheddarAndCocoa.Game
             _squirrelTimer = SquirrelDelay();
             if (awardScore && Time.time >= _nextSquirrelScareScoreAt)
             {
-                Score += SquirrelScareScore;
+                AddScore(SquirrelScareScore, "SQUIRREL SCARED");
                 _nextSquirrelScareScoreAt = Time.time + 1f;
             }
             LastFeedback = awardScore ? FeedbackKind.SquirrelScared : FeedbackKind.UnitedBark;
@@ -513,7 +529,7 @@ namespace CheddarAndCocoa.Game
             _dogs[_grabbedDog].SetMode(MovementMode.Free);
             _grabbedDog = -1;
             Phase = State.Playing;
-            Score += RescueScore;
+            AddScore(RescueScore, "PARTNER RESCUE");
             LastFeedback = FeedbackKind.PartnerRescue;
             LastCue = $"{DogName(rescuer)} bark-rescued their sibling - heroic nonsense!";
             if (DogFeedback[rescuedDog] != null) DogFeedback[rescuedDog].ShowRescued();
@@ -531,23 +547,28 @@ namespace CheddarAndCocoa.Game
         private void EndRound(bool clear)
         {
             Phase = clear ? State.LevelClear : State.GameOver;
+            Outcome = clear ? MissionOutcome.Clear : MissionOutcome.Failed;
             if (clear)
             {
-                Score += Mathf.CeilToInt(TimeRemaining);
-                StarRating = Score >= 125 ? 3 : Score >= 85 ? 2 : 1;
+                AddScore(ClearScore + Mathf.CeilToInt(TimeRemaining) * TimeBonusMultiplier, "LEVEL CLEAR");
+                EndRank = RankForScore(Score, true);
+                StarRating = Score >= 1500 ? 3 : Score >= 1000 ? 2 : 1;
                 LastFeedback = FeedbackKind.LevelClear;
-                LastCue = $"BACKYARD SAVED! Weenies defended. {StarRating}/3 stars";
-                MissionBanner = "BACKYARD SAVED! PROUD DOG PARADE!";
+                LastCue = $"BACKYARD SAVED! {EndRank}. Score {Score}";
+                MissionBanner = $"BACKYARD SAVED! {EndRank}";
                 PlayCue(_successCue);
             }
             else
             {
+                AddScore(-GameOverPenalty, "GAME OVER");
+                EndRank = RankForScore(Score, false);
                 StarRating = 0;
                 LastFeedback = FeedbackKind.GameOver;
-                LastCue = "MISSION FAILED: squirrel/predator chaos won this round.";
-                MissionBanner = "MISSION FAILED! SAD FLOP RESET!";
+                LastCue = $"MISSION FAILED: {EndRank}. Score {Score}";
+                MissionBanner = $"MISSION FAILED! {EndRank}";
                 PlayCue(_dangerCue);
             }
+            EndSummaryLabel = $"{Outcome}: {Score} - {EndRank}";
 
             foreach (var dog in _dogs)
             {
@@ -571,6 +592,22 @@ namespace CheddarAndCocoa.Game
         }
 
         private bool MissionActive() => Phase == State.Playing || Phase == State.PredatorWarning || Phase == State.PredatorAttack;
+
+        private void AddScore(int delta, string reason)
+        {
+            Score += delta;
+            LastScoreDelta = delta;
+            string sign = delta >= 0 ? "+" : "-";
+            LastScoreEventLabel = $"{sign}{Mathf.Abs(delta)} {reason}";
+        }
+
+        private static string RankForScore(int score, bool clear)
+        {
+            if (clear && score >= 1500) return "Pawfect Yard";
+            if (clear && score >= 1000) return "Backyard Heroes";
+            if (score >= 350) return "Snack Survivors";
+            return "Needs More Bark";
+        }
 
         private float SquirrelDelay()
         {
