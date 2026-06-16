@@ -18,6 +18,10 @@ namespace CheddarAndCocoa.Game
 
         [SerializeField] private float roundDuration = 60f;
         [SerializeField] private int treatCount = 5;
+        [SerializeField] private float unitedBarkWindow = 0.8f;
+        [SerializeField] private float unitedBarkRange = 3f;
+        [SerializeField] private float unitedBarkCooldown = 2f;
+        [SerializeField] private int unitedBarkScore = 1;
 
         // --- Round state (read by the HUD + tests) ---
         public int Score { get; private set; }
@@ -25,6 +29,7 @@ namespace CheddarAndCocoa.Game
         public float RoundDuration => roundDuration;
         public State Phase { get; private set; } = State.Playing;
         public bool IsGameOver => Phase == State.GameOver;
+        public int UnitedBarks { get; private set; }
 
         private DogController[] _dogs;
         private GamepadPlayerInput[] _inputs;
@@ -34,6 +39,8 @@ namespace CheddarAndCocoa.Game
         private System.Random _rng;  // seeded -> deterministic treat layout for the headless sim
         private Transform _treatRoot;
         private readonly List<Treat> _treats = new();
+        private float[] _lastBarks;
+        private float _nextUnitedBarkAt;
 
         /// <summary>Build the round. Called once by the bootstrap after the dogs/arena exist.</summary>
         public void Init(DogController[] dogs, GamepadPlayerInput[] inputs, Sprite treatSprite,
@@ -46,7 +53,13 @@ namespace CheddarAndCocoa.Game
             _rng = new System.Random(seed);
 
             _dogStarts = new Vector2[dogs.Length];
-            for (int i = 0; i < dogs.Length; i++) _dogStarts[i] = dogs[i].transform.position;
+            _lastBarks = new float[dogs.Length];
+            for (int i = 0; i < dogs.Length; i++)
+            {
+                _dogStarts[i] = dogs[i].transform.position;
+                _lastBarks[i] = float.NegativeInfinity;
+                dogs[i].OnBark += OnDogBarked;
+            }
 
             _treatRoot = new GameObject("Treats").transform;
             BeginRound();
@@ -76,12 +89,15 @@ namespace CheddarAndCocoa.Game
         private void BeginRound()
         {
             Score = 0;
+            UnitedBarks = 0;
             TimeRemaining = roundDuration;
             Phase = State.Playing;
+            _nextUnitedBarkAt = 0f;
 
             // Re-home dogs + hand control back to the players.
             for (int i = 0; i < _dogs.Length; i++)
             {
+                _lastBarks[i] = float.NegativeInfinity;
                 _dogs[i].transform.position = _dogStarts[i];
                 if (_dogs[i].TryGetComponent<Rigidbody2D>(out var rb)) rb.linearVelocity = Vector2.zero;
                 if (i < _inputs.Length && _inputs[i] != null) _inputs[i].enabled = true;
@@ -89,6 +105,54 @@ namespace CheddarAndCocoa.Game
 
             ClearTreats();
             for (int i = 0; i < treatCount; i++) SpawnTreat();
+        }
+
+        private void OnDogBarked(DogId dogId)
+        {
+            if (Phase != State.Playing || _dogs == null || _dogs.Length < 2) return;
+
+            int dogIndex = IndexOfDog(dogId);
+            if (dogIndex < 0) return;
+
+            _lastBarks[dogIndex] = Time.time;
+            if (Time.time < _nextUnitedBarkAt) return;
+
+            // First arena use for bark: if both siblings huddle close and bark within a short
+            // window, award a tiny teamwork point. This is the slice-friendly stand-in for the
+            // upcoming united-front predator scare described in docs/COOP-VISION.md.
+            if (!AllDogsBarkedRecently() || !DogsAreHuddled()) return;
+
+            UnitedBarks++;
+            Score += unitedBarkScore;
+            _nextUnitedBarkAt = Time.time + unitedBarkCooldown;
+        }
+
+        private int IndexOfDog(DogId dogId)
+        {
+            for (int i = 0; i < _dogs.Length; i++)
+            {
+                if (_dogs[i] != null && _dogs[i].GetComponent<DogIdentity>().Id == dogId) return i;
+            }
+            return -1;
+        }
+
+        private bool AllDogsBarkedRecently()
+        {
+            for (int i = 0; i < _lastBarks.Length; i++)
+            {
+                if (Time.time - _lastBarks[i] > unitedBarkWindow) return false;
+            }
+            return true;
+        }
+
+        private bool DogsAreHuddled()
+        {
+            Vector2 first = _dogs[0].transform.position;
+            for (int i = 1; i < _dogs.Length; i++)
+            {
+                if (Vector2.Distance(first, _dogs[i].transform.position) > unitedBarkRange) return false;
+            }
+            return true;
         }
 
         private void EndRound()
@@ -140,6 +204,15 @@ namespace CheddarAndCocoa.Game
         {
             foreach (var t in _treats) if (t != null) Destroy(t.gameObject);
             _treats.Clear();
+        }
+
+        private void OnDestroy()
+        {
+            if (_dogs == null) return;
+            for (int i = 0; i < _dogs.Length; i++)
+            {
+                if (_dogs[i] != null) _dogs[i].OnBark -= OnDogBarked;
+            }
         }
     }
 }

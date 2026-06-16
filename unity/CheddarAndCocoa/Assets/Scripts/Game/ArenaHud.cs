@@ -39,6 +39,7 @@ namespace CheddarAndCocoa.Game
             int secs = Mathf.CeilToInt(Mathf.Max(0f, _game.TimeRemaining));
             GUI.Label(new Rect(0, 8, Screen.width, 30), $"SCORE  {_game.Score}", _hud);
             GUI.Label(new Rect(0, 34, Screen.width, 26), $"⏱  {secs}s", _mid);
+            GUI.Label(new Rect(0, 58, Screen.width, 24), $"United barks: {_game.UnitedBarks}", _mid);
 
             if (_game.IsGameOver)
             {
