@@ -19,7 +19,7 @@ namespace CheddarAndCocoa.Game
 
         private void Update()
         {
-            if (_game == null || !_game.IsGameOver) return;
+            if (_game == null || (_game.Phase != GameManager.State.GameOver && _game.Phase != GameManager.State.LevelClear)) return;
 
             // Restart on R, gamepad Start, or Enter so any input device can play again.
             bool restart = false;
@@ -37,17 +37,18 @@ namespace CheddarAndCocoa.Game
 
             // Score + timer, top-center.
             int secs = Mathf.CeilToInt(Mathf.Max(0f, _game.TimeRemaining));
-            GUI.Label(new Rect(0, 8, Screen.width, 30), $"SCORE  {_game.Score}", _hud);
-            GUI.Label(new Rect(0, 34, Screen.width, 26), $"⏱  {secs}s", _mid);
-            GUI.Label(new Rect(0, 58, Screen.width, 24), $"United barks: {_game.UnitedBarks}", _mid);
+            GUI.Label(new Rect(0, 8, Screen.width, 30), $"{_game.LevelName}   SCORE {_game.Score}", _hud);
+            GUI.Label(new Rect(0, 34, Screen.width, 26), _game.ObjectiveText, _mid);
+            GUI.Label(new Rect(0, 58, Screen.width, 24), $"⏱ {secs}s   Pressure {Mathf.CeilToInt(_game.Pressure)}%   Objective {Mathf.FloorToInt(_game.ObjectiveProgress)}%", _mid);
+            GUI.Label(new Rect(0, 82, Screen.width, 24), $"Modifier: {_game.ModifierLabel}   Team combos: {_game.TeamCombos}   Recoveries: {_game.Recoveries}", _mid);
 
-            if (_game.IsGameOver)
+            if (_game.IsGameOver || _game.IsLevelClear)
             {
                 float w = 420, h = 150;
                 var box = new Rect((Screen.width - w) * 0.5f, (Screen.height - h) * 0.5f, w, h);
                 GUI.Box(box, GUIContent.none);
-                GUI.Label(new Rect(box.x, box.y + 14, w, 40), "TIME!", _big);
-                GUI.Label(new Rect(box.x, box.y + 62, w, 30), $"Final score: {_game.Score}", _mid);
+                GUI.Label(new Rect(box.x, box.y + 14, w, 40), _game.IsLevelClear ? "BREAKFAST SAVED!" : "TIME!", _big);
+                GUI.Label(new Rect(box.x, box.y + 62, w, 30), $"Final score: {_game.Score}  Best: {_game.BestScore}", _mid);
                 GUI.Label(new Rect(box.x, box.y + 96, w, 26),
                     "Press R / Enter / (start) to play again", _mid);
 

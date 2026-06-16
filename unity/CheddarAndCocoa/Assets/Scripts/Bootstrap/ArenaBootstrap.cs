@@ -4,6 +4,7 @@ using CheddarAndCocoa.Data;
 using CheddarAndCocoa.Input;
 using CheddarAndCocoa.CameraRig;
 using CheddarAndCocoa.Game;
+using UnityEngine.SceneManagement;
 
 namespace CheddarAndCocoa.Bootstrap
 {
@@ -56,10 +57,13 @@ namespace CheddarAndCocoa.Bootstrap
             // The round: shared score, 60s timer, treats, restart.
             var game = new GameObject("GameManager").AddComponent<GameManager>();
             var bounds = new Rect(-fieldWidth * 0.5f, -fieldHeight * 0.5f, fieldWidth, fieldHeight);
+            var level = SceneManager.GetActiveScene().name == "LivingRoomChaosScene"
+                ? GameManager.LevelKind.LivingRoomChaos
+                : GameManager.LevelKind.BreakfastHeist;
             game.Init(
                 new[] { cheddarDog, cocoaDog },
                 new[] { cheddar.GetComponent<GamepadPlayerInput>(), cocoa.GetComponent<GamepadPlayerInput>() },
-                _square, bounds, treatSeed);
+                _square, bounds, treatSeed, level);
 
             // Score/timer/game-over overlay.
             var hud = new GameObject("ArenaHud").AddComponent<ArenaHud>();
@@ -80,7 +84,7 @@ namespace CheddarAndCocoa.Bootstrap
             t.dog = DogId.Cheddar;
             t.bodyColor = Hex("#e3ab63");
             t.wetBodyColor = Hex("#b07e3f");
-            t.baseSpeed = 4.4f; t.floaterSpeed = 4.9f; t.swimSpeed = 1.6f; t.zoomiesMultiplier = 1.85f;
+            t.baseSpeed = 4.8f; t.floaterSpeed = 5.2f; t.swimSpeed = 1.6f; t.zoomiesMultiplier = 1.85f;
             t.wrestleWinChance = 0.70f; t.stairTime = 0.5f;
             t.canChairLeap = true; t.barfChance = 0.18f; t.chewTime = 0.25f;
             return t;
@@ -92,7 +96,7 @@ namespace CheddarAndCocoa.Bootstrap
             t.dog = DogId.Cocoa;
             t.bodyColor = Hex("#5e3a20");
             t.wetBodyColor = Hex("#3c2410");
-            t.baseSpeed = 4.4f; t.floaterSpeed = 4.9f; t.swimSpeed = 1.6f; t.zoomiesMultiplier = 1.85f;
+            t.baseSpeed = 4.2f; t.floaterSpeed = 5.2f; t.swimSpeed = 1.6f; t.zoomiesMultiplier = 1.85f;
             t.wrestleWinChance = 0.78f; t.stairTime = 1.05f;
             t.canChairLeap = false; t.barfChance = 0f; t.chewTime = 0.5f;
             return t;
