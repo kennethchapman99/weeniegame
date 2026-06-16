@@ -1,69 +1,79 @@
-# Arena First Playable — 60-second treat-grab co-op
+# Arena Playable — Backyard Mission: Breakfast Rescue
 
-The first **actually playable loop** for Cheddar & Cocoa: two players, one shared score, a clock,
-treats to grab, and a restart. It builds on the verified controller baseline
-(`docs/UNITY-FIRST-PLAYABLE.md`) without changing it — that scene/test still proves two controllers
-move two dogs. This one adds the *game*.
+`unity/CheddarAndCocoa/Assets/Scenes/ArenaScene.unity` is now a small co-op vertical slice instead of a flat treat loop. The scene still builds itself from `ArenaBootstrap`, but the round objective is a backyard rescue mission: Cheddar and Cocoa must recover breakfast/weenies, stop a squirrel from stealing too much food, complete a shared rope tug, and stand together against one predator scare before time runs out.
 
-## What it is
+## Objective
 
-A small walled arena with two dogs — **Cheddar** (golden, left) and **Cocoa** (brown, right) —
-and **5 "weenie" treats** scattered around. Touch a treat to collect it; the **shared score** goes
-up and a fresh treat spawns. A **60-second timer** counts down; at zero the round ends, shows the
-**final score**, and waits for a restart. Barking makes a visible **expanding ring** (plus the
-sprite pop and a "WOOF!" flash) — not just a console log.
+Clear the mission by completing all required objectives before the timer expires:
 
-Everything is generated from code by `ArenaBootstrap` (no art/prefab dependencies), so the scene
-file is a single GameObject.
+1. Recover enough **Breakfast/Weenies** (`6` items in the current prototype).
+2. Keep the **Squirrel** from stealing too many items (`3` stolen food ends the run).
+3. Resolve the **Predator Warning / Predator Attack** with a united-front bark or a rescue.
+4. Complete the **Rope/Tug** shared-object objective.
 
-## How to run it
-
-1. Open the project in **Unity 6 LTS (`6000.0.x`)** (see `docs/UNITY-FIRST-PLAYABLE.md` for setup).
-2. Open **`Assets/Scenes/ArenaScene.unity`**.
-3. Press **Play**.
+The round can end in **LevelClear** or **GameOver**, and either result can be restarted.
 
 ## Controls
 
-You can play with **two controllers, two keyboard layouts, or a mix** — controller and keyboard are
-read together per player.
+| Player | Dog | Controller | Keyboard | Bark | Interact |
+| --- | --- | --- | --- | --- | --- |
+| P1 | Cheddar | Gamepad slot 0 | WASD | Space / X button | Y button |
+| P2 | Cocoa | Gamepad slot 1 | Arrow keys | Enter / Right Shift / X button | Y button |
 
-| Player | Dog | Controller | Keyboard | Bark |
-|---|---|---|---|---|
-| **P1** | Cheddar (golden) | pad 0, left stick | **W A S D** | controller **X** / **Space** |
-| **P2** | Cocoa (brown) | pad 1, left stick | **Arrow keys** | controller **X** / **Enter** or **Right-Shift** |
+Cheddar is the chaos puppy and Cocoa is the steadier veteran. The placeholder sprites are simple colored blocks for now, but HUD/debug labels call out **Cheddar**, **Cocoa**, **Squirrel**, **Predator Warning**, **Rope/Tug**, and **Breakfast/Weenies** so the slice is readable in a manual playtest.
 
-No controllers needed — the keyboard fallback alone is enough for two people on one keyboard.
+## Squirrel pressure
 
-## How to play
+A visible **Squirrel** periodically picks a breakfast/weenie and runs to steal it. If it reaches the item, the squirrel escapes with food, the team loses score, and the stolen-food counter rises. A single nearby bark interrupts/scares the squirrel briefly; a united bark scares it longer and adds teamwork score.
 
-- **Move** onto treats to collect them. Each collect = **+1 shared score** and a new treat appears.
-- **Bark** for feedback/juice (a ring pulse). It doesn't score yet — it's the core verb being kept
-  alive for the united-front mechanics to come.
-- When the **timer hits 0**, the round ends and the **final score** card appears.
-- **Restart** with **R**, **Enter**, or a controller **Start**/**A** button (or click the on-screen
-  **Restart** button). Score and timer reset; dogs return to their start spots.
+## Predator scare
 
-## What to check by hand (manual acceptance)
+Once per round, a **Predator Warning** telegraphs danger and targets one dog. If both dogs are close together and bark within the united-bark timing window, the predator is driven away for a large score reward. If the team fails the warning, **Predator Attack** grabs/stuns the target dog. The other dog can rescue by coming close and barking; failure costs score/time pressure but does not instantly end the game.
 
-| Check | Expected |
-|---|---|
-| Scene loads | Green arena, two dogs, top-center `SCORE 0` and a countdown |
-| Both players move independently | P1 keys/pad move Cheddar; P2 keys/pad move Cocoa — no cross-talk |
-| Collect a treat | Score increments by 1; a replacement treat appears |
-| Bark | Visible ring pulse + sprite pop + "WOOF!" over the dog |
-| Timer expires | "TIME!" card with the final score; dogs stop accepting input |
-| Restart | Score back to 0, timer refilled, dogs re-homed |
+## Rope/Tug shared-object mechanic
 
-## Automated proof
+The **Rope/Tug** object is a required co-op objective. Either dog can interact near the rope for progress, but the main completion path is both dogs standing together at the rope to charge the tug meter. Finishing tug awards a major score bonus and is required for LevelClear.
 
-The headless PlayMode test `Assets/Tests/PlayMode/ArenaGameLoopPlayModeTests.cs` loads ArenaScene
-and asserts: both dogs exist, score starts at 0, collecting a treat increments the score (and
-respawns it), the countdown reaches game-over, and restart resets score + timer. It runs alongside
-the original controller-movement test:
+## United bark
 
-```sh
-./unity/run-playmode-tests.sh      # runs ALL PlayMode tests → unity/playmode-results.xml
-```
+Bark remains visible through expanding bark rings, but now affects gameplay:
 
-> Both scenes are registered in `ProjectSettings/EditorBuildSettings.asset` (ArenaScene first) so
-> the test can load ArenaScene by name and so a build opens straight into the playable loop.
+- scares or interrupts the squirrel;
+- resolves the predator warning/attack when both dogs are close and timed;
+- rescues a grabbed/stunned dog when the partner is close;
+- awards teamwork score with a cooldown so it cannot be spammed every frame.
+
+## Scoring and stars
+
+Score is no longer flat +1 only:
+
+- breakfast/weenie recovery: +10;
+- single-dog squirrel scare: +3;
+- united bark teamwork: +5;
+- predator defended: +30;
+- rescue after failed predator attack: +8;
+- tug objective: +25;
+- LevelClear time remaining bonus: remaining seconds;
+- squirrel steal / predator failure: score penalties.
+
+LevelClear displays a 1–3 star rating based on the final score.
+
+## Round modifiers
+
+Each restart deterministically selects one seeded modifier for tests/HUD:
+
+- **Squirrel Trouble** — squirrel acts faster.
+- **Zoomies Surge** — periodic dog speed bursts make control livelier.
+- **Pancake Panic** — stolen food hurts more, representing faster pressure buildup.
+
+## Known limitations
+
+- All mission actors use placeholder square sprites generated at runtime; there are no external art assets yet.
+- The squirrel and predator use intentionally simple movement/state rules so the PlayMode tests remain deterministic.
+- Tug is proximity/progress based, not a full physics rope.
+- Predator targeting and modifier selection are seeded but still prototype-simple.
+- The scene is now a real co-op mission skeleton, but balancing, audio, animation, UI polish, and richer rescue/tug feel are still future work.
+
+## Test coverage
+
+`unity/Assets/Tests/PlayMode/ArenaGameLoopPlayModeTests.cs` loads ArenaScene and verifies dogs, mission state, item recovery, squirrel steal/scare, united bark timing/range, predator defense, failed predator rescue, tug completion, LevelClear, GameOver/restart, and exposed modifier state.
