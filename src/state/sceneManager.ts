@@ -72,6 +72,7 @@ export function beginScene(s: GameState): void {
   s.popups = [];
   s.tug = null;
   s.sounds = [];
+  s.shake = 0;
   s.spawnTimer = 1.2;
   s.toast = null;
   s.mission = null; // co-op scenes rebuild it in enter(); versus scenes leave it null
@@ -158,6 +159,7 @@ export function updateGame(
   p2?: DogCmd | null,
 ): void {
   s.elapsedMs += dt * 1000; // animation/streak clock advances in every phase
+  if (s.shake > 0) s.shake = Math.max(0, s.shake - dt * 48); // decay screen shake
 
   if (s.phase === 'inter') {
     s.interTimer -= dt;

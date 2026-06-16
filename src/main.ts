@@ -37,6 +37,9 @@ input.attach(canvas, camera);
 const backdrop = new Backdrop();
 const audio = new AudioBus();
 const state = makeGameState(makeRng(0xc0ffee));
+// A separate cosmetic rng for render-only jitter (screen shake). Kept off the sim
+// rng so visual noise never perturbs deterministic game logic / test reproducibility.
+const fxRng = makeRng(0x5ca1e);
 
 // Dev-only inspection hook (stripped from production builds): lets the headless
 // verification harness read/poke live game state without shipping a global.
@@ -151,9 +154,18 @@ function render(): void {
 
   const def = currentScene(state);
   const bg = backdrop.get(def.bgKey(state), def.paint(state), camera.view);
-  ctx.drawImage(bg, 0, 0);
 
-  camera.applyTransform();
+  // screen shake: jitter the whole frame (bg + world) by the deterministic shake magnitude.
+  let sx = 0;
+  let sy = 0;
+  if (state.shake > 0.05) {
+    sx = fxRng.range(-1, 1) * state.shake;
+    sy = fxRng.range(-1, 1) * state.shake;
+  }
+  const k = camera.view.dpr * camera.view.scale;
+  ctx.drawImage(bg, sx * k, sy * k);
+
+  camera.applyTransform(ctx, sx, sy);
 
   if (state.phase === 'title') {
     drawTitle(ctx, state, input.padCount, audio.isMuted, input.gamepadActive ? titleFocus : -1);
@@ -179,6 +191,7 @@ function render(): void {
   drawParticles(ctx, state);
   drawPopups(ctx, state);
 
+  drawVignette(ctx); // soft edge darkening for depth/focus
   drawHUD(ctx, state);
   // On-screen WRESTLE/JUMP are touch affordances — hide them when a controller is driving.
   if (state.phase === 'play' && !input.gamepadActive) {
@@ -194,6 +207,15 @@ function render(): void {
     for (const id of state.sounds) audio.play(id);
     state.sounds.length = 0;
   }
+}
+
+/** A soft radial vignette over the world for depth (drawn under the HUD). */
+function drawVignette(g: CanvasRenderingContext2D): void {
+  const grad = g.createRadialGradient(480, 300, 230, 480, 300, 640);
+  grad.addColorStop(0, 'rgba(0,0,0,0)');
+  grad.addColorStop(1, 'rgba(18,12,6,0.32)');
+  g.fillStyle = grad;
+  g.fillRect(0, 0, 960, 600);
 }
 
 startLoop({ update, render });

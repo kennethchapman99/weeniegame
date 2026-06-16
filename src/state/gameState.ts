@@ -280,6 +280,8 @@ export interface GameState {
   couch: Couch | null;
   particles: Particle[];
   popups: Popup[];
+  /** screen-shake magnitude (world units), decayed each step; the host jitters the camera by it */
+  shake: number;
   /** sound requests drained + played by the host each frame (keeps the sim audio-free) */
   sounds: SoundId[];
 
@@ -326,6 +328,7 @@ export function makeGameState(rng: Rng, playerId: DogId = 'cheddar'): GameState 
     couch: null,
     particles: [],
     popups: [],
+    shake: 0,
     sounds: [],
     spawnTimer: 1.2,
     steals: { cheddar: 0, cocoa: 0 },
@@ -349,6 +352,11 @@ export function cap(id: string): string {
 /** Queue a sound for the host to play this frame (systems stay audio-free + deterministic). */
 export function playSound(s: GameState, id: SoundId): void {
   s.sounds.push(id);
+}
+
+/** Kick the screen shake (takes the stronger of current/new so big hits dominate). Cosmetic. */
+export function addShake(s: GameState, mag: number): void {
+  if (mag > s.shake) s.shake = mag;
 }
 
 /** The single score mutation point. Adds n to dog, flashes, and fires the zoomies streak. */

@@ -79,10 +79,13 @@ export class Camera {
     this.applyTransform();
   }
 
-  /** Set the ctx transform so subsequent draws use world units. Call after any save/restore. */
-  applyTransform(g: CanvasRenderingContext2D = this.ctx): void {
+  /**
+   * Set the ctx transform so subsequent draws use world units. Call after any save/restore.
+   * `ox`/`oy` are an optional camera offset in WORLD units (used for screen shake).
+   */
+  applyTransform(g: CanvasRenderingContext2D = this.ctx, ox = 0, oy = 0): void {
     const k = this.view.dpr * this.view.scale;
-    g.setTransform(k, 0, 0, k, 0, 0);
+    g.setTransform(k, 0, 0, k, ox * k, oy * k);
   }
 
   /** Pointer/client (CSS px, viewport-relative) -> world units. */
