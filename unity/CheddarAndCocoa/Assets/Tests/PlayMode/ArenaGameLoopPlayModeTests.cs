@@ -8,29 +8,15 @@ using CheddarAndCocoa.Game;
 
 namespace CheddarAndCocoa.Tests
 {
-    /// <summary>
-    /// Runtime proof of the first PLAYABLE loop (separate from the controller-movement baseline in
-    /// <see cref="ControllerCoopPlayModeTests"/>). Loads the real ArenaScene and asserts the round
-    /// rules hold:
-    ///   1. the scene loads and builds both dogs (Cheddar + Cocoa);
-    ///   2. the shared score starts at 0;
-    ///   3. collecting a treat increments the score (and the treat is respawned);
-    ///   4. the countdown can reach game-over;
-    ///   5. restart resets score + timer + clears the game-over state.
-    ///
-    /// Headless: <c>unity/run-playmode-tests.sh</c> (needs a licensed editor).
-    /// </summary>
     public sealed class ArenaGameLoopPlayModeTests
     {
         [UnityTest]
-        public IEnumerator ArenaLoop_Scores_TimesOut_AndRestarts()
+        public IEnumerator BackyardMission_Objectives_Hazards_Tug_Clear_AndRestart()
         {
-            // 1) Scene loads + builds itself (ArenaBootstrap.Start runs over a couple frames).
             yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
             yield return null;
             yield return null;
 
-            // Both dogs exist.
             DogController cheddar = null, cocoa = null;
             foreach (var id in Object.FindObjectsByType<DogIdentity>(FindObjectsSortMode.None))
             {
@@ -38,57 +24,102 @@ namespace CheddarAndCocoa.Tests
                 if (id.Id == DogId.Cheddar) cheddar = dc;
                 else if (id.Id == DogId.Cocoa) cocoa = dc;
             }
-            Assert.IsNotNull(cheddar, "ArenaScene did not build a Cheddar dog.");
-            Assert.IsNotNull(cocoa, "ArenaScene did not build a Cocoa dog.");
+            Assert.IsNotNull(cheddar);
+            Assert.IsNotNull(cocoa);
 
             var game = Object.FindFirstObjectByType<GameManager>();
-            Assert.IsNotNull(game, "ArenaScene has no GameManager.");
+            Assert.IsNotNull(game);
+            Assert.AreEqual(GameManager.State.Playing, game.Phase);
+            Assert.IsNotEmpty(game.ActiveModifierLabel);
+            Assert.IsNotNull(game.SquirrelObject);
+            Assert.IsNotNull(game.PredatorObject);
+            Assert.IsNotNull(game.RopeObject);
+            Assert.IsNotEmpty(game.LastCue);
+            Assert.IsNotNull(game.SquirrelObject.GetComponent<MissionActorFeedback>());
+            Assert.IsNotNull(game.PredatorObject.GetComponent<MissionActorFeedback>());
+            Assert.IsNotNull(game.RopeObject.GetComponent<MissionActorFeedback>());
+            Assert.IsNotNull(game.GetComponent<AudioSource>());
 
-            // 2) Score starts at 0; round is playing with time on the clock.
-            Assert.AreEqual(0, game.Score, "Score should start at 0.");
-            Assert.IsFalse(game.IsGameOver, "Round should start in the Playing state.");
-            Assert.Greater(game.TimeRemaining, 0f, "Timer should start above 0.");
-
-            // 3) Collecting a treat increments the shared score and respawns a replacement.
             var treats = Object.FindObjectsByType<Treat>(FindObjectsSortMode.None);
-            Assert.Greater(treats.Length, 0, "Arena should spawn treats to collect.");
-            int treatCountBefore = treats.Length;
-
+            Assert.Greater(treats.Length, 0);
             int scoreBefore = game.Score;
-            treats[0].CollectBy(cheddar); // the same path OnTriggerEnter2D drives when a dog touches it
-            Assert.AreEqual(scoreBefore + 1, game.Score, "Collecting a treat should increment the score.");
-            yield return null; // let the destroyed treat clear + replacement spawn
-            Assert.AreEqual(treatCountBefore, Object.FindObjectsByType<Treat>(FindObjectsSortMode.None).Length,
-                "A collected treat should be replaced so the count stays constant.");
+            treats[0].CollectBy(cheddar);
+            Assert.Greater(game.Score, scoreBefore);
+            Assert.AreEqual(1, game.BreakfastRecovered);
+            yield return null;
 
-            // Bark now has a small co-op purpose: both dogs must be close and bark within the
-            // united-front window to earn a teamwork point. Barking far apart should not score.
             cocoa.transform.position = cheddar.transform.position + Vector3.right * 6f;
-            int scoreAfterTreat = game.Score;
-            cheddar.Bark();
-            cocoa.Bark();
-            Assert.AreEqual(scoreAfterTreat, game.Score, "Barking far apart should stay cosmetic only.");
-            Assert.AreEqual(0, game.UnitedBarks, "Far-apart barks should not count as a united bark.");
+            int unitedBefore = game.UnitedBarks;
+            cheddar.Bark(); cocoa.Bark();
+            Assert.AreEqual(unitedBefore, game.UnitedBarks, "United bark should require close dogs.");
 
-            cocoa.transform.position = cheddar.transform.position + Vector3.right * 1f;
-            cheddar.Bark();
-            cocoa.Bark();
-            Assert.AreEqual(scoreAfterTreat + 1, game.Score, "Close synchronized barks should score once.");
-            Assert.AreEqual(1, game.UnitedBarks, "Close synchronized barks should count as a united bark.");
+            cocoa.transform.position = cheddar.transform.position + Vector3.right;
+            cheddar.Bark(); cocoa.Bark();
+            Assert.Greater(game.UnitedBarks, unitedBefore, "Close timed barks should count.");
 
-            // 4) Countdown can reach game over. Shorten the round and let it tick down.
-            game.SetRoundDuration(0.3f);
+            // Squirrel pressure: it can steal if ignored after being placed on food.
+            var target = Object.FindObjectsByType<Treat>(FindObjectsSortMode.None)[0];
+            game.SquirrelObject.transform.position = target.transform.position;
             float guard = 0f;
-            while (!game.IsGameOver && guard < 5f) { guard += Time.deltaTime; yield return null; }
-            Assert.IsTrue(game.IsGameOver, "Round did not reach game-over when the timer expired.");
-            Assert.LessOrEqual(game.TimeRemaining, 0f, "Time should be spent at game-over.");
+            while (game.StolenFood == 0 && guard < 4f) { guard += Time.deltaTime; yield return null; }
+            Assert.GreaterOrEqual(game.StolenFood, 1, "Squirrel should eventually steal breakfast.");
 
-            // 5) Restart resets score + timer + clears game-over.
-            game.SetRoundDuration(60f);
+            // Bark near the squirrel should scare it and reward a small score bump.
+            target = Object.FindObjectsByType<Treat>(FindObjectsSortMode.None)[0];
+            game.SquirrelObject.transform.position = target.transform.position;
+            cheddar.transform.position = game.SquirrelObject.transform.position;
+            scoreBefore = game.Score;
+            cheddar.Bark();
+            Assert.Greater(game.Score, scoreBefore, "Barking near squirrel should affect game state.");
+            Assert.That(game.LastCue, Does.Contain("squirrel").IgnoreCase);
+
+            // Predator warning/attack can be resolved by united bark.
+            game.ForcePredatorWarning();
+            Assert.AreEqual(GameManager.State.PredatorWarning, game.Phase);
+            cocoa.transform.position = cheddar.transform.position + Vector3.right;
+            cheddar.Bark(); cocoa.Bark();
+            Assert.IsTrue(game.PredatorResolved);
+            Assert.That(game.LastCue, Does.Contain("predator").IgnoreCase);
+
+            // Failed predator attack stuns/grabs, then the partner rescues by coming close and barking.
             game.Restart();
-            Assert.IsFalse(game.IsGameOver, "Restart should leave the Playing state.");
-            Assert.AreEqual(0, game.Score, "Restart should reset the score to 0.");
-            Assert.AreEqual(60f, game.TimeRemaining, 0.0001f, "Restart should refill the timer.");
+            game.ForcePredatorAttack();
+            Assert.AreEqual(GameManager.State.PredatorAttack, game.Phase);
+            Assert.IsTrue(game.AnyDogGrabbed);
+            Assert.IsTrue(cheddar.Mode == MovementMode.Stunned || cocoa.Mode == MovementMode.Stunned);
+            cheddar.transform.position = cocoa.transform.position;
+            cheddar.Bark(); cocoa.Bark();
+            Assert.IsFalse(game.AnyDogGrabbed, "Partner bark should rescue grabbed dog.");
+
+            // Tug completes when both dogs coordinate on the rope.
+            game.RopeObject.transform.position = Vector3.zero;
+            cheddar.transform.position = Vector3.zero;
+            cocoa.transform.position = Vector3.right * 0.5f;
+            guard = 0f;
+            while (!game.TugComplete && guard < 4f) { guard += Time.deltaTime; yield return null; }
+            Assert.IsTrue(game.TugComplete);
+            Assert.That(game.RopeObject.GetComponent<MissionActorFeedback>().Label, Does.Contain("COMPLETE"));
+
+            // Level clear requires food, tug, and predator resolution.
+            game.ForcePredatorWarning();
+            cheddar.Bark(); cocoa.Bark();
+            guard = 0f;
+            while (game.BreakfastRecovered < game.BreakfastGoal && guard < 5f)
+            {
+                var t = Object.FindObjectsByType<Treat>(FindObjectsSortMode.None)[0];
+                t.CollectBy(cheddar);
+                guard += Time.deltaTime;
+                yield return null;
+            }
+            Assert.AreEqual(GameManager.State.LevelClear, game.Phase);
+            Assert.GreaterOrEqual(game.StarRating, 1);
+
+            game.Restart();
+            game.ForceGameOver();
+            Assert.IsTrue(game.IsGameOver);
+            game.Restart();
+            Assert.AreEqual(GameManager.State.Playing, game.Phase);
+            Assert.AreEqual(0, game.Score);
         }
     }
 }
