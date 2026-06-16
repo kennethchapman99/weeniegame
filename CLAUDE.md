@@ -2,44 +2,76 @@
 
 This file governs how you (Claude Code) work in this repo. Read it fully before the first task.
 
+## Required first reads
+
+Before modifying gameplay, read these in order:
+
+1. `docs/GAME-DESIGN-BIBLE.md` — creative source of truth, level ideas, mechanics, running gags, and build priorities.
+2. `AGENTS.md` — coding-agent guardrails and current recommended next move.
+3. `docs/ARENA-PLAYABLE.md` — current Unity Backyard Mission vertical slice and acceptance checks.
+4. `docs/UNITY-FIRST-PLAYABLE.md` — Unity setup, test, and runtime proof history.
+5. `prototype/cheddar-and-cocoa.prototype.html` and legacy docs when porting or preserving prototype behavior.
+
 ## Prime directive
 
-**The prototype is the spec.** `prototype/cheddar-and-cocoa.prototype.html` is a working, validated reference implementation of every mechanic. Your job is to re-implement it as a clean, staged, tested TypeScript project **without regressing behavior or feel**. When a question about intended behavior arises, open the prototype and observe — do not invent.
+**The game fantasy is the spec.** Build a joyful, personal, replayable couch co-op game for Ken and Sue where they play as Cheddar and Cocoa through exaggerated dog-life adventures.
+
+The prototype remains important as a validated reference for original mechanics and feel. The current Unity work is now the active playable direction. Do not drift into generic arena mechanics; use dog-life fantasies and inside jokes as mechanics.
 
 ## Hard rules (non-negotiable)
 
-1. **Zero runtime network requests.** The game must run from `file://` and inside constrained in-app webviews. No CDN fonts, no remote audio, no analytics. Bundle/inline everything. The prototype already proved this; don't reintroduce a `<link href="https://fonts...">`.
-2. **Mobile-first.** Portrait orientation, touch-drag movement is the primary input. The logical world is **960×600**, letterboxed to the screen and scaled by `devicePixelRatio` (capped at 3) for crisp rendering. Preserve this.
-3. **Deterministic core.** Game logic must be driven by a fixed timestep and a seedable RNG so the headless test harness can reproduce runs. No `Math.random()` calls scattered through logic — route through an injectable `rng`.
-4. **Logic/render separation.** Update (simulation) and render (drawing) must be separate. No score mutations or state transitions inside render functions. The prototype violates this in places; fixing it is part of the work.
-5. **Every milestone is shippable and tested** before moving on. See `docs/BUILD-PLAN.md`. Do not start milestone N+1 with milestone N's tests red.
-6. **Don't delete the prototype.** It stays as the living spec until M8 ships and is signed off.
+1. **Preserve the working Unity project and tests.** Keep the Unity project compile-clean and out of Safe Mode. Do not regress PlayMode tests.
+2. **Every new gameplay slice should be shippable and tested.** Add deterministic PlayMode coverage for mission logic where feasible.
+3. **Prototype remains preserved.** Do not delete or casually rewrite `prototype/cheddar-and-cocoa.prototype.html`; it remains a living reference for mechanics/feel until explicitly retired.
+4. **Cheddar and Cocoa must feel distinct.** Cheddar is chaos puppy energy; Cocoa is veteran/queen/territory-control energy. This should show up in mechanics, animation, tuning, and comedy.
+5. **Co-op first.** New ideas should force communication, rescue, role split, synchronized timing, or shared-object interaction.
+6. **Bark stays gameplay-relevant.** It should affect squirrel, predator, rescue, human distraction, rhythm, panic/calm, or puzzle state — not merely play a cosmetic effect.
+7. **Readable chaos.** Add clear labels, pings, animation, camera/audio cues, HUD copy, and manual acceptance notes until final art can carry clarity.
+8. **Small playable vertical slices beat broad architecture.** Do not build a large framework before the current level is fun.
 
-## Working style
-
-- **Plan before editing.** For any non-trivial task, write a short plan (files touched, functions added, how you'll test) and confirm scope before large changes.
-- **Small, reviewable commits**, one concern each. Conventional commit messages (`feat:`, `fix:`, `refactor:`, `test:`, `chore:`).
-- **Tests live in the repo.** The prototype was validated by an external headless harness; port that approach into `tests/` (see ARCHITECTURE). Each system gets at least one behavioral test that drives `update()` and asserts on state.
-- **Run the full check before declaring a milestone done:** typecheck, lint, unit tests, and the headless full-game sim. Wire these into one `npm run verify` script early (M0).
-- **Preserve tuning constants.** Numbers like round times, wrestle reversal odds, sunbeam bask rate, predator dodge windows, and AI speed (0.88×) were balanced by playtesting + simulation. Extract them into a single `config/balance.ts` rather than re-deriving them. The values are catalogued in `docs/MECHANICS.md`.
-
-## Owner preferences (from the project owner)
+## Owner preferences
 
 - Full code for changed files when reviewing in chat; confident brevity in prose.
-- Flag risks and tradeoffs directly — no yes-man. If a milestone's approach has a downside, say so up front.
+- Flag risks and tradeoffs directly — no yes-man.
 - Comparisons as tables.
+- Preserve docs and explain what changed.
+
+## Build philosophy
+
+Every meaningful mechanic should answer:
+
+- What dog fantasy is this delivering?
+- What are Cheddar and Cocoa each doing differently?
+- What makes players communicate?
+- What can go wrong in a funny way?
+- What is the simplest tested version?
+
+Core dog verbs to prefer: chase, rescue, steal, distract, defend, comfort, carry, tug, hide, sniff, bark.
+
+## Current recommended priority
+
+The current Backyard Mission has the right gameplay structure: breakfast/weenie recovery, squirrel pressure, predator warning/rescue, rope/tug, united bark, scoring, stars, modifiers, and test coverage.
+
+Next best work:
+
+1. dog identity/art/animation readability pass;
+2. bark/tug/squirrel/predator feedback and game feel;
+3. manual two-player playtest/tuning;
+4. then build Kitchen Falling Food Frenzy as the next compact level prototype.
 
 ## What "done" looks like per task
 
-- Code typechecks and lints clean.
-- New/changed behavior has a test that would fail without the change.
-- `npm run verify` is green.
-- The behavior matches the prototype (spot-check in browser for anything visual/feel-related).
-- Tuning constants centralized, not inlined.
+- Code compiles/imports cleanly in Unity.
+- Existing PlayMode tests stay green.
+- New/changed behavior has a test that would fail without the change where feasible.
+- Manual acceptance checklist is updated for visual/feel changes.
+- Behavior aligns with `docs/GAME-DESIGN-BIBLE.md` and preserves Cheddar/Cocoa identity.
+- Docs are updated when adding mechanics, levels, controls, or acceptance criteria.
 
-## Things that will bite you (learned from the prototype build)
+## Things that will bite you
 
-- **Brace/scope drift in large edits.** The prototype broke once from a dropped `if(){` wrapper during an inline edit. Modular files + typecheck on every save prevents this class of bug — lean on it.
-- **Coordinate spaces.** World units (960×600) vs. device pixels vs. CSS pixels. Pointer events must be converted world-space before use. Get the transform helpers right once in the renderer/input layer.
-- **Per-scene state resets.** Several bugs came from state leaking between rounds (zoomies, tug, predator, wet timers). A scene should fully (re)initialize its entity state on entry. Make this a single explicit function, not scattered resets.
-- **AI water/predator routing.** The pool AI uses corner-waypoint routing to avoid swimming; the predator AI uses huddle/dodge logic. These are subtle — port them faithfully and keep the sims that validate them.
+- **Brace/scope drift in large edits.** Use small changes and run checks often.
+- **Scene state resets.** Zoomies, tug, predator, wet timers, and score state should reset explicitly on restart/scene entry.
+- **Placeholder readability.** Generated shapes are acceptable, but players must instantly know what is food, squirrel, predator, rope, Cheddar, Cocoa, danger, and objective.
+- **Overbuilding.** This project needs funny playable proof more than systems architecture.
+- **Generic co-op drift.** If an idea could star any two characters, rewrite it until it feels dog-specific.
