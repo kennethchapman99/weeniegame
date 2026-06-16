@@ -11,14 +11,14 @@ describe('camera viewport math', () => {
 
   it('letterboxes by the limiting axis and centres', () => {
     // Wider-than-world viewport: limited by height, pillarboxed (offX > 0)
-    const wide = computeViewport(1600, 600, 1);
+    const wide = computeViewport(1600, 720, 1);
     expect(wide.scale).toBeCloseTo(1, 6);
     expect(wide.offX).toBeGreaterThan(0);
     expect(wide.offY).toBeCloseTo(0, 6);
 
     // Taller-than-world (portrait): limited by width, letterboxed (offY > 0)
     const tall = computeViewport(480, 1200, 2);
-    expect(tall.scale).toBeCloseTo(0.5, 6);
+    expect(tall.scale).toBeCloseTo(480 / WORLD.w, 6);
     expect(tall.offY).toBeGreaterThan(0);
   });
 
@@ -26,8 +26,8 @@ describe('camera viewport math', () => {
     const cases: Array<[number, number, number]> = [
       [390, 844, 3], // mobile portrait, dpr 3
       [1440, 900, 2], // desktop
-      [960, 600, 1], // exact
-      [1600, 600, 1.5], // pillarboxed
+      [WORLD.w, WORLD.h, 1], // exact
+      [1600, 720, 1.5], // pillarboxed
     ];
     const points = [
       { x: 0, y: 0 },

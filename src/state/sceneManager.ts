@@ -53,8 +53,8 @@ function currentScene(s: GameState): SceneDef {
 
 /** Fresh game from the title screen: reset both dogs and start at the first round. */
 export function startGame(s: GameState): void {
-  s.dogs.cheddar = makeDog('cheddar', 300, 400, 3.2);
-  s.dogs.cocoa = makeDog('cocoa', 660, 400, 6.1);
+  s.dogs.cheddar = makeDog('cheddar', 430, 455, 3.2);
+  s.dogs.cocoa = makeDog('cocoa', 850, 455, 6.1);
   s.dogs.cocoa.face = -1;
   s.steals = { cheddar: 0, cocoa: 0 };
   s.sceneIdx = 0;

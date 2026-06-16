@@ -58,10 +58,10 @@ export function nearestDeck(p: Point): Point {
 /** Sample one of the four deck bands around the water (never inside the water rect). */
 export function sampleDeckBand(rng: Rng): Point {
   const band = (rng.next() * 4) | 0;
-  if (band === 0) return { x: rng.range(70, 890), y: rng.range(232, 260) }; // top
-  if (band === 1) return { x: rng.range(70, 890), y: rng.range(546, 554) }; // bottom
+  if (band === 0) return { x: rng.range(70, W - 70), y: rng.range(232, 260) }; // top
+  if (band === 1) return { x: rng.range(70, W - 70), y: rng.range(H - 48, H - 38) }; // bottom
   if (band === 2) return { x: rng.range(62, 110), y: rng.range(280, 540) }; // left
-  return { x: rng.range(850, 898), y: rng.range(280, 540) }; // right
+  return { x: rng.range(W - 110, W - 62), y: rng.range(280, 540) }; // right
 }
 
 // ---- AI corner-waypoint routing graph (around the deck ring) ----
@@ -71,9 +71,9 @@ export type Side = 'top' | 'bottom' | 'left' | 'right' | 'water';
 
 export const CORNERS: Record<Corner, Point> = {
   tl: { x: 94, y: 252 },
-  tr: { x: 856, y: 252 },
-  bl: { x: 94, y: 549 },
-  br: { x: 856, y: 549 },
+  tr: { x: W - 104, y: 252 },
+  bl: { x: 94, y: H - 51 },
+  br: { x: W - 104, y: H - 51 },
 };
 
 export const SIDE_CORNERS: Record<Exclude<Side, 'water'>, Corner[]> = {
@@ -93,8 +93,8 @@ export const RING: Record<string, Corner[]> = {
 
 export function sideOf(px: number, py: number): Side {
   if (py <= 272) return 'top';
-  if (py >= 538) return 'bottom';
+  if (py >= H - 60) return 'bottom';
   if (px <= 122) return 'left';
-  if (px >= 838) return 'right';
+  if (px >= W - 122) return 'right';
   return 'water';
 }

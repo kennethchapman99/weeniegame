@@ -21,10 +21,11 @@ const H = WORLD.h;
 export function initFloaters(s: GameState): void {
   const r = s.rng;
   s.floaters = [
-    { x: 240, y: 330, rx: 78, ry: 46, vx: 0.22, style: 'donut', ph: r.range(0, 6) },
-    { x: 560, y: 420, rx: 88, ry: 52, vx: -0.18, style: 'leaf', ph: r.range(0, 6) },
-    { x: 760, y: 300, rx: 74, ry: 44, vx: 0.16, style: 'ring', ph: r.range(0, 6) },
-    { x: 420, y: 500, rx: 84, ry: 48, vx: -0.24, style: 'donut2', ph: r.range(0, 6) },
+    { x: W * 0.2, y: 330, rx: 78, ry: 46, vx: 0.22, style: 'donut', ph: r.range(0, 6) },
+    { x: W * 0.43, y: 430, rx: 88, ry: 52, vx: -0.18, style: 'leaf', ph: r.range(0, 6) },
+    { x: W * 0.62, y: 310, rx: 74, ry: 44, vx: 0.16, style: 'ring', ph: r.range(0, 6) },
+    { x: W * 0.78, y: 510, rx: 84, ry: 48, vx: -0.24, style: 'donut2', ph: r.range(0, 6) },
+    { x: W * 0.9, y: 390, rx: 68, ry: 40, vx: -0.2, style: 'ring', ph: r.range(0, 6) },
   ];
 }
 

@@ -18,8 +18,8 @@ type G = CanvasRenderingContext2D;
 const W = WORLD.w;
 
 /** On-screen action buttons (world coords, bottom-right). */
-export const WRESTLE_BTN = { x: 888, y: 552, r: 40 } as const;
-export const JUMP_BTN = { x: 792, y: 556, r: 32 } as const;
+export const WRESTLE_BTN = { x: WORLD.w - 72, y: WORLD.h - 48, r: 40 } as const;
+export const JUMP_BTN = { x: WORLD.w - 168, y: WORLD.h - 44, r: 32 } as const;
 
 export function wrestleButtonHit(p: Point): boolean {
   return Math.hypot(p.x - WRESTLE_BTN.x, p.y - WRESTLE_BTN.y) < WRESTLE_BTN.r + 6;

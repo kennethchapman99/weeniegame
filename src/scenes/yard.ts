@@ -7,6 +7,7 @@
 
 import type { Rng } from '../core/rng.js';
 import { WORLD, YARD } from '../config/balance.js';
+import { rounded } from '../core/math.js';
 import type { SceneDef } from './types.js';
 import type { GameState } from '../state/gameState.js';
 import { updateToys, drawToys } from '../systems/toys.js';
@@ -139,7 +140,83 @@ export function paintYard(g: G, rng: Rng): void {
     g.stroke();
   }
 
+  // the wider yard has room for more "stuff to happen": a garden bed, stepping stones,
+  // and a little dog-safe agility log that make large screens feel intentionally populated.
+  paintGardenBed(g, rng);
+  paintSteppingStones(g);
+  paintAgilityLog(g);
   paintMagnolia(g, rng);
+}
+
+function paintGardenBed(g: G, rng: Rng): void {
+  const x = W - 360;
+  const y = H - 160;
+  g.save();
+  g.translate(x, y);
+  g.fillStyle = 'rgba(45,28,17,.28)';
+  g.beginPath();
+  g.ellipse(110, 54, 140, 42, -0.08, 0, 7);
+  g.fill();
+  g.fillStyle = '#6b4429';
+  rounded(g, 0, 18, 230, 72, 18);
+  g.fill();
+  g.fillStyle = '#7f5534';
+  for (let i = 0; i < 5; i++) {
+    rounded(g, 14 + i * 42, 28, 28, 50, 12);
+    g.fill();
+  }
+  for (let i = 0; i < 18; i++) {
+    const px = rng.range(20, 210);
+    const py = rng.range(24, 76);
+    g.strokeStyle = '#4f873e';
+    g.lineWidth = 2;
+    g.beginPath();
+    g.moveTo(px, py);
+    g.quadraticCurveTo(px + rng.range(-7, 7), py - 16, px + rng.range(-10, 10), py - 28);
+    g.stroke();
+    g.fillStyle = i % 3 === 0 ? '#e85b4f' : i % 3 === 1 ? '#f5c14e' : '#8fcf65';
+    g.beginPath();
+    g.arc(px + rng.range(-8, 8), py - rng.range(22, 32), rng.range(3, 5), 0, 7);
+    g.fill();
+  }
+  g.restore();
+}
+
+function paintSteppingStones(g: G): void {
+  g.fillStyle = 'rgba(210,204,183,.7)';
+  g.strokeStyle = 'rgba(90,80,60,.24)';
+  g.lineWidth = 2;
+  for (let i = 0; i < 7; i++) {
+    const x = 170 + i * 78;
+    const y = H - 82 + Math.sin(i * 1.7) * 18;
+    g.beginPath();
+    g.ellipse(x, y, 30, 13, Math.sin(i) * 0.3, 0, 7);
+    g.fill();
+    g.stroke();
+  }
+}
+
+function paintAgilityLog(g: G): void {
+  const x = 145;
+  const y = H - 135;
+  g.save();
+  g.translate(x, y);
+  g.rotate(-0.07);
+  const lg = g.createLinearGradient(0, -18, 0, 18);
+  lg.addColorStop(0, '#8c613a');
+  lg.addColorStop(1, '#5f3c22');
+  g.fillStyle = lg;
+  rounded(g, 0, -18, 150, 36, 18);
+  g.fill();
+  g.strokeStyle = 'rgba(45,25,12,.45)';
+  g.lineWidth = 2;
+  for (let i = 18; i < 145; i += 24) {
+    g.beginPath();
+    g.moveTo(i, -15);
+    g.quadraticCurveTo(i + 8, 0, i, 15);
+    g.stroke();
+  }
+  g.restore();
 }
 
 /** The magnolia — the squirrels' hideout (modelled on the real backyard tree). */
