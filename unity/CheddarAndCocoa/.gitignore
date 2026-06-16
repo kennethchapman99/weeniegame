@@ -15,9 +15,11 @@
 # IDE / build artifacts
 .vs/
 .idea/
+.vscode/
 *.csproj
 *.unityproj
 *.sln
+*.slnx
 *.user
 *.booproj
 *.svd

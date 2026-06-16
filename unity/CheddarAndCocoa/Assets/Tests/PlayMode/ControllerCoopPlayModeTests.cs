@@ -3,6 +3,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.LowLevel; // GamepadState — full-state injection
 using CheddarAndCocoa.Bootstrap;
 using CheddarAndCocoa.Dogs;
 
@@ -53,10 +54,15 @@ namespace CheddarAndCocoa.Tests
             cheddar.OnBark += _ => cheddarBarked = true;
 
             // Push the dogs APART (Cheddar starts left, Cocoa right) so they can't collide mid-test:
-            // pad0 → LEFT, pad1 → RIGHT.
-            Set(pad0.leftStick, new Vector2(-1f, 0f));
-            Set(pad1.leftStick, new Vector2(1f, 0f));
-            for (int i = 0; i < 30; i++) yield return new WaitForFixedUpdate();
+            // pad0 → LEFT, pad1 → RIGHT. Inject FULL GamepadState events (delta-state Set() can't
+            // target the composite leftStick control on this Input System version). The stick value
+            // persists until the next event, so one injection holds the dogs moving; velocity set
+            // in GamepadPlayerInput.Update then integrates over the physics steps below.
+            InputSystem.QueueStateEvent(pad0, new GamepadState { leftStick = new Vector2(-1f, 0f) });
+            InputSystem.QueueStateEvent(pad1, new GamepadState { leftStick = new Vector2(1f, 0f) });
+            InputSystem.Update();
+            yield return null; // let GamepadPlayerInput.Update sample the sticks and set velocity
+            for (int i = 0; i < 40; i++) yield return new WaitForFixedUpdate();
 
             Vector2 cheddarEnd = cheddar.transform.position;
             Vector2 cocoaEnd = cocoa.transform.position;
@@ -69,16 +75,17 @@ namespace CheddarAndCocoa.Tests
             Assert.AreNotEqual(Mathf.Sign(cheddarDx), Mathf.Sign(cocoaDx),
                 "Dogs moved the same direction — input is not independent per pad.");
 
-            // Bark: press X (buttonWest) on pad0. wasPressedThisFrame is a single-frame edge, and
-            // the exact frame the engine processes it vs. when GamepadPlayerInput.Update() samples
-            // it can race, so retry the press a few frames until the edge lands.
-            Set(pad0.leftStick, Vector2.zero);
-            Set(pad1.leftStick, Vector2.zero);
+            // Bark: press X (buttonWest) on pad0. wasPressedThisFrame is a single-frame edge. We
+            // must let the PLAYER LOOP process the queued press (no manual InputSystem.Update here),
+            // because this coroutine resumes AFTER MonoBehaviour.Update — a manual update would land
+            // the edge a frame before GamepadPlayerInput samples it and the player-loop update would
+            // then clear it. Queue + yield lets the press be live on the frame GamepadPlayerInput
+            // reads it. Retry the release→press cycle a few frames so the edge reliably lands.
             for (int i = 0; i < 12 && !cheddarBarked; i++)
             {
-                Release(pad0.buttonWest);
+                InputSystem.QueueStateEvent(pad0, new GamepadState()); // release (sticks neutral too)
                 yield return null;
-                Press(pad0.buttonWest);
+                InputSystem.QueueStateEvent(pad0, new GamepadState().WithButton(GamepadButton.West)); // X down
                 yield return null;
             }
 

@@ -30,13 +30,12 @@ Only what this milestone needs (pinned in `unity/CheddarAndCocoa/Packages/manife
 
 1. Install **Unity Hub** + **Unity 6 LTS** (Mac and/or Windows build support).
 2. Unity Hub → **Add → Add project from disk →** select `unity/CheddarAndCocoa`.
-3. Open it. `.meta` files (stable GUIDs) are committed, so the scripts/asmdef bind on import; Unity
-   generates `Library/` and the default `ProjectSettings` (only `ProjectVersion.txt` is committed),
-   then resolves the packages above. First import takes a minute.
-4. **When prompted to enable the new Input System backend, click Yes** (the editor restarts). This
-   sets *Project Settings → Player → Active Input Handling* to *Input System Package* (or *Both*).
-   Without it the gamepads compile fine but send no input. If you missed the prompt, set it
-   manually there and restart.
+3. Open it. `.meta` files (stable GUIDs) and the full `ProjectSettings/` + `Packages/` lock are
+   committed, so the scripts/asmdef bind and packages resolve deterministically; Unity just
+   regenerates `Library/`. First import takes a minute.
+4. **No input-backend prompt to worry about** — *Active Input Handling* is already set to *Both*
+   (`activeInputHandler: 2`), so controllers feed the new Input System immediately. (If a Unity
+   patch differs and prompts anyway, click **Yes**.)
 
 ## How to run the test scene
 
@@ -63,33 +62,27 @@ Only what this milestone needs (pinned in `unity/CheddarAndCocoa/Packages/manife
 | **Y** (north button) | Grab/interact **placeholder** — logs only |
 | A / B | Reserved (wrestle / jump) — wired into `MoveIntent`, not yet implemented |
 
-## Verification status
+## Verification status — ✅ all criteria verified by an actual Unity run
 
-- **C# compile — VERIFIED.** All 13 scripts were compiled headlessly with Unity 6's bundled Roslyn
-  against the editor's real `UnityEngine.*` module assemblies + the Input System API → an assembly
-  was produced with **0 errors** (two benign warnings only: `DogController._jumpT` and
-  `LevelObjective.surviveSeconds` are documented stub fields for not-yet-built features). The
-  Package Manager also resolved the manifest (Input System loaded) during a batch-mode import.
-- **Opens / Play / movement / bark — automated test ready, blocked only on license.** There's a
-  PlayMode test (`Assets/Tests/PlayMode/ControllerCoopPlayModeTests.cs`) that runs the real
-  `GameBootstrap`, injects **two virtual gamepads**, and asserts the two dogs move *independently*
-  (opposite directions per pad) and that bark fires `OnBark` — i.e. it proves the three runtime
-  criteria with **no hardware and no manual Play**. The test assembly also compiles clean (verified
-  with Roslyn against NUnit + the Input System TestFramework).
-- **To get the green runtime proof** the editor must be *licensed*, and on this machine that needs
-  a one-time setup (all owner-side — needs your Unity account):
-  1. **Reinstall Unity Hub** — the app isn't currently installed; the installer is already at
-     `~/Downloads/UnityHubSetup-arm64.dmg`. (The editor `6000.0.65f1` is still installed.)
-  2. **Sign in** in the Hub with your Unity ID — this refreshes the **Personal** license, which is
-     currently offline-expired (`LicenseGroupOfflineValidityPeriodIsExpired`, `Token not found in
-     cache`), so the headless editor exits 198 at the license gate until then.
-  3. Then run the automated proof (no controllers, no manual Play needed):
+- **Compiles clean / no Safe Mode.** A real Unity 6000.0.65f1 batch import + PlayMode run compiled
+  the project and the tests with **0 errors** (two benign unused-field warnings only: `_jumpT`,
+  `surviveSeconds`, both documented stubs).
+- **Scene Play + two dogs move independently + bark — VERIFIED.** The PlayMode test
+  `Assets/Tests/PlayMode/ControllerCoopPlayModeTests.cs` runs the real `GameBootstrap`, injects
+  **two virtual gamepads**, and asserts each pad drives its own dog in opposite directions and that
+  bark fires `OnBark`. Result: **`passed=1 failed=0`**, with `[Cheddar] WOOF!` logged. A snapshot of
+  the run is checked in at `unity/test-results/playmode-results.xml`. Re-run any time:
 
-     ```sh
-     ./unity/run-playmode-tests.sh      # headless PlayMode test → playmode-results.xml
-     ```
+  ```sh
+  ./unity/run-playmode-tests.sh      # headless PlayMode test → unity/playmode-results.xml
+  ```
 
-     Or open `ControllerTestScene` in the signed-in editor and press **Play** with two pads.
+- **Active Input Handling is preset to *Both*** (`ProjectSettings.asset: activeInputHandler: 2`), so
+  real controllers feed the new Input System on first open — no manual "enable backend / click Yes"
+  step needed anymore.
+- **Note on licensing:** running the editor needs a valid Unity license. This machine uses a Unity
+  **Personal** seat; if its offline period lapses again, just open Unity Hub and sign in once to
+  refresh (symptom: editor exits 198, "No valid Unity Editor license found").
 
 ## What works
 
