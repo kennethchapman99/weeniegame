@@ -11,7 +11,9 @@ Clear the mission by completing all required objectives before the timer expires
 3. Resolve the **Predator Warning / Predator Attack** with a united-front bark or a rescue.
 4. Complete the **Rope/Tug** shared-object objective.
 
-The round can end in **LevelClear** or **GameOver**, and either result can be restarted. Current pacing is hand-tuned for a first manual pass: a 75-second timer, an early predator telegraph, and slower tug charge so both players have to stay committed for a moment.
+The round can end in **LevelClear** or **GameOver**, and either result can be restarted. Current pacing is hand-tuned for a first two-player playtest: a 75-second timer, a 5-second mission intro banner, delayed first squirrel pressure, an ~18-second predator telegraph, and slower tug charge so both players have to stay committed for a moment.
+
+The opening HUD banner says: **Cheddar + Cocoa must protect the weenies together.** For the first few seconds, the squirrel is labeled **Squirrel: WAITING**, the predator is **Predator: OFFSCREEN**, and the rope is **Rope/Tug - BOTH DOGS**. This is intentional: players should first read their spawn, dog identity, first weenie arrows, and shared fantasy before the first threat competes for attention.
 
 ## Controls
 
@@ -30,21 +32,32 @@ Each dog also gets a small objective arrow that appears only when useful. It poi
 4. **BOTH TUG** once enough food has been recovered to make rope coordination the next likely bottleneck.
 5. **WEENIE** for nearest breakfast recovery during normal play.
 
+Manual first-20-seconds check: start the scene with two players and do nothing for three seconds. Confirm no squirrel steal happens yet, the intro banner is visible, both dog identity labels are readable, and the arrows are primarily helping players find breakfast/weenies. By roughly 6-8 seconds the first squirrel pressure may begin depending on modifier, and the predator should not compete until the later warning.
+
 ## Squirrel pressure
 
 A visible, labeled **Squirrel** periodically picks a breakfast/weenie and runs to steal it. If it reaches the item, the squirrel escapes with food, the team loses score, and the stolen-food counter rises. A single nearby bark interrupts/scares the squirrel briefly; a united bark scares it longer and adds teamwork score.
+
+Current squirrel labels/cues:
+
+- **SQUIRREL STEALING - BARK!** when it has picked a target.
+- **SQUIRREL DROPPED IT!** after a successful solo bark scare.
+- **SQUIRREL HID FROM DOUBLE WOOF** after a united bark scare.
+- **SQUIRREL GOT A WEENIE!** when players miss the steal.
+
+Manual readability check: let the squirrel start stealing once, then bark near it with one dog and confirm the label/cue clearly changes from stealing to dropped/scared. Let it steal once on a later run and confirm the label says it got a weenie, the stolen counter rises, and the fail state is distinct if stolen food reaches `3`.
 
 ## Predator scare
 
 Once per round, a **Predator Warning** telegraphs danger and targets one dog. If both dogs are close together and bark within the united-bark timing window, the predator is driven away for a large score reward. If the team fails the warning, **Predator Attack** grabs/stuns the target dog. The other dog can rescue by coming close and barking; failure costs score/time pressure but does not instantly end the game.
 
-Manual readability check: when the warning starts, the HUD says to huddle and bark, the predator label turns bright red, and both dogs' arrows should point toward each other with **HUDDLE + BARK** if they are separated. During an attack, the grabbed dog should read **STUNNED**, the partner arrow should say **BARK RESCUE**, and a successful partner bark should flip the grabbed dog into **RESCUED!** briefly.
+Manual readability check: when the warning starts, the HUD says a shadow is over the targeted dog, the predator label becomes **HUDDLE + BARK!**, and both dogs' arrows should point toward each other with **HUDDLE + BARK** if they are separated. A successful huddle bark should show **DOUBLE WOOF drove the predator away!** and move the predator to **PREDATOR YEETED** offscreen. During an attack, the grabbed dog should read **STUNNED**, the partner arrow should say **BARK RESCUE**, and a successful partner bark should show a distinct rescue cue: **bark-rescued their sibling - heroic nonsense!** The rescue cue is deliberately separate from united bark feedback.
 
 ## Rope/Tug shared-object mechanic
 
 The labeled, pulsing **Rope/Tug** object is a required co-op objective. Either dog can interact near the rope for progress, but the main completion path is both dogs standing together at the rope to charge the tug meter. Finishing tug awards a major score bonus and is required for LevelClear.
 
-Manual readability check: after early food recovery, objective arrows should switch to **BOTH TUG** while dogs are away from the rope. When both dogs stand on the rope, their labels briefly read **TUG!**, the rope label shows progress, and completion flips the rope label to **ROPE COMPLETE!**.
+Manual readability check: after early food recovery, objective arrows should switch to **BOTH TUG** while dogs are away from the rope. If only one dog reaches the rope, the rope label should call out **WAITING FOR CHEDDAR** or **WAITING FOR COCOA** and the HUD should say both dogs must commit together. When both dogs stand on the rope, their labels briefly read **TUG!**, the rope label changes to **BOTH TUGGING X%**, and completion flips the rope label to **ROPE COMPLETE!**.
 
 ## United bark
 
@@ -55,7 +68,7 @@ Bark remains visible through expanding bark rings, but now affects gameplay:
 - rescues a grabbed/stunned dog when the partner is close;
 - awards teamwork score with a cooldown so it cannot be spammed every frame.
 
-Manual readability check: each bark should pop the dog into a **WOOF!** pose label and still show the expanding bark ring. A successful united bark should update the HUD cue and, during predator warning, drive the predator away immediately.
+Manual readability check: each bark should pop the dog into a **WOOF!** pose label and still show the expanding bark ring. A solo bark away from targets gives a joking solo-bark cue. A successful united bark gives a **DOUBLE WOOF** cue and is protected for a short moment so the second same-moment bark does not visually downgrade it back to solo feedback. During predator warning, the united bark should drive the predator away immediately.
 
 ## Scoring and stars
 
@@ -70,7 +83,19 @@ Score is no longer flat +1 only:
 - LevelClear time remaining bonus: remaining seconds;
 - squirrel steal / predator failure: score penalties.
 
-LevelClear displays a 1–3 star rating based on the final score. On clear, both dogs hold a **PROUD!** pose; on fail, both dogs hold a **SAD FLOP** pose so the two end states read differently even before final art.
+LevelClear displays a 1–3 star rating based on the final score. On clear, the center banner reads **BACKYARD SAVED! PROUD DOG PARADE!** and both dogs hold a **PROUD!** pose. On fail, the center banner reads **MISSION FAILED! SAD FLOP RESET!** and both dogs hold a **SAD FLOP** pose so the two end states read differently even before final art.
+
+## Two-player playtest script
+
+Use this short script before starting a new level:
+
+1. Start `ArenaScene` with two players and read the opening at gameplay zoom. Confirm both players can answer: who am I, where is my first weenie, what is the shared mission?
+2. Let the first squirrel steal attempt start. Have one player bark near it; confirm the steal/scare cause and effect is obvious.
+3. Recover at least three weenies. Confirm arrows switch toward **BOTH TUG** and stop feeling noisy once players are close to targets.
+4. Send only one dog to the rope. Confirm the waiting-for-partner label makes the required cooperation obvious.
+5. Send both dogs to the rope. Confirm both dog pose labels and rope progress communicate a shared tug.
+6. On the predator warning, first try the correct huddle + bark. Restart and then intentionally fail the warning once to see the grab/rescue path.
+7. Finish a clear run and a failed run. Confirm the clear/fail banners, dog poses, and restart instructions are impossible to miss.
 
 ## Round modifiers
 
@@ -85,10 +110,11 @@ Each restart deterministically selects one seeded modifier for tests/HUD:
 - All mission actors use placeholder sprites/text labels generated at runtime; there are no external art assets yet.
 - Dog identity art, pose labels, and objective arrows are generated placeholders. They are intentionally readable and easy to delete once authored sprites/animation exist.
 - The squirrel and predator use intentionally simple movement/state rules so the PlayMode tests remain deterministic.
+- The intro, bark, squirrel, predator, tug, clear, and fail feedback are still text/scale/audio-placeholder driven; they are designed to be replaced by authored animation/SFX later.
 - Tug is proximity/progress based, not a full physics rope.
 - Predator targeting and modifier selection are seeded but still prototype-simple.
 - The scene now has basic procedural sound cues, an arena `AudioListener`, and simple placeholder animation, but real prefab art, authored animation, better SFX, and richer rescue/tug feel are still future work.
 
 ## Test coverage
 
-`unity/Assets/Tests/PlayMode/ArenaGameLoopPlayModeTests.cs` loads ArenaScene and verifies dogs, mission state, item recovery, squirrel steal/scare, united bark timing/range, predator defense, failed predator rescue, tug completion, LevelClear, GameOver/restart, exposed modifier state, dog identity labels, dog pose labels, objective-arrow labels, and the generated arena audio listener.
+`unity/Assets/Tests/PlayMode/ArenaGameLoopPlayModeTests.cs` loads ArenaScene and verifies dogs, mission state, intro prompt/banner, delayed first squirrel steal window, item recovery, squirrel steal/scare labels, solo/united bark feedback, predator defense, failed predator rescue, tug waiting/together feedback, LevelClear, GameOver/restart, exposed modifier state, dog identity labels, dog pose labels, objective-arrow labels, and the generated arena audio listener.
