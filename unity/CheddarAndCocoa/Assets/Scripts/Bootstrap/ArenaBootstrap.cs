@@ -119,6 +119,10 @@ namespace CheddarAndCocoa.Bootstrap
 
             go.AddComponent<DogIdentity>().Configure(id, tuning);
             go.AddComponent<DogController>();
+            go.AddComponent<DogReadabilityFeedback>().Init(_square);
+            go.AddComponent<ObjectiveArrowFeedback>().Init(id == DogId.Cheddar
+                ? new Color(1f, 0.92f, 0.25f)
+                : new Color(0.72f, 0.9f, 1f));
             var input = go.AddComponent<GamepadPlayerInput>();
             input.SetSlot(slot);
             input.SetKeyboardScheme(scheme);
@@ -136,6 +140,7 @@ namespace CheddarAndCocoa.Bootstrap
             cam.orthographicSize = fieldHeight * 0.5f + 1f;
             cam.backgroundColor = Hex("#243a1c"); // dark grass
             cam.clearFlags = CameraClearFlags.SolidColor;
+            go.AddComponent<AudioListener>();
             go.tag = "MainCamera";
             go.AddComponent<SharedCameraController>();
             return go;

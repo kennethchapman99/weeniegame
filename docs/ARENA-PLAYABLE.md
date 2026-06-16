@@ -20,7 +20,15 @@ The round can end in **LevelClear** or **GameOver**, and either result can be re
 | P1 | Cheddar | Gamepad slot 0 | WASD | Space / X button | Y button |
 | P2 | Cocoa | Gamepad slot 1 | Arrow keys | Enter / Right Shift / X button | Y button |
 
-Cheddar is the chaos puppy and Cocoa is the steadier veteran. The placeholder sprites are still simple generated shapes, but mission actors now include world labels, pulse/rotation feedback, HUD callouts, and tiny procedural sound cues so the first manual playtest is readable without external assets.
+Cheddar is the chaos puppy and Cocoa is the steadier veteran. The placeholder sprites are still simple generated shapes, but the dogs now have generated identity markings and pose labels: Cheddar reads as **CHEDDAR CHAOS PUP** with warmer golden markings, a faster wag, and louder bark/proud poses; Cocoa reads as **COCOA SPOT QUEEN** with darker chocolate body, chest/spot markings, and a tiny crown marker. Idle, run, bark, tug, stunned, rescued, proud, and sad states are exposed through body squash/rotation, tail motion, color-shifted labels, and deterministic PlayMode assertions.
+
+Each dog also gets a small objective arrow that appears only when useful. It points to the next actionable target and hides when the dog is already close enough, so it should guide without becoming permanent screen noise. Current arrow priorities are:
+
+1. **BARK RESCUE / PARTNER BARK** during predator grabs.
+2. **HUDDLE + BARK** during predator warning.
+3. **BARK SQUIRREL** while the squirrel is actively stealing.
+4. **BOTH TUG** once enough food has been recovered to make rope coordination the next likely bottleneck.
+5. **WEENIE** for nearest breakfast recovery during normal play.
 
 ## Squirrel pressure
 
@@ -30,9 +38,13 @@ A visible, labeled **Squirrel** periodically picks a breakfast/weenie and runs t
 
 Once per round, a **Predator Warning** telegraphs danger and targets one dog. If both dogs are close together and bark within the united-bark timing window, the predator is driven away for a large score reward. If the team fails the warning, **Predator Attack** grabs/stuns the target dog. The other dog can rescue by coming close and barking; failure costs score/time pressure but does not instantly end the game.
 
+Manual readability check: when the warning starts, the HUD says to huddle and bark, the predator label turns bright red, and both dogs' arrows should point toward each other with **HUDDLE + BARK** if they are separated. During an attack, the grabbed dog should read **STUNNED**, the partner arrow should say **BARK RESCUE**, and a successful partner bark should flip the grabbed dog into **RESCUED!** briefly.
+
 ## Rope/Tug shared-object mechanic
 
 The labeled, pulsing **Rope/Tug** object is a required co-op objective. Either dog can interact near the rope for progress, but the main completion path is both dogs standing together at the rope to charge the tug meter. Finishing tug awards a major score bonus and is required for LevelClear.
+
+Manual readability check: after early food recovery, objective arrows should switch to **BOTH TUG** while dogs are away from the rope. When both dogs stand on the rope, their labels briefly read **TUG!**, the rope label shows progress, and completion flips the rope label to **ROPE COMPLETE!**.
 
 ## United bark
 
@@ -42,6 +54,8 @@ Bark remains visible through expanding bark rings, but now affects gameplay:
 - resolves the predator warning/attack when both dogs are close and timed;
 - rescues a grabbed/stunned dog when the partner is close;
 - awards teamwork score with a cooldown so it cannot be spammed every frame.
+
+Manual readability check: each bark should pop the dog into a **WOOF!** pose label and still show the expanding bark ring. A successful united bark should update the HUD cue and, during predator warning, drive the predator away immediately.
 
 ## Scoring and stars
 
@@ -56,7 +70,7 @@ Score is no longer flat +1 only:
 - LevelClear time remaining bonus: remaining seconds;
 - squirrel steal / predator failure: score penalties.
 
-LevelClear displays a 1–3 star rating based on the final score.
+LevelClear displays a 1–3 star rating based on the final score. On clear, both dogs hold a **PROUD!** pose; on fail, both dogs hold a **SAD FLOP** pose so the two end states read differently even before final art.
 
 ## Round modifiers
 
@@ -69,11 +83,12 @@ Each restart deterministically selects one seeded modifier for tests/HUD:
 ## Known limitations
 
 - All mission actors use placeholder sprites/text labels generated at runtime; there are no external art assets yet.
+- Dog identity art, pose labels, and objective arrows are generated placeholders. They are intentionally readable and easy to delete once authored sprites/animation exist.
 - The squirrel and predator use intentionally simple movement/state rules so the PlayMode tests remain deterministic.
 - Tug is proximity/progress based, not a full physics rope.
 - Predator targeting and modifier selection are seeded but still prototype-simple.
-- The scene now has basic procedural sound cues and simple placeholder animation, but real prefab art, authored animation, better SFX, and richer rescue/tug feel are still future work.
+- The scene now has basic procedural sound cues, an arena `AudioListener`, and simple placeholder animation, but real prefab art, authored animation, better SFX, and richer rescue/tug feel are still future work.
 
 ## Test coverage
 
-`unity/Assets/Tests/PlayMode/ArenaGameLoopPlayModeTests.cs` loads ArenaScene and verifies dogs, mission state, item recovery, squirrel steal/scare, united bark timing/range, predator defense, failed predator rescue, tug completion, LevelClear, GameOver/restart, and exposed modifier state.
+`unity/Assets/Tests/PlayMode/ArenaGameLoopPlayModeTests.cs` loads ArenaScene and verifies dogs, mission state, item recovery, squirrel steal/scare, united bark timing/range, predator defense, failed predator rescue, tug completion, LevelClear, GameOver/restart, exposed modifier state, dog identity labels, dog pose labels, objective-arrow labels, and the generated arena audio listener.

@@ -75,6 +75,8 @@ namespace CheddarAndCocoa.Game
         public GameObject SquirrelObject { get; private set; }
         public GameObject PredatorObject { get; private set; }
         public GameObject RopeObject { get; private set; }
+        public DogReadabilityFeedback[] DogFeedback { get; private set; }
+        public ObjectiveArrowFeedback[] ObjectiveArrows { get; private set; }
 
         private DogController[] _dogs;
         private GamepadPlayerInput[] _inputs;
@@ -109,12 +111,18 @@ namespace CheddarAndCocoa.Game
             _rng = new System.Random(seed);
             _dogStarts = new Vector2[dogs.Length];
             _lastBarks = new float[dogs.Length];
+            DogFeedback = new DogReadabilityFeedback[dogs.Length];
+            ObjectiveArrows = new ObjectiveArrowFeedback[dogs.Length];
 
             for (int i = 0; i < dogs.Length; i++)
             {
                 _dogStarts[i] = dogs[i].transform.position;
                 dogs[i].OnBark += OnDogBarked;
                 dogs[i].OnInteract += OnDogInteracted;
+                dogs[i].TryGetComponent(out DogReadabilityFeedback dogFeedback);
+                dogs[i].TryGetComponent(out ObjectiveArrowFeedback objectiveArrow);
+                DogFeedback[i] = dogFeedback;
+                ObjectiveArrows[i] = objectiveArrow;
             }
 
             _treatRoot = new GameObject("Breakfast/Weenies").transform;
@@ -189,9 +197,11 @@ namespace CheddarAndCocoa.Game
             {
                 _lastBarks[i] = float.NegativeInfinity;
                 _dogs[i].SetMode(MovementMode.Free);
+                if (DogFeedback[i] != null) DogFeedback[i].ClearMissionPose();
                 _dogs[i].transform.position = _dogStarts[i];
                 if (_dogs[i].TryGetComponent<Rigidbody2D>(out var rb)) rb.linearVelocity = Vector2.zero;
                 if (i < _inputs.Length && _inputs[i] != null) _inputs[i].enabled = true;
+                if (ObjectiveArrows[i] != null) ObjectiveArrows[i].Hide();
             }
 
             ClearTreats();
@@ -220,6 +230,7 @@ namespace CheddarAndCocoa.Game
             TickPredator();
             TickTugProximity();
             CheckClear();
+            UpdateObjectiveArrows();
         }
 
         private void TickModifier()
@@ -347,6 +358,8 @@ namespace CheddarAndCocoa.Game
             bool cocoaNear = Vector2.Distance(_dogs[1].transform.position, RopeObject.transform.position) < 1.6f;
             if (!cheddarNear || !cocoaNear) return;
 
+            if (DogFeedback[0] != null) DogFeedback[0].ShowTug();
+            if (DogFeedback[1] != null) DogFeedback[1].ShowTug();
             TugProgress = Mathf.Min(1f, TugProgress + Time.deltaTime * tugChargePerSecond);
             SetActorState(RopeObject, $"Rope/Tug {Mathf.RoundToInt(TugProgress * 100f)}%", new Color(1f, 0.78f, 0.22f), 0.18f);
             if (TugProgress >= 1f) CompleteTug();
@@ -360,6 +373,7 @@ namespace CheddarAndCocoa.Game
             if (dogIndex < 0) return;
             if (Vector2.Distance(_dogs[dogIndex].transform.position, RopeObject.transform.position) > 1.8f) return;
 
+            if (DogFeedback[dogIndex] != null) DogFeedback[dogIndex].ShowTug();
             TugProgress = Mathf.Min(1f, TugProgress + 0.2f);
             LastCue = $"{DogName(_dogs[dogIndex])} grabbed the rope!";
             SetActorState(RopeObject, $"Rope/Tug {Mathf.RoundToInt(TugProgress * 100f)}%", new Color(1f, 0.78f, 0.22f), 0.2f);
@@ -426,11 +440,15 @@ namespace CheddarAndCocoa.Game
         {
             if (_grabbedDog < 0) return;
 
+            int rescuedDog = _grabbedDog;
             _dogs[_grabbedDog].SetMode(MovementMode.Free);
             _grabbedDog = -1;
             Phase = State.Playing;
             Score += RescueScore;
             LastCue = $"{DogName(rescuer)} rescued their sibling!";
+            if (DogFeedback[rescuedDog] != null) DogFeedback[rescuedDog].ShowRescued();
+            int rescuerIndex = IndexOfDog(rescuer.GetComponent<DogIdentity>().Id);
+            if (rescuerIndex >= 0 && DogFeedback[rescuerIndex] != null) DogFeedback[rescuerIndex].ShowProudBrief();
             PlayCue(_successCue);
         }
 
@@ -463,10 +481,19 @@ namespace CheddarAndCocoa.Game
                 if (dog.TryGetComponent<Rigidbody2D>(out var rb)) rb.linearVelocity = Vector2.zero;
             }
 
+            for (int i = 0; i < DogFeedback.Length; i++)
+            {
+                if (DogFeedback[i] == null) continue;
+                if (clear) DogFeedback[i].ShowProud();
+                else DogFeedback[i].ShowSad();
+            }
+
             for (int i = 0; i < _inputs.Length; i++)
             {
                 if (_inputs[i] != null) _inputs[i].enabled = false;
             }
+
+            HideObjectiveArrows();
         }
 
         private bool MissionActive() => Phase == State.Playing || Phase == State.PredatorWarning || Phase == State.PredatorAttack;
@@ -508,6 +535,104 @@ namespace CheddarAndCocoa.Game
                 if (treat != null && Vector2.Distance(position, treat.transform.position) <= range) return treat;
             }
             return null;
+        }
+
+        private Treat FindNearestTreat(Vector2 position)
+        {
+            Treat nearest = null;
+            float nearestDistance = float.PositiveInfinity;
+            foreach (var treat in _treats)
+            {
+                if (treat == null) continue;
+                float distance = Vector2.Distance(position, treat.transform.position);
+                if (distance >= nearestDistance) continue;
+                nearest = treat;
+                nearestDistance = distance;
+            }
+            return nearest;
+        }
+
+        private void UpdateObjectiveArrows()
+        {
+            if (ObjectiveArrows == null) return;
+
+            for (int i = 0; i < ObjectiveArrows.Length; i++)
+            {
+                var arrow = ObjectiveArrows[i];
+                if (arrow == null) continue;
+                if (TryGetObjectiveTarget(i, out var target, out var copy, out var hideDistance))
+                    arrow.PointAt(target, copy, hideDistance);
+                else
+                    arrow.Hide();
+            }
+        }
+
+        private bool TryGetObjectiveTarget(int dogIndex, out Transform target, out string copy, out float hideDistance)
+        {
+            target = null;
+            copy = string.Empty;
+            hideDistance = 0.9f;
+
+            if (!MissionActive() || dogIndex < 0 || dogIndex >= _dogs.Length) return false;
+
+            if (Phase == State.PredatorAttack && _grabbedDog >= 0)
+            {
+                if (dogIndex == _grabbedDog)
+                {
+                    int partner = _grabbedDog == 0 ? 1 : 0;
+                    target = _dogs[partner].transform;
+                    copy = "PARTNER BARK";
+                    hideDistance = 0.4f;
+                    return true;
+                }
+
+                target = _dogs[_grabbedDog].transform;
+                copy = "BARK RESCUE";
+                hideDistance = 1.8f;
+                return true;
+            }
+
+            if (Phase == State.PredatorWarning)
+            {
+                int partner = dogIndex == 0 ? 1 : 0;
+                target = _dogs[partner].transform;
+                copy = "HUDDLE + BARK";
+                hideDistance = 1.6f;
+                return true;
+            }
+
+            if (_squirrelTarget != null)
+            {
+                target = SquirrelObject.transform;
+                copy = "BARK SQUIRREL";
+                hideDistance = 2.2f;
+                return true;
+            }
+
+            if (!TugComplete && BreakfastRecovered >= Mathf.Max(2, recoveryGoal / 2))
+            {
+                target = RopeObject.transform;
+                copy = "BOTH TUG";
+                hideDistance = 1.7f;
+                return true;
+            }
+
+            var nearestTreat = FindNearestTreat(_dogs[dogIndex].transform.position);
+            if (nearestTreat == null) return false;
+
+            target = nearestTreat.transform;
+            copy = "WEENIE";
+            hideDistance = 1.2f;
+            return true;
+        }
+
+        private void HideObjectiveArrows()
+        {
+            if (ObjectiveArrows == null) return;
+            foreach (var arrow in ObjectiveArrows)
+            {
+                if (arrow != null) arrow.Hide();
+            }
         }
 
         private void SpawnTreat()

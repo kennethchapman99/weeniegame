@@ -39,6 +39,23 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(game.PredatorObject.GetComponent<MissionActorFeedback>());
             Assert.IsNotNull(game.RopeObject.GetComponent<MissionActorFeedback>());
             Assert.IsNotNull(game.GetComponent<AudioSource>());
+            Assert.IsNotNull(Camera.main.GetComponent<AudioListener>());
+
+            var cheddarFeedback = cheddar.GetComponent<DogReadabilityFeedback>();
+            var cocoaFeedback = cocoa.GetComponent<DogReadabilityFeedback>();
+            Assert.IsNotNull(cheddarFeedback);
+            Assert.IsNotNull(cocoaFeedback);
+            Assert.That(cheddarFeedback.IdentityLabel, Does.Contain("CHEDDAR CHAOS PUP"));
+            Assert.That(cocoaFeedback.IdentityLabel, Does.Contain("COCOA SPOT QUEEN"));
+            Assert.IsNotNull(game.ObjectiveArrows);
+            Assert.AreEqual(2, game.ObjectiveArrows.Length);
+            Assert.IsNotNull(game.ObjectiveArrows[0]);
+            Assert.IsNotNull(game.ObjectiveArrows[1]);
+
+            cheddar.Bark();
+            yield return null;
+            Assert.AreEqual(DogReadabilityFeedback.Pose.Bark, cheddarFeedback.CurrentPose);
+            Assert.That(cheddarFeedback.IdentityLabel, Does.Contain("WOOF!"));
 
             var treats = Object.FindObjectsByType<Treat>(FindObjectsSortMode.None);
             Assert.Greater(treats.Length, 0);
@@ -74,8 +91,11 @@ namespace CheddarAndCocoa.Tests
             Assert.That(game.LastCue, Does.Contain("squirrel").IgnoreCase);
 
             // Predator warning/attack can be resolved by united bark.
+            cocoa.transform.position = cheddar.transform.position + Vector3.right * 5f;
             game.ForcePredatorWarning();
+            yield return null;
             Assert.AreEqual(GameManager.State.PredatorWarning, game.Phase);
+            Assert.That(game.ObjectiveArrows[0].Label, Does.Contain("HUDDLE + BARK"));
             cocoa.transform.position = cheddar.transform.position + Vector3.right;
             cheddar.Bark(); cocoa.Bark();
             Assert.IsTrue(game.PredatorResolved);
@@ -84,21 +104,43 @@ namespace CheddarAndCocoa.Tests
             // Failed predator attack stuns/grabs, then the partner rescues by coming close and barking.
             game.Restart();
             game.ForcePredatorAttack();
+            yield return null;
             Assert.AreEqual(GameManager.State.PredatorAttack, game.Phase);
             Assert.IsTrue(game.AnyDogGrabbed);
             Assert.IsTrue(cheddar.Mode == MovementMode.Stunned || cocoa.Mode == MovementMode.Stunned);
+            Assert.IsTrue(cheddarFeedback.CurrentPose == DogReadabilityFeedback.Pose.Stunned ||
+                          cocoaFeedback.CurrentPose == DogReadabilityFeedback.Pose.Stunned);
+            Assert.IsTrue(game.ObjectiveArrows[0].Label.Contains("BARK RESCUE") ||
+                          game.ObjectiveArrows[1].Label.Contains("BARK RESCUE"));
             cheddar.transform.position = cocoa.transform.position;
             cheddar.Bark(); cocoa.Bark();
+            yield return null;
             Assert.IsFalse(game.AnyDogGrabbed, "Partner bark should rescue grabbed dog.");
+            Assert.IsTrue(cheddarFeedback.CurrentPose == DogReadabilityFeedback.Pose.Rescued ||
+                          cocoaFeedback.CurrentPose == DogReadabilityFeedback.Pose.Rescued ||
+                          cheddarFeedback.CurrentPose == DogReadabilityFeedback.Pose.Proud ||
+                          cocoaFeedback.CurrentPose == DogReadabilityFeedback.Pose.Proud);
 
             // Tug completes when both dogs coordinate on the rope.
+            game.Restart();
+            for (int i = 0; i < 3; i++)
+            {
+                Object.FindObjectsByType<Treat>(FindObjectsSortMode.None)[0].CollectBy(cheddar);
+                yield return null;
+            }
             game.RopeObject.transform.position = Vector3.zero;
+            cheddar.transform.position = Vector3.left * 4f;
+            cocoa.transform.position = Vector3.right * 4f;
+            yield return null;
+            Assert.That(game.ObjectiveArrows[0].Label, Does.Contain("BOTH TUG"));
             cheddar.transform.position = Vector3.zero;
             cocoa.transform.position = Vector3.right * 0.5f;
             guard = 0f;
             while (!game.TugComplete && guard < 4f) { guard += Time.deltaTime; yield return null; }
             Assert.IsTrue(game.TugComplete);
             Assert.That(game.RopeObject.GetComponent<MissionActorFeedback>().Label, Does.Contain("COMPLETE"));
+            Assert.IsTrue(cheddarFeedback.CurrentPose == DogReadabilityFeedback.Pose.Tug ||
+                          cocoaFeedback.CurrentPose == DogReadabilityFeedback.Pose.Tug);
 
             // Level clear requires food, tug, and predator resolution.
             game.ForcePredatorWarning();
@@ -113,10 +155,16 @@ namespace CheddarAndCocoa.Tests
             }
             Assert.AreEqual(GameManager.State.LevelClear, game.Phase);
             Assert.GreaterOrEqual(game.StarRating, 1);
+            yield return null;
+            Assert.AreEqual(DogReadabilityFeedback.Pose.Proud, cheddarFeedback.CurrentPose);
+            Assert.AreEqual(DogReadabilityFeedback.Pose.Proud, cocoaFeedback.CurrentPose);
 
             game.Restart();
             game.ForceGameOver();
             Assert.IsTrue(game.IsGameOver);
+            yield return null;
+            Assert.AreEqual(DogReadabilityFeedback.Pose.Sad, cheddarFeedback.CurrentPose);
+            Assert.AreEqual(DogReadabilityFeedback.Pose.Sad, cocoaFeedback.CurrentPose);
             game.Restart();
             Assert.AreEqual(GameManager.State.Playing, game.Phase);
             Assert.AreEqual(0, game.Score);
