@@ -4,3 +4,6 @@ dist/
 .DS_Store
 .vite/
 coverage/
+
+# Transient Unity PlayMode test output (committed snapshot lives in unity/test-results/)
+unity/playmode-results.xml

@@ -13,6 +13,10 @@ beside the original web/Canvas build (repo root: `src/`, `prototype/`), which re
 > ▶️ **First playable:** open `Assets/Scenes/ControllerTestScene.unity` and press Play to drive two
 > dogs with two controllers. Full instructions: **`../../docs/UNITY-FIRST-PLAYABLE.md`**.
 
+> 🎮 **Playable loop:** open `Assets/Scenes/ArenaScene.unity` for the 60-second treat-grab co-op
+> round (shared score, timer, restart, keyboard *or* controller). How to play:
+> **`../../docs/ARENA-PLAYABLE.md`**.
+
 > 📦 **Packages are trimmed to the first-playable minimum** (Input System + 2D physics + IMGUI).
 > URP, Cinemachine, and the 2D animation/tilemap packages from the pivot plan are **not** added
 > yet — they get added in the phase that needs them, to avoid version-resolution failures before
