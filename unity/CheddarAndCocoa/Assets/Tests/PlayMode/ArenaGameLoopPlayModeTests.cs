@@ -61,6 +61,21 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(treatCountBefore, Object.FindObjectsByType<Treat>(FindObjectsSortMode.None).Length,
                 "A collected treat should be replaced so the count stays constant.");
 
+            // Bark now has a small co-op purpose: both dogs must be close and bark within the
+            // united-front window to earn a teamwork point. Barking far apart should not score.
+            cocoa.transform.position = cheddar.transform.position + Vector3.right * 6f;
+            int scoreAfterTreat = game.Score;
+            cheddar.Bark();
+            cocoa.Bark();
+            Assert.AreEqual(scoreAfterTreat, game.Score, "Barking far apart should stay cosmetic only.");
+            Assert.AreEqual(0, game.UnitedBarks, "Far-apart barks should not count as a united bark.");
+
+            cocoa.transform.position = cheddar.transform.position + Vector3.right * 1f;
+            cheddar.Bark();
+            cocoa.Bark();
+            Assert.AreEqual(scoreAfterTreat + 1, game.Score, "Close synchronized barks should score once.");
+            Assert.AreEqual(1, game.UnitedBarks, "Close synchronized barks should count as a united bark.");
+
             // 4) Countdown can reach game over. Shorten the round and let it tick down.
             game.SetRoundDuration(0.3f);
             float guard = 0f;
