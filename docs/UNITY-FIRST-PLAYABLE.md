@@ -76,16 +76,20 @@ Only what this milestone needs (pinned in `unity/CheddarAndCocoa/Packages/manife
   (opposite directions per pad) and that bark fires `OnBark` — i.e. it proves the three runtime
   criteria with **no hardware and no manual Play**. The test assembly also compiles clean (verified
   with Roslyn against NUnit + the Input System TestFramework).
-- **To get the green runtime proof:** the editor must be *licensed*. This machine has a Unity
-  **Personal** seat whose **offline period has lapsed** (`LicenseGroupOfflineValidityPeriodIsExpired`,
-  `Token not found in cache`), so the headless run aborts at the license gate. Open **Unity Hub and
-  sign in once** to refresh the license, then run:
+- **To get the green runtime proof** the editor must be *licensed*, and on this machine that needs
+  a one-time setup (all owner-side — needs your Unity account):
+  1. **Reinstall Unity Hub** — the app isn't currently installed; the installer is already at
+     `~/Downloads/UnityHubSetup-arm64.dmg`. (The editor `6000.0.65f1` is still installed.)
+  2. **Sign in** in the Hub with your Unity ID — this refreshes the **Personal** license, which is
+     currently offline-expired (`LicenseGroupOfflineValidityPeriodIsExpired`, `Token not found in
+     cache`), so the headless editor exits 198 at the license gate until then.
+  3. Then run the automated proof (no controllers, no manual Play needed):
 
-  ```sh
-  ./unity/run-playmode-tests.sh      # headless PlayMode test → playmode-results.xml
-  ```
+     ```sh
+     ./unity/run-playmode-tests.sh      # headless PlayMode test → playmode-results.xml
+     ```
 
-  Or just open `ControllerTestScene` in the signed-in editor and press **Play** with two pads.
+     Or open `ControllerTestScene` in the signed-in editor and press **Play** with two pads.
 
 ## What works
 
