@@ -39,8 +39,9 @@ namespace CheddarAndCocoa.Game
             int secs = Mathf.CeilToInt(Mathf.Max(0f, _game.TimeRemaining));
             GUI.Label(new Rect(0, 8, Screen.width, 30), $"SCORE  {_game.Score}", _hud);
             GUI.Label(new Rect(0, 34, Screen.width, 26), $"⏱  {secs}s", _mid);
-            GUI.Label(new Rect(0, 58, Screen.width, 24), $"Mission: {_game.Phase} | {_game.BreakfastRecovered}/{_game.BreakfastGoal} Breakfast/Weenies | Stolen {_game.StolenFood}/{_game.MaxStolenFood}", _mid);
-            GUI.Label(new Rect(0, 82, Screen.width, 24), $"United barks: {_game.UnitedBarks} | Tug {Mathf.RoundToInt(_game.TugProgress * 100f)}% | Modifier: {_game.ActiveModifierLabel}", _mid);
+            string squirrelState = _game.MaxStolenFood > 0 ? $"Stolen {_game.StolenFood}/{_game.MaxStolenFood}" : "No squirrel pressure";
+            GUI.Label(new Rect(0, 58, Screen.width, 24), $"Mission: {_game.ActiveMissionName} / {_game.Phase} | {_game.BreakfastRecovered}/{_game.BreakfastGoal} {_game.MissionItemPlural} | {squirrelState}", _mid);
+            GUI.Label(new Rect(0, 82, Screen.width, 24), $"1 Backyard  2 Snack  3 Sock | United barks: {_game.UnitedBarks} | Tug {Mathf.RoundToInt(_game.TugProgress * 100f)}% | Modifier: {_game.ActiveModifierLabel}", _mid);
             GUI.Label(new Rect(0, 106, Screen.width, 24), _game.LastScoreEventLabel, _mid);
             if (_game.ScorePopVisible)
                 GUI.Label(new Rect(0, 128, Screen.width, 30), _game.LastScorePopLabel, _big);

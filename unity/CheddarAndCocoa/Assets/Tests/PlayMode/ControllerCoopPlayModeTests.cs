@@ -28,6 +28,10 @@ namespace CheddarAndCocoa.Tests
         [UnityTest]
         public IEnumerator TwoPads_DriveTwoDogs_Independently_AndBarkFires()
         {
+            foreach (var go in Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None))
+                Object.Destroy(go);
+            yield return null;
+
             // Two virtual controllers — the Input System reports them in Gamepad.all[0]/[1],
             // which is exactly what GamepadPlayerInput.ResolvePad() reads for P1/P2.
             var pad0 = InputSystem.AddDevice<Gamepad>();
@@ -62,7 +66,13 @@ namespace CheddarAndCocoa.Tests
             InputSystem.QueueStateEvent(pad1, new GamepadState { leftStick = new Vector2(1f, 0f) });
             InputSystem.Update();
             yield return null; // let GamepadPlayerInput.Update sample the sticks and set velocity
-            for (int i = 0; i < 40; i++) yield return new WaitForFixedUpdate();
+            for (int i = 0; i < 40; i++)
+            {
+                InputSystem.QueueStateEvent(pad0, new GamepadState { leftStick = new Vector2(-1f, 0f) });
+                InputSystem.QueueStateEvent(pad1, new GamepadState { leftStick = new Vector2(1f, 0f) });
+                yield return null;
+                yield return new WaitForFixedUpdate();
+            }
 
             Vector2 cheddarEnd = cheddar.transform.position;
             Vector2 cocoaEnd = cocoa.transform.position;

@@ -314,6 +314,163 @@ namespace CheddarAndCocoa.Tests
             Assert.That(game.ObjectiveLabel, Does.Contain("Save weenies"));
         }
 
+        [UnityTest]
+        public IEnumerator SnackHeist_Initializes_Scores_Clears_Fails_AndReplays()
+        {
+            yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
+            yield return null;
+            yield return null;
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            var cheddar = FindDog(DogId.Cheddar);
+            Assert.IsNotNull(game);
+            Assert.IsNotNull(cheddar);
+
+            game.StartMission(GameManager.MissionVariant.SnackHeist);
+            yield return null;
+
+            Assert.AreEqual(GameManager.MissionVariant.SnackHeist, game.ActiveMissionVariant);
+            Assert.AreEqual("Snack Heist", game.ActiveMissionName);
+            Assert.That(game.MissionIntroPrompt, Does.Contain("forbidden snack stash"));
+            Assert.That(game.ObjectiveLabel, Does.Contain("Stash snacks"));
+            Assert.IsTrue(game.SquirrelObject.activeSelf);
+            Assert.IsFalse(game.PredatorObject.activeSelf);
+            Assert.IsFalse(game.RopeObject.activeSelf);
+
+            var firstSnack = FirstTreat();
+            Assert.IsNotNull(firstSnack.transform.Find("SnackCrumbA"));
+            firstSnack.CollectBy(cheddar);
+            Assert.AreEqual(60, game.LastScoreDelta);
+            Assert.AreEqual("+60 SNACK STASHED", game.LastScoreEventLabel);
+            Assert.That(game.ObjectiveLabel, Does.Contain("Stash snacks 1/4"));
+
+            while (game.BreakfastRecovered < game.BreakfastGoal)
+            {
+                FirstTreat().CollectBy(cheddar);
+                yield return null;
+            }
+
+            Assert.AreEqual(GameManager.MissionOutcome.Clear, game.Outcome);
+            Assert.IsTrue(game.ReplayPromptVisible);
+            Assert.That(game.ReplayPromptLabel, Does.Contain("Snack Heist"));
+            Assert.That(game.MissionBanner, Does.Contain("SNACK STASH SAVED"));
+            Assert.That(game.LastScoreEventLabel, Does.Contain("SNACK HEIST CLEAR"));
+
+            game.StartMission(GameManager.MissionVariant.SnackHeist);
+            yield return null;
+            int stolenBefore = game.StolenFood;
+            ForceOneSquirrelSteal(game);
+            yield return WaitForStolenFood(game, stolenBefore + 1);
+            Assert.That(game.LastScoreEventLabel, Does.Contain("SNACK THIEF"));
+            Assert.That(game.ObjectiveLabel, Does.Contain("Stash snacks"));
+
+            ForceOneSquirrelSteal(game);
+            yield return WaitForOutcome(game, GameManager.MissionOutcome.Failed);
+            Assert.AreEqual(GameManager.MissionOutcome.Failed, game.Outcome);
+            Assert.IsTrue(game.ReplayPromptVisible);
+            Assert.That(game.EndReasonLabel, Does.Contain("forbidden snacks"));
+            Assert.That(game.ReplayPromptLabel, Does.Contain("Snack Heist"));
+        }
+
+        [UnityTest]
+        public IEnumerator SockPanic_Initializes_Scores_Clears_Fails_AndReplays()
+        {
+            yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
+            yield return null;
+            yield return null;
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            var cocoa = FindDog(DogId.Cocoa);
+            Assert.IsNotNull(game);
+            Assert.IsNotNull(cocoa);
+
+            game.StartMission(GameManager.MissionVariant.SockPanic);
+            yield return null;
+
+            Assert.AreEqual(GameManager.MissionVariant.SockPanic, game.ActiveMissionVariant);
+            Assert.AreEqual("Sock Panic", game.ActiveMissionName);
+            Assert.That(game.MissionIntroPrompt, Does.Contain("scattered socks"));
+            Assert.That(game.ObjectiveLabel, Does.Contain("Return socks"));
+            Assert.IsFalse(game.SquirrelObject.activeSelf);
+            Assert.IsFalse(game.PredatorObject.activeSelf);
+            Assert.IsFalse(game.RopeObject.activeSelf);
+
+            var firstSock = FirstTreat();
+            Assert.IsNotNull(firstSock.transform.Find("SockStripeA"));
+            firstSock.CollectBy(cocoa);
+            Assert.AreEqual(40, game.LastScoreDelta);
+            Assert.AreEqual("+40 SOCK RESCUED", game.LastScoreEventLabel);
+            Assert.That(game.ObjectiveLabel, Does.Contain("Return socks 1/5"));
+
+            while (game.BreakfastRecovered < game.BreakfastGoal)
+            {
+                FirstTreat().CollectBy(cocoa);
+                yield return null;
+            }
+
+            Assert.AreEqual(GameManager.MissionOutcome.Clear, game.Outcome);
+            Assert.IsTrue(game.ReplayPromptVisible);
+            Assert.That(game.ReplayPromptLabel, Does.Contain("Sock Panic"));
+            Assert.That(game.MissionBanner, Does.Contain("SOCKS SORTED"));
+            Assert.That(game.LastScoreEventLabel, Does.Contain("SOCK PANIC CLEAR"));
+
+            game.StartMission(GameManager.MissionVariant.SockPanic);
+            game.SetRoundDuration(0.02f);
+            yield return WaitForOutcome(game, GameManager.MissionOutcome.Failed);
+            Assert.AreEqual(GameManager.MissionOutcome.Failed, game.Outcome);
+            Assert.IsTrue(game.ReplayPromptVisible);
+            Assert.That(game.EndReasonLabel, Does.Contain("Laundry order returned"));
+            Assert.That(game.ObjectiveLabel, Does.Contain("Sock Panic"));
+        }
+
+        private static DogController FindDog(DogId dogId)
+        {
+            foreach (var id in Object.FindObjectsByType<DogIdentity>(FindObjectsSortMode.None))
+            {
+                if (id.Id == dogId) return id.GetComponent<DogController>();
+            }
+
+            return null;
+        }
+
+        private static Treat FirstTreat()
+        {
+            var treats = Object.FindObjectsByType<Treat>(FindObjectsSortMode.None);
+            Assert.Greater(treats.Length, 0);
+            return treats[0];
+        }
+
+        private static void ForceOneSquirrelSteal(GameManager game)
+        {
+            var target = FirstTreat();
+            game.SquirrelObject.transform.position = target.transform.position;
+            game.ForceSquirrelStealAttempt();
+        }
+
+        private static IEnumerator WaitForStolenFood(GameManager game, int target)
+        {
+            float guard = 0f;
+            while (game.StolenFood < target && guard < 2f)
+            {
+                guard += Time.deltaTime;
+                yield return null;
+            }
+
+            Assert.GreaterOrEqual(game.StolenFood, target);
+        }
+
+        private static IEnumerator WaitForOutcome(GameManager game, GameManager.MissionOutcome outcome)
+        {
+            float guard = 0f;
+            while (game.Outcome != outcome && guard < 2f)
+            {
+                guard += Time.deltaTime;
+                yield return null;
+            }
+
+            Assert.AreEqual(outcome, game.Outcome);
+        }
+
         private static bool FindWorldPopContaining(string text)
         {
             foreach (var pop in Object.FindObjectsByType<MissionWorldPop>(FindObjectsSortMode.None))

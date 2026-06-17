@@ -32,6 +32,7 @@ namespace CheddarAndCocoa.Objectives
 
         public ObjectiveKind Kind => kind;
         public string Label => label;
+        public float SurviveSeconds => surviveSeconds;
         public ObjectiveStatus Status { get; private set; } = ObjectiveStatus.Active;
         public int Progress { get; private set; }
 

@@ -1,18 +1,60 @@
-# Arena Playable — Backyard Mission: Breakfast Rescue
+# Arena Playable — Mission Variety Spike
 
-`unity/CheddarAndCocoa/Assets/Scenes/ArenaScene.unity` is now a small co-op vertical slice instead of a flat treat loop. The scene still builds itself from `ArenaBootstrap`, but the round objective is a backyard rescue mission: Cheddar and Cocoa must recover breakfast/weenies, stop a squirrel from stealing too much food, complete a shared rope tug, and stand together against one predator scare before time runs out.
+`unity/CheddarAndCocoa/Assets/Scenes/ArenaScene.unity` is now a small co-op vertical slice instead of a flat treat loop. The scene still builds itself from `ArenaBootstrap`, but the arena can run multiple small mission variants through one lightweight mission definition path. The default round remains the backyard rescue mission: Cheddar and Cocoa must recover breakfast/weenies, stop a squirrel from stealing too much food, complete a shared rope tug, and stand together against one predator scare before time runs out.
 
 For current global character art direction, read `docs/ART-DIRECTION.md`. Backyard Mission is the
 playable proof of that direction, not the only place the direction applies.
 
-## Objective
+## Mission variants
 
-Clear the mission by completing all required objectives before the timer expires:
+Mission selection is intentionally simple for the spike:
+
+- Press **1** for **Backyard Rescue**.
+- Press **2** for **Snack Heist**.
+- Press **3** for **Sock Panic**.
+- PlayMode tests can also call `GameManager.StartMission(GameManager.MissionVariant...)`.
+
+### Backyard Rescue
+
+This is the existing mission loop and remains the default when `ArenaScene` starts. Clear the mission by completing all required objectives before the timer expires:
 
 1. Recover enough **Breakfast/Weenies** (`6` items in the current prototype).
 2. Keep the **Squirrel** from stealing too many items (`3` stolen food ends the run).
 3. Resolve the **Predator Warning / Predator Attack** with a united-front bark or a rescue.
 4. Complete the **Rope/Tug** shared-object objective.
+
+Unique scoring/events include **+50 WEENIE SAVED**, **+25 SQUIRREL SCARED**, **+300 PREDATOR YEETED**, **+250 PARTNER RESCUE**, **+200 TUG COMPLETE**, and **+500 LEVEL CLEAR** plus time bonus.
+
+### Snack Heist
+
+Snack Heist is a compact protect-and-collect mission using the existing item and squirrel systems without predator or tug requirements. Cheddar and Cocoa must stash `4` forbidden snacks before the squirrel steals `2`.
+
+Readable differences:
+
+- Collectibles are round orange snack placeholders with plate/crumb markers and **Snack!** labels.
+- Objective text starts as **Stash snacks 0/4**.
+- Squirrel pressure uses snack-specific labels like **SQUIRREL SNACK HEIST - BARK!** and **SQUIRREL STOLE A SNACK!**.
+- Unique scoring/events include **+60 SNACK STASHED**, **+35 SNACK GUARD BARK**, **-90 SNACK THIEF**, and **SNACK HEIST CLEAR**.
+- Clear banner: **SNACK STASH SAVED!**.
+- Fail reason calls out the squirrel union escaping with forbidden snacks.
+
+Manual check: press **2**, collect one snack, confirm **+60 SNACK STASHED** and **Stash snacks 1/4**. Let or force the squirrel to steal twice and confirm GameOver/replay uses Snack Heist copy.
+
+### Sock Panic
+
+Sock Panic is a time-boxed collect mission using the same arena, dogs, score/replay loop, and generated prop path, but with squirrel, predator, and rope actors disabled. Cheddar and Cocoa must retrieve `5` scattered socks before time expires.
+
+Readable differences:
+
+- Collectibles are blue sock placeholders with cuff/toe/stripe markers and **Sock!** labels.
+- Objective text starts as **Return socks 0/5**.
+- Unique scoring/events include **+40 SOCK RESCUED** and **SOCK PANIC CLEAR**.
+- Clear banner: **SOCKS SORTED!**.
+- Time failure reason: **Laundry order returned before the final sock was rescued.**
+
+Manual check: press **3**, collect one sock, confirm **+40 SOCK RESCUED** and **Return socks 1/5**. Let the timer expire and confirm Sock Panic replay/fail copy.
+
+## Objective
 
 The round can end in **LevelClear** or **GameOver**, and either result can be restarted. Current pacing is hand-tuned for a first two-player playtest: a 75-second timer, a 5-second mission intro banner, delayed first squirrel pressure, an ~18-second predator telegraph, and slower tug charge so both players have to stay committed for a moment.
 
@@ -28,6 +70,8 @@ The replay loop is intentionally simple: players see current score, the latest s
 | P2 | Cocoa | Gamepad slot 1 | Arrow keys | Enter / Right Shift / X button | Y button |
 
 After LevelClear or GameOver, replay with **R**, **Enter**, gamepad **Start**, gamepad **South button**, or the on-screen **Replay** button.
+
+During a run, keyboard **1 / 2 / 3** restarts the arena into Backyard Rescue, Snack Heist, or Sock Panic for quick manual comparison. This is a spike/debug selection path, not a campaign menu.
 
 Cheddar is the chaos puppy and Cocoa is the steadier veteran. The placeholder sprites are still simple generated shapes, but the dogs now have a reusable global identity direction proven in the arena: both read as long, low miniature dachshunds with visible head, long snout, floppy ear, tiny feet, tail, collar, and expression markers. Cheddar reads as **CHEDDAR CHAOS PUP** with a golden body, red collar, bright chaos tuft/flash, faster wag, and more explosive bark/proud motion. Cocoa reads as **COCOA SPOT QUEEN** with a chocolate body, teal collar, cream chest, spot markings, steadier expression, and tiny queen marker. Idle, run, bark, tug, stunned, rescued, proud, and sad states are exposed through body squash/rotation, tail/head/ear motion, color-shifted labels, and deterministic PlayMode assertions.
 
@@ -140,6 +184,8 @@ Each restart deterministically selects one seeded modifier for tests/HUD:
 ## Known limitations
 
 - All mission actors use placeholder sprites/text labels generated at runtime; there are no external art assets yet.
+- Mission selection is keyboard/code/test driven only; there is no authored menu or campaign flow.
+- Snack Heist and Sock Panic are architecture proofs inside the existing arena, not finished level designs. They reuse the same camera, spawn bounds, scoring HUD, restart flow, and generated placeholder prop system.
 - Dog identity art, pose labels, collars, expression markers, prop silhouettes, and objective arrows are generated placeholders. They are intentionally readable and easy to delete once authored sprites/animation exist.
 - The squirrel and predator use intentionally simple movement/state rules so the PlayMode tests remain deterministic.
 - The intro, bark, squirrel, predator, tug, clear, fail, score-pop, and objective feedback are still text/scale/audio-placeholder driven; they are designed to be replaced by authored animation/SFX later.
@@ -153,3 +199,5 @@ Each restart deterministically selects one seeded modifier for tests/HUD:
 ## Test coverage
 
 `unity/Assets/Tests/PlayMode/ArenaGameLoopPlayModeTests.cs` loads ArenaScene and verifies dogs, mission state, intro prompt/banner, deterministic objective labels, delayed first squirrel steal window, initial score state, item recovery scoring, HUD score-pop state, world score/miss/success pops, squirrel steal/scare labels and score events, solo/united bark feedback and scoring, bark burst state, predator defense scoring, failed predator hit and rescue scoring, tug waiting/together feedback and scoring, LevelClear score/rank/summary/reason, GameOver score/rank/summary/reason, replay prompt visibility, restart reset state, exposed modifier state, dog identity labels, dog pose labels, movement intent labels/arrows, objective-arrow labels, and the generated arena audio listener.
+
+The same test file also verifies **Snack Heist** and **Sock Panic** can initialize, update objective labels, score unique mission events, reach clear/fail outcomes, and expose replay state. `ControllerCoopPlayModeTests` still verifies the baseline two-pad movement/bark proof and now clears scene objects before constructing its own bootstrap so it does not accidentally inspect leftover ArenaScene dogs from previous tests.
