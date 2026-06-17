@@ -24,22 +24,27 @@ namespace CheddarAndCocoa.Game
             if (_game.MissionSelectVisible)
             {
                 DrawMissionSelect();
-                return;
             }
-
-            if (_game.SessionSummaryVisible)
+            else if (_game.SessionSummaryVisible)
             {
                 DrawSessionSummary();
-                return;
+            }
+            else
+            {
+                DrawGameplayHud();
             }
 
-            // Score + timer, top-center.
+            if (_game.PlaytestOverlayVisible) DrawPlaytestOverlay();
+        }
+
+        private void DrawGameplayHud()
+        {
             int secs = Mathf.CeilToInt(Mathf.Max(0f, _game.TimeRemaining));
             GUI.Label(new Rect(0, 8, Screen.width, 30), $"SCORE  {_game.Score}", _hud);
-            GUI.Label(new Rect(0, 34, Screen.width, 26), $"⏱  {secs}s", _mid);
+            GUI.Label(new Rect(0, 34, Screen.width, 26), $"Timer  {secs}s", _mid);
             string squirrelState = _game.MaxStolenFood > 0 ? $"Stolen {_game.StolenFood}/{_game.MaxStolenFood}" : "No squirrel pressure";
             GUI.Label(new Rect(0, 58, Screen.width, 24), $"MISSION: {_game.ActiveMissionName} / {_game.Phase} | {_game.BreakfastRecovered}/{_game.BreakfastGoal} {_game.MissionItemPlural} | {squirrelState}", _mid);
-            GUI.Label(new Rect(0, 82, Screen.width, 24), "Move: WASD / Arrows / Sticks | Bark: Space / Enter / X | Tug/Rescue: Y / Right Shift | End: R Replay, N Next, M Missions", _small);
+            GUI.Label(new Rect(0, 82, Screen.width, 24), "Move: WASD / Arrows / Sticks | Bark: Space / Enter / X | Tug/Rescue: Y / Right Shift | F1/` Playtest Overlay", _small);
             GUI.Label(new Rect(0, 106, Screen.width, 24), $"1 Backyard  2 Snack  3 Sock | United barks: {_game.UnitedBarks} | Tug {Mathf.RoundToInt(_game.TugProgress * 100f)}% | Modifier: {_game.ActiveModifierLabel}", _mid);
             GUI.Label(new Rect(0, 130, Screen.width, 24), _game.LastScoreEventLabel, _mid);
             if (_game.ScorePopVisible)
@@ -49,26 +54,45 @@ namespace CheddarAndCocoa.Game
             if (!string.IsNullOrEmpty(_game.MissionBanner) && !_game.IsGameOver && !_game.IsLevelClear)
                 GUI.Label(new Rect(0, 236, Screen.width, 34), _game.MissionBanner, _big);
 
-            if (_game.IsGameOver || _game.IsLevelClear)
-            {
-                float w = 640, h = 268;
-                var box = new Rect((Screen.width - w) * 0.5f, (Screen.height - h) * 0.5f, w, h);
-                GUI.Box(box, GUIContent.none);
-                GUI.Label(new Rect(box.x, box.y + 14, w, 40), _game.MissionBanner, _big);
-                GUI.Label(new Rect(box.x, box.y + 58, w, 30), _game.EndSummaryLabel, _mid);
-                GUI.Label(new Rect(box.x, box.y + 84, w, 30), _game.EndReasonLabel, _mid);
-                GUI.Label(new Rect(box.x, box.y + 114, w, 28), $"Last swing: {_game.LastScoreEventLabel}   Stars: {_game.StarRating}/3", _mid);
-                GUI.Label(new Rect(box.x, box.y + 142, w, 24), _game.SessionSummaryLabel, _small);
-                GUI.Label(new Rect(box.x, box.y + 166, w, 26), "R/Enter Replay | N/Right Shoulder Next | M/Esc Mission Select", _mid);
+            if (_game.IsGameOver || _game.IsLevelClear) DrawEndCard();
+        }
 
-                float y = box.y + h - 42;
-                if (GUI.Button(new Rect(box.x + 70, y, 150, 30), _game.EndReplayActionLabel))
-                    _game.Restart();
-                if (GUI.Button(new Rect(box.x + 245, y, 150, 30), _game.EndNextActionLabel))
-                    _game.ChooseNextMission();
-                if (GUI.Button(new Rect(box.x + 420, y, 150, 30), _game.EndMissionSelectActionLabel))
-                    _game.ReturnToMissionSelect();
-            }
+        private void DrawEndCard()
+        {
+            float w = 640, h = 268;
+            var box = new Rect((Screen.width - w) * 0.5f, (Screen.height - h) * 0.5f, w, h);
+            GUI.Box(box, GUIContent.none);
+            GUI.Label(new Rect(box.x, box.y + 14, w, 40), _game.MissionBanner, _big);
+            GUI.Label(new Rect(box.x, box.y + 58, w, 30), _game.EndSummaryLabel, _mid);
+            GUI.Label(new Rect(box.x, box.y + 84, w, 30), _game.EndReasonLabel, _mid);
+            GUI.Label(new Rect(box.x, box.y + 114, w, 28), $"Last swing: {_game.LastScoreEventLabel}   Stars: {_game.StarRating}/3", _mid);
+            GUI.Label(new Rect(box.x, box.y + 142, w, 24), _game.SessionSummaryLabel, _small);
+            GUI.Label(new Rect(box.x, box.y + 166, w, 26), "R/Enter Replay | N/Right Shoulder Next | M/Esc Mission Select", _mid);
+
+            float y = box.y + h - 42;
+            if (GUI.Button(new Rect(box.x + 70, y, 150, 30), _game.EndReplayActionLabel))
+                _game.Restart();
+            if (GUI.Button(new Rect(box.x + 245, y, 150, 30), _game.EndNextActionLabel))
+                _game.ChooseNextMission();
+            if (GUI.Button(new Rect(box.x + 420, y, 150, 30), _game.EndMissionSelectActionLabel))
+                _game.ReturnToMissionSelect();
+        }
+
+        private void DrawPlaytestOverlay()
+        {
+            float w = 390f;
+            float h = 190f;
+            var box = new Rect(Screen.width - w - 12f, 12f, w, h);
+            GUI.Box(box, GUIContent.none);
+
+            int secs = Mathf.CeilToInt(Mathf.Max(0f, _game.TimeRemaining));
+            GUI.Label(new Rect(box.x + 12f, box.y + 8f, w - 24f, 22f), "PLAYTEST DEBUG", _small);
+            GUI.Label(new Rect(box.x + 12f, box.y + 32f, w - 24f, 20f), $"Mission: {_game.ActiveMissionVariant} / {_game.CurrentFlow} / {_game.Phase}", _small);
+            GUI.Label(new Rect(box.x + 12f, box.y + 54f, w - 24f, 20f), $"Timer: {secs}s   Score: {_game.Score}   Last: {_game.LastScoreEventLabel}", _small);
+            GUI.Label(new Rect(box.x + 12f, box.y + 76f, w - 24f, 34f), $"Objective: {_game.ObjectiveLabel}", _small);
+            GUI.Label(new Rect(box.x + 12f, box.y + 112f, w - 24f, 20f), $"Outcome: {_game.Outcome}   Rank: {_game.EndRank}", _small);
+            GUI.Label(new Rect(box.x + 12f, box.y + 134f, w - 24f, 20f), $"Session: {_game.SessionMissionsPlayed} played / {_game.SessionTotalScore} score / {_game.SessionStarsEarned} stars", _small);
+            GUI.Label(new Rect(box.x + 12f, box.y + 156f, w - 24f, 30f), $"Event: {_game.LastPlaytestEvent}", _small);
         }
 
         private void DrawMissionSelect()

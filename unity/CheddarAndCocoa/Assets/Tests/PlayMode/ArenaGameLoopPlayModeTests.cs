@@ -10,6 +10,27 @@ namespace CheddarAndCocoa.Tests
 {
     public sealed class ArenaGameLoopPlayModeTests
     {
+        [Test]
+        public void ArenaTuningDefaults_AreCentralized_AndKeepMissionBalanceInRange()
+        {
+            var tuning = ArenaMissionTuning.CreateDefault();
+            Assert.AreEqual(9f, tuning.FirstSquirrelBaseDelay);
+            Assert.AreEqual(7f, tuning.FirstSquirrelTroubleDelay);
+            Assert.AreEqual(3.4f, tuning.SquirrelBaseDelay);
+            Assert.AreEqual(2.2f, tuning.SquirrelTroubleDelay);
+            Assert.AreEqual(1.9f, tuning.SquirrelMoveSpeed);
+            Assert.AreEqual(25f, tuning.PredatorWarningAt);
+            Assert.AreEqual(5f, tuning.PredatorWarningSeconds);
+            Assert.AreEqual(0.5f, tuning.TugChargePerSecond);
+            Assert.AreEqual(2f, tuning.RescueBarkRange);
+            Assert.AreEqual(100, tuning.UnitedBarkScore);
+            Assert.AreEqual(500, tuning.ClearScore);
+
+            AssertMissionBalance(GameManager.MissionVariant.BackyardRescue, tuning, expectSquirrel: true, expectPredator: true, expectTug: true);
+            AssertMissionBalance(GameManager.MissionVariant.SnackHeist, tuning, expectSquirrel: true, expectPredator: false, expectTug: false);
+            AssertMissionBalance(GameManager.MissionVariant.SockPanic, tuning, expectSquirrel: false, expectPredator: false, expectTug: false);
+        }
+
         [UnityTest]
         public IEnumerator BackyardMission_Objectives_Hazards_Tug_Clear_AndRestart()
         {
@@ -57,6 +78,9 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(0, game.LastScoreDelta);
             Assert.AreEqual(GameManager.MissionOutcome.InProgress, game.Outcome);
             Assert.That(game.LastScoreEventLabel, Does.Contain("READY"));
+            Assert.GreaterOrEqual(game.PlaytestLog.Count, 2);
+            Assert.IsTrue(LogContains(game, "MissionStarted: Backyard Rescue"));
+            Assert.IsTrue(LogContains(game, "ObjectiveChanged: Save weenies"));
             Assert.IsFalse(game.ReplayPromptVisible);
             Assert.IsEmpty(game.EndSummaryLabel);
             Assert.IsNotNull(game.SquirrelObject.GetComponent<MissionActorFeedback>());
@@ -98,6 +122,7 @@ namespace CheddarAndCocoa.Tests
 
             cheddar.Bark();
             yield return null;
+            Assert.IsTrue(LogContains(game, "Bark: Cheddar"));
             Assert.AreEqual(DogReadabilityFeedback.Pose.Bark, cheddarFeedback.CurrentPose);
             Assert.That(cheddarFeedback.IdentityLabel, Does.Contain("WOOF!"));
             Assert.AreEqual(GameManager.FeedbackKind.SoloBark, game.LastFeedback);
@@ -128,6 +153,7 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(scoreBefore + 50, game.Score);
             Assert.AreEqual(50, game.LastScoreDelta);
             Assert.AreEqual("+50 WEENIE SAVED", game.LastScoreEventLabel);
+            Assert.IsTrue(LogContains(game, "ScoreDelta: +50 WEENIE SAVED"));
             Assert.AreEqual("+50 WEENIE SAVED", game.LastScorePopLabel);
             Assert.IsTrue(game.ScorePopVisible);
             Assert.IsTrue(FindWorldPopContaining("+50"));
@@ -232,6 +258,7 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(250, game.LastScoreDelta);
             Assert.AreEqual("+250 PARTNER RESCUE", game.LastScoreEventLabel);
             Assert.AreEqual(GameManager.FeedbackKind.PartnerRescue, game.LastFeedback);
+            Assert.IsTrue(LogContains(game, "Rescue:"));
             Assert.AreEqual(GameManager.JuiceFeedbackKind.SuccessPop, game.LastJuiceFeedback);
             Assert.That(game.LastJuiceLabel, Does.Contain("RESCUE POP"));
             Assert.IsTrue(cheddarFeedback.CurrentPose == DogReadabilityFeedback.Pose.Rescued ||
@@ -264,6 +291,7 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(game.TugComplete);
             Assert.AreEqual(200, game.LastScoreDelta);
             Assert.AreEqual("+200 TUG COMPLETE", game.LastScoreEventLabel);
+            Assert.IsTrue(LogContains(game, "TugComplete: Rope objective complete"));
             Assert.AreEqual(GameManager.FeedbackKind.TugTogether, game.LastFeedback);
             Assert.AreEqual(GameManager.JuiceFeedbackKind.SuccessPop, game.LastJuiceFeedback);
             Assert.That(game.LastJuiceLabel, Does.Contain("TUG POP"));
@@ -306,6 +334,7 @@ namespace CheddarAndCocoa.Tests
             Assert.That(game.ObjectiveLabel, Does.Contain("Backyard saved"));
             Assert.That(game.LastScoreEventLabel, Does.Contain("LEVEL CLEAR"));
             Assert.AreEqual(GameManager.FeedbackKind.LevelClear, game.LastFeedback);
+            Assert.IsTrue(LogContains(game, "MissionClear: Clear"));
             Assert.That(game.MissionBanner, Does.Contain("BACKYARD SAVED"));
             yield return null;
             Assert.AreEqual(DogReadabilityFeedback.Pose.Proud, cheddarFeedback.CurrentPose);
@@ -327,6 +356,7 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(game.EndMissionSelectAvailable);
             Assert.That(game.ReplayPromptLabel, Does.Contain("replay"));
             Assert.AreEqual(GameManager.FeedbackKind.GameOver, game.LastFeedback);
+            Assert.IsTrue(LogContains(game, "MissionFail: Failed"));
             Assert.That(game.MissionBanner, Does.Contain("MISSION FAILED"));
             yield return null;
             Assert.AreEqual(DogReadabilityFeedback.Pose.Sad, cheddarFeedback.CurrentPose);
@@ -341,6 +371,45 @@ namespace CheddarAndCocoa.Tests
             Assert.IsEmpty(game.EndReasonLabel);
             Assert.That(game.ObjectiveLabel, Does.Contain("Save weenies"));
         }
+
+        [UnityTest]
+        public IEnumerator PlaytestOverlay_Toggles_AndEventLogCapturesFlowEvents()
+        {
+            yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
+            yield return null;
+            yield return null;
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            Assert.IsNotNull(game);
+            Assert.IsFalse(game.PlaytestOverlayVisible);
+            Assert.IsTrue(LogContains(game, "MissionSelect: Backyard Rescue"));
+            Assert.That(game.LastPlaytestEvent, Does.Contain("ObjectiveChanged"));
+
+            game.SetPlaytestOverlayVisible(true);
+            Assert.IsTrue(game.PlaytestOverlayVisible);
+            Assert.That(game.LastPlaytestEvent, Does.Contain("Overlay: shown"));
+
+            game.StartMission(GameManager.MissionVariant.SnackHeist);
+            yield return null;
+            Assert.IsTrue(LogContains(game, "MissionStarted: Snack Heist"));
+            Assert.IsTrue(LogContains(game, "ObjectiveChanged: Stash snacks"));
+
+            FirstTreat().CollectBy(FindDog(DogId.Cheddar));
+            Assert.IsTrue(LogContains(game, "ScoreDelta: +60 SNACK STASHED"));
+
+            game.ForceGameOver();
+            Assert.IsTrue(LogContains(game, "MissionFail: Failed"));
+
+            game.ChooseNextMission();
+            yield return null;
+            Assert.IsTrue(LogContains(game, "Next: SockPanic"));
+            Assert.AreEqual(GameManager.MissionVariant.SockPanic, game.ActiveMissionVariant);
+
+            game.SetPlaytestOverlayVisible(false);
+            Assert.IsFalse(game.PlaytestOverlayVisible);
+            Assert.That(game.LastPlaytestEvent, Does.Contain("Overlay: hidden"));
+        }
+
 
         [UnityTest]
         public IEnumerator MissionFlow_Select_StartsEveryMission_AndEndActionsNavigate()
@@ -614,6 +683,46 @@ namespace CheddarAndCocoa.Tests
             foreach (var pop in Object.FindObjectsByType<MissionWorldPop>(FindObjectsSortMode.None))
             {
                 if (pop.Label.Contains(text)) return true;
+            }
+
+            return false;
+        }
+
+        private static void AssertMissionBalance(GameManager.MissionVariant variant, ArenaMissionTuning tuning, bool expectSquirrel, bool expectPredator, bool expectTug)
+        {
+            var mission = GameManager.BuildMissionDefinition(variant);
+            Assert.That(mission.RoundSeconds, Is.InRange(30f, 90f), $"{mission.Name} should fit the 30-90 second playtest target.");
+            Assert.AreEqual(expectSquirrel, mission.UsesSquirrel);
+            Assert.AreEqual(expectPredator, mission.RequiresPredator);
+            Assert.AreEqual(expectTug, mission.RequiresTug);
+            Assert.Greater(mission.ItemGoal, 0);
+            Assert.GreaterOrEqual(mission.SpawnedItemCount, mission.ItemGoal - 1);
+            Assert.Greater(mission.ItemScore, 0);
+            Assert.Greater(mission.PawfectScore, mission.HeroScore);
+            Assert.Greater(mission.HeroScore, mission.SurvivorScore);
+
+            int likelyClearScore = mission.ItemScore * mission.ItemGoal + tuning.ClearScore + Mathf.CeilToInt(mission.RoundSeconds) * tuning.TimeBonusMultiplier;
+            if (mission.RequiresPredator) likelyClearScore += tuning.PredatorDefendedScore;
+            if (mission.RequiresTug) likelyClearScore += tuning.TugScore;
+            Assert.GreaterOrEqual(likelyClearScore, mission.PawfectScore, $"{mission.Name} should have reachable top-rank scoring.");
+
+            if (mission.UsesSquirrel)
+            {
+                Assert.Greater(mission.MaxStolenFood, 1);
+                Assert.Greater(mission.SquirrelPenalty, 0);
+                Assert.Greater(mission.SquirrelScareScore, 0);
+            }
+            else
+            {
+                Assert.AreEqual(0, mission.MaxStolenFood);
+            }
+        }
+
+        private static bool LogContains(GameManager game, string text)
+        {
+            foreach (string entry in game.PlaytestEvents)
+            {
+                if (entry.Contains(text)) return true;
             }
 
             return false;

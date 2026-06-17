@@ -22,7 +22,7 @@ No progress is saved; the session loop is intentionally local and lightweight.
 
 ### Backyard Rescue
 
-This is the existing mission loop and remains the default when `ArenaScene` starts. Clear the mission by completing all required objectives before the timer expires:
+This is the existing mission loop and remains the default when `ArenaScene` starts. Clear the mission by completing all required objectives before the `90` second timer expires:
 
 1. Recover enough **Breakfast/Weenies** (`6` items in the current prototype).
 2. Keep the **Squirrel** from stealing too many items (`3` stolen food ends the run).
@@ -33,7 +33,7 @@ Unique scoring/events include **+50 WEENIE SAVED**, **+25 SQUIRREL SCARED**, **+
 
 ### Snack Heist
 
-Snack Heist is a compact protect-and-collect mission using the existing item and squirrel systems without predator or tug requirements. Cheddar and Cocoa must stash `4` forbidden snacks before the squirrel steals `2`.
+Snack Heist is a compact protect-and-collect mission using the existing item and squirrel systems without predator or tug requirements. Cheddar and Cocoa must stash `4` forbidden snacks before the squirrel steals `2` within `70` seconds.
 
 Readable differences:
 
@@ -48,7 +48,7 @@ Manual check: press **2**, collect one snack, confirm **+60 SNACK STASHED** and 
 
 ### Sock Panic
 
-Sock Panic is a time-boxed collect mission using the same arena, dogs, score/replay loop, and generated prop path, but with squirrel, predator, and rope actors disabled. Cheddar and Cocoa must retrieve `5` scattered socks before time expires.
+Sock Panic is a time-boxed collect mission using the same arena, dogs, score/replay loop, and generated prop path, but with squirrel, predator, and rope actors disabled. Cheddar and Cocoa must retrieve `5` scattered socks before the `55` second timer expires.
 
 Readable differences:
 
@@ -62,7 +62,7 @@ Manual check: press **3**, collect one sock, confirm **+40 SOCK RESCUED** and **
 
 ## Objective
 
-The round can end in **LevelClear** or **GameOver**, and either result can be restarted. Current pacing is hand-tuned for a first two-player playtest: a 75-second timer, a 5-second mission intro banner, delayed first squirrel pressure, an ~18-second predator telegraph, and slower tug charge so both players have to stay committed for a moment.
+The round can end in **LevelClear** or **GameOver**, and either result can be restarted. Current pacing is hand-tuned for a first two-player playtest: `90 / 70 / 55` second mission timers, a 5-second mission intro banner, delayed first squirrel pressure, an ~25-second predator telegraph in Backyard Rescue, and a short but readable tug charge so both players have to stay committed for a moment.
 
 The opening HUD banner says: **Cheddar + Cocoa must protect the weenies together.** For the first few seconds, the squirrel is labeled **Squirrel: WAITING**, the predator is **Predator: OFFSCREEN**, and the rope is **Rope/Tug - BOTH DOGS**. This is intentional: players should first read their spawn, dog identity, first weenie arrows, and shared fantasy before the first threat competes for attention.
 
@@ -81,6 +81,13 @@ Mission flow controls:
 - During a run: keyboard **1 / 2 / 3** still restarts the arena into Backyard Rescue, Snack Heist, or Sock Panic for quick manual comparison.
 - End screen: **R / Enter / Start / South** replays; **N / Right Arrow / Right Shoulder / D-pad Right** advances; **M / Escape / East / D-pad Left** returns to mission select.
 - Session Summary: **Enter**, **Space**, **Start**, **South**, **M**, or **Escape** returns to mission select.
+- Playtest overlay: **F1** or **`** toggles a compact debug overlay. It shows mission id, flow/phase, timer, score, objective, outcome/rank, session totals, and the latest playtest event. It is read-only and sits in the top-right corner so normal play remains usable.
+
+## Playtest/debug visibility
+
+`GameManager` owns a lightweight in-memory `PlaytestEventLog` for the current Unity Play session. The log is exposed through `PlaytestLog`, `PlaytestEvents`, and `LastPlaytestEvent`, so PlayMode tests or a temporary inspector can read it without scraping UI. Events are numbered and deterministic rather than timestamped. Captured event types include mission select/start, objective changes, bark, squirrel pressure/scare/steal, tug/rescue, score deltas, clear/fail, replay, next mission, overlay toggles, and session summary.
+
+Manual check: press **F1** during mission select and during play. Confirm the overlay appears in the top-right, does not hide the dogs or end buttons, and updates after collecting an item, barking, forcing a fail/clear, replaying, and choosing Next Mission.
 
 Cheddar is the chaos puppy and Cocoa is the steadier veteran. The placeholder sprites are still simple generated shapes, but the dogs now have a reusable global identity direction proven in the arena: both read as long, low miniature dachshunds with visible head, long snout, floppy ear, tiny feet, tail, collar, and expression markers. Cheddar reads as **CHEDDAR CHAOS PUP** with a golden body, red collar, bright chaos tuft/flash, faster wag, and more explosive bark/proud motion. Cocoa reads as **COCOA SPOT QUEEN** with a chocolate body, teal collar, cream chest, spot markings, steadier expression, and tiny queen marker. Idle, run, bark, tug, stunned, rescued, proud, and sad states are exposed through body squash/rotation, tail/head/ear motion, color-shifted labels, and deterministic PlayMode assertions.
 
@@ -155,12 +162,12 @@ The score model is deliberately readable and arcade-simple. Score changes appear
 - predator hit after missed warning: **-150 PREDATOR HIT**;
 - GameOver: **-100 GAME OVER**.
 
-Ranks are deterministic and intentionally funny:
+Ranks are deterministic and intentionally funny. Thresholds are mission-specific so shorter compact missions can still award sensible stars:
 
-- **Pawfect Yard** — clear with `1500+` score.
-- **Backyard Heroes** — clear with `1000+` score.
-- **Snack Survivors** — any run with `350+` score that does not hit the higher clear ranks.
-- **Needs More Bark** — low-score clear or fail.
+- **Backyard Rescue**: Pawfect Yard `1500+`, Backyard Heroes `1050+`, Snack Survivors `350+`.
+- **Snack Heist**: Pawfect Yard `950+`, Backyard Heroes `700+`, Snack Survivors `250+`.
+- **Sock Panic**: Pawfect Yard `800+`, Backyard Heroes `600+`, Snack Survivors `200+`.
+- **Needs More Bark** — any score below the mission's survivor threshold.
 
 LevelClear displays a 1-3 star rating based on final score, the center banner reads **BACKYARD SAVED! [rank]**, and both dogs hold a **PROUD!** pose. GameOver displays **MISSION FAILED! [rank]**, applies the game-over penalty, and both dogs hold a **SAD FLOP** pose. The end card includes `Outcome: Score - Rank`, one short funny `EndReasonLabel`, the last score swing, stars, session totals, and Replay / Next Mission / Mission Select actions.
 
@@ -202,10 +209,59 @@ Each restart deterministically selects one seeded modifier for tests/HUD:
 - **Zoomies Surge** — periodic dog speed bursts make control livelier.
 - **Pancake Panic** — stolen food hurts more, representing faster pressure buildup.
 
+## Tuning guide
+
+Arena tuning is centralized in `unity/CheddarAndCocoa/Assets/Scripts/Game/ArenaMissionTuning.cs`. Adjust this file first for playtest balancing; avoid scattering one-off numbers in `GameManager`.
+
+Current key defaults:
+
+- Timers: Backyard Rescue `90s`, Snack Heist `70s`, Sock Panic `55s`.
+- Rewards: item scores `50 / 60 / 40`, united bark `+100`, predator defended `+300`, partner rescue `+250`, tug complete `+200`, clear bonus `+500`, time bonus `5 x remaining seconds`.
+- Penalties: Backyard squirrel `-50`, Snack squirrel `-90`, Pancake Panic squirrel `-80`, predator hit `-150`, game over `-100`.
+- Squirrel pressure: first steal delay `9.0s` (`7.0s` on Squirrel Trouble), repeat delay `3.4s` (`2.2s` on Squirrel Trouble), move speed `1.9`.
+- Bark/rescue/tug: united bark window `0.8s`, united bark range `3.0`, single bark squirrel range `4.0`, rescue bark range `2.0`, tug together distance `1.6`, tug charge `0.5` per second, interact tug bump `0.2`.
+- Mission counts: Backyard Rescue spawns `5` items and needs `6` recoveries because collected items respawn; Snack Heist spawns/needs `4`; Sock Panic spawns/needs `5`.
+
+After tuning, run:
+
+```sh
+./unity/run-playmode-tests.sh
+```
+
+The PlayMode tests assert tuning defaults, the 30-90 second mission timing target, reachable top-rank scoring, overlay state, and deterministic playtest log entries.
+
+## Build/share readiness
+
+For a local development build, use Unity 6 LTS and open `unity/CheddarAndCocoa`. `ProjectSettings/EditorBuildSettings.asset` already includes `Assets/Scenes/ArenaScene.unity` and `Assets/Scenes/ControllerTestScene.unity`.
+
+Manual build path:
+
+1. Unity Editor → **File → Build Profiles** (or **Build Settings**, depending on patch).
+2. Select the local desktop target, leave **Development Build** enabled for playtest sharing, and confirm `ArenaScene` is checked in the scene list.
+3. Click **Build** and choose a local folder outside the repo such as `~/Desktop/CheddarAndCocoa-DevBuild`.
+
+No installer, signing, icon, store packaging, external analytics, or distribution polish is expected for this slice.
+
+## Five-minute playtest instructions
+
+Start from `ArenaScene`, press Play, and hand controls to two players without explaining the code. Ask them to play Backyard Rescue, then use **Next Mission** to reach Snack Heist and Sock Panic, and finally open Session Summary after all three have ended. Turn on the **F1** overlay only when the observer needs to inspect state; leave it off for first-read usability.
+
+Observe whether players can identify their dog, start a mission, read the current objective, recover from squirrel/predator/tug pressure, understand clear/fail, replay, and use Next Mission without a mouse. Watch especially for moments where score pops or objective arrows are missed during chaos.
+
+Suggested feedback questions:
+
+- Which dog were you, and how could you tell without reading only the name label?
+- What did bark do in each mission?
+- When did you know what to do next?
+- Did the squirrel/predator/timer feel fair, too slow, or too punishing?
+- Did Replay, Next Mission, and Session Summary make sense?
+- What was funny or personal, and what felt like generic collecting?
+
 ## Known limitations
 
 - All mission actors use placeholder sprites/text labels generated at runtime; there are no external art assets yet.
 - Mission select, end actions, and session summary are generated IMGUI placeholders, not authored production UI.
+- The playtest overlay and event log are debug/playtest aids only. They are not analytics, persistence, telemetry, or player-facing production UI.
 - Snack Heist and Sock Panic are architecture proofs inside the existing arena, not finished level designs. They reuse the same camera, spawn bounds, scoring HUD, restart flow, and generated placeholder prop system.
 - Dog identity art, pose labels, collars, expression markers, prop silhouettes, and objective arrows are generated placeholders. They are intentionally readable and easy to delete once authored sprites/animation exist.
 - The squirrel and predator use intentionally simple movement/state rules so the PlayMode tests remain deterministic.
@@ -219,6 +275,6 @@ Each restart deterministically selects one seeded modifier for tests/HUD:
 
 ## Test coverage
 
-`unity/Assets/Tests/PlayMode/ArenaGameLoopPlayModeTests.cs` loads ArenaScene and verifies mission select initialization, starting each mission through the new flow, end-screen Replay / Next Mission / Mission Select availability, session totals across multiple missions, session summary after all three variants have ended, dogs, mission state, intro prompt/banner, deterministic objective labels, delayed first squirrel steal window, initial score state, item recovery scoring, HUD score-pop state, world score/miss/success pops, squirrel steal/scare labels and score events, solo/united bark feedback and scoring, bark burst state, predator defense scoring, failed predator hit and rescue scoring, tug waiting/together feedback and scoring, LevelClear score/rank/summary/reason, GameOver score/rank/summary/reason, replay prompt visibility, restart reset state, exposed modifier state, dog identity labels, dog pose labels, movement intent labels/arrows, objective-arrow labels, and the generated arena audio listener.
+`unity/Assets/Tests/PlayMode/ArenaGameLoopPlayModeTests.cs` loads ArenaScene and verifies mission select initialization, centralized tuning defaults, mission balance invariants, starting each mission through the new flow, end-screen Replay / Next Mission / Mission Select availability, session totals across multiple missions, session summary after all three variants have ended, dogs, mission state, intro prompt/banner, deterministic objective labels, delayed first squirrel steal window, initial score state, item recovery scoring, HUD score-pop state, world score/miss/success pops, playtest overlay state, playtest event log entries, squirrel steal/scare labels and score events, solo/united bark feedback and scoring, bark burst state, predator defense scoring, failed predator hit and rescue scoring, tug waiting/together feedback and scoring, LevelClear score/rank/summary/reason, GameOver score/rank/summary/reason, replay prompt visibility, restart reset state, exposed modifier state, dog identity labels, dog pose labels, movement intent labels/arrows, objective-arrow labels, and the generated arena audio listener.
 
 The same test file also verifies **Snack Heist** and **Sock Panic** can initialize, update objective labels, score unique mission events, reach clear/fail outcomes, and expose replay state. `ControllerCoopPlayModeTests` still verifies the baseline two-pad movement/bark proof and now clears scene objects before constructing its own bootstrap so it does not accidentally inspect leftover ArenaScene dogs from previous tests.
