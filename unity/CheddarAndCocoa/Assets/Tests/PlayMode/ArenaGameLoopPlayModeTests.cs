@@ -511,25 +511,58 @@ namespace CheddarAndCocoa.Tests
             yield return null;
 
             var game = Object.FindFirstObjectByType<GameManager>();
+            var cheddar = FindDog(DogId.Cheddar);
             Assert.IsNotNull(game);
+            Assert.IsNotNull(cheddar);
             Assert.IsFalse(game.PlaytestOverlayVisible);
+            Assert.IsFalse(game.PlaytestModeEnabled);
             Assert.IsTrue(LogContains(game, "MissionSelect: Backyard Rescue"));
             Assert.That(game.LastPlaytestEvent, Does.Contain("ObjectiveChanged"));
 
             game.SetPlaytestOverlayVisible(true);
             Assert.IsTrue(game.PlaytestOverlayVisible);
+            Assert.IsTrue(game.PlaytestModeEnabled);
             Assert.That(game.LastPlaytestEvent, Does.Contain("Overlay: shown"));
 
             game.StartMission(GameManager.MissionVariant.SnackHeist);
             yield return null;
             Assert.IsTrue(LogContains(game, "MissionStarted: Snack Heist"));
             Assert.IsTrue(LogContains(game, "ObjectiveChanged: Stash snacks"));
+            Assert.Greater(game.ObjectiveChangeCount, 0);
+            Assert.AreEqual(0, game.BarksUsed);
+            Assert.AreEqual(0, game.FailedInteractions);
+            Assert.That(game.FailPressureLabel, Does.Contain("squirrel 0/2"));
+            Assert.That(game.DogPositionsLabel, Does.Contain("Cheddar"));
 
-            FirstTreat().CollectBy(FindDog(DogId.Cheddar));
+            FirstTreat().CollectBy(cheddar);
             Assert.IsTrue(LogContains(game, "ScoreDelta: +60 SNACK STASHED"));
+            Assert.IsTrue(LogContains(game, "Collection: Cheddar collected"));
+            Assert.AreEqual(60, game.Score);
+            Assert.GreaterOrEqual(game.MissionDurationSeconds, 0f);
+
+            yield return ClearCollectOnlyMission(cheddar);
+            Assert.AreEqual(GameManager.MissionOutcome.Clear, game.Outcome);
+            Assert.IsTrue(LogContains(game, "MissionClear: Clear"));
+
+            game.Restart();
+            yield return null;
+            Assert.AreEqual(1, game.MissionReplayCount);
+            Assert.IsTrue(LogContains(game, "Replay: Snack Heist"));
+            Assert.AreEqual(0, game.BarksUsed);
+            Assert.AreEqual(0, game.FailedInteractions);
+
+            cheddar.Bark();
+            Assert.AreEqual(1, game.BarksUsed);
+            Assert.IsTrue(LogContains(game, "Bark: Cheddar"));
+
+            cheddar.Interact();
+            Assert.AreEqual(1, game.FailedInteractions);
+            Assert.IsTrue(LogContains(game, "InteractionMiss: Cheddar"));
 
             game.ForceGameOver();
             Assert.IsTrue(LogContains(game, "MissionFail: Failed"));
+            Assert.AreEqual(1, game.FailuresForMission(GameManager.MissionVariant.SnackHeist));
+            Assert.That(game.MissionFailureSummaryLabel, Does.Contain("Snack 1"));
 
             game.ChooseNextMission();
             yield return null;

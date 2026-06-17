@@ -12,7 +12,7 @@ namespace CheddarAndCocoa.Game
     public sealed class ArenaHud : MonoBehaviour
     {
         private GameManager _game;
-        private GUIStyle _hud, _big, _mid, _small;
+        private GUIStyle _hud, _big, _mid, _small, _overlay;
 
         public void Init(GameManager game) => _game = game;
 
@@ -34,6 +34,7 @@ namespace CheddarAndCocoa.Game
                 DrawGameplayHud();
             }
 
+            DrawPlaytestModeToggle();
             if (_game.PlaytestOverlayVisible) DrawPlaytestOverlay();
         }
 
@@ -80,19 +81,30 @@ namespace CheddarAndCocoa.Game
 
         private void DrawPlaytestOverlay()
         {
-            float w = 390f;
-            float h = 190f;
+            float w = 440f;
+            float h = 274f;
             var box = new Rect(Screen.width - w - 12f, 12f, w, h);
             GUI.Box(box, GUIContent.none);
 
             int secs = Mathf.CeilToInt(Mathf.Max(0f, _game.TimeRemaining));
-            GUI.Label(new Rect(box.x + 12f, box.y + 8f, w - 24f, 22f), "PLAYTEST DEBUG", _small);
-            GUI.Label(new Rect(box.x + 12f, box.y + 32f, w - 24f, 20f), $"Mission: {_game.ActiveMissionVariant} / {_game.CurrentFlow} / {_game.Phase}", _small);
-            GUI.Label(new Rect(box.x + 12f, box.y + 54f, w - 24f, 20f), $"Timer: {secs}s   Score: {_game.Score}   Last: {_game.LastScoreEventLabel}", _small);
-            GUI.Label(new Rect(box.x + 12f, box.y + 76f, w - 24f, 34f), $"Objective: {_game.ObjectiveLabel}", _small);
-            GUI.Label(new Rect(box.x + 12f, box.y + 112f, w - 24f, 20f), $"Outcome: {_game.Outcome}   Rank: {_game.EndRank}", _small);
-            GUI.Label(new Rect(box.x + 12f, box.y + 134f, w - 24f, 20f), $"Session: {_game.SessionMissionsPlayed} played / {_game.SessionTotalScore} score / {_game.SessionStarsEarned} stars", _small);
-            GUI.Label(new Rect(box.x + 12f, box.y + 156f, w - 24f, 30f), $"Event: {_game.LastPlaytestEvent}", _small);
+            GUI.Label(new Rect(box.x + 12f, box.y + 8f, w - 24f, 22f), "PLAYTEST MODE", _overlay);
+            GUI.Label(new Rect(box.x + 12f, box.y + 32f, w - 24f, 20f), $"Mission: {_game.ActiveMissionVariant} / {_game.CurrentFlow} / {_game.Phase}", _overlay);
+            GUI.Label(new Rect(box.x + 12f, box.y + 54f, w - 24f, 20f), $"Timer: {secs}s   Score: {_game.Score}   Last score: {_game.LastScoreEventLabel}", _overlay);
+            GUI.Label(new Rect(box.x + 12f, box.y + 76f, w - 24f, 34f), $"Objective: {_game.ObjectiveLabel}", _overlay);
+            GUI.Label(new Rect(box.x + 12f, box.y + 112f, w - 24f, 20f), _game.FailPressureLabel, _overlay);
+            GUI.Label(new Rect(box.x + 12f, box.y + 134f, w - 24f, 20f), _game.DogPositionsLabel, _overlay);
+            GUI.Label(new Rect(box.x + 12f, box.y + 156f, w - 24f, 20f), _game.PlaytestCountersLabel, _overlay);
+            GUI.Label(new Rect(box.x + 12f, box.y + 178f, w - 24f, 20f), _game.MissionFailureSummaryLabel, _overlay);
+            GUI.Label(new Rect(box.x + 12f, box.y + 200f, w - 24f, 20f), $"Session: {_game.SessionMissionsPlayed} played / {_game.SessionTotalScore} score / {_game.SessionStarsEarned} stars", _overlay);
+            GUI.Label(new Rect(box.x + 12f, box.y + 222f, w - 24f, 20f), $"Outcome: {_game.Outcome}   Rank: {_game.EndRank}", _overlay);
+            GUI.Label(new Rect(box.x + 12f, box.y + 244f, w - 24f, 26f), $"Event: {_game.LastPlaytestEvent}", _overlay);
+        }
+
+        private void DrawPlaytestModeToggle()
+        {
+            string label = _game.PlaytestModeEnabled ? "Playtest Mode: On" : "Playtest Mode: Off";
+            if (GUI.Button(new Rect(12f, Screen.height - 42f, 168f, 30f), label))
+                _game.TogglePlaytestOverlay();
         }
 
         private void DrawMissionSelect()
@@ -150,6 +162,7 @@ namespace CheddarAndCocoa.Game
             _small = new GUIStyle(GUI.skin.label) { fontSize = 14, alignment = TextAnchor.MiddleCenter };
             _small.normal.textColor = new Color(0.9f, 0.95f, 1f);
             _small.wordWrap = true;
+            _overlay = new GUIStyle(_small) { alignment = TextAnchor.MiddleLeft };
             _big = new GUIStyle(GUI.skin.label) { fontSize = 34, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
             _big.normal.textColor = new Color(1f, 0.95f, 0.4f);
         }

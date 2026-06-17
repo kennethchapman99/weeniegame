@@ -81,13 +81,78 @@ Mission flow controls:
 - During a run: keyboard **1 / 2 / 3** still restarts the arena into Backyard Rescue, Snack Heist, or Sock Panic for quick manual comparison.
 - End screen: **R / Enter / Start / South** replays; **N / Right Arrow / Right Shoulder / D-pad Right** advances; **M / Escape / East / D-pad Left** returns to mission select.
 - Session Summary: **Enter**, **Space**, **Start**, **South**, **M**, or **Escape** returns to mission select.
-- Playtest overlay: **F1** or **`** toggles a compact debug overlay. It shows mission id, flow/phase, timer, score, objective, outcome/rank, session totals, and the latest playtest event. It is read-only and sits in the top-right corner so normal play remains usable.
+- Playtest Mode: click the bottom-left **Playtest Mode: On/Off** button or press **F1** / **`**. It toggles a compact top-right diagnostics overlay and does not pause or block normal play.
+
+## First playtest protocol
+
+Use this protocol before changing tuning again:
+
+1. Open `unity/CheddarAndCocoa` in Unity 6 LTS, open `Assets/Scenes/ArenaScene.unity`, press Play, and turn **Playtest Mode** on.
+2. Start on mission select. Do not explain the game at first; let the two players try to identify their dogs, choose a mission, move, bark, and react.
+3. Watch silently for the first run unless they are fully blocked by hardware/input confusion.
+4. After the first end screen, ask short questions, then have them use **Replay** and **Next Mission** without a mouse.
+5. Run all three missions at least once: **Backyard Rescue**, **Snack Heist**, and **Sock Panic**.
+6. After all three have ended, use **Next / Session Summary** and confirm the players understand the session totals.
+7. Write down confusion points using the playtest overlay and event log rather than fixing during the session.
+
+What to observe:
+
+- Can each player identify whether they are Cheddar or Cocoa without only reading labels?
+- Do players understand the current objective label before the first squirrel/predator pressure arrives?
+- Does bark feel like a useful verb, especially for squirrel, united-front defense, and rescue?
+- Does the rope/tug objective cause communication or just confusion?
+- Do score pops and world pops explain why score changed?
+- Do players naturally find Replay, Next Mission, and Mission Select?
+- Are failures funny/recoverable, or do they feel arbitrary?
+- Does the camera keep both dogs, objectives, and hazards readable?
+
+Ask testers:
+
+1. What did you think the goal was when the mission started?
+2. Which dog were you, and how could you tell?
+3. When did barking feel useful?
+4. Was there a moment where you did not know what to do next?
+5. What did you think the squirrel was doing?
+6. What did you think the predator warning wanted from both players?
+7. Did tugging the rope feel cooperative?
+8. Did the end screen make Replay and Next Mission clear?
+9. Which mission would you replay first?
+10. What was funny or personal, and what felt generic?
+
+Known rough edges for this playtest:
+
+- Placeholder art and generated tones are still prototype-only.
+- There is no final tutorial; the objective label, arrows, labels, and playtest observer have to carry clarity.
+- Keyboard two-player controls share one keyboard, so controller play is the better test if two gamepads are available.
+- The visible Playtest Mode button is an IMGUI debug control and may overlap a tiny corner of the play space.
+- Local session totals reset when Play mode or the app exits.
+- Event logs are in-memory only; there is no file export yet.
+
+## Local Mac build path
+
+Use this only for a quick couch playtest build; no signing, installer, store, or distribution work is needed.
+
+1. Open Unity Hub and launch `unity/CheddarAndCocoa` with Unity 6 LTS.
+2. Open `Assets/Scenes/ArenaScene.unity`.
+3. Confirm `File -> Build Profiles...` (or `File -> Build Settings...` on older Unity UI) includes `Assets/Scenes/ArenaScene.unity`; it is already listed in `ProjectSettings/EditorBuildSettings.asset`.
+4. Select **macOS** as the target platform. Use the current architecture/default unless Unity asks; **Universal** is fine for local testing.
+5. Choose **Build** or **Build And Run**.
+6. Save the output somewhere local and ignored, for example `unity/local-builds/CheddarAndCocoa-Arena`.
+7. Launch the built app, start each mission from mission select, and press **F1** / **`** or the bottom-left Playtest Mode button to verify the overlay is available.
+
+Before handing off a build, run:
+
+```sh
+./unity/run-playmode-tests.sh
+```
 
 ## Playtest/debug visibility
 
-`GameManager` owns a lightweight in-memory `PlaytestEventLog` for the current Unity Play session. The log is exposed through `PlaytestLog`, `PlaytestEvents`, and `LastPlaytestEvent`, so PlayMode tests or a temporary inspector can read it without scraping UI. Events are numbered and deterministic rather than timestamped. Captured event types include mission select/start, objective changes, bark, squirrel pressure/scare/steal, tug/rescue, score deltas, clear/fail, replay, next mission, overlay toggles, and session summary.
+`GameManager` owns a lightweight in-memory `PlaytestEventLog` for the current Unity Play session. The log is exposed through `PlaytestLog`, `PlaytestEvents`, and `LastPlaytestEvent`, so PlayMode tests or a temporary inspector can read it without scraping UI. Events are numbered and deterministic rather than timestamped. Captured event types include mission select/start, objective changes, bark, collection, squirrel pressure/scare/steal, tug/rescue, score deltas, clear/fail, replay, next mission, overlay toggles, and session summary.
 
-Manual check: press **F1** during mission select and during play. Confirm the overlay appears in the top-right, does not hide the dogs or end buttons, and updates after collecting an item, barking, forcing a fail/clear, replaying, and choosing Next Mission.
+The playtest overlay shows mission, flow/phase, timer, score, last score event, current objective, fail pressure, Cheddar/Cocoa positions, current-round friction counters, failures by mission, session totals, outcome/rank, and the latest event. Friction counters are intentionally small and local: `BarksUsed`, `FailedInteractions`, `ObjectiveChangeCount`, `MissionDurationSeconds`, `MissionReplayCount`, and `FailuresForMission(...)`. They are meant to flag confusion for a human observer, not to become analytics.
+
+Manual check: press **F1** during mission select and during play, or click the bottom-left Playtest Mode button. Confirm the overlay appears in the top-right, does not hide the dogs or end buttons, and updates after collecting an item, barking, missing an interaction, forcing a fail/clear, replaying, and choosing Next Mission.
 
 Cheddar is the chaos puppy and Cocoa is the steadier veteran. The placeholder sprites are still simple generated shapes, but the dogs now have a reusable global identity direction proven in the arena: both read as long, low miniature dachshunds with visible head, long snout, floppy ear, tiny feet, tail, collar, and expression markers. Cheddar reads as **CHEDDAR CHAOS PUP** with a golden body, red collar, bright chaos tuft/flash, faster wag, and more explosive bark/proud motion. Cocoa reads as **COCOA SPOT QUEEN** with a chocolate body, teal collar, cream chest, spot markings, steadier expression, and tiny queen marker. Idle, run, bark, tug, stunned, rescued, proud, and sad states are exposed through body squash/rotation, tail/head/ear motion, color-shifted labels, and deterministic PlayMode assertions.
 

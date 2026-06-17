@@ -187,6 +187,16 @@ namespace CheddarAndCocoa.Game
         public IReadOnlyList<string> PlaytestEvents => _playtestLog.Entries;
         public string LastPlaytestEvent => _playtestLog.LastEvent;
         public bool PlaytestOverlayVisible { get; private set; }
+        public bool PlaytestModeEnabled => PlaytestOverlayVisible;
+        public int BarksUsed { get; private set; }
+        public int FailedInteractions { get; private set; }
+        public int ObjectiveChangeCount { get; private set; }
+        public int MissionReplayCount { get; private set; }
+        public float MissionDurationSeconds => CurrentFlow == FlowState.MissionSelect ? 0f : Mathf.Clamp(roundDuration - TimeRemaining, 0f, roundDuration);
+        public string FailPressureLabel => BuildFailPressureLabel();
+        public string DogPositionsLabel => BuildDogPositionsLabel();
+        public string PlaytestCountersLabel => $"Barks {BarksUsed} / missed interacts {FailedInteractions} / objective shifts {ObjectiveChangeCount} / duration {MissionDurationSeconds:0.0}s / replays {MissionReplayCount}";
+        public string MissionFailureSummaryLabel => BuildMissionFailureSummaryLabel();
         public FeedbackKind LastFeedback { get; private set; } = FeedbackKind.Intro;
         public JuiceFeedbackKind LastJuiceFeedback { get; private set; } = JuiceFeedbackKind.None;
         public string LastJuiceLabel { get; private set; } = string.Empty;
@@ -229,6 +239,7 @@ namespace CheddarAndCocoa.Game
         private float _nextZoomiesPulseAt;
         private int _selectedMissionIndex;
         private readonly bool[] _sessionCompletedMissions = new bool[MissionOrder.Length];
+        private readonly int[] _sessionFailuresByMission = new int[MissionOrder.Length];
         private bool _roundResultRecorded;
         private string _lastLoggedObjective = string.Empty;
 
@@ -284,6 +295,7 @@ namespace CheddarAndCocoa.Game
             _treats.Remove(treat);
             Destroy(treat.gameObject);
             SpawnTreat();
+            LogPlaytestEvent("Collection", $"{DogName(dog)} collected {_mission.ItemCollectCueNoun} {BreakfastRecovered}/{recoveryGoal}");
             CheckClear();
             LogObjectiveIfChanged();
         }
@@ -296,6 +308,7 @@ namespace CheddarAndCocoa.Game
                 return;
             }
 
+            MissionReplayCount++;
             LogPlaytestEvent("Replay", _mission.Name);
             StartMission(_mission.Variant);
         }
@@ -388,6 +401,12 @@ namespace CheddarAndCocoa.Game
             if (MissionActive()) TimeRemaining = Mathf.Min(TimeRemaining, roundDuration);
         }
 
+        public int FailuresForMission(MissionVariant variant)
+        {
+            int index = IndexOfMission(variant);
+            return index >= 0 && index < _sessionFailuresByMission.Length ? _sessionFailuresByMission[index] : 0;
+        }
+
         public void ForcePredatorWarning()
         {
             if (MissionActive() && _mission.RequiresPredator) StartPredatorWarning();
@@ -441,6 +460,9 @@ namespace CheddarAndCocoa.Game
             LastJuiceLabel = string.Empty;
             LastScorePopLabel = string.Empty;
             _roundResultRecorded = false;
+            BarksUsed = 0;
+            FailedInteractions = 0;
+            ObjectiveChangeCount = 0;
 
             ActiveModifier = (RoundModifier)_rng.Next(0, 3);
             _nextUnitedBarkAt = 0f;
@@ -691,12 +713,27 @@ namespace CheddarAndCocoa.Game
 
         private void OnDogInteracted(DogId dogId)
         {
-            if (!_mission.RequiresTug) return;
-            if (!MissionActive() || TugComplete) return;
+            if (!MissionActive()) return;
+
+            if (_mission == null || !_mission.RequiresTug)
+            {
+                MarkFailedInteraction(dogId, "no interact target in this mission");
+                return;
+            }
+
+            if (TugComplete)
+            {
+                MarkFailedInteraction(dogId, "tug already complete");
+                return;
+            }
 
             int dogIndex = IndexOfDog(dogId);
             if (dogIndex < 0) return;
-            if (Vector2.Distance(_dogs[dogIndex].transform.position, RopeObject.transform.position) > _tuning.TugInteractDistance) return;
+            if (Vector2.Distance(_dogs[dogIndex].transform.position, RopeObject.transform.position) > _tuning.TugInteractDistance)
+            {
+                MarkFailedInteraction(dogId, "too far from rope");
+                return;
+            }
 
             if (DogFeedback[dogIndex] != null) DogFeedback[dogIndex].ShowTug();
             TugProgress = Mathf.Min(1f, TugProgress + _tuning.TugInteractProgress);
@@ -730,6 +767,7 @@ namespace CheddarAndCocoa.Game
             int dogIndex = IndexOfDog(dogId);
             if (dogIndex < 0) return;
 
+            BarksUsed++;
             _lastBarks[dogIndex] = Time.time;
             var dog = _dogs[dogIndex];
             bool barkDidSomething = false;
@@ -944,12 +982,19 @@ namespace CheddarAndCocoa.Game
             if (objective == _lastLoggedObjective) return;
 
             _lastLoggedObjective = objective;
+            ObjectiveChangeCount++;
             LogPlaytestEvent("ObjectiveChanged", objective);
         }
 
         private void LogPlaytestEvent(string kind, string detail)
         {
             _playtestLog.Add(kind, detail);
+        }
+
+        private void MarkFailedInteraction(DogId dogId, string reason)
+        {
+            FailedInteractions++;
+            LogPlaytestEvent("InteractionMiss", $"{dogId}: {reason}");
         }
 
         private static string RankForScore(int score, bool clear, MissionDefinition mission)
@@ -1072,6 +1117,9 @@ namespace CheddarAndCocoa.Game
             LastFeedback = FeedbackKind.Intro;
             LastJuiceFeedback = JuiceFeedbackKind.None;
             LastJuiceLabel = string.Empty;
+            BarksUsed = 0;
+            FailedInteractions = 0;
+            ObjectiveChangeCount = 0;
             _scorePopUntil = 0f;
             _squirrelTarget = null;
             _grabbedDog = -1;
@@ -1107,9 +1155,42 @@ namespace CheddarAndCocoa.Game
             SessionStarsEarned += StarRating;
             int missionIndex = IndexOfMission(_mission.Variant);
             if (missionIndex >= 0) _sessionCompletedMissions[missionIndex] = true;
+            if (Outcome == MissionOutcome.Failed && missionIndex >= 0) _sessionFailuresByMission[missionIndex]++;
             SessionUniqueMissionsCompleted = CountCompletedMissions();
             _sessionRanks.Add($"{_mission.Name}: {EndRank}");
             UpdateSessionSummaryLabel();
+        }
+
+        private string BuildFailPressureLabel()
+        {
+            if (_mission == null || CurrentFlow == FlowState.MissionSelect) return "Fail pressure: no active mission";
+
+            string squirrel = _mission.UsesSquirrel ? $"squirrel {StolenFood}/{maxStolenFood}" : "squirrel off";
+            string predator = _mission.RequiresPredator
+                ? (PredatorResolved ? "predator resolved" : PredatorFailed ? "predator failed/rescue path" : $"predator {Phase}")
+                : "predator off";
+            string tug = _mission.RequiresTug ? $"tug {Mathf.RoundToInt(TugProgress * 100f)}%" : "tug off";
+            return $"Fail pressure: {Mathf.CeilToInt(Mathf.Max(0f, TimeRemaining))}s / {squirrel} / {predator} / {tug}";
+        }
+
+        private string BuildDogPositionsLabel()
+        {
+            if (_dogs == null || _dogs.Length == 0) return "Dogs: not spawned";
+
+            var parts = new List<string>(_dogs.Length);
+            foreach (var dog in _dogs)
+            {
+                if (dog == null) continue;
+                Vector3 p = dog.transform.position;
+                parts.Add($"{DogName(dog)} ({p.x:0.0},{p.y:0.0})");
+            }
+
+            return parts.Count == 0 ? "Dogs: not spawned" : $"Dogs: {string.Join(" | ", parts)}";
+        }
+
+        private string BuildMissionFailureSummaryLabel()
+        {
+            return $"Failures: Backyard {_sessionFailuresByMission[0]} / Snack {_sessionFailuresByMission[1]} / Sock {_sessionFailuresByMission[2]}";
         }
 
         private void UpdateSessionSummaryLabel()
