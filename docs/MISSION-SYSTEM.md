@@ -6,17 +6,18 @@ The ArenaScene mission spike is deliberately small. It proves that the existing 
 
 `ArenaBootstrap` still builds the same scene and creates one `GameManager`. `GameManager` owns:
 
+- `FlowState` - the lightweight local flow: `MissionSelect`, `Playing`, `EndScreen`, and `SessionSummary`.
 - `MissionVariant` - the selectable variant id.
 - `MissionDefinition` - serializable data for names, objective copy, collectible counts, enabled pressure systems, scoring labels, and end reasons.
 - `StartMission(MissionVariant variant)` - code/test/manual entry point that swaps the definition and restarts the round.
+- Session counters - local-only missions played, total score, stars, unique missions finished, and rank labels.
 
-Manual selection is a debug path in `GameManager.Update()`:
+Manual selection now has two paths:
 
-- `1` starts Backyard Rescue.
-- `2` starts Snack Heist.
-- `3` starts Sock Panic.
+- Cold start opens the generated IMGUI mission picker. Up/Down or D-pad changes selection; Enter/Space/Start/South starts the selected mission.
+- `1`, `2`, and `3` still start Backyard Rescue, Snack Heist, and Sock Panic directly for fast testing.
 
-This is not a campaign structure. Keep it that way until there are enough proven missions to justify menus, persistence, unlocks, or authored level data.
+After a mission ends, the same local flow exposes Replay, Next Mission, and Mission Select. Once all three variants have ended in the current Play session, Next opens Session Summary. This is not a campaign structure. Keep it that way until there are enough proven missions to justify persistence, unlocks, or authored level data.
 
 ## Current Variants
 
@@ -29,16 +30,17 @@ This is not a campaign structure. Keep it that way until there are enough proven
 ## Adding The Next Mission
 
 1. Add a new value to `GameManager.MissionVariant`.
-2. Add a new `MissionDefinition` branch in `BuildMissionDefinition`.
-3. Decide which existing systems are enabled:
+2. Add the value to `GameManager.MissionOrder` if it should appear in the generated mission picker and session loop.
+3. Add a new `MissionDefinition` branch in `BuildMissionDefinition`.
+4. Decide which existing systems are enabled:
    - `UsesSquirrel`
    - `RequiresPredator`
    - `RequiresTug`
-4. Give the mission unique objective text, score labels, clear banner, replay prompt, and fail reasons.
-5. Add readable placeholder collectible art in `BuildCollectibleArt` if the existing weenie/snack/sock shapes do not fit.
-6. Add a keyboard debug selection if manual testing needs it.
-7. Add deterministic PlayMode coverage that starts the mission, checks objective copy, scores one unique event, reaches clear/fail, and verifies replay state.
-8. Update `docs/ARENA-PLAYABLE.md` with manual checks and limitations.
+5. Give the mission unique objective text, score labels, clear banner, replay prompt, and fail reasons.
+6. Add readable placeholder collectible art in `BuildCollectibleArt` if the existing weenie/snack/sock shapes do not fit.
+7. Add a keyboard debug selection if manual testing needs it.
+8. Add deterministic PlayMode coverage that starts the mission from mission select, checks objective copy, scores one unique event, reaches clear/fail, and verifies replay/next/mission-select state.
+9. Update `docs/ARENA-PLAYABLE.md` with cold-start instructions, manual checks, and limitations.
 
 ## Guardrails
 

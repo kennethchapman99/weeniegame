@@ -14,6 +14,7 @@ namespace CheddarAndCocoa.Game
     public sealed class GameManager : MonoBehaviour
     {
         public enum State { Intro, Playing, PredatorWarning, PredatorAttack, LevelClear, GameOver }
+        public enum FlowState { MissionSelect, Playing, EndScreen, SessionSummary }
         public enum RoundModifier { SquirrelTrouble, ZoomiesSurge, PancakePanic }
         public enum MissionOutcome { InProgress, Clear, Failed }
         public enum MissionVariant { BackyardRescue, SnackHeist, SockPanic }
@@ -110,6 +111,12 @@ namespace CheddarAndCocoa.Game
         private const int DefaultSquirrelPenalty = 50;
         private const int PancakePenalty = 80;
         private const int GameOverPenalty = 100;
+        private static readonly MissionVariant[] MissionOrder =
+        {
+            MissionVariant.BackyardRescue,
+            MissionVariant.SnackHeist,
+            MissionVariant.SockPanic
+        };
 
         [Header("Mission selection")]
         [SerializeField] private MissionVariant startingMission = MissionVariant.BackyardRescue;
@@ -143,6 +150,15 @@ namespace CheddarAndCocoa.Game
         public int LastScoreDelta { get; private set; }
         public float TimeRemaining { get; private set; }
         public float RoundDuration => roundDuration;
+        public FlowState CurrentFlow { get; private set; } = FlowState.MissionSelect;
+        public bool MissionSelectVisible => CurrentFlow == FlowState.MissionSelect;
+        public bool EndScreenVisible => CurrentFlow == FlowState.EndScreen;
+        public bool SessionSummaryVisible => CurrentFlow == FlowState.SessionSummary;
+        public int MissionSelectOptionCount => MissionOrder.Length;
+        public int SelectedMissionIndex => _selectedMissionIndex;
+        public MissionVariant SelectedMissionVariant => MissionOrder[Mathf.Clamp(_selectedMissionIndex, 0, MissionOrder.Length - 1)];
+        public string SelectedMissionName => BuildMissionDefinition(SelectedMissionVariant).Name;
+        public string SelectedMissionBriefing => BuildMissionDefinition(SelectedMissionVariant).IntroPrompt;
         public State Phase { get; private set; } = State.Intro;
         public bool IsGameOver => Phase == State.GameOver;
         public bool IsLevelClear => Phase == State.LevelClear;
@@ -180,6 +196,19 @@ namespace CheddarAndCocoa.Game
         public string EndReasonLabel { get; private set; } = string.Empty;
         public bool ReplayPromptVisible => IsGameOver || IsLevelClear;
         public string ReplayPromptLabel => ReplayPromptVisible ? (_mission != null ? _mission.ReplayPrompt : "Press R / Enter / Start to replay the weenie rescue") : string.Empty;
+        public bool EndReplayAvailable => EndScreenVisible;
+        public bool EndNextMissionAvailable => EndScreenVisible;
+        public bool EndMissionSelectAvailable => EndScreenVisible;
+        public string EndReplayActionLabel => EndReplayAvailable ? "Replay" : string.Empty;
+        public string EndNextActionLabel => EndNextMissionAvailable ? (SessionSummaryReady ? "Session Summary" : "Next Mission") : string.Empty;
+        public string EndMissionSelectActionLabel => EndMissionSelectAvailable ? "Mission Select" : string.Empty;
+        public int SessionMissionsPlayed { get; private set; }
+        public int SessionTotalScore { get; private set; }
+        public int SessionStarsEarned { get; private set; }
+        public int SessionUniqueMissionsCompleted { get; private set; }
+        public bool SessionSummaryReady => SessionUniqueMissionsCompleted >= MissionOrder.Length;
+        public string SessionSummaryLabel { get; private set; } = "Session Summary: no missions played yet.";
+        public string SessionRanksEarnedLabel { get; private set; } = "Ranks: none yet.";
         public FeedbackKind LastFeedback { get; private set; } = FeedbackKind.Intro;
         public JuiceFeedbackKind LastJuiceFeedback { get; private set; } = JuiceFeedbackKind.None;
         public string LastJuiceLabel { get; private set; } = string.Empty;
@@ -203,6 +232,7 @@ namespace CheddarAndCocoa.Game
         private MissionDefinition _mission;
 
         private readonly List<Treat> _treats = new();
+        private readonly List<string> _sessionRanks = new();
         private float[] _lastBarks;
         private float _nextUnitedBarkAt;
         private float _squirrelTimer;
@@ -217,6 +247,9 @@ namespace CheddarAndCocoa.Game
         private int _predatorTarget = -1;
         private int _grabbedDog = -1;
         private float _nextZoomiesPulseAt;
+        private int _selectedMissionIndex;
+        private readonly bool[] _sessionCompletedMissions = new bool[MissionOrder.Length];
+        private bool _roundResultRecorded;
 
         public void Init(DogController[] dogs, GamepadPlayerInput[] inputs, Sprite treatSprite, Rect bounds, int seed)
         {
@@ -242,10 +275,11 @@ namespace CheddarAndCocoa.Game
             }
 
             _mission = BuildMissionDefinition(startingMission);
+            _selectedMissionIndex = IndexOfMission(startingMission);
             _treatRoot = new GameObject(_mission.ItemRootName).transform;
             BuildAudio();
             BuildMissionObjects();
-            BeginRound();
+            ShowMissionSelect();
         }
 
         public void OnTreatCollected(Treat treat, DogController dog)
@@ -266,12 +300,81 @@ namespace CheddarAndCocoa.Game
             CheckClear();
         }
 
-        public void Restart() => BeginRound();
+        public void Restart()
+        {
+            if (_mission == null)
+            {
+                StartSelectedMission();
+                return;
+            }
+
+            StartMission(_mission.Variant);
+        }
 
         public void StartMission(MissionVariant variant)
         {
+            SelectMission(variant);
             _mission = BuildMissionDefinition(variant);
             BeginRound();
+        }
+
+        public void SelectMission(MissionVariant variant)
+        {
+            int index = IndexOfMission(variant);
+            if (index < 0) return;
+
+            _selectedMissionIndex = index;
+            _mission = BuildMissionDefinition(variant);
+            if (MissionSelectVisible)
+            {
+                LastCue = $"{_mission.Name}: {_mission.IntroPrompt}";
+                MissionBanner = "Mission Select";
+            }
+        }
+
+        public void SelectPreviousMission()
+        {
+            _selectedMissionIndex = (_selectedMissionIndex + MissionOrder.Length - 1) % MissionOrder.Length;
+            SelectMission(SelectedMissionVariant);
+        }
+
+        public void SelectNextMission()
+        {
+            _selectedMissionIndex = (_selectedMissionIndex + 1) % MissionOrder.Length;
+            SelectMission(SelectedMissionVariant);
+        }
+
+        public void StartSelectedMission() => StartMission(SelectedMissionVariant);
+
+        public void ReturnToMissionSelect()
+        {
+            ShowMissionSelect();
+        }
+
+        public void ChooseNextMission()
+        {
+            if (SessionSummaryReady)
+            {
+                ShowSessionSummary();
+                return;
+            }
+
+            int current = _mission != null ? IndexOfMission(_mission.Variant) : _selectedMissionIndex;
+            int next = NextUnfinishedMissionIndex(current);
+            StartMission(MissionOrder[next]);
+        }
+
+        public void ShowSessionSummary()
+        {
+            CurrentFlow = FlowState.SessionSummary;
+            Phase = State.Intro;
+            Outcome = MissionOutcome.InProgress;
+            MissionBanner = "Session Summary";
+            LastCue = SessionSummaryLabel;
+            LastFeedback = FeedbackKind.Intro;
+            DisableDogInputs();
+            HideObjectiveArrows();
+            SetMissionObjectsActive(false);
         }
 
         public void SetRoundDuration(float seconds)
@@ -302,6 +405,7 @@ namespace CheddarAndCocoa.Game
         private void BeginRound()
         {
             if (_mission == null) _mission = BuildMissionDefinition(startingMission);
+            CurrentFlow = FlowState.Playing;
             roundDuration = _mission.RoundSeconds;
             treatCount = _mission.SpawnedItemCount;
             recoveryGoal = _mission.ItemGoal;
@@ -331,6 +435,7 @@ namespace CheddarAndCocoa.Game
             LastJuiceFeedback = JuiceFeedbackKind.None;
             LastJuiceLabel = string.Empty;
             LastScorePopLabel = string.Empty;
+            _roundResultRecorded = false;
 
             ActiveModifier = (RoundModifier)_rng.Next(0, 3);
             _nextUnitedBarkAt = 0f;
@@ -374,6 +479,9 @@ namespace CheddarAndCocoa.Game
 
         private void Update()
         {
+            TickFlowInput();
+            if (!MissionActive()) return;
+
             TickMissionSelectionKeys();
             if (!MissionActive()) return;
 
@@ -688,6 +796,7 @@ namespace CheddarAndCocoa.Game
         private void EndRound(bool clear)
         {
             Phase = clear ? State.LevelClear : State.GameOver;
+            CurrentFlow = FlowState.EndScreen;
             Outcome = clear ? MissionOutcome.Clear : MissionOutcome.Failed;
             if (clear)
             {
@@ -734,6 +843,7 @@ namespace CheddarAndCocoa.Game
             }
 
             HideObjectiveArrows();
+            RecordSessionResult();
         }
 
         private bool MissionActive() => Phase == State.Playing || Phase == State.PredatorWarning || Phase == State.PredatorAttack;
@@ -751,6 +861,8 @@ namespace CheddarAndCocoa.Game
         private string BuildObjectiveLabel()
         {
             if (_mission == null) return "Protect the weenies";
+            if (MissionSelectVisible) return "Choose a mission";
+            if (SessionSummaryVisible) return "Session Summary";
             if (IsLevelClear) return _mission.ClearObjectiveText;
             if (IsGameOver) return _mission.FailObjectiveText;
             if (_dogs == null || _dogs.Length == 0) return _mission.IntroPrompt;
@@ -809,6 +921,71 @@ namespace CheddarAndCocoa.Game
             return ActiveModifier == RoundModifier.SquirrelTrouble ? squirrelTroubleDelay : squirrelBaseDelay;
         }
 
+        private void TickFlowInput()
+        {
+            var kb = Keyboard.current;
+            var pad = Gamepad.current;
+
+            if (MissionSelectVisible)
+            {
+                bool previous = false;
+                bool next = false;
+                bool start = false;
+                if (kb != null)
+                {
+                    if (kb.digit1Key.wasPressedThisFrame) { StartMission(MissionVariant.BackyardRescue); return; }
+                    if (kb.digit2Key.wasPressedThisFrame) { StartMission(MissionVariant.SnackHeist); return; }
+                    if (kb.digit3Key.wasPressedThisFrame) { StartMission(MissionVariant.SockPanic); return; }
+                    previous |= kb.upArrowKey.wasPressedThisFrame || kb.leftArrowKey.wasPressedThisFrame;
+                    next |= kb.downArrowKey.wasPressedThisFrame || kb.rightArrowKey.wasPressedThisFrame || kb.tabKey.wasPressedThisFrame;
+                    start |= kb.enterKey.wasPressedThisFrame || kb.spaceKey.wasPressedThisFrame;
+                }
+                if (pad != null)
+                {
+                    previous |= pad.dpad.up.wasPressedThisFrame || pad.dpad.left.wasPressedThisFrame;
+                    next |= pad.dpad.down.wasPressedThisFrame || pad.dpad.right.wasPressedThisFrame;
+                    start |= pad.startButton.wasPressedThisFrame || pad.buttonSouth.wasPressedThisFrame;
+                }
+
+                if (previous) SelectPreviousMission();
+                else if (next) SelectNextMission();
+                else if (start) StartSelectedMission();
+                return;
+            }
+
+            if (EndScreenVisible)
+            {
+                bool replay = false;
+                bool next = false;
+                bool missionSelect = false;
+                if (kb != null)
+                {
+                    replay |= kb.rKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame;
+                    next |= kb.nKey.wasPressedThisFrame || kb.rightArrowKey.wasPressedThisFrame;
+                    missionSelect |= kb.mKey.wasPressedThisFrame || kb.escapeKey.wasPressedThisFrame;
+                }
+                if (pad != null)
+                {
+                    replay |= pad.startButton.wasPressedThisFrame || pad.buttonSouth.wasPressedThisFrame;
+                    next |= pad.rightShoulder.wasPressedThisFrame || pad.dpad.right.wasPressedThisFrame;
+                    missionSelect |= pad.buttonEast.wasPressedThisFrame || pad.dpad.left.wasPressedThisFrame;
+                }
+
+                if (missionSelect) ReturnToMissionSelect();
+                else if (next) ChooseNextMission();
+                else if (replay) Restart();
+                return;
+            }
+
+            if (SessionSummaryVisible)
+            {
+                bool back = false;
+                if (kb != null) back |= kb.enterKey.wasPressedThisFrame || kb.spaceKey.wasPressedThisFrame || kb.mKey.wasPressedThisFrame || kb.escapeKey.wasPressedThisFrame;
+                if (pad != null) back |= pad.startButton.wasPressedThisFrame || pad.buttonSouth.wasPressedThisFrame || pad.buttonEast.wasPressedThisFrame;
+                if (back) ReturnToMissionSelect();
+            }
+        }
+
         private void TickMissionSelectionKeys()
         {
             var kb = Keyboard.current;
@@ -816,6 +993,119 @@ namespace CheddarAndCocoa.Game
             if (kb.digit1Key.wasPressedThisFrame) StartMission(MissionVariant.BackyardRescue);
             else if (kb.digit2Key.wasPressedThisFrame) StartMission(MissionVariant.SnackHeist);
             else if (kb.digit3Key.wasPressedThisFrame) StartMission(MissionVariant.SockPanic);
+        }
+
+        private void ShowMissionSelect()
+        {
+            CurrentFlow = FlowState.MissionSelect;
+            Phase = State.Intro;
+            Outcome = MissionOutcome.InProgress;
+            TimeRemaining = 0f;
+            Score = 0;
+            LastScoreDelta = 0;
+            UnitedBarks = 0;
+            BreakfastRecovered = 0;
+            StolenFood = 0;
+            PredatorResolved = false;
+            PredatorFailed = false;
+            TugProgress = 0f;
+            TugComplete = false;
+            StarRating = 0;
+            EndRank = "Needs More Bark";
+            EndSummaryLabel = string.Empty;
+            EndReasonLabel = string.Empty;
+            LastScoreEventLabel = "0 READY FOR DOG BUSINESS";
+            LastScorePopLabel = string.Empty;
+            LastCue = $"{SelectedMissionName}: {SelectedMissionBriefing}";
+            MissionBanner = "Mission Select";
+            LastFeedback = FeedbackKind.Intro;
+            LastJuiceFeedback = JuiceFeedbackKind.None;
+            LastJuiceLabel = string.Empty;
+            _scorePopUntil = 0f;
+            _squirrelTarget = null;
+            _grabbedDog = -1;
+            ClearTreats();
+            DisableDogInputs();
+            HideObjectiveArrows();
+            SetMissionObjectsActive(false);
+
+            if (_dogs != null)
+            {
+                for (int i = 0; i < _dogs.Length; i++)
+                {
+                    _dogs[i].SetMode(MovementMode.Free);
+                    _dogs[i].transform.position = _dogStarts[i];
+                    if (_dogs[i].TryGetComponent<Rigidbody2D>(out var rb)) rb.linearVelocity = Vector2.zero;
+                    if (DogFeedback != null && i < DogFeedback.Length && DogFeedback[i] != null) DogFeedback[i].ClearMissionPose();
+                }
+            }
+        }
+
+        private void RecordSessionResult()
+        {
+            if (_roundResultRecorded) return;
+            _roundResultRecorded = true;
+
+            SessionMissionsPlayed++;
+            SessionTotalScore += Score;
+            SessionStarsEarned += StarRating;
+            int missionIndex = IndexOfMission(_mission.Variant);
+            if (missionIndex >= 0) _sessionCompletedMissions[missionIndex] = true;
+            SessionUniqueMissionsCompleted = CountCompletedMissions();
+            _sessionRanks.Add($"{_mission.Name}: {EndRank}");
+            UpdateSessionSummaryLabel();
+        }
+
+        private void UpdateSessionSummaryLabel()
+        {
+            SessionSummaryLabel = $"Session Summary: {SessionMissionsPlayed} missions played, {SessionTotalScore} total score, {SessionStarsEarned} stars, {SessionUniqueMissionsCompleted}/3 missions finished.";
+            SessionRanksEarnedLabel = _sessionRanks.Count == 0 ? "Ranks: none yet." : $"Ranks: {string.Join(" | ", _sessionRanks)}";
+        }
+
+        private int CountCompletedMissions()
+        {
+            int count = 0;
+            for (int i = 0; i < _sessionCompletedMissions.Length; i++)
+            {
+                if (_sessionCompletedMissions[i]) count++;
+            }
+            return count;
+        }
+
+        private int NextUnfinishedMissionIndex(int current)
+        {
+            if (current < 0) current = _selectedMissionIndex;
+            for (int offset = 1; offset <= MissionOrder.Length; offset++)
+            {
+                int candidate = (current + offset) % MissionOrder.Length;
+                if (!_sessionCompletedMissions[candidate]) return candidate;
+            }
+            return (current + 1) % MissionOrder.Length;
+        }
+
+        private static int IndexOfMission(MissionVariant variant)
+        {
+            for (int i = 0; i < MissionOrder.Length; i++)
+            {
+                if (MissionOrder[i] == variant) return i;
+            }
+            return 0;
+        }
+
+        private void DisableDogInputs()
+        {
+            if (_inputs == null) return;
+            for (int i = 0; i < _inputs.Length; i++)
+            {
+                if (_inputs[i] != null) _inputs[i].enabled = false;
+            }
+        }
+
+        private void SetMissionObjectsActive(bool active)
+        {
+            if (SquirrelObject != null) SquirrelObject.SetActive(active && _mission != null && _mission.UsesSquirrel);
+            if (PredatorObject != null) PredatorObject.SetActive(active && _mission != null && _mission.RequiresPredator);
+            if (RopeObject != null) RopeObject.SetActive(active && _mission != null && _mission.RequiresTug);
         }
 
         private static MissionDefinition BuildMissionDefinition(MissionVariant variant)

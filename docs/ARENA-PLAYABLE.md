@@ -1,18 +1,24 @@
 # Arena Playable — Mission Variety Spike
 
-`unity/CheddarAndCocoa/Assets/Scenes/ArenaScene.unity` is now a small co-op vertical slice instead of a flat treat loop. The scene still builds itself from `ArenaBootstrap`, but the arena can run multiple small mission variants through one lightweight mission definition path. The default round remains the backyard rescue mission: Cheddar and Cocoa must recover breakfast/weenies, stop a squirrel from stealing too much food, complete a shared rope tug, and stand together against one predator scare before time runs out.
+`unity/CheddarAndCocoa/Assets/Scenes/ArenaScene.unity` is now a small co-op vertical slice instead of a flat treat loop. The scene still builds itself from `ArenaBootstrap`, but the arena can run multiple small mission variants through one lightweight mission definition path. A cold start now opens a generated in-scene mission select so a new player can choose Backyard Rescue, Snack Heist, or Sock Panic without a developer explaining debug keys.
 
 For current global character art direction, read `docs/ART-DIRECTION.md`. Backyard Mission is the
 playable proof of that direction, not the only place the direction applies.
 
+## Cold-start flow
+
+1. Open `ArenaScene` and press Play.
+2. The mission picker appears immediately. Use **Up/Down** or gamepad **D-pad** to highlight a mission, then press **Enter**, **Space**, gamepad **Start**, or gamepad **South** to start. Keyboard **1 / 2 / 3** also starts Backyard Rescue, Snack Heist, or Sock Panic directly.
+3. Read the one-line mission briefing at the start of the round. The HUD keeps the current mission name, objective, score, timer, controls, modifier, and latest score event visible during play.
+4. When a mission ends, choose **Replay**, **Next Mission**, or **Mission Select** with the on-screen buttons, keyboard, or gamepad:
+   - **R / Enter / Start / South** replays the current mission.
+   - **N / Right Arrow / Right Shoulder / D-pad Right** starts the next unfinished mission.
+   - **M / Escape / East button / D-pad Left** returns to mission select.
+5. After all three mission variants have ended at least once in the session, the Next action opens a simple **Session Summary** with missions played, total score, stars, and ranks earned.
+
+No progress is saved; the session loop is intentionally local and lightweight.
+
 ## Mission variants
-
-Mission selection is intentionally simple for the spike:
-
-- Press **1** for **Backyard Rescue**.
-- Press **2** for **Snack Heist**.
-- Press **3** for **Sock Panic**.
-- PlayMode tests can also call `GameManager.StartMission(GameManager.MissionVariant...)`.
 
 ### Backyard Rescue
 
@@ -60,7 +66,7 @@ The round can end in **LevelClear** or **GameOver**, and either result can be re
 
 The opening HUD banner says: **Cheddar + Cocoa must protect the weenies together.** For the first few seconds, the squirrel is labeled **Squirrel: WAITING**, the predator is **Predator: OFFSCREEN**, and the rope is **Rope/Tug - BOTH DOGS**. This is intentional: players should first read their spawn, dog identity, first weenie arrows, and shared fantasy before the first threat competes for attention.
 
-The replay loop is intentionally simple: players see current score, the latest score swing, a short reason line, and a replay prompt. Score deltas now appear both as a brief HUD pop and as small world text near the action so cause/effect is easier to read during chaos. The exposed deterministic state is `Score`, `LastScoreDelta`, `LastScoreEventLabel`, `LastScorePopLabel`, `ScorePopVisible`, `ObjectiveLabel`, `Outcome`, `EndRank`, `EndSummaryLabel`, `EndReasonLabel`, `ReplayPromptVisible`, `LastJuiceFeedback`, and `LastJuiceLabel`.
+The end loop is intentionally simple: players see current score, the latest score swing, a short reason line, session totals, and Replay / Next Mission / Mission Select actions. Score deltas now appear both as a brief HUD pop and as small world text near the action so cause/effect is easier to read during chaos. The exposed deterministic state includes `CurrentFlow`, `MissionSelectVisible`, `SelectedMissionVariant`, `Score`, `LastScoreDelta`, `LastScoreEventLabel`, `LastScorePopLabel`, `ScorePopVisible`, `ObjectiveLabel`, `Outcome`, `EndRank`, `EndSummaryLabel`, `EndReasonLabel`, `ReplayPromptVisible`, `EndReplayAvailable`, `EndNextMissionAvailable`, `EndMissionSelectAvailable`, `SessionMissionsPlayed`, `SessionTotalScore`, `SessionStarsEarned`, `SessionUniqueMissionsCompleted`, `SessionSummaryLabel`, `LastJuiceFeedback`, and `LastJuiceLabel`.
 
 ## Controls
 
@@ -69,9 +75,12 @@ The replay loop is intentionally simple: players see current score, the latest s
 | P1 | Cheddar | Gamepad slot 0 | WASD | Space / X button | Y button |
 | P2 | Cocoa | Gamepad slot 1 | Arrow keys | Enter / Right Shift / X button | Y button |
 
-After LevelClear or GameOver, replay with **R**, **Enter**, gamepad **Start**, gamepad **South button**, or the on-screen **Replay** button.
+Mission flow controls:
 
-During a run, keyboard **1 / 2 / 3** restarts the arena into Backyard Rescue, Snack Heist, or Sock Panic for quick manual comparison. This is a spike/debug selection path, not a campaign menu.
+- Mission select: **Up/Down** or gamepad **D-pad** changes mission; **Enter**, **Space**, gamepad **Start**, or gamepad **South** starts; **1 / 2 / 3** starts a mission directly.
+- During a run: keyboard **1 / 2 / 3** still restarts the arena into Backyard Rescue, Snack Heist, or Sock Panic for quick manual comparison.
+- End screen: **R / Enter / Start / South** replays; **N / Right Arrow / Right Shoulder / D-pad Right** advances; **M / Escape / East / D-pad Left** returns to mission select.
+- Session Summary: **Enter**, **Space**, **Start**, **South**, **M**, or **Escape** returns to mission select.
 
 Cheddar is the chaos puppy and Cocoa is the steadier veteran. The placeholder sprites are still simple generated shapes, but the dogs now have a reusable global identity direction proven in the arena: both read as long, low miniature dachshunds with visible head, long snout, floppy ear, tiny feet, tail, collar, and expression markers. Cheddar reads as **CHEDDAR CHAOS PUP** with a golden body, red collar, bright chaos tuft/flash, faster wag, and more explosive bark/proud motion. Cocoa reads as **COCOA SPOT QUEEN** with a chocolate body, teal collar, cream chest, spot markings, steadier expression, and tiny queen marker. Idle, run, bark, tug, stunned, rescued, proud, and sad states are exposed through body squash/rotation, tail/head/ear motion, color-shifted labels, and deterministic PlayMode assertions.
 
@@ -153,9 +162,21 @@ Ranks are deterministic and intentionally funny:
 - **Snack Survivors** — any run with `350+` score that does not hit the higher clear ranks.
 - **Needs More Bark** — low-score clear or fail.
 
-LevelClear displays a 1-3 star rating based on final score, the center banner reads **BACKYARD SAVED! [rank]**, and both dogs hold a **PROUD!** pose. GameOver displays **MISSION FAILED! [rank]**, applies the game-over penalty, and both dogs hold a **SAD FLOP** pose. The end card includes `Outcome: Score - Rank`, one short funny `EndReasonLabel`, the last score swing, stars, and **Press R / Enter / Start to replay the weenie rescue**.
+LevelClear displays a 1-3 star rating based on final score, the center banner reads **BACKYARD SAVED! [rank]**, and both dogs hold a **PROUD!** pose. GameOver displays **MISSION FAILED! [rank]**, applies the game-over penalty, and both dogs hold a **SAD FLOP** pose. The end card includes `Outcome: Score - Rank`, one short funny `EndReasonLabel`, the last score swing, stars, session totals, and Replay / Next Mission / Mission Select actions.
 
-Manual score/replay readability check: during both clear and fail, confirm the final dog poses are still visible behind/around the end card, the score swing label remains signed and cause-first, the funny rank and reason line are readable, and the replay prompt clearly refers back to the weenie rescue.
+Manual score/replay readability check: during both clear and fail, confirm the final dog poses are still visible behind/around the end card, the score swing label remains signed and cause-first, the funny rank and reason line are readable, and Replay / Next Mission / Mission Select are all usable without a mouse.
+
+## Non-developer playtest script
+
+Use this when handing the prototype to someone who has not seen the code:
+
+1. Start `ArenaScene` and say nothing. Confirm the player can identify that the first screen is mission select and can start a mission using keyboard or controller only.
+2. Ask them to read the controls line and mission briefing out loud. Confirm they can answer: how do I move, bark, tug/rescue, replay, and go next?
+3. Have them play **Backyard Rescue** until either clear or fail. Confirm they understand the current mission name, objective label, dog identities, score pop, and end choices.
+4. On the end screen, ask them to choose **Next Mission** without using a mouse. Confirm the next unfinished mission starts and shows its own briefing.
+5. Have them finish **Snack Heist** and **Sock Panic** by any outcome. Confirm the session totals increment after each ended mission.
+6. After all three missions have ended, choose **Next / Session Summary** and confirm missions played, total score, stars, and ranks are readable.
+7. Return to mission select and replay any mission. Confirm session totals are not persistent across stopping Play mode.
 
 ## Two-player playtest script
 
@@ -184,13 +205,13 @@ Each restart deterministically selects one seeded modifier for tests/HUD:
 ## Known limitations
 
 - All mission actors use placeholder sprites/text labels generated at runtime; there are no external art assets yet.
-- Mission selection is keyboard/code/test driven only; there is no authored menu or campaign flow.
+- Mission select, end actions, and session summary are generated IMGUI placeholders, not authored production UI.
 - Snack Heist and Sock Panic are architecture proofs inside the existing arena, not finished level designs. They reuse the same camera, spawn bounds, scoring HUD, restart flow, and generated placeholder prop system.
 - Dog identity art, pose labels, collars, expression markers, prop silhouettes, and objective arrows are generated placeholders. They are intentionally readable and easy to delete once authored sprites/animation exist.
 - The squirrel and predator use intentionally simple movement/state rules so the PlayMode tests remain deterministic.
 - The intro, bark, squirrel, predator, tug, clear, fail, score-pop, and objective feedback are still text/scale/audio-placeholder driven; they are designed to be replaced by authored animation/SFX later.
 - `ForceSquirrelStealAttempt()` exists as a deterministic PlayMode test hook and is not intended as a player-facing control.
-- Scoring is intentionally flat and local-only. There is no save file, leaderboard, unlock economy, or persistent progression yet.
+- Scoring is intentionally flat and session-local only. There is no save file, leaderboard, unlock economy, or persistent progression yet.
 - The end rank is based only on final score and clear/fail state; it does not yet account for style, dog-specific contributions, or advanced co-op medals.
 - Tug is proximity/progress based, not a full physics rope.
 - Predator targeting and modifier selection are seeded but still prototype-simple.
@@ -198,6 +219,6 @@ Each restart deterministically selects one seeded modifier for tests/HUD:
 
 ## Test coverage
 
-`unity/Assets/Tests/PlayMode/ArenaGameLoopPlayModeTests.cs` loads ArenaScene and verifies dogs, mission state, intro prompt/banner, deterministic objective labels, delayed first squirrel steal window, initial score state, item recovery scoring, HUD score-pop state, world score/miss/success pops, squirrel steal/scare labels and score events, solo/united bark feedback and scoring, bark burst state, predator defense scoring, failed predator hit and rescue scoring, tug waiting/together feedback and scoring, LevelClear score/rank/summary/reason, GameOver score/rank/summary/reason, replay prompt visibility, restart reset state, exposed modifier state, dog identity labels, dog pose labels, movement intent labels/arrows, objective-arrow labels, and the generated arena audio listener.
+`unity/Assets/Tests/PlayMode/ArenaGameLoopPlayModeTests.cs` loads ArenaScene and verifies mission select initialization, starting each mission through the new flow, end-screen Replay / Next Mission / Mission Select availability, session totals across multiple missions, session summary after all three variants have ended, dogs, mission state, intro prompt/banner, deterministic objective labels, delayed first squirrel steal window, initial score state, item recovery scoring, HUD score-pop state, world score/miss/success pops, squirrel steal/scare labels and score events, solo/united bark feedback and scoring, bark burst state, predator defense scoring, failed predator hit and rescue scoring, tug waiting/together feedback and scoring, LevelClear score/rank/summary/reason, GameOver score/rank/summary/reason, replay prompt visibility, restart reset state, exposed modifier state, dog identity labels, dog pose labels, movement intent labels/arrows, objective-arrow labels, and the generated arena audio listener.
 
 The same test file also verifies **Snack Heist** and **Sock Panic** can initialize, update objective labels, score unique mission events, reach clear/fail outcomes, and expose replay state. `ControllerCoopPlayModeTests` still verifies the baseline two-pad movement/bark proof and now clears scene objects before constructing its own bootstrap so it does not accidentally inspect leftover ArenaScene dogs from previous tests.

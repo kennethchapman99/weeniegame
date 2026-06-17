@@ -29,6 +29,19 @@ namespace CheddarAndCocoa.Tests
 
             var game = Object.FindFirstObjectByType<GameManager>();
             Assert.IsNotNull(game);
+            Assert.IsTrue(game.MissionSelectVisible);
+            Assert.AreEqual(GameManager.FlowState.MissionSelect, game.CurrentFlow);
+            Assert.AreEqual(3, game.MissionSelectOptionCount);
+            Assert.AreEqual(GameManager.MissionVariant.BackyardRescue, game.SelectedMissionVariant);
+            Assert.AreEqual("Backyard Rescue", game.SelectedMissionName);
+            Assert.That(game.ObjectiveLabel, Does.Contain("Choose a mission"));
+            Assert.AreEqual(0, game.SessionMissionsPlayed);
+            Assert.AreEqual(0, game.SessionTotalScore);
+
+            game.StartSelectedMission();
+            yield return null;
+
+            Assert.AreEqual(GameManager.FlowState.Playing, game.CurrentFlow);
             Assert.AreEqual(GameManager.State.Playing, game.Phase);
             Assert.IsNotEmpty(game.ActiveModifierLabel);
             Assert.IsNotNull(game.SquirrelObject);
@@ -273,6 +286,17 @@ namespace CheddarAndCocoa.Tests
             Assert.GreaterOrEqual(game.StarRating, 1);
             Assert.AreEqual(GameManager.MissionOutcome.Clear, game.Outcome);
             Assert.IsTrue(game.ReplayPromptVisible);
+            Assert.IsTrue(game.EndScreenVisible);
+            Assert.IsTrue(game.EndReplayAvailable);
+            Assert.IsTrue(game.EndNextMissionAvailable);
+            Assert.IsTrue(game.EndMissionSelectAvailable);
+            Assert.AreEqual("Replay", game.EndReplayActionLabel);
+            Assert.AreEqual("Next Mission", game.EndNextActionLabel);
+            Assert.AreEqual("Mission Select", game.EndMissionSelectActionLabel);
+            Assert.AreEqual(1, game.SessionMissionsPlayed);
+            Assert.AreEqual(game.Score, game.SessionTotalScore);
+            Assert.AreEqual(game.StarRating, game.SessionStarsEarned);
+            Assert.AreEqual(1, game.SessionUniqueMissionsCompleted);
             Assert.That(game.ReplayPromptLabel, Does.Contain("replay"));
             Assert.AreEqual("Pawfect Yard", game.EndRank);
             Assert.That(game.EndSummaryLabel, Does.Contain("Clear"));
@@ -298,6 +322,9 @@ namespace CheddarAndCocoa.Tests
             Assert.That(game.EndReasonLabel, Does.Contain("Needs more bark"));
             Assert.That(game.ObjectiveLabel, Does.Contain("Mission failed"));
             Assert.IsTrue(game.ReplayPromptVisible);
+            Assert.IsTrue(game.EndReplayAvailable);
+            Assert.IsTrue(game.EndNextMissionAvailable);
+            Assert.IsTrue(game.EndMissionSelectAvailable);
             Assert.That(game.ReplayPromptLabel, Does.Contain("replay"));
             Assert.AreEqual(GameManager.FeedbackKind.GameOver, game.LastFeedback);
             Assert.That(game.MissionBanner, Does.Contain("MISSION FAILED"));
@@ -305,6 +332,7 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(DogReadabilityFeedback.Pose.Sad, cheddarFeedback.CurrentPose);
             Assert.AreEqual(DogReadabilityFeedback.Pose.Sad, cocoaFeedback.CurrentPose);
             game.Restart();
+            Assert.AreEqual(GameManager.FlowState.Playing, game.CurrentFlow);
             Assert.AreEqual(GameManager.State.Playing, game.Phase);
             Assert.AreEqual(0, game.Score);
             Assert.AreEqual(GameManager.MissionOutcome.InProgress, game.Outcome);
@@ -312,6 +340,103 @@ namespace CheddarAndCocoa.Tests
             Assert.IsEmpty(game.EndSummaryLabel);
             Assert.IsEmpty(game.EndReasonLabel);
             Assert.That(game.ObjectiveLabel, Does.Contain("Save weenies"));
+        }
+
+        [UnityTest]
+        public IEnumerator MissionFlow_Select_StartsEveryMission_AndEndActionsNavigate()
+        {
+            yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
+            yield return null;
+            yield return null;
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            Assert.IsNotNull(game);
+            Assert.IsTrue(game.MissionSelectVisible);
+
+            game.SelectMission(GameManager.MissionVariant.BackyardRescue);
+            game.StartSelectedMission();
+            yield return null;
+            Assert.AreEqual(GameManager.MissionVariant.BackyardRescue, game.ActiveMissionVariant);
+            Assert.AreEqual(GameManager.FlowState.Playing, game.CurrentFlow);
+            game.ReturnToMissionSelect();
+            Assert.IsTrue(game.MissionSelectVisible);
+
+            game.SelectMission(GameManager.MissionVariant.SnackHeist);
+            game.StartSelectedMission();
+            yield return null;
+            Assert.AreEqual(GameManager.MissionVariant.SnackHeist, game.ActiveMissionVariant);
+            Assert.That(game.ObjectiveLabel, Does.Contain("Stash snacks"));
+            game.ForceGameOver();
+            Assert.IsTrue(game.EndScreenVisible);
+            Assert.AreEqual("Replay", game.EndReplayActionLabel);
+            Assert.AreEqual("Next Mission", game.EndNextActionLabel);
+            Assert.AreEqual("Mission Select", game.EndMissionSelectActionLabel);
+
+            game.ChooseNextMission();
+            yield return null;
+            Assert.AreEqual(GameManager.FlowState.Playing, game.CurrentFlow);
+            Assert.AreEqual(GameManager.MissionVariant.SockPanic, game.ActiveMissionVariant);
+
+            game.ReturnToMissionSelect();
+            game.SelectMission(GameManager.MissionVariant.SockPanic);
+            game.StartSelectedMission();
+            yield return null;
+            Assert.AreEqual(GameManager.MissionVariant.SockPanic, game.ActiveMissionVariant);
+            Assert.That(game.ObjectiveLabel, Does.Contain("Return socks"));
+        }
+
+        [UnityTest]
+        public IEnumerator MissionFlow_SessionTotals_UpdateAcrossTwoMissions()
+        {
+            yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
+            yield return null;
+            yield return null;
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            var cheddar = FindDog(DogId.Cheddar);
+            Assert.IsNotNull(game);
+            Assert.IsNotNull(cheddar);
+
+            game.SelectMission(GameManager.MissionVariant.SnackHeist);
+            game.StartSelectedMission();
+            yield return null;
+            yield return ClearCollectOnlyMission(cheddar);
+
+            int firstScore = game.Score;
+            int firstStars = game.StarRating;
+            Assert.AreEqual(GameManager.MissionOutcome.Clear, game.Outcome);
+            Assert.AreEqual(1, game.SessionMissionsPlayed);
+            Assert.AreEqual(firstScore, game.SessionTotalScore);
+            Assert.AreEqual(firstStars, game.SessionStarsEarned);
+
+            game.ChooseNextMission();
+            yield return null;
+            Assert.AreEqual(GameManager.MissionVariant.SockPanic, game.ActiveMissionVariant);
+            yield return ClearCollectOnlyMission(cheddar);
+
+            int secondScore = game.Score;
+            int secondStars = game.StarRating;
+            Assert.AreEqual(GameManager.MissionOutcome.Clear, game.Outcome);
+            Assert.AreEqual(2, game.SessionMissionsPlayed);
+            Assert.AreEqual(firstScore + secondScore, game.SessionTotalScore);
+            Assert.AreEqual(firstStars + secondStars, game.SessionStarsEarned);
+            Assert.AreEqual(2, game.SessionUniqueMissionsCompleted);
+            Assert.That(game.SessionSummaryLabel, Does.Contain("2 missions played"));
+            Assert.That(game.SessionRanksEarnedLabel, Does.Contain("Snack Heist"));
+            Assert.That(game.SessionRanksEarnedLabel, Does.Contain("Sock Panic"));
+
+            game.ChooseNextMission();
+            yield return null;
+            Assert.AreEqual(GameManager.MissionVariant.BackyardRescue, game.ActiveMissionVariant);
+            game.ForceGameOver();
+            Assert.AreEqual(3, game.SessionUniqueMissionsCompleted);
+            Assert.IsTrue(game.SessionSummaryReady);
+            Assert.AreEqual("Session Summary", game.EndNextActionLabel);
+
+            game.ChooseNextMission();
+            Assert.IsTrue(game.SessionSummaryVisible);
+            Assert.That(game.SessionSummaryLabel, Does.Contain("3 missions played"));
+            Assert.That(game.SessionRanksEarnedLabel, Does.Contain("Backyard Rescue"));
         }
 
         [UnityTest]
@@ -326,6 +451,7 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(game);
             Assert.IsNotNull(cheddar);
 
+            Assert.IsTrue(game.MissionSelectVisible);
             game.StartMission(GameManager.MissionVariant.SnackHeist);
             yield return null;
 
@@ -384,6 +510,7 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(game);
             Assert.IsNotNull(cocoa);
 
+            Assert.IsTrue(game.MissionSelectVisible);
             game.StartMission(GameManager.MissionVariant.SockPanic);
             yield return null;
 
@@ -438,6 +565,17 @@ namespace CheddarAndCocoa.Tests
             var treats = Object.FindObjectsByType<Treat>(FindObjectsSortMode.None);
             Assert.Greater(treats.Length, 0);
             return treats[0];
+        }
+
+        private static IEnumerator ClearCollectOnlyMission(DogController dog)
+        {
+            var game = Object.FindFirstObjectByType<GameManager>();
+            Assert.IsNotNull(game);
+            while (game.BreakfastRecovered < game.BreakfastGoal)
+            {
+                FirstTreat().CollectBy(dog);
+                yield return null;
+            }
         }
 
         private static void ForceOneSquirrelSteal(GameManager game)
