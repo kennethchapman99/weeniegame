@@ -5,6 +5,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using CheddarAndCocoa.Dogs;
 using CheddarAndCocoa.Game;
+using CheddarAndCocoa.CameraRig;
 
 namespace CheddarAndCocoa.Tests
 {
@@ -25,6 +26,13 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(2f, tuning.RescueBarkRange);
             Assert.AreEqual(100, tuning.UnitedBarkScore);
             Assert.AreEqual(500, tuning.ClearScore);
+            Assert.AreEqual(6.8f, tuning.CameraMinOrthoSize);
+            Assert.AreEqual(8.4f, tuning.CameraMaxOrthoSize);
+            Assert.AreEqual(3.0f, tuning.CameraHorizontalMargin);
+            Assert.AreEqual(2.2f, tuning.CameraVerticalMargin);
+            Assert.AreEqual(tuning.SingleBarkSquirrelRange, tuning.SquirrelRangeIndicatorRadius);
+            Assert.AreEqual(tuning.RescueBarkRange, tuning.RescueRangeIndicatorRadius);
+            Assert.AreEqual(tuning.TugTogetherDistance, tuning.TugRangeIndicatorRadius);
 
             AssertMissionBalance(GameManager.MissionVariant.BackyardRescue, tuning, expectSquirrel: true, expectPredator: true, expectTug: true);
             AssertMissionBalance(GameManager.MissionVariant.SnackHeist, tuning, expectSquirrel: true, expectPredator: false, expectTug: false);
@@ -46,6 +54,105 @@ namespace CheddarAndCocoa.Tests
             Assert.That(ArenaArtCatalog.CollectiblePartNames(GameManager.MissionVariant.SockPanic), Does.Contain("SockStripeA"));
             Assert.AreEqual("BarkBurst", ArenaArtCatalog.BarkFeedback.BurstName);
             Assert.AreEqual("ObjectiveArrowLabel", ArenaArtCatalog.ObjectiveArrowLabel.Name);
+        }
+
+        [UnityTest]
+        public IEnumerator ArenaMovementCameraAndRangeFeel_AreConfigured_AndStateDriven()
+        {
+            yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
+            yield return null;
+            yield return null;
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            var cheddar = FindDog(DogId.Cheddar);
+            var cocoa = FindDog(DogId.Cocoa);
+            Assert.IsNotNull(game);
+            Assert.IsNotNull(cheddar);
+            Assert.IsNotNull(cocoa);
+
+            game.StartSelectedMission();
+            yield return null;
+
+            Assert.Greater(cheddar.MaxSpeedUnitsPerSecond, cocoa.MaxSpeedUnitsPerSecond);
+            Assert.Greater(cheddar.AccelerationUnitsPerSecond, 25f);
+            Assert.Greater(cocoa.DecelerationUnitsPerSecond, cheddar.DecelerationUnitsPerSecond);
+            Assert.Greater(cocoa.TurnResponsivenessUnitsPerSecond, cheddar.TurnResponsivenessUnitsPerSecond);
+            Assert.AreEqual(0.08f, cheddar.StopSpeed);
+
+            foreach (var input in Object.FindObjectsByType<CheddarAndCocoa.Input.GamepadPlayerInput>(FindObjectsSortMode.None))
+                input.enabled = false;
+
+            Vector2 cheddarStart = cheddar.transform.position;
+            Vector2 cocoaStart = cocoa.transform.position;
+            for (int i = 0; i < 20; i++)
+            {
+                cheddar.Tick(new DogController.MoveIntent { move = Vector2.right }, Time.deltaTime);
+                cocoa.Tick(new DogController.MoveIntent { move = Vector2.left }, Time.deltaTime);
+                yield return new WaitForFixedUpdate();
+            }
+
+            Assert.Greater(cheddar.transform.position.x - cheddarStart.x, 0.2f);
+            Assert.Less(cocoa.transform.position.x - cocoaStart.x, -0.2f);
+            Assert.LessOrEqual(cheddar.CurrentVelocity.magnitude, cheddar.MaxSpeedUnitsPerSecond + 0.1f);
+            Assert.LessOrEqual(cocoa.CurrentVelocity.magnitude, cocoa.MaxSpeedUnitsPerSecond + 0.1f);
+            Assert.AreNotEqual(Mathf.Sign(cheddar.transform.position.x - cheddarStart.x),
+                Mathf.Sign(cocoa.transform.position.x - cocoaStart.x));
+
+            for (int i = 0; i < 20; i++)
+            {
+                cheddar.Tick(new DogController.MoveIntent { move = Vector2.zero }, Time.deltaTime);
+                cocoa.Tick(new DogController.MoveIntent { move = Vector2.zero }, Time.deltaTime);
+                yield return new WaitForFixedUpdate();
+            }
+            Assert.Less(cheddar.CurrentVelocity.magnitude, 0.12f);
+            Assert.Less(cocoa.CurrentVelocity.magnitude, 0.12f);
+
+            var cameraRig = Camera.main.GetComponent<SharedCameraController>();
+            Assert.IsNotNull(cameraRig);
+            Assert.AreEqual(game.Tuning.CameraMinOrthoSize, cameraRig.MinOrthoSize);
+            Assert.AreEqual(game.Tuning.CameraMaxOrthoSize, cameraRig.MaxOrthoSize);
+            Assert.AreEqual(game.Tuning.CameraHorizontalMargin, cameraRig.HorizontalMargin);
+            Assert.AreEqual(game.Tuning.CameraVerticalMargin, cameraRig.VerticalMargin);
+            Assert.IsFalse(cameraRig.IsClampedToBounds);
+
+            foreach (var indicator in game.InteractionRangeIndicators)
+            {
+                if (indicator != null) Assert.IsFalse(indicator.IsVisible);
+            }
+
+            var target = FirstTreat();
+            game.SquirrelObject.transform.position = target.transform.position + Vector3.right;
+            game.ForceSquirrelStealAttempt();
+            yield return null;
+            var squirrelRange = game.SquirrelObject.GetComponent<InteractionRangeIndicator>();
+            Assert.IsTrue(squirrelRange.IsVisible);
+            Assert.AreEqual("BARK RANGE", squirrelRange.Label);
+            Assert.AreEqual(game.Tuning.SquirrelRangeIndicatorRadius, squirrelRange.Radius);
+
+            for (int i = 0; i < 3; i++)
+            {
+                FirstTreat().CollectBy(cheddar);
+                yield return null;
+            }
+            yield return null;
+            var tugRange = game.RopeObject.GetComponent<InteractionRangeIndicator>();
+            Assert.IsTrue(tugRange.IsVisible);
+            Assert.AreEqual("BOTH DOGS", tugRange.Label);
+            Assert.AreEqual(game.Tuning.TugRangeIndicatorRadius, tugRange.Radius);
+
+            game.ForcePredatorAttack();
+            yield return null;
+            Assert.IsTrue(game.AnyDogGrabbed);
+            bool rescueRangeVisible = false;
+            foreach (var indicator in game.InteractionRangeIndicators)
+            {
+                if (indicator != null && indicator.IsVisible && indicator.Label == "RESCUE BARK")
+                {
+                    Assert.AreEqual(game.Tuning.RescueRangeIndicatorRadius, indicator.Radius);
+                    rescueRangeVisible = true;
+                }
+            }
+            Assert.IsTrue(rescueRangeVisible, "A grabbed dog should show the rescue bark range.");
         }
 
         [UnityTest]

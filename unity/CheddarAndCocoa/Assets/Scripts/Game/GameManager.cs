@@ -195,11 +195,13 @@ namespace CheddarAndCocoa.Game
         public GameObject RopeObject { get; private set; }
         public DogReadabilityFeedback[] DogFeedback { get; private set; }
         public ObjectiveArrowFeedback[] ObjectiveArrows { get; private set; }
+        public InteractionRangeIndicator[] InteractionRangeIndicators { get; private set; }
 
         private DogController[] _dogs;
         private GamepadPlayerInput[] _inputs;
         private Vector2[] _dogStarts;
         private Sprite _sprite;
+        private Sprite _rangeSprite;
         private Rect _bounds;
         private System.Random _rng;
         private Transform _treatRoot;
@@ -230,17 +232,19 @@ namespace CheddarAndCocoa.Game
         private bool _roundResultRecorded;
         private string _lastLoggedObjective = string.Empty;
 
-        public void Init(DogController[] dogs, GamepadPlayerInput[] inputs, Sprite treatSprite, Rect bounds, int seed)
+        public void Init(DogController[] dogs, GamepadPlayerInput[] inputs, Sprite treatSprite, Sprite rangeSprite, Rect bounds, int seed)
         {
             _dogs = dogs;
             _inputs = inputs;
             _sprite = treatSprite;
+            _rangeSprite = rangeSprite;
             _bounds = bounds;
             _rng = new System.Random(seed);
             _dogStarts = new Vector2[dogs.Length];
             _lastBarks = new float[dogs.Length];
             DogFeedback = new DogReadabilityFeedback[dogs.Length];
             ObjectiveArrows = new ObjectiveArrowFeedback[dogs.Length];
+            InteractionRangeIndicators = new InteractionRangeIndicator[dogs.Length + 3];
 
             for (int i = 0; i < dogs.Length; i++)
             {
@@ -251,6 +255,8 @@ namespace CheddarAndCocoa.Game
                 dogs[i].TryGetComponent(out ObjectiveArrowFeedback objectiveArrow);
                 DogFeedback[i] = dogFeedback;
                 ObjectiveArrows[i] = objectiveArrow;
+                InteractionRangeIndicators[i] = dogs[i].gameObject.AddComponent<InteractionRangeIndicator>();
+                InteractionRangeIndicators[i].Init(_rangeSprite, new Color(0.6f, 1f, 0.75f, 0.42f), "RESCUE BARK");
             }
 
             _playtestLog.Clear();
@@ -259,6 +265,7 @@ namespace CheddarAndCocoa.Game
             _treatRoot = new GameObject(_mission.ItemRootName).transform;
             BuildAudio();
             BuildMissionObjects();
+            HideInteractionRanges();
             ShowMissionSelect();
         }
 
@@ -360,6 +367,7 @@ namespace CheddarAndCocoa.Game
             LastFeedback = FeedbackKind.Intro;
             DisableDogInputs();
             HideObjectiveArrows();
+            HideInteractionRanges();
             SetMissionObjectsActive(false);
             LogPlaytestEvent("SessionSummary", SessionSummaryLabel);
             LogObjectiveIfChanged();
@@ -500,6 +508,7 @@ namespace CheddarAndCocoa.Game
             TickTugProximity();
             CheckClear();
             UpdateObjectiveArrows();
+            UpdateInteractionRanges();
             LogObjectiveIfChanged();
         }
 
@@ -862,6 +871,7 @@ namespace CheddarAndCocoa.Game
             }
 
             HideObjectiveArrows();
+            HideInteractionRanges();
             RecordSessionResult();
             LogPlaytestEvent(clear ? "MissionClear" : "MissionFail", EndSummaryLabel);
             LogObjectiveIfChanged();
@@ -1068,6 +1078,7 @@ namespace CheddarAndCocoa.Game
             ClearTreats();
             DisableDogInputs();
             HideObjectiveArrows();
+            HideInteractionRanges();
             SetMissionObjectsActive(false);
 
             if (_dogs != null)
@@ -1470,6 +1481,46 @@ namespace CheddarAndCocoa.Game
             }
         }
 
+        private void UpdateInteractionRanges()
+        {
+            if (InteractionRangeIndicators == null) return;
+
+            HideInteractionRanges();
+
+            if (!MissionActive()) return;
+
+            if (_mission.UsesSquirrel && _squirrelTarget != null && SquirrelObject != null)
+            {
+                var squirrelRange = SquirrelObject.GetComponent<InteractionRangeIndicator>();
+                if (squirrelRange != null)
+                    squirrelRange.Show(_tuning.SquirrelRangeIndicatorRadius, "BARK RANGE", new Color(1f, 0.92f, 0.35f, 0.36f));
+            }
+
+            if (_mission.RequiresTug && !TugComplete && RopeObject != null &&
+                BreakfastRecovered >= Mathf.Max(2, recoveryGoal / 2))
+            {
+                var tugRange = RopeObject.GetComponent<InteractionRangeIndicator>();
+                if (tugRange != null)
+                    tugRange.Show(_tuning.TugRangeIndicatorRadius, "BOTH DOGS", new Color(1f, 0.82f, 0.22f, 0.34f));
+            }
+
+            if (_grabbedDog >= 0 && _grabbedDog < _dogs.Length)
+            {
+                var rescueRange = InteractionRangeIndicators[_grabbedDog];
+                if (rescueRange != null)
+                    rescueRange.Show(_tuning.RescueRangeIndicatorRadius, "RESCUE BARK", new Color(0.55f, 1f, 0.7f, 0.42f));
+            }
+        }
+
+        private void HideInteractionRanges()
+        {
+            if (InteractionRangeIndicators == null) return;
+            foreach (var indicator in InteractionRangeIndicators)
+            {
+                if (indicator != null) indicator.Hide();
+            }
+        }
+
         private void SpawnTreat()
         {
             const float margin = 1.2f;
@@ -1522,6 +1573,13 @@ namespace CheddarAndCocoa.Game
             SquirrelObject = MakeActor(ArenaArtCatalog.Actor(ArenaArtCatalog.ActorKind.Squirrel));
             PredatorObject = MakeActor(ArenaArtCatalog.Actor(ArenaArtCatalog.ActorKind.Predator));
             RopeObject = MakeActor(ArenaArtCatalog.Actor(ArenaArtCatalog.ActorKind.Rope));
+            if (InteractionRangeIndicators != null)
+            {
+                int offset = _dogs != null ? _dogs.Length : 0;
+                if (offset < InteractionRangeIndicators.Length) InteractionRangeIndicators[offset] = SquirrelObject.GetComponent<InteractionRangeIndicator>();
+                if (offset + 1 < InteractionRangeIndicators.Length) InteractionRangeIndicators[offset + 1] = PredatorObject.GetComponent<InteractionRangeIndicator>();
+                if (offset + 2 < InteractionRangeIndicators.Length) InteractionRangeIndicators[offset + 2] = RopeObject.GetComponent<InteractionRangeIndicator>();
+            }
         }
 
         private GameObject MakeActor(ActorVisualSlot art)
@@ -1537,6 +1595,8 @@ namespace CheddarAndCocoa.Game
             BuildActorArt(go, art, sr);
             AddWorldLabel(go, art.Label, art.LabelOffset, 24, Color.white);
             go.AddComponent<MissionActorFeedback>().Init(sr, art.Label, art.PulseAmount, art.RotationPerSecond);
+            var range = go.AddComponent<InteractionRangeIndicator>();
+            range.Init(_rangeSprite, new Color(1f, 1f, 1f, 0.35f), "RANGE");
             return go;
         }
 
@@ -1729,6 +1789,86 @@ namespace CheddarAndCocoa.Game
             }
 
             if (_t >= art.LifeSeconds) Destroy(gameObject);
+        }
+    }
+
+    /// <summary>
+    /// Generated ring + label used only when a bark, tug, or rescue range is actionable.
+    /// </summary>
+    public sealed class InteractionRangeIndicator : MonoBehaviour
+    {
+        private GameObject _root;
+        private GameObject _labelRoot;
+        private SpriteRenderer _ring;
+        private TextMesh _label;
+        private Color _baseColor = Color.white;
+        private float _radius = 1f;
+
+        public bool IsVisible => _root != null && _root.activeSelf;
+        public float Radius => _radius;
+        public string Label => IsVisible && _label != null ? _label.text : string.Empty;
+
+        public void Init(Sprite ringSprite, Color color, string label)
+        {
+            _baseColor = color;
+
+            _root = new GameObject("InteractionRangeIndicator");
+            _root.transform.SetParent(transform);
+            _root.transform.localPosition = new Vector3(0f, 0f, 0.06f);
+            _root.transform.localRotation = Quaternion.identity;
+
+            _ring = _root.AddComponent<SpriteRenderer>();
+            _ring.sprite = ringSprite;
+            _ring.sortingOrder = 3;
+
+            _labelRoot = new GameObject("InteractionRangeLabel");
+            _labelRoot.transform.SetParent(transform);
+            _labelRoot.transform.localPosition = new Vector3(0f, 1.45f, -0.02f);
+            _labelRoot.transform.localScale = Vector3.one * 0.08f;
+            _label = _labelRoot.AddComponent<TextMesh>();
+            _label.anchor = TextAnchor.MiddleCenter;
+            _label.alignment = TextAlignment.Center;
+            _label.fontSize = 18;
+
+            Show(1f, label, color);
+            Hide();
+        }
+
+        public void Show(float radius, string label, Color color)
+        {
+            if (_root == null) return;
+
+            _radius = Mathf.Max(0.1f, radius);
+            _baseColor = color;
+            _root.SetActive(true);
+            if (_labelRoot != null) _labelRoot.SetActive(true);
+            _root.transform.localScale = Vector3.one * (_radius * 2f);
+            if (_labelRoot != null) _labelRoot.transform.localPosition = new Vector3(0f, _radius + 0.45f, -0.02f);
+
+            if (_ring != null) _ring.color = _baseColor;
+            if (_label != null)
+            {
+                _label.text = label;
+                Color labelColor = color;
+                labelColor.a = 1f;
+                _label.color = labelColor;
+            }
+        }
+
+        public void Hide()
+        {
+            if (_root != null) _root.SetActive(false);
+            if (_labelRoot != null) _labelRoot.SetActive(false);
+        }
+
+        private void LateUpdate()
+        {
+            if (!IsVisible) return;
+
+            float pulse = 1f + Mathf.Sin(Time.time * 4f) * 0.035f;
+            _root.transform.localScale = Vector3.one * (_radius * 2f * pulse);
+            if (_labelRoot != null) _labelRoot.transform.localPosition = new Vector3(0f, _radius + 0.45f, -0.02f);
+            if (_label != null) _label.transform.rotation = Quaternion.identity;
         }
     }
 }

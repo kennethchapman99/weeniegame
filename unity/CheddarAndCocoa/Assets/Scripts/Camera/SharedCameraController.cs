@@ -22,9 +22,10 @@ namespace CheddarAndCocoa.CameraRig
         [SerializeField] private Transform cocoa;
 
         [Header("Framing")]
-        [SerializeField] private float margin = 4f;        // world units of padding around the pair
-        [SerializeField] private float minOrthoSize = 6f;  // closest zoom
-        [SerializeField] private float maxOrthoSize = 16f; // widest zoom (dogs far apart)
+        [SerializeField] private float horizontalMargin = 3f; // world units of side padding
+        [SerializeField] private float verticalMargin = 2.2f;  // world units of top/bottom padding
+        [SerializeField] private float minOrthoSize = 6.8f;    // closest zoom
+        [SerializeField] private float maxOrthoSize = 8.4f;    // widest zoom
         [SerializeField] private float followLerp = 8f;    // position smoothing
         [SerializeField] private float zoomLerp = 6f;      // size smoothing
 
@@ -36,6 +37,31 @@ namespace CheddarAndCocoa.CameraRig
         private float _shake; // screen-shake magnitude; decays each frame (prototype state.shake)
 
         private void Awake() => _cam = GetComponent<Camera>();
+
+        public float HorizontalMargin => horizontalMargin;
+        public float VerticalMargin => verticalMargin;
+        public float MinOrthoSize => minOrthoSize;
+        public float MaxOrthoSize => maxOrthoSize;
+        public float FollowLerp => followLerp;
+        public float ZoomLerp => zoomLerp;
+        public bool IsClampedToBounds => clampToBounds;
+        public Rect LevelBounds => levelBounds;
+
+        public void Configure(float initialOrthoSize, float minSize, float maxSize,
+            float horizontalPadding, float verticalPadding, float follow, float zoom,
+            bool clamp, Rect bounds)
+        {
+            if (_cam == null) _cam = GetComponent<Camera>();
+            minOrthoSize = minSize;
+            maxOrthoSize = Mathf.Max(maxSize, minOrthoSize);
+            horizontalMargin = horizontalPadding;
+            verticalMargin = verticalPadding;
+            followLerp = follow;
+            zoomLerp = zoom;
+            clampToBounds = clamp;
+            levelBounds = bounds;
+            _cam.orthographicSize = Mathf.Clamp(initialOrthoSize, minOrthoSize, maxOrthoSize);
+        }
 
         /// <summary>Runtime setup — point the camera at both dogs (used by GameBootstrap).</summary>
         public void SetTargets(Transform cheddarT, Transform cocoaT)
@@ -49,9 +75,13 @@ namespace CheddarAndCocoa.CameraRig
             if (cheddar == null || cocoa == null) return;
             float dt = Time.deltaTime;
 
-            Vector2 mid = (Vector2)(cheddar.position + cocoa.position) * 0.5f;
-            float halfSpan = Vector2.Distance(cheddar.position, cocoa.position) * 0.5f + margin;
-            float targetSize = Mathf.Clamp(halfSpan, minOrthoSize, maxOrthoSize);
+            Vector2 a = cheddar.position;
+            Vector2 b = cocoa.position;
+            Vector2 mid = (a + b) * 0.5f;
+            float halfWidth = Mathf.Abs(a.x - b.x) * 0.5f + horizontalMargin;
+            float halfHeight = Mathf.Abs(a.y - b.y) * 0.5f + verticalMargin;
+            float aspect = _cam != null && _cam.aspect > 0f ? _cam.aspect : 16f / 9f;
+            float targetSize = Mathf.Clamp(Mathf.Max(halfHeight, halfWidth / aspect), minOrthoSize, maxOrthoSize);
 
             // Smooth follow + zoom.
             Vector3 target = new Vector3(mid.x, mid.y, transform.position.z);

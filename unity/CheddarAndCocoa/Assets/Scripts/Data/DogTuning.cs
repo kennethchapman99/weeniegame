@@ -40,6 +40,18 @@ namespace CheddarAndCocoa.Data
         [Tooltip("Arrival-easing radius (anti-jitter). Prototype: 10 (touch) / 8 (AI).")]
         public float arriveRadius = 10f;
 
+        [Header("Movement feel (Unity units/sec tuning)")]
+        [Tooltip("How quickly the dog reaches max speed from rest.")]
+        public float acceleration = 30f;
+        [Tooltip("How quickly the dog stops after input is released.")]
+        public float deceleration = 36f;
+        [Tooltip("Extra response when the dog reverses or cuts sharply.")]
+        public float turnResponsiveness = 48f;
+        [Tooltip("Velocity below this value snaps to a full stop to avoid tiny drifts.")]
+        public float stopSpeed = 0.08f;
+        [Tooltip("Minimum velocity that counts as running for lean, bob, paw trails, and labels.")]
+        public float runFeedbackSpeed = 0.22f;
+
         [Header("Zoomies (prototype ZOOMIES)")]
         [Tooltip("Scores within the window to trigger. Prototype: 3.")]
         public int zoomiesStreak = 3;

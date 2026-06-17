@@ -71,6 +71,13 @@ namespace CheddarAndCocoa.Dogs
         private float _wetTimer;                    // dryT: slick render + AI avoids floaties
         private float _jumpT;                       // 0..jumpDuration; height = sin(pi * t/dur)
 
+        public float MaxSpeedUnitsPerSecond => CurrentSpeed();
+        public float AccelerationUnitsPerSecond => tuning != null ? tuning.acceleration : 0f;
+        public float DecelerationUnitsPerSecond => tuning != null ? tuning.deceleration : 0f;
+        public float TurnResponsivenessUnitsPerSecond => tuning != null ? tuning.turnResponsiveness : 0f;
+        public float StopSpeed => tuning != null ? tuning.stopSpeed : 0f;
+        public Vector2 CurrentVelocity => _body != null ? _body.linearVelocity : Vector2.zero;
+
         private void Awake()
         {
             _body = GetComponent<Rigidbody2D>();
@@ -98,13 +105,16 @@ namespace CheddarAndCocoa.Dogs
                 return;
             }
 
-            float speed = CurrentSpeed();
-            Vector2 desired = intent.move;
+            Vector2 desiredInput = intent.move.sqrMagnitude > 1f ? intent.move.normalized : intent.move;
+            Vector2 desiredVelocity = desiredInput * CurrentSpeed();
+            Vector2 currentVelocity = _body.linearVelocity;
+            float response = MovementResponse(currentVelocity, desiredVelocity);
 
-            // TODO: arrival easing (prototype anti-jitter): scale speed to 0 within arriveRadius of
-            // the target and hard-stop inside it. With analog sticks the stick magnitude already
-            // provides the ramp; arrival easing matters for tap-to-move / AI waypoints.
-            _body.linearVelocity = desired * speed;
+            Vector2 nextVelocity = Vector2.MoveTowards(currentVelocity, desiredVelocity, response * dt);
+            if (desiredInput.sqrMagnitude <= 0.0001f && nextVelocity.magnitude <= tuning.stopSpeed)
+                nextVelocity = Vector2.zero;
+
+            _body.linearVelocity = nextVelocity;
 
             // TODO: jump arc (B): _jumpT ramps over tuning.jumpDuration; expose Height for the
             // renderer + predator dodge check (height > 0.3 at the strike).
@@ -143,6 +153,16 @@ namespace CheddarAndCocoa.Dogs
             // Convert prototype per-frame target (already ratio-correct) to units/sec.
             float baseUnitsPerSec = tuning.baseSpeed / pixelsPerUnit * 60f;
             return Zoomies ? baseUnitsPerSec * tuning.zoomiesMultiplier : baseUnitsPerSec;
+        }
+
+        private float MovementResponse(Vector2 currentVelocity, Vector2 desiredVelocity)
+        {
+            if (desiredVelocity.sqrMagnitude <= 0.0001f) return tuning.deceleration;
+            if (currentVelocity.sqrMagnitude <= 0.0001f) return tuning.acceleration;
+
+            float alignment = Vector2.Dot(currentVelocity.normalized, desiredVelocity.normalized);
+            if (alignment < 0.35f) return tuning.turnResponsiveness;
+            return tuning.acceleration;
         }
 
         private void UpdateOverlays(float dt)

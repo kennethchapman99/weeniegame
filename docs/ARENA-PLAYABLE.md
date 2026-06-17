@@ -99,6 +99,28 @@ Current pose labels:
 
 Each dog also gets a small objective arrow that appears only when useful. It points to the next actionable target and hides when the dog is already close enough, so it should guide without becoming permanent screen noise. Each dog also has a tiny movement intent marker while running: Cheddar uses a red chaos arrow and Cocoa uses a teal veteran arrow. The intent marker is deliberately smaller than collars/labels and exists only to keep facing/movement readable at gameplay zoom. `FacingIntentLabel` exposes the deterministic left/right direction for tests.
 
+Movement now has a first feel pass instead of instant velocity snaps. Cheddar is a little faster and more impulsive; Cocoa is slightly steadier, brakes harder, and cuts more cleanly. Both dogs accelerate, decelerate, snap tiny drift to a stop, lean into motion, squash/stretch subtly while running, and leave short-lived accent-color paw trail placeholders. These are prototype readability marks, not final effects.
+
+Current movement defaults in ArenaScene:
+
+- Cheddar: base speed `4.8` prototype units (`5.76` Unity units/sec after conversion), acceleration `34`, deceleration `31`, turn response `46`, zoomies multiplier `1.85`.
+- Cocoa: base speed `4.55` prototype units (`5.46` Unity units/sec after conversion), acceleration `29`, deceleration `39`, turn response `52`, zoomies multiplier `1.75`.
+- Both: stop snap `0.08` Unity units/sec and run feedback threshold `0.22`.
+
+Manual movement feel check: move each dog from rest, reverse direction, circle around a weenie, and release the stick/keys near the rope. Confirm the dogs feel quick and cute, Cheddar reads a little more chaotic, Cocoa reads more controlled, and neither dog slides past small targets in a frustrating way. The paw trails should appear only while moving and should not compete with objective arrows, labels, or score pops.
+
+The shared camera remains a 2D orthographic backyard camera matching `docs/ART-DIRECTION.md`, but its arena framing is now tuned for readability across all three current missions. It frames dog bounds using horizontal/vertical margins instead of diagonal distance, with a narrow zoom band so the arena, mission props, and HUD context stay readable while still letting dog animation read.
+
+Current camera defaults in ArenaScene:
+
+- Initial orthographic size `7.1`.
+- Min/max orthographic size `6.8 / 8.4`.
+- Horizontal/vertical framing margin `3.0 / 2.2`.
+- Follow/zoom lerp `9 / 7`.
+- Bounds clamping is off for this generated arena so the full backyard context remains stable.
+
+Manual camera check: play Backyard Rescue, Snack Heist, and Sock Panic from mission select. Confirm the dogs, nearest collectibles, squirrel pressure, rope, predator warning, score pop area, and end card are readable without losing the 2.5D/isometric-ish backyard feel. The HUD can occupy the top of the screen, but it should not hide the active dog work or mission props.
+
 The HUD objective label is derived from game state, not hand-authored timing. Current objective states include **Save weenies X/6**, **Bark to scare squirrel**, **Huddle + bark at the shadow**, **Rescue Cheddar/Cocoa**, **Both dogs tug the rope**, **Clear the yard together**, and the clear/fail replay states.
 
 Current arrow priorities are:
@@ -124,17 +146,23 @@ Current squirrel labels/cues:
 
 Manual readability check: let the squirrel start stealing once, then bark near it with one dog and confirm the HUD objective changes to **Bark to scare squirrel**, the label/cue clearly changes from stealing to dropped/scared, and a small **DROP!** world pop appears. Let it steal once on a later run and confirm the label says it got a weenie, the score shows a signed negative pop, a **MISS! -WEENIE** world pop appears near the squirrel, the stolen counter rises, and the fail state is distinct if stolen food reaches `3`.
 
+When the squirrel is actively stealing, a temporary **BARK RANGE** ring appears around it. The ring uses the same placeholder ring language as bark feedback and hides outside the actionable state.
+
 ## Predator scare
 
 Once per round, a **Predator Warning** telegraphs danger and targets one dog. The placeholder is a dark/red wing-and-eye shadow, not a normal arena object. If both dogs are close together and bark within the united-bark timing window, the predator is driven away for a large score reward. If the team fails the warning, **Predator Attack** grabs/stuns the target dog. The other dog can rescue by coming close and barking; failure costs score/time pressure but does not instantly end the game.
 
 Manual readability check: when the warning starts, the HUD objective says **Huddle + bark at the shadow**, the predator label becomes **HUDDLE + BARK!**, and both dogs' arrows should point toward each other with **HUDDLE + BARK** if they are separated. A successful huddle bark should show **DOUBLE WOOF drove the predator away!**, create a **DOUBLE WOOF!** success pop, and move the predator to **PREDATOR YEETED** offscreen. During an attack, the grabbed dog should read **STUNNED**, the HUD objective should say **Rescue Cheddar/Cocoa**, the partner arrow should say **BARK RESCUE**, and a successful partner bark should show a distinct rescue cue plus **RESCUED!** world pop. The rescue cue is deliberately separate from united bark feedback.
 
+During a predator grab, the grabbed dog shows a temporary **RESCUE BARK** range ring. This is meant to explain rescue distance without adding permanent clutter.
+
 ## Rope/Tug shared-object mechanic
 
 The labeled, pulsing **Rope/Tug** object is a required co-op objective. Its placeholder is a horizontal yellow/brown striped tug rope with visible ends so it is not confused with food. Either dog can interact near the rope for progress, but the main completion path is both dogs standing together at the rope to charge the tug meter. Finishing tug awards a major score bonus and is required for LevelClear.
 
 Manual readability check: after early food recovery, the HUD objective and objective arrows should switch to **BOTH TUG** while dogs are away from the rope. If only one dog reaches the rope, the rope label should call out **WAITING FOR CHEDDAR** or **WAITING FOR COCOA** and the HUD should say both dogs must commit together. When both dogs stand on the rope, their labels briefly read **TUG!**, the rope label changes to **BOTH TUGGING X%**, and completion flips the rope label to **ROPE COMPLETE!** with a **TUG POP!** world pop.
+
+After enough food recovery makes tug the next likely bottleneck, the rope shows a temporary **BOTH DOGS** range ring. It uses the current `1.6` tug-together radius and hides on non-tug missions.
 
 ## United bark
 
@@ -211,7 +239,7 @@ Each restart deterministically selects one seeded modifier for tests/HUD:
 
 ## Tuning guide
 
-Arena tuning is centralized in `unity/CheddarAndCocoa/Assets/Scripts/Game/ArenaMissionTuning.cs`. Adjust this file first for playtest balancing; avoid scattering one-off numbers in `GameManager`.
+Mission, camera, and interaction-range tuning is centralized in `unity/CheddarAndCocoa/Assets/Scripts/Game/ArenaMissionTuning.cs`. Per-dog movement feel fields live on `unity/CheddarAndCocoa/Assets/Scripts/Data/DogTuning.cs` and the current ArenaScene runtime values are assigned in `ArenaBootstrap` until authored dog tuning assets exist. Adjust those files first for playtest balancing; avoid scattering one-off numbers in `GameManager`.
 
 Current key defaults:
 
@@ -220,6 +248,9 @@ Current key defaults:
 - Penalties: Backyard squirrel `-50`, Snack squirrel `-90`, Pancake Panic squirrel `-80`, predator hit `-150`, game over `-100`.
 - Squirrel pressure: first steal delay `9.0s` (`7.0s` on Squirrel Trouble), repeat delay `3.4s` (`2.2s` on Squirrel Trouble), move speed `1.9`.
 - Bark/rescue/tug: united bark window `0.8s`, united bark range `3.0`, single bark squirrel range `4.0`, rescue bark range `2.0`, tug together distance `1.6`, tug charge `0.5` per second, interact tug bump `0.2`.
+- Camera: initial ortho `7.1`, min/max ortho `6.8 / 8.4`, horizontal/vertical margins `3.0 / 2.2`, follow/zoom lerp `9 / 7`.
+- Arena dog movement: Cheddar base speed `4.8`, acceleration `34`, deceleration `31`, turn response `46`, zoomies `1.85`; Cocoa base speed `4.55`, acceleration `29`, deceleration `39`, turn response `52`, zoomies `1.75`; both use stop snap `0.08` and run-feedback threshold `0.22`.
+- Range hints: squirrel bark ring `4.0`, rescue bark ring `2.0`, tug together ring `1.6`.
 - Mission counts: Backyard Rescue spawns `5` items and needs `6` recoveries because collected items respawn; Snack Heist spawns/needs `4`; Sock Panic spawns/needs `5`.
 
 After tuning, run:
@@ -228,7 +259,7 @@ After tuning, run:
 ./unity/run-playmode-tests.sh
 ```
 
-The PlayMode tests assert tuning defaults, the 30-90 second mission timing target, reachable top-rank scoring, overlay state, and deterministic playtest log entries.
+The PlayMode tests assert tuning defaults, movement feel defaults, independent dog movement, camera config, interaction range indicator state, the 30-90 second mission timing target, reachable top-rank scoring, overlay state, and deterministic playtest log entries.
 
 ## Build/share readiness
 
@@ -267,6 +298,9 @@ Use this after any placeholder-art, authored-art, or sprite import change:
 - Dog pose states are still distinct: idle, run, bark, tug, stunned, rescued, proud, sad.
 - Bark ring/text, objective arrows, score pops, and playtest overlay remain readable but do not hide
   the dogs or core mission objects.
+- Movement lean, squash/stretch, and paw trails are readable during motion but do not become constant noise.
+- Camera framing keeps all three current missions readable from mission select without changing the orthographic backyard direction.
+- Temporary bark, rescue, and tug range rings appear only in actionable states and hide on mission select, end screens, and non-relevant missions.
 - Weenie, snack, and sock collectibles are visually distinct from each other and from the squirrel
   and rope.
 - Squirrel, predator, and rope expose their expected replacement slots from
@@ -288,9 +322,11 @@ Use this after any placeholder-art, authored-art, or sprite import change:
 - Tug is proximity/progress based, not a full physics rope.
 - Predator targeting and modifier selection are seeded but still prototype-simple.
 - The scene now has basic procedural sound cues, an arena `AudioListener`, and simple placeholder animation, but real prefab art, authored animation, better SFX, and richer rescue/tug feel are still future work.
+- Camera feel is tuned for the current generated backyard arena only. A larger authored level may need level-specific camera anchors or bounds.
+- Paw trails and range rings are placeholder geometry/text. They are useful for playtest readability, not a final VFX style.
 
 ## Test coverage
 
-`unity/Assets/Tests/PlayMode/ArenaGameLoopPlayModeTests.cs` loads ArenaScene and verifies mission select initialization, centralized tuning defaults, mission balance invariants, starting each mission through the new flow, end-screen Replay / Next Mission / Mission Select availability, session totals across multiple missions, session summary after all three variants have ended, dogs, mission state, intro prompt/banner, deterministic objective labels, delayed first squirrel steal window, initial score state, item recovery scoring, HUD score-pop state, world score/miss/success pops, playtest overlay state, playtest event log entries, squirrel steal/scare labels and score events, solo/united bark feedback and scoring, bark burst state, predator defense scoring, failed predator hit and rescue scoring, tug waiting/together feedback and scoring, LevelClear score/rank/summary/reason, GameOver score/rank/summary/reason, replay prompt visibility, restart reset state, exposed modifier state, dog identity labels, dog pose labels, movement intent labels/arrows, objective-arrow labels, and the generated arena audio listener.
+`unity/Assets/Tests/PlayMode/ArenaGameLoopPlayModeTests.cs` loads ArenaScene and verifies mission select initialization, centralized tuning defaults, movement/camera tuning defaults, mission balance invariants, starting each mission through the new flow, end-screen Replay / Next Mission / Mission Select availability, session totals across multiple missions, session summary after all three variants have ended, dogs, independent movement response, camera component/config, interaction range indicator state, mission state, intro prompt/banner, deterministic objective labels, delayed first squirrel steal window, initial score state, item recovery scoring, HUD score-pop state, world score/miss/success pops, playtest overlay state, playtest event log entries, squirrel steal/scare labels and score events, solo/united bark feedback and scoring, bark burst state, predator defense scoring, failed predator hit and rescue scoring, tug waiting/together feedback and scoring, LevelClear score/rank/summary/reason, GameOver score/rank/summary/reason, replay prompt visibility, restart reset state, exposed modifier state, dog identity labels, dog pose labels, movement intent labels/arrows, objective-arrow labels, and the generated arena audio listener.
 
 The same test file also verifies **Snack Heist** and **Sock Panic** can initialize, update objective labels, score unique mission events, reach clear/fail outcomes, and expose replay state. `ControllerCoopPlayModeTests` still verifies the baseline two-pad movement/bark proof and now clears scene objects before constructing its own bootstrap so it does not accidentally inspect leftover ArenaScene dogs from previous tests.

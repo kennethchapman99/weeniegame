@@ -43,12 +43,15 @@ namespace CheddarAndCocoa.Dogs
         private Pose _forcedPose;
         private float _forcedPoseUntil;
         private float _barkUntil;
+        private float _nextPawTrailAt;
+        private Sprite _sprite;
         private DogVisualSlot _art;
 
         public Pose CurrentPose { get; private set; } = Pose.Idle;
         public string CurrentPoseLabel => CurrentPose.ToString();
         public string IdentityLabel => _label != null ? _label.text : string.Empty;
         public string FacingIntentLabel => _lastIntentDir.x >= 0f ? "FacingRight" : "FacingLeft";
+        public string LastMovementJuiceLabel { get; private set; } = string.Empty;
         public string ArtDirectionSignature => _identity == null
             ? string.Empty
             : ArenaArtCatalog.Dog(_identity.Id).ArtDirectionSignature;
@@ -59,6 +62,7 @@ namespace CheddarAndCocoa.Dogs
             _identity = GetComponent<DogIdentity>();
             _body = GetComponent<SpriteRenderer>();
             _baseScale = transform.localScale;
+            _sprite = sprite;
             _art = ArenaArtCatalog.Dog(_identity.Id);
 
             BuildIdentityArt(sprite);
@@ -135,11 +139,14 @@ namespace CheddarAndCocoa.Dogs
             float wag = _identity.Id == DogId.Cheddar ? 42f : 20f;
             Vector2 velocity = Vector2.zero;
             if (TryGetComponent<Rigidbody2D>(out var rb)) velocity = rb.linearVelocity;
-            if (velocity.sqrMagnitude > 0.05f) _lastIntentDir = velocity.normalized;
+            float runFeedbackSpeed = _identity != null && _identity.Tuning != null
+                ? _identity.Tuning.runFeedbackSpeed
+                : 0.22f;
+            if (velocity.magnitude > runFeedbackSpeed) _lastIntentDir = velocity.normalized;
 
             transform.localRotation = pose switch
             {
-                Pose.Run => Quaternion.Euler(0f, 0f, Mathf.Sin(t * 16f) * 4f),
+                Pose.Run => Quaternion.Euler(0f, 0f, Mathf.Sin(t * 16f) * 3f - _lastIntentDir.x * 3.5f),
                 Pose.Bark => Quaternion.Euler(0f, 0f, Mathf.Sin(t * 30f) * 7f),
                 Pose.Stunned => Quaternion.Euler(0f, 0f, 12f),
                 Pose.Sad => Quaternion.Euler(0f, 0f, -7f),
@@ -156,9 +163,12 @@ namespace CheddarAndCocoa.Dogs
                 Pose.Proud => 1.12f,
                 Pose.Sad => 0.92f,
                 Pose.Tug => 1.06f,
+                Pose.Run => 1f + Mathf.Sin(t * 18f) * 0.025f,
                 _ => 1f
             };
-            transform.localScale = new Vector3(_baseScale.x * pop, _baseScale.y * pop, _baseScale.z);
+            float stretch = pose == Pose.Run ? 1f + Mathf.Clamp01(velocity.magnitude / 6f) * 0.05f : 1f;
+            float squash = pose == Pose.Run ? 1f - Mathf.Clamp01(velocity.magnitude / 6f) * 0.035f : 1f;
+            transform.localScale = new Vector3(_baseScale.x * pop * stretch, _baseScale.y * pop * squash, _baseScale.z);
 
             if (_tail != null)
             {
@@ -219,7 +229,7 @@ namespace CheddarAndCocoa.Dogs
 
             if (_intentArrow != null)
             {
-                bool moving = velocity.sqrMagnitude > 0.05f && pose == Pose.Run;
+                bool moving = velocity.magnitude > runFeedbackSpeed && pose == Pose.Run;
                 _intentArrow.enabled = moving;
                 if (moving)
                 {
@@ -230,6 +240,37 @@ namespace CheddarAndCocoa.Dogs
             }
 
             if (_label != null) _label.transform.rotation = Quaternion.identity;
+            TickMovementJuice(pose, velocity, runFeedbackSpeed);
+        }
+
+        private void TickMovementJuice(Pose pose, Vector2 velocity, float runFeedbackSpeed)
+        {
+            if (pose != Pose.Run || velocity.magnitude <= runFeedbackSpeed || Time.time < _nextPawTrailAt)
+                return;
+
+            float interval = _identity.Id == DogId.Cheddar ? 0.14f : 0.18f;
+            _nextPawTrailAt = Time.time + interval;
+            LastMovementJuiceLabel = _identity.Id == DogId.Cheddar ? "CHEDDAR PAW TRAIL" : "COCOA PAW TRAIL";
+            SpawnPawTrail(velocity.normalized);
+        }
+
+        private void SpawnPawTrail(Vector2 runDir)
+        {
+            if (_sprite == null) return;
+
+            var go = new GameObject($"PawTrail_{_identity.Id}");
+            Vector2 side = new Vector2(-runDir.y, runDir.x) * 0.12f;
+            go.transform.position = transform.position - (Vector3)(runDir * 0.55f) + (Vector3)side + Vector3.back * 0.04f;
+            go.transform.localScale = new Vector3(0.14f, 0.07f, 1f);
+
+            var sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = _sprite;
+            sr.sortingOrder = 4;
+            var tint = _art.ObjectiveArrowColor;
+            tint.a = 0.32f;
+            sr.color = tint;
+
+            go.AddComponent<PawTrailPlaceholder>().Begin(sr);
         }
 
         private void BuildIdentityArt(Sprite sprite)
@@ -303,5 +344,27 @@ namespace CheddarAndCocoa.Dogs
             Pose.Sad => "SAD FLOP",
             _ => pose.ToString()
         };
+
+        private sealed class PawTrailPlaceholder : MonoBehaviour
+        {
+            private SpriteRenderer _renderer;
+            private float _t;
+
+            public void Begin(SpriteRenderer renderer) => _renderer = renderer;
+
+            private void Update()
+            {
+                _t += Time.deltaTime;
+                transform.localScale *= 1f + Time.deltaTime * 0.9f;
+                if (_renderer != null)
+                {
+                    var c = _renderer.color;
+                    c.a = Mathf.Lerp(0.32f, 0f, _t / 0.35f);
+                    _renderer.color = c;
+                }
+
+                if (_t >= 0.35f) Destroy(gameObject);
+            }
+        }
     }
 }

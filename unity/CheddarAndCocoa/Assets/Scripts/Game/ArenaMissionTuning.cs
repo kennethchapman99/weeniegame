@@ -40,6 +40,18 @@ namespace CheddarAndCocoa.Game
         public float TugChargePerSecond = 0.5f;
         public float TugInteractProgress = 0.2f;
 
+        public float CameraInitialOrthoSize = 7.1f;
+        public float CameraMinOrthoSize = 6.8f;
+        public float CameraMaxOrthoSize = 8.4f;
+        public float CameraHorizontalMargin = 3.0f;
+        public float CameraVerticalMargin = 2.2f;
+        public float CameraFollowLerp = 9f;
+        public float CameraZoomLerp = 7f;
+
+        public float SquirrelRangeIndicatorRadius => SingleBarkSquirrelRange;
+        public float RescueRangeIndicatorRadius => RescueBarkRange;
+        public float TugRangeIndicatorRadius => TugTogetherDistance;
+
         public MissionBalance BackyardRescue = new MissionBalance
         {
             RoundSeconds = 90f,

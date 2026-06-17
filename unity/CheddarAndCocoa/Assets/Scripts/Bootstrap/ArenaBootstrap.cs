@@ -27,6 +27,7 @@ namespace CheddarAndCocoa.Bootstrap
 
         private Sprite _square;
         private Sprite _ring;
+        private readonly ArenaMissionTuning _arenaTuning = ArenaMissionTuning.CreateDefault();
 
         private void Start()
         {
@@ -36,6 +37,7 @@ namespace CheddarAndCocoa.Bootstrap
             BuildFloorAndBounds();
             var camGo = BuildCamera();
             var cam = camGo.GetComponent<Camera>();
+            var bounds = new Rect(-fieldWidth * 0.5f, -fieldHeight * 0.5f, fieldWidth, fieldHeight);
 
             // Cheddar — golden chaos puppy (P1: pad 0 / WASD + Space).
             var cheddar = BuildDog(DogId.Cheddar, new Vector2(-4f, 0f), slot: 0,
@@ -47,7 +49,18 @@ namespace CheddarAndCocoa.Bootstrap
             var cheddarDog = cheddar.GetComponent<DogController>();
             var cocoaDog = cocoa.GetComponent<DogController>();
 
-            camGo.GetComponent<SharedCameraController>().SetTargets(cheddar.transform, cocoa.transform);
+            var sharedCamera = camGo.GetComponent<SharedCameraController>();
+            sharedCamera.Configure(
+                _arenaTuning.CameraInitialOrthoSize,
+                _arenaTuning.CameraMinOrthoSize,
+                _arenaTuning.CameraMaxOrthoSize,
+                _arenaTuning.CameraHorizontalMargin,
+                _arenaTuning.CameraVerticalMargin,
+                _arenaTuning.CameraFollowLerp,
+                _arenaTuning.CameraZoomLerp,
+                clamp: false,
+                bounds);
+            sharedCamera.SetTargets(cheddar.transform, cocoa.transform);
 
             // Visible bark feedback: an expanding ring at the dog on each bark.
             cheddar.AddComponent<BarkEffect>().Init(cheddarDog, _ring, ArenaArtCatalog.Dog(DogId.Cheddar).BarkTint);
@@ -55,11 +68,10 @@ namespace CheddarAndCocoa.Bootstrap
 
             // The round: shared score, 60s timer, treats, restart.
             var game = new GameObject(ArenaArtCatalog.GameManagerObjectName).AddComponent<GameManager>();
-            var bounds = new Rect(-fieldWidth * 0.5f, -fieldHeight * 0.5f, fieldWidth, fieldHeight);
             game.Init(
                 new[] { cheddarDog, cocoaDog },
                 new[] { cheddar.GetComponent<GamepadPlayerInput>(), cocoa.GetComponent<GamepadPlayerInput>() },
-                _square, bounds, treatSeed);
+                _square, _ring, bounds, treatSeed);
 
             // Score/timer/game-over overlay.
             var hud = new GameObject(ArenaArtCatalog.ArenaHudObjectName).AddComponent<ArenaHud>();
@@ -80,7 +92,8 @@ namespace CheddarAndCocoa.Bootstrap
             t.dog = DogId.Cheddar;
             t.bodyColor = Hex("#e3ab63");
             t.wetBodyColor = Hex("#b07e3f");
-            t.baseSpeed = 4.4f; t.floaterSpeed = 4.9f; t.swimSpeed = 1.6f; t.zoomiesMultiplier = 1.85f;
+            t.baseSpeed = 4.8f; t.floaterSpeed = 4.9f; t.swimSpeed = 1.6f; t.zoomiesMultiplier = 1.85f;
+            t.acceleration = 34f; t.deceleration = 31f; t.turnResponsiveness = 46f; t.stopSpeed = 0.08f; t.runFeedbackSpeed = 0.22f;
             t.wrestleWinChance = 0.70f; t.stairTime = 0.5f;
             t.canChairLeap = true; t.barfChance = 0.18f; t.chewTime = 0.25f;
             return t;
@@ -92,7 +105,8 @@ namespace CheddarAndCocoa.Bootstrap
             t.dog = DogId.Cocoa;
             t.bodyColor = Hex("#5e3a20");
             t.wetBodyColor = Hex("#3c2410");
-            t.baseSpeed = 4.4f; t.floaterSpeed = 4.9f; t.swimSpeed = 1.6f; t.zoomiesMultiplier = 1.85f;
+            t.baseSpeed = 4.55f; t.floaterSpeed = 4.9f; t.swimSpeed = 1.6f; t.zoomiesMultiplier = 1.75f;
+            t.acceleration = 29f; t.deceleration = 39f; t.turnResponsiveness = 52f; t.stopSpeed = 0.08f; t.runFeedbackSpeed = 0.22f;
             t.wrestleWinChance = 0.78f; t.stairTime = 1.05f;
             t.canChairLeap = false; t.barfChance = 0f; t.chewTime = 0.5f;
             return t;
@@ -136,7 +150,7 @@ namespace CheddarAndCocoa.Bootstrap
             go.transform.position = new Vector3(0f, 0f, -10f);
             var cam = go.AddComponent<Camera>();
             cam.orthographic = true;
-            cam.orthographicSize = fieldHeight * 0.5f + 1f;
+            cam.orthographicSize = _arenaTuning.CameraInitialOrthoSize;
             cam.backgroundColor = ArenaArtCatalog.CameraBackgroundColor; // dark grass
             cam.clearFlags = CameraClearFlags.SolidColor;
             go.AddComponent<AudioListener>();
