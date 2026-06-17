@@ -1,5 +1,13 @@
 # CLAUDE.md — Operating contract for Cheddar & Cocoa
 
+> 🛑 **STOP — READ THIS FIRST. The ONLY active codebase is the Unity project
+> (`unity/CheddarAndCocoa/`).** The TypeScript/Canvas build (`src/`, `tests/`) and the
+> `prototype/` are **FROZEN, read-only reference material** for porting behavior and balance —
+> they are NOT the product and must NOT be extended. **Do not add, edit, or "improve" anything in
+> `src/` or `tests/`.** Every new level, mechanic, fix, and test belongs in the Unity project. If a
+> task seems to call for TS/Canvas work, do it in Unity instead. Treat any request to "make
+> progress" or "build a level" as a request to build it **in Unity**.
+
 This file governs how you (Claude Code) work in this repo. Read it fully before the first task.
 
 ## Required first reads
@@ -10,7 +18,7 @@ Before modifying gameplay, read these in order:
 2. `AGENTS.md` — coding-agent guardrails and current recommended next move.
 3. `docs/ARENA-PLAYABLE.md` — current Unity Backyard Mission vertical slice and acceptance checks.
 4. `docs/UNITY-FIRST-PLAYABLE.md` — Unity setup, test, and runtime proof history.
-5. `prototype/cheddar-and-cocoa.prototype.html` and legacy docs when porting or preserving prototype behavior.
+5. `prototype/cheddar-and-cocoa.prototype.html` and the `src/` TypeScript build **as read-only reference only** — consult them to learn how a mechanic should behave/be tuned when porting it into Unity. Never edit them.
 
 ## Prime directive
 

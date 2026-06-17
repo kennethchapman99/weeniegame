@@ -2,13 +2,15 @@
 
 A 2D arcade game starring two long-haired mini dachshunds — **Cheddar** (golden, chaos puppy) and **Cocoa** (chocolate, reigning spot queen) — competing and cooperating across the backyard, pool, and a three-room model of their actual house. They fight over toys, cuddle spots, sunbeams, and the sacred dog couch; wrestle and flip each other; play tug-of-war; chase food and squirrels; and have to **work together** to survive coyotes, eagles, humans, cleaning day, vet betrayal, and other dog-life emergencies.
 
-This repository contains a **working single-file prototype** (`prototype/cheddar-and-cocoa.prototype.html`), a **staged TypeScript/Canvas port** (`src/`, M0–M14), and — as of 2026-06-15 — a **Unity rebuild** (`unity/CheddarAndCocoa/`).
+This repository contains a **working single-file prototype** (`prototype/cheddar-and-cocoa.prototype.html`), a **frozen, reference-only TypeScript/Canvas port** (`src/`, M0–M14 — see the freeze notice below), and the **active Unity build** (`unity/CheddarAndCocoa/`), which is where all current work happens.
 
-> 🔱 **Direction shift (2026-06-15): the product is being rebuilt in Unity** (C#, local couch
-> co-op for desktop→TV, later Apple TV). The TypeScript/Canvas build (`src/`), the `prototype/`,
-> and `docs/` are **preserved as the design / balance / behavior spec and a runnable test
-> oracle** — not deleted, not expanded as the long-term product. See
-> **`docs/UNITY-PIVOT-PLAN.md`** for the why, the platform plan, and the migration phases.
+> 🛑 **THE TYPESCRIPT / CANVAS BUILD (`src/`, `tests/`) IS FROZEN — DO NOT ADD OR EDIT IT.**
+> The product is built **only in Unity** (`unity/CheddarAndCocoa/`). The TS/Canvas build and the
+> `prototype/` are kept **read-only**, purely as a behavior/balance **reference** for porting —
+> not as a thing to extend. **All new gameplay, levels, mechanics, and tests go in the Unity
+> project.** Any work added to `src/` or `tests/` is wasted effort and will be reverted. If you are
+> an agent: the answer to "where do I build this?" is always Unity. See
+> **`docs/UNITY-PIVOT-PLAN.md`** and **`docs/UNITY-FIRST-PLAYABLE.md`**.
 
 > 🎮 **Creative source of truth:** `docs/GAME-DESIGN-BIBLE.md` captures the current game vision,
 > mechanic library, level idea bank, running gags, and near-term build priorities. Claude/Codex

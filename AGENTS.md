@@ -1,5 +1,11 @@
 # Agent Instructions for Weeniegame
 
+> 🛑 **THE UNITY PROJECT (`unity/CheddarAndCocoa/`) IS THE ONLY ACTIVE CODEBASE.** The TypeScript/
+> Canvas build (`src/`, `tests/`) and the `prototype/` are **FROZEN reference material** — read them
+> to understand how a mechanic behaves and how it's tuned, then **build it in Unity**. Do **not** add
+> to or edit `src/` or `tests/`; that work is wasted and will be reverted. All new levels, mechanics,
+> fixes, and tests belong in the Unity project.
+
 This repository is a personal couch co-op game starring Cheddar and Cocoa. Before implementing gameplay, read:
 
 1. `docs/GAME-DESIGN-BIBLE.md` — creative north star, level ideas, mechanics, build priorities.

@@ -1,13 +1,13 @@
 # Build Plan
 
-> 🔱 **PROJECT DIRECTION SHIFT (2026-06-15): pivoting to Unity.** Milestones M0–M14 below built and
-> validated the game on the TypeScript/Canvas stack. That build has done its job — it **proved the
-> game is fun and locked the balance**. The product is now being **rebuilt in Unity** (C#, local
-> couch co-op for desktop→TV, later tvOS). The TS build + `prototype/` + `docs/` are **preserved as
-> the design / balance / behavior spec and a runnable test oracle** — not deleted, not expanded as
-> the long-term product. See **`docs/UNITY-PIVOT-PLAN.md`** for the full plan, and the
-> **"Unity rebuild roadmap"** section at the bottom of this file. The TS history below stays as the
-> record of how the design was built and tuned.
+> 🛑 **THE TYPESCRIPT MILESTONES BELOW (M0–M14) ARE A FROZEN HISTORICAL RECORD — DO NOT CONTINUE
+> THEM.** They built and tuned the game on the TS/Canvas stack and proved it's fun; that job is
+> **done**. The product is now built **only in Unity** (`unity/CheddarAndCocoa/`; C#, local couch
+> co-op for desktop→TV, later tvOS). **Do not add new TS milestones, missions, or tests** — the
+> `src/`/`tests/` tree is read-only reference. New work = the **"Unity rebuild roadmap"** section at
+> the bottom of this file. The TS history below stays only as the record of how the design was built
+> and tuned, and as the behavior/balance spec to port from. See **`docs/UNITY-PIVOT-PLAN.md`** and
+> **`docs/UNITY-MISSIONS-PORT.md`**.
 
 Each milestone is independently shippable and must end green (typecheck + lint + tests + full-game sim). Ship in order — later milestones assume the scaffolding of earlier ones. **The prototype is the acceptance reference for every milestone.**
 
@@ -207,31 +207,22 @@ All of M0–M8 shipped and green; the built game matches the prototype across al
 ## M13+ — Missions as content — 🟢 IN PROGRESS (5 missions + AI + polish, 2026-06-15)
 🎯 Build the actual missions, one shippable mission per milestone.
 
-> **Shipped so far** — an 8-mission co-op campaign (`COOP_REGISTRY`, in order, chained NEXT MISSION →
-> with a 🏆 finale; per-mission best score/stars persisted, `core/scores.ts`):
+> **Shipped so far** — a 5-mission co-op campaign (`COOP_REGISTRY`, chained NEXT MISSION → with
+> a 🏆 finale; per-mission best score/stars persisted, `core/scores.ts`):
 > 1. **Through the Gate** (M12) — pressure pads / bothOnSpots.
 > 2. **Sneak the Snack** — distract+grab (a teammate taunts the guard cat; cat only pounces a
 >    pup *settled* on a treat, not one running past).
 > 3. **Over the Creek** — boost-jump (one pup catapults the other across; the bridge drop).
 > 4. **Kitchen Counter Caper** — first ASYMMETRIC abilities: Cheddar chair-leaps to knock snacks
 >    down, the team gobbles them (swept if ignored). Promotes `docs/LEVEL-IDEAS.md`.
-> 5. **Buried Treasure** — scent+dig: Cocoa sniffs out mounds, Cheddar digs them up, either pup
->    collects (`config/balance.ts` `BURROW`).
-> 6. **The Cleaning Ladies Are Here** — distract + carry/escort (a new verb): one pup lures the
->    patrolling vacuum while the other carries the favourite toy to the dog-couch safe zone; carry
->    it past an *un-distracted* vacuum and it's "put away" (dropped + stunned). `CLEANING` block.
-> 7. **Stay Together** — a SURVIVE mission (`surviveMode`): a hawk dives at the strayed pup;
+> 5. **Stay Together** — a SURVIVE mission (`surviveMode`): a hawk dives at the strayed pup;
 >    huddle to stay safe, last 45s to win.
-> 8. **The Thunderstorm** — a SURVIVE mission introducing the **shared-panic / co-regulation**
->    primitive (reusable for the vet, nail grinder, big dogs): each pup has a panic meter; thunder
->    spikes it unless sheltered, being alone raises it, and the *only* way it drains is huddling to
->    comfort each other — either pup maxing out = fail. `STORM` block; `tests/sim/storm.test.ts`.
 > **Mission-aware AI partner** (`SceneDef.coopAi`) makes solo co-op playable — the partner covers
 > a pad / distracts / braces the boost / plays its kitchen role / huddles. **Polish:** mission
 > audio (woof/yip/screech/splash), a mute toggle (persisted), best-score persistence.
-> Each mission = `scenes/missions/*.ts` + a sim test (gates/mission/sneak/creek/kitchen/burrow/
-> cleaning/hawk/storm/coop-ai, +audio/scores units = 139 green). NEXT: more missions (car trip,
-> begging boss, vet — reuse the shared-panic meter), in-play mute, or controller-driven menus.
+> Each mission = `scenes/missions/*.ts` + a sim test (gates/mission/sneak/creek/kitchen/hawk/
+> coop-ai, +audio/scores units = 123 green). NEXT: more missions (car trip, house rescue, …),
+> in-play mute, or controller-driven menus.
 
 - **Kitchen "food drop"** (promote `docs/LEVEL-IDEAS.md`): asymmetric abilities — Cheddar
   chair-leaps + barfs, Cocoa steady; co-op angle (Cheddar knocks table food down for Cocoa).
