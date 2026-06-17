@@ -1,0 +1,10 @@
+id,category,filename,status,source/tool,license/ownership,notes,import priority
+cheddar_idle,Cheddar,cheddar_idle_01.png,needed,,,,high
+cocoa_idle,Cocoa,cocoa_idle_01.png,needed,,,,high
+squirrel_steal,squirrel,squirrel_steal_01.png,needed,,,,high
+prop_sock_red,mission objects,prop_sock_red_01.png,needed,,,,high
+vfx_bark_burst,feedback/VFX,vfx_bark_burst_01.png,needed,,,,high
+sfx_bark_cheddar,gameplay audio,sfx_bark_cheddar_01.wav,needed,,,,high
+sfx_collect_snack,gameplay audio,sfx_collect_snack_01.wav,needed,,,,high
+sfx_mission_win,gameplay audio,sfx_mission_win_01.wav,needed,,,,high
+ui_select,UI audio,ui_select_01.wav,needed,,,,high

@@ -455,7 +455,10 @@ namespace CheddarAndCocoa.Game
         {
             if (!_mission.UsesSquirrel || !MissionActive() || _treats.Count == 0) return;
 
-            StartSquirrelSteal(FindNearestTreat(SquirrelObject.transform.position) ?? _treats[0]);
+            var target = FindNearestTreat(SquirrelObject.transform.position) ?? _treats[0];
+            StartSquirrelSteal(target);
+            if (target != null && Vector2.Distance(SquirrelObject.transform.position, target.transform.position) < 0.3f)
+                SquirrelStealsTarget();
         }
 
         public void ForceGameOver() => EndRound(false);

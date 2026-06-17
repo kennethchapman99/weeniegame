@@ -3,7 +3,8 @@
 `unity/CheddarAndCocoa/Assets/Scenes/ArenaScene.unity` is now a small co-op vertical slice instead of a flat treat loop. The scene still builds itself from `ArenaBootstrap`, but the arena can run multiple small mission variants through one lightweight mission definition path. A cold start now opens a generated in-scene mission select so a new player can choose Backyard Rescue, Snack Heist, or Sock Panic without a developer explaining debug keys.
 
 For current global character art direction, read `docs/ART-DIRECTION.md`. Backyard Mission is the
-playable proof of that direction, not the only place the direction applies.
+playable proof of that direction, not the only place the direction applies. For future external
+sprite/audio collection before Unity import, use `docs/ASSET-CATALOG.md`.
 
 ## Cold-start flow
 

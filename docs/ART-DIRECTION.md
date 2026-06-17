@@ -4,6 +4,9 @@ This is the global visual bible for the playable prototypes. It applies across t
 only Backyard Mission. The current Unity arena proves the direction with generated placeholder
 shapes; authored sprites and animation should preserve these readability rules.
 
+For the external asset intake list, folder structure, naming rules, technical specs, and tracking
+template, use [ASSET-CATALOG.md](ASSET-CATALOG.md).
+
 ## Visual Promise
 
 Cheddar & Cocoa should look like bold, funny, readable miniature dachshunds living through dog-life
