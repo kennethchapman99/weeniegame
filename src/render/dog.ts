@@ -14,6 +14,7 @@ import { rounded, shade } from '../core/math.js';
 import { JUMP } from '../config/balance.js';
 
 type G = CanvasRenderingContext2D;
+const DOG_VISUAL_SCALE = 0.84;
 
 export function drawDog(g: G, d: Dog, t: number): void {
   const swimming = d.mode === 'swimming';
@@ -42,6 +43,7 @@ export function drawDog(g: G, d: Dog, t: number): void {
   const lift = jumpHeight(d, JUMP.duration) * 26; // hop height
   g.save();
   g.translate(d.x, d.y - bob - lift);
+  g.scale(DOG_VISUAL_SCALE, DOG_VISUAL_SCALE);
 
   if (lift > 1) {
     // ground shadow shrinks as you rise
@@ -132,7 +134,8 @@ export function drawDog(g: G, d: Dog, t: number): void {
     g.quadraticCurveTo(fx + 4, 30 + (i % 2) * 3, fx + 9, 19);
   }
   g.fill();
-  // back highlight
+  // layered guard hairs and back highlight add higher-fidelity long-haired dachshund texture
+  drawFurTexture(g, p, t, d.seed);
   g.strokeStyle = 'rgba(255,255,255,.16)';
   g.lineWidth = 5;
   g.lineCap = 'round';
@@ -143,6 +146,8 @@ export function drawDog(g: G, d: Dog, t: number): void {
 
   // near legs
   legPair(g, p, gaitOf(t, d, trot, stunned), false);
+
+  drawCollar(g, d.id);
 
   // chest fluff
   g.fillStyle = p.chest;
@@ -268,7 +273,7 @@ function drawBarkMouth(g: G, d: Dog, t: number): void {
   const open = (0.4 + 0.6 * Math.abs(Math.sin(t * 0.05))) * bp; // rapid chomp, synced to lunge
   g.save();
   g.translate(d.x, d.y - 2);
-  g.scale(d.face, 1);
+  g.scale(d.face * DOG_VISUAL_SCALE, DOG_VISUAL_SCALE);
   const hx = 70;
   const hy = -24;
   const gape = 8 + open * 18; // big cartoon gape
@@ -309,6 +314,50 @@ function drawBarkMouth(g: G, d: Dog, t: number): void {
     g.lineTo(hx + 14 + Math.cos(a) * (18 + open * 10), hy + Math.sin(a) * (18 + open * 10));
     g.stroke();
   }
+  g.restore();
+}
+
+function drawFurTexture(g: G, p: Palette, t: number, seed: number): void {
+  g.save();
+  g.lineCap = 'round';
+  g.strokeStyle = 'rgba(255,255,255,.18)';
+  g.lineWidth = 1.4;
+  for (let i = 0; i < 9; i++) {
+    const x = -35 + i * 9;
+    const sway = Math.sin(t * 0.008 + seed + i) * 2;
+    g.beginPath();
+    g.moveTo(x, -12 + (i % 2));
+    g.quadraticCurveTo(x + 5, -6 + sway, x + 10, -8);
+    g.stroke();
+  }
+  g.strokeStyle = shade(p.body[1], -18);
+  g.globalAlpha = 0.28;
+  g.lineWidth = 1.2;
+  for (let i = 0; i < 7; i++) {
+    const x = -38 + i * 13;
+    g.beginPath();
+    g.moveTo(x, 12);
+    g.quadraticCurveTo(x + 3, 21 + (i % 2) * 3, x + 8, 15);
+    g.stroke();
+  }
+  g.restore();
+}
+
+function drawCollar(g: G, id: Dog['id']): void {
+  g.save();
+  g.translate(35, -7);
+  g.rotate(0.2);
+  g.strokeStyle = id === 'cheddar' ? '#3f78d8' : '#d84f7b';
+  g.lineWidth = 4;
+  g.lineCap = 'round';
+  g.beginPath();
+  g.moveTo(-7, -9);
+  g.quadraticCurveTo(4, -3, 10, 8);
+  g.stroke();
+  g.fillStyle = '#ffd65a';
+  g.beginPath();
+  g.arc(10, 9, 3.2, 0, 7);
+  g.fill();
   g.restore();
 }
 

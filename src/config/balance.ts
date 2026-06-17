@@ -7,9 +7,9 @@
  * never inline these numbers in system code.
  */
 
-export const WORLD = { w: 960, h: 600, dprCap: 3 } as const;
+export const WORLD = { w: 1280, h: 720, dprCap: 3 } as const;
 
-export const BOUNDS = { minX: 50, maxX: 960 - 50, minY: 215, maxY: 600 - 45 } as const;
+export const BOUNDS = { minX: 54, maxX: WORLD.w - 54, minY: 215, maxY: WORLD.h - 45 } as const;
 
 export const SPEED = {
   free: 4.4,
