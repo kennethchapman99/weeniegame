@@ -86,6 +86,32 @@ export const BURROW = {
   target: 4, // real buried treats to collect to win
 } as const;
 
+// "The Thunderstorm" co-op comfort/co-regulation mission — a shared panic meter. The pups calm
+// each other by huddling close; thunder spikes panic unless sheltered; either pup maxing out = fail.
+export const STORM = {
+  panicSpike: 0.34, // boom panic added to an exposed pup at the strike epicenter
+  spikeFalloff: 280, // px — the spike fades to 0 by this distance from the strike
+  shelterShield: 0.8, // fraction of the boom spike blocked while under a shelter
+  cuddleR: 120, // within this the pups comfort each other (drain panic)
+  comfortDrain: 0.17, // panic/sec drained from BOTH pups while they cuddle
+  aloneRise: 0.05, // panic/sec a pup gains while apart from its sibling (scared alone)
+  flashLead: 0.7, // seconds of lightning flash telegraphing a strike before the boom
+  boomEvery: [2.4, 4.0] as [number, number], // seconds between strikes
+} as const;
+
+// "The Cleaning Ladies Are Here" co-op stealth mission — one pup lures the vacuum while the
+// other carries the favourite toy to the safety of the dog couch before it's "put away".
+export const CLEANING = {
+  patrol: [360, 1040] as [number, number], // vacuum sweep x-range
+  patrolSpeed: 3.2, // px/frame while patrolling
+  creepSpeed: 1.1, // px/frame while fixated on a luring pup (slow — keeps it off the carrier)
+  grabR: 40, // proximity to pick up the loose toy
+  catchR: 70, // vacuum within this of an UN-distracted carrier puts the toy away
+  dropStun: 0.8, // stun on a carrier who gets caught
+  dropKnockback: 6, // knockback speed away from the vacuum
+  couchR: 60, // deliver the toy within this of the dog couch to win
+} as const;
+
 // "Sneak the Snack" distract+grab mission tuning.
 export const SNEAK = {
   grabR: 42, // how close a dog must be to a treat to grab it

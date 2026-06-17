@@ -208,6 +208,14 @@ Stealth/chaos level.
 
 Core verbs: hide, steal, distract, rescue.
 
+> **BUILT (v1) as co-op mission "The Cleaning Ladies Are Here"** — `scenes/missions/cleaning.ts`,
+> `CLEANING` balance block, 5 sim tests in `tests/sim/cleaning.test.ts`. The distract/objective
+> split: one pup lures a patrolling vacuum (it fixates within `distractR` and creeps after the
+> decoy) while the other carries the favourite toy to the dog-couch safe zone. Carrying past an
+> *un-distracted* vacuum gets the toy "put away" — dropped + the carrier stunned. Introduces the
+> carry/escort verb. Future v2 hooks from the wishlist: muddy-pawprint trails, hide-under-couch
+> during a pass, multiple cleaning hazards (mop/bucket).
+
 ### 7. Operation Pee Break: Teenager Phone Rescue
 
 Co-op human-manipulation puzzle.
@@ -356,6 +364,14 @@ Comfort/co-regulation level.
 - Final objective: reach Sue/Ken/blanket nest.
 
 Core verbs: hide, comfort, carry, survive.
+
+> **BUILT (v1) as co-op mission "The Thunderstorm"** — `scenes/missions/storm.ts`, `STORM` balance
+> block, 5 sim tests in `tests/sim/storm.test.ts`. Introduces the **shared-panic / co-regulation**
+> primitive: each pup has its own panic meter, telegraphed thunder strikes spike it (blunted under
+> a shelter), being alone slowly raises it, and the *only* drain is huddling within `cuddleR` to
+> comfort each other. Either pup maxing out fails; weathering the full timer wins. The panic meter
+> is the reusable building block for the vet/nail-grinder/big-dog ideas. Future v2 hooks: gather
+> blankets, a final "reach the nest" objective, flicker/shockwave movement interrupts.
 
 ### 17. Amazon Delivery Defense
 

@@ -23,7 +23,7 @@ function startHawk(seed = 1) {
   const s = makeGameState(makeRng(seed));
   s.mode = 'coop';
   s.partner = 'human'; // pin the pups where we place them
-  s.sceneIdx = 5;
+  s.sceneIdx = 6; // co-op registry: …burrow(4), cleaning(5), hawk(6)
   beginScene(s);
   for (let i = 0; i < 200 && s.phase !== 'play'; i++) updateGame(s, noIntent, false, false, DT);
   return s;
