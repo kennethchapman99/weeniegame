@@ -38,10 +38,10 @@ namespace CheddarAndCocoa.Bootstrap
             var cam = camGo.GetComponent<Camera>();
 
             // Cheddar — golden chaos puppy (P1: pad 0 / WASD + Space).
-            var cheddar = BuildDog(DogId.Cheddar, Hex("#e3ab63"), new Vector2(-4f, 0f), slot: 0,
+            var cheddar = BuildDog(DogId.Cheddar, new Vector2(-4f, 0f), slot: 0,
                 GamepadPlayerInput.KeyboardScheme.WasdSpace, CheddarTuning());
             // Cocoa — chocolate spot queen (P2: pad 1 / arrows + Enter/RShift).
-            var cocoa = BuildDog(DogId.Cocoa, Hex("#5e3a20"), new Vector2(4f, 0f), slot: 1,
+            var cocoa = BuildDog(DogId.Cocoa, new Vector2(4f, 0f), slot: 1,
                 GamepadPlayerInput.KeyboardScheme.ArrowsEnter, CocoaTuning());
 
             var cheddarDog = cheddar.GetComponent<DogController>();
@@ -50,11 +50,11 @@ namespace CheddarAndCocoa.Bootstrap
             camGo.GetComponent<SharedCameraController>().SetTargets(cheddar.transform, cocoa.transform);
 
             // Visible bark feedback: an expanding ring at the dog on each bark.
-            cheddar.AddComponent<BarkEffect>().Init(cheddarDog, _ring, new Color(1f, 0.95f, 0.5f, 0.8f));
-            cocoa.AddComponent<BarkEffect>().Init(cocoaDog, _ring, new Color(0.7f, 0.85f, 1f, 0.8f));
+            cheddar.AddComponent<BarkEffect>().Init(cheddarDog, _ring, ArenaArtCatalog.Dog(DogId.Cheddar).BarkTint);
+            cocoa.AddComponent<BarkEffect>().Init(cocoaDog, _ring, ArenaArtCatalog.Dog(DogId.Cocoa).BarkTint);
 
             // The round: shared score, 60s timer, treats, restart.
-            var game = new GameObject("GameManager").AddComponent<GameManager>();
+            var game = new GameObject(ArenaArtCatalog.GameManagerObjectName).AddComponent<GameManager>();
             var bounds = new Rect(-fieldWidth * 0.5f, -fieldHeight * 0.5f, fieldWidth, fieldHeight);
             game.Init(
                 new[] { cheddarDog, cocoaDog },
@@ -62,11 +62,11 @@ namespace CheddarAndCocoa.Bootstrap
                 _square, bounds, treatSeed);
 
             // Score/timer/game-over overlay.
-            var hud = new GameObject("ArenaHud").AddComponent<ArenaHud>();
+            var hud = new GameObject(ArenaArtCatalog.ArenaHudObjectName).AddComponent<ArenaHud>();
             hud.Init(game);
 
             // Controller/keyboard legend + name tags + WOOF flash (reuse the existing debug overlay).
-            var dbg = new GameObject("DebugHud").AddComponent<DebugHud>();
+            var dbg = new GameObject(ArenaArtCatalog.DebugHudObjectName).AddComponent<DebugHud>();
             dbg.Init(cam,
                 cheddarDog, cheddar.GetComponent<DogIdentity>(), 0,
                 cocoaDog, cocoa.GetComponent<DogIdentity>(), 1);
@@ -100,18 +100,19 @@ namespace CheddarAndCocoa.Bootstrap
 
         // --- Builders ---
 
-        private GameObject BuildDog(DogId id, Color color, Vector2 pos, int slot,
+        private GameObject BuildDog(DogId id, Vector2 pos, int slot,
             GamepadPlayerInput.KeyboardScheme scheme, DogTuning tuning)
         {
+            var art = ArenaArtCatalog.Dog(id);
             // Build inactive so component Awakes run only after identity/slot are configured.
             var go = new GameObject(id.ToString());
             go.SetActive(false);
             go.transform.position = pos;
-            go.transform.localScale = new Vector3(1.6f, 0.62f, 1f); // long, low dachshund placeholder
+            go.transform.localScale = ArenaArtCatalog.ArenaDogBodyScale; // long, low dachshund placeholder
 
             var sr = go.AddComponent<SpriteRenderer>();
             sr.sprite = _square;
-            sr.color = color;
+            sr.color = art.BootstrapColor;
             sr.sortingOrder = 10;
 
             go.AddComponent<Rigidbody2D>();   // DogController sets gravity/rotation in Awake
@@ -120,9 +121,7 @@ namespace CheddarAndCocoa.Bootstrap
             go.AddComponent<DogIdentity>().Configure(id, tuning);
             go.AddComponent<DogController>();
             go.AddComponent<DogReadabilityFeedback>().Init(_square);
-            go.AddComponent<ObjectiveArrowFeedback>().Init(id == DogId.Cheddar
-                ? new Color(1f, 0.92f, 0.25f)
-                : new Color(0.72f, 0.9f, 1f));
+            go.AddComponent<ObjectiveArrowFeedback>().Init(art.ObjectiveArrowColor);
             var input = go.AddComponent<GamepadPlayerInput>();
             input.SetSlot(slot);
             input.SetKeyboardScheme(scheme);
@@ -138,7 +137,7 @@ namespace CheddarAndCocoa.Bootstrap
             var cam = go.AddComponent<Camera>();
             cam.orthographic = true;
             cam.orthographicSize = fieldHeight * 0.5f + 1f;
-            cam.backgroundColor = Hex("#243a1c"); // dark grass
+            cam.backgroundColor = ArenaArtCatalog.CameraBackgroundColor; // dark grass
             cam.clearFlags = CameraClearFlags.SolidColor;
             go.AddComponent<AudioListener>();
             go.tag = "MainCamera";
@@ -151,7 +150,7 @@ namespace CheddarAndCocoa.Bootstrap
             var floor = new GameObject("Floor");
             var sr = floor.AddComponent<SpriteRenderer>();
             sr.sprite = _square;
-            sr.color = Hex("#3c6b2f"); // lawn green
+            sr.color = ArenaArtCatalog.FloorColor; // lawn green
             sr.sortingOrder = -10;
             floor.transform.localScale = new Vector3(fieldWidth, fieldHeight, 1f);
 

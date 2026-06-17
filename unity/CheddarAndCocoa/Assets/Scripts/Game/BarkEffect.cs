@@ -32,7 +32,8 @@ namespace CheddarAndCocoa.Game
 
         private void Spawn()
         {
-            var go = new GameObject("BarkRing");
+            var art = ArenaArtCatalog.BarkFeedback;
+            var go = new GameObject(art.RingName);
             go.transform.position = _dog.transform.position;
             var sr = go.AddComponent<SpriteRenderer>();
             sr.sprite = _ring;
@@ -40,11 +41,11 @@ namespace CheddarAndCocoa.Game
             sr.sortingOrder = 20;
             go.AddComponent<Ring>().Begin(sr);
 
-            var burst = new GameObject("BarkBurst");
+            var burst = new GameObject(art.BurstName);
             burst.transform.position = _dog.transform.position + Vector3.up * 0.9f;
             var text = burst.AddComponent<TextMesh>();
-            text.text = "BARK!";
-            text.fontSize = 32;
+            text.text = art.BurstText;
+            text.fontSize = art.BurstFontSize;
             text.anchor = TextAnchor.MiddleCenter;
             text.alignment = TextAlignment.Center;
             text.color = _tint;
@@ -54,7 +55,6 @@ namespace CheddarAndCocoa.Game
         /// <summary>Drives one ring's expand + fade, then self-destructs.</summary>
         private sealed class Ring : MonoBehaviour
         {
-            private const float Life = 0.45f;
             private SpriteRenderer _sr;
             private float _t;
 
@@ -63,22 +63,22 @@ namespace CheddarAndCocoa.Game
             private void Update()
             {
                 _t += Time.deltaTime;
-                float k = _t / Life;
-                float scale = Mathf.Lerp(0.4f, 2.4f, k);
+                var art = ArenaArtCatalog.BarkFeedback;
+                float k = _t / art.RingLifeSeconds;
+                float scale = Mathf.Lerp(art.RingStartScale, art.RingEndScale, k);
                 transform.localScale = new Vector3(scale, scale, 1f);
 
                 Color c = _sr.color;
                 c.a = Mathf.Lerp(0.8f, 0f, k);
                 _sr.color = c;
 
-                if (_t >= Life) Destroy(gameObject);
+                if (_t >= art.RingLifeSeconds) Destroy(gameObject);
             }
         }
 
         /// <summary>Comic bark text paired with the ring; self-contained so no UI system is needed.</summary>
         private sealed class FloatingText : MonoBehaviour
         {
-            private const float Life = 0.65f;
             private TextMesh _text;
             private float _t;
 
@@ -91,11 +91,11 @@ namespace CheddarAndCocoa.Game
                 if (_text != null)
                 {
                     Color c = _text.color;
-                    c.a = Mathf.Lerp(1f, 0f, _t / Life);
+                    c.a = Mathf.Lerp(1f, 0f, _t / ArenaArtCatalog.BarkFeedback.BurstLifeSeconds);
                     _text.color = c;
                 }
 
-                if (_t >= Life) Destroy(gameObject);
+                if (_t >= ArenaArtCatalog.BarkFeedback.BurstLifeSeconds) Destroy(gameObject);
             }
         }
     }

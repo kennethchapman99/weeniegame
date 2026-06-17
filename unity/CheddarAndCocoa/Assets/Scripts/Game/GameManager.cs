@@ -1479,13 +1479,14 @@ namespace CheddarAndCocoa.Game
             var go = new GameObject(_mission.ItemObjectName);
             go.transform.SetParent(_treatRoot);
             go.transform.position = new Vector3(x, y, 0f);
-            go.transform.localScale = ItemScaleFor(_mission.Variant);
+            var art = ArenaArtCatalog.Collectible(_mission.Variant);
+            go.transform.localScale = art.RootScale;
 
             var sr = go.AddComponent<SpriteRenderer>();
             sr.sprite = _sprite;
             sr.color = _mission.ItemColor;
             sr.sortingOrder = 5;
-            BuildCollectibleArt(go);
+            BuildCollectibleArt(go, art);
 
             var col = go.AddComponent<CircleCollider2D>();
             col.isTrigger = true;
@@ -1498,50 +1499,13 @@ namespace CheddarAndCocoa.Game
             AddWorldLabel(go, _mission.ItemWorldLabel, Vector3.up * 2.2f, 16, Color.white);
         }
 
-        private static Vector3 ItemScaleFor(MissionVariant variant)
+        private void BuildCollectibleArt(GameObject go, CollectibleVisualSlot art)
         {
-            return variant switch
+            foreach (var part in art.Parts)
             {
-                MissionVariant.SnackHeist => new Vector3(0.54f, 0.54f, 1f),
-                MissionVariant.SockPanic => new Vector3(0.46f, 0.86f, 1f),
-                _ => new Vector3(0.72f, 0.32f, 1f)
-            };
-        }
-
-        private void BuildCollectibleArt(GameObject go)
-        {
-            if (_mission.Variant == MissionVariant.SnackHeist)
-            {
-                AddActorPart(go, "SnackPlate", _sprite, _mission.ItemSecondaryColor,
-                    new Vector3(0f, -0.08f, 0.04f), new Vector3(1.38f, 0.32f, 1f), 4);
-                AddActorPart(go, "SnackCheeseCorner", _sprite, _mission.ItemAccentColor,
-                    new Vector3(0.24f, 0.24f, -0.03f), new Vector3(0.38f, 0.25f, 1f), 7);
-                AddActorPart(go, "SnackCrumbA", _sprite, new Color(1f, 0.92f, 0.38f),
-                    new Vector3(-0.28f, 0.28f, -0.04f), new Vector3(0.14f, 0.14f, 1f), 8);
-                AddActorPart(go, "SnackCrumbB", _sprite, new Color(1f, 0.92f, 0.38f),
-                    new Vector3(0.32f, -0.22f, -0.04f), new Vector3(0.12f, 0.12f, 1f), 8);
-                return;
+                AddActorPart(go, part, _sprite,
+                    part.ResolveColor(_mission.ItemColor, _mission.ItemAccentColor, _mission.ItemSecondaryColor));
             }
-
-            if (_mission.Variant == MissionVariant.SockPanic)
-            {
-                AddActorPart(go, "SockToe", _sprite, _mission.ItemAccentColor,
-                    new Vector3(0f, -0.48f, -0.03f), new Vector3(1.18f, 0.24f, 1f), 7);
-                AddActorPart(go, "SockCuff", _sprite, _mission.ItemSecondaryColor,
-                    new Vector3(0f, 0.48f, -0.03f), new Vector3(1.18f, 0.2f, 1f), 7);
-                AddActorPart(go, "SockStripeA", _sprite, _mission.ItemAccentColor,
-                    new Vector3(0f, 0.18f, -0.04f), new Vector3(1.12f, 0.12f, 1f), 8);
-                AddActorPart(go, "SockStripeB", _sprite, _mission.ItemSecondaryColor,
-                    new Vector3(0f, -0.12f, -0.04f), new Vector3(1.12f, 0.12f, 1f), 8);
-                return;
-            }
-
-            AddActorPart(go, "WeenieBunLeft", _sprite, new Color(0.98f, 0.76f, 0.4f),
-                new Vector3(-0.5f, 0f, -0.03f), new Vector3(0.2f, 0.9f, 1f), 6);
-            AddActorPart(go, "WeenieBunRight", _sprite, new Color(0.98f, 0.76f, 0.4f),
-                new Vector3(0.5f, 0f, -0.03f), new Vector3(0.2f, 0.9f, 1f), 6);
-            AddActorPart(go, "WeenieMustard", _sprite, new Color(1f, 0.9f, 0.12f),
-                new Vector3(0f, 0.18f, -0.04f), new Vector3(0.8f, 0.18f, 1f), 7);
         }
 
         private void ClearTreats()
@@ -1555,87 +1519,46 @@ namespace CheddarAndCocoa.Game
 
         private void BuildMissionObjects()
         {
-            SquirrelObject = MakeActor("Squirrel", new Color(0.55f, 0.32f, 0.12f), 0.7f, "Squirrel", 0.18f);
-            PredatorObject = MakeActor("Predator Warning", new Color(0.7f, 0.05f, 0.08f), 1.1f, "Predator Warning", 0.25f);
-            RopeObject = MakeActor("Rope/Tug", new Color(0.95f, 0.7f, 0.15f), 0.9f, "Rope/Tug", 0.1f);
+            SquirrelObject = MakeActor(ArenaArtCatalog.Actor(ArenaArtCatalog.ActorKind.Squirrel));
+            PredatorObject = MakeActor(ArenaArtCatalog.Actor(ArenaArtCatalog.ActorKind.Predator));
+            RopeObject = MakeActor(ArenaArtCatalog.Actor(ArenaArtCatalog.ActorKind.Rope));
         }
 
-        private GameObject MakeActor(string name, Color color, float scale, string label, float pulse)
+        private GameObject MakeActor(ActorVisualSlot art)
         {
-            var go = new GameObject(name);
-            go.transform.localScale = Vector3.one * scale;
+            var go = new GameObject(art.ObjectName);
+            go.transform.localScale = Vector3.one * art.RootScale;
 
             var sr = go.AddComponent<SpriteRenderer>();
             sr.sprite = _sprite;
-            sr.color = color;
+            sr.color = art.RootColor;
             sr.sortingOrder = 6;
 
-            BuildActorArt(go, name, sr);
-            AddWorldLabel(go, label, ActorLabelOffset(name), 24, Color.white);
-            go.AddComponent<MissionActorFeedback>().Init(sr, label, pulse);
+            BuildActorArt(go, art, sr);
+            AddWorldLabel(go, art.Label, art.LabelOffset, 24, Color.white);
+            go.AddComponent<MissionActorFeedback>().Init(sr, art.Label, art.PulseAmount, art.RotationPerSecond);
             return go;
         }
 
-        private static Vector3 ActorLabelOffset(string name)
+        private void BuildActorArt(GameObject go, ActorVisualSlot art, SpriteRenderer root)
         {
-            if (name.Contains("Squirrel") || name.Contains("Predator") || name.Contains("Rope"))
-                return Vector3.up * 1.8f;
-            return Vector3.up * 0.85f;
-        }
-
-        private void BuildActorArt(GameObject go, string name, SpriteRenderer root)
-        {
-            if (name.Contains("Squirrel"))
+            root.transform.localScale = art.BodyScale;
+            foreach (var part in art.Parts)
             {
-                root.transform.localScale = new Vector3(0.78f, 0.48f, 1f);
-                AddActorPart(go, "SquirrelFlagTail", _sprite, new Color(0.72f, 0.42f, 0.12f),
-                    new Vector3(-0.55f, 0.22f, -0.02f), new Vector3(0.32f, 0.9f, 1f), 7);
-                AddActorPart(go, "SquirrelPointNose", _sprite, new Color(0.36f, 0.18f, 0.07f),
-                    new Vector3(0.52f, 0.04f, -0.03f), new Vector3(0.28f, 0.22f, 1f), 8);
-                AddActorPart(go, "SquirrelBeadyEye", _sprite, Color.black,
-                    new Vector3(0.28f, 0.2f, -0.04f), new Vector3(0.09f, 0.09f, 1f), 9);
-                return;
-            }
-
-            if (name.Contains("Predator"))
-            {
-                root.transform.localScale = new Vector3(1.25f, 0.48f, 1f);
-                AddActorPart(go, "PredatorWingLeft", _sprite, new Color(0.18f, 0.03f, 0.04f),
-                    new Vector3(-0.62f, 0.04f, -0.02f), new Vector3(0.55f, 0.28f, 1f), 7);
-                AddActorPart(go, "PredatorWingRight", _sprite, new Color(0.18f, 0.03f, 0.04f),
-                    new Vector3(0.62f, 0.04f, -0.02f), new Vector3(0.55f, 0.28f, 1f), 7);
-                AddActorPart(go, "PredatorWarningEyeA", _sprite, new Color(1f, 0.1f, 0.06f),
-                    new Vector3(-0.16f, 0.16f, -0.04f), new Vector3(0.12f, 0.12f, 1f), 9);
-                AddActorPart(go, "PredatorWarningEyeB", _sprite, new Color(1f, 0.1f, 0.06f),
-                    new Vector3(0.16f, 0.16f, -0.04f), new Vector3(0.12f, 0.12f, 1f), 9);
-                return;
-            }
-
-            if (name.Contains("Rope"))
-            {
-                root.transform.localScale = new Vector3(1.45f, 0.24f, 1f);
-                AddActorPart(go, "RopeStripeA", _sprite, new Color(0.55f, 0.27f, 0.08f),
-                    new Vector3(-0.36f, 0f, -0.02f), new Vector3(0.16f, 1.1f, 1f), 7);
-                AddActorPart(go, "RopeStripeB", _sprite, new Color(0.55f, 0.27f, 0.08f),
-                    new Vector3(0.36f, 0f, -0.02f), new Vector3(0.16f, 1.1f, 1f), 7);
-                AddActorPart(go, "RopeEndLeft", _sprite, new Color(1f, 0.82f, 0.3f),
-                    new Vector3(-0.76f, 0f, -0.03f), new Vector3(0.16f, 1.5f, 1f), 8);
-                AddActorPart(go, "RopeEndRight", _sprite, new Color(1f, 0.82f, 0.3f),
-                    new Vector3(0.76f, 0f, -0.03f), new Vector3(0.16f, 1.5f, 1f), 8);
+                AddActorPart(go, part, _sprite, part.Color);
             }
         }
 
-        private static SpriteRenderer AddActorPart(GameObject parent, string name, Sprite sprite, Color color,
-            Vector3 localPosition, Vector3 localScale, int sortingOrder)
+        private static SpriteRenderer AddActorPart(GameObject parent, PartSlot part, Sprite sprite, Color color)
         {
-            var go = new GameObject(name);
+            var go = new GameObject(part.Name);
             go.transform.SetParent(parent.transform);
-            go.transform.localPosition = localPosition;
-            go.transform.localScale = localScale;
+            go.transform.localPosition = part.LocalPosition;
+            go.transform.localScale = part.LocalScale;
             var sr = go.AddComponent<SpriteRenderer>();
             sr.sprite = sprite;
             sr.color = color;
-            sr.sortingOrder = sortingOrder;
+            sr.sortingOrder = part.SortingOrder;
             return sr;
         }
 
@@ -1669,11 +1592,12 @@ namespace CheddarAndCocoa.Game
 
         private void SpawnWorldPop(Vector3 position, string text, Color color)
         {
-            var go = new GameObject($"MissionPop_{text.Replace(" ", "_").Replace("!", string.Empty).Replace("+", "PLUS").Replace("-", "MINUS")}");
-            go.transform.position = position + Vector3.up * 0.95f;
+            var art = ArenaArtCatalog.WorldPop;
+            var go = new GameObject($"{art.NamePrefix}_{text.Replace(" ", "_").Replace("!", string.Empty).Replace("+", "PLUS").Replace("-", "MINUS")}");
+            go.transform.position = position + art.SpawnOffset;
             var label = go.AddComponent<TextMesh>();
             label.text = text;
-            label.fontSize = 28;
+            label.fontSize = art.FontSize;
             label.anchor = TextAnchor.MiddleCenter;
             label.alignment = TextAlignment.Center;
             label.color = color;
@@ -1743,15 +1667,17 @@ namespace CheddarAndCocoa.Game
         private TextMesh _label;
         private Vector3 _baseScale;
         private float _pulseAmount;
+        private Vector3 _rotationPerSecond;
 
         public string Label => _label != null ? _label.text : string.Empty;
 
-        public void Init(SpriteRenderer renderer, string label, float pulseAmount)
+        public void Init(SpriteRenderer renderer, string label, float pulseAmount, Vector3 rotationPerSecond)
         {
             _renderer = renderer;
             _label = GetComponentInChildren<TextMesh>();
             _baseScale = transform.localScale;
             _pulseAmount = pulseAmount;
+            _rotationPerSecond = rotationPerSecond;
             SetState(label, renderer != null ? renderer.color : Color.white, pulseAmount);
         }
 
@@ -1771,8 +1697,7 @@ namespace CheddarAndCocoa.Game
         {
             float pulse = 1f + Mathf.Sin(Time.time * 5f) * _pulseAmount;
             transform.localScale = _baseScale * pulse;
-            if (name.Contains("Squirrel")) transform.Rotate(0f, 0f, 80f * Time.deltaTime);
-            if (name.Contains("Rope")) transform.Rotate(0f, 0f, 45f * Time.deltaTime);
+            if (_rotationPerSecond != Vector3.zero) transform.Rotate(_rotationPerSecond * Time.deltaTime);
             if (_label != null) _label.transform.rotation = Quaternion.identity;
         }
     }
@@ -1780,7 +1705,6 @@ namespace CheddarAndCocoa.Game
     /// <summary>Short-lived world text for score, rescue, tug, and miss moments.</summary>
     public sealed class MissionWorldPop : MonoBehaviour
     {
-        private const float Life = 1.05f;
         private TextMesh _label;
         private float _t;
 
@@ -1791,19 +1715,20 @@ namespace CheddarAndCocoa.Game
         private void Update()
         {
             _t += Time.deltaTime;
-            transform.position += Vector3.up * (Time.deltaTime * 0.35f);
-            float scale = 1f + Mathf.Sin(Mathf.Clamp01(_t / Life) * Mathf.PI) * 0.28f;
+            var art = ArenaArtCatalog.WorldPop;
+            transform.position += Vector3.up * (Time.deltaTime * art.RiseSpeed);
+            float scale = 1f + Mathf.Sin(Mathf.Clamp01(_t / art.LifeSeconds) * Mathf.PI) * art.PopScaleAmount;
             transform.localScale = Vector3.one * scale;
 
             if (_label != null)
             {
                 _label.transform.rotation = Quaternion.identity;
                 Color c = _label.color;
-                c.a = Mathf.Lerp(1f, 0f, _t / Life);
+                c.a = Mathf.Lerp(1f, 0f, _t / art.LifeSeconds);
                 _label.color = c;
             }
 
-            if (_t >= Life) Destroy(gameObject);
+            if (_t >= art.LifeSeconds) Destroy(gameObject);
         }
     }
 }

@@ -257,6 +257,22 @@ Suggested feedback questions:
 - Did Replay, Next Mission, and Session Summary make sense?
 - What was funny or personal, and what felt like generic collecting?
 
+## Visual readability checklist
+
+Use this after any placeholder-art, authored-art, or sprite import change:
+
+- Cheddar and Cocoa still read as different long, low dachshunds at gameplay zoom without relying
+  only on text labels.
+- Cheddar keeps golden/red chaos reads; Cocoa keeps chocolate/teal spot-queen reads.
+- Dog pose states are still distinct: idle, run, bark, tug, stunned, rescued, proud, sad.
+- Bark ring/text, objective arrows, score pops, and playtest overlay remain readable but do not hide
+  the dogs or core mission objects.
+- Weenie, snack, and sock collectibles are visually distinct from each other and from the squirrel
+  and rope.
+- Squirrel, predator, and rope expose their expected replacement slots from
+  `ArenaArtCatalog` and keep their current role reads: thief, threat, shared tug prop.
+- Mission select, end actions, and session summary remain legible with placeholder IMGUI styling.
+
 ## Known limitations
 
 - All mission actors use placeholder sprites/text labels generated at runtime; there are no external art assets yet.

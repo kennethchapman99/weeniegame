@@ -18,13 +18,14 @@ namespace CheddarAndCocoa.Game
 
         public void Init(Color color)
         {
-            var labelGo = new GameObject("ObjectiveArrowLabel");
+            var slot = ArenaArtCatalog.ObjectiveArrowLabel;
+            var labelGo = new GameObject(slot.Name);
             labelGo.transform.SetParent(transform);
-            labelGo.transform.localScale = Vector3.one * 0.085f;
+            labelGo.transform.localScale = slot.LocalScale;
             _label = labelGo.AddComponent<TextMesh>();
             _label.anchor = TextAnchor.MiddleCenter;
             _label.alignment = TextAlignment.Center;
-            _label.fontSize = 22;
+            _label.fontSize = slot.FontSize;
             _label.color = color;
             Hide();
         }

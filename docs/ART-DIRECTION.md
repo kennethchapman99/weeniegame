@@ -142,6 +142,10 @@ The current Unity proof lives in `unity/CheddarAndCocoa/Assets/Scenes/ArenaScene
 
 Current implementation rules:
 
+- Runtime placeholder visual slots are centralized in
+  `unity/CheddarAndCocoa/Assets/Scripts/Game/ArenaArtCatalog.cs`. Future authored sprites should
+  replace the named slots there first instead of adding one-off child names, colors, or scales in
+  gameplay code.
 - Dog bodies are longer and lower than generic rectangles.
 - Both dogs have generated heads, long snouts, floppy ears, tiny feet, tails, collars, and expression
   eyes.
@@ -177,6 +181,76 @@ Rope:
 - Yellow/brown striped horizontal tug object with distinct ends.
 - Labels must name whether it needs both dogs, is waiting for one dog, is charging, or is complete.
 - Tug should feel like shared dog work, not a generic progress bar.
+
+## Future Art Replacement Contract
+
+Do not start a production AI art workflow yet. When authored or AI-assisted assets are introduced,
+they should satisfy this contract before replacing the runtime placeholders.
+
+### Camera And Perspective
+
+- Current gameplay uses a 2D orthographic, top-down/three-quarter readable arena. Assets should read
+  from this camera without needing per-object camera billboarding.
+- Dog sprites should face primarily left/right with clear snout direction. A slight three-quarter
+  read is fine; avoid front-only portraits that hide dachshund length.
+- Props should be readable at the current gameplay zoom, not only in close-up UI.
+- Shadow direction should be consistent across sprites: use a soft down/right grounding shadow or no
+  baked shadow. Avoid dramatic shadows that imply a different light source than the arena.
+
+### Scale
+
+- The dog replacement envelope should match the current long-low body footprint: about `1.6 x 0.62`
+  Unity units for the base body before pose squash/stretch.
+- Cheddar and Cocoa should use the same collision footprint unless gameplay deliberately changes.
+  Visual differences should come from markings, collars, pose, and animation energy, not collider
+  size.
+- Weenie/snack/sock props should remain small enough to collect cleanly with the current `0.6`
+  trigger radius and large enough to read under objective arrows.
+- Squirrel, predator warning, and rope replacements should preserve their rough current gameplay
+  scale: squirrel small thief, predator larger warning/shadow, rope horizontal shared-object.
+
+### Sprite Import Expectations
+
+- Use transparent-background sprites for dogs, props, mission actors, VFX, markers, and UI icons.
+- Keep pivots centered unless a slot explicitly needs an end/feet pivot. Dog body sprites should
+  pivot around the body center so existing squash, bark, proud, sad, and tug transforms remain
+  usable.
+- Use pixels-per-unit consistently across a sprite set. Do not compensate for inconsistent source
+  scale with arbitrary scene transforms.
+- Keep sprite bounds tight but leave enough padding for ears, tail, rope ends, and bark rings so
+  animation does not clip.
+
+### Naming Conventions
+
+Named replacement slots should map to `ArenaArtCatalog` first:
+
+- Dogs: `DachshundHead`, `LongDogSnout`, `CheddarRedCollar`, `CocoaTealCollar`,
+  `CheddarIntentArrow`, `CocoaIntentArrow`, `CocoaQueenSpotA`, `CheddarChaosTuft`,
+  `DogReadabilityLabel`.
+- Collectibles: `WeenieMustard`, `SnackPlate`, `SnackCrumbA`, `SockToe`, `SockStripeA`.
+- Mission actors: `SquirrelFlagTail`, `SquirrelPointNose`, `PredatorWarningEyeA`,
+  `PredatorWingLeft`, `RopeStripeA`, `RopeEndLeft`.
+- Feedback/UI: `BarkRing`, `BarkBurst`, `ObjectiveArrowLabel`, `MissionPop_*`.
+
+If a future prefab uses fewer child objects because the art is a single sprite, keep a stable slot
+component or prefab child with the same logical name so PlayMode tests and replacement tooling can
+still find it.
+
+### Animation Pose Expectations
+
+Future dog animation should preserve these state reads:
+
+- Idle: Cheddar wiggle-ready, Cocoa queen-ready.
+- Run: Cheddar chaos zoom, Cocoa spot patrol.
+- Bark: visible pop plus bark effect; bark remains gameplay feedback.
+- Tug: both dogs visibly commit to one shared rope problem.
+- Stunned: dog is clearly unable to act.
+- Rescued: warm recovery pop.
+- Proud: clear/teamwork victory pose.
+- Sad: recoverable fail pose, not grim punishment.
+
+Animation controllers, sprite sheets, or prefab swaps can arrive later, but they must expose these
+poses or equivalent state hooks before replacing the generated pose labels.
 
 ## Score And Replay Visual Tone
 

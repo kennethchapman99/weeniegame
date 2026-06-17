@@ -31,6 +31,23 @@ namespace CheddarAndCocoa.Tests
             AssertMissionBalance(GameManager.MissionVariant.SockPanic, tuning, expectSquirrel: false, expectPredator: false, expectTug: false);
         }
 
+        [Test]
+        public void ArenaArtCatalog_DefinesReplaceableVisualSlots()
+        {
+            Assert.That(ArenaArtCatalog.Dog(DogId.Cheddar).Title, Does.Contain("CHEDDAR"));
+            Assert.That(ArenaArtCatalog.Dog(DogId.Cocoa).Title, Does.Contain("COCOA"));
+            Assert.That(ArenaArtCatalog.DogPartNames(DogId.Cheddar), Does.Contain("CheddarRedCollar"));
+            Assert.That(ArenaArtCatalog.DogPartNames(DogId.Cocoa), Does.Contain("CocoaTealCollar"));
+            Assert.That(ArenaArtCatalog.ActorPartNames(ArenaArtCatalog.ActorKind.Squirrel), Does.Contain("SquirrelFlagTail"));
+            Assert.That(ArenaArtCatalog.ActorPartNames(ArenaArtCatalog.ActorKind.Predator), Does.Contain("PredatorWarningEyeA"));
+            Assert.That(ArenaArtCatalog.ActorPartNames(ArenaArtCatalog.ActorKind.Rope), Does.Contain("RopeStripeA"));
+            Assert.That(ArenaArtCatalog.CollectiblePartNames(GameManager.MissionVariant.BackyardRescue), Does.Contain("WeenieMustard"));
+            Assert.That(ArenaArtCatalog.CollectiblePartNames(GameManager.MissionVariant.SnackHeist), Does.Contain("SnackCrumbA"));
+            Assert.That(ArenaArtCatalog.CollectiblePartNames(GameManager.MissionVariant.SockPanic), Does.Contain("SockStripeA"));
+            Assert.AreEqual("BarkBurst", ArenaArtCatalog.BarkFeedback.BurstName);
+            Assert.AreEqual("ObjectiveArrowLabel", ArenaArtCatalog.ObjectiveArrowLabel.Name);
+        }
+
         [UnityTest]
         public IEnumerator BackyardMission_Objectives_Hazards_Tug_Clear_AndRestart()
         {
@@ -86,11 +103,13 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(game.SquirrelObject.GetComponent<MissionActorFeedback>());
             Assert.IsNotNull(game.PredatorObject.GetComponent<MissionActorFeedback>());
             Assert.IsNotNull(game.RopeObject.GetComponent<MissionActorFeedback>());
-            Assert.IsNotNull(game.SquirrelObject.transform.Find("SquirrelFlagTail"));
-            Assert.IsNotNull(game.PredatorObject.transform.Find("PredatorWarningEyeA"));
-            Assert.IsNotNull(game.RopeObject.transform.Find("RopeStripeA"));
+            AssertHasChildren(game.SquirrelObject.transform, ArenaArtCatalog.ActorPartNames(ArenaArtCatalog.ActorKind.Squirrel));
+            AssertHasChildren(game.PredatorObject.transform, ArenaArtCatalog.ActorPartNames(ArenaArtCatalog.ActorKind.Predator));
+            AssertHasChildren(game.RopeObject.transform, ArenaArtCatalog.ActorPartNames(ArenaArtCatalog.ActorKind.Rope));
             Assert.IsNotNull(game.GetComponent<AudioSource>());
             Assert.IsNotNull(Camera.main.GetComponent<AudioListener>());
+            Assert.IsNotNull(GameObject.Find(ArenaArtCatalog.ArenaHudObjectName));
+            Assert.IsNotNull(GameObject.Find(ArenaArtCatalog.DebugHudObjectName));
 
             var cheddarFeedback = cheddar.GetComponent<DogReadabilityFeedback>();
             var cocoaFeedback = cocoa.GetComponent<DogReadabilityFeedback>();
@@ -100,13 +119,12 @@ namespace CheddarAndCocoa.Tests
             Assert.That(cocoaFeedback.IdentityLabel, Does.Contain("COCOA SPOT QUEEN"));
             Assert.That(cheddarFeedback.ArtDirectionSignature, Does.Contain("golden-chaos"));
             Assert.That(cocoaFeedback.ArtDirectionSignature, Does.Contain("chocolate-spot"));
-            Assert.IsNotNull(cheddar.transform.Find("LongDogSnout"));
-            Assert.IsNotNull(cheddar.transform.Find("CheddarRedCollar"));
-            Assert.IsNotNull(cheddar.transform.Find("CheddarIntentArrow"));
-            Assert.IsNotNull(cocoa.transform.Find("LongDogSnout"));
-            Assert.IsNotNull(cocoa.transform.Find("CocoaTealCollar"));
-            Assert.IsNotNull(cocoa.transform.Find("CocoaIntentArrow"));
-            Assert.IsNotNull(cocoa.transform.Find("CocoaQueenSpotA"));
+            AssertHasChildren(cheddar.transform, ArenaArtCatalog.DogPartNames(DogId.Cheddar));
+            AssertHasChildren(cocoa.transform, ArenaArtCatalog.DogPartNames(DogId.Cocoa));
+            Assert.IsNotNull(cheddar.transform.Find(ArenaArtCatalog.DogLabel.Name));
+            Assert.IsNotNull(cocoa.transform.Find(ArenaArtCatalog.DogLabel.Name));
+            Assert.IsNotNull(cheddar.transform.Find(ArenaArtCatalog.ObjectiveArrowLabel.Name));
+            Assert.IsNotNull(cocoa.transform.Find(ArenaArtCatalog.ObjectiveArrowLabel.Name));
             Assert.IsNotNull(game.ObjectiveArrows);
             Assert.AreEqual(2, game.ObjectiveArrows.Length);
             Assert.IsNotNull(game.ObjectiveArrows[0]);
@@ -128,7 +146,8 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(GameManager.FeedbackKind.SoloBark, game.LastFeedback);
             Assert.AreEqual(GameManager.JuiceFeedbackKind.BarkBurst, game.LastJuiceFeedback);
             Assert.That(game.LastJuiceLabel, Does.Contain("BARK BURST"));
-            Assert.IsNotNull(GameObject.Find("BarkBurst"));
+            Assert.IsNotNull(GameObject.Find(ArenaArtCatalog.BarkFeedback.BurstName));
+            Assert.IsNotNull(GameObject.Find(ArenaArtCatalog.BarkFeedback.RingName));
 
             var rb = cheddar.GetComponent<Rigidbody2D>();
             cheddar.GetComponent<CheddarAndCocoa.Input.GamepadPlayerInput>().enabled = false;
@@ -147,7 +166,7 @@ namespace CheddarAndCocoa.Tests
 
             var treats = Object.FindObjectsByType<Treat>(FindObjectsSortMode.None);
             Assert.Greater(treats.Length, 0);
-            Assert.IsNotNull(treats[0].transform.Find("WeenieMustard"));
+            AssertHasChildren(treats[0].transform, ArenaArtCatalog.CollectiblePartNames(GameManager.MissionVariant.BackyardRescue));
             int scoreBefore = game.Score;
             treats[0].CollectBy(cheddar);
             Assert.AreEqual(scoreBefore + 50, game.Score);
@@ -533,7 +552,7 @@ namespace CheddarAndCocoa.Tests
             Assert.IsFalse(game.RopeObject.activeSelf);
 
             var firstSnack = FirstTreat();
-            Assert.IsNotNull(firstSnack.transform.Find("SnackCrumbA"));
+            AssertHasChildren(firstSnack.transform, ArenaArtCatalog.CollectiblePartNames(GameManager.MissionVariant.SnackHeist));
             firstSnack.CollectBy(cheddar);
             Assert.AreEqual(60, game.LastScoreDelta);
             Assert.AreEqual("+60 SNACK STASHED", game.LastScoreEventLabel);
@@ -592,7 +611,7 @@ namespace CheddarAndCocoa.Tests
             Assert.IsFalse(game.RopeObject.activeSelf);
 
             var firstSock = FirstTreat();
-            Assert.IsNotNull(firstSock.transform.Find("SockStripeA"));
+            AssertHasChildren(firstSock.transform, ArenaArtCatalog.CollectiblePartNames(GameManager.MissionVariant.SockPanic));
             firstSock.CollectBy(cocoa);
             Assert.AreEqual(40, game.LastScoreDelta);
             Assert.AreEqual("+40 SOCK RESCUED", game.LastScoreEventLabel);
@@ -686,6 +705,15 @@ namespace CheddarAndCocoa.Tests
             }
 
             return false;
+        }
+
+        private static void AssertHasChildren(Transform root, string[] childNames)
+        {
+            Assert.IsNotNull(root);
+            foreach (string childName in childNames)
+            {
+                Assert.IsNotNull(root.Find(childName), $"{root.name} should expose visual replacement slot {childName}.");
+            }
         }
 
         private static void AssertMissionBalance(GameManager.MissionVariant variant, ArenaMissionTuning tuning, bool expectSquirrel, bool expectPredator, bool expectTug)

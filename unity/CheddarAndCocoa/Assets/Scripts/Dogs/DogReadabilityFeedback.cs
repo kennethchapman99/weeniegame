@@ -1,4 +1,5 @@
 using UnityEngine;
+using CheddarAndCocoa.Game;
 
 namespace CheddarAndCocoa.Dogs
 {
@@ -42,6 +43,7 @@ namespace CheddarAndCocoa.Dogs
         private Pose _forcedPose;
         private float _forcedPoseUntil;
         private float _barkUntil;
+        private DogVisualSlot _art;
 
         public Pose CurrentPose { get; private set; } = Pose.Idle;
         public string CurrentPoseLabel => CurrentPose.ToString();
@@ -49,9 +51,7 @@ namespace CheddarAndCocoa.Dogs
         public string FacingIntentLabel => _lastIntentDir.x >= 0f ? "FacingRight" : "FacingLeft";
         public string ArtDirectionSignature => _identity == null
             ? string.Empty
-            : _identity.Id == DogId.Cheddar
-                ? "long-low-golden-chaos-puppy-red-collar"
-                : "long-low-chocolate-spot-queen-teal-collar";
+            : ArenaArtCatalog.Dog(_identity.Id).ArtDirectionSignature;
 
         public void Init(Sprite sprite)
         {
@@ -59,6 +59,7 @@ namespace CheddarAndCocoa.Dogs
             _identity = GetComponent<DogIdentity>();
             _body = GetComponent<SpriteRenderer>();
             _baseScale = transform.localScale;
+            _art = ArenaArtCatalog.Dog(_identity.Id);
 
             BuildIdentityArt(sprite);
             _dog.OnBark += OnBark;
@@ -233,84 +234,67 @@ namespace CheddarAndCocoa.Dogs
 
         private void BuildIdentityArt(Sprite sprite)
         {
-            bool cheddar = _identity.Id == DogId.Cheddar;
-            Color body = cheddar ? new Color(1f, 0.67f, 0.22f) : new Color(0.28f, 0.13f, 0.06f);
-            Color muzzle = cheddar ? new Color(1f, 0.82f, 0.42f) : new Color(0.7f, 0.43f, 0.24f);
-            if (_body != null) _body.color = body;
+            if (_body != null) _body.color = _art.BodyColor;
 
-            _head = MakePart("DachshundHead", sprite, body,
-                new Vector3(0.52f, 0.1f, -0.03f), new Vector3(0.38f, 0.52f, 1f), 14);
-            _snout = MakePart("LongDogSnout", sprite, muzzle,
-                new Vector3(0.78f, 0.03f, -0.05f), new Vector3(0.34f, 0.22f, 1f), 15);
-            _ear = MakePart(cheddar ? "CheddarFloppyEar" : "CocoaVelvetEar", sprite,
-                cheddar ? new Color(0.91f, 0.44f, 0.08f) : new Color(0.13f, 0.06f, 0.03f),
-                new Vector3(0.38f, 0.3f, -0.06f), new Vector3(0.2f, 0.46f, 1f), 16);
-            _collar = MakePart(cheddar ? "CheddarRedCollar" : "CocoaTealCollar", sprite,
-                cheddar ? new Color(0.95f, 0.18f, 0.1f) : new Color(0.08f, 0.78f, 0.84f),
-                new Vector3(0.2f, 0.02f, -0.07f), new Vector3(0.12f, 0.7f, 1f), 17);
-            _eye = MakePart("ExpressionEye", sprite, Color.black,
-                new Vector3(0.62f, 0.18f, -0.08f), new Vector3(0.1f, 0.1f, 1f), 18);
-            _chest = MakePart("ChestPatch", sprite, cheddar ? new Color(1f, 0.9f, 0.52f) : new Color(0.96f, 0.84f, 0.64f),
-                new Vector3(0.08f, -0.08f, -0.02f), new Vector3(0.28f, 0.52f, 1f), 12);
-            _frontFeet = MakePart("TinyFrontFeet", sprite, cheddar ? new Color(0.87f, 0.41f, 0.08f) : new Color(0.12f, 0.06f, 0.03f),
-                new Vector3(0.38f, -0.53f, 0f), new Vector3(0.18f, 0.22f, 1f), 8);
-            _backFeet = MakePart("TinyBackFeet", sprite, cheddar ? new Color(0.87f, 0.41f, 0.08f) : new Color(0.12f, 0.06f, 0.03f),
-                new Vector3(-0.42f, -0.53f, 0f), new Vector3(0.2f, 0.22f, 1f), 8);
-            _tail = MakePart("TailFlag", sprite, cheddar ? new Color(1f, 0.82f, 0.28f) : new Color(0.16f, 0.07f, 0.03f),
-                new Vector3(-0.68f, 0.16f, 0f), new Vector3(0.16f, 0.58f, 1f), 9);
-            _marker = MakePart("MoodSpark", sprite, cheddar ? new Color(1f, 0.95f, 0.25f) : new Color(0.95f, 0.82f, 0.55f),
-                new Vector3(0.24f, 0.54f, -0.08f), new Vector3(0.18f, 0.18f, 1f), 19);
-            _intentArrow = MakePart(cheddar ? "CheddarIntentArrow" : "CocoaIntentArrow", sprite,
-                cheddar ? new Color(1f, 0.15f, 0.08f, 0.78f) : new Color(0.08f, 0.8f, 0.9f, 0.78f),
-                new Vector3(0.9f, 0f, -0.09f), new Vector3(0.24f, 0.1f, 1f), 21);
-            _intentArrow.enabled = false;
-
-            if (!cheddar)
+            foreach (var part in _art.Parts)
             {
-                MakePart("CocoaQueenSpotA", sprite, new Color(0.08f, 0.035f, 0.02f),
-                    new Vector3(-0.2f, 0.2f, -0.04f), new Vector3(0.26f, 0.22f, 1f), 13);
-                MakePart("CocoaQueenSpotB", sprite, new Color(0.74f, 0.47f, 0.28f),
-                    new Vector3(-0.48f, -0.04f, -0.04f), new Vector3(0.22f, 0.18f, 1f), 13);
-                MakePart("CocoaQueenCrown", sprite, new Color(1f, 0.86f, 0.18f),
-                    new Vector3(0.46f, 0.58f, -0.08f), new Vector3(0.34f, 0.12f, 1f), 20);
-            }
-            else
-            {
-                MakePart("CheddarChaosTuft", sprite, new Color(1f, 0.88f, 0.22f),
-                    new Vector3(0.52f, 0.54f, -0.08f), new Vector3(0.14f, 0.24f, 1f), 20);
-                MakePart("CheddarMischiefFlash", sprite, new Color(1f, 0.32f, 0.08f),
-                    new Vector3(-0.18f, 0.25f, -0.04f), new Vector3(0.34f, 0.12f, 1f), 13);
+                AssignPartReference(part.Name, MakePart(part, sprite));
             }
 
-            var labelGo = new GameObject("DogReadabilityLabel");
+            if (_intentArrow != null) _intentArrow.enabled = false;
+
+            var labelSlot = ArenaArtCatalog.DogLabel;
+            var labelGo = new GameObject(labelSlot.Name);
             labelGo.transform.SetParent(transform);
-            labelGo.transform.localPosition = new Vector3(0f, 0.95f, -0.1f);
-            labelGo.transform.localScale = Vector3.one * 0.085f;
+            labelGo.transform.localPosition = labelSlot.LocalPosition;
+            labelGo.transform.localScale = labelSlot.LocalScale;
             _label = labelGo.AddComponent<TextMesh>();
             _label.anchor = TextAnchor.MiddleCenter;
             _label.alignment = TextAlignment.Center;
-            _label.fontSize = 22;
+            _label.fontSize = labelSlot.FontSize;
+            _label.color = labelSlot.Color;
         }
 
-        private SpriteRenderer MakePart(string name, Sprite sprite, Color color, Vector3 localPosition, Vector3 localScale, int order)
+        private SpriteRenderer MakePart(PartSlot part, Sprite sprite)
         {
-            var go = new GameObject(name);
+            var go = new GameObject(part.Name);
             go.transform.SetParent(transform);
-            go.transform.localPosition = localPosition;
-            go.transform.localScale = localScale;
+            go.transform.localPosition = part.LocalPosition;
+            go.transform.localScale = part.LocalScale;
             var sr = go.AddComponent<SpriteRenderer>();
             sr.sprite = sprite;
-            sr.color = color;
-            sr.sortingOrder = order;
+            sr.color = part.Color;
+            sr.sortingOrder = part.SortingOrder;
             return sr;
         }
 
-        private string DogTitle() => _identity.Id == DogId.Cheddar ? "CHEDDAR CHAOS PUP" : "COCOA SPOT QUEEN";
+        private void AssignPartReference(string name, SpriteRenderer part)
+        {
+            switch (name)
+            {
+                case "DachshundHead": _head = part; break;
+                case "LongDogSnout": _snout = part; break;
+                case "CheddarFloppyEar":
+                case "CocoaVelvetEar": _ear = part; break;
+                case "CheddarRedCollar":
+                case "CocoaTealCollar": _collar = part; break;
+                case "ExpressionEye": _eye = part; break;
+                case "ChestPatch": _chest = part; break;
+                case "TinyFrontFeet": _frontFeet = part; break;
+                case "TinyBackFeet": _backFeet = part; break;
+                case "TailFlag": _tail = part; break;
+                case "MoodSpark": _marker = part; break;
+                case "CheddarIntentArrow":
+                case "CocoaIntentArrow": _intentArrow = part; break;
+            }
+        }
+
+        private string DogTitle() => _art.Title;
 
         private string PoseCopy(Pose pose) => pose switch
         {
-            Pose.Idle => _identity.Id == DogId.Cheddar ? "WIGGLE READY" : "QUEEN READY",
-            Pose.Run => _identity.Id == DogId.Cheddar ? "CHAOS ZOOM" : "SPOT PATROL",
+            Pose.Idle => _art.IdlePoseLabel,
+            Pose.Run => _art.RunPoseLabel,
             Pose.Bark => "WOOF!",
             Pose.Tug => "TUG!",
             Pose.Stunned => "STUNNED",
