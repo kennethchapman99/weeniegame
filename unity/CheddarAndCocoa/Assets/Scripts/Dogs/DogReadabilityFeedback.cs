@@ -35,8 +35,10 @@ namespace CheddarAndCocoa.Dogs
         private SpriteRenderer _backFeet;
         private SpriteRenderer _tail;
         private SpriteRenderer _marker;
+        private SpriteRenderer _intentArrow;
         private TextMesh _label;
         private Vector3 _baseScale;
+        private Vector2 _lastIntentDir = Vector2.right;
         private Pose _forcedPose;
         private float _forcedPoseUntil;
         private float _barkUntil;
@@ -44,6 +46,7 @@ namespace CheddarAndCocoa.Dogs
         public Pose CurrentPose { get; private set; } = Pose.Idle;
         public string CurrentPoseLabel => CurrentPose.ToString();
         public string IdentityLabel => _label != null ? _label.text : string.Empty;
+        public string FacingIntentLabel => _lastIntentDir.x >= 0f ? "FacingRight" : "FacingLeft";
         public string ArtDirectionSignature => _identity == null
             ? string.Empty
             : _identity.Id == DogId.Cheddar
@@ -129,6 +132,9 @@ namespace CheddarAndCocoa.Dogs
         {
             float t = Time.time;
             float wag = _identity.Id == DogId.Cheddar ? 42f : 20f;
+            Vector2 velocity = Vector2.zero;
+            if (TryGetComponent<Rigidbody2D>(out var rb)) velocity = rb.linearVelocity;
+            if (velocity.sqrMagnitude > 0.05f) _lastIntentDir = velocity.normalized;
 
             transform.localRotation = pose switch
             {
@@ -210,6 +216,18 @@ namespace CheddarAndCocoa.Dogs
                 _collar.transform.localScale = new Vector3(0.12f, 0.7f * collarPop, 1f);
             }
 
+            if (_intentArrow != null)
+            {
+                bool moving = velocity.sqrMagnitude > 0.05f && pose == Pose.Run;
+                _intentArrow.enabled = moving;
+                if (moving)
+                {
+                    _intentArrow.transform.localPosition = new Vector3(_lastIntentDir.x * 0.9f, _lastIntentDir.y * 0.45f, -0.09f);
+                    _intentArrow.transform.localRotation = Quaternion.Euler(0f, 0f,
+                        Mathf.Atan2(_lastIntentDir.y, _lastIntentDir.x) * Mathf.Rad2Deg);
+                }
+            }
+
             if (_label != null) _label.transform.rotation = Quaternion.identity;
         }
 
@@ -242,6 +260,10 @@ namespace CheddarAndCocoa.Dogs
                 new Vector3(-0.68f, 0.16f, 0f), new Vector3(0.16f, 0.58f, 1f), 9);
             _marker = MakePart("MoodSpark", sprite, cheddar ? new Color(1f, 0.95f, 0.25f) : new Color(0.95f, 0.82f, 0.55f),
                 new Vector3(0.24f, 0.54f, -0.08f), new Vector3(0.18f, 0.18f, 1f), 19);
+            _intentArrow = MakePart(cheddar ? "CheddarIntentArrow" : "CocoaIntentArrow", sprite,
+                cheddar ? new Color(1f, 0.15f, 0.08f, 0.78f) : new Color(0.08f, 0.8f, 0.9f, 0.78f),
+                new Vector3(0.9f, 0f, -0.09f), new Vector3(0.24f, 0.1f, 1f), 21);
+            _intentArrow.enabled = false;
 
             if (!cheddar)
             {

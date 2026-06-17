@@ -32,6 +32,15 @@ namespace CheddarAndCocoa.Game
             GameOver
         }
 
+        public enum JuiceFeedbackKind
+        {
+            None,
+            BarkBurst,
+            SuccessPop,
+            WarningMiss,
+            ScoreDelta
+        }
+
         private const int ItemScore = 50;
         private const int SquirrelScareScore = 25;
         private const int UnitedBarkScore = 100;
@@ -98,13 +107,19 @@ namespace CheddarAndCocoa.Game
         };
         public string LastCue { get; private set; } = "Ready";
         public string LastScoreEventLabel { get; private set; } = "Score ready";
+        public string LastScorePopLabel { get; private set; } = string.Empty;
+        public bool ScorePopVisible => Time.time < _scorePopUntil;
+        public string ObjectiveLabel => BuildObjectiveLabel();
         public string MissionIntroPrompt => "Cheddar + Cocoa must protect the weenies together.";
         public string MissionBanner { get; private set; } = string.Empty;
         public string EndRank { get; private set; } = "Needs More Bark";
         public string EndSummaryLabel { get; private set; } = string.Empty;
+        public string EndReasonLabel { get; private set; } = string.Empty;
         public bool ReplayPromptVisible => IsGameOver || IsLevelClear;
         public string ReplayPromptLabel => ReplayPromptVisible ? "Press R / Enter / Start to replay the weenie rescue" : string.Empty;
         public FeedbackKind LastFeedback { get; private set; } = FeedbackKind.Intro;
+        public JuiceFeedbackKind LastJuiceFeedback { get; private set; } = JuiceFeedbackKind.None;
+        public string LastJuiceLabel { get; private set; } = string.Empty;
         public GameObject SquirrelObject { get; private set; }
         public GameObject PredatorObject { get; private set; }
         public GameObject RopeObject { get; private set; }
@@ -132,6 +147,7 @@ namespace CheddarAndCocoa.Game
         private Treat _squirrelTarget;
         private bool _squirrelHasStarted;
         private float _introPromptUntil;
+        private float _scorePopUntil;
         private float _teamBarkFeedbackUntil;
         private float _predatorTimer;
         private int _predatorTarget = -1;
@@ -175,6 +191,8 @@ namespace CheddarAndCocoa.Game
             BreakfastRecovered++;
             LastCue = $"{DogName(dog)} recovered breakfast!";
             Pulse(dog != null ? dog.gameObject : null, 1.2f);
+            SetJuice(JuiceFeedbackKind.ScoreDelta, LastScoreEventLabel);
+            SpawnWorldPop(dog != null ? dog.transform.position : treat.transform.position, LastScoreEventLabel, new Color(1f, 0.9f, 0.25f));
             PlayCue(_successCue);
 
             _treats.Remove(treat);
@@ -201,6 +219,13 @@ namespace CheddarAndCocoa.Game
             if (MissionActive() || Phase == State.PredatorWarning) StartPredatorAttack();
         }
 
+        public void ForceSquirrelStealAttempt()
+        {
+            if (!MissionActive() || _treats.Count == 0) return;
+
+            StartSquirrelSteal(FindNearestTreat(SquirrelObject.transform.position) ?? _treats[0]);
+        }
+
         public void ForceGameOver() => EndRound(false);
 
         private void BeginRound()
@@ -223,11 +248,16 @@ namespace CheddarAndCocoa.Game
             MissionBanner = MissionIntroPrompt;
             EndRank = "Needs More Bark";
             EndSummaryLabel = string.Empty;
+            EndReasonLabel = string.Empty;
             LastFeedback = FeedbackKind.Intro;
+            LastJuiceFeedback = JuiceFeedbackKind.None;
+            LastJuiceLabel = string.Empty;
+            LastScorePopLabel = string.Empty;
 
             ActiveModifier = (RoundModifier)_rng.Next(0, 3);
             _nextUnitedBarkAt = 0f;
             _teamBarkFeedbackUntil = 0f;
+            _scorePopUntil = 0f;
             _squirrelScaredUntil = 0f;
             _nextSquirrelScareScoreAt = 0f;
             _squirrelTarget = null;
@@ -309,12 +339,7 @@ namespace CheddarAndCocoa.Game
                 _squirrelTimer -= Time.deltaTime;
                 if (_squirrelTimer <= 0f && _treats.Count > 0)
                 {
-                    _squirrelTarget = _treats[_rng.Next(_treats.Count)];
-                    _squirrelHasStarted = true;
-                    LastFeedback = FeedbackKind.SquirrelStealing;
-                    LastCue = "Squirrel is tiptoeing off with a weenie - bark now!";
-                    SetActorState(SquirrelObject, "SQUIRREL STEALING - BARK!", new Color(0.7f, 0.35f, 0.08f), 0.32f);
-                    PlayCue(_dangerCue);
+                    StartSquirrelSteal(_treats[_rng.Next(_treats.Count)]);
                 }
                 return;
             }
@@ -326,6 +351,19 @@ namespace CheddarAndCocoa.Game
 
             if (Vector2.Distance(SquirrelObject.transform.position, _squirrelTarget.transform.position) < 0.25f)
                 SquirrelStealsTarget();
+        }
+
+        private void StartSquirrelSteal(Treat target)
+        {
+            if (target == null) return;
+
+            _squirrelTarget = target;
+            _squirrelHasStarted = true;
+            LastFeedback = FeedbackKind.SquirrelStealing;
+            LastCue = "Squirrel is tiptoeing off with a weenie - bark now!";
+            SetJuice(JuiceFeedbackKind.WarningMiss, "BARK TO SCARE SQUIRREL");
+            SetActorState(SquirrelObject, "SQUIRREL STEALING - BARK!", new Color(0.7f, 0.35f, 0.08f), 0.32f);
+            PlayCue(_dangerCue);
         }
 
         private void SquirrelStealsTarget()
@@ -343,7 +381,9 @@ namespace CheddarAndCocoa.Game
             _squirrelTimer = SquirrelDelay();
             LastFeedback = FeedbackKind.SquirrelStoleFood;
             LastCue = "Squirrel got a weenie and is being rude about it!";
+            SetJuice(JuiceFeedbackKind.WarningMiss, "MISS! SQUIRREL STOLE A WEENIE");
             SetActorState(SquirrelObject, "SQUIRREL GOT A WEENIE!", Color.gray, 0.22f);
+            SpawnWorldPop(SquirrelObject.transform.position, "MISS! -WEENIE", new Color(1f, 0.35f, 0.2f));
             PlayCue(_dangerCue);
 
             if (StolenFood >= maxStolenFood) EndRound(false);
@@ -387,6 +427,8 @@ namespace CheddarAndCocoa.Game
             AddScore(-PredatorFailurePenalty, "PREDATOR HIT");
             LastFeedback = FeedbackKind.PredatorAttack;
             LastCue = $"{DogName(_dogs[_grabbedDog])} got yoinked! Partner bark rescue!";
+            SetJuice(JuiceFeedbackKind.WarningMiss, $"RESCUE {DogName(_dogs[_grabbedDog]).ToUpperInvariant()}!");
+            SpawnWorldPop(_dogs[_grabbedDog].transform.position, "YOINKED!", new Color(1f, 0.2f, 0.2f));
             PlayCue(_dangerCue);
         }
 
@@ -401,6 +443,8 @@ namespace CheddarAndCocoa.Game
             PredatorObject.name = "Predator Driven Away";
             PlaceObject(PredatorObject, new Vector2(0f, _bounds.yMax + 2f));
             SetActorState(PredatorObject, "PREDATOR YEETED", Color.gray, 0.08f);
+            SetJuice(JuiceFeedbackKind.SuccessPop, "PREDATOR YEETED!");
+            SpawnWorldPop(_dogs[0].transform.position + Vector3.up, "DOUBLE WOOF!", new Color(1f, 0.95f, 0.25f));
             PlayCue(_successCue);
             CheckClear();
         }
@@ -457,6 +501,8 @@ namespace CheddarAndCocoa.Game
             LastCue = "Rope tug complete - dramatic victory chomps!";
             RopeObject.name = "Rope/Tug Complete";
             SetActorState(RopeObject, "ROPE COMPLETE!", new Color(0.3f, 1f, 0.3f), 0.08f);
+            SetJuice(JuiceFeedbackKind.SuccessPop, "TUG POP! ROPE COMPLETE");
+            SpawnWorldPop(RopeObject.transform.position, "TUG POP!", new Color(0.45f, 1f, 0.35f));
             PlayCue(_successCue);
             CheckClear();
         }
@@ -491,6 +537,7 @@ namespace CheddarAndCocoa.Game
                 {
                     LastFeedback = FeedbackKind.SoloBark;
                     LastCue = $"{DogName(dog)} solo WOOF: emotionally powerful, mechanically suspicious.";
+                    SetJuice(JuiceFeedbackKind.BarkBurst, $"{DogName(dog).ToUpperInvariant()} BARK BURST");
                 }
                 return;
             }
@@ -518,6 +565,9 @@ namespace CheddarAndCocoa.Game
             LastFeedback = awardScore ? FeedbackKind.SquirrelScared : FeedbackKind.UnitedBark;
             LastCue = awardScore ? $"{cue} It dropped the snack plan!" : "DOUBLE WOOF made the squirrel reconsider its life.";
             SetActorState(SquirrelObject, awardScore ? "SQUIRREL DROPPED IT!" : "SQUIRREL HID FROM DOUBLE WOOF", new Color(0.85f, 0.85f, 0.85f), 0.08f);
+            SetJuice(awardScore ? JuiceFeedbackKind.SuccessPop : JuiceFeedbackKind.BarkBurst,
+                awardScore ? "SQUIRREL DROP POP!" : "DOUBLE WOOF BURST");
+            SpawnWorldPop(SquirrelObject.transform.position, awardScore ? "DROP!" : "DOUBLE WOOF!", new Color(0.9f, 0.95f, 1f));
             PlayCue(_barkCue);
         }
 
@@ -535,6 +585,8 @@ namespace CheddarAndCocoa.Game
             if (DogFeedback[rescuedDog] != null) DogFeedback[rescuedDog].ShowRescued();
             int rescuerIndex = IndexOfDog(rescuer.GetComponent<DogIdentity>().Id);
             if (rescuerIndex >= 0 && DogFeedback[rescuerIndex] != null) DogFeedback[rescuerIndex].ShowProudBrief();
+            SetJuice(JuiceFeedbackKind.SuccessPop, "RESCUE POP!");
+            SpawnWorldPop(_dogs[rescuedDog].transform.position, "RESCUED!", new Color(0.45f, 1f, 0.65f));
             PlayCue(_successCue);
         }
 
@@ -556,6 +608,8 @@ namespace CheddarAndCocoa.Game
                 LastFeedback = FeedbackKind.LevelClear;
                 LastCue = $"BACKYARD SAVED! {EndRank}. Score {Score}";
                 MissionBanner = $"BACKYARD SAVED! {EndRank}";
+                EndReasonLabel = EndReasonFor(clear);
+                SetJuice(JuiceFeedbackKind.SuccessPop, "BACKYARD SAVED POP!");
                 PlayCue(_successCue);
             }
             else
@@ -566,6 +620,8 @@ namespace CheddarAndCocoa.Game
                 LastFeedback = FeedbackKind.GameOver;
                 LastCue = $"MISSION FAILED: {EndRank}. Score {Score}";
                 MissionBanner = $"MISSION FAILED! {EndRank}";
+                EndReasonLabel = EndReasonFor(clear);
+                SetJuice(JuiceFeedbackKind.WarningMiss, "SAD FLOP REPLAY!");
                 PlayCue(_dangerCue);
             }
             EndSummaryLabel = $"{Outcome}: {Score} - {EndRank}";
@@ -599,6 +655,53 @@ namespace CheddarAndCocoa.Game
             LastScoreDelta = delta;
             string sign = delta >= 0 ? "+" : "-";
             LastScoreEventLabel = $"{sign}{Mathf.Abs(delta)} {reason}";
+            LastScorePopLabel = LastScoreEventLabel;
+            _scorePopUntil = Time.time + 1.4f;
+        }
+
+        private string BuildObjectiveLabel()
+        {
+            if (IsLevelClear) return "Backyard saved - replay the weenie rescue";
+            if (IsGameOver) return "Mission failed - replay the weenie rescue";
+            if (_dogs == null || _dogs.Length == 0) return "Protect the weenies";
+
+            if (Phase == State.PredatorAttack && _grabbedDog >= 0)
+                return $"Rescue {DogName(_dogs[_grabbedDog])}";
+            if (Phase == State.PredatorWarning)
+                return "Huddle + bark at the shadow";
+            if (_squirrelTarget != null)
+                return "Bark to scare squirrel";
+            if (!TugComplete && BreakfastRecovered >= Mathf.Max(2, recoveryGoal / 2))
+                return "Both dogs tug the rope";
+            if (BreakfastRecovered < recoveryGoal)
+                return $"Save weenies {BreakfastRecovered}/{recoveryGoal}";
+            if (!TugComplete)
+                return "Both dogs tug the rope";
+            if (!PredatorResolved)
+                return "Clear the yard together";
+
+            return "Clear the yard";
+        }
+
+        private string EndReasonFor(bool clear)
+        {
+            if (clear)
+            {
+                if (EndRank == "Pawfect Yard") return "Tiny legends protected every snack with style.";
+                if (EndRank == "Backyard Heroes") return "The yard survived with respectable barking.";
+                return "The weenies made it, even if dignity did not.";
+            }
+
+            if (StolenFood >= maxStolenFood) return "The squirrel union escaped with too many weenies.";
+            if (TimeRemaining <= 0f) return "The clock won while the dogs had opinions.";
+            if (PredatorFailed) return "The shadow caused a dramatic rescue backlog.";
+            return "Needs more bark before the next weenie rescue.";
+        }
+
+        private void SetJuice(JuiceFeedbackKind kind, string label)
+        {
+            LastJuiceFeedback = kind;
+            LastJuiceLabel = label;
         }
 
         private static string RankForScore(int score, bool clear)
@@ -907,6 +1010,19 @@ namespace CheddarAndCocoa.Game
             if (go != null && go.TryGetComponent<MissionActorFeedback>(out var feedback)) feedback.Pulse(amount);
         }
 
+        private void SpawnWorldPop(Vector3 position, string text, Color color)
+        {
+            var go = new GameObject($"MissionPop_{text.Replace(" ", "_").Replace("!", string.Empty).Replace("+", "PLUS").Replace("-", "MINUS")}");
+            go.transform.position = position + Vector3.up * 0.95f;
+            var label = go.AddComponent<TextMesh>();
+            label.text = text;
+            label.fontSize = 28;
+            label.anchor = TextAnchor.MiddleCenter;
+            label.alignment = TextAlignment.Center;
+            label.color = color;
+            go.AddComponent<MissionWorldPop>().Begin(label);
+        }
+
         private void PlaceObject(GameObject go, Vector2 position)
         {
             if (go != null) go.transform.position = position;
@@ -1001,6 +1117,36 @@ namespace CheddarAndCocoa.Game
             if (name.Contains("Squirrel")) transform.Rotate(0f, 0f, 80f * Time.deltaTime);
             if (name.Contains("Rope")) transform.Rotate(0f, 0f, 45f * Time.deltaTime);
             if (_label != null) _label.transform.rotation = Quaternion.identity;
+        }
+    }
+
+    /// <summary>Short-lived world text for score, rescue, tug, and miss moments.</summary>
+    public sealed class MissionWorldPop : MonoBehaviour
+    {
+        private const float Life = 1.05f;
+        private TextMesh _label;
+        private float _t;
+
+        public string Label => _label != null ? _label.text : string.Empty;
+
+        public void Begin(TextMesh label) => _label = label;
+
+        private void Update()
+        {
+            _t += Time.deltaTime;
+            transform.position += Vector3.up * (Time.deltaTime * 0.35f);
+            float scale = 1f + Mathf.Sin(Mathf.Clamp01(_t / Life) * Mathf.PI) * 0.28f;
+            transform.localScale = Vector3.one * scale;
+
+            if (_label != null)
+            {
+                _label.transform.rotation = Quaternion.identity;
+                Color c = _label.color;
+                c.a = Mathf.Lerp(1f, 0f, _t / Life);
+                _label.color = c;
+            }
+
+            if (_t >= Life) Destroy(gameObject);
         }
     }
 }

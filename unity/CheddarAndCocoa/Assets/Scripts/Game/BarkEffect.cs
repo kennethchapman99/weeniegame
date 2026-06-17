@@ -39,6 +39,16 @@ namespace CheddarAndCocoa.Game
             sr.color = _tint;
             sr.sortingOrder = 20;
             go.AddComponent<Ring>().Begin(sr);
+
+            var burst = new GameObject("BarkBurst");
+            burst.transform.position = _dog.transform.position + Vector3.up * 0.9f;
+            var text = burst.AddComponent<TextMesh>();
+            text.text = "BARK!";
+            text.fontSize = 32;
+            text.anchor = TextAnchor.MiddleCenter;
+            text.alignment = TextAlignment.Center;
+            text.color = _tint;
+            burst.AddComponent<FloatingText>().Begin(text);
         }
 
         /// <summary>Drives one ring's expand + fade, then self-destructs.</summary>
@@ -60,6 +70,30 @@ namespace CheddarAndCocoa.Game
                 Color c = _sr.color;
                 c.a = Mathf.Lerp(0.8f, 0f, k);
                 _sr.color = c;
+
+                if (_t >= Life) Destroy(gameObject);
+            }
+        }
+
+        /// <summary>Comic bark text paired with the ring; self-contained so no UI system is needed.</summary>
+        private sealed class FloatingText : MonoBehaviour
+        {
+            private const float Life = 0.65f;
+            private TextMesh _text;
+            private float _t;
+
+            public void Begin(TextMesh text) => _text = text;
+
+            private void Update()
+            {
+                _t += Time.deltaTime;
+                transform.position += Vector3.up * (Time.deltaTime * 0.5f);
+                if (_text != null)
+                {
+                    Color c = _text.color;
+                    c.a = Mathf.Lerp(1f, 0f, _t / Life);
+                    _text.color = c;
+                }
 
                 if (_t >= Life) Destroy(gameObject);
             }

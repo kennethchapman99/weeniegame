@@ -37,7 +37,9 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotEmpty(game.LastCue);
             Assert.That(game.MissionIntroPrompt, Is.EqualTo("Cheddar + Cocoa must protect the weenies together."));
             Assert.That(game.MissionBanner, Does.Contain("protect the weenies"));
+            Assert.That(game.ObjectiveLabel, Does.Contain("Save weenies"));
             Assert.AreEqual(GameManager.FeedbackKind.Intro, game.LastFeedback);
+            Assert.AreEqual(GameManager.JuiceFeedbackKind.None, game.LastJuiceFeedback);
             Assert.AreEqual(0, game.Score);
             Assert.AreEqual(0, game.LastScoreDelta);
             Assert.AreEqual(GameManager.MissionOutcome.InProgress, game.Outcome);
@@ -63,8 +65,10 @@ namespace CheddarAndCocoa.Tests
             Assert.That(cocoaFeedback.ArtDirectionSignature, Does.Contain("chocolate-spot"));
             Assert.IsNotNull(cheddar.transform.Find("LongDogSnout"));
             Assert.IsNotNull(cheddar.transform.Find("CheddarRedCollar"));
+            Assert.IsNotNull(cheddar.transform.Find("CheddarIntentArrow"));
             Assert.IsNotNull(cocoa.transform.Find("LongDogSnout"));
             Assert.IsNotNull(cocoa.transform.Find("CocoaTealCollar"));
+            Assert.IsNotNull(cocoa.transform.Find("CocoaIntentArrow"));
             Assert.IsNotNull(cocoa.transform.Find("CocoaQueenSpotA"));
             Assert.IsNotNull(game.ObjectiveArrows);
             Assert.AreEqual(2, game.ObjectiveArrows.Length);
@@ -84,6 +88,24 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(DogReadabilityFeedback.Pose.Bark, cheddarFeedback.CurrentPose);
             Assert.That(cheddarFeedback.IdentityLabel, Does.Contain("WOOF!"));
             Assert.AreEqual(GameManager.FeedbackKind.SoloBark, game.LastFeedback);
+            Assert.AreEqual(GameManager.JuiceFeedbackKind.BarkBurst, game.LastJuiceFeedback);
+            Assert.That(game.LastJuiceLabel, Does.Contain("BARK BURST"));
+            Assert.IsNotNull(GameObject.Find("BarkBurst"));
+
+            var rb = cheddar.GetComponent<Rigidbody2D>();
+            cheddar.GetComponent<CheddarAndCocoa.Input.GamepadPlayerInput>().enabled = false;
+            rb.linearVelocity = Vector2.left;
+            float intentGuard = 0f;
+            while (cheddarFeedback.CurrentPose == DogReadabilityFeedback.Pose.Bark && intentGuard < 0.6f)
+            {
+                intentGuard += Time.deltaTime;
+                yield return null;
+            }
+            Assert.AreEqual(DogReadabilityFeedback.Pose.Run, cheddarFeedback.CurrentPose);
+            Assert.AreEqual("FacingLeft", cheddarFeedback.FacingIntentLabel);
+            rb.linearVelocity = Vector2.zero;
+            game.Restart();
+            yield return null;
 
             var treats = Object.FindObjectsByType<Treat>(FindObjectsSortMode.None);
             Assert.Greater(treats.Length, 0);
@@ -93,6 +115,9 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(scoreBefore + 50, game.Score);
             Assert.AreEqual(50, game.LastScoreDelta);
             Assert.AreEqual("+50 WEENIE SAVED", game.LastScoreEventLabel);
+            Assert.AreEqual("+50 WEENIE SAVED", game.LastScorePopLabel);
+            Assert.IsTrue(game.ScorePopVisible);
+            Assert.IsTrue(FindWorldPopContaining("+50"));
             Assert.AreEqual(1, game.BreakfastRecovered);
             yield return null;
 
@@ -113,6 +138,11 @@ namespace CheddarAndCocoa.Tests
             yield return null;
             Assert.AreEqual(0, game.Score);
             var target = Object.FindObjectsByType<Treat>(FindObjectsSortMode.None)[0];
+            game.SquirrelObject.transform.position = target.transform.position + Vector3.right;
+            game.ForceSquirrelStealAttempt();
+            Assert.That(game.ObjectiveLabel, Does.Contain("Bark to scare squirrel"));
+            Assert.AreEqual(GameManager.FeedbackKind.SquirrelStealing, game.LastFeedback);
+            Assert.AreEqual(GameManager.JuiceFeedbackKind.WarningMiss, game.LastJuiceFeedback);
             game.SquirrelObject.transform.position = target.transform.position;
             float guard = 0f;
             while (game.StolenFood == 0 && guard < 4f) { guard += Time.deltaTime; yield return null; }
@@ -120,11 +150,16 @@ namespace CheddarAndCocoa.Tests
             Assert.Less(game.Score, 0);
             Assert.Less(game.LastScoreDelta, 0);
             Assert.That(game.LastScoreEventLabel, Does.Contain("SQUIRREL GOT ONE"));
+            Assert.That(game.LastScorePopLabel, Does.Contain("SQUIRREL GOT ONE"));
             Assert.AreEqual(GameManager.FeedbackKind.SquirrelStoleFood, game.LastFeedback);
+            Assert.AreEqual(GameManager.JuiceFeedbackKind.WarningMiss, game.LastJuiceFeedback);
+            Assert.That(game.LastJuiceLabel, Does.Contain("SQUIRREL STOLE"));
             Assert.That(game.SquirrelObject.GetComponent<MissionActorFeedback>().Label, Does.Contain("GOT A WEENIE"));
+            Assert.IsTrue(FindWorldPopContaining("MISS"));
 
             // Bark near the squirrel should scare it and reward a small score bump.
             target = Object.FindObjectsByType<Treat>(FindObjectsSortMode.None)[0];
+            game.ForceSquirrelStealAttempt();
             game.SquirrelObject.transform.position = target.transform.position;
             cheddar.transform.position = game.SquirrelObject.transform.position;
             scoreBefore = game.Score;
@@ -134,14 +169,18 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual("+25 SQUIRREL SCARED", game.LastScoreEventLabel);
             Assert.That(game.LastCue, Does.Contain("squirrel").IgnoreCase);
             Assert.AreEqual(GameManager.FeedbackKind.SquirrelScared, game.LastFeedback);
+            Assert.AreEqual(GameManager.JuiceFeedbackKind.SuccessPop, game.LastJuiceFeedback);
+            Assert.That(game.LastJuiceLabel, Does.Contain("SQUIRREL DROP"));
             Assert.That(game.SquirrelObject.GetComponent<MissionActorFeedback>().Label, Does.Contain("DROPPED"));
 
             // Predator warning/attack can be resolved by united bark.
-            cocoa.transform.position = cheddar.transform.position + Vector3.right * 5f;
+            cheddar.transform.position = new Vector3(-4f, 4f, 0f);
+            cocoa.transform.position = new Vector3(4f, 4f, 0f);
             game.ForcePredatorWarning();
             yield return null;
             Assert.AreEqual(GameManager.State.PredatorWarning, game.Phase);
             Assert.AreEqual(GameManager.FeedbackKind.PredatorHuddle, game.LastFeedback);
+            Assert.That(game.ObjectiveLabel, Does.Contain("Huddle + bark"));
             Assert.That(game.PredatorObject.GetComponent<MissionActorFeedback>().Label, Does.Contain("HUDDLE"));
             Assert.That(game.ObjectiveArrows[0].Label, Does.Contain("HUDDLE + BARK"));
             cocoa.transform.position = cheddar.transform.position + Vector3.right;
@@ -153,6 +192,8 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual("+300 PREDATOR YEETED", game.LastScoreEventLabel);
             Assert.That(game.LastCue, Does.Contain("predator").IgnoreCase);
             Assert.AreEqual(GameManager.FeedbackKind.UnitedBark, game.LastFeedback);
+            Assert.AreEqual(GameManager.JuiceFeedbackKind.SuccessPop, game.LastJuiceFeedback);
+            Assert.That(game.LastJuiceLabel, Does.Contain("PREDATOR YEETED"));
 
             // Failed predator attack stuns/grabs, then the partner rescues by coming close and barking.
             game.Restart();
@@ -161,8 +202,11 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(GameManager.State.PredatorAttack, game.Phase);
             Assert.IsTrue(game.AnyDogGrabbed);
             Assert.AreEqual(GameManager.FeedbackKind.PredatorAttack, game.LastFeedback);
+            Assert.That(game.ObjectiveLabel, Does.Contain("Rescue"));
             Assert.AreEqual(-150, game.LastScoreDelta);
             Assert.AreEqual("-150 PREDATOR HIT", game.LastScoreEventLabel);
+            Assert.AreEqual("-150 PREDATOR HIT", game.LastScorePopLabel);
+            Assert.AreEqual(GameManager.JuiceFeedbackKind.WarningMiss, game.LastJuiceFeedback);
             Assert.IsTrue(cheddar.Mode == MovementMode.Stunned || cocoa.Mode == MovementMode.Stunned);
             Assert.IsTrue(cheddarFeedback.CurrentPose == DogReadabilityFeedback.Pose.Stunned ||
                           cocoaFeedback.CurrentPose == DogReadabilityFeedback.Pose.Stunned);
@@ -175,6 +219,8 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(250, game.LastScoreDelta);
             Assert.AreEqual("+250 PARTNER RESCUE", game.LastScoreEventLabel);
             Assert.AreEqual(GameManager.FeedbackKind.PartnerRescue, game.LastFeedback);
+            Assert.AreEqual(GameManager.JuiceFeedbackKind.SuccessPop, game.LastJuiceFeedback);
+            Assert.That(game.LastJuiceLabel, Does.Contain("RESCUE POP"));
             Assert.IsTrue(cheddarFeedback.CurrentPose == DogReadabilityFeedback.Pose.Rescued ||
                           cocoaFeedback.CurrentPose == DogReadabilityFeedback.Pose.Rescued ||
                           cheddarFeedback.CurrentPose == DogReadabilityFeedback.Pose.Proud ||
@@ -192,6 +238,7 @@ namespace CheddarAndCocoa.Tests
             cocoa.transform.position = Vector3.right * 4f;
             yield return null;
             Assert.That(game.ObjectiveArrows[0].Label, Does.Contain("BOTH TUG"));
+            Assert.That(game.ObjectiveLabel, Does.Contain("Both dogs tug"));
             cheddar.transform.position = Vector3.zero;
             cocoa.transform.position = Vector3.right * 4f;
             yield return null;
@@ -205,6 +252,8 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(200, game.LastScoreDelta);
             Assert.AreEqual("+200 TUG COMPLETE", game.LastScoreEventLabel);
             Assert.AreEqual(GameManager.FeedbackKind.TugTogether, game.LastFeedback);
+            Assert.AreEqual(GameManager.JuiceFeedbackKind.SuccessPop, game.LastJuiceFeedback);
+            Assert.That(game.LastJuiceLabel, Does.Contain("TUG POP"));
             Assert.That(game.RopeObject.GetComponent<MissionActorFeedback>().Label, Does.Contain("COMPLETE"));
             Assert.IsTrue(cheddarFeedback.CurrentPose == DogReadabilityFeedback.Pose.Tug ||
                           cocoaFeedback.CurrentPose == DogReadabilityFeedback.Pose.Tug);
@@ -229,6 +278,8 @@ namespace CheddarAndCocoa.Tests
             Assert.That(game.EndSummaryLabel, Does.Contain("Clear"));
             Assert.That(game.EndSummaryLabel, Does.Contain(game.Score.ToString()));
             Assert.That(game.EndSummaryLabel, Does.Contain(game.EndRank));
+            Assert.That(game.EndReasonLabel, Does.Contain("Tiny legends"));
+            Assert.That(game.ObjectiveLabel, Does.Contain("Backyard saved"));
             Assert.That(game.LastScoreEventLabel, Does.Contain("LEVEL CLEAR"));
             Assert.AreEqual(GameManager.FeedbackKind.LevelClear, game.LastFeedback);
             Assert.That(game.MissionBanner, Does.Contain("BACKYARD SAVED"));
@@ -244,6 +295,8 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual("-100 GAME OVER", game.LastScoreEventLabel);
             Assert.AreEqual("Needs More Bark", game.EndRank);
             Assert.That(game.EndSummaryLabel, Does.Contain("Failed"));
+            Assert.That(game.EndReasonLabel, Does.Contain("Needs more bark"));
+            Assert.That(game.ObjectiveLabel, Does.Contain("Mission failed"));
             Assert.IsTrue(game.ReplayPromptVisible);
             Assert.That(game.ReplayPromptLabel, Does.Contain("replay"));
             Assert.AreEqual(GameManager.FeedbackKind.GameOver, game.LastFeedback);
@@ -257,6 +310,18 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(GameManager.MissionOutcome.InProgress, game.Outcome);
             Assert.IsFalse(game.ReplayPromptVisible);
             Assert.IsEmpty(game.EndSummaryLabel);
+            Assert.IsEmpty(game.EndReasonLabel);
+            Assert.That(game.ObjectiveLabel, Does.Contain("Save weenies"));
+        }
+
+        private static bool FindWorldPopContaining(string text)
+        {
+            foreach (var pop in Object.FindObjectsByType<MissionWorldPop>(FindObjectsSortMode.None))
+            {
+                if (pop.Label.Contains(text)) return true;
+            }
+
+            return false;
         }
     }
 }
