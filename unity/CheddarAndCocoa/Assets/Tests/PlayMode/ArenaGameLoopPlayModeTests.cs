@@ -619,6 +619,86 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator DemoRegression_ColdStartFlowDogsCameraOverlay_StayReachable()
+        {
+            yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
+            yield return null;
+            yield return null;
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            var cheddar = FindDog(DogId.Cheddar);
+            var cocoa = FindDog(DogId.Cocoa);
+            Assert.IsNotNull(game);
+            Assert.IsNotNull(cheddar);
+            Assert.IsNotNull(cocoa);
+
+            Assert.AreEqual(GameManager.FlowState.MissionSelect, game.CurrentFlow);
+            Assert.IsTrue(game.MissionSelectVisible);
+            Assert.AreEqual(3, game.MissionSelectOptionCount);
+            Assert.That(game.ObjectiveLabel, Does.Contain("Choose a mission"));
+            Assert.IsTrue(LogContains(game, "MissionSelect: Backyard Rescue"));
+
+            AssertMissionIdAvailable(game, GameManager.MissionVariant.BackyardRescue, "Backyard Rescue");
+            AssertMissionIdAvailable(game, GameManager.MissionVariant.SnackHeist, "Snack Heist");
+            AssertMissionIdAvailable(game, GameManager.MissionVariant.SockPanic, "Sock Panic");
+
+            var cheddarIdentity = cheddar.GetComponent<DogIdentity>();
+            var cocoaIdentity = cocoa.GetComponent<DogIdentity>();
+            Assert.AreEqual(DogId.Cheddar, cheddarIdentity.Id);
+            Assert.AreEqual(DogId.Cocoa, cocoaIdentity.Id);
+            Assert.AreNotEqual(cheddarIdentity.Tuning.baseSpeed, cocoaIdentity.Tuning.baseSpeed);
+            Assert.AreNotEqual(cheddarIdentity.Tuning.deceleration, cocoaIdentity.Tuning.deceleration);
+            Assert.That(cheddar.GetComponent<DogReadabilityFeedback>().ArtDirectionSignature, Does.Contain("golden-chaos"));
+            Assert.That(cocoa.GetComponent<DogReadabilityFeedback>().ArtDirectionSignature, Does.Contain("chocolate-spot"));
+
+            var cameraRig = Camera.main.GetComponent<SharedCameraController>();
+            Assert.IsNotNull(cameraRig);
+            Assert.That(Camera.main.orthographicSize, Is.InRange(game.Tuning.CameraMinOrthoSize, game.Tuning.CameraMaxOrthoSize));
+
+            Assert.IsNotNull(GameObject.Find(ArenaArtCatalog.ArenaHudObjectName));
+            Assert.IsNotNull(GameObject.Find(ArenaArtCatalog.DebugHudObjectName));
+            game.SetPlaytestOverlayVisible(true);
+            Assert.IsTrue(game.PlaytestOverlayVisible);
+            game.SelectMission(GameManager.MissionVariant.BackyardRescue);
+            game.StartSelectedMission();
+            yield return null;
+            Assert.AreEqual(GameManager.FlowState.Playing, game.CurrentFlow);
+            Assert.IsTrue(LogContains(game, "Overlay: shown"));
+
+            game.ForceGameOver();
+            Assert.AreEqual(GameManager.FlowState.EndScreen, game.CurrentFlow);
+            Assert.IsTrue(game.EndReplayAvailable);
+            Assert.IsTrue(game.EndNextMissionAvailable);
+            Assert.IsTrue(game.EndMissionSelectAvailable);
+
+            game.Restart();
+            yield return null;
+            Assert.AreEqual(GameManager.FlowState.Playing, game.CurrentFlow);
+            Assert.AreEqual(GameManager.MissionVariant.BackyardRescue, game.ActiveMissionVariant);
+            game.ForceGameOver();
+
+            game.ReturnToMissionSelect();
+            Assert.AreEqual(GameManager.FlowState.MissionSelect, game.CurrentFlow);
+
+            game.StartMission(GameManager.MissionVariant.SnackHeist);
+            yield return null;
+            game.ForceGameOver();
+            game.ChooseNextMission();
+            yield return null;
+            Assert.AreEqual(GameManager.FlowState.Playing, game.CurrentFlow);
+            Assert.AreEqual(GameManager.MissionVariant.SockPanic, game.ActiveMissionVariant);
+
+            game.ForceGameOver();
+            Assert.IsTrue(game.SessionSummaryReady);
+            Assert.AreEqual("Session Summary", game.EndNextActionLabel);
+            game.ChooseNextMission();
+            Assert.AreEqual(GameManager.FlowState.SessionSummary, game.CurrentFlow);
+            Assert.IsTrue(game.SessionSummaryVisible);
+            game.ReturnToMissionSelect();
+            Assert.AreEqual(GameManager.FlowState.MissionSelect, game.CurrentFlow);
+        }
+
+        [UnityTest]
         public IEnumerator MissionFlow_SessionTotals_UpdateAcrossTwoMissions()
         {
             yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
@@ -889,6 +969,14 @@ namespace CheddarAndCocoa.Tests
             {
                 Assert.AreEqual(0, mission.MaxStolenFood);
             }
+        }
+
+        private static void AssertMissionIdAvailable(GameManager game, GameManager.MissionVariant variant, string expectedName)
+        {
+            game.SelectMission(variant);
+            Assert.AreEqual(variant, game.SelectedMissionVariant);
+            Assert.AreEqual(expectedName, game.SelectedMissionName);
+            Assert.AreEqual(expectedName, GameManager.BuildMissionDefinition(variant).Name);
         }
 
         private static bool LogContains(GameManager game, string text)

@@ -7,7 +7,7 @@ playable proof of that direction, not the only place the direction applies.
 
 ## Cold-start flow
 
-1. Open `ArenaScene` and press Play.
+1. Open `unity/CheddarAndCocoa` in Unity 6 LTS, open `Assets/Scenes/ArenaScene.unity`, and press Play. `ArenaScene` is also the scripted local build entry point.
 2. The mission picker appears immediately. Use **Up/Down** or gamepad **D-pad** to highlight a mission, then press **Enter**, **Space**, gamepad **Start**, or gamepad **South** to start. Keyboard **1 / 2 / 3** also starts Backyard Rescue, Snack Heist, or Sock Panic directly.
 3. Read the one-line mission briefing at the start of the round. The HUD keeps the current mission name, objective, score, timer, controls, modifier, and latest score event visible during play.
 4. When a mission ends, choose **Replay**, **Next Mission**, or **Mission Select** with the on-screen buttons, keyboard, or gamepad:
@@ -132,12 +132,27 @@ Known rough edges for this playtest:
 
 Use this only for a quick couch playtest build; no signing, installer, store, or distribution work is needed.
 
+From the repo root:
+
+```sh
+./unity/build-dev.sh
+```
+
+Expected result:
+
+- Unity runs in batch mode with `CheddarAndCocoa.EditorTools.ArenaDevBuild.BuildDevMac`.
+- The only scene in the build player options is `Assets/Scenes/ArenaScene.unity`.
+- The output app is written to `unity/builds/dev/CheddarAndCocoa-Arena.app`.
+- The script ends with `Development build ready: .../unity/builds/dev/CheddarAndCocoa-Arena.app`.
+
+Manual fallback if batch mode is unavailable:
+
 1. Open Unity Hub and launch `unity/CheddarAndCocoa` with Unity 6 LTS.
 2. Open `Assets/Scenes/ArenaScene.unity`.
 3. Confirm `File -> Build Profiles...` (or `File -> Build Settings...` on older Unity UI) includes `Assets/Scenes/ArenaScene.unity`; it is already listed in `ProjectSettings/EditorBuildSettings.asset`.
-4. Select **macOS** as the target platform. Use the current architecture/default unless Unity asks; **Universal** is fine for local testing.
+4. Select **macOS** as the target platform and enable **Development Build**.
 5. Choose **Build** or **Build And Run**.
-6. Save the output somewhere local and ignored, for example `unity/local-builds/CheddarAndCocoa-Arena`.
+6. Save the output somewhere local and ignored, for example `unity/builds/dev/CheddarAndCocoa-Arena.app`.
 7. Launch the built app, start each mission from mission select, and press **F1** / **`** or the bottom-left Playtest Mode button to verify the overlay is available.
 
 Before handing off a build, run:
@@ -145,6 +160,14 @@ Before handing off a build, run:
 ```sh
 ./unity/run-playmode-tests.sh
 ```
+
+For one command that checks project structure, scene wiring, PlayMode tests, and the local dev build:
+
+```sh
+./unity/validate-demo.sh
+```
+
+Use `./unity/validate-demo.sh --skip-build` when validating on a machine that can run tests but does not have macOS build support installed.
 
 ## Playtest/debug visibility
 
@@ -324,19 +347,58 @@ After tuning, run:
 ./unity/run-playmode-tests.sh
 ```
 
-The PlayMode tests assert tuning defaults, movement feel defaults, independent dog movement, camera config, interaction range indicator state, the 30-90 second mission timing target, reachable top-rank scoring, overlay state, and deterministic playtest log entries.
+Expected pass signal:
+
+- the shell script exits `0`;
+- the Unity log includes a test summary with `failed=0`;
+- `unity/playmode-results.xml` is written.
+
+Expected failure signal:
+
+- the shell script exits non-zero;
+- the Unity log or XML names the failing PlayMode test;
+- if the editor cannot start because of licensing, open Unity Hub, sign in once, and re-run the command.
+
+Known non-fatal Unity log noise:
+
+- Unity may print package import, domain reload, asset refresh, or graphics-device messages during batch mode.
+- Generated audio clips, IMGUI overlays, placeholder sprites, and PlayMode event-log messages are expected prototype output.
+- The important failure signals are compiler errors, Safe Mode, test failures, missing `ArenaScene`, missing `ArenaBootstrap`, or a failed build result.
+
+The PlayMode tests assert tuning defaults, movement feel defaults, independent dog movement, camera config, interaction range indicator state, the 30-90 second mission timing target, reachable top-rank scoring, cold-start mission select, all three mission ids, replay/next/select/session-summary reachability, distinct Cheddar/Cocoa identity tuning and art slots, overlay state, and deterministic playtest log entries.
 
 ## Build/share readiness
 
-For a local development build, use Unity 6 LTS and open `unity/CheddarAndCocoa`. `ProjectSettings/EditorBuildSettings.asset` already includes `Assets/Scenes/ArenaScene.unity` and `Assets/Scenes/ControllerTestScene.unity`.
+For a local development build, use Unity 6 LTS and run:
 
-Manual build path:
+```sh
+./unity/build-dev.sh
+```
 
-1. Unity Editor → **File → Build Profiles** (or **Build Settings**, depending on patch).
-2. Select the local desktop target, leave **Development Build** enabled for playtest sharing, and confirm `ArenaScene` is checked in the scene list.
-3. Click **Build** and choose a local folder outside the repo such as `~/Desktop/CheddarAndCocoa-DevBuild`.
+Output location: `unity/builds/dev/CheddarAndCocoa-Arena.app`.
 
-No installer, signing, icon, store packaging, external analytics, or distribution polish is expected for this slice.
+For the full local demo validation pass, run:
+
+```sh
+./unity/validate-demo.sh
+```
+
+That script confirms the Unity project path exists, `ArenaScene` exists and is listed in `EditorBuildSettings.asset`, `ArenaScene` contains the `ArenaBootstrap` GameObject and script reference, PlayMode tests pass, and the local development build can be created. Use `--skip-build` only when the machine is intentionally test-only.
+
+No installer, signing, notarization, icon, store packaging, external analytics, or distribution polish is expected for this slice.
+
+Demo readiness checklist:
+
+- `./unity/run-playmode-tests.sh` passes with `failed=0`.
+- `./unity/build-dev.sh` creates `unity/builds/dev/CheddarAndCocoa-Arena.app`.
+- Cold start opens mission select, not a live round.
+- Backyard Rescue, Snack Heist, and Sock Panic start from mission select.
+- Replay, Next Mission, Mission Select, and Session Summary are reachable without a mouse.
+- Cheddar and Cocoa spawn with distinct identity/readability slots and asymmetric tuning.
+- The shared camera initializes and keeps both dogs framed.
+- Playtest Mode can be toggled and does not block normal mission flow.
+- Keyboard and gamepad controls match the Controls table above.
+- Known limitations below are acceptable for this demo handoff.
 
 ## Five-minute playtest instructions
 

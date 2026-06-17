@@ -8,3 +8,4 @@ coverage/
 # Transient Unity PlayMode test output (committed snapshot lives in unity/test-results/)
 unity/playmode-results.xml
 unity/local-builds/
+unity/builds/
