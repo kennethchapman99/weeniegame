@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -55,6 +56,34 @@ namespace CheddarAndCocoa.Tests
             Assert.That(ArenaArtCatalog.CollectiblePartNames(GameManager.MissionVariant.SockPanic), Does.Contain("SockStripeA"));
             Assert.AreEqual("BarkBurst", ArenaArtCatalog.BarkFeedback.BurstName);
             Assert.AreEqual("ObjectiveArrowLabel", ArenaArtCatalog.ObjectiveArrowLabel.Name);
+        }
+
+        [Test]
+        public void ArenaFeedbackCatalog_DefinesReplaceableAudioCueSlots()
+        {
+            string[] required =
+            {
+                ArenaFeedbackCatalog.Bark,
+                ArenaFeedbackCatalog.TugRescueSuccess,
+                ArenaFeedbackCatalog.SnackSockCollect,
+                ArenaFeedbackCatalog.SquirrelStealMiss,
+                ArenaFeedbackCatalog.ScoreGain,
+                ArenaFeedbackCatalog.ScorePenalty,
+                ArenaFeedbackCatalog.MissionWin,
+                ArenaFeedbackCatalog.MissionFail,
+                ArenaFeedbackCatalog.UiReplayNextSelect
+            };
+
+            foreach (string cue in required)
+                Assert.IsTrue(ArenaFeedbackCatalog.ContainsCue(cue), $"Missing replaceable audio cue slot {cue}.");
+
+            var names = new HashSet<string>();
+            foreach (var cue in ArenaFeedbackCatalog.RequiredAudioCues)
+            {
+                Assert.IsTrue(names.Add(cue.Name), $"Duplicate audio cue slot {cue.Name}.");
+                Assert.Greater(cue.Seconds, 0f);
+                Assert.Greater(cue.Volume, 0f);
+            }
         }
 
         [UnityTest]
@@ -574,6 +603,86 @@ namespace CheddarAndCocoa.Tests
             Assert.That(game.LastPlaytestEvent, Does.Contain("Overlay: hidden"));
         }
 
+        [UnityTest]
+        public IEnumerator ArenaFeedback_AudioAndRumbleRequests_AreEventDrivenAndToggleable()
+        {
+            yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
+            yield return null;
+            yield return null;
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            var cheddar = FindDog(DogId.Cheddar);
+            var cocoa = FindDog(DogId.Cocoa);
+            Assert.IsNotNull(game);
+            Assert.IsNotNull(cheddar);
+            Assert.IsNotNull(cocoa);
+            Assert.IsTrue(game.AudioEnabled);
+            Assert.IsTrue(game.RumbleEnabled);
+
+            game.StartMission(GameManager.MissionVariant.SnackHeist);
+            yield return null;
+            game.ClearFeedbackRequests();
+            cheddar.Bark();
+            AssertHasAudioCue(game, ArenaFeedbackCatalog.Bark);
+            AssertHasRumble(game, "bark");
+
+            game.ClearFeedbackRequests();
+            FirstTreat().CollectBy(cheddar);
+            AssertHasAudioCue(game, ArenaFeedbackCatalog.ScoreGain);
+            AssertHasAudioCue(game, ArenaFeedbackCatalog.SnackSockCollect);
+
+            game.ClearFeedbackRequests();
+            int stolenBefore = game.StolenFood;
+            ForceOneSquirrelSteal(game);
+            yield return WaitForStolenFood(game, stolenBefore + 1);
+            AssertHasAudioCue(game, ArenaFeedbackCatalog.ScorePenalty);
+            AssertHasAudioCue(game, ArenaFeedbackCatalog.SquirrelStealMiss);
+            AssertHasRumble(game, "squirrel_penalty");
+
+            game.StartMission(GameManager.MissionVariant.BackyardRescue);
+            yield return null;
+            game.ClearFeedbackRequests();
+            game.ForcePredatorAttack();
+            yield return null;
+            cheddar.transform.position = cocoa.transform.position;
+            cheddar.Bark();
+            cocoa.Bark();
+            yield return null;
+            AssertHasAudioCue(game, ArenaFeedbackCatalog.TugRescueSuccess);
+            AssertHasRumble(game, "rescue_success");
+
+            game.StartMission(GameManager.MissionVariant.SockPanic);
+            yield return null;
+            game.ClearFeedbackRequests();
+            yield return ClearCollectOnlyMission(cheddar);
+            Assert.AreEqual(GameManager.MissionOutcome.Clear, game.Outcome);
+            AssertHasAudioCue(game, ArenaFeedbackCatalog.MissionWin);
+            AssertHasRumble(game, "mission_win");
+
+            game.StartMission(GameManager.MissionVariant.SockPanic);
+            yield return null;
+            game.ClearFeedbackRequests();
+            game.ForceGameOver();
+            AssertHasAudioCue(game, ArenaFeedbackCatalog.MissionFail);
+            AssertHasRumble(game, "mission_fail");
+
+            game.ClearFeedbackRequests();
+            game.Restart();
+            AssertHasAudioCue(game, ArenaFeedbackCatalog.UiReplayNextSelect);
+
+            game.ClearFeedbackRequests();
+            game.SetAudioEnabled(false);
+            cheddar.Bark();
+            Assert.AreEqual(0, game.AudioCueRequestCount);
+
+            game.SetAudioEnabled(true);
+            game.SetRumbleEnabled(false);
+            game.ClearFeedbackRequests();
+            cheddar.Bark();
+            AssertHasAudioCue(game, ArenaFeedbackCatalog.Bark);
+            Assert.AreEqual(0, game.RumbleRequestCount);
+        }
+
 
         [UnityTest]
         public IEnumerator MissionFlow_Select_StartsEveryMission_AndEndActionsNavigate()
@@ -930,6 +1039,26 @@ namespace CheddarAndCocoa.Tests
             }
 
             return false;
+        }
+
+        private static void AssertHasAudioCue(GameManager game, string cueName)
+        {
+            foreach (string cue in game.AudioCueRequests)
+            {
+                if (cue == cueName) return;
+            }
+
+            Assert.Fail($"Expected audio cue request {cueName}.");
+        }
+
+        private static void AssertHasRumble(GameManager game, string requestName)
+        {
+            foreach (string request in game.RumbleRequests)
+            {
+                if (request == requestName) return;
+            }
+
+            Assert.Fail($"Expected rumble request {requestName}.");
         }
 
         private static void AssertHasChildren(Transform root, string[] childNames)

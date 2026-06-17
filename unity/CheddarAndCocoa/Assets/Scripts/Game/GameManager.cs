@@ -197,6 +197,14 @@ namespace CheddarAndCocoa.Game
         public string DogPositionsLabel => BuildDogPositionsLabel();
         public string PlaytestCountersLabel => $"Barks {BarksUsed} / missed interacts {FailedInteractions} / objective shifts {ObjectiveChangeCount} / duration {MissionDurationSeconds:0.0}s / replays {MissionReplayCount}";
         public string MissionFailureSummaryLabel => BuildMissionFailureSummaryLabel();
+        public bool AudioEnabled { get; private set; } = true;
+        public bool RumbleEnabled { get; private set; } = true;
+        public IReadOnlyList<string> AudioCueRequests => _audioCueRequests;
+        public IReadOnlyList<string> RumbleRequests => _rumbleRequests;
+        public string LastAudioCueRequested { get; private set; } = string.Empty;
+        public string LastRumbleRequested { get; private set; } = string.Empty;
+        public int AudioCueRequestCount => _audioCueRequests.Count;
+        public int RumbleRequestCount => _rumbleRequests.Count;
         public FeedbackKind LastFeedback { get; private set; } = FeedbackKind.Intro;
         public JuiceFeedbackKind LastJuiceFeedback { get; private set; } = JuiceFeedbackKind.None;
         public string LastJuiceLabel { get; private set; } = string.Empty;
@@ -216,9 +224,10 @@ namespace CheddarAndCocoa.Game
         private System.Random _rng;
         private Transform _treatRoot;
         private AudioSource _audio;
-        private AudioClip _barkCue;
-        private AudioClip _dangerCue;
-        private AudioClip _successCue;
+        private readonly Dictionary<string, AudioClip> _audioClips = new();
+        private readonly Dictionary<string, AudioCueSlot> _audioSlots = ArenaFeedbackCatalog.BuildLookup();
+        private readonly List<string> _audioCueRequests = new();
+        private readonly List<string> _rumbleRequests = new();
         private MissionDefinition _mission;
 
         private readonly List<Treat> _treats = new();
@@ -290,7 +299,7 @@ namespace CheddarAndCocoa.Game
             Pulse(dog != null ? dog.gameObject : null, 1.2f);
             SetJuice(JuiceFeedbackKind.ScoreDelta, LastScoreEventLabel);
             SpawnWorldPop(dog != null ? dog.transform.position : treat.transform.position, LastScoreEventLabel, _mission.ItemPopColor);
-            PlayCue(_successCue);
+            RequestAudioCue(ArenaFeedbackCatalog.SnackSockCollect);
 
             _treats.Remove(treat);
             Destroy(treat.gameObject);
@@ -310,6 +319,7 @@ namespace CheddarAndCocoa.Game
 
             MissionReplayCount++;
             LogPlaytestEvent("Replay", _mission.Name);
+            RequestAudioCue(ArenaFeedbackCatalog.UiReplayNextSelect);
             StartMission(_mission.Variant);
         }
 
@@ -331,6 +341,7 @@ namespace CheddarAndCocoa.Game
             {
                 LastCue = $"{_mission.Name}: {_mission.IntroPrompt}";
                 MissionBanner = "Mission Select";
+                RequestAudioCue(ArenaFeedbackCatalog.UiReplayNextSelect);
                 LogPlaytestEvent("MissionSelected", _mission.Name);
                 LogObjectiveIfChanged();
             }
@@ -352,11 +363,13 @@ namespace CheddarAndCocoa.Game
 
         public void ReturnToMissionSelect()
         {
+            RequestAudioCue(ArenaFeedbackCatalog.UiReplayNextSelect);
             ShowMissionSelect();
         }
 
         public void ChooseNextMission()
         {
+            RequestAudioCue(ArenaFeedbackCatalog.UiReplayNextSelect);
             if (SessionSummaryReady)
             {
                 LogPlaytestEvent("Next", "Session Summary");
@@ -393,6 +406,27 @@ namespace CheddarAndCocoa.Game
             if (PlaytestOverlayVisible == visible) return;
             PlaytestOverlayVisible = visible;
             LogPlaytestEvent("Overlay", visible ? "shown" : "hidden");
+        }
+
+        public void SetAudioEnabled(bool enabled)
+        {
+            AudioEnabled = enabled;
+            LogPlaytestEvent("Audio", enabled ? "enabled" : "disabled");
+        }
+
+        public void SetRumbleEnabled(bool enabled)
+        {
+            RumbleEnabled = enabled;
+            if (!enabled) StopRumble();
+            LogPlaytestEvent("Rumble", enabled ? "enabled" : "disabled");
+        }
+
+        public void ClearFeedbackRequests()
+        {
+            _audioCueRequests.Clear();
+            _rumbleRequests.Clear();
+            LastAudioCueRequested = string.Empty;
+            LastRumbleRequested = string.Empty;
         }
 
         public void SetRoundDuration(float seconds)
@@ -541,7 +575,7 @@ namespace CheddarAndCocoa.Game
             foreach (var dog in _dogs) dog.TriggerZoomies();
             LastCue = "Zoomies surge! Hold the line!";
             _nextZoomiesPulseAt = Time.time + 10f;
-            PlayCue(_barkCue);
+            RequestAudioCue(ArenaFeedbackCatalog.Bark);
             LogPlaytestEvent("Modifier", LastCue);
         }
 
@@ -587,7 +621,8 @@ namespace CheddarAndCocoa.Game
             LastCue = _mission.SquirrelStealingCue;
             SetJuice(JuiceFeedbackKind.WarningMiss, _mission.SquirrelObjectiveText.ToUpperInvariant());
             SetActorState(SquirrelObject, _mission.SquirrelStealingActorLabel, new Color(0.7f, 0.35f, 0.08f), 0.32f);
-            PlayCue(_dangerCue);
+            RequestAudioCue(ArenaFeedbackCatalog.SquirrelStealMiss);
+            RequestRumble("squirrel_warning", 0.12f, 0.24f, 0.12f);
             LogPlaytestEvent("SquirrelPressure", _mission.SquirrelStealingActorLabel);
             LogObjectiveIfChanged();
         }
@@ -610,7 +645,8 @@ namespace CheddarAndCocoa.Game
             SetJuice(JuiceFeedbackKind.WarningMiss, _mission.SquirrelStealJuiceLabel);
             SetActorState(SquirrelObject, _mission.SquirrelStoleActorLabel, Color.gray, 0.22f);
             SpawnWorldPop(SquirrelObject.transform.position, _mission.SquirrelMissPopLabel, new Color(1f, 0.35f, 0.2f));
-            PlayCue(_dangerCue);
+            RequestAudioCue(ArenaFeedbackCatalog.SquirrelStealMiss);
+            RequestRumble("squirrel_penalty", 0.18f, 0.38f, 0.16f);
             LogPlaytestEvent("SquirrelStole", $"{StolenFood}/{maxStolenFood}");
 
             if (StolenFood >= maxStolenFood) EndRound(false);
@@ -636,7 +672,8 @@ namespace CheddarAndCocoa.Game
             PredatorObject.name = "Predator Warning";
             PlaceObject(PredatorObject, (Vector2)_dogs[_predatorTarget].transform.position + Vector2.up * 2f);
             SetActorState(PredatorObject, "HUDDLE + BARK!", new Color(1f, 0.08f, 0.08f), 0.42f);
-            PlayCue(_dangerCue);
+            RequestAudioCue(ArenaFeedbackCatalog.ThreatWarning);
+            RequestRumble("predator_warning", 0.16f, 0.3f, 0.14f);
             LogPlaytestEvent("PredatorWarning", LastCue);
             LogObjectiveIfChanged();
         }
@@ -659,7 +696,8 @@ namespace CheddarAndCocoa.Game
             LastCue = $"{DogName(_dogs[_grabbedDog])} got yoinked! Partner bark rescue!";
             SetJuice(JuiceFeedbackKind.WarningMiss, $"RESCUE {DogName(_dogs[_grabbedDog]).ToUpperInvariant()}!");
             SpawnWorldPop(_dogs[_grabbedDog].transform.position, "YOINKED!", new Color(1f, 0.2f, 0.2f));
-            PlayCue(_dangerCue);
+            RequestAudioCue(ArenaFeedbackCatalog.ThreatWarning);
+            RequestRumble("predator_penalty", 0.24f, 0.45f, 0.18f);
             LogPlaytestEvent("PredatorAttack", LastCue);
             LogObjectiveIfChanged();
         }
@@ -677,7 +715,8 @@ namespace CheddarAndCocoa.Game
             SetActorState(PredatorObject, "PREDATOR YEETED", Color.gray, 0.08f);
             SetJuice(JuiceFeedbackKind.SuccessPop, "PREDATOR YEETED!");
             SpawnWorldPop(_dogs[0].transform.position + Vector3.up, "DOUBLE WOOF!", new Color(1f, 0.95f, 0.25f));
-            PlayCue(_successCue);
+            RequestAudioCue(ArenaFeedbackCatalog.TugRescueSuccess);
+            RequestRumble("team_success", 0.32f, 0.55f, 0.18f);
             LogPlaytestEvent("PredatorDefended", LastCue);
             CheckClear();
         }
@@ -740,7 +779,7 @@ namespace CheddarAndCocoa.Game
             LastFeedback = FeedbackKind.TugNeedsPartner;
             LastCue = $"{DogName(_dogs[dogIndex])} has the rope - partner pile on!";
             SetActorState(RopeObject, $"Rope/Tug {Mathf.RoundToInt(TugProgress * 100f)}% - NEED PARTNER", new Color(1f, 0.78f, 0.22f), 0.2f);
-            PlayCue(_barkCue);
+            RequestAudioCue(ArenaFeedbackCatalog.Bark);
             LogPlaytestEvent("Tug", LastCue);
             if (TugProgress >= 1f) CompleteTug();
         }
@@ -755,7 +794,8 @@ namespace CheddarAndCocoa.Game
             SetActorState(RopeObject, "ROPE COMPLETE!", new Color(0.3f, 1f, 0.3f), 0.08f);
             SetJuice(JuiceFeedbackKind.SuccessPop, "TUG POP! ROPE COMPLETE");
             SpawnWorldPop(RopeObject.transform.position, "TUG POP!", new Color(0.45f, 1f, 0.35f));
-            PlayCue(_successCue);
+            RequestAudioCue(ArenaFeedbackCatalog.TugRescueSuccess);
+            RequestRumble("tug_success", 0.32f, 0.58f, 0.2f);
             LogPlaytestEvent("TugComplete", "Rope objective complete");
             CheckClear();
         }
@@ -771,6 +811,8 @@ namespace CheddarAndCocoa.Game
             _lastBarks[dogIndex] = Time.time;
             var dog = _dogs[dogIndex];
             bool barkDidSomething = false;
+            RequestAudioCue(ArenaFeedbackCatalog.Bark);
+            RequestRumble("bark", 0.08f, 0.18f, 0.08f);
             LogPlaytestEvent("Bark", DogName(dog));
 
             if (_mission.UsesSquirrel && Vector2.Distance(dog.transform.position, SquirrelObject.transform.position) < _tuning.SingleBarkSquirrelRange)
@@ -824,7 +866,7 @@ namespace CheddarAndCocoa.Game
             SetJuice(awardScore ? JuiceFeedbackKind.SuccessPop : JuiceFeedbackKind.BarkBurst,
                 awardScore ? _mission.SquirrelScareJuiceLabel : "DOUBLE WOOF BURST");
             SpawnWorldPop(SquirrelObject.transform.position, awardScore ? "DROP!" : "DOUBLE WOOF!", new Color(0.9f, 0.95f, 1f));
-            PlayCue(_barkCue);
+            if (awardScore) RequestAudioCue(ArenaFeedbackCatalog.TugRescueSuccess);
             LogPlaytestEvent(awardScore ? "SquirrelScared" : "SquirrelUnitedScare", LastCue);
             LogObjectiveIfChanged();
         }
@@ -845,7 +887,8 @@ namespace CheddarAndCocoa.Game
             if (rescuerIndex >= 0 && DogFeedback[rescuerIndex] != null) DogFeedback[rescuerIndex].ShowProudBrief();
             SetJuice(JuiceFeedbackKind.SuccessPop, "RESCUE POP!");
             SpawnWorldPop(_dogs[rescuedDog].transform.position, "RESCUED!", new Color(0.45f, 1f, 0.65f));
-            PlayCue(_successCue);
+            RequestAudioCue(ArenaFeedbackCatalog.TugRescueSuccess);
+            RequestRumble("rescue_success", 0.34f, 0.62f, 0.2f);
             LogPlaytestEvent("Rescue", LastCue);
             LogObjectiveIfChanged();
         }
@@ -874,7 +917,8 @@ namespace CheddarAndCocoa.Game
                 MissionBanner = $"{_mission.ClearBannerPrefix} {EndRank}";
                 EndReasonLabel = EndReasonFor(clear);
                 SetJuice(JuiceFeedbackKind.SuccessPop, $"{_mission.ClearBannerPrefix} POP!");
-                PlayCue(_successCue);
+                RequestAudioCue(ArenaFeedbackCatalog.MissionWin);
+                RequestRumble("mission_win", 0.42f, 0.68f, 0.24f);
             }
             else
             {
@@ -886,7 +930,8 @@ namespace CheddarAndCocoa.Game
                 MissionBanner = $"MISSION FAILED! {EndRank}";
                 EndReasonLabel = EndReasonFor(clear);
                 SetJuice(JuiceFeedbackKind.WarningMiss, "SAD FLOP REPLAY!");
-                PlayCue(_dangerCue);
+                RequestAudioCue(ArenaFeedbackCatalog.MissionFail);
+                RequestRumble("mission_fail", 0.24f, 0.5f, 0.24f);
             }
             EndSummaryLabel = $"{Outcome}: {Score} - {EndRank}";
 
@@ -925,6 +970,7 @@ namespace CheddarAndCocoa.Game
             LastScoreEventLabel = $"{sign}{Mathf.Abs(delta)} {reason}";
             LastScorePopLabel = LastScoreEventLabel;
             _scorePopUntil = Time.time + 1.4f;
+            RequestAudioCue(delta >= 0 ? ArenaFeedbackCatalog.ScoreGain : ArenaFeedbackCatalog.ScorePenalty);
             LogPlaytestEvent("ScoreDelta", LastScoreEventLabel);
         }
 
@@ -1021,6 +1067,8 @@ namespace CheddarAndCocoa.Game
             {
                 TogglePlaytestOverlay();
             }
+            if (kb != null && kb.f2Key.wasPressedThisFrame) SetAudioEnabled(!AudioEnabled);
+            if (kb != null && kb.f3Key.wasPressedThisFrame) SetRumbleEnabled(!RumbleEnabled);
 
             if (MissionSelectVisible)
             {
@@ -1761,36 +1809,76 @@ namespace CheddarAndCocoa.Game
         {
             _audio = gameObject.AddComponent<AudioSource>();
             _audio.playOnAwake = false;
-            _audio.volume = 0.18f;
-            _barkCue = MakeTone("MissionBarkCue", 520f, 0.08f);
-            _dangerCue = MakeTone("MissionDangerCue", 180f, 0.16f);
-            _successCue = MakeTone("MissionSuccessCue", 740f, 0.12f);
+            _audio.volume = 1f;
+
+            foreach (var cue in ArenaFeedbackCatalog.RequiredAudioCues)
+                _audioClips[cue.Name] = MakePlaceholderClip(cue);
         }
 
-        private AudioClip MakeTone(string name, float frequency, float seconds)
+        private AudioClip MakePlaceholderClip(AudioCueSlot cue)
         {
             const int sampleRate = 22050;
-            int sampleCount = Mathf.CeilToInt(sampleRate * seconds);
+            int sampleCount = Mathf.CeilToInt(sampleRate * cue.Seconds);
             var samples = new float[sampleCount];
+            uint noise = 2166136261u;
             for (int i = 0; i < sampleCount; i++)
             {
                 float t = i / (float)sampleRate;
                 float envelope = 1f - (i / (float)sampleCount);
-                samples[i] = Mathf.Sin(2f * Mathf.PI * frequency * t) * envelope * 0.25f;
+                float wave;
+                if (cue.Wave == ArenaFeedbackCatalog.PlaceholderWave.Noise)
+                {
+                    noise ^= (uint)(i + cue.Name.Length * 31);
+                    noise *= 16777619u;
+                    wave = ((noise & 1023u) / 511.5f) - 1f;
+                }
+                else
+                {
+                    wave = Mathf.Sin(2f * Mathf.PI * cue.Frequency * t);
+                }
+                samples[i] = wave * envelope * cue.Volume;
             }
 
-            var clip = AudioClip.Create(name, sampleCount, 1, sampleRate, false);
+            var clip = AudioClip.Create(cue.Name, sampleCount, 1, sampleRate, false);
             clip.SetData(samples, 0);
             return clip;
         }
 
-        private void PlayCue(AudioClip clip)
+        private void RequestAudioCue(string cueName)
         {
-            if (_audio != null && clip != null) _audio.PlayOneShot(clip);
+            if (!AudioEnabled || string.IsNullOrEmpty(cueName)) return;
+            if (!_audioSlots.ContainsKey(cueName)) return;
+
+            LastAudioCueRequested = cueName;
+            _audioCueRequests.Add(cueName);
+            if (_audio != null && _audioClips.TryGetValue(cueName, out var clip) && clip != null)
+                _audio.PlayOneShot(clip);
+        }
+
+        private void RequestRumble(string requestName, float lowFrequency, float highFrequency, float seconds)
+        {
+            if (!RumbleEnabled || string.IsNullOrEmpty(requestName)) return;
+
+            LastRumbleRequested = requestName;
+            _rumbleRequests.Add(requestName);
+
+            var pad = Gamepad.current;
+            if (pad == null) return;
+
+            pad.SetMotorSpeeds(lowFrequency, highFrequency);
+            CancelInvoke(nameof(StopRumble));
+            Invoke(nameof(StopRumble), Mathf.Max(0.01f, seconds));
+        }
+
+        private void StopRumble()
+        {
+            var pad = Gamepad.current;
+            if (pad != null) pad.SetMotorSpeeds(0f, 0f);
         }
 
         private void OnDestroy()
         {
+            StopRumble();
             if (_dogs == null) return;
             foreach (var dog in _dogs)
             {

@@ -135,6 +135,25 @@ Shared callouts:
 - Use funny phrases after the action is understood, not instead of clarity.
 - Score labels should stay arcade-readable: signed number plus plain cause.
 
+## Audio Style Direction
+
+Future authored audio should be cute, comic, toy-like, and readable at couch co-op volume. The
+current Unity arena uses generated placeholder tones/noises only; those clips are replaceable cue
+slots, not a final sound palette.
+
+- Dog barks should be funny and expressive, not realistic, aggressive, or annoying.
+- Cheddar's bark can be brighter, eager, and a little chaotic.
+- Cocoa's bark can be lower, confident, and queenly, but still warm.
+- Squirrel cues should sound mischievous: sneaky taps, tiny scurries, comic warning chirps, or toy
+  percussion beats.
+- Tug, rescue, and united-bark wins should feel warm and satisfying, with playful teamwork pops.
+- Win feedback should be celebratory and silly, not epic or generic.
+- Fail feedback should be playful and recoverable, not harsh, scary, or punitive.
+- Score gain/penalty cues should be short enough to stack during chaos without masking objective
+  readability.
+- Avoid realistic distress sounds, aggressive dog snarls, harsh predator audio, or loops that make
+  bark feel like punishment.
+
 ## Backyard Mission Implementation
 
 The current Unity proof lives in `unity/CheddarAndCocoa/Assets/Scenes/ArenaScene.unity`, built by

@@ -82,6 +82,7 @@ Mission flow controls:
 - End screen: **R / Enter / Start / South** replays; **N / Right Arrow / Right Shoulder / D-pad Right** advances; **M / Escape / East / D-pad Left** returns to mission select.
 - Session Summary: **Enter**, **Space**, **Start**, **South**, **M**, or **Escape** returns to mission select.
 - Playtest Mode: click the bottom-left **Playtest Mode: On/Off** button or press **F1** / **`**. It toggles a compact top-right diagnostics overlay and does not pause or block normal play.
+- Placeholder feedback toggles: **F2** toggles generated audio cues; **F3** toggles gamepad rumble requests. Both default to on.
 
 ## First playtest protocol
 
@@ -175,7 +176,28 @@ Use `./unity/validate-demo.sh --skip-build` when validating on a machine that ca
 
 The playtest overlay shows mission, flow/phase, timer, score, last score event, current objective, fail pressure, Cheddar/Cocoa positions, current-round friction counters, failures by mission, session totals, outcome/rank, and the latest event. Friction counters are intentionally small and local: `BarksUsed`, `FailedInteractions`, `ObjectiveChangeCount`, `MissionDurationSeconds`, `MissionReplayCount`, and `FailuresForMission(...)`. They are meant to flag confusion for a human observer, not to become analytics.
 
-Manual check: press **F1** during mission select and during play, or click the bottom-left Playtest Mode button. Confirm the overlay appears in the top-right, does not hide the dogs or end buttons, and updates after collecting an item, barking, missing an interaction, forcing a fail/clear, replaying, and choosing Next Mission.
+Manual check: press **F1** during mission select and during play, or click the bottom-left Playtest Mode button. Confirm the overlay appears in the top-right, does not hide the dogs or end buttons, and updates after collecting an item, barking, missing an interaction, forcing a fail/clear, replaying, and choosing Next Mission. The overlay also reports whether audio and rumble are enabled plus the latest requested cue/request name.
+
+## Audio/rumble placeholder checks
+
+The arena now has replaceable generated feedback slots in `ArenaFeedbackCatalog`. These are placeholder tones/noises and simple rumble pulses only; they are not final audio direction or final haptics.
+
+Manual audio check:
+
+- Start any mission and bark. Confirm a short comic bark cue plays.
+- Collect a weenie/snack/sock. Confirm a small score-gain cue plus collect cue plays.
+- Let the squirrel steal or force a fail. Confirm a lower warning/penalty cue plays.
+- Complete rescue/tug or clear a mission. Confirm the success/win cue is brighter than the penalty cue.
+- Use Replay, Next Mission, and Mission Select. Confirm a small UI blip plays.
+- Press **F2** and repeat bark/collect. Confirm normal gameplay continues while generated audio is muted.
+
+Manual rumble check with a gamepad:
+
+- Bark gives a small pulse.
+- Rescue, tug completion, predator defense, and mission win give a stronger pulse.
+- Squirrel pressure/steal, predator hit, and mission fail give a short warning pulse.
+- Press **F3** and repeat bark/rescue/fail. Confirm normal gameplay continues with rumble disabled.
+- No controller connected is expected to be a safe no-op.
 
 Cheddar is the chaos puppy and Cocoa is the steadier veteran. The placeholder sprites are still simple generated shapes, but the dogs now have a reusable global identity direction proven in the arena: both read as long, low miniature dachshunds with visible head, long snout, floppy ear, tiny feet, tail, collar, and expression markers. Cheddar reads as **CHEDDAR CHAOS PUP** with a golden body, red collar, bright chaos tuft/flash, faster wag, and more explosive bark/proud motion. Cocoa reads as **COCOA SPOT QUEEN** with a chocolate body, teal collar, cream chest, spot markings, steadier expression, and tiny queen marker. Idle, run, bark, tug, stunned, rescued, proud, and sad states are exposed through body squash/rotation, tail/head/ear motion, color-shifted labels, and deterministic PlayMode assertions.
 
@@ -397,6 +419,7 @@ Demo readiness checklist:
 - Cheddar and Cocoa spawn with distinct identity/readability slots and asymmetric tuning.
 - The shared camera initializes and keeps both dogs framed.
 - Playtest Mode can be toggled and does not block normal mission flow.
+- Audio and rumble can be toggled with **F2** / **F3**, and major events still request their named placeholder feedback cues when enabled.
 - Keyboard and gamepad controls match the Controls table above.
 - Known limitations below are acceptable for this demo handoff.
 
@@ -443,6 +466,7 @@ Use this after any placeholder-art, authored-art, or sprite import change:
 - Dog identity art, pose labels, collars, expression markers, prop silhouettes, and objective arrows are generated placeholders. They are intentionally readable and easy to delete once authored sprites/animation exist.
 - The squirrel and predator use intentionally simple movement/state rules so the PlayMode tests remain deterministic.
 - The intro, bark, squirrel, predator, tug, clear, fail, score-pop, and objective feedback are still text/scale/audio-placeholder driven; they are designed to be replaced by authored animation/SFX later.
+- Audio cues are generated placeholder clips from named slots, and rumble is a simple best-effort gamepad pulse. Neither is mixed, balanced, platform-tuned, or authored final feedback.
 - `ForceSquirrelStealAttempt()` exists as a deterministic PlayMode test hook and is not intended as a player-facing control.
 - Scoring is intentionally flat and session-local only. There is no save file, leaderboard, unlock economy, or persistent progression yet.
 - The end rank is based only on final score and clear/fail state; it does not yet account for style, dog-specific contributions, or advanced co-op medals.
@@ -454,6 +478,6 @@ Use this after any placeholder-art, authored-art, or sprite import change:
 
 ## Test coverage
 
-`unity/Assets/Tests/PlayMode/ArenaGameLoopPlayModeTests.cs` loads ArenaScene and verifies mission select initialization, centralized tuning defaults, movement/camera tuning defaults, mission balance invariants, starting each mission through the new flow, end-screen Replay / Next Mission / Mission Select availability, session totals across multiple missions, session summary after all three variants have ended, dogs, independent movement response, camera component/config, interaction range indicator state, mission state, intro prompt/banner, deterministic objective labels, delayed first squirrel steal window, initial score state, item recovery scoring, HUD score-pop state, world score/miss/success pops, playtest overlay state, playtest event log entries, squirrel steal/scare labels and score events, solo/united bark feedback and scoring, bark burst state, predator defense scoring, failed predator hit and rescue scoring, tug waiting/together feedback and scoring, LevelClear score/rank/summary/reason, GameOver score/rank/summary/reason, replay prompt visibility, restart reset state, exposed modifier state, dog identity labels, dog pose labels, movement intent labels/arrows, objective-arrow labels, and the generated arena audio listener.
+`unity/Assets/Tests/PlayMode/ArenaGameLoopPlayModeTests.cs` loads ArenaScene and verifies mission select initialization, centralized tuning defaults, movement/camera tuning defaults, mission balance invariants, starting each mission through the new flow, end-screen Replay / Next Mission / Mission Select availability, session totals across multiple missions, session summary after all three variants have ended, dogs, independent movement response, camera component/config, interaction range indicator state, mission state, intro prompt/banner, deterministic objective labels, delayed first squirrel steal window, initial score state, item recovery scoring, HUD score-pop state, world score/miss/success pops, playtest overlay state, playtest event log entries, squirrel steal/scare labels and score events, solo/united bark feedback and scoring, bark burst state, predator defense scoring, failed predator hit and rescue scoring, tug waiting/together feedback and scoring, LevelClear score/rank/summary/reason, GameOver score/rank/summary/reason, replay prompt visibility, restart reset state, exposed modifier state, dog identity labels, dog pose labels, movement intent labels/arrows, objective-arrow labels, generated arena audio listener, required replaceable audio cue slots, expected major-event audio cue requests, expected rumble request names, and audio/rumble suppression toggles.
 
 The same test file also verifies **Snack Heist** and **Sock Panic** can initialize, update objective labels, score unique mission events, reach clear/fail outcomes, and expose replay state. `ControllerCoopPlayModeTests` still verifies the baseline two-pad movement/bark proof and now clears scene objects before constructing its own bootstrap so it does not accidentally inspect leftover ArenaScene dogs from previous tests.
