@@ -6,6 +6,51 @@ For current global character art direction, read `docs/ART-DIRECTION.md`. Backya
 playable proof of that direction, not the only place the direction applies. For future external
 sprite/audio collection before Unity import, use `docs/ASSET-CATALOG.md`.
 
+## Draft art import pass
+
+The first readable imported-art pass now lives under
+`unity/CheddarAndCocoa/Assets/Art/Resources/ArenaDraft/` with Unity-generated `.meta` files:
+
+- `Characters/Dogs/`: Cheddar and Cocoa portrait, pose, and expression draft sheets.
+- `Characters/Squirrel/`: squirrel reference, character, pose, and expression draft sheets.
+- `Characters/Eagle/` and `Characters/Coyote/`: predator reference, pose, and expression draft sheets.
+- `Characters/Bunny/`: bunny reference, pose, and expression draft sheets.
+- `Props/Backyard/`: backyard prop sheets.
+- `UI/`: draft UI kit sheet.
+- `VFX/`: draft VFX sheet.
+
+These imported files are intentionally used as **draft badges/reference sprites**, not final gameplay
+sprites. The current sheets have full backgrounds, broad pose-sheet layouts, or reference-card
+composition, so the arena keeps the deterministic generated silhouettes for collision-safe gameplay
+readability and layers small imported badges behind/near them:
+
+- Cheddar and Cocoa each carry an imported portrait badge behind the generated long-low body,
+  collar, feet, snout, ears, and pose-state pieces.
+- Squirrel, rope, and predator actors keep generated role silhouettes while loading squirrel,
+  backyard-prop, eagle, and coyote draft badges as background reference accents.
+- A noninteractive bunny cameo appears at the yard edge as a placeholder/background prop.
+- Bark feedback keeps the generated ring/text and adds a faint imported VFX-sheet accent.
+- Mission select/end-card HUD keeps IMGUI text controls and draws a subtle imported UI-kit accent.
+
+Still placeholder:
+
+- Dog idle/run/bark/tug/stunned/rescued/proud/sad states are still generated pieces plus text labels,
+  not cut transparent pose sprites.
+- Squirrel, eagle/coyote predator, rope, weenie/snack/sock, score pops, range rings, and objective
+  arrows still rely on generated geometry/text for the primary gameplay read.
+- The bunny is decorative only and has no mission logic.
+- The imported prop/UI/VFX sheets are reference accents until individual transparent sprites are
+  sliced or exported.
+
+Final polish still needed:
+
+- Export transparent, tightly bounded gameplay sprites from the draft sheets or a final art pass.
+- Replace the badge approach with real sprite/prefab slots while preserving the `ArenaArtCatalog`
+  child names or equivalent stable slot components.
+- Author state-specific dog sprites/animation and threat/rope/VFX sprites that read at current
+  gameplay zoom without relying on full reference sheets.
+- Do a two-player manual readability pass after final sprites land.
+
 ## Cold-start flow
 
 1. Open `unity/CheddarAndCocoa` in Unity 6 LTS, open `Assets/Scenes/ArenaScene.unity`, and press Play. `ArenaScene` is also the scripted local build entry point.
@@ -460,8 +505,11 @@ Use this after any placeholder-art, authored-art, or sprite import change:
 
 ## Known limitations
 
-- All mission actors use placeholder sprites/text labels generated at runtime; there are no external art assets yet.
-- Mission select, end actions, and session summary are generated IMGUI placeholders, not authored production UI.
+- Mission actors still use generated gameplay silhouettes/text labels as the primary read, with
+  imported DRAFT badges layered in for first-pass character/art reference. The imported sheets are
+  not final transparent gameplay sprites.
+- Mission select, end actions, and session summary are generated IMGUI placeholders with a small
+  imported UI-kit accent, not authored production UI.
 - The playtest overlay and event log are debug/playtest aids only. They are not analytics, persistence, telemetry, or player-facing production UI.
 - Snack Heist and Sock Panic are architecture proofs inside the existing arena, not finished level designs. They reuse the same camera, spawn bounds, scoring HUD, restart flow, and generated placeholder prop system.
 - Dog identity art, pose labels, collars, expression markers, prop silhouettes, and objective arrows are generated placeholders. They are intentionally readable and easy to delete once authored sprites/animation exist.

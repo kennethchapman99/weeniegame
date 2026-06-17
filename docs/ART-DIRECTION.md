@@ -160,7 +160,8 @@ slots, not a final sound palette.
 ## Backyard Mission Implementation
 
 The current Unity proof lives in `unity/CheddarAndCocoa/Assets/Scenes/ArenaScene.unity`, built by
-`ArenaBootstrap`. It uses generated runtime shapes only.
+`ArenaBootstrap`. It uses generated runtime shapes as the primary gameplay read, with the first
+imported DRAFT art pass layered in as small reference badges.
 
 Current implementation rules:
 
@@ -168,12 +169,19 @@ Current implementation rules:
   `unity/CheddarAndCocoa/Assets/Scripts/Game/ArenaArtCatalog.cs`. Future authored sprites should
   replace the named slots there first instead of adding one-off child names, colors, or scales in
   gameplay code.
+- Imported DRAFT art is organized under
+  `unity/CheddarAndCocoa/Assets/Art/Resources/ArenaDraft/` and loaded through
+  `ArenaDraftArt`. These are draft/reference sheets with backgrounds and broad pose layouts, so they
+  should not be treated as final transparent gameplay sprites yet.
 - Dog bodies are longer and lower than generic rectangles.
 - Both dogs have generated heads, long snouts, floppy ears, tiny feet, tails, collars, and expression
   eyes.
 - Cheddar has a golden body, red collar, bright chaos tuft/flash, and "CHEDDAR CHAOS PUP" identity.
 - Cocoa has a chocolate body, teal collar, cream chest, spot markings, tiny crown marker, and
   "COCOA SPOT QUEEN" identity.
+- Cheddar and Cocoa currently also show small imported portrait badges behind their generated
+  gameplay bodies. The badge is a readability/reference aid, not a replacement for final pose
+  animation.
 - Pose labels are intentionally direct: WIGGLE READY, QUEEN READY, CHAOS ZOOM, SPOT PATROL, WOOF,
   TUG, STUNNED, RESCUED, PROUD, SAD FLOP.
 - Objective arrows stay dog-accent colored and hide when the target is close.
@@ -188,19 +196,22 @@ Weenie/breakfast:
 
 Squirrel:
 
-- Small brown thief with tail, nose, eye, and clear steal/scare labels.
+- Small thief with tail, nose, eye, grab paws, loot/acorn marker, draft squirrel badge, and clear
+  steal/scare labels.
 - Stealing state must be more urgent than idle/waiting.
 - Bark response must visibly change the squirrel state.
 
 Predator:
 
-- Red/dark warning shadow, wing/eye shape, offscreen/warning/attack/yeeted labels.
+- Red/dark warning shadow with eagle wing sweep, coyote ears/eyes, imported eagle/coyote badges, and
+  offscreen/warning/attack/yeeted labels.
 - Should read as a pressure event, not a normal collectible.
 - During attack, grabbed dog pose plus partner rescue arrow must dominate the read.
 
 Rope:
 
-- Yellow/brown striped horizontal tug object with distinct ends.
+- Yellow/brown striped horizontal tug object with distinct ends, center knot, bite marks, and a
+  draft backyard-prop badge until a real rope sprite is exported.
 - Labels must name whether it needs both dogs, is waiting for one dog, is charging, or is complete.
 - Tug should feel like shared dog work, not a generic progress bar.
 
@@ -285,9 +296,11 @@ poses or equivalent state hooks before replacing the generated pose labels.
 
 This is not final art:
 
-- All art is generated with runtime sprites and TextMesh labels.
+- Primary gameplay readability still comes from generated runtime sprites and TextMesh labels, with
+  local imported DRAFT sheets used as badges/reference accents.
 - Shapes are intentionally chunky and replaceable.
-- There are no external, paid, or remote assets.
+- There are no paid or remote assets in the Unity project; the current imported art is local DRAFT
+  material and still needs final transparent gameplay exports.
 - There is no full character rig, sprite sheet, animation controller, VFX pipeline, or final UI skin.
 - Text labels are still carrying some clarity that authored art and SFX should eventually carry.
 - Future levels should reuse the same dog identity rules before inventing new costumes or UI

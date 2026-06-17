@@ -49,13 +49,27 @@ namespace CheddarAndCocoa.Tests
             Assert.That(ArenaArtCatalog.DogPartNames(DogId.Cheddar), Does.Contain("CheddarRedCollar"));
             Assert.That(ArenaArtCatalog.DogPartNames(DogId.Cocoa), Does.Contain("CocoaTealCollar"));
             Assert.That(ArenaArtCatalog.ActorPartNames(ArenaArtCatalog.ActorKind.Squirrel), Does.Contain("SquirrelFlagTail"));
+            Assert.That(ArenaArtCatalog.ActorPartNames(ArenaArtCatalog.ActorKind.Squirrel), Does.Contain("SquirrelLootAcorn"));
             Assert.That(ArenaArtCatalog.ActorPartNames(ArenaArtCatalog.ActorKind.Predator), Does.Contain("PredatorWarningEyeA"));
+            Assert.That(ArenaArtCatalog.ActorPartNames(ArenaArtCatalog.ActorKind.Predator), Does.Contain("CoyoteFenceEars"));
             Assert.That(ArenaArtCatalog.ActorPartNames(ArenaArtCatalog.ActorKind.Rope), Does.Contain("RopeStripeA"));
+            Assert.That(ArenaArtCatalog.ActorPartNames(ArenaArtCatalog.ActorKind.Rope), Does.Contain("RopeCenterKnot"));
             Assert.That(ArenaArtCatalog.CollectiblePartNames(GameManager.MissionVariant.BackyardRescue), Does.Contain("WeenieMustard"));
             Assert.That(ArenaArtCatalog.CollectiblePartNames(GameManager.MissionVariant.SnackHeist), Does.Contain("SnackCrumbA"));
             Assert.That(ArenaArtCatalog.CollectiblePartNames(GameManager.MissionVariant.SockPanic), Does.Contain("SockStripeA"));
             Assert.AreEqual("BarkBurst", ArenaArtCatalog.BarkFeedback.BurstName);
             Assert.AreEqual("ObjectiveArrowLabel", ArenaArtCatalog.ObjectiveArrowLabel.Name);
+            Assert.That(ArenaDraftArt.PathFor(ArenaDraftArt.SpriteId.CheddarPortrait), Does.StartWith("ArenaDraft/Characters/Dogs"));
+            Assert.That(ArenaDraftArt.PathFor(ArenaDraftArt.SpriteId.SquirrelCharacter), Does.StartWith("ArenaDraft/Characters/Squirrel"));
+            Assert.IsTrue(ArenaDraftArt.HasSprite(ArenaDraftArt.SpriteId.CheddarPortrait));
+            Assert.IsTrue(ArenaDraftArt.HasSprite(ArenaDraftArt.SpriteId.CocoaPortrait));
+            Assert.IsTrue(ArenaDraftArt.HasSprite(ArenaDraftArt.SpriteId.SquirrelCharacter));
+            Assert.IsTrue(ArenaDraftArt.HasSprite(ArenaDraftArt.SpriteId.EagleReference));
+            Assert.IsTrue(ArenaDraftArt.HasSprite(ArenaDraftArt.SpriteId.CoyoteReference));
+            Assert.IsTrue(ArenaDraftArt.HasSprite(ArenaDraftArt.SpriteId.BunnyReference));
+            Assert.IsTrue(ArenaDraftArt.HasSprite(ArenaDraftArt.SpriteId.BackyardProps));
+            Assert.IsTrue(ArenaDraftArt.HasSprite(ArenaDraftArt.SpriteId.UiKit));
+            Assert.IsTrue(ArenaDraftArt.HasSprite(ArenaDraftArt.SpriteId.Vfx));
         }
 
         [Test]
@@ -247,6 +261,11 @@ namespace CheddarAndCocoa.Tests
             AssertHasChildren(game.SquirrelObject.transform, ArenaArtCatalog.ActorPartNames(ArenaArtCatalog.ActorKind.Squirrel));
             AssertHasChildren(game.PredatorObject.transform, ArenaArtCatalog.ActorPartNames(ArenaArtCatalog.ActorKind.Predator));
             AssertHasChildren(game.RopeObject.transform, ArenaArtCatalog.ActorPartNames(ArenaArtCatalog.ActorKind.Rope));
+            Assert.IsNotNull(game.SquirrelObject.transform.Find(ArenaDraftArt.SquirrelBadgeName));
+            Assert.IsNotNull(game.PredatorObject.transform.Find(ArenaDraftArt.EagleBadgeName));
+            Assert.IsNotNull(game.PredatorObject.transform.Find(ArenaDraftArt.CoyoteBadgeName));
+            Assert.IsNotNull(game.RopeObject.transform.Find(ArenaDraftArt.BackyardPropsBadgeName));
+            Assert.IsNotNull(GameObject.Find(ArenaDraftArt.BunnyCameoName));
             Assert.IsNotNull(game.GetComponent<AudioSource>());
             Assert.IsNotNull(Camera.main.GetComponent<AudioListener>());
             Assert.IsNotNull(GameObject.Find(ArenaArtCatalog.ArenaHudObjectName));
@@ -262,6 +281,8 @@ namespace CheddarAndCocoa.Tests
             Assert.That(cocoaFeedback.ArtDirectionSignature, Does.Contain("chocolate-spot"));
             AssertHasChildren(cheddar.transform, ArenaArtCatalog.DogPartNames(DogId.Cheddar));
             AssertHasChildren(cocoa.transform, ArenaArtCatalog.DogPartNames(DogId.Cocoa));
+            Assert.IsNotNull(cheddar.transform.Find(ArenaDraftArt.CheddarPortraitBadgeName));
+            Assert.IsNotNull(cocoa.transform.Find(ArenaDraftArt.CocoaPortraitBadgeName));
             Assert.IsNotNull(cheddar.transform.Find(ArenaArtCatalog.DogLabel.Name));
             Assert.IsNotNull(cocoa.transform.Find(ArenaArtCatalog.DogLabel.Name));
             Assert.IsNotNull(cheddar.transform.Find(ArenaArtCatalog.ObjectiveArrowLabel.Name));
@@ -289,6 +310,7 @@ namespace CheddarAndCocoa.Tests
             Assert.That(game.LastJuiceLabel, Does.Contain("BARK BURST"));
             Assert.IsNotNull(GameObject.Find(ArenaArtCatalog.BarkFeedback.BurstName));
             Assert.IsNotNull(GameObject.Find(ArenaArtCatalog.BarkFeedback.RingName));
+            Assert.IsNotNull(GameObject.Find(ArenaDraftArt.VfxBarkBadgeName));
 
             var rb = cheddar.GetComponent<Rigidbody2D>();
             cheddar.GetComponent<CheddarAndCocoa.Input.GamepadPlayerInput>().enabled = false;
@@ -628,6 +650,7 @@ namespace CheddarAndCocoa.Tests
 
             game.ClearFeedbackRequests();
             FirstTreat().CollectBy(cheddar);
+            yield return null;
             AssertHasAudioCue(game, ArenaFeedbackCatalog.ScoreGain);
             AssertHasAudioCue(game, ArenaFeedbackCatalog.SnackSockCollect);
 

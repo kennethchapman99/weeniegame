@@ -131,22 +131,30 @@ namespace CheddarAndCocoa.Game
                     new Vector3(1.25f, 0.48f, 1f),
                     new[]
                     {
+                        new PartSlot("EagleWingSweep", new Color(0.08f, 0.02f, 0.025f), new Vector3(0f, -0.12f, -0.03f), new Vector3(1.55f, 0.2f, 1f), 6),
                         new PartSlot("PredatorWingLeft", new Color(0.18f, 0.03f, 0.04f), new Vector3(-0.62f, 0.04f, -0.02f), new Vector3(0.55f, 0.28f, 1f), 7),
                         new PartSlot("PredatorWingRight", new Color(0.18f, 0.03f, 0.04f), new Vector3(0.62f, 0.04f, -0.02f), new Vector3(0.55f, 0.28f, 1f), 7),
+                        new PartSlot("CoyoteFenceEars", new Color(0.45f, 0.26f, 0.11f), new Vector3(0f, 0.34f, -0.05f), new Vector3(0.42f, 0.18f, 1f), 8),
                         new PartSlot("PredatorWarningEyeA", new Color(1f, 0.1f, 0.06f), new Vector3(-0.16f, 0.16f, -0.04f), new Vector3(0.12f, 0.12f, 1f), 9),
-                        new PartSlot("PredatorWarningEyeB", new Color(1f, 0.1f, 0.06f), new Vector3(0.16f, 0.16f, -0.04f), new Vector3(0.12f, 0.12f, 1f), 9)
-                    }),
+                        new PartSlot("PredatorWarningEyeB", new Color(1f, 0.1f, 0.06f), new Vector3(0.16f, 0.16f, -0.04f), new Vector3(0.12f, 0.12f, 1f), 9),
+                        new PartSlot("CoyoteFenceEyes", new Color(1f, 0.64f, 0.18f), new Vector3(0f, 0.02f, -0.06f), new Vector3(0.52f, 0.07f, 1f), 10),
+                        new PartSlot("PredatorShadowClaws", new Color(0.04f, 0f, 0f), new Vector3(0f, -0.33f, -0.07f), new Vector3(0.85f, 0.1f, 1f), 10)
+                    },
+                    new[] { ArenaDraftArt.SpriteId.EagleReference, ArenaDraftArt.SpriteId.CoyoteReference }),
                 ActorKind.Rope => new ActorVisualSlot(
                     "Rope/Tug", new Color(0.95f, 0.7f, 0.15f), 0.9f, "Rope/Tug",
                     Vector3.up * 1.8f, 0.1f, new Vector3(0f, 0f, 45f),
                     new Vector3(1.45f, 0.24f, 1f),
                     new[]
                     {
+                        new PartSlot("RopeCenterKnot", new Color(0.78f, 0.42f, 0.12f), new Vector3(0f, 0f, -0.04f), new Vector3(0.22f, 1.45f, 1f), 9),
                         new PartSlot("RopeStripeA", new Color(0.55f, 0.27f, 0.08f), new Vector3(-0.36f, 0f, -0.02f), new Vector3(0.16f, 1.1f, 1f), 7),
                         new PartSlot("RopeStripeB", new Color(0.55f, 0.27f, 0.08f), new Vector3(0.36f, 0f, -0.02f), new Vector3(0.16f, 1.1f, 1f), 7),
                         new PartSlot("RopeEndLeft", new Color(1f, 0.82f, 0.3f), new Vector3(-0.76f, 0f, -0.03f), new Vector3(0.16f, 1.5f, 1f), 8),
-                        new PartSlot("RopeEndRight", new Color(1f, 0.82f, 0.3f), new Vector3(0.76f, 0f, -0.03f), new Vector3(0.16f, 1.5f, 1f), 8)
-                    }),
+                        new PartSlot("RopeEndRight", new Color(1f, 0.82f, 0.3f), new Vector3(0.76f, 0f, -0.03f), new Vector3(0.16f, 1.5f, 1f), 8),
+                        new PartSlot("RopeBiteMarks", new Color(0.18f, 0.08f, 0.02f), new Vector3(0f, 0.17f, -0.05f), new Vector3(1.05f, 0.06f, 1f), 10)
+                    },
+                    new[] { ArenaDraftArt.SpriteId.BackyardProps }),
                 _ => new ActorVisualSlot(
                     "Squirrel", new Color(0.55f, 0.32f, 0.12f), 0.7f, "Squirrel",
                     Vector3.up * 1.8f, 0.18f, new Vector3(0f, 0f, 80f),
@@ -155,8 +163,11 @@ namespace CheddarAndCocoa.Game
                     {
                         new PartSlot("SquirrelFlagTail", new Color(0.72f, 0.42f, 0.12f), new Vector3(-0.55f, 0.22f, -0.02f), new Vector3(0.32f, 0.9f, 1f), 7),
                         new PartSlot("SquirrelPointNose", new Color(0.36f, 0.18f, 0.07f), new Vector3(0.52f, 0.04f, -0.03f), new Vector3(0.28f, 0.22f, 1f), 8),
-                        new PartSlot("SquirrelBeadyEye", Color.black, new Vector3(0.28f, 0.2f, -0.04f), new Vector3(0.09f, 0.09f, 1f), 9)
-                    })
+                        new PartSlot("SquirrelBeadyEye", Color.black, new Vector3(0.28f, 0.2f, -0.04f), new Vector3(0.09f, 0.09f, 1f), 9),
+                        new PartSlot("SquirrelGrabPaws", new Color(0.95f, 0.65f, 0.22f), new Vector3(0.18f, -0.26f, -0.04f), new Vector3(0.34f, 0.11f, 1f), 9),
+                        new PartSlot("SquirrelLootAcorn", new Color(0.38f, 0.2f, 0.08f), new Vector3(-0.1f, -0.32f, -0.05f), new Vector3(0.18f, 0.18f, 1f), 10)
+                    },
+                    new[] { ArenaDraftArt.SpriteId.SquirrelCharacter })
             };
         }
 
@@ -230,10 +241,11 @@ namespace CheddarAndCocoa.Game
         public readonly Vector3 RotationPerSecond;
         public readonly Vector3 BodyScale;
         public readonly PartSlot[] Parts;
+        public readonly ArenaDraftArt.SpriteId[] DraftSprites;
 
         public ActorVisualSlot(string objectName, Color rootColor, float rootScale, string label,
             Vector3 labelOffset, float pulseAmount, Vector3 rotationPerSecond, Vector3 bodyScale,
-            PartSlot[] parts)
+            PartSlot[] parts, ArenaDraftArt.SpriteId[] draftSprites = null)
         {
             ObjectName = objectName;
             RootColor = rootColor;
@@ -244,6 +256,7 @@ namespace CheddarAndCocoa.Game
             RotationPerSecond = rotationPerSecond;
             BodyScale = bodyScale;
             Parts = parts;
+            DraftSprites = draftSprites ?? System.Array.Empty<ArenaDraftArt.SpriteId>();
         }
     }
 

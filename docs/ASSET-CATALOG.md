@@ -8,8 +8,47 @@ or authored assets in the external drop folder first:
 /Users/kchapman/WeeniegameAssetDrop/
 ```
 
-The current arena uses generated placeholders and named replacement slots. This catalog describes
+The current arena uses generated placeholders and named replacement slots, plus a first imported
+DRAFT pass under `unity/CheddarAndCocoa/Assets/Art/Resources/ArenaDraft/`. This catalog describes
 what to make, how to name it, and what "ready to import" means.
+
+## Current Imported DRAFT Pass
+
+The tracked `DRAFT assets/` files have been copied into the Unity project with normalized names and
+Unity `.meta` files:
+
+```text
+unity/CheddarAndCocoa/Assets/Art/Resources/ArenaDraft/
+  Characters/
+    Dogs/
+    Squirrel/
+    Eagle/
+    Coyote/
+    Bunny/
+  Props/Backyard/
+  UI/
+  VFX/
+```
+
+Unity imports these files as single sprites via `Assets/Scripts/Editor/ArenaDraftArtImporter.cs`.
+Runtime access goes through `Assets/Scripts/Game/ArenaDraftArt.cs`.
+
+Current status:
+
+- Imported and visible in-game as draft badges/reference accents: Cheddar, Cocoa, squirrel, eagle,
+  coyote, bunny, backyard props, UI kit, and VFX sheet.
+- Still not production-ready: most files are full pose sheets, portraits, or reference-card images
+  with backgrounds rather than individual transparent gameplay sprites.
+- Keep the generated `ArenaArtCatalog` silhouettes as the primary gameplay read until the draft art
+  is sliced/exported into final transparent assets.
+
+Next art task:
+
+- Export individual transparent sprites for each needed state (`cheddar_idle_01.png`,
+  `cocoa_bark_01.png`, `squirrel_steal_01.png`, `mission_rope_tug_01.png`,
+  `vfx_bark_burst_01.png`, etc.).
+- Preserve the current folder/category organization and update this catalog when a draft badge is
+  replaced by a final gameplay sprite.
 
 ## External Folder Structure
 

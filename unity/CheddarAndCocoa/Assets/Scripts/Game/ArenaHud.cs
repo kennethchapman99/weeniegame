@@ -13,6 +13,7 @@ namespace CheddarAndCocoa.Game
     {
         private GameManager _game;
         private GUIStyle _hud, _big, _mid, _small, _overlay;
+        private Texture2D _uiKitTexture;
 
         public void Init(GameManager game) => _game = game;
 
@@ -63,6 +64,7 @@ namespace CheddarAndCocoa.Game
             float w = 640, h = 268;
             var box = new Rect((Screen.width - w) * 0.5f, (Screen.height - h) * 0.5f, w, h);
             GUI.Box(box, GUIContent.none);
+            DrawUiKitAccent(new Rect(box.x + w - 96, box.y + 14, 56, 38));
             GUI.Label(new Rect(box.x, box.y + 14, w, 40), _game.MissionBanner, _big);
             GUI.Label(new Rect(box.x, box.y + 58, w, 30), _game.EndSummaryLabel, _mid);
             GUI.Label(new Rect(box.x, box.y + 84, w, 30), _game.EndReasonLabel, _mid);
@@ -113,6 +115,7 @@ namespace CheddarAndCocoa.Game
             float w = 680, h = 360;
             var box = new Rect((Screen.width - w) * 0.5f, (Screen.height - h) * 0.5f, w, h);
             GUI.Box(box, GUIContent.none);
+            DrawUiKitAccent(new Rect(box.x + w - 116, box.y + 16, 76, 50));
             GUI.Label(new Rect(box.x, box.y + 16, w, 42), "Cheddar + Cocoa Mission Select", _big);
             GUI.Label(new Rect(box.x + 40, box.y + 60, w - 80, 48),
                 "Pick a dog emergency. Up/Down chooses, Enter/Start begins, or press 1/2/3 for a mission.",
@@ -152,9 +155,20 @@ namespace CheddarAndCocoa.Game
                 _game.ReturnToMissionSelect();
         }
 
+        private void DrawUiKitAccent(Rect rect)
+        {
+            if (_uiKitTexture == null) return;
+
+            Color previous = GUI.color;
+            GUI.color = new Color(1f, 1f, 1f, 0.38f);
+            GUI.DrawTexture(rect, _uiKitTexture, ScaleMode.ScaleToFit, true);
+            GUI.color = previous;
+        }
+
         private void EnsureStyles()
         {
             if (_hud != null) return;
+            _uiKitTexture = ArenaDraftArt.LoadTexture(ArenaDraftArt.SpriteId.UiKit);
             _hud = new GUIStyle(GUI.skin.label) { fontSize = 22, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
             _hud.normal.textColor = Color.white;
             _mid = new GUIStyle(GUI.skin.label) { fontSize = 18, alignment = TextAnchor.MiddleCenter };

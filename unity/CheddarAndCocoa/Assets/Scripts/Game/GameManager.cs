@@ -229,6 +229,7 @@ namespace CheddarAndCocoa.Game
         private readonly List<string> _audioCueRequests = new();
         private readonly List<string> _rumbleRequests = new();
         private MissionDefinition _mission;
+        private GameObject _bunnyCameoObject;
 
         private readonly List<Treat> _treats = new();
         private readonly List<string> _sessionRanks = new();
@@ -541,9 +542,11 @@ namespace CheddarAndCocoa.Game
             PlaceObject(SquirrelObject, new Vector2(_bounds.xMax - 2f, _bounds.yMax - 2f));
             PlaceObject(PredatorObject, new Vector2(0f, _bounds.yMax + 2f));
             PlaceObject(RopeObject, Vector2.zero);
+            PlaceObject(_bunnyCameoObject, new Vector2(_bounds.xMin + 1.4f, _bounds.yMin + 1.0f));
             SquirrelObject.SetActive(_mission.UsesSquirrel);
             PredatorObject.SetActive(_mission.RequiresPredator);
             RopeObject.SetActive(_mission.RequiresTug);
+            if (_bunnyCameoObject != null) _bunnyCameoObject.SetActive(true);
             if (_mission.UsesSquirrel) SetActorState(SquirrelObject, "Squirrel: WAITING", new Color(0.55f, 0.32f, 0.12f), 0.06f);
             if (_mission.RequiresPredator) SetActorState(PredatorObject, "Predator: OFFSCREEN", Color.gray, 0.04f);
             if (_mission.RequiresTug) SetActorState(RopeObject, "Rope/Tug - BOTH DOGS", new Color(0.95f, 0.7f, 0.15f), 0.08f);
@@ -1302,6 +1305,7 @@ namespace CheddarAndCocoa.Game
             if (SquirrelObject != null) SquirrelObject.SetActive(active && _mission != null && _mission.UsesSquirrel);
             if (PredatorObject != null) PredatorObject.SetActive(active && _mission != null && _mission.RequiresPredator);
             if (RopeObject != null) RopeObject.SetActive(active && _mission != null && _mission.RequiresTug);
+            if (_bunnyCameoObject != null) _bunnyCameoObject.SetActive(active);
         }
 
         public static MissionDefinition BuildMissionDefinition(MissionVariant variant) =>
@@ -1713,6 +1717,7 @@ namespace CheddarAndCocoa.Game
             SquirrelObject = MakeActor(ArenaArtCatalog.Actor(ArenaArtCatalog.ActorKind.Squirrel));
             PredatorObject = MakeActor(ArenaArtCatalog.Actor(ArenaArtCatalog.ActorKind.Predator));
             RopeObject = MakeActor(ArenaArtCatalog.Actor(ArenaArtCatalog.ActorKind.Rope));
+            _bunnyCameoObject = MakeDraftBunnyCameo();
             if (InteractionRangeIndicators != null)
             {
                 int offset = _dogs != null ? _dogs.Length : 0;
@@ -1747,6 +1752,54 @@ namespace CheddarAndCocoa.Game
             {
                 AddActorPart(go, part, _sprite, part.Color);
             }
+            AddDraftActorBadges(go, art);
+        }
+
+        private void AddDraftActorBadges(GameObject go, ActorVisualSlot art)
+        {
+            for (int i = 0; i < art.DraftSprites.Length; i++)
+            {
+                var id = art.DraftSprites[i];
+                string name = id switch
+                {
+                    ArenaDraftArt.SpriteId.SquirrelCharacter => ArenaDraftArt.SquirrelBadgeName,
+                    ArenaDraftArt.SpriteId.EagleReference => ArenaDraftArt.EagleBadgeName,
+                    ArenaDraftArt.SpriteId.CoyoteReference => ArenaDraftArt.CoyoteBadgeName,
+                    ArenaDraftArt.SpriteId.BackyardProps => ArenaDraftArt.BackyardPropsBadgeName,
+                    _ => $"DraftArtBadge_{id}"
+                };
+                Vector3 position = id switch
+                {
+                    ArenaDraftArt.SpriteId.EagleReference => new Vector3(-0.82f, 0.12f, 0.05f),
+                    ArenaDraftArt.SpriteId.CoyoteReference => new Vector3(0.82f, 0.12f, 0.05f),
+                    ArenaDraftArt.SpriteId.BackyardProps => new Vector3(0f, -0.02f, 0.05f),
+                    _ => new Vector3(0f, 0f, 0.05f)
+                };
+                Vector3 scale = id == ArenaDraftArt.SpriteId.BackyardProps
+                    ? new Vector3(0.055f, 0.055f, 1f)
+                    : new Vector3(0.09f, 0.09f, 1f);
+                ArenaDraftArt.AddSpriteBadge(go.transform, name, id, position, scale, 4,
+                    new Color(1f, 1f, 1f, 0.72f));
+            }
+        }
+
+        private GameObject MakeDraftBunnyCameo()
+        {
+            var go = new GameObject(ArenaDraftArt.BunnyCameoName);
+            go.transform.localScale = Vector3.one * 0.65f;
+
+            var sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = _sprite;
+            sr.color = new Color(0.78f, 0.54f, 0.32f, 0.48f);
+            sr.sortingOrder = 2;
+            sr.transform.localScale = new Vector3(0.52f, 0.32f, 1f);
+
+            AddActorPart(go, new PartSlot("BunnyCameoEarA", new Color(0.9f, 0.7f, 0.45f, 0.6f), new Vector3(-0.16f, 0.26f, -0.02f), new Vector3(0.13f, 0.42f, 1f), 3), _sprite, new Color(0.9f, 0.7f, 0.45f, 0.6f));
+            AddActorPart(go, new PartSlot("BunnyCameoEarB", new Color(0.9f, 0.7f, 0.45f, 0.6f), new Vector3(0.1f, 0.3f, -0.02f), new Vector3(0.12f, 0.46f, 1f), 3), _sprite, new Color(0.9f, 0.7f, 0.45f, 0.6f));
+            ArenaDraftArt.AddSpriteBadge(go.transform, "DraftBunnyReferenceBadge",
+                ArenaDraftArt.SpriteId.BunnyReference, new Vector3(0f, 0.05f, 0.04f),
+                new Vector3(0.075f, 0.075f, 1f), 3, new Color(1f, 1f, 1f, 0.7f));
+            return go;
         }
 
         private static SpriteRenderer AddActorPart(GameObject parent, PartSlot part, Sprite sprite, Color color)

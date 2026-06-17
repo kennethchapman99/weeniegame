@@ -282,6 +282,18 @@ namespace CheddarAndCocoa.Dogs
                 AssignPartReference(part.Name, MakePart(part, sprite));
             }
 
+            var draftId = _identity.Id == DogId.Cheddar
+                ? ArenaDraftArt.SpriteId.CheddarPortrait
+                : ArenaDraftArt.SpriteId.CocoaPortrait;
+            string badgeName = _identity.Id == DogId.Cheddar
+                ? ArenaDraftArt.CheddarPortraitBadgeName
+                : ArenaDraftArt.CocoaPortraitBadgeName;
+            ArenaDraftArt.AddSpriteBadge(transform, badgeName, draftId,
+                new Vector3(-0.32f, -0.08f, 0.03f),
+                new Vector3(0.065f, 0.065f, 1f),
+                7,
+                new Color(1f, 1f, 1f, 0.9f));
+
             if (_intentArrow != null) _intentArrow.enabled = false;
 
             var labelSlot = ArenaArtCatalog.DogLabel;

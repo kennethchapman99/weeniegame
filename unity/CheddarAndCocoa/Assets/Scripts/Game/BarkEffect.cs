@@ -43,6 +43,9 @@ namespace CheddarAndCocoa.Game
 
             var burst = new GameObject(art.BurstName);
             burst.transform.position = _dog.transform.position + Vector3.up * 0.9f;
+            ArenaDraftArt.AddSpriteBadge(burst.transform, ArenaDraftArt.VfxBarkBadgeName,
+                ArenaDraftArt.SpriteId.Vfx, Vector3.zero, new Vector3(0.045f, 0.045f, 1f), 19,
+                new Color(1f, 1f, 1f, 0.32f));
             var text = burst.AddComponent<TextMesh>();
             text.text = art.BurstText;
             text.fontSize = art.BurstFontSize;
