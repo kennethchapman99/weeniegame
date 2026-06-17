@@ -93,7 +93,7 @@ namespace CheddarAndCocoa.Bootstrap
             t.bodyColor = Hex("#e3ab63");
             t.wetBodyColor = Hex("#b07e3f");
             t.baseSpeed = 4.8f; t.floaterSpeed = 4.9f; t.swimSpeed = 1.6f; t.zoomiesMultiplier = 1.85f;
-            t.acceleration = 34f; t.deceleration = 31f; t.turnResponsiveness = 46f; t.stopSpeed = 0.08f; t.runFeedbackSpeed = 0.22f;
+            t.inputDeadzone = 0.25f; t.acceleration = 34f; t.deceleration = 31f; t.turnResponsiveness = 46f; t.stopSpeed = 0.08f; t.runFeedbackSpeed = 0.22f;
             t.wrestleWinChance = 0.70f; t.stairTime = 0.5f;
             t.canChairLeap = true; t.barfChance = 0.18f; t.chewTime = 0.25f;
             return t;
@@ -106,7 +106,7 @@ namespace CheddarAndCocoa.Bootstrap
             t.bodyColor = Hex("#5e3a20");
             t.wetBodyColor = Hex("#3c2410");
             t.baseSpeed = 4.55f; t.floaterSpeed = 4.9f; t.swimSpeed = 1.6f; t.zoomiesMultiplier = 1.75f;
-            t.acceleration = 29f; t.deceleration = 39f; t.turnResponsiveness = 52f; t.stopSpeed = 0.08f; t.runFeedbackSpeed = 0.22f;
+            t.inputDeadzone = 0.25f; t.acceleration = 29f; t.deceleration = 39f; t.turnResponsiveness = 52f; t.stopSpeed = 0.08f; t.runFeedbackSpeed = 0.22f;
             t.wrestleWinChance = 0.78f; t.stairTime = 1.05f;
             t.canChairLeap = false; t.barfChance = 0f; t.chewTime = 0.5f;
             return t;

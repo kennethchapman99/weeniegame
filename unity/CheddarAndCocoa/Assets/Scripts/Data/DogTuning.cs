@@ -41,6 +41,8 @@ namespace CheddarAndCocoa.Data
         public float arriveRadius = 10f;
 
         [Header("Movement feel (Unity units/sec tuning)")]
+        [Tooltip("Analog stick/input magnitude below this value is ignored.")]
+        [Range(0f, 0.9f)] public float inputDeadzone = 0.25f;
         [Tooltip("How quickly the dog reaches max speed from rest.")]
         public float acceleration = 30f;
         [Tooltip("How quickly the dog stops after input is released.")]

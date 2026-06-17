@@ -6,6 +6,7 @@ using UnityEngine.TestTools;
 using CheddarAndCocoa.Dogs;
 using CheddarAndCocoa.Game;
 using CheddarAndCocoa.CameraRig;
+using CheddarAndCocoa.Input;
 
 namespace CheddarAndCocoa.Tests
 {
@@ -78,6 +79,10 @@ namespace CheddarAndCocoa.Tests
             Assert.Greater(cocoa.DecelerationUnitsPerSecond, cheddar.DecelerationUnitsPerSecond);
             Assert.Greater(cocoa.TurnResponsivenessUnitsPerSecond, cheddar.TurnResponsivenessUnitsPerSecond);
             Assert.AreEqual(0.08f, cheddar.StopSpeed);
+            Assert.That(cheddar.GetComponent<DogIdentity>().Tuning.inputDeadzone, Is.InRange(0.15f, 0.35f));
+            Assert.That(cocoa.GetComponent<DogIdentity>().Tuning.inputDeadzone, Is.InRange(0.15f, 0.35f));
+            Assert.AreEqual(cheddar.GetComponent<DogIdentity>().Tuning.inputDeadzone,
+                cheddar.GetComponent<GamepadPlayerInput>().Deadzone);
 
             foreach (var input in Object.FindObjectsByType<CheddarAndCocoa.Input.GamepadPlayerInput>(FindObjectsSortMode.None))
                 input.enabled = false;

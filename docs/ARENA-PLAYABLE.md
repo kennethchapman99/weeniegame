@@ -105,7 +105,7 @@ Current movement defaults in ArenaScene:
 
 - Cheddar: base speed `4.8` prototype units (`5.76` Unity units/sec after conversion), acceleration `34`, deceleration `31`, turn response `46`, zoomies multiplier `1.85`.
 - Cocoa: base speed `4.55` prototype units (`5.46` Unity units/sec after conversion), acceleration `29`, deceleration `39`, turn response `52`, zoomies multiplier `1.75`.
-- Both: stop snap `0.08` Unity units/sec and run feedback threshold `0.22`.
+- Both: input deadzone `0.25`, stop snap `0.08` Unity units/sec, and run feedback threshold `0.22`.
 
 Manual movement feel check: move each dog from rest, reverse direction, circle around a weenie, and release the stick/keys near the rope. Confirm the dogs feel quick and cute, Cheddar reads a little more chaotic, Cocoa reads more controlled, and neither dog slides past small targets in a frustrating way. The paw trails should appear only while moving and should not compete with objective arrows, labels, or score pops.
 
@@ -249,7 +249,7 @@ Current key defaults:
 - Squirrel pressure: first steal delay `9.0s` (`7.0s` on Squirrel Trouble), repeat delay `3.4s` (`2.2s` on Squirrel Trouble), move speed `1.9`.
 - Bark/rescue/tug: united bark window `0.8s`, united bark range `3.0`, single bark squirrel range `4.0`, rescue bark range `2.0`, tug together distance `1.6`, tug charge `0.5` per second, interact tug bump `0.2`.
 - Camera: initial ortho `7.1`, min/max ortho `6.8 / 8.4`, horizontal/vertical margins `3.0 / 2.2`, follow/zoom lerp `9 / 7`.
-- Arena dog movement: Cheddar base speed `4.8`, acceleration `34`, deceleration `31`, turn response `46`, zoomies `1.85`; Cocoa base speed `4.55`, acceleration `29`, deceleration `39`, turn response `52`, zoomies `1.75`; both use stop snap `0.08` and run-feedback threshold `0.22`.
+- Arena dog movement: Cheddar base speed `4.8`, acceleration `34`, deceleration `31`, turn response `46`, zoomies `1.85`; Cocoa base speed `4.55`, acceleration `29`, deceleration `39`, turn response `52`, zoomies `1.75`; both use input deadzone `0.25`, stop snap `0.08`, and run-feedback threshold `0.22`.
 - Range hints: squirrel bark ring `4.0`, rescue bark ring `2.0`, tug together ring `1.6`.
 - Mission counts: Backyard Rescue spawns `5` items and needs `6` recoveries because collected items respawn; Snack Heist spawns/needs `4`; Sock Panic spawns/needs `5`.
 

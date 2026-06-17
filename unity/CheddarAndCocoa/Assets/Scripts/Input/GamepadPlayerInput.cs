@@ -19,13 +19,14 @@ namespace CheddarAndCocoa.Input
     /// its <see cref="DogController"/> locally. Use the Input System (not legacy Input).
     /// </summary>
     [RequireComponent(typeof(DogController))]
+    [RequireComponent(typeof(DogIdentity))]
     public sealed class GamepadPlayerInput : MonoBehaviour
     {
         /// <summary>Keyboard fallback layouts so the game is playable with no controllers. P1 = WASD +
         /// Space (bark); P2 = arrow keys + Enter/Right-Shift (bark). <see cref="None"/> = controller only.</summary>
         public enum KeyboardScheme { None, WasdSpace, ArrowsEnter }
 
-        [SerializeField, Range(0f, 0.9f)] private float deadzone = 0.25f; // balance.ts INPUT.gamepadDeadzone
+        [SerializeField, Range(0f, 0.9f)] private float deadzone = 0.25f; // default mirrors balance.ts INPUT.gamepadDeadzone
         [Tooltip("Leave null to use the most-recently-paired gamepad; set for explicit P1/P2 assignment.")]
         [SerializeField] private int gamepadSlot = -1;
         [Tooltip("Keyboard fallback layout for this player (so the game plays without controllers).")]
@@ -33,7 +34,15 @@ namespace CheddarAndCocoa.Input
 
         private DogController _dog;
 
-        private void Awake() => _dog = GetComponent<DogController>();
+        public float Deadzone => deadzone;
+
+        private void Awake()
+        {
+            _dog = GetComponent<DogController>();
+            var identity = GetComponent<DogIdentity>();
+            if (identity != null && identity.Tuning != null)
+                deadzone = Mathf.Clamp(identity.Tuning.inputDeadzone, 0f, 0.9f);
+        }
 
         /// <summary>Assign this player's controller slot (0 = P1, 1 = P2). Set by GameBootstrap.</summary>
         public void SetSlot(int slot) => gamepadSlot = slot;
