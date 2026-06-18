@@ -73,6 +73,10 @@ ceiling for narrower and portrait windows. This keeps both dogs framed at maximu
 32:9, 16:9, 4:3, and 9:16 aspect contracts. Cheddar/Cocoa identity labels scale with strategic zoom
 so their names and current emotional poses remain legible when the yard view pulls back.
 
+All blocking HUD panels now share an eight-pixel safe-area contract. Mission select, pause, end-card,
+session summary, and the playtest overlay shrink to the current viewport instead of clipping fixed
+640-900 pixel layouts on narrow desktop windows.
+
 1. Open `unity/CheddarAndCocoa` in Unity 6 LTS, open `Assets/Scenes/ArenaScene.unity`, and press Play. `ArenaScene` is also the scripted local build entry point.
 2. The mission picker appears immediately. Use **Up/Down** or gamepad **D-pad** to highlight a mission, then press **Enter**, **Space**, gamepad **Start**, or gamepad **South** to start. Keyboard **1-9 and 0** also starts Backyard Rescue, Snack Heist, Sock Panic, Squirrel Conspiracy, Eagle Shadow Panic, Coyotes at the Fence, Weenie Roundup, Scent Search, Thunderstorm Comfort, Mark the Yard, Walkies on the Leash, or Car Ride Balance (arrow-select) directly.
    - All 12 missions fit in an adaptive two-column picker down to a 480-pixel-tall window.

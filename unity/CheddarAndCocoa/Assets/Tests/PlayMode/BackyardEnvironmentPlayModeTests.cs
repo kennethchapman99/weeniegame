@@ -10,6 +10,18 @@ namespace CheddarAndCocoa.Tests
 {
     public sealed class BackyardEnvironmentPlayModeTests
     {
+        [TestCase(480f, 480f, 640f, 296f)]
+        [TestCase(1024f, 600f, 900f, 458f)]
+        [TestCase(2560f, 1080f, 680f, 292f)]
+        public void HudPanels_StayInsideViewport(float screenWidth, float screenHeight, float desiredWidth, float desiredHeight)
+        {
+            Rect panel = ArenaHud.FitPanel(screenWidth, screenHeight, desiredWidth, desiredHeight);
+            Assert.GreaterOrEqual(panel.xMin, 8f);
+            Assert.GreaterOrEqual(panel.yMin, 8f);
+            Assert.LessOrEqual(panel.xMax, screenWidth - 8f);
+            Assert.LessOrEqual(panel.yMax, screenHeight - 8f);
+        }
+
         [UnityTest]
         public IEnumerator BackyardEnvironment_BuildsDecorativePropsInsideLargeYard()
         {

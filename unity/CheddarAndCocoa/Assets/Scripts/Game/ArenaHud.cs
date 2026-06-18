@@ -17,6 +17,15 @@ namespace CheddarAndCocoa.Game
 
         public void Init(GameManager game) => _game = game;
 
+        public static Rect FitPanel(float screenWidth, float screenHeight, float desiredWidth, float desiredHeight, float margin = 8f)
+        {
+            float availableWidth = Mathf.Max(1f, screenWidth - margin * 2f);
+            float availableHeight = Mathf.Max(1f, screenHeight - margin * 2f);
+            float width = Mathf.Min(desiredWidth, availableWidth);
+            float height = Mathf.Min(desiredHeight, availableHeight);
+            return new Rect((screenWidth - width) * 0.5f, (screenHeight - height) * 0.5f, width, height);
+        }
+
         private void OnGUI()
         {
             if (_game == null) return;
@@ -66,24 +75,26 @@ namespace CheddarAndCocoa.Game
         private void DrawPauseMenu()
         {
             DrawGameplayHud();
-            float w = 520f, h = 250f;
-            var box = new Rect((Screen.width - w) * 0.5f, (Screen.height - h) * 0.5f, w, h);
+            var box = FitPanel(Screen.width, Screen.height, 520f, 250f);
+            float w = box.width;
+            float buttonWidth = Mathf.Min(200f, w - 40f);
+            float buttonX = box.x + (w - buttonWidth) * 0.5f;
             GUI.Box(box, GUIContent.none);
             GUI.Label(new Rect(box.x, box.y + 20f, w, 42f), "Pawsed", _big);
             GUI.Label(new Rect(box.x + 30f, box.y + 68f, w - 60f, 28f),
                 "Escape / Start resumes the tiny dog emergency.", _mid);
-            if (GUI.Button(new Rect(box.x + 160f, box.y + 108f, 200f, 32f), "Resume"))
+            if (GUI.Button(new Rect(buttonX, box.y + 108f, buttonWidth, 32f), "Resume"))
                 _game.TogglePause();
-            if (GUI.Button(new Rect(box.x + 160f, box.y + 148f, 200f, 32f), "Mission Select"))
+            if (GUI.Button(new Rect(buttonX, box.y + 148f, buttonWidth, 32f), "Mission Select"))
                 _game.ReturnToMissionSelect();
-            if (GUI.Button(new Rect(box.x + 160f, box.y + 188f, 200f, 32f), "Quit Game"))
+            if (GUI.Button(new Rect(buttonX, box.y + 188f, buttonWidth, 32f), "Quit Game"))
                 _game.RequestQuit();
         }
 
         private void DrawEndCard()
         {
-            float w = 640, h = 296;
-            var box = new Rect((Screen.width - w) * 0.5f, (Screen.height - h) * 0.5f, w, h);
+            var box = FitPanel(Screen.width, Screen.height, 640f, 296f);
+            float w = box.width, h = box.height;
             GUI.Box(box, GUIContent.none);
             DrawUiKitAccent(new Rect(box.x + w - 96, box.y + 14, 56, 38));
             GUI.Label(new Rect(box.x, box.y + 14, w, 40), _game.MissionBanner, _big);
@@ -97,20 +108,23 @@ namespace CheddarAndCocoa.Game
             GUI.Label(new Rect(box.x, box.y + 166, w, 24), $"{_game.MvpLabel}   |   {_game.SessionSummaryLabel}", _small);
             GUI.Label(new Rect(box.x, box.y + 190, w, 26), "R/Enter Replay | N/Right Shoulder Next | M/Esc Mission Select", _mid);
 
-            float y = box.y + h - 42;
-            if (GUI.Button(new Rect(box.x + 70, y, 150, 30), _game.EndReplayActionLabel))
+            float y = box.y + h - 42f;
+            float gap = 12f;
+            float buttonWidth = (w - 40f - gap * 2f) / 3f;
+            float buttonX = box.x + 20f;
+            if (GUI.Button(new Rect(buttonX, y, buttonWidth, 30), _game.EndReplayActionLabel))
                 _game.Restart();
-            if (GUI.Button(new Rect(box.x + 245, y, 150, 30), _game.EndNextActionLabel))
+            if (GUI.Button(new Rect(buttonX + buttonWidth + gap, y, buttonWidth, 30), _game.EndNextActionLabel))
                 _game.ChooseNextMission();
-            if (GUI.Button(new Rect(box.x + 420, y, 150, 30), _game.EndMissionSelectActionLabel))
+            if (GUI.Button(new Rect(buttonX + (buttonWidth + gap) * 2f, y, buttonWidth, 30), _game.EndMissionSelectActionLabel))
                 _game.ReturnToMissionSelect();
         }
 
         private void DrawPlaytestOverlay()
         {
-            float w = 440f;
-            float h = 322f;
-            var box = new Rect(Screen.width - w - 12f, 12f, w, h);
+            float w = Mathf.Min(440f, Mathf.Max(1f, Screen.width - 24f));
+            float h = Mathf.Min(322f, Mathf.Max(1f, Screen.height - 24f));
+            var box = new Rect(Mathf.Max(12f, Screen.width - w - 12f), 12f, w, h);
             GUI.Box(box, GUIContent.none);
 
             int secs = Mathf.CeilToInt(Mathf.Max(0f, _game.TimeRemaining));
@@ -141,9 +155,8 @@ namespace CheddarAndCocoa.Game
             int count = _game.MissionSelectOptionCount;
             const int columns = 2;
             int rows = Mathf.CeilToInt(count / (float)columns);
-            float w = Mathf.Min(900f, Screen.width - 16f);
-            float h = Mathf.Min(458f, Screen.height - 16f);
-            var box = new Rect((Screen.width - w) * 0.5f, (Screen.height - h) * 0.5f, w, h);
+            var box = FitPanel(Screen.width, Screen.height, 900f, 458f);
+            float w = box.width;
             GUI.Box(box, GUIContent.none);
             DrawUiKitAccent(new Rect(box.x + w - 116, box.y + 16, 76, 50));
             GUI.Label(new Rect(box.x, box.y + 14, w, 42), "Cheddar + Cocoa Mission Select", _big);
@@ -187,16 +200,16 @@ namespace CheddarAndCocoa.Game
 
         private void DrawSessionSummary()
         {
-            float w = 680, h = 292;
-            var box = new Rect((Screen.width - w) * 0.5f, (Screen.height - h) * 0.5f, w, h);
+            var box = FitPanel(Screen.width, Screen.height, 680f, 292f);
+            float w = box.width, h = box.height;
             GUI.Box(box, GUIContent.none);
             GUI.Label(new Rect(box.x, box.y + 18, w, 42), "Session Summary", _big);
             GUI.Label(new Rect(box.x + 40, box.y + 76, w - 80, 32), _game.SessionSummaryLabel, _mid);
             GUI.Label(new Rect(box.x + 40, box.y + 116, w - 80, 72), _game.SessionRanksEarnedLabel, _small);
             GUI.Label(new Rect(box.x + 40, box.y + 188, w - 80, 28), "Enter / Start continues • M / Escape opens mission select", _mid);
 
-            float buttonWidth = 180f;
-            float buttonGap = 12f;
+            float buttonGap = 10f;
+            float buttonWidth = (w - 40f - buttonGap * 2f) / 3f;
             float buttonStart = box.x + (w - buttonWidth * 3f - buttonGap * 2f) * 0.5f;
             if (GUI.Button(new Rect(buttonStart, box.y + h - 44, buttonWidth, 30), "Continue Session"))
                 _game.ContinueSession();
