@@ -61,16 +61,18 @@ namespace CheddarAndCocoa.Game
 
         private void DrawEndCard()
         {
-            float w = 640, h = 268;
+            float w = 640, h = 296;
             var box = new Rect((Screen.width - w) * 0.5f, (Screen.height - h) * 0.5f, w, h);
             GUI.Box(box, GUIContent.none);
             DrawUiKitAccent(new Rect(box.x + w - 96, box.y + 14, 56, 38));
             GUI.Label(new Rect(box.x, box.y + 14, w, 40), _game.MissionBanner, _big);
             GUI.Label(new Rect(box.x, box.y + 58, w, 30), _game.EndSummaryLabel, _mid);
             GUI.Label(new Rect(box.x, box.y + 84, w, 30), _game.EndReasonLabel, _mid);
+            string best = $"Session best ({_game.ActiveMissionName}): {_game.BestScoreForMission(_game.ActiveMissionVariant)}" + (_game.LastRoundWasBest ? "  ** NEW BEST! **" : "");
             GUI.Label(new Rect(box.x, box.y + 114, w, 28), $"Last swing: {_game.LastScoreEventLabel}   Stars: {_game.StarRating}/3", _mid);
-            GUI.Label(new Rect(box.x, box.y + 142, w, 24), _game.SessionSummaryLabel, _small);
-            GUI.Label(new Rect(box.x, box.y + 166, w, 26), "R/Enter Replay | N/Right Shoulder Next | M/Esc Mission Select", _mid);
+            GUI.Label(new Rect(box.x, box.y + 140, w, 24), best, _game.LastRoundWasBest ? _hud : _small);
+            GUI.Label(new Rect(box.x, box.y + 166, w, 24), _game.SessionSummaryLabel, _small);
+            GUI.Label(new Rect(box.x, box.y + 190, w, 26), "R/Enter Replay | N/Right Shoulder Next | M/Esc Mission Select", _mid);
 
             float y = box.y + h - 42;
             if (GUI.Button(new Rect(box.x + 70, y, 150, 30), _game.EndReplayActionLabel))

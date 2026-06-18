@@ -619,7 +619,7 @@ namespace CheddarAndCocoa.Tests
             game.ForceGameOver();
             Assert.IsTrue(LogContains(game, "MissionFail: Failed"));
             Assert.AreEqual(1, game.FailuresForMission(GameManager.MissionVariant.SnackHeist));
-            Assert.That(game.MissionFailureSummaryLabel, Does.Contain("Snack 1"));
+            Assert.That(game.MissionFailureSummaryLabel, Does.Contain("Snack Heist 1"));
 
             game.ChooseNextMission();
             yield return null;

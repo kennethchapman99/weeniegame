@@ -115,6 +115,27 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(1, game.MissionReplayCount);
         }
 
+        [UnityTest]
+        public IEnumerator MarkTheYard_FirstClear_RecordsSessionBestButNotANewBest()
+        {
+            yield return LoadArena();
+            var game = _game;
+
+            game.StartMission(GameManager.MissionVariant.MarkTheYard);
+            yield return null;
+
+            int guard = 0;
+            while (game.Outcome == GameManager.MissionOutcome.InProgress && guard++ < 40)
+            {
+                game.ForceClaimZone(DogId.Cheddar);
+                yield return null;
+            }
+
+            Assert.AreEqual(GameManager.MissionOutcome.Clear, game.Outcome);
+            Assert.AreEqual(game.Score, game.BestScoreForMission(GameManager.MissionVariant.MarkTheYard));
+            Assert.IsFalse(game.LastRoundWasBest, "First time playing a mission is not a 'new best'.");
+        }
+
         private IEnumerator LoadArena()
         {
             _game = null;

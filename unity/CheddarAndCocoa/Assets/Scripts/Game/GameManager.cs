@@ -322,6 +322,7 @@ namespace CheddarAndCocoa.Game
         private int _selectedMissionIndex;
         private readonly bool[] _sessionCompletedMissions = new bool[MissionOrder.Length];
         private readonly int[] _sessionFailuresByMission = new int[MissionOrder.Length];
+        private readonly int[] _sessionBestByMission = new int[MissionOrder.Length];
         private bool _roundResultRecorded;
         private string _lastLoggedObjective = string.Empty;
 
@@ -507,6 +508,14 @@ namespace CheddarAndCocoa.Game
         {
             roundDuration = Mathf.Max(0.01f, seconds);
             if (MissionActive()) TimeRemaining = Mathf.Min(TimeRemaining, roundDuration);
+        }
+
+        public bool LastRoundWasBest { get; private set; }
+
+        public int BestScoreForMission(MissionVariant variant)
+        {
+            int index = IndexOfMission(variant);
+            return index >= 0 && index < _sessionBestByMission.Length ? _sessionBestByMission[index] : 0;
         }
 
         public int FailuresForMission(MissionVariant variant)
@@ -2675,7 +2684,17 @@ namespace CheddarAndCocoa.Game
             SessionTotalScore += Score;
             SessionStarsEarned += StarRating;
             int missionIndex = IndexOfMission(_mission.Variant);
-            if (missionIndex >= 0) _sessionCompletedMissions[missionIndex] = true;
+            LastRoundWasBest = false;
+            if (missionIndex >= 0)
+            {
+                bool playedBefore = _sessionCompletedMissions[missionIndex];
+                _sessionCompletedMissions[missionIndex] = true;
+                if (Score > _sessionBestByMission[missionIndex])
+                {
+                    LastRoundWasBest = playedBefore; // only a "new best" if there was a prior run to beat
+                    _sessionBestByMission[missionIndex] = Score;
+                }
+            }
             if (Outcome == MissionOutcome.Failed && missionIndex >= 0) _sessionFailuresByMission[missionIndex]++;
             SessionUniqueMissionsCompleted = CountCompletedMissions();
             _sessionRanks.Add($"{_mission.Name}: {EndRank}");
@@ -2711,7 +2730,11 @@ namespace CheddarAndCocoa.Game
 
         private string BuildMissionFailureSummaryLabel()
         {
-            return $"Failures: Backyard {_sessionFailuresByMission[0]} / Snack {_sessionFailuresByMission[1]} / Sock {_sessionFailuresByMission[2]} / Squirrel {_sessionFailuresByMission[3]}";
+            var parts = new List<string>(MissionOrder.Length);
+            for (int i = 0; i < MissionOrder.Length; i++)
+                if (_sessionFailuresByMission[i] > 0)
+                    parts.Add($"{BuildMissionDefinition(MissionOrder[i], _tuning).Name} {_sessionFailuresByMission[i]}");
+            return parts.Count == 0 ? "Failures: none yet" : $"Failures: {string.Join(" / ", parts)}";
         }
 
         private void UpdateSessionSummaryLabel()
