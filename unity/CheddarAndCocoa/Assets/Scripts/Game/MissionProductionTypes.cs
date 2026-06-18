@@ -106,6 +106,15 @@ namespace CheddarAndCocoa.Game
             "Deliver enough weenies to the bowl before the timer expires.",
             "The timer expires before enough weenies are delivered.");
 
+        public static readonly ProductionMissionSpec ScentSearch = new(
+            "scent_search",
+            "Scent Search",
+            ProductionMissionPack.Backyard,
+            ProductionMechanicModule.ScentSearch,
+            "Sniff out the buried bones and dig them up before time runs out.",
+            "Dig up enough buried bones before the timer expires.",
+            "Too many cold digs, or the timer expires.");
+
         public static readonly ProductionMissionSpec CoyotesFence = new(
             "coyotes_fence",
             "Coyotes at the Fence",

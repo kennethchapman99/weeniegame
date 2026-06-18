@@ -8,14 +8,14 @@ using CheddarAndCocoa.Game;
 
 namespace CheddarAndCocoa.Tests
 {
-    public sealed class WeenieRoundupPlayModeTests
+    public sealed class ScentSearchPlayModeTests
     {
         private GameManager _game;
         private DogController _cheddar;
         private DogController _cocoa;
 
         [UnityTest]
-        public IEnumerator WeenieRoundup_AppearsInMissionSelectRotation()
+        public IEnumerator ScentSearch_AppearsInMissionSelectRotation()
         {
             yield return LoadArena();
             var game = _game;
@@ -25,7 +25,7 @@ namespace CheddarAndCocoa.Tests
             bool found = false;
             for (int i = 0; i < game.MissionSelectOptionCount; i++)
             {
-                if (game.SelectedMissionVariant == GameManager.MissionVariant.WeenieRoundup)
+                if (game.SelectedMissionVariant == GameManager.MissionVariant.ScentSearch)
                 {
                     found = true;
                     break;
@@ -34,86 +34,85 @@ namespace CheddarAndCocoa.Tests
                 yield return null;
             }
 
-            Assert.IsTrue(found, "Weenie Roundup should be reachable from mission select.");
-            Assert.AreEqual("Weenie Roundup", game.SelectedMissionName);
+            Assert.IsTrue(found, "Scent Search should be reachable from mission select.");
+            Assert.AreEqual("Scent Search", game.SelectedMissionName);
         }
 
         [UnityTest]
-        public IEnumerator WeenieRoundup_ClearPath_CarryEveryWeenieToTheBowl()
+        public IEnumerator ScentSearch_ClearPath_SniffAndDigUpEveryBone()
         {
             yield return LoadArena();
             var game = _game;
 
-            game.StartMission(GameManager.MissionVariant.WeenieRoundup);
+            game.StartMission(GameManager.MissionVariant.ScentSearch);
             yield return null;
 
-            Assert.AreEqual("weenie_roundup", game.RuntimeSnapshot.MissionId);
-            Assert.That(game.ObjectiveLabel, Does.Contain("Round up"));
+            Assert.AreEqual("scent_search", game.RuntimeSnapshot.MissionId);
+            Assert.That(game.ObjectiveLabel, Does.Contain("Sniff"));
             int required = game.RuntimeSnapshot.ObjectiveGoal;
             Assert.Greater(required, 0);
-            Assert.AreEqual(required, game.WeenieRoundupState.Loose);
 
-            // Two dogs ferry weenies in parallel until the bowl is full.
             int guard = 0;
-            while (game.Outcome == GameManager.MissionOutcome.InProgress && guard++ < 50)
+            while (game.Outcome == GameManager.MissionOutcome.InProgress && guard++ < 30)
             {
-                game.ForceWeeniePickup(DogId.Cheddar);
-                game.ForceWeenieDeliver(DogId.Cheddar);
-                game.ForceWeeniePickup(DogId.Cocoa);
-                game.ForceWeenieDeliver(DogId.Cocoa);
+                game.ForceScentSniff(DogId.Cheddar);
+                game.ForceScentDigCorrect(DogId.Cheddar);
                 yield return null;
             }
 
-            Assert.AreEqual(required, game.WeenieRoundupState.Delivered);
+            Assert.AreEqual(required, game.ScentSearchState.Found);
+            Assert.AreEqual(0, game.ScentSearchState.WastedDigs);
+            Assert.Greater(game.ScentSearchState.Sniffs, 0);
             Assert.AreEqual(GameManager.MissionOutcome.Clear, game.Outcome);
-            Assert.AreEqual(GameManager.FlowState.EndScreen, game.CurrentFlow);
             Assert.IsTrue(game.RuntimeSnapshot.IsClear);
-            Assert.That(game.EndSummaryLabel, Does.Contain("Weenie Wranglers"));
+            Assert.That(game.EndSummaryLabel, Does.Contain("Master Sniffers"));
         }
 
         [UnityTest]
-        public IEnumerator WeenieRoundup_Drop_ReturnsWeenieToTheYard()
+        public IEnumerator ScentSearch_FailPath_TooManyColdDigsEndMission()
         {
             yield return LoadArena();
             var game = _game;
 
-            game.StartMission(GameManager.MissionVariant.WeenieRoundup);
+            game.StartMission(GameManager.MissionVariant.ScentSearch);
             yield return null;
 
-            int looseAtStart = game.WeenieRoundupState.Loose;
-            game.ForceWeeniePickup(DogId.Cheddar);
-            yield return null;
-            Assert.AreEqual(looseAtStart - 1, game.WeenieRoundupState.Loose);
+            for (int i = 0; i < 4; i++)
+            {
+                game.ForceScentDigWrong(DogId.Cheddar);
+                yield return null;
+            }
 
-            game.ForceWeenieDrop(DogId.Cheddar);
-            yield return null;
-            Assert.AreEqual(looseAtStart, game.WeenieRoundupState.Loose, "A fumbled weenie returns to the yard.");
-            Assert.AreEqual(1, game.WeenieRoundupState.Drops);
+            Assert.AreEqual(4, game.ScentSearchState.WastedDigs);
+            Assert.AreEqual(GameManager.MissionOutcome.Failed, game.Outcome);
+            Assert.AreEqual(GameManager.State.GameOver, game.Phase);
+            Assert.IsTrue(game.RuntimeSnapshot.IsFailed);
+            Assert.That(game.EndSummaryLabel, Does.Contain("Dug Up The Whole Yard"));
         }
 
         [UnityTest]
-        public IEnumerator WeenieRoundup_Replay_ResetsCarryRuntimeState()
+        public IEnumerator ScentSearch_Replay_ResetsScentRuntimeState()
         {
             yield return LoadArena();
             var game = _game;
 
-            game.StartMission(GameManager.MissionVariant.WeenieRoundup);
+            game.StartMission(GameManager.MissionVariant.ScentSearch);
             yield return null;
-            game.ForceWeeniePickup(DogId.Cheddar);
-            game.ForceWeenieDeliver(DogId.Cheddar);
+            game.ForceScentSniff(DogId.Cheddar);
+            game.ForceScentDigCorrect(DogId.Cheddar);
             yield return null;
 
-            Assert.AreEqual(1, game.WeenieRoundupState.Delivered);
+            Assert.AreEqual(1, game.ScentSearchState.Found);
 
             game.Restart();
             yield return null;
 
-            Assert.AreEqual(GameManager.MissionVariant.WeenieRoundup, game.ActiveMissionVariant);
+            Assert.AreEqual(GameManager.MissionVariant.ScentSearch, game.ActiveMissionVariant);
             Assert.AreEqual(GameManager.MissionOutcome.InProgress, game.Outcome);
             Assert.AreEqual(0, game.Score);
-            Assert.AreEqual(0, game.WeenieRoundupState.Delivered);
-            Assert.AreEqual(0, game.WeenieRoundupState.Drops);
-            Assert.Greater(game.WeenieRoundupState.Loose, 0);
+            Assert.AreEqual(0, game.ScentSearchState.Found);
+            Assert.AreEqual(0, game.ScentSearchState.WastedDigs);
+            Assert.AreEqual(0, game.ScentSearchState.Sniffs);
             Assert.AreEqual(1, game.MissionReplayCount);
         }
 

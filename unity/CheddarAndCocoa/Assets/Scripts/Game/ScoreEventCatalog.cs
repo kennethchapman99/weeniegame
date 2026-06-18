@@ -18,6 +18,11 @@ namespace CheddarAndCocoa.Game
         public static readonly ProductionScoreEvent WeenieDropped = new("FUMBLED WEENIE", -50);
         public static readonly ProductionScoreEvent RoundupComplete = new("ROUNDUP COMPLETE", 500, true);
 
+        public static readonly ProductionScoreEvent ScentSniff = new("HOT SNIFF", 20);
+        public static readonly ProductionScoreEvent BoneFound = new("BONE DUG UP", 175, true);
+        public static readonly ProductionScoreEvent ColdDig = new("COLD DIG", -40);
+        public static readonly ProductionScoreEvent ScentSearchComplete = new("SEARCH COMPLETE", 500, true);
+
         public static readonly ProductionScoreEvent FenceHeld = new("FENCE HELD", 100, true);
         public static readonly ProductionScoreEvent DirtFilled = new("DIRT FILLED", 125);
         public static readonly ProductionScoreEvent YardDefended = new("YARD DEFENDED", 500, true);

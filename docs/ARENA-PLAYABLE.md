@@ -1,6 +1,6 @@
 # Arena Playable — Mission Variety Spike
 
-`unity/CheddarAndCocoa/Assets/Scenes/ArenaScene.unity` is now a small co-op vertical slice instead of a flat treat loop. The scene still builds itself from `ArenaBootstrap`, but the arena can run multiple small mission variants through one lightweight mission definition path. A cold start now opens a generated in-scene mission select so a new player can choose Backyard Rescue, Snack Heist, Sock Panic, Squirrel Conspiracy, Eagle Shadow Panic, Coyotes at the Fence, or Weenie Roundup without a developer explaining debug keys.
+`unity/CheddarAndCocoa/Assets/Scenes/ArenaScene.unity` is now a small co-op vertical slice instead of a flat treat loop. The scene still builds itself from `ArenaBootstrap`, but the arena can run multiple small mission variants through one lightweight mission definition path. A cold start now opens a generated in-scene mission select so a new player can choose Backyard Rescue, Snack Heist, Sock Panic, Squirrel Conspiracy, Eagle Shadow Panic, Coyotes at the Fence, Weenie Roundup, or Scent Search without a developer explaining debug keys.
 
 For current global character art direction, read `docs/ART-DIRECTION.md`. Backyard Mission is the
 playable proof of that direction, not the only place the direction applies. For future external
@@ -54,7 +54,7 @@ Final polish still needed:
 ## Cold-start flow
 
 1. Open `unity/CheddarAndCocoa` in Unity 6 LTS, open `Assets/Scenes/ArenaScene.unity`, and press Play. `ArenaScene` is also the scripted local build entry point.
-2. The mission picker appears immediately. Use **Up/Down** or gamepad **D-pad** to highlight a mission, then press **Enter**, **Space**, gamepad **Start**, or gamepad **South** to start. Keyboard **1 / 2 / 3 / 4 / 5 / 6 / 7** also starts Backyard Rescue, Snack Heist, Sock Panic, Squirrel Conspiracy, Eagle Shadow Panic, Coyotes at the Fence, or Weenie Roundup directly.
+2. The mission picker appears immediately. Use **Up/Down** or gamepad **D-pad** to highlight a mission, then press **Enter**, **Space**, gamepad **Start**, or gamepad **South** to start. Keyboard **1 / 2 / 3 / 4 / 5 / 6 / 7 / 8** also starts Backyard Rescue, Snack Heist, Sock Panic, Squirrel Conspiracy, Eagle Shadow Panic, Coyotes at the Fence, Weenie Roundup, or Scent Search directly.
 3. Read the one-line mission briefing at the start of the round. The HUD keeps the current mission name, objective, score, timer, controls, modifier, and latest score event visible during play.
 4. When a mission ends, choose **Replay**, **Next Mission**, or **Mission Select** with the on-screen buttons, keyboard, or gamepad:
    - **R / Enter / Start / South** replays the current mission.
@@ -173,6 +173,22 @@ The deterministic test/pacing hooks are `ForceWeeniePickup(dog)`, `ForceWeenieDe
 
 Manual check: press **7**, walk a dog onto a weenie to grab it, carry it to the bowl, and repeat (split the dogs up) until the bowl shows 5/5. Confirm the end summary says **Weenie Wranglers**.
 
+### Scent Search
+
+Scent Search is a **sniff + dig** mission using `ScentSearchMissionState` — the info-gathering verbs the other levels don't use. Six **DIG?** mounds are scattered across the yard; one hides a bone. **Bark to sniff**: the closer the sniffing dog is to the buried bone, the hotter the readout (`RED HOT` / `WARM` / `COLD`). **Interact to dig** the mound you think is hot; the right one yields a bone and re-buries the next one elsewhere, a cold one wastes a dig. Find three bones before four cold digs (or the timer) end the run.
+
+Readable differences:
+
+- No squirrel/predator/tug; the loop is sniff-for-heat → dig-the-hot-spot.
+- Bark is repurposed as the sniff/scent read; interact is the dig.
+- Objective text tracks bones found and cold digs.
+- Unique scoring/events include **HOT SNIFF**, **BONE DUG UP**, **COLD DIG** (penalty), and **SEARCH COMPLETE**.
+- Clear banner: **BONES UNEARTHED!**; end summary reads **Master Sniffers** on a clean clear, **Dug Up The Whole Yard** when there were wasted digs.
+
+The deterministic test/pacing hooks are `ForceScentSniff(dog)`, `ForceScentDigCorrect(dog)`, and `ForceScentDigWrong(dog)` (`DigSpots` exposes the mound positions); in normal play sniff/dig are driven by barking and interacting near the mounds.
+
+Manual check: press **8**, bark near a mound to read the heat, move toward hotter readings, and interact to dig. Confirm digging the hot mound says **BONE DUG UP** and three finds clear with **Master Sniffers**.
+
 ## Level scale and camera
 
 The arena is built at **48 x 28 world units** — a real backyard the dogs have to cover, not a single-screen demo box. The squirrel conspiracy route now sweeps the full yard (corners near `±15, ±9`) and the dogs spawn farther apart (`±9, 0`).
@@ -196,8 +212,8 @@ The end loop is intentionally simple: players see current score, the latest scor
 
 Mission flow controls:
 
-- Mission select: **Up/Down** or gamepad **D-pad** changes mission; **Enter**, **Space**, gamepad **Start**, or gamepad **South** starts; **1 / 2 / 3 / 4 / 5 / 6 / 7** starts a mission directly.
-- During a run: keyboard **1 / 2 / 3 / 4 / 5 / 6 / 7** still restarts the arena into Backyard Rescue, Snack Heist, Sock Panic, Squirrel Conspiracy, Eagle Shadow Panic, Coyotes at the Fence, or Weenie Roundup for quick manual comparison.
+- Mission select: **Up/Down** or gamepad **D-pad** changes mission; **Enter**, **Space**, gamepad **Start**, or gamepad **South** starts; **1 / 2 / 3 / 4 / 5 / 6 / 7 / 8** starts a mission directly.
+- During a run: keyboard **1 / 2 / 3 / 4 / 5 / 6 / 7 / 8** still restarts the arena into Backyard Rescue, Snack Heist, Sock Panic, Squirrel Conspiracy, Eagle Shadow Panic, Coyotes at the Fence, Weenie Roundup, or Scent Search for quick manual comparison.
 - End screen: **R / Enter / Start / South** replays; **N / Right Arrow / Right Shoulder / D-pad Right** advances; **M / Escape / East / D-pad Left** returns to mission select.
 - Session Summary: **Enter**, **Space**, **Start**, **South**, **M**, or **Escape** returns to mission select.
 - Playtest Mode: click the bottom-left **Playtest Mode: On/Off** button or press **F1** / **`**. It toggles a compact top-right diagnostics overlay and does not pause or block normal play.

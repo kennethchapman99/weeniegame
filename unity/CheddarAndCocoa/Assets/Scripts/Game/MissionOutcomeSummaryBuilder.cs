@@ -35,6 +35,17 @@ namespace CheddarAndCocoa.Game
             return "Still Rounding Up";
         }
 
+        public static string BuildScentSummary(ScentSearchMissionState state, int required)
+        {
+            if (state.ReadyToClear(required))
+                return "Master Sniffers";
+
+            if (state.WastedDigs > 0)
+                return "Dug Up The Whole Yard";
+
+            return "Still Sniffing";
+        }
+
         public static string BuildPatrolSummary(PatrolDefenseMissionState state)
         {
             if (state.FinalPressureComplete)

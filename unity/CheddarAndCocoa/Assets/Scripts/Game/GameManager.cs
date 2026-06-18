@@ -17,7 +17,7 @@ namespace CheddarAndCocoa.Game
         public enum FlowState { MissionSelect, Playing, EndScreen, SessionSummary }
         public enum RoundModifier { SquirrelTrouble, ZoomiesSurge, PancakePanic }
         public enum MissionOutcome { InProgress, Clear, Failed }
-        public enum MissionVariant { BackyardRescue, SnackHeist, SockPanic, SquirrelConspiracy, EagleShadowPanic, CoyotesFence, WeenieRoundup }
+        public enum MissionVariant { BackyardRescue, SnackHeist, SockPanic, SquirrelConspiracy, EagleShadowPanic, CoyotesFence, WeenieRoundup, ScentSearch }
         public enum FeedbackKind
         {
             Intro,
@@ -110,7 +110,8 @@ namespace CheddarAndCocoa.Game
             MissionVariant.SquirrelConspiracy,
             MissionVariant.EagleShadowPanic,
             MissionVariant.CoyotesFence,
-            MissionVariant.WeenieRoundup
+            MissionVariant.WeenieRoundup,
+            MissionVariant.ScentSearch
         };
 
         [Header("Mission selection")]
@@ -139,6 +140,8 @@ namespace CheddarAndCocoa.Game
         public Vector2[] FenceGaps => (Vector2[])_fenceGaps.Clone();
         public CarryRoundupMissionState WeenieRoundupState => _carryState;
         public Vector2 BowlPosition => _bowlPosition;
+        public ScentSearchMissionState ScentSearchState => _scentState;
+        public Vector2[] DigSpots => (Vector2[])_digSpots.Clone();
         public MissionRuntimeSnapshot RuntimeSnapshot => BuildRuntimeSnapshot();
         public int SelectedMissionIndex => _selectedMissionIndex;
         public MissionVariant SelectedMissionVariant => MissionOrder[Mathf.Clamp(_selectedMissionIndex, 0, MissionOrder.Length - 1)];
@@ -273,6 +276,13 @@ namespace CheddarAndCocoa.Game
         private const int WeenieRequiredDeliveries = 5;
         private const float WeeniePickupRange = 1.6f;
         private const float BowlDeliverRange = 2.2f;
+        private readonly ScentSearchMissionState _scentState = new ScentSearchMissionState();
+        private readonly Vector2[] _digSpots = { new(-19f, 9f), new(17f, 10f), new(-18f, -9f), new(8f, -10f), new(20f, 1f), new(-3f, 6f) };
+        private GameObject[] _digMarkers;
+        private int _buriedSpot = -1;
+        private const int ScentRequiredFinds = 3;
+        private const int ScentMaxWastedDigs = 4;
+        private const float DigRange = 2f;
 
         private readonly List<Treat> _treats = new();
         private readonly List<string> _sessionRanks = new();
@@ -734,6 +744,18 @@ namespace CheddarAndCocoa.Game
             else
             {
                 SetWeenieRoundupActive(false);
+            }
+            if (_mission.Variant == MissionVariant.ScentSearch)
+            {
+                _scentState.Reset();
+                if (_digMarkers != null)
+                    for (int i = 0; i < _digMarkers.Length; i++)
+                        if (_digMarkers[i] != null) { _digMarkers[i].transform.position = _digSpots[i]; _digMarkers[i].SetActive(true); }
+                ChooseBuriedSpot();
+            }
+            else
+            {
+                SetScentSearchActive(false);
             }
             _lastLoggedObjective = string.Empty;
             LogPlaytestEvent("MissionStarted", $"{_mission.Name} / {ActiveModifierLabel} / {roundDuration:0}s");
@@ -1235,6 +1257,143 @@ namespace CheddarAndCocoa.Game
                 DropWeenie(IndexOfDog(dogId));
         }
 
+        // --- Scent Search (sniff + dig) ---
+
+        private void BuildScentSearchMarkers()
+        {
+            _digMarkers = new GameObject[_digSpots.Length];
+            for (int i = 0; i < _digSpots.Length; i++)
+            {
+                var go = new GameObject($"DigSpot_{i}");
+                go.transform.position = _digSpots[i];
+                go.transform.localScale = new Vector3(1.6f, 1.0f, 1f);
+                var sr = go.AddComponent<SpriteRenderer>();
+                sr.sprite = _sprite;
+                sr.color = new Color(0.42f, 0.3f, 0.16f);
+                sr.sortingOrder = 3;
+                AddWorldLabel(go, "DIG?", Vector3.up * 1.1f, 13, Color.white);
+                go.SetActive(false);
+                _digMarkers[i] = go;
+            }
+        }
+
+        private void SetScentSearchActive(bool active)
+        {
+            if (_digMarkers == null) return;
+            foreach (var marker in _digMarkers)
+                if (marker != null) marker.SetActive(active);
+        }
+
+        private void ChooseBuriedSpot()
+        {
+            // Pick a random still-active dig spot to bury the next bone under.
+            var active = new System.Collections.Generic.List<int>();
+            for (int i = 0; i < _digMarkers.Length; i++)
+                if (_digMarkers[i] != null && _digMarkers[i].activeSelf) active.Add(i);
+            _buriedSpot = active.Count == 0 ? -1 : active[_rng.Next(active.Count)];
+        }
+
+        private int NearestActiveDigSpot(Vector2 position)
+        {
+            int best = -1;
+            float bestDist = float.PositiveInfinity;
+            for (int i = 0; i < _digMarkers.Length; i++)
+            {
+                if (_digMarkers[i] == null || !_digMarkers[i].activeSelf) continue;
+                float d = Vector2.Distance(position, _digMarkers[i].transform.position);
+                if (d < bestDist) { bestDist = d; best = i; }
+            }
+            return best;
+        }
+
+        private void DoScentSniff(int dogIndex)
+        {
+            if (dogIndex < 0 || dogIndex >= _dogs.Length || _buriedSpot < 0) return;
+
+            _scentState.AddSniff();
+            float dist = Vector2.Distance(_dogs[dogIndex].transform.position, _digSpots[_buriedSpot]);
+            string heat = dist < 5f ? "RED HOT" : dist < 11f ? "WARM" : "COLD";
+            if (dist < 5f) AddScore(ScoreEventCatalog.ScentSniff.Points, ScoreEventCatalog.ScentSniff.Label);
+            LastFeedback = FeedbackKind.SquirrelScared;
+            LastCue = $"{DogName(_dogs[dogIndex])} sniffs... the bone scent is {heat}!";
+            SetJuice(dist < 5f ? JuiceFeedbackKind.SuccessPop : JuiceFeedbackKind.BarkBurst, $"SCENT: {heat}");
+            SpawnWorldPop(_dogs[dogIndex].transform.position + Vector3.up, heat, dist < 5f ? new Color(1f, 0.45f, 0.2f) : new Color(0.6f, 0.75f, 1f));
+            RequestAudioCue(ArenaFeedbackCatalog.Bark);
+            LogPlaytestEvent("ScentSniff", heat);
+            LogObjectiveIfChanged();
+        }
+
+        private void DigAtSpot(int dogIndex, int spotIndex, bool force)
+        {
+            if (dogIndex < 0 || dogIndex >= _dogs.Length) return;
+            if (spotIndex < 0 || spotIndex >= _digMarkers.Length || !_digMarkers[spotIndex].activeSelf)
+            {
+                MarkFailedInteraction(_dogs[dogIndex].GetComponent<DogIdentity>().Id, "nothing to dig here");
+                return;
+            }
+            if (!force && Vector2.Distance(_dogs[dogIndex].transform.position, _digSpots[spotIndex]) > DigRange)
+            {
+                MarkFailedInteraction(_dogs[dogIndex].GetComponent<DogIdentity>().Id, "too far from the dig spot");
+                return;
+            }
+
+            if (spotIndex == _buriedSpot)
+            {
+                _scentState.AddFind();
+                _digMarkers[spotIndex].SetActive(false);
+                AddScore(ScoreEventCatalog.BoneFound.Points, ScoreEventCatalog.BoneFound.Label);
+                LastFeedback = FeedbackKind.PartnerRescue;
+                LastCue = $"{DogName(_dogs[dogIndex])} dug up a buried bone! ({_scentState.Found}/{ScentRequiredFinds})";
+                SetJuice(JuiceFeedbackKind.SuccessPop, ScoreEventCatalog.BoneFound.Label);
+                SpawnWorldPop(_digSpots[spotIndex], "BONE!", new Color(0.95f, 0.9f, 0.7f));
+                RequestAudioCue(ArenaFeedbackCatalog.TugRescueSuccess);
+                RequestRumble("bone_found", 0.26f, 0.5f, 0.16f);
+                LogPlaytestEvent("BoneFound", $"{_scentState.Found}/{ScentRequiredFinds}");
+                if (_scentState.ReadyToClear(ScentRequiredFinds))
+                {
+                    AddScore(ScoreEventCatalog.ScentSearchComplete.Points, ScoreEventCatalog.ScentSearchComplete.Label);
+                    CheckClear();
+                    return;
+                }
+                ChooseBuriedSpot();
+            }
+            else
+            {
+                _scentState.AddWastedDig();
+                AddScore(ScoreEventCatalog.ColdDig.Points, ScoreEventCatalog.ColdDig.Label);
+                LastFeedback = FeedbackKind.SquirrelStoleFood;
+                LastCue = $"{DogName(_dogs[dogIndex])} dug a cold hole - nothing here ({_scentState.WastedDigs}/{ScentMaxWastedDigs}).";
+                SetJuice(JuiceFeedbackKind.WarningMiss, ScoreEventCatalog.ColdDig.Label);
+                SpawnWorldPop(_digSpots[spotIndex], "COLD!", new Color(0.6f, 0.75f, 1f));
+                LogPlaytestEvent("ColdDig", $"{_scentState.WastedDigs}/{ScentMaxWastedDigs}");
+                if (_scentState.TooManyWastedDigs(ScentMaxWastedDigs)) { EndRound(false); return; }
+            }
+            LogObjectiveIfChanged();
+        }
+
+        public void ForceScentSniff(DogId dogId = DogId.Cheddar)
+        {
+            if (MissionActive() && _mission != null && _mission.Variant == MissionVariant.ScentSearch)
+                DoScentSniff(IndexOfDog(dogId));
+        }
+
+        public void ForceScentDigCorrect(DogId dogId = DogId.Cheddar)
+        {
+            if (MissionActive() && _mission != null && _mission.Variant == MissionVariant.ScentSearch)
+                DigAtSpot(IndexOfDog(dogId), _buriedSpot, true);
+        }
+
+        public void ForceScentDigWrong(DogId dogId = DogId.Cheddar)
+        {
+            if (!MissionActive() || _mission == null || _mission.Variant != MissionVariant.ScentSearch) return;
+            for (int i = 0; i < _digMarkers.Length; i++)
+                if (_digMarkers[i] != null && _digMarkers[i].activeSelf && i != _buriedSpot)
+                {
+                    DigAtSpot(IndexOfDog(dogId), i, true);
+                    return;
+                }
+        }
+
         private float NearestEagleCoverDistance(Vector2 position)
         {
             float best = float.PositiveInfinity;
@@ -1533,6 +1692,13 @@ namespace CheddarAndCocoa.Game
                 goal = WeenieRequiredDeliveries;
                 mistakes = _carryState.Drops;
             }
+            else if (_mission != null && _mission.Variant == MissionVariant.ScentSearch)
+            {
+                missionId = "scent_search";
+                progress = _scentState.Found;
+                goal = ScentRequiredFinds;
+                mistakes = _scentState.WastedDigs;
+            }
             else
             {
                 missionId = ActiveMissionVariant.ToString();
@@ -1663,6 +1829,13 @@ namespace CheddarAndCocoa.Game
                 return;
             }
 
+            if (_mission != null && _mission.Variant == MissionVariant.ScentSearch)
+            {
+                int dig = IndexOfDog(dogId);
+                if (dig >= 0) DigAtSpot(dig, NearestActiveDigSpot(_dogs[dig].transform.position), false);
+                return;
+            }
+
             if (_mission == null || !_mission.RequiresTug)
             {
                 MarkFailedInteraction(dogId, "no interact target in this mission");
@@ -1731,6 +1904,11 @@ namespace CheddarAndCocoa.Game
             else if (_mission.Variant == MissionVariant.CoyotesFence)
             {
                 RegisterCoyoteBarkPressure(dogIndex);
+                barkDidSomething = true;
+            }
+            else if (_mission.Variant == MissionVariant.ScentSearch)
+            {
+                DoScentSniff(dogIndex);
                 barkDidSomething = true;
             }
             else if (_mission.UsesSquirrel && Vector2.Distance(dog.transform.position, SquirrelObject.transform.position) < _tuning.SingleBarkSquirrelRange)
@@ -1836,6 +2014,11 @@ namespace CheddarAndCocoa.Game
                 if (_carryState.ReadyToClear(WeenieRequiredDeliveries)) EndRound(true);
                 return;
             }
+            if (_mission.Variant == MissionVariant.ScentSearch)
+            {
+                if (_scentState.ReadyToClear(ScentRequiredFinds)) EndRound(true);
+                return;
+            }
 
             bool hasItems = BreakfastRecovered >= _mission.ItemGoal;
             bool hasPredator = !_mission.RequiresPredator || PredatorResolved;
@@ -1914,6 +2097,8 @@ namespace CheddarAndCocoa.Game
                 funny = MissionOutcomeSummaryBuilder.BuildPatrolSummary(_patrolState);
             else if (_mission != null && _mission.Variant == MissionVariant.WeenieRoundup)
                 funny = MissionOutcomeSummaryBuilder.BuildCarrySummary(_carryState, WeenieRequiredDeliveries);
+            else if (_mission != null && _mission.Variant == MissionVariant.ScentSearch)
+                funny = MissionOutcomeSummaryBuilder.BuildScentSummary(_scentState, ScentRequiredFinds);
             else
                 funny = Outcome.ToString();
             return $"{funny}: {Score} - {EndRank}";
@@ -1970,6 +2155,10 @@ namespace CheddarAndCocoa.Game
                 if (anyCarrying) return $"Carry the weenie to the HOME BOWL ({_carryState.Delivered}/{WeenieRequiredDeliveries} delivered)";
                 return $"Round up the scattered weenies: {_carryState.Delivered}/{WeenieRequiredDeliveries} delivered, {_carryState.Loose} loose";
             }
+            if (_mission.Variant == MissionVariant.ScentSearch)
+            {
+                return $"Sniff (bark) for HOT/COLD, then dig (interact): bones {_scentState.Found}/{ScentRequiredFinds}, cold digs {_scentState.WastedDigs}/{ScentMaxWastedDigs}";
+            }
             if (_squirrelTarget != null)
                 return _mission.SquirrelObjectiveText;
             if (_mission.RequiresTug && !TugComplete && BreakfastRecovered >= Mathf.Max(2, recoveryGoal / 2))
@@ -1996,6 +2185,7 @@ namespace CheddarAndCocoa.Game
             if (_mission.Variant == MissionVariant.SquirrelConspiracy && _herdingState.TooManyTaunts(3)) return "The squirrel taunted the dogs into a full backyard misinformation spiral.";
             if (_mission.Variant == MissionVariant.EagleShadowPanic && _threatSweepState.TooManyExposures(EagleMaxExposures)) return "The eagle shadow caught the dogs in the open one too many times.";
             if (_mission.Variant == MissionVariant.CoyotesFence && _patrolState.TooManyBreaches(CoyoteMaxBreaches)) return "The coyote breached the fence one too many times while the dogs got separated.";
+            if (_mission.Variant == MissionVariant.ScentSearch && _scentState.TooManyWastedDigs(ScentMaxWastedDigs)) return "The dogs dug up half the yard chasing cold scents and ran out of patience.";
             if (_mission.UsesSquirrel && StolenFood >= maxStolenFood) return _mission.StolenFailReason;
             if (TimeRemaining <= 0f) return _mission.TimeFailReason;
             if (_mission.RequiresPredator && PredatorFailed) return _mission.PredatorFailReason;
@@ -2067,6 +2257,7 @@ namespace CheddarAndCocoa.Game
                     if (kb.digit5Key.wasPressedThisFrame) { StartMission(MissionVariant.EagleShadowPanic); return; }
                     if (kb.digit6Key.wasPressedThisFrame) { StartMission(MissionVariant.CoyotesFence); return; }
                     if (kb.digit7Key.wasPressedThisFrame) { StartMission(MissionVariant.WeenieRoundup); return; }
+                    if (kb.digit8Key.wasPressedThisFrame) { StartMission(MissionVariant.ScentSearch); return; }
                     previous |= kb.upArrowKey.wasPressedThisFrame || kb.leftArrowKey.wasPressedThisFrame;
                     next |= kb.downArrowKey.wasPressedThisFrame || kb.rightArrowKey.wasPressedThisFrame || kb.tabKey.wasPressedThisFrame;
                     start |= kb.enterKey.wasPressedThisFrame || kb.spaceKey.wasPressedThisFrame;
@@ -2128,6 +2319,7 @@ namespace CheddarAndCocoa.Game
             else if (kb.digit5Key.wasPressedThisFrame) StartMission(MissionVariant.EagleShadowPanic);
             else if (kb.digit6Key.wasPressedThisFrame) StartMission(MissionVariant.CoyotesFence);
             else if (kb.digit7Key.wasPressedThisFrame) StartMission(MissionVariant.WeenieRoundup);
+            else if (kb.digit8Key.wasPressedThisFrame) StartMission(MissionVariant.ScentSearch);
         }
 
         private void ShowMissionSelect()
@@ -2286,6 +2478,7 @@ namespace CheddarAndCocoa.Game
             if (!active || _mission == null || _mission.Variant != MissionVariant.EagleShadowPanic) SetEagleCoverMarkersActive(false);
             if (!active || _mission == null || _mission.Variant != MissionVariant.CoyotesFence) SetCoyoteGapMarkersActive(false);
             if (!active || _mission == null || _mission.Variant != MissionVariant.WeenieRoundup) SetWeenieRoundupActive(false);
+            if (!active || _mission == null || _mission.Variant != MissionVariant.ScentSearch) SetScentSearchActive(false);
         }
 
         public static MissionDefinition BuildMissionDefinition(MissionVariant variant) =>
@@ -2580,6 +2773,63 @@ namespace CheddarAndCocoa.Game
                         ItemAccentColor = new Color(0.95f, 0.6f, 0.4f),
                         ItemSecondaryColor = new Color(0.3f, 0.12f, 0.08f),
                         ItemPopColor = new Color(1f, 0.6f, 0.4f)
+                    };
+                case MissionVariant.ScentSearch:
+                    return new MissionDefinition
+                    {
+                        Variant = MissionVariant.ScentSearch,
+                        Name = "Scent Search",
+                        IntroPrompt = "Cheddar + Cocoa must sniff out the buried bones (bark to sniff HOT/COLD) and dig them up (interact) before the yard is a mess.",
+                        ReadyScoreLabel = "READY TO SNIFF",
+                        ItemRootName = "Dig Spots",
+                        ItemObjectName = "Dig Spot",
+                        ItemWorldLabel = "Dig?",
+                        ItemArrowLabel = "DIG",
+                        ItemCollectCueNoun = "a buried bone",
+                        CollectObjectiveFormat = "Dig up bones {0}/{1}",
+                        CollectedScoreLabel = "BONE DUG UP",
+                        ItemScore = balance.ItemScore,
+                        SpawnedItemCount = balance.SpawnedItemCount,
+                        ItemGoal = balance.ItemGoal,
+                        RoundSeconds = balance.RoundSeconds,
+                        PawfectScore = balance.PawfectScore,
+                        HeroScore = balance.HeroScore,
+                        SurvivorScore = balance.SurvivorScore,
+                        UsesSquirrel = false,
+                        RequiresPredator = false,
+                        RequiresTug = false,
+                        MaxStolenFood = balance.MaxStolenFood,
+                        SquirrelPenalty = balance.SquirrelPenalty,
+                        SquirrelScareScore = balance.SquirrelScareScore,
+                        SquirrelObjectiveText = "Sniff out the buried bones",
+                        SquirrelStealingCue = "No squirrel here - follow the bone scent.",
+                        SquirrelStoleCue = "No squirrel here - keep sniffing.",
+                        SquirrelStealScoreLabel = "COLD DIG",
+                        SquirrelScareScoreLabel = "HOT SNIFF",
+                        SquirrelStealingActorLabel = "SCENT TRAIL",
+                        SquirrelDroppedActorLabel = "BONE DUG UP",
+                        SquirrelStoleActorLabel = "COLD HOLE",
+                        SquirrelMissPopLabel = "COLD!",
+                        SquirrelStealJuiceLabel = "COLD DIG!",
+                        SquirrelScareJuiceLabel = "HOT SNIFF!",
+                        TugObjectiveText = "Dig up the bones",
+                        WaitingObjectiveText = "Sniff out the last bone together",
+                        ClearObjectiveText = "All bones found - replay Scent Search",
+                        ClearBannerPrefix = "BONES UNEARTHED!",
+                        ClearScoreLabel = "SEARCH COMPLETE",
+                        ReplayPrompt = "Press R / Enter / Start to replay Scent Search",
+                        FailObjectiveText = "Mission failed - replay Scent Search",
+                        GenericFailReason = "Needs sharper sniffing before digging next time.",
+                        TimeFailReason = "The bones stayed buried until the clock ran out.",
+                        StolenFailReason = "The dogs dug too many cold holes chasing bad scents.",
+                        PredatorFailReason = "No predator here, just a lot of dirt.",
+                        PawfectClearReason = "Tiny truffle-hounds nosed out every bone with barely a wasted dig.",
+                        HeroClearReason = "Every bone got unearthed with respectable sniffing discipline.",
+                        BasicClearReason = "The bones came up, even if the lawn will need reseeding.",
+                        ItemColor = new Color(0.42f, 0.3f, 0.16f),
+                        ItemAccentColor = new Color(0.7f, 0.55f, 0.3f),
+                        ItemSecondaryColor = new Color(0.2f, 0.14f, 0.07f),
+                        ItemPopColor = new Color(0.95f, 0.9f, 0.7f)
                     };
                 case MissionVariant.SockPanic:
                     return new MissionDefinition
@@ -2929,6 +3179,7 @@ namespace CheddarAndCocoa.Game
             BuildEagleCoverMarkers();
             BuildCoyoteGapMarkers();
             BuildWeenieRoundupObjects();
+            BuildScentSearchMarkers();
             if (InteractionRangeIndicators != null)
             {
                 int offset = _dogs != null ? _dogs.Length : 0;
