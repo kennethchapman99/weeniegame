@@ -41,13 +41,13 @@ Acceptance:
 - It can clear and fail.
 - Replay resets all new state.
 
-## Queue 3: Eagle Shadow Panic
+## Queue 3: Eagle Shadow Panic — DONE
 
-Only start after Queue 2 is green.
+Implemented as a selectable `EagleShadowPanic` mission variant wired into `GameManager` on top of `ThreatSweepMissionState`: shadow-sweep hide phase (`SAFE HIDE` / `EAGLE SPOOK` exposure), a split-role toy rescue (`SHADOW DISTRACTED` / `TOY RESCUED`), and a final united-front bark circle (`UNITED FRONT` / `SHADOW PANIC CLEAR`). Three exposures fail the run. Covered by `EagleShadowPanicPlayModeTests` (select rotation, clear path, exposure fail, replay reset); full PlayMode suite green at 39/39.
 
-## Queue 4: Coyotes at the Fence
+## Queue 4: Coyotes at the Fence — DONE
 
-Only start after Queue 3 is green.
+Implemented as a selectable `CoyotesFence` mission variant wired into `GameManager` on top of `PatrolDefenseMissionState`: a coyote tests fence gaps, one dog bark-pins it (`FENCE HELD`) while the partner fills the weak spot (`DIRT FILLED`) — repairs only progress while bark pressure is held. A late fake-snack lure (`FAKE SNACK BAIT`, Cheddar-specific gag) can be resolved by barking instead of taking the bait. After enough repairs the final push is blocked with a united bark (`YARD DEFENDED`). Three breaches fail the run. Covered by `CoyotesFencePlayModeTests` (select rotation, bark-gated repair + clear, fake-snack lure, breach fail, replay reset); full PlayMode suite green.
 
 ## Queue 5: Launch Demo Hardening
 

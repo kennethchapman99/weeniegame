@@ -1,6 +1,6 @@
 # Arena Playable — Mission Variety Spike
 
-`unity/CheddarAndCocoa/Assets/Scenes/ArenaScene.unity` is now a small co-op vertical slice instead of a flat treat loop. The scene still builds itself from `ArenaBootstrap`, but the arena can run multiple small mission variants through one lightweight mission definition path. A cold start now opens a generated in-scene mission select so a new player can choose Backyard Rescue, Snack Heist, Sock Panic, or Squirrel Conspiracy without a developer explaining debug keys.
+`unity/CheddarAndCocoa/Assets/Scenes/ArenaScene.unity` is now a small co-op vertical slice instead of a flat treat loop. The scene still builds itself from `ArenaBootstrap`, but the arena can run multiple small mission variants through one lightweight mission definition path. A cold start now opens a generated in-scene mission select so a new player can choose Backyard Rescue, Snack Heist, Sock Panic, Squirrel Conspiracy, Eagle Shadow Panic, or Coyotes at the Fence without a developer explaining debug keys.
 
 For current global character art direction, read `docs/ART-DIRECTION.md`. Backyard Mission is the
 playable proof of that direction, not the only place the direction applies. For future external
@@ -54,7 +54,7 @@ Final polish still needed:
 ## Cold-start flow
 
 1. Open `unity/CheddarAndCocoa` in Unity 6 LTS, open `Assets/Scenes/ArenaScene.unity`, and press Play. `ArenaScene` is also the scripted local build entry point.
-2. The mission picker appears immediately. Use **Up/Down** or gamepad **D-pad** to highlight a mission, then press **Enter**, **Space**, gamepad **Start**, or gamepad **South** to start. Keyboard **1 / 2 / 3 / 4** also starts Backyard Rescue, Snack Heist, Sock Panic, or Squirrel Conspiracy directly.
+2. The mission picker appears immediately. Use **Up/Down** or gamepad **D-pad** to highlight a mission, then press **Enter**, **Space**, gamepad **Start**, or gamepad **South** to start. Keyboard **1 / 2 / 3 / 4 / 5 / 6** also starts Backyard Rescue, Snack Heist, Sock Panic, Squirrel Conspiracy, Eagle Shadow Panic, or Coyotes at the Fence directly.
 3. Read the one-line mission briefing at the start of the round. The HUD keeps the current mission name, objective, score, timer, controls, modifier, and latest score event visible during play.
 4. When a mission ends, choose **Replay**, **Next Mission**, or **Mission Select** with the on-screen buttons, keyboard, or gamepad:
    - **R / Enter / Start / South** replays the current mission.
@@ -120,6 +120,45 @@ Readable differences:
 
 Manual check: press **4**, bark near the squirrel from useful positions until controls reach `4/4`, then move to the revealed stash and interact. Confirm the end summary says **Conspiracy Cracked**. Let or force three taunts and confirm fail/replay reset the herding counters.
 
+### Eagle Shadow Panic
+
+Eagle Shadow Panic is the second production-mission slice using `ThreatSweepMissionState`. A sweeping eagle shadow threatens the yard; Cheddar and Cocoa must hide in cover during sweeps, then split roles so one dog distracts while the other rescues a stranded toy, then huddle for a united-front bark circle to drive the eagle off. Three exposures (caught in the open) ends the run.
+
+Readable differences:
+
+- The predator actor is repurposed as the **EAGLE SHADOW SWEEP** threat and the squirrel actor is repurposed as the stranded **TOY** to rescue (no spawned collectibles or squirrel-steal loop).
+- Objective text moves through three phases: hide (`safe hides x/2, exposures x/3`), distracted rescue (`rescue the toy in the open`), and the final `United-front bark circle`.
+- The rescue objective only opens after `2` safe hides; the toy rescue then unlocks the united-front phase.
+- Unique scoring/events include **SAFE HIDE**, **SHADOW DISTRACTED**, **EAGLE SPOOK** (exposure penalty), **TOY RESCUED**, **UNITED FRONT**, and **SHADOW PANIC CLEAR**.
+- Clear banner: **EAGLE DRIVEN OFF!**; end summary on a clear reads **Backyard Defenders**.
+- Fail reason calls out the eagle shadow catching dogs in the open too many times (**Shadow Trouble** summary).
+
+The deterministic test/pacing hooks are `ForceEagleShadowSafeHide()`, `ForceEagleShadowExposure()`, `ForceEagleShadowRescue(dog)`, and `ForceEagleShadowUnitedFront()`; in normal play the final united-front phase also resolves through the existing huddled united-bark path.
+
+Manual check: press **5**, hide twice to open the rescue objective, interact near the toy to rescue it, then bring both dogs together and bark to complete the united front. Confirm the end summary says **Backyard Defenders**. Force three exposures and confirm fail/replay reset the threat-sweep counters.
+
+### Coyotes at the Fence
+
+Coyotes at the Fence is the third production-mission slice using `PatrolDefenseMissionState`. A coyote tests weak spots along the yard fence; one dog must **bark-pin** the coyote while the partner **fills the weak spot** — fills only progress while bark pressure is held, forcing a role split. A late **fake snack lure** tempts whichever dog is closer (a Cheddar-specific gag) and is defused by barking instead of taking the bait. After enough weak spots are filled, both dogs bark down the final coyote push. Three breaches end the run.
+
+Readable differences:
+
+- The predator actor is repurposed as the **COYOTE AT THE FENCE** and the squirrel actor as the moving **WEAK SPOT / FILL DIRT** marker (no spawned collectibles or squirrel-steal loop).
+- Objective text moves through patrol (`fence gap n, repairs x/3, breaches x/3`), pinned (`partner fill the weak spot now`), lure (`ignore the fake snack lure`), and final-push (`both dogs bark together`) states.
+- A fill attempt with no partner bark pressure is rejected as a missed interaction, so the role split is mechanically enforced.
+- Unique scoring/events include **FENCE HELD**, **DIRT FILLED**, **COYOTE BLOCKED**, **FAKE SNACK BAIT**, **COYOTE BREACH** (penalty), and **YARD DEFENDED**.
+- Clear banner: **YARD DEFENDED!**; end summary on a clear reads **Fence Guardians**, on a breach fail reads **Needs More Patrols**.
+
+The deterministic test/pacing hooks are `ForceCoyoteBarkPressure(dog)`, `ForceCoyoteRepair(dog)`, `ForceCoyoteBreach()`, `ForceCoyoteFakeSnack()`, and `ForceCoyoteFinalBlock()`; in normal play barking pins the coyote and the final push also resolves through the existing huddled united-bark path.
+
+Manual check: press **6**, bark to pin the coyote, then interact at the weak spot to fill it; repeat three times, then bring both dogs together and bark to block the final push. Confirm the end summary says **Fence Guardians**. Force three breaches and confirm fail/replay reset the patrol counters.
+
+## Level scale and camera
+
+The arena is built at **48 x 28 world units** — a real backyard the dogs have to cover, not a single-screen demo box. The squirrel conspiracy route now sweeps the full yard (corners near `±15, ±9`) and the dogs spawn farther apart (`±9, 0`).
+
+Because this is one-screen couch co-op, the shared camera is a **dynamic clamped follow-cam**: it pulls in tight (down to `6.8` ortho) when the dogs regroup and zooms out (up to `13` ortho) as they split across the yard, always keeping both on screen, and clamps to the level walls so it never reveals the void outside the fence. This trades a little zoom-out readability when the dogs are at opposite ends for a yard that feels large and exploration-worthy, and it reinforces the co-op design pillar: spreading out is a real choice with a readability cost, so players communicate about when to regroup.
+
 ## Objective
 
 The round can end in **LevelClear** or **GameOver**, and either result can be restarted. Current pacing is hand-tuned for a first two-player playtest: `90 / 70 / 55` second mission timers, a 5-second mission intro banner, delayed first squirrel pressure, an ~25-second predator telegraph in Backyard Rescue, and a short but readable tug charge so both players have to stay committed for a moment.
@@ -137,8 +176,8 @@ The end loop is intentionally simple: players see current score, the latest scor
 
 Mission flow controls:
 
-- Mission select: **Up/Down** or gamepad **D-pad** changes mission; **Enter**, **Space**, gamepad **Start**, or gamepad **South** starts; **1 / 2 / 3** starts a mission directly.
-- During a run: keyboard **1 / 2 / 3 / 4** still restarts the arena into Backyard Rescue, Snack Heist, Sock Panic, or Squirrel Conspiracy for quick manual comparison.
+- Mission select: **Up/Down** or gamepad **D-pad** changes mission; **Enter**, **Space**, gamepad **Start**, or gamepad **South** starts; **1 / 2 / 3 / 4 / 5 / 6** starts a mission directly.
+- During a run: keyboard **1 / 2 / 3 / 4 / 5 / 6** still restarts the arena into Backyard Rescue, Snack Heist, Sock Panic, Squirrel Conspiracy, Eagle Shadow Panic, or Coyotes at the Fence for quick manual comparison.
 - End screen: **R / Enter / Start / South** replays; **N / Right Arrow / Right Shoulder / D-pad Right** advances; **M / Escape / East / D-pad Left** returns to mission select.
 - Session Summary: **Enter**, **Space**, **Start**, **South**, **M**, or **Escape** returns to mission select.
 - Playtest Mode: click the bottom-left **Playtest Mode: On/Off** button or press **F1** / **`**. It toggles a compact top-right diagnostics overlay and does not pause or block normal play.

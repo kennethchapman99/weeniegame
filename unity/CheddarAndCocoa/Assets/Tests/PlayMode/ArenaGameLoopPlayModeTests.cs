@@ -29,9 +29,9 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(100, tuning.UnitedBarkScore);
             Assert.AreEqual(500, tuning.ClearScore);
             Assert.AreEqual(6.8f, tuning.CameraMinOrthoSize);
-            Assert.AreEqual(8.4f, tuning.CameraMaxOrthoSize);
-            Assert.AreEqual(3.0f, tuning.CameraHorizontalMargin);
-            Assert.AreEqual(2.2f, tuning.CameraVerticalMargin);
+            Assert.AreEqual(13f, tuning.CameraMaxOrthoSize);
+            Assert.AreEqual(4.0f, tuning.CameraHorizontalMargin);
+            Assert.AreEqual(3.0f, tuning.CameraVerticalMargin);
             Assert.AreEqual(tuning.SingleBarkSquirrelRange, tuning.SquirrelRangeIndicatorRadius);
             Assert.AreEqual(tuning.RescueBarkRange, tuning.RescueRangeIndicatorRadius);
             Assert.AreEqual(tuning.TugTogetherDistance, tuning.TugRangeIndicatorRadius);
@@ -164,7 +164,7 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(game.Tuning.CameraMaxOrthoSize, cameraRig.MaxOrthoSize);
             Assert.AreEqual(game.Tuning.CameraHorizontalMargin, cameraRig.HorizontalMargin);
             Assert.AreEqual(game.Tuning.CameraVerticalMargin, cameraRig.VerticalMargin);
-            Assert.IsFalse(cameraRig.IsClampedToBounds);
+            Assert.IsTrue(cameraRig.IsClampedToBounds);
 
             foreach (var indicator in game.InteractionRangeIndicators)
             {
@@ -227,7 +227,7 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(game);
             Assert.IsTrue(game.MissionSelectVisible);
             Assert.AreEqual(GameManager.FlowState.MissionSelect, game.CurrentFlow);
-            Assert.AreEqual(4, game.MissionSelectOptionCount);
+            Assert.AreEqual(6, game.MissionSelectOptionCount);
             Assert.AreEqual(GameManager.MissionVariant.BackyardRescue, game.SelectedMissionVariant);
             Assert.AreEqual("Backyard Rescue", game.SelectedMissionName);
             Assert.That(game.ObjectiveLabel, Does.Contain("Choose a mission"));
@@ -772,7 +772,7 @@ namespace CheddarAndCocoa.Tests
 
             Assert.AreEqual(GameManager.FlowState.MissionSelect, game.CurrentFlow);
             Assert.IsTrue(game.MissionSelectVisible);
-            Assert.AreEqual(4, game.MissionSelectOptionCount);
+            Assert.AreEqual(6, game.MissionSelectOptionCount);
             Assert.That(game.ObjectiveLabel, Does.Contain("Choose a mission"));
             Assert.IsTrue(LogContains(game, "MissionSelect: Backyard Rescue"));
 
