@@ -247,6 +247,8 @@ namespace CheddarAndCocoa.Game
         public DogReadabilityFeedback[] DogFeedback { get; private set; }
         public ObjectiveArrowFeedback[] ObjectiveArrows { get; private set; }
         public InteractionRangeIndicator[] InteractionRangeIndicators { get; private set; }
+        public Vector2 MissionEntryTarget => _missionEntryTarget;
+        public float MaximumMissionEntryDistance => 12f;
 
         private DogController[] _dogs;
         private GamepadPlayerInput[] _inputs;
@@ -352,6 +354,7 @@ namespace CheddarAndCocoa.Game
         private readonly int[] _sessionBestByMission = new int[MissionOrder.Length];
         private bool _roundResultRecorded;
         private string _lastLoggedObjective = string.Empty;
+        private Vector2 _missionEntryTarget;
 
         public void Init(DogController[] dogs, GamepadPlayerInput[] inputs, Sprite treatSprite, Sprite rangeSprite, Rect bounds, int seed)
         {
@@ -957,6 +960,8 @@ namespace CheddarAndCocoa.Game
                     SetActorState(PredatorObject, "CAR - LEAN TO KEEP IT LEVEL!", new Color(0.5f, 0.4f, 0.3f), 0.12f);
                 }
             }
+            StageDogsForMissionEntry();
+            UpdateObjectiveArrows();
             _lastLoggedObjective = string.Empty;
             LogPlaytestEvent("MissionStarted", $"{_mission.Name} / {ActiveModifierLabel} / {roundDuration:0}s");
             LogObjectiveIfChanged();
@@ -3996,6 +4001,9 @@ namespace CheddarAndCocoa.Game
                 return true;
             }
 
+            if (TryGetProductionMissionTarget(dogIndex, out target, out copy, out hideDistance))
+                return true;
+
             if (_mission.UsesSquirrel && _squirrelTarget != null)
             {
                 target = SquirrelObject.transform;
@@ -4019,6 +4027,164 @@ namespace CheddarAndCocoa.Game
             copy = _mission.ItemArrowLabel;
             hideDistance = 1.2f;
             return true;
+        }
+
+        private bool TryGetProductionMissionTarget(int dogIndex, out Transform target, out string copy, out float hideDistance)
+        {
+            target = null;
+            copy = string.Empty;
+            hideDistance = 1.4f;
+
+            switch (_mission.Variant)
+            {
+                case MissionVariant.SquirrelConspiracy:
+                    target = SquirrelObject != null ? SquirrelObject.transform : null;
+                    copy = _herdingState.StashRevealed ? "CRACK STASH" : "HERD SQUIRREL";
+                    break;
+                case MissionVariant.EagleShadowPanic:
+                    if (_threatSweepState.RescueObjectiveActive && !_threatSweepState.RescueComplete)
+                    {
+                        target = SquirrelObject != null ? SquirrelObject.transform : null;
+                        copy = "RESCUE TOY";
+                    }
+                    else if (_threatSweepState.RescueComplete)
+                    {
+                        target = _dogs[dogIndex == 0 ? 1 : 0].transform;
+                        copy = "HUDDLE + BARK";
+                        hideDistance = 1.6f;
+                    }
+                    else
+                    {
+                        target = FindNearestActiveMarker(_eagleCoverMarkers, _dogs[dogIndex].transform.position);
+                        copy = "HIDE HERE";
+                    }
+                    break;
+                case MissionVariant.CoyotesFence:
+                    if (_patrolState.ReadyForFinalPressure(CoyoteRequiredRepairs))
+                    {
+                        target = _dogs[dogIndex == 0 ? 1 : 0].transform;
+                        copy = "UNITED BARK";
+                        hideDistance = 1.6f;
+                    }
+                    else
+                    {
+                        target = SquirrelObject != null ? SquirrelObject.transform : null;
+                        copy = _coyotePressureHeld ? "FILL DIRT" : "BARK COYOTE";
+                    }
+                    break;
+                case MissionVariant.WeenieRoundup:
+                    if (_dogCarrying != null && dogIndex < _dogCarrying.Length && _dogCarrying[dogIndex])
+                    {
+                        target = _bowlObject != null ? _bowlObject.transform : null;
+                        copy = "HOME BOWL";
+                    }
+                    else
+                    {
+                        target = FindNearestActiveMarker(_weenieMarkers, _dogs[dogIndex].transform.position);
+                        copy = "PICK UP WEENIE";
+                    }
+                    break;
+                case MissionVariant.ScentSearch:
+                    target = FindNearestActiveMarker(_digMarkers, _dogs[dogIndex].transform.position);
+                    copy = "SNIFF PATCH";
+                    break;
+                case MissionVariant.ThunderstormComfort:
+                    target = _dogs[dogIndex == 0 ? 1 : 0].transform;
+                    copy = "COMFORT PARTNER";
+                    hideDistance = 1.8f;
+                    break;
+                case MissionVariant.MarkTheYard:
+                    target = FindNearestUnclaimedZone(_dogs[dogIndex].transform.position);
+                    copy = "MARK ZONE";
+                    break;
+                case MissionVariant.LeashWalk:
+                    int checkpoint = _leashState.CheckpointIndex;
+                    if (_leashCheckpointMarkers != null && checkpoint >= 0 && checkpoint < _leashCheckpointMarkers.Length && _leashCheckpointMarkers[checkpoint] != null)
+                        target = _leashCheckpointMarkers[checkpoint].transform;
+                    copy = "WALK TOGETHER";
+                    hideDistance = CheckpointRange;
+                    break;
+                case MissionVariant.CarRide:
+                default:
+                    return false;
+            }
+
+            return target != null;
+        }
+
+        private static Transform FindNearestActiveMarker(GameObject[] markers, Vector2 position)
+        {
+            Transform nearest = null;
+            float nearestDistance = float.PositiveInfinity;
+            if (markers == null) return null;
+            foreach (var marker in markers)
+            {
+                if (marker == null || !marker.activeSelf) continue;
+                float distance = Vector2.Distance(position, marker.transform.position);
+                if (distance >= nearestDistance) continue;
+                nearest = marker.transform;
+                nearestDistance = distance;
+            }
+            return nearest;
+        }
+
+        private Transform FindNearestUnclaimedZone(Vector2 position)
+        {
+            Transform nearest = null;
+            float nearestDistance = float.PositiveInfinity;
+            if (_zoneMarkers == null || _zoneClaimed == null) return null;
+            for (int i = 0; i < _zoneMarkers.Length && i < _zoneClaimed.Length; i++)
+            {
+                if (_zoneClaimed[i] || _zoneMarkers[i] == null || !_zoneMarkers[i].activeSelf) continue;
+                float distance = Vector2.Distance(position, _zoneMarkers[i].transform.position);
+                if (distance >= nearestDistance) continue;
+                nearest = _zoneMarkers[i].transform;
+                nearestDistance = distance;
+            }
+            return nearest;
+        }
+
+        private void StageDogsForMissionEntry()
+        {
+            _missionEntryTarget = ResolveMissionEntryTarget();
+            Vector2 inward = (_bounds.center - _missionEntryTarget).normalized;
+            if (inward.sqrMagnitude < 0.01f) inward = Vector2.down;
+            Vector2 center = _missionEntryTarget + inward * 7f;
+            Vector2 side = new Vector2(-inward.y, inward.x) * 1.5f;
+
+            for (int i = 0; i < _dogs.Length; i++)
+            {
+                Vector2 offset = i % 2 == 0 ? -side : side;
+                Vector2 position = ClampInsideBounds(center + offset, 1.5f);
+                _dogs[i].transform.position = position;
+                if (_dogs[i].TryGetComponent<Rigidbody2D>(out var rb)) rb.linearVelocity = Vector2.zero;
+            }
+        }
+
+        private Vector2 ResolveMissionEntryTarget()
+        {
+            switch (_mission.Variant)
+            {
+                case MissionVariant.SquirrelConspiracy: return _squirrelRoute[0];
+                case MissionVariant.EagleShadowPanic: return _eagleCoverZones[0];
+                case MissionVariant.CoyotesFence: return _fenceGapPosition;
+                case MissionVariant.WeenieRoundup: return _weenieSpots[0];
+                case MissionVariant.ScentSearch: return _digSpots[0];
+                case MissionVariant.ThunderstormComfort:
+                case MissionVariant.CarRide: return _bounds.center;
+                case MissionVariant.MarkTheYard: return _territoryZones[_territoryZones.Length - 1];
+                case MissionVariant.LeashWalk: return _leashCheckpoints[0];
+                default:
+                    var nearestTreat = FindNearestTreat(_bounds.center);
+                    return nearestTreat != null ? (Vector2)nearestTreat.transform.position : _bounds.center;
+            }
+        }
+
+        private Vector2 ClampInsideBounds(Vector2 point, float margin)
+        {
+            return new Vector2(
+                Mathf.Clamp(point.x, _bounds.xMin + margin, _bounds.xMax - margin),
+                Mathf.Clamp(point.y, _bounds.yMin + margin, _bounds.yMax - margin));
         }
 
         private void HideObjectiveArrows()

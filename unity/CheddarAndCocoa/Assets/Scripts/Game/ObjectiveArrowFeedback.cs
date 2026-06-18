@@ -12,6 +12,7 @@ namespace CheddarAndCocoa.Game
         private Transform _target;
         private string _copy = string.Empty;
         private float _hideDistance = 0.9f;
+        private Vector3 _baseScale;
 
         public string Label => _target != null ? _copy : string.Empty;
         public bool IsVisible => _label != null && _label.gameObject.activeSelf;
@@ -22,6 +23,7 @@ namespace CheddarAndCocoa.Game
             var labelGo = new GameObject(slot.Name);
             labelGo.transform.SetParent(transform);
             labelGo.transform.localScale = slot.LocalScale;
+            _baseScale = slot.LocalScale;
             _label = labelGo.AddComponent<TextMesh>();
             _label.anchor = TextAnchor.MiddleCenter;
             _label.alignment = TextAlignment.Center;
@@ -64,7 +66,9 @@ namespace CheddarAndCocoa.Game
             var dir = ((Vector2)delta).normalized;
             _label.transform.localPosition = new Vector3(dir.x * 1.1f, dir.y * 1.1f + 0.75f, -0.15f);
             _label.transform.rotation = Quaternion.identity;
-            _label.text = $"{ArrowGlyph(dir)} {_copy}";
+            float zoomScale = Camera.main != null ? Mathf.Clamp(Camera.main.orthographicSize / 7.5f, 1f, 3.2f) : 1f;
+            _label.transform.localScale = _baseScale * zoomScale;
+            _label.text = $"{ArrowGlyph(dir)} {_copy}  {Mathf.CeilToInt(delta.magnitude)}m";
         }
 
         private static string ArrowGlyph(Vector2 dir)

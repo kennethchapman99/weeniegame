@@ -83,6 +83,41 @@ namespace CheddarAndCocoa.Tests
             }
         }
 
+        [UnityTest]
+        public IEnumerator EveryMission_StagesDogsWithinAReasonableFirstObjectiveWalk()
+        {
+            yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
+            yield return null;
+            yield return null;
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            var cheddar = GameObject.Find("Cheddar");
+            var cocoa = GameObject.Find("Cocoa");
+            Assert.IsNotNull(game);
+            Assert.IsNotNull(cheddar);
+            Assert.IsNotNull(cocoa);
+
+            for (int i = 0; i < game.MissionSelectOptionCount; i++)
+            {
+                var mission = game.MissionVariantAt(i);
+                game.StartMission(mission);
+                yield return null;
+
+                float cheddarDistance = Vector2.Distance(cheddar.transform.position, game.MissionEntryTarget);
+                float cocoaDistance = Vector2.Distance(cocoa.transform.position, game.MissionEntryTarget);
+                Assert.LessOrEqual(cheddarDistance, game.MaximumMissionEntryDistance,
+                    $"{mission} should not open with a tedious walk for Cheddar.");
+                Assert.LessOrEqual(cocoaDistance, game.MaximumMissionEntryDistance,
+                    $"{mission} should not open with a tedious walk for Cocoa.");
+
+                if (mission != GameManager.MissionVariant.CarRide)
+                {
+                    Assert.IsTrue(game.ObjectiveArrows[0].IsVisible, $"{mission} should immediately guide Cheddar.");
+                    Assert.IsTrue(game.ObjectiveArrows[1].IsVisible, $"{mission} should immediately guide Cocoa.");
+                }
+            }
+        }
+
         private static void AssertSpatialSpread(Vector2[] points, float minimumWidth, string label)
         {
             Assert.IsNotEmpty(points);
