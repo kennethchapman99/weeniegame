@@ -135,6 +135,7 @@ namespace CheddarAndCocoa.Game
         public ThreatSweepMissionState EagleShadowPanicState => _threatSweepState;
         public PatrolDefenseMissionState CoyotesFenceState => _patrolState;
         public Vector2[] EagleCoverZones => (Vector2[])_eagleCoverZones.Clone();
+        public Vector2[] FenceGaps => (Vector2[])_fenceGaps.Clone();
         public MissionRuntimeSnapshot RuntimeSnapshot => BuildRuntimeSnapshot();
         public int SelectedMissionIndex => _selectedMissionIndex;
         public MissionVariant SelectedMissionVariant => MissionOrder[Mathf.Clamp(_selectedMissionIndex, 0, MissionOrder.Length - 1)];
@@ -257,6 +258,8 @@ namespace CheddarAndCocoa.Game
         private readonly Vector2[] _eagleCoverZones = { new(-14f, -8f), new(14f, -8f), new(0f, 9f) };
         private GameObject[] _eagleCoverMarkers;
         private int _eagleSweepDir = 1;
+        private readonly Vector2[] _fenceGaps = { new(-22f, 6f), new(-22f, -6f), new(22f, 6f), new(22f, -6f) };
+        private GameObject[] _coyoteGapMarkers;
 
         private readonly List<Treat> _treats = new();
         private readonly List<string> _sessionRanks = new();
@@ -578,6 +581,12 @@ namespace CheddarAndCocoa.Game
                 CompleteCoyoteFinalPressure();
         }
 
+        public void ForceCoyoteProwlReach()
+        {
+            if (MissionActive() && _mission != null && _mission.Variant == MissionVariant.CoyotesFence)
+                EvaluatePatrolReach();
+        }
+
         private void BeginRound()
         {
             if (_mission == null) _mission = BuildMissionDefinition(startingMission, _tuning);
@@ -624,7 +633,7 @@ namespace CheddarAndCocoa.Game
             _coyotePressureHeld = false;
             _stashPosition = new Vector2(_bounds.xMax - 1.7f, _bounds.yMin + 1.7f);
             _toyRescuePosition = new Vector2(_bounds.xMax - 1.7f, _bounds.yMin + 1.7f);
-            _fenceGapPosition = new Vector2(_bounds.xMin + 1.7f, 0f);
+            _fenceGapPosition = _fenceGaps[0];
             _nextUnitedBarkAt = 0f;
             _teamBarkFeedbackUntil = 0f;
             _scorePopUntil = 0f;
@@ -684,10 +693,16 @@ namespace CheddarAndCocoa.Game
                 PredatorObject.SetActive(true);
                 SquirrelObject.SetActive(true);
                 _patrolState.SelectGap(0);
-                PlaceObject(PredatorObject, new Vector2(_bounds.xMin - 1.5f, 0f));
+                _fenceGapPosition = _fenceGaps[0];
+                PlaceObject(PredatorObject, new Vector2(0f, _bounds.yMax + 2f));
                 PlaceObject(SquirrelObject, _fenceGapPosition);
                 SetActorState(PredatorObject, "COYOTE AT THE FENCE - BARK PRESSURE!", new Color(0.55f, 0.32f, 0.12f), 0.28f);
                 SetActorState(SquirrelObject, "WEAK SPOT - FILL DIRT (NEEDS PARTNER BARK)", new Color(0.62f, 0.45f, 0.2f), 0.1f);
+                SetCoyoteGapMarkersActive(true);
+            }
+            else
+            {
+                SetCoyoteGapMarkersActive(false);
             }
             _lastLoggedObjective = string.Empty;
             LogPlaytestEvent("MissionStarted", $"{_mission.Name} / {ActiveModifierLabel} / {roundDuration:0}s");
@@ -714,6 +729,7 @@ namespace CheddarAndCocoa.Game
             TickModifier();
             if (_mission.Variant == MissionVariant.SquirrelConspiracy) TickSquirrelConspiracy();
             else if (_mission.Variant == MissionVariant.EagleShadowPanic) TickThreatSweep();
+            else if (_mission.Variant == MissionVariant.CoyotesFence) TickPatrolDefense();
             else TickSquirrel();
             TickPredator();
             TickTugProximity();
@@ -936,6 +952,64 @@ namespace CheddarAndCocoa.Game
                 if (marker != null) marker.SetActive(active);
         }
 
+        private void BuildCoyoteGapMarkers()
+        {
+            _coyoteGapMarkers = new GameObject[_fenceGaps.Length];
+            for (int i = 0; i < _fenceGaps.Length; i++)
+            {
+                var go = new GameObject($"FenceGap_{i}");
+                go.transform.position = _fenceGaps[i];
+                go.transform.localScale = new Vector3(1.2f, 2.4f, 1f);
+                var sr = go.AddComponent<SpriteRenderer>();
+                sr.sprite = _sprite;
+                sr.color = new Color(0.5f, 0.36f, 0.18f, 0.6f);
+                sr.sortingOrder = 1;
+                AddWorldLabel(go, "WEAK SPOT", Vector3.up * 1.4f, 13, Color.white);
+                go.SetActive(false);
+                _coyoteGapMarkers[i] = go;
+            }
+        }
+
+        private void SetCoyoteGapMarkersActive(bool active)
+        {
+            if (_coyoteGapMarkers == null) return;
+            foreach (var marker in _coyoteGapMarkers)
+                if (marker != null) marker.SetActive(active);
+        }
+
+        // The coyote prowls toward the active weak spot. If the dogs are holding bark pressure when
+        // it arrives, it is driven off; otherwise it breaches the gap.
+        private void EvaluatePatrolReach()
+        {
+            if (_patrolState.FinalPressureComplete) return;
+
+            if (_coyotePressureHeld)
+            {
+                _coyotePressureHeld = false;
+                LastCue = "The coyote lunged at the weak spot but the bark pressure drove it back!";
+                SetActorState(PredatorObject, "COYOTE DRIVEN BACK!", new Color(0.7f, 0.42f, 0.16f), 0.24f);
+                SpawnWorldPop(PredatorObject.transform.position, "DRIVEN BACK!", new Color(1f, 0.85f, 0.3f));
+                LogPlaytestEvent("CoyoteDrivenBack", LastCue);
+                PlaceObject(PredatorObject, new Vector2(0f, _bounds.yMax + 2f));
+                LogObjectiveIfChanged();
+                return;
+            }
+
+            RegisterCoyoteBreach();
+            PlaceObject(PredatorObject, new Vector2(0f, _bounds.yMax + 2f));
+        }
+
+        private void TickPatrolDefense()
+        {
+            if (PredatorObject == null || _patrolState.FinalPressureComplete) return;
+
+            Vector2 target = _fenceGaps[_patrolState.ActiveGapIndex % _fenceGaps.Length];
+            PredatorObject.transform.position = Vector3.MoveTowards(
+                PredatorObject.transform.position, target, Time.deltaTime * (_tuning.SquirrelMoveSpeed * 0.7f));
+            if (Vector2.Distance(PredatorObject.transform.position, target) < 0.5f)
+                EvaluatePatrolReach();
+        }
+
         private float NearestEagleCoverDistance(Vector2 position)
         {
             float best = float.PositiveInfinity;
@@ -1123,7 +1197,7 @@ namespace CheddarAndCocoa.Game
             _patrolState.AddRepair();
             _coyotePressureHeld = false;
             _patrolState.SelectGap((_patrolState.ActiveGapIndex + 1) % FenceGapCount);
-            _fenceGapPosition = new Vector2(_patrolState.ActiveGapIndex % 2 == 0 ? _bounds.xMin + 1.7f : _bounds.xMax - 1.7f, _bounds.yMin + 1.7f * (_patrolState.ActiveGapIndex / 2 == 0 ? 1f : -1f));
+            _fenceGapPosition = _fenceGaps[_patrolState.ActiveGapIndex % _fenceGaps.Length];
             PlaceObject(SquirrelObject, _fenceGapPosition);
             AddScore(ScoreEventCatalog.DirtFilled.Points, ScoreEventCatalog.DirtFilled.Label);
             LastFeedback = FeedbackKind.PartnerRescue;
@@ -1963,6 +2037,7 @@ namespace CheddarAndCocoa.Game
             if (RopeObject != null) RopeObject.SetActive(active && _mission != null && _mission.RequiresTug);
             if (_bunnyCameoObject != null) _bunnyCameoObject.SetActive(active);
             if (!active || _mission == null || _mission.Variant != MissionVariant.EagleShadowPanic) SetEagleCoverMarkersActive(false);
+            if (!active || _mission == null || _mission.Variant != MissionVariant.CoyotesFence) SetCoyoteGapMarkersActive(false);
         }
 
         public static MissionDefinition BuildMissionDefinition(MissionVariant variant) =>
@@ -2547,6 +2622,7 @@ namespace CheddarAndCocoa.Game
             RopeObject = MakeActor(ArenaArtCatalog.Actor(ArenaArtCatalog.ActorKind.Rope));
             _bunnyCameoObject = MakeDraftBunnyCameo();
             BuildEagleCoverMarkers();
+            BuildCoyoteGapMarkers();
             if (InteractionRangeIndicators != null)
             {
                 int offset = _dogs != null ? _dogs.Length : 0;

@@ -152,6 +152,29 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(1, game.MissionReplayCount);
         }
 
+        [UnityTest]
+        public IEnumerator CoyotesFence_ProwlReach_BarkPressureDrivesOffElseBreaches()
+        {
+            yield return LoadArena();
+            var game = _game;
+
+            game.StartMission(GameManager.MissionVariant.CoyotesFence);
+            yield return null;
+
+            Assert.Greater(game.FenceGaps.Length, 0);
+
+            // Holding bark pressure when the coyote reaches the gap drives it off (no breach).
+            game.ForceCoyoteBarkPressure(DogId.Cocoa);
+            game.ForceCoyoteProwlReach();
+            yield return null;
+            Assert.AreEqual(0, game.CoyotesFenceState.Breaches);
+
+            // Reaching an unguarded gap (pressure already spent) breaches the fence.
+            game.ForceCoyoteProwlReach();
+            yield return null;
+            Assert.AreEqual(1, game.CoyotesFenceState.Breaches);
+        }
+
         private IEnumerator LoadArena()
         {
             _game = null;
