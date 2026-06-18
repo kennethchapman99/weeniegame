@@ -3238,7 +3238,19 @@ namespace CheddarAndCocoa.Game
         private void UpdateSessionSummaryLabel()
         {
             SessionSummaryLabel = $"Session Summary: {SessionMissionsPlayed} missions played, {SessionTotalScore} total score, {SessionStarsEarned} stars, {SessionFlawlessClears} flawless, {SessionUniqueMissionsCompleted}/{MissionOrder.Length} missions finished.";
-            SessionRanksEarnedLabel = _sessionRanks.Count == 0 ? "Ranks: none yet." : $"Ranks: {string.Join(" | ", _sessionRanks)}";
+            if (_sessionRanks.Count == 0)
+            {
+                SessionRanksEarnedLabel = "Recent ranks: none yet.";
+                return;
+            }
+
+            const int visibleRanks = 3;
+            int first = Mathf.Max(0, _sessionRanks.Count - visibleRanks);
+            var recent = new List<string>(visibleRanks);
+            for (int i = first; i < _sessionRanks.Count; i++) recent.Add(_sessionRanks[i]);
+            int earlier = _sessionRanks.Count - recent.Count;
+            string earlierLabel = earlier > 0 ? $" (+{earlier} earlier)" : string.Empty;
+            SessionRanksEarnedLabel = $"Recent ranks{earlierLabel}: {string.Join(" | ", recent)}";
         }
 
         private int CountCompletedMissions()

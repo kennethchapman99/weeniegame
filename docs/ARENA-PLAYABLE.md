@@ -106,6 +106,7 @@ small world text.
    - **N / Right Arrow / Right Shoulder / D-pad Right** starts the next unfinished mission.
    - **M / Escape / East button / D-pad Left** returns to mission select.
 5. After every three newly tried mission variants (3/6/9/12), the Next action opens a simple **Session Summary** with missions played, total score, stars, and ranks earned. Choose **Continue Session** (Enter/Start) to launch the next unfinished mission, **Mission Select** to choose freely, or **New Session** to reset local stats. Between milestones, Next Mission continues directly without repeating the summary.
+   - Rank history is bounded to the three most recent results with an `+N earlier` count, preventing replays and a full 12-mission run from overflowing the summary panel.
 
 No progress is saved; the session loop is intentionally local and lightweight.
 

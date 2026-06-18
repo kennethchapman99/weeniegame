@@ -46,6 +46,7 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual("NEW", game.MissionSelectStatusFor(GameManager.MissionVariant.MarkTheYard));
             Assert.IsFalse(game.SessionSummaryReady);
             Assert.That(game.SessionSummaryLabel, Does.Contain("no missions played yet"));
+            Assert.That(game.SessionRanksEarnedLabel, Does.Contain("none yet"));
         }
 
         [UnityTest]

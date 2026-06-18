@@ -944,6 +944,10 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(4, game.SessionUniqueMissionsCompleted);
             Assert.IsFalse(game.SessionSummaryReady, "Summary should stay quiet until the six-mission milestone.");
             Assert.AreEqual("Next Mission", game.EndNextActionLabel);
+            Assert.That(game.SessionRanksEarnedLabel, Does.Contain("+1 earlier"));
+            Assert.That(game.SessionRanksEarnedLabel, Does.Not.Contain("Snack Heist"),
+                "Long sessions should show recent ranks instead of overflowing the summary panel.");
+            Assert.That(game.SessionRanksEarnedLabel, Does.Contain("Eagle Shadow Panic"));
         }
 
         [UnityTest]
