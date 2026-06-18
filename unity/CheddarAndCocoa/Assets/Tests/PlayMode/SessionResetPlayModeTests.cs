@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using CheddarAndCocoa.Game;
+using CheddarAndCocoa.Dogs;
 
 namespace CheddarAndCocoa.Tests
 {
@@ -45,6 +46,46 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual("NEW", game.MissionSelectStatusFor(GameManager.MissionVariant.MarkTheYard));
             Assert.IsFalse(game.SessionSummaryReady);
             Assert.That(game.SessionSummaryLabel, Does.Contain("no missions played yet"));
+        }
+
+        [UnityTest]
+        public IEnumerator DirectMissionSwitch_ClearsSpeedEmotionAndMissionStateImmediately()
+        {
+            yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
+            yield return null;
+            yield return null;
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            var cheddarObject = GameObject.Find("Cheddar");
+            var cheddar = cheddarObject.GetComponent<DogController>();
+            var feedback = cheddarObject.GetComponent<DogReadabilityFeedback>();
+
+            game.StartMission(GameManager.MissionVariant.SquirrelConspiracy);
+            yield return null;
+            cheddarObject.transform.position = new Vector2(55f, -25f);
+            yield return null;
+            yield return null;
+            Assert.IsTrue(cheddar.TravelAssist);
+
+            game.ForceGameOver();
+            Assert.AreEqual(DogReadabilityFeedback.Pose.Sad, feedback.CurrentPose);
+
+            game.StartMission(GameManager.MissionVariant.SockPanic);
+            Assert.IsFalse(cheddar.TravelAssist, "New mission must not inherit distant-objective speed.");
+            Assert.AreEqual(DogReadabilityFeedback.Pose.Idle, feedback.CurrentPose,
+                "New mission intro must not inherit the prior failure pose.");
+            Assert.AreEqual(0, game.Score);
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, game.Outcome);
+            Assert.IsFalse(game.SquirrelObject.activeSelf);
+            Assert.IsFalse(game.PredatorObject.activeSelf);
+            Assert.IsFalse(game.RopeObject.activeSelf);
+
+            game.StartMission(GameManager.MissionVariant.LeashWalk);
+            game.ForceLeashSnap();
+            Assert.AreEqual(1, game.LeashWalkState.Snaps);
+            game.StartMission(GameManager.MissionVariant.CarRide);
+            Assert.AreEqual(0, game.LeashWalkState.Snaps);
+            Assert.AreEqual(0, game.CarRideState.Spills);
         }
     }
 }

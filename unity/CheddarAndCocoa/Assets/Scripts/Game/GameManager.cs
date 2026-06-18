@@ -877,6 +877,7 @@ namespace CheddarAndCocoa.Game
             {
                 _lastBarks[i] = float.NegativeInfinity;
                 _dogs[i].SetMode(MovementMode.Free);
+                _dogs[i].SetTravelAssist(false);
                 if (DogFeedback[i] != null) DogFeedback[i].ClearMissionPose();
                 _dogs[i].transform.position = _dogStarts[i];
                 if (_dogs[i].TryGetComponent<Rigidbody2D>(out var rb)) rb.linearVelocity = Vector2.zero;
