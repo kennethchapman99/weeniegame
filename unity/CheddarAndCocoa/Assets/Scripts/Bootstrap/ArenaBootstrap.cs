@@ -21,8 +21,10 @@ namespace CheddarAndCocoa.Bootstrap
     public sealed class ArenaBootstrap : MonoBehaviour
     {
         [Header("Arena (world units)")]
-        [SerializeField] private float fieldWidth = 20f;
-        [SerializeField] private float fieldHeight = 12f;
+        // A real backyard, not a demo box: large enough that the dogs must split up, patrol, and
+        // cover ground, with a dynamic shared camera that zooms to frame both and clamps to walls.
+        [SerializeField] private float fieldWidth = 48f;
+        [SerializeField] private float fieldHeight = 28f;
         [SerializeField] private int treatSeed = 1234; // seeded -> deterministic treat layout for tests
 
         private Sprite _square;
@@ -40,10 +42,10 @@ namespace CheddarAndCocoa.Bootstrap
             var bounds = new Rect(-fieldWidth * 0.5f, -fieldHeight * 0.5f, fieldWidth, fieldHeight);
 
             // Cheddar — golden chaos puppy (P1: pad 0 / WASD + Space).
-            var cheddar = BuildDog(DogId.Cheddar, new Vector2(-4f, 0f), slot: 0,
+            var cheddar = BuildDog(DogId.Cheddar, new Vector2(-9f, 0f), slot: 0,
                 GamepadPlayerInput.KeyboardScheme.WasdSpace, CheddarTuning());
             // Cocoa — chocolate spot queen (P2: pad 1 / arrows + Enter/RShift).
-            var cocoa = BuildDog(DogId.Cocoa, new Vector2(4f, 0f), slot: 1,
+            var cocoa = BuildDog(DogId.Cocoa, new Vector2(9f, 0f), slot: 1,
                 GamepadPlayerInput.KeyboardScheme.ArrowsEnter, CocoaTuning());
 
             var cheddarDog = cheddar.GetComponent<DogController>();
@@ -58,7 +60,7 @@ namespace CheddarAndCocoa.Bootstrap
                 _arenaTuning.CameraVerticalMargin,
                 _arenaTuning.CameraFollowLerp,
                 _arenaTuning.CameraZoomLerp,
-                clamp: false,
+                clamp: true,
                 bounds);
             sharedCamera.SetTargets(cheddar.transform, cocoa.transform);
 

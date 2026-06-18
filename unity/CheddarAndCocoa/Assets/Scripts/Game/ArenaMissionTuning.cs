@@ -40,11 +40,13 @@ namespace CheddarAndCocoa.Game
         public float TugChargePerSecond = 0.5f;
         public float TugInteractProgress = 0.2f;
 
-        public float CameraInitialOrthoSize = 7.1f;
+        // Sized for the large backyard (48x28): the shared camera frames both dogs close when they
+        // regroup and pulls way back as they split across the yard, while clamping to the walls.
+        public float CameraInitialOrthoSize = 9f;
         public float CameraMinOrthoSize = 6.8f;
-        public float CameraMaxOrthoSize = 8.4f;
-        public float CameraHorizontalMargin = 3.0f;
-        public float CameraVerticalMargin = 2.2f;
+        public float CameraMaxOrthoSize = 13f;
+        public float CameraHorizontalMargin = 4.0f;
+        public float CameraVerticalMargin = 3.0f;
         public float CameraFollowLerp = 9f;
         public float CameraZoomLerp = 7f;
 
@@ -108,6 +110,34 @@ namespace CheddarAndCocoa.Game
             SurvivorScore = 350
         };
 
+        public MissionBalance EagleShadowPanic = new MissionBalance
+        {
+            RoundSeconds = 70f,
+            SpawnedItemCount = 0,
+            ItemGoal = 1,
+            ItemScore = 0,
+            MaxStolenFood = 3,
+            SquirrelPenalty = 75,
+            SquirrelScareScore = 75,
+            PawfectScore = 1500,
+            HeroScore = 1050,
+            SurvivorScore = 350
+        };
+
+        public MissionBalance CoyotesFence = new MissionBalance
+        {
+            RoundSeconds = 80f,
+            SpawnedItemCount = 0,
+            ItemGoal = 1,
+            ItemScore = 0,
+            MaxStolenFood = 3,
+            SquirrelPenalty = 75,
+            SquirrelScareScore = 75,
+            PawfectScore = 1600,
+            HeroScore = 1100,
+            SurvivorScore = 350
+        };
+
         public static ArenaMissionTuning CreateDefault() => new ArenaMissionTuning();
 
         public MissionBalance BalanceFor(GameManager.MissionVariant variant)
@@ -117,6 +147,8 @@ namespace CheddarAndCocoa.Game
                 GameManager.MissionVariant.SnackHeist => SnackHeist,
                 GameManager.MissionVariant.SockPanic => SockPanic,
                 GameManager.MissionVariant.SquirrelConspiracy => SquirrelConspiracy,
+                GameManager.MissionVariant.EagleShadowPanic => EagleShadowPanic,
+                GameManager.MissionVariant.CoyotesFence => CoyotesFence,
                 _ => BackyardRescue
             };
         }
