@@ -49,6 +49,16 @@ Implemented as a selectable `EagleShadowPanic` mission variant wired into `GameM
 
 Implemented as a selectable `CoyotesFence` mission variant wired into `GameManager` on top of `PatrolDefenseMissionState`: a coyote tests fence gaps, one dog bark-pins it (`FENCE HELD`) while the partner fills the weak spot (`DIRT FILLED`) — repairs only progress while bark pressure is held. A late fake-snack lure (`FAKE SNACK BAIT`, Cheddar-specific gag) can be resolved by barking instead of taking the bait. After enough repairs the final push is blocked with a united bark (`YARD DEFENDED`). Three breaches fail the run. Covered by `CoyotesFencePlayModeTests` (select rotation, bark-gated repair + clear, fake-snack lure, breach fail, replay reset); full PlayMode suite green.
 
+## Bonus missions — DONE (beyond the original queue)
+
+Three more missions were added on top of the queue to broaden the dog-verb coverage and make the large yard feel like a real game. All are selectable from mission select, deterministically tested, and shipped on `main`:
+
+- **Weenie Roundup** (`CarryRoundupMissionState`) — the **carry** verb: pick up scattered weenies and carry them to the HOME BOWL; both dogs can carry in parallel; fumbles bounce the weenie away. `WeenieRoundupPlayModeTests`.
+- **Scent Search** (`ScentSearchMissionState`) — the **sniff + dig** verbs: bark to read HOT/COLD on a buried bone, interact to dig the right mound; cold digs are penalized. `ScentSearchPlayModeTests`.
+- **Thunderstorm Comfort** (`ThunderstormMissionState` + `PanicMeter`) — the **comfort** verb: huddle to co-regulate panic and ride out timed thunderclaps; leans into Cheddar (spooks harder) vs Cocoa (steadier). `ThunderstormComfortPlayModeTests`.
+
+The arena was also grown to a real 48x28 yard with a dynamic clamped follow-cam, decorative backyard dressing, and spatial geometry for the threat missions (Eagle cover zones, Coyote fence gaps). Full PlayMode suite green at 59/59.
+
 ## Queue 5: Launch Demo Hardening
 
 Tasks:
