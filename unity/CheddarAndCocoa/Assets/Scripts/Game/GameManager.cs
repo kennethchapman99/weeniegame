@@ -151,6 +151,7 @@ namespace CheddarAndCocoa.Game
         public MissionRuntimeSnapshot RuntimeSnapshot => BuildRuntimeSnapshot();
         public int SelectedMissionIndex => _selectedMissionIndex;
         public MissionVariant SelectedMissionVariant => MissionOrder[Mathf.Clamp(_selectedMissionIndex, 0, MissionOrder.Length - 1)];
+        public MissionVariant MissionVariantAt(int index) => MissionOrder[Mathf.Clamp(index, 0, MissionOrder.Length - 1)];
         public string SelectedMissionName => BuildMissionDefinition(SelectedMissionVariant, _tuning).Name;
         public string SelectedMissionBriefing => BuildMissionDefinition(SelectedMissionVariant, _tuning).IntroPrompt;
         public State Phase { get; private set; } = State.Intro;

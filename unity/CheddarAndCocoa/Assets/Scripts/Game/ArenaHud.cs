@@ -47,7 +47,7 @@ namespace CheddarAndCocoa.Game
             string squirrelState = _game.MaxStolenFood > 0 ? $"Stolen {_game.StolenFood}/{_game.MaxStolenFood}" : "No squirrel pressure";
             GUI.Label(new Rect(0, 58, Screen.width, 24), $"MISSION: {_game.ActiveMissionName} / {_game.Phase} | {_game.BreakfastRecovered}/{_game.BreakfastGoal} {_game.MissionItemPlural} | {squirrelState}", _mid);
             GUI.Label(new Rect(0, 82, Screen.width, 24), "Move: WASD / Arrows / Sticks | Bark: Space / Enter / X | Tug/Rescue: Y / Right Shift | F1 Overlay | F2 Audio | F3 Rumble", _small);
-            GUI.Label(new Rect(0, 106, Screen.width, 24), $"1 Backyard  2 Snack  3 Sock  4 Squirrel | United barks: {_game.UnitedBarks} | Tug {Mathf.RoundToInt(_game.TugProgress * 100f)}% | Modifier: {_game.ActiveModifierLabel}", _mid);
+            GUI.Label(new Rect(0, 106, Screen.width, 24), $"Switch mission: keys 1-9, 0 ({_game.MissionSelectOptionCount} missions) | United barks: {_game.UnitedBarks} | Tug {Mathf.RoundToInt(_game.TugProgress * 100f)}% | Modifier: {_game.ActiveModifierLabel}", _mid);
             GUI.Label(new Rect(0, 130, Screen.width, 24), _game.LastScoreEventLabel, _mid);
             if (_game.ScorePopVisible)
                 GUI.Label(new Rect(0, 152, Screen.width, 30), _game.LastScorePopLabel, _big);
@@ -112,33 +112,35 @@ namespace CheddarAndCocoa.Game
 
         private void DrawMissionSelect()
         {
-            float w = 680, h = 360;
-            var box = new Rect((Screen.width - w) * 0.5f, (Screen.height - h) * 0.5f, w, h);
+            int count = _game.MissionSelectOptionCount;
+            float w = 760, h = 150 + count * 34 + 70;
+            var box = new Rect((Screen.width - w) * 0.5f, Mathf.Max(8f, (Screen.height - h) * 0.5f), w, h);
             GUI.Box(box, GUIContent.none);
             DrawUiKitAccent(new Rect(box.x + w - 116, box.y + 16, 76, 50));
-            GUI.Label(new Rect(box.x, box.y + 16, w, 42), "Cheddar + Cocoa Mission Select", _big);
-            GUI.Label(new Rect(box.x + 40, box.y + 60, w - 80, 48),
-                "Pick a dog emergency. Up/Down chooses, Enter/Start begins, or press 1/2/3/4 for a mission.",
+            GUI.Label(new Rect(box.x, box.y + 14, w, 42), "Cheddar + Cocoa Mission Select", _big);
+            GUI.Label(new Rect(box.x + 40, box.y + 58, w - 80, 26),
+                "Pick a dog emergency. Up/Down chooses, Enter/Start begins, or press the listed number key.",
                 _mid);
 
-            DrawMissionRow(box, 0, GameManager.MissionVariant.BackyardRescue, "Backyard Rescue", "Protect weenies, bark off squirrel crime, huddle against the shadow, finish the rope tug.");
-            DrawMissionRow(box, 1, GameManager.MissionVariant.SnackHeist, "Snack Heist", "Stash forbidden snacks before the squirrel union steals too much evidence.");
-            DrawMissionRow(box, 2, GameManager.MissionVariant.SockPanic, "Sock Panic", "Return scattered socks before laundry order returns.");
-            DrawMissionRow(box, 3, GameManager.MissionVariant.SquirrelConspiracy, "Squirrel Conspiracy", "Herd routes, hold cutoff zones, expose the stash, and stop squirrel taunts.");
+            for (int i = 0; i < count; i++)
+                DrawMissionRow(box, i, _game.MissionVariantAt(i));
 
-            GUI.Label(new Rect(box.x + 40, box.y + 292, w - 80, 42), _game.SelectedMissionBriefing, _small);
-            if (GUI.Button(new Rect(box.x + w * 0.5f - 90, box.y + 324, 180, 30), $"Start {_game.SelectedMissionName}"))
+            float footY = box.y + 120 + count * 34 + 8;
+            GUI.Label(new Rect(box.x + 40, footY, w - 80, 28), _game.SelectedMissionBriefing, _small);
+            if (GUI.Button(new Rect(box.x + w * 0.5f - 90, footY + 28, 180, 30), $"Start {_game.SelectedMissionName}"))
                 _game.StartSelectedMission();
         }
 
-        private void DrawMissionRow(Rect box, int index, GameManager.MissionVariant variant, string title, string briefing)
+        private void DrawMissionRow(Rect box, int index, GameManager.MissionVariant variant)
         {
-            float y = box.y + 120 + index * 46;
+            float y = box.y + 120 + index * 34;
             bool selected = _game.SelectedMissionIndex == index;
             string prefix = selected ? "> " : "  ";
-            GUI.Label(new Rect(box.x + 48, y, 180, 26), $"{prefix}{index + 1}. {title}", selected ? _hud : _mid);
-            GUI.Label(new Rect(box.x + 230, y + 2, 320, 24), briefing, _small);
-            if (GUI.Button(new Rect(box.x + 560, y, 80, 26), "Start"))
+            string key = index < 9 ? (index + 1).ToString() : "0";
+            var def = GameManager.BuildMissionDefinition(variant);
+            GUI.Label(new Rect(box.x + 40, y, 250, 26), $"{prefix}{key}. {def.Name}", selected ? _hud : _mid);
+            GUI.Label(new Rect(box.x + 296, y + 2, 360, 24), def.IntroPrompt, _small);
+            if (GUI.Button(new Rect(box.x + box.width - 96, y, 80, 26), "Start"))
                 _game.StartMission(variant);
         }
 
