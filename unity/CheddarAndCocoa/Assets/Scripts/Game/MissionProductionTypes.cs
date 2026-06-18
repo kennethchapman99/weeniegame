@@ -97,6 +97,15 @@ namespace CheddarAndCocoa.Game
             "Complete the final united-front bark after the rescue objective.",
             "Too many shadow exposures or the timer expires.");
 
+        public static readonly ProductionMissionSpec WeenieRoundup = new(
+            "weenie_roundup",
+            "Weenie Roundup",
+            ProductionMissionPack.Backyard,
+            ProductionMechanicModule.SharedObject,
+            "Carry every scattered weenie back to the home bowl together.",
+            "Deliver enough weenies to the bowl before the timer expires.",
+            "The timer expires before enough weenies are delivered.");
+
         public static readonly ProductionMissionSpec CoyotesFence = new(
             "coyotes_fence",
             "Coyotes at the Fence",

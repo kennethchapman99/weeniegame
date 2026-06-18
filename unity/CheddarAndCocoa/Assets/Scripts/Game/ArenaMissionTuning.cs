@@ -140,6 +140,20 @@ namespace CheddarAndCocoa.Game
             SurvivorScore = 350
         };
 
+        public MissionBalance WeenieRoundup = new MissionBalance
+        {
+            RoundSeconds = 85f,
+            SpawnedItemCount = 0,
+            ItemGoal = 5,
+            ItemScore = 0,
+            MaxStolenFood = 3,
+            SquirrelPenalty = 50,
+            SquirrelScareScore = 25,
+            PawfectScore = 1500,
+            HeroScore = 1050,
+            SurvivorScore = 350
+        };
+
         public static ArenaMissionTuning CreateDefault() => new ArenaMissionTuning();
 
         public MissionBalance BalanceFor(GameManager.MissionVariant variant)
@@ -151,6 +165,7 @@ namespace CheddarAndCocoa.Game
                 GameManager.MissionVariant.SquirrelConspiracy => SquirrelConspiracy,
                 GameManager.MissionVariant.EagleShadowPanic => EagleShadowPanic,
                 GameManager.MissionVariant.CoyotesFence => CoyotesFence,
+                GameManager.MissionVariant.WeenieRoundup => WeenieRoundup,
                 _ => BackyardRescue
             };
         }

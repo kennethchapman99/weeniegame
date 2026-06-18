@@ -17,7 +17,7 @@ namespace CheddarAndCocoa.Game
         public enum FlowState { MissionSelect, Playing, EndScreen, SessionSummary }
         public enum RoundModifier { SquirrelTrouble, ZoomiesSurge, PancakePanic }
         public enum MissionOutcome { InProgress, Clear, Failed }
-        public enum MissionVariant { BackyardRescue, SnackHeist, SockPanic, SquirrelConspiracy, EagleShadowPanic, CoyotesFence }
+        public enum MissionVariant { BackyardRescue, SnackHeist, SockPanic, SquirrelConspiracy, EagleShadowPanic, CoyotesFence, WeenieRoundup }
         public enum FeedbackKind
         {
             Intro,
@@ -109,7 +109,8 @@ namespace CheddarAndCocoa.Game
             MissionVariant.SockPanic,
             MissionVariant.SquirrelConspiracy,
             MissionVariant.EagleShadowPanic,
-            MissionVariant.CoyotesFence
+            MissionVariant.CoyotesFence,
+            MissionVariant.WeenieRoundup
         };
 
         [Header("Mission selection")]
@@ -136,6 +137,8 @@ namespace CheddarAndCocoa.Game
         public PatrolDefenseMissionState CoyotesFenceState => _patrolState;
         public Vector2[] EagleCoverZones => (Vector2[])_eagleCoverZones.Clone();
         public Vector2[] FenceGaps => (Vector2[])_fenceGaps.Clone();
+        public CarryRoundupMissionState WeenieRoundupState => _carryState;
+        public Vector2 BowlPosition => _bowlPosition;
         public MissionRuntimeSnapshot RuntimeSnapshot => BuildRuntimeSnapshot();
         public int SelectedMissionIndex => _selectedMissionIndex;
         public MissionVariant SelectedMissionVariant => MissionOrder[Mathf.Clamp(_selectedMissionIndex, 0, MissionOrder.Length - 1)];
@@ -260,6 +263,16 @@ namespace CheddarAndCocoa.Game
         private int _eagleSweepDir = 1;
         private readonly Vector2[] _fenceGaps = { new(-22f, 6f), new(-22f, -6f), new(22f, 6f), new(22f, -6f) };
         private GameObject[] _coyoteGapMarkers;
+        private readonly CarryRoundupMissionState _carryState = new CarryRoundupMissionState();
+        private readonly Vector2[] _weenieSpots = { new(-18f, 10f), new(18f, 11f), new(-20f, -10f), new(6f, -11f), new(20f, -3f) };
+        private GameObject[] _weenieMarkers;
+        private GameObject[] _carriedMarkers;
+        private GameObject _bowlObject;
+        private bool[] _dogCarrying;
+        private Vector2 _bowlPosition;
+        private const int WeenieRequiredDeliveries = 5;
+        private const float WeeniePickupRange = 1.6f;
+        private const float BowlDeliverRange = 2.2f;
 
         private readonly List<Treat> _treats = new();
         private readonly List<string> _sessionRanks = new();
@@ -634,6 +647,10 @@ namespace CheddarAndCocoa.Game
             _stashPosition = new Vector2(_bounds.xMax - 1.7f, _bounds.yMin + 1.7f);
             _toyRescuePosition = new Vector2(_bounds.xMax - 1.7f, _bounds.yMin + 1.7f);
             _fenceGapPosition = _fenceGaps[0];
+            _carryState.Reset();
+            _bowlPosition = new Vector2(_bounds.xMax - 4f, _bounds.yMin + 3f);
+            if (_dogCarrying != null)
+                for (int i = 0; i < _dogCarrying.Length; i++) _dogCarrying[i] = false;
             _nextUnitedBarkAt = 0f;
             _teamBarkFeedbackUntil = 0f;
             _scorePopUntil = 0f;
@@ -704,6 +721,20 @@ namespace CheddarAndCocoa.Game
             {
                 SetCoyoteGapMarkersActive(false);
             }
+            if (_mission.Variant == MissionVariant.WeenieRoundup)
+            {
+                _carryState.Configure(WeenieRequiredDeliveries);
+                if (_bowlObject != null) { _bowlObject.SetActive(true); PlaceObject(_bowlObject, _bowlPosition); SetActorState(_bowlObject, $"HOME BOWL 0/{WeenieRequiredDeliveries}", new Color(0.85f, 0.85f, 0.9f), 0.1f); }
+                if (_weenieMarkers != null)
+                    for (int i = 0; i < _weenieMarkers.Length; i++)
+                        if (_weenieMarkers[i] != null) { _weenieMarkers[i].transform.position = _weenieSpots[i]; _weenieMarkers[i].SetActive(true); }
+                if (_carriedMarkers != null)
+                    foreach (var marker in _carriedMarkers) if (marker != null) marker.SetActive(false);
+            }
+            else
+            {
+                SetWeenieRoundupActive(false);
+            }
             _lastLoggedObjective = string.Empty;
             LogPlaytestEvent("MissionStarted", $"{_mission.Name} / {ActiveModifierLabel} / {roundDuration:0}s");
             LogObjectiveIfChanged();
@@ -730,6 +761,7 @@ namespace CheddarAndCocoa.Game
             if (_mission.Variant == MissionVariant.SquirrelConspiracy) TickSquirrelConspiracy();
             else if (_mission.Variant == MissionVariant.EagleShadowPanic) TickThreatSweep();
             else if (_mission.Variant == MissionVariant.CoyotesFence) TickPatrolDefense();
+            else if (_mission.Variant == MissionVariant.WeenieRoundup) TickCarryRoundup();
             else TickSquirrel();
             TickPredator();
             TickTugProximity();
@@ -1008,6 +1040,199 @@ namespace CheddarAndCocoa.Game
                 PredatorObject.transform.position, target, Time.deltaTime * (_tuning.SquirrelMoveSpeed * 0.7f));
             if (Vector2.Distance(PredatorObject.transform.position, target) < 0.5f)
                 EvaluatePatrolReach();
+        }
+
+        // --- Weenie Roundup (carry to bowl) ---
+
+        private void BuildWeenieRoundupObjects()
+        {
+            _weenieMarkers = new GameObject[_weenieSpots.Length];
+            for (int i = 0; i < _weenieSpots.Length; i++)
+            {
+                var go = new GameObject($"LooseWeenie_{i}");
+                go.transform.position = _weenieSpots[i];
+                go.transform.localScale = new Vector3(1.1f, 0.5f, 1f);
+                var sr = go.AddComponent<SpriteRenderer>();
+                sr.sprite = _sprite;
+                sr.color = new Color(0.78f, 0.34f, 0.24f);
+                sr.sortingOrder = 4;
+                AddWorldLabel(go, "WEENIE", Vector3.up * 1.2f, 13, Color.white);
+                go.SetActive(false);
+                _weenieMarkers[i] = go;
+            }
+
+            int dogCount = _dogs != null ? _dogs.Length : 2;
+            _carriedMarkers = new GameObject[dogCount];
+            _dogCarrying = new bool[dogCount];
+            for (int i = 0; i < dogCount; i++)
+            {
+                var go = new GameObject($"CarriedWeenie_{i}");
+                go.transform.localScale = new Vector3(0.9f, 0.4f, 1f);
+                var sr = go.AddComponent<SpriteRenderer>();
+                sr.sprite = _sprite;
+                sr.color = new Color(0.85f, 0.4f, 0.28f);
+                sr.sortingOrder = 11;
+                go.SetActive(false);
+                _carriedMarkers[i] = go;
+            }
+
+            _bowlObject = new GameObject("HomeBowl");
+            _bowlObject.transform.localScale = new Vector3(3f, 2f, 1f);
+            var bowlSr = _bowlObject.AddComponent<SpriteRenderer>();
+            bowlSr.sprite = _sprite;
+            bowlSr.color = new Color(0.85f, 0.85f, 0.9f);
+            bowlSr.sortingOrder = 2;
+            AddWorldLabel(_bowlObject, "HOME BOWL", Vector3.up * 1.4f, 16, Color.white);
+            _bowlObject.SetActive(false);
+        }
+
+        private void SetWeenieRoundupActive(bool active)
+        {
+            if (_bowlObject != null) _bowlObject.SetActive(active);
+            if (_weenieMarkers != null)
+                for (int i = 0; i < _weenieMarkers.Length; i++)
+                    if (_weenieMarkers[i] != null) _weenieMarkers[i].SetActive(active);
+            if (_carriedMarkers != null)
+                foreach (var marker in _carriedMarkers)
+                    if (marker != null) marker.SetActive(false);
+        }
+
+        private int NearestActiveWeenie(Vector2 position)
+        {
+            int best = -1;
+            float bestDist = float.PositiveInfinity;
+            if (_weenieMarkers == null) return best;
+            for (int i = 0; i < _weenieMarkers.Length; i++)
+            {
+                if (_weenieMarkers[i] == null || !_weenieMarkers[i].activeSelf) continue;
+                float d = Vector2.Distance(position, _weenieMarkers[i].transform.position);
+                if (d < bestDist) { bestDist = d; best = i; }
+            }
+            return best;
+        }
+
+        private int FirstActiveWeenie()
+        {
+            if (_weenieMarkers == null) return -1;
+            for (int i = 0; i < _weenieMarkers.Length; i++)
+                if (_weenieMarkers[i] != null && _weenieMarkers[i].activeSelf) return i;
+            return -1;
+        }
+
+        private void PickupWeenie(int dogIndex, int markerIndex)
+        {
+            if (dogIndex < 0 || dogIndex >= _dogCarrying.Length || _dogCarrying[dogIndex]) return;
+            if (markerIndex < 0 || markerIndex >= _weenieMarkers.Length || !_weenieMarkers[markerIndex].activeSelf) return;
+            if (!_carryState.TryPickup()) return;
+
+            _weenieMarkers[markerIndex].SetActive(false);
+            _dogCarrying[dogIndex] = true;
+            if (_carriedMarkers[dogIndex] != null) _carriedMarkers[dogIndex].SetActive(true);
+            AddScore(ScoreEventCatalog.WeeniePickup.Points, ScoreEventCatalog.WeeniePickup.Label);
+            LastFeedback = FeedbackKind.PartnerRescue;
+            LastCue = $"{DogName(_dogs[dogIndex])} grabbed a weenie - carry it to the bowl!";
+            SetJuice(JuiceFeedbackKind.SuccessPop, ScoreEventCatalog.WeeniePickup.Label);
+            RequestAudioCue(ArenaFeedbackCatalog.SnackSockCollect);
+            LogPlaytestEvent("WeeniePickup", $"loose {_carryState.Loose}");
+            LogObjectiveIfChanged();
+        }
+
+        private void DeliverWeenie(int dogIndex)
+        {
+            if (dogIndex < 0 || dogIndex >= _dogCarrying.Length || !_dogCarrying[dogIndex]) return;
+
+            _dogCarrying[dogIndex] = false;
+            if (_carriedMarkers[dogIndex] != null) _carriedMarkers[dogIndex].SetActive(false);
+            _carryState.Deliver();
+            AddScore(ScoreEventCatalog.WeenieDelivered.Points, ScoreEventCatalog.WeenieDelivered.Label);
+            LastFeedback = FeedbackKind.LevelClear;
+            LastCue = $"{DogName(_dogs[dogIndex])} delivered a weenie to the bowl! ({_carryState.Delivered}/{WeenieRequiredDeliveries})";
+            SetActorState(_bowlObject, $"HOME BOWL {_carryState.Delivered}/{WeenieRequiredDeliveries}", new Color(0.6f, 1f, 0.7f), 0.2f);
+            SetJuice(JuiceFeedbackKind.SuccessPop, ScoreEventCatalog.WeenieDelivered.Label);
+            SpawnWorldPop(_bowlPosition, "DELIVERED!", new Color(0.55f, 1f, 0.45f));
+            RequestAudioCue(ArenaFeedbackCatalog.TugRescueSuccess);
+            RequestRumble("weenie_delivered", 0.24f, 0.45f, 0.16f);
+            LogPlaytestEvent("WeenieDelivered", $"{_carryState.Delivered}/{WeenieRequiredDeliveries}");
+
+            if (_carryState.ReadyToClear(WeenieRequiredDeliveries))
+            {
+                AddScore(ScoreEventCatalog.RoundupComplete.Points, ScoreEventCatalog.RoundupComplete.Label);
+                CheckClear();
+            }
+            else
+            {
+                LogObjectiveIfChanged();
+            }
+        }
+
+        private void DropWeenie(int dogIndex)
+        {
+            if (dogIndex < 0 || dogIndex >= _dogCarrying.Length || !_dogCarrying[dogIndex]) return;
+
+            _dogCarrying[dogIndex] = false;
+            if (_carriedMarkers[dogIndex] != null) _carriedMarkers[dogIndex].SetActive(false);
+            _carryState.Drop();
+
+            // The fumbled weenie bounces a couple units away (outside pickup range) so the dog has to
+            // chase it down again rather than instantly re-grabbing it at its feet.
+            Vector2 dropAt = (Vector2)_dogs[dogIndex].transform.position + new Vector2(WeeniePickupRange + 1f, 0f);
+            dropAt.x = Mathf.Clamp(dropAt.x, _bounds.xMin + 1f, _bounds.xMax - 1f);
+            for (int i = 0; i < _weenieMarkers.Length; i++)
+            {
+                if (_weenieMarkers[i] != null && !_weenieMarkers[i].activeSelf)
+                {
+                    _weenieMarkers[i].transform.position = dropAt;
+                    _weenieMarkers[i].SetActive(true);
+                    break;
+                }
+            }
+
+            AddScore(ScoreEventCatalog.WeenieDropped.Points, ScoreEventCatalog.WeenieDropped.Label);
+            LastFeedback = FeedbackKind.SquirrelStoleFood;
+            LastCue = $"{DogName(_dogs[dogIndex])} fumbled the weenie - go grab it again!";
+            SetJuice(JuiceFeedbackKind.WarningMiss, ScoreEventCatalog.WeenieDropped.Label);
+            LogPlaytestEvent("WeenieDropped", $"drops {_carryState.Drops}");
+            LogObjectiveIfChanged();
+        }
+
+        private void TickCarryRoundup()
+        {
+            if (_dogs == null || _dogCarrying == null) return;
+
+            for (int i = 0; i < _dogs.Length; i++)
+            {
+                if (_dogCarrying[i])
+                {
+                    if (_carriedMarkers[i] != null)
+                        _carriedMarkers[i].transform.position = _dogs[i].transform.position + Vector3.up * 0.6f;
+                    if (Vector2.Distance(_dogs[i].transform.position, _bowlPosition) <= BowlDeliverRange)
+                        DeliverWeenie(i);
+                }
+                else
+                {
+                    int marker = NearestActiveWeenie(_dogs[i].transform.position);
+                    if (marker >= 0 && Vector2.Distance(_dogs[i].transform.position, _weenieMarkers[marker].transform.position) <= WeeniePickupRange)
+                        PickupWeenie(i, marker);
+                }
+            }
+        }
+
+        public void ForceWeeniePickup(DogId dogId = DogId.Cheddar)
+        {
+            if (MissionActive() && _mission != null && _mission.Variant == MissionVariant.WeenieRoundup)
+                PickupWeenie(IndexOfDog(dogId), FirstActiveWeenie());
+        }
+
+        public void ForceWeenieDeliver(DogId dogId = DogId.Cheddar)
+        {
+            if (MissionActive() && _mission != null && _mission.Variant == MissionVariant.WeenieRoundup)
+                DeliverWeenie(IndexOfDog(dogId));
+        }
+
+        public void ForceWeenieDrop(DogId dogId = DogId.Cheddar)
+        {
+            if (MissionActive() && _mission != null && _mission.Variant == MissionVariant.WeenieRoundup)
+                DropWeenie(IndexOfDog(dogId));
         }
 
         private float NearestEagleCoverDistance(Vector2 position)
@@ -1300,6 +1525,13 @@ namespace CheddarAndCocoa.Game
                 progress = _patrolState.GapsRepaired + (_patrolState.FinalPressureComplete ? 1 : 0);
                 goal = CoyoteRequiredRepairs + 1;
                 mistakes = _patrolState.Breaches;
+            }
+            else if (_mission != null && _mission.Variant == MissionVariant.WeenieRoundup)
+            {
+                missionId = "weenie_roundup";
+                progress = _carryState.Delivered;
+                goal = WeenieRequiredDeliveries;
+                mistakes = _carryState.Drops;
             }
             else
             {
@@ -1599,6 +1831,11 @@ namespace CheddarAndCocoa.Game
                 if (_patrolState.FinalPressureComplete) EndRound(true);
                 return;
             }
+            if (_mission.Variant == MissionVariant.WeenieRoundup)
+            {
+                if (_carryState.ReadyToClear(WeenieRequiredDeliveries)) EndRound(true);
+                return;
+            }
 
             bool hasItems = BreakfastRecovered >= _mission.ItemGoal;
             bool hasPredator = !_mission.RequiresPredator || PredatorResolved;
@@ -1675,6 +1912,8 @@ namespace CheddarAndCocoa.Game
                 funny = MissionOutcomeSummaryBuilder.BuildThreatSweepSummary(_threatSweepState);
             else if (_mission != null && _mission.Variant == MissionVariant.CoyotesFence)
                 funny = MissionOutcomeSummaryBuilder.BuildPatrolSummary(_patrolState);
+            else if (_mission != null && _mission.Variant == MissionVariant.WeenieRoundup)
+                funny = MissionOutcomeSummaryBuilder.BuildCarrySummary(_carryState, WeenieRequiredDeliveries);
             else
                 funny = Outcome.ToString();
             return $"{funny}: {Score} - {EndRank}";
@@ -1724,6 +1963,12 @@ namespace CheddarAndCocoa.Game
                 if (_patrolState.FakeSnackActive) return "Ignore the fake snack lure - hold the fence";
                 if (_coyotePressureHeld) return "Coyote pinned - partner fill the weak spot now";
                 return $"Patrol fence gap {_patrolState.ActiveGapIndex + 1}: repairs {_patrolState.GapsRepaired}/{CoyoteRequiredRepairs}, breaches {_patrolState.Breaches}/{CoyoteMaxBreaches}";
+            }
+            if (_mission.Variant == MissionVariant.WeenieRoundup)
+            {
+                bool anyCarrying = _dogCarrying != null && System.Array.Exists(_dogCarrying, c => c);
+                if (anyCarrying) return $"Carry the weenie to the HOME BOWL ({_carryState.Delivered}/{WeenieRequiredDeliveries} delivered)";
+                return $"Round up the scattered weenies: {_carryState.Delivered}/{WeenieRequiredDeliveries} delivered, {_carryState.Loose} loose";
             }
             if (_squirrelTarget != null)
                 return _mission.SquirrelObjectiveText;
@@ -1821,6 +2066,7 @@ namespace CheddarAndCocoa.Game
                     if (kb.digit4Key.wasPressedThisFrame) { StartMission(MissionVariant.SquirrelConspiracy); return; }
                     if (kb.digit5Key.wasPressedThisFrame) { StartMission(MissionVariant.EagleShadowPanic); return; }
                     if (kb.digit6Key.wasPressedThisFrame) { StartMission(MissionVariant.CoyotesFence); return; }
+                    if (kb.digit7Key.wasPressedThisFrame) { StartMission(MissionVariant.WeenieRoundup); return; }
                     previous |= kb.upArrowKey.wasPressedThisFrame || kb.leftArrowKey.wasPressedThisFrame;
                     next |= kb.downArrowKey.wasPressedThisFrame || kb.rightArrowKey.wasPressedThisFrame || kb.tabKey.wasPressedThisFrame;
                     start |= kb.enterKey.wasPressedThisFrame || kb.spaceKey.wasPressedThisFrame;
@@ -1881,6 +2127,7 @@ namespace CheddarAndCocoa.Game
             else if (kb.digit4Key.wasPressedThisFrame) StartMission(MissionVariant.SquirrelConspiracy);
             else if (kb.digit5Key.wasPressedThisFrame) StartMission(MissionVariant.EagleShadowPanic);
             else if (kb.digit6Key.wasPressedThisFrame) StartMission(MissionVariant.CoyotesFence);
+            else if (kb.digit7Key.wasPressedThisFrame) StartMission(MissionVariant.WeenieRoundup);
         }
 
         private void ShowMissionSelect()
@@ -2038,6 +2285,7 @@ namespace CheddarAndCocoa.Game
             if (_bunnyCameoObject != null) _bunnyCameoObject.SetActive(active);
             if (!active || _mission == null || _mission.Variant != MissionVariant.EagleShadowPanic) SetEagleCoverMarkersActive(false);
             if (!active || _mission == null || _mission.Variant != MissionVariant.CoyotesFence) SetCoyoteGapMarkersActive(false);
+            if (!active || _mission == null || _mission.Variant != MissionVariant.WeenieRoundup) SetWeenieRoundupActive(false);
         }
 
         public static MissionDefinition BuildMissionDefinition(MissionVariant variant) =>
@@ -2275,6 +2523,63 @@ namespace CheddarAndCocoa.Game
                         ItemAccentColor = new Color(0.85f, 0.7f, 0.35f),
                         ItemSecondaryColor = new Color(0.2f, 0.14f, 0.06f),
                         ItemPopColor = new Color(0.95f, 0.8f, 0.35f)
+                    };
+                case MissionVariant.WeenieRoundup:
+                    return new MissionDefinition
+                    {
+                        Variant = MissionVariant.WeenieRoundup,
+                        Name = "Weenie Roundup",
+                        IntroPrompt = "Cheddar + Cocoa must round up every scattered weenie and carry them back to the home bowl together.",
+                        ReadyScoreLabel = "READY TO ROUND UP WEENIES",
+                        ItemRootName = "Scattered Weenies",
+                        ItemObjectName = "Loose Weenie",
+                        ItemWorldLabel = "Weenie!",
+                        ItemArrowLabel = "WEENIE",
+                        ItemCollectCueNoun = "a weenie",
+                        CollectObjectiveFormat = "Deliver weenies {0}/{1}",
+                        CollectedScoreLabel = "WEENIE DELIVERED",
+                        ItemScore = balance.ItemScore,
+                        SpawnedItemCount = balance.SpawnedItemCount,
+                        ItemGoal = balance.ItemGoal,
+                        RoundSeconds = balance.RoundSeconds,
+                        PawfectScore = balance.PawfectScore,
+                        HeroScore = balance.HeroScore,
+                        SurvivorScore = balance.SurvivorScore,
+                        UsesSquirrel = false,
+                        RequiresPredator = false,
+                        RequiresTug = false,
+                        MaxStolenFood = balance.MaxStolenFood,
+                        SquirrelPenalty = balance.SquirrelPenalty,
+                        SquirrelScareScore = balance.SquirrelScareScore,
+                        SquirrelObjectiveText = "Carry the weenies home",
+                        SquirrelStealingCue = "No squirrel here - just a lot of weenies to carry.",
+                        SquirrelStoleCue = "No squirrel here - mind the bowl.",
+                        SquirrelStealScoreLabel = "FUMBLED WEENIE",
+                        SquirrelScareScoreLabel = "WEENIE DELIVERED",
+                        SquirrelStealingActorLabel = "WEENIE LOOSE",
+                        SquirrelDroppedActorLabel = "WEENIE DELIVERED",
+                        SquirrelStoleActorLabel = "WEENIE FUMBLED",
+                        SquirrelMissPopLabel = "FUMBLE!",
+                        SquirrelStealJuiceLabel = "FUMBLED WEENIE!",
+                        SquirrelScareJuiceLabel = "WEENIE DELIVERED!",
+                        TugObjectiveText = "Carry weenies to the bowl",
+                        WaitingObjectiveText = "Round up the last weenies together",
+                        ClearObjectiveText = "Bowl is full - replay Weenie Roundup",
+                        ClearBannerPrefix = "BOWL FILLED!",
+                        ClearScoreLabel = "ROUNDUP COMPLETE",
+                        ReplayPrompt = "Press R / Enter / Start to replay Weenie Roundup",
+                        FailObjectiveText = "Mission failed - replay Weenie Roundup",
+                        GenericFailReason = "Needs faster weenie hauling before the next mealtime.",
+                        TimeFailReason = "The clock ran out before every weenie made it to the bowl.",
+                        StolenFailReason = "Too many weenies got fumbled in the long carry.",
+                        PredatorFailReason = "No predator here, just a lot of running.",
+                        PawfectClearReason = "Tiny haulers filled the bowl with zero fumbles - elite weenie logistics.",
+                        HeroClearReason = "Every weenie made it home with respectable carrying discipline.",
+                        BasicClearReason = "The bowl got filled, even if a few weenies hit the dirt first.",
+                        ItemColor = new Color(0.78f, 0.34f, 0.24f),
+                        ItemAccentColor = new Color(0.95f, 0.6f, 0.4f),
+                        ItemSecondaryColor = new Color(0.3f, 0.12f, 0.08f),
+                        ItemPopColor = new Color(1f, 0.6f, 0.4f)
                     };
                 case MissionVariant.SockPanic:
                     return new MissionDefinition
@@ -2623,6 +2928,7 @@ namespace CheddarAndCocoa.Game
             _bunnyCameoObject = MakeDraftBunnyCameo();
             BuildEagleCoverMarkers();
             BuildCoyoteGapMarkers();
+            BuildWeenieRoundupObjects();
             if (InteractionRangeIndicators != null)
             {
                 int offset = _dogs != null ? _dogs.Length : 0;

@@ -24,6 +24,17 @@ namespace CheddarAndCocoa.Game
             return "Keeping Watch";
         }
 
+        public static string BuildCarrySummary(CarryRoundupMissionState state, int required)
+        {
+            if (state.ReadyToClear(required))
+                return "Weenie Wranglers";
+
+            if (state.Drops > 0)
+                return "Butterpaws";
+
+            return "Still Rounding Up";
+        }
+
         public static string BuildPatrolSummary(PatrolDefenseMissionState state)
         {
             if (state.FinalPressureComplete)
