@@ -37,6 +37,7 @@ namespace CheddarAndCocoa.Dogs
         private SpriteRenderer _tail;
         private SpriteRenderer _marker;
         private SpriteRenderer _intentArrow;
+        private SpriteRenderer _authoredPose;
         private TextMesh _label;
         private Vector3 _baseScale;
         private Vector2 _lastIntentDir = Vector2.right;
@@ -52,6 +53,8 @@ namespace CheddarAndCocoa.Dogs
         public string IdentityLabel => _label != null ? _label.text : string.Empty;
         public string FacingIntentLabel => _lastIntentDir.x >= 0f ? "FacingRight" : "FacingLeft";
         public string LastMovementJuiceLabel { get; private set; } = string.Empty;
+        public bool UsesAuthoredPoseArt => _authoredPose != null && _authoredPose.sprite != null;
+        public string AuthoredPoseSpriteName => UsesAuthoredPoseArt ? _authoredPose.sprite.name : string.Empty;
         public string ArtDirectionSignature => _identity == null
             ? string.Empty
             : ArenaArtCatalog.Dog(_identity.Id).ArtDirectionSignature;
@@ -66,6 +69,7 @@ namespace CheddarAndCocoa.Dogs
             _art = ArenaArtCatalog.Dog(_identity.Id);
 
             BuildIdentityArt(sprite);
+            BuildAuthoredPoseArt();
             _dog.OnBark += OnBark;
             ApplyPose(Pose.Idle);
         }
@@ -118,6 +122,9 @@ namespace CheddarAndCocoa.Dogs
             if (CurrentPose == pose && _label != null && !string.IsNullOrEmpty(_label.text)) return;
             CurrentPose = pose;
 
+            if (_authoredPose != null)
+                _authoredPose.sprite = ArenaDogPoseSprites.For(_identity.Id, pose);
+
             if (_label != null)
             {
                 _label.text = $"{DogTitle()}\n{PoseCopy(pose)}";
@@ -132,7 +139,8 @@ namespace CheddarAndCocoa.Dogs
                 };
             }
 
-            if (_marker != null) _marker.enabled = pose == Pose.Bark || pose == Pose.Proud || pose == Pose.Rescued || pose == Pose.Stunned;
+            if (_marker != null) _marker.enabled = _authoredPose == null &&
+                (pose == Pose.Bark || pose == Pose.Proud || pose == Pose.Rescued || pose == Pose.Stunned);
         }
 
         private void AnimatePose(Pose pose)
@@ -145,6 +153,7 @@ namespace CheddarAndCocoa.Dogs
                 ? _identity.Tuning.runFeedbackSpeed
                 : 0.22f;
             if (velocity.magnitude > runFeedbackSpeed) _lastIntentDir = velocity.normalized;
+            if (_authoredPose != null) _authoredPose.flipX = _lastIntentDir.x < 0f;
 
             transform.localRotation = pose switch
             {
@@ -308,6 +317,23 @@ namespace CheddarAndCocoa.Dogs
             _label.alignment = TextAlignment.Center;
             _label.fontSize = labelSlot.FontSize;
             _label.color = labelSlot.Color;
+        }
+
+        private void BuildAuthoredPoseArt()
+        {
+            Sprite idle = ArenaDogPoseSprites.For(_identity.Id, Pose.Idle);
+            if (idle == null) return;
+
+            foreach (var renderer in GetComponentsInChildren<SpriteRenderer>(true))
+                renderer.enabled = false;
+
+            var go = new GameObject($"{_identity.Id}AuthoredPose");
+            go.transform.SetParent(transform);
+            go.transform.localPosition = new Vector3(0f, -0.12f, -0.2f);
+            go.transform.localScale = new Vector3(0.8f, 1.65f, 1f);
+            _authoredPose = go.AddComponent<SpriteRenderer>();
+            _authoredPose.sprite = idle;
+            _authoredPose.sortingOrder = 30;
         }
 
         private SpriteRenderer MakePart(PartSlot part, Sprite sprite)

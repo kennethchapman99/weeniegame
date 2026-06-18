@@ -36,8 +36,9 @@ readability and layers small imported badges behind/near them:
 
 Still placeholder:
 
-- Dog idle/run/bark/tug/stunned/rescued/proud/sad states are still generated pieces plus text labels,
-  not cut transparent pose sprites.
+- Dog idle/run/bark/tug/stunned/rescued/proud/sad states now use cropped pose-atlas sprites with
+  keyed transparency. Generated identity pieces remain as a fallback and collision/readability
+  contract; a future final export should replace the runtime background key with native alpha.
 - Squirrel, eagle/coyote predator, rope, weenie/snack/sock, score pops, range rings, and objective
   arrows still rely on generated geometry/text for the primary gameplay read.
 - The bunny is decorative only and has no mission logic.
