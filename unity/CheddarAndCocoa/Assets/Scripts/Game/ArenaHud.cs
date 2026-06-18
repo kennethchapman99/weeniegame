@@ -161,8 +161,13 @@ namespace CheddarAndCocoa.Game
             GUI.Label(new Rect(box.x + 40, box.y + 116, w - 80, 72), _game.SessionRanksEarnedLabel, _small);
             GUI.Label(new Rect(box.x + 40, box.y + 188, w - 80, 28), "Enter / Start / M returns to mission select for another tiny dog crisis.", _mid);
 
-            if (GUI.Button(new Rect(box.x + w * 0.5f - 100, box.y + h - 44, 200, 30), "Mission Select"))
+            if (GUI.Button(new Rect(box.x + w * 0.5f - 210, box.y + h - 44, 200, 30), "Mission Select"))
                 _game.ReturnToMissionSelect();
+            if (GUI.Button(new Rect(box.x + w * 0.5f + 10, box.y + h - 44, 200, 30), "New Session"))
+            {
+                _game.ResetSession();
+                _game.ReturnToMissionSelect();
+            }
         }
 
         private void DrawUiKitAccent(Rect rect)

@@ -445,6 +445,23 @@ namespace CheddarAndCocoa.Game
             ShowMissionSelect();
         }
 
+        /// <summary>Clear all session-accumulated stats for a fresh couch sitting.</summary>
+        public void ResetSession()
+        {
+            SessionMissionsPlayed = 0;
+            SessionTotalScore = 0;
+            SessionStarsEarned = 0;
+            SessionFlawlessClears = 0;
+            SessionUniqueMissionsCompleted = 0;
+            _sessionRanks.Clear();
+            System.Array.Clear(_sessionCompletedMissions, 0, _sessionCompletedMissions.Length);
+            System.Array.Clear(_sessionFailuresByMission, 0, _sessionFailuresByMission.Length);
+            System.Array.Clear(_sessionBestByMission, 0, _sessionBestByMission.Length);
+            SessionSummaryLabel = "Session Summary: no missions played yet.";
+            SessionRanksEarnedLabel = "Ranks: none yet.";
+            LogPlaytestEvent("SessionReset", "fresh session");
+        }
+
         public void ChooseNextMission()
         {
             RequestAudioCue(ArenaFeedbackCatalog.UiReplayNextSelect);
