@@ -82,6 +82,10 @@ Crown`, Cocoa becomes `Queen of the Yard`, and equal contributions produce a qui
 Flawless copy uses the same contribution result, reinforcing their distinct chaos/steady identities
 without adding mid-mission UI noise.
 
+Short-lived world pops for scores, rescues, tug results, safe hides, misses, and objective beats now
+scale with strategic camera zoom (capped at `3.2x`). Split players can still read what just happened
+without changing collision sizes or the close-camera presentation.
+
 1. Open `unity/CheddarAndCocoa` in Unity 6 LTS, open `Assets/Scenes/ArenaScene.unity`, and press Play. `ArenaScene` is also the scripted local build entry point.
 2. The mission picker appears immediately. Use **Up/Down** or gamepad **D-pad** to highlight a mission, then press **Enter**, **Space**, gamepad **Start**, or gamepad **South** to start. Keyboard **1-9 and 0** also starts Backyard Rescue, Snack Heist, Sock Panic, Squirrel Conspiracy, Eagle Shadow Panic, Coyotes at the Fence, Weenie Roundup, Scent Search, Thunderstorm Comfort, Mark the Yard, Walkies on the Leash, or Car Ride Balance (arrow-select) directly.
    - All 12 missions fit in an adaptive two-column picker down to a 480-pixel-tall window.

@@ -178,6 +178,26 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(1f, cheddar.TravelAssistMultiplier);
         }
 
+        [UnityTest]
+        public IEnumerator StrategicZoom_KeepsActionWorldPopsReadable()
+        {
+            yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
+            yield return null;
+            yield return null;
+
+            Camera.main.orthographicSize = 34f;
+            var go = new GameObject("StrategicWorldPopTest");
+            var label = go.AddComponent<TextMesh>();
+            label.text = "+200 TUG COMPLETE";
+            var pop = go.AddComponent<MissionWorldPop>();
+            pop.Begin(label);
+            yield return null;
+
+            Assert.Greater(pop.StrategicScale, 1f);
+            Assert.Greater(go.transform.localScale.x, 1f);
+            Object.Destroy(go);
+        }
+
         private static void AssertSpatialSpread(Vector2[] points, float minimumWidth, string label)
         {
             Assert.IsNotEmpty(points);
