@@ -217,10 +217,21 @@ namespace CheddarAndCocoa.Bootstrap
                 Prop(root, $"Flower_{i}", F(-0.92f, fy), new Vector2(0.7f, 0.7f), i % 2 == 0 ? Hex("#d8557f") : Hex("#e8c24a"), -7);
             }
 
-            // Bush cover clumps scattered for "hide here" reads (deterministic positions).
-            var bushes = new[] { F(-0.2f, -0.55f), F(0.1f, 0.4f), F(-0.4f, 0.05f), F(0.35f, -0.1f), F(0.0f, -0.05f) };
+            // Bush cover clumps. The first three sit on the Eagle Shadow "HIDE HERE" cover zones
+            // (GameManager._eagleCoverZones) so the hiding spots read as real backyard cover; the
+            // rest are scatter dressing. Decorative only — no colliders.
+            var bushes = new[]
+            {
+                new Vector2(-14f, -8f), new Vector2(14f, -8f), new Vector2(0f, 9f),
+                F(-0.4f, 0.05f), F(0.35f, -0.1f), F(0.0f, -0.05f),
+            };
             for (int i = 0; i < bushes.Length; i++)
-                Prop(root, $"Bush_{i}", bushes[i], new Vector2(2.6f, 1.9f), Hex("#356b2a"), -7);
+            {
+                bool coverBush = i < 3;
+                Prop(root, coverBush ? $"CoverBush_{i}" : $"Bush_{i}", bushes[i],
+                    coverBush ? new Vector2(4.2f, 3.2f) : new Vector2(2.6f, 1.9f),
+                    coverBush ? Hex("#2f6b27") : Hex("#356b2a"), -7);
+            }
 
             // Decorative fence posts just inside the walls so the boundary reads as a backyard fence.
             BuildFenceLine(root, hw, hh);
