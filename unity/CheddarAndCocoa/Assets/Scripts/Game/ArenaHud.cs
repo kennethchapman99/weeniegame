@@ -22,7 +22,11 @@ namespace CheddarAndCocoa.Game
             if (_game == null) return;
             EnsureStyles();
 
-            if (_game.MissionSelectVisible)
+            if (_game.IsPaused)
+            {
+                DrawPauseMenu();
+            }
+            else if (_game.MissionSelectVisible)
             {
                 DrawMissionSelect();
             }
@@ -57,6 +61,23 @@ namespace CheddarAndCocoa.Game
                 GUI.Label(new Rect(0, 236, Screen.width, 34), _game.MissionBanner, _big);
 
             if (_game.IsGameOver || _game.IsLevelClear) DrawEndCard();
+        }
+
+        private void DrawPauseMenu()
+        {
+            DrawGameplayHud();
+            float w = 520f, h = 250f;
+            var box = new Rect((Screen.width - w) * 0.5f, (Screen.height - h) * 0.5f, w, h);
+            GUI.Box(box, GUIContent.none);
+            GUI.Label(new Rect(box.x, box.y + 20f, w, 42f), "Pawsed", _big);
+            GUI.Label(new Rect(box.x + 30f, box.y + 68f, w - 60f, 28f),
+                "Escape / Start resumes the tiny dog emergency.", _mid);
+            if (GUI.Button(new Rect(box.x + 160f, box.y + 108f, 200f, 32f), "Resume"))
+                _game.TogglePause();
+            if (GUI.Button(new Rect(box.x + 160f, box.y + 148f, 200f, 32f), "Mission Select"))
+                _game.ReturnToMissionSelect();
+            if (GUI.Button(new Rect(box.x + 160f, box.y + 188f, 200f, 32f), "Quit Game"))
+                _game.RequestQuit();
         }
 
         private void DrawEndCard()

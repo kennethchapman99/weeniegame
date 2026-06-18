@@ -281,6 +281,8 @@ Mission flow controls:
 
 - Mission select: **Up/Down** or gamepad **D-pad** changes mission; **Enter**, **Space**, gamepad **Start**, or gamepad **South** starts; **1-9 and 0** starts a mission directly.
 - During a run: keyboard **1-9 and 0** still restarts the arena into Backyard Rescue, Snack Heist, Sock Panic, Squirrel Conspiracy, Eagle Shadow Panic, Coyotes at the Fence, Weenie Roundup, Scent Search, Thunderstorm Comfort, Mark the Yard, Walkies on the Leash, or Car Ride Balance (arrow-select) for quick manual comparison.
+- During a run: **Escape** or gamepad **Start** pauses. The pause card can resume, return safely to
+  mission select, or quit the packaged player; pausing freezes mission time and dog input.
 - End screen: **R / Enter / Start / South** replays; **N / Right Arrow / Right Shoulder / D-pad Right** advances; **M / Escape / East / D-pad Left** returns to mission select.
 - Session Summary: **Enter**, **Space**, **Start**, **South**, **M**, or **Escape** returns to mission select.
 - Playtest Mode: click the bottom-left **Playtest Mode: On/Off** button or press **F1** / **`**. It toggles a compact top-right diagnostics overlay and does not pause or block normal play.

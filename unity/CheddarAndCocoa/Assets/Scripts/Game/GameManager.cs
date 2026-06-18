@@ -236,6 +236,8 @@ namespace CheddarAndCocoa.Game
         public int RumbleRequestCount => _rumbleRequests.Count;
         public bool MusicLoopReady => _music != null && _music.clip != null && _music.loop;
         public bool MusicMuted => _music == null || _music.mute;
+        public bool IsPaused { get; private set; }
+        public bool QuitRequested { get; private set; }
         public FeedbackKind LastFeedback { get; private set; } = FeedbackKind.Intro;
         public JuiceFeedbackKind LastJuiceFeedback { get; private set; } = JuiceFeedbackKind.None;
         public string LastJuiceLabel { get; private set; } = string.Empty;
@@ -426,9 +428,25 @@ namespace CheddarAndCocoa.Game
 
         public void StartMission(MissionVariant variant)
         {
+            SetPaused(false);
             SelectMission(variant);
             _mission = BuildMissionDefinition(variant, _tuning);
             BeginRound();
+        }
+
+        public void TogglePause()
+        {
+            if (IsPaused) SetPaused(false);
+            else if (MissionActive()) SetPaused(true);
+        }
+
+        public void RequestQuit()
+        {
+            QuitRequested = true;
+            LogPlaytestEvent("Quit", "requested");
+#if !UNITY_EDITOR
+            Application.Quit();
+#endif
         }
 
         public void SelectMission(MissionVariant variant)
@@ -464,6 +482,7 @@ namespace CheddarAndCocoa.Game
 
         public void ReturnToMissionSelect()
         {
+            SetPaused(false);
             RequestAudioCue(ArenaFeedbackCatalog.UiReplayNextSelect);
             ShowMissionSelect();
         }
@@ -2860,6 +2879,19 @@ namespace CheddarAndCocoa.Game
             var kb = Keyboard.current;
             var pad = Gamepad.current;
 
+            bool pausePressed = (kb != null && kb.escapeKey.wasPressedThisFrame) ||
+                                (pad != null && pad.startButton.wasPressedThisFrame);
+            if (IsPaused)
+            {
+                if (pausePressed) SetPaused(false);
+                return;
+            }
+            if (MissionActive() && pausePressed)
+            {
+                SetPaused(true);
+                return;
+            }
+
             if (kb != null && (kb.f1Key.wasPressedThisFrame || kb.backquoteKey.wasPressedThisFrame))
             {
                 TogglePlaytestOverlay();
@@ -3110,6 +3142,24 @@ namespace CheddarAndCocoa.Game
             {
                 if (_inputs[i] != null) _inputs[i].enabled = false;
             }
+        }
+
+        private void SetPaused(bool paused)
+        {
+            if (IsPaused == paused) return;
+            IsPaused = paused;
+            Time.timeScale = paused ? 0f : 1f;
+            if (paused)
+            {
+                DisableDogInputs();
+                StopRumble();
+            }
+            else if (MissionActive() && _inputs != null)
+            {
+                foreach (var input in _inputs)
+                    if (input != null) input.enabled = true;
+            }
+            LogPlaytestEvent("Pause", paused ? "paused" : "resumed");
         }
 
         private void SetMissionObjectsActive(bool active)
@@ -4316,6 +4366,7 @@ namespace CheddarAndCocoa.Game
 
         private void OnDestroy()
         {
+            Time.timeScale = 1f;
             StopRumble();
             if (_dogs == null) return;
             foreach (var dog in _dogs)

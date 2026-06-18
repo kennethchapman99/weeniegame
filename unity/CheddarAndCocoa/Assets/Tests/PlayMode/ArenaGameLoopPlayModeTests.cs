@@ -721,6 +721,37 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(0, game.RumbleRequestCount);
         }
 
+        [UnityTest]
+        public IEnumerator Pause_DisablesPlay_AndAlwaysRestoresTimeScale()
+        {
+            yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
+            yield return null;
+            yield return null;
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            Assert.IsNotNull(game);
+            game.StartMission(GameManager.MissionVariant.BackyardRescue);
+            yield return null;
+
+            game.TogglePause();
+            Assert.IsTrue(game.IsPaused);
+            Assert.AreEqual(0f, Time.timeScale);
+            foreach (var input in Object.FindObjectsByType<GamepadPlayerInput>(FindObjectsSortMode.None))
+                Assert.IsFalse(input.enabled);
+
+            game.TogglePause();
+            Assert.IsFalse(game.IsPaused);
+            Assert.AreEqual(1f, Time.timeScale);
+            foreach (var input in Object.FindObjectsByType<GamepadPlayerInput>(FindObjectsSortMode.None))
+                Assert.IsTrue(input.enabled);
+
+            game.TogglePause();
+            game.ReturnToMissionSelect();
+            Assert.IsFalse(game.IsPaused);
+            Assert.AreEqual(1f, Time.timeScale);
+            Assert.IsTrue(game.MissionSelectVisible);
+        }
+
 
         [UnityTest]
         public IEnumerator MissionFlow_Select_StartsEveryMission_AndEndActionsNavigate()
