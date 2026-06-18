@@ -142,7 +142,9 @@ namespace CheddarAndCocoa.Game
             string prefix = selected ? "> " : "  ";
             string key = index < 9 ? (index + 1).ToString() : "0";
             var def = GameManager.BuildMissionDefinition(variant);
-            GUI.Label(new Rect(box.x + 40, y, 250, 26), $"{prefix}{key}. {def.Name}", selected ? _hud : _mid);
+            int best = _game.BestScoreForMission(variant);
+            string bestTag = best > 0 ? $"  (best {best})" : "";
+            GUI.Label(new Rect(box.x + 40, y, 250, 26), $"{prefix}{key}. {def.Name}{bestTag}", selected ? _hud : _mid);
             GUI.Label(new Rect(box.x + 296, y + 2, 360, 24), def.IntroPrompt, _small);
             if (GUI.Button(new Rect(box.x + box.width - 96, y, 80, 26), "Start"))
                 _game.StartMission(variant);
