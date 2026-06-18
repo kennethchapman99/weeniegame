@@ -1462,6 +1462,9 @@ namespace CheddarAndCocoa.Game
             if (_panic == null || _dogs == null || _dogs.Length < 2) return;
 
             _panic.Step(_dogs[0].transform.position, _dogs[1].transform.position, Time.deltaTime);
+            if (Vector2.Distance(_dogs[0].transform.position, _dogs[1].transform.position) <= _panic.CuddleRadius)
+                for (int i = 0; i < DogFeedback.Length; i++)
+                    if (DogFeedback[i] != null) DogFeedback[i].ShowComfort();
             if (_panic.Maxed != null) { EndRound(false); return; }
 
             if (Time.time >= _nextThunderAt)
@@ -1478,6 +1481,8 @@ namespace CheddarAndCocoa.Game
             // Cheddar (chaos puppy) spooks harder than Cocoa (veteran queen).
             _panic.AddSpike(DogId.Cheddar, 0.26f);
             _panic.AddSpike(DogId.Cocoa, 0.16f);
+            for (int i = 0; i < DogFeedback.Length; i++)
+                if (DogFeedback[i] != null) DogFeedback[i].ShowPanic(); // both pups flinch at the clap
             RequestAudioCue(ArenaFeedbackCatalog.ThreatWarning);
             RequestRumble("thunderclap", 0.3f, 0.55f, 0.2f);
             SpawnWorldPop(new Vector2(0f, _bounds.yMax - 2f), "BOOM!", new Color(0.8f, 0.85f, 1f));

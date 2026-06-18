@@ -121,6 +121,26 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(1, game.MissionReplayCount);
         }
 
+        [UnityTest]
+        public IEnumerator ThunderstormComfort_Thunderclap_MakesDogsFlinch()
+        {
+            yield return LoadArena();
+            var game = _game;
+
+            game.StartMission(GameManager.MissionVariant.ThunderstormComfort);
+            yield return null;
+
+            // Keep the dogs apart so the huddle-comfort pose doesn't override the flinch.
+            _cheddar.transform.position = new Vector3(-12f, 0f, 0f);
+            _cocoa.transform.position = new Vector3(12f, 0f, 0f);
+
+            game.ForceThunderclap();
+            yield return null;
+
+            Assert.AreEqual(DogReadabilityFeedback.Pose.Sad, game.DogFeedback[0].CurrentPose,
+                "Dogs should visibly flinch (Sad pose) at a thunderclap.");
+        }
+
         private IEnumerator LoadArena()
         {
             _game = null;

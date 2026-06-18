@@ -75,6 +75,8 @@ namespace CheddarAndCocoa.Dogs
         public void ShowProudBrief() => ForcePose(Pose.Proud, 1.1f);
         public void ShowProud() => ForcePose(Pose.Proud, 999f);
         public void ShowSad() => ForcePose(Pose.Sad, 999f);
+        public void ShowPanic() => ForcePose(Pose.Sad, 0.6f);     // brief flinch (e.g. a thunderclap)
+        public void ShowComfort() => ForcePose(Pose.Proud, 0.5f); // brief reassurance while huddling
         public void ClearMissionPose() => _forcedPoseUntil = 0f;
 
         private void OnDestroy()
