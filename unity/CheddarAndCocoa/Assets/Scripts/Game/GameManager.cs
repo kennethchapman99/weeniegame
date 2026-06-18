@@ -1550,7 +1550,7 @@ namespace CheddarAndCocoa.Game
                     return new MissionDefinition
                     {
                         Variant = MissionVariant.SquirrelConspiracy,
-                        Name = "Squirrel Conspiracy",
+                        Name = "The Great Backyard Squirrel Conspiracy",
                         IntroPrompt = "Cheddar + Cocoa must herd the suspicious squirrel, reveal the hidden stash, and crack the backyard conspiracy.",
                         ReadyScoreLabel = "READY TO INVESTIGATE SQUIRRELS",
                         ItemRootName = "Conspiracy Clues",
