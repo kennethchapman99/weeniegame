@@ -67,12 +67,14 @@ namespace CheddarAndCocoa.Game
             {
                 parts.Add(new PartSlot("CheddarChaosTuft", new Color(1f, 0.88f, 0.22f), new Vector3(0.52f, 0.54f, -0.08f), new Vector3(0.14f, 0.24f, 1f), 20));
                 parts.Add(new PartSlot("CheddarMischiefFlash", new Color(1f, 0.32f, 0.08f), new Vector3(-0.18f, 0.25f, -0.04f), new Vector3(0.34f, 0.12f, 1f), 13));
+                parts.Add(new PartSlot("CheddarChaosBolt", new Color(1f, 0.98f, 0.12f), new Vector3(-0.38f, 0.36f, -0.07f), new Vector3(0.16f, 0.34f, 1f), 20));
             }
             else
             {
                 parts.Add(new PartSlot("CocoaQueenSpotA", new Color(0.08f, 0.035f, 0.02f), new Vector3(-0.2f, 0.2f, -0.04f), new Vector3(0.26f, 0.22f, 1f), 13));
                 parts.Add(new PartSlot("CocoaQueenSpotB", new Color(0.74f, 0.47f, 0.28f), new Vector3(-0.48f, -0.04f, -0.04f), new Vector3(0.22f, 0.18f, 1f), 13));
-                parts.Add(new PartSlot("CocoaQueenCrown", new Color(1f, 0.86f, 0.18f), new Vector3(0.46f, 0.58f, -0.08f), new Vector3(0.34f, 0.12f, 1f), 20));
+                parts.Add(new PartSlot("CocoaQueenSpotC", new Color(0.96f, 0.84f, 0.64f), new Vector3(0.26f, -0.28f, -0.05f), new Vector3(0.18f, 0.16f, 1f), 14));
+                parts.Add(new PartSlot("CocoaQueenCrown", new Color(1f, 0.86f, 0.18f), new Vector3(0.46f, 0.6f, -0.08f), new Vector3(0.42f, 0.16f, 1f), 20));
             }
 
             return new DogVisualSlot(

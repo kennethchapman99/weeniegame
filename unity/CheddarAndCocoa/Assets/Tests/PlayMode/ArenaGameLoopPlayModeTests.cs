@@ -47,7 +47,9 @@ namespace CheddarAndCocoa.Tests
             Assert.That(ArenaArtCatalog.Dog(DogId.Cheddar).Title, Does.Contain("CHEDDAR"));
             Assert.That(ArenaArtCatalog.Dog(DogId.Cocoa).Title, Does.Contain("COCOA"));
             Assert.That(ArenaArtCatalog.DogPartNames(DogId.Cheddar), Does.Contain("CheddarRedCollar"));
+            Assert.That(ArenaArtCatalog.DogPartNames(DogId.Cheddar), Does.Contain("CheddarChaosBolt"));
             Assert.That(ArenaArtCatalog.DogPartNames(DogId.Cocoa), Does.Contain("CocoaTealCollar"));
+            Assert.That(ArenaArtCatalog.DogPartNames(DogId.Cocoa), Does.Contain("CocoaQueenSpotC"));
             Assert.That(ArenaArtCatalog.ActorPartNames(ArenaArtCatalog.ActorKind.Squirrel), Does.Contain("SquirrelFlagTail"));
             Assert.That(ArenaArtCatalog.ActorPartNames(ArenaArtCatalog.ActorKind.Predator), Does.Contain("PredatorWarningEyeA"));
             Assert.That(ArenaArtCatalog.ActorPartNames(ArenaArtCatalog.ActorKind.Rope), Does.Contain("RopeStripeA"));
@@ -381,6 +383,7 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(GameManager.FeedbackKind.PredatorHuddle, game.LastFeedback);
             Assert.That(game.ObjectiveLabel, Does.Contain("Huddle + bark"));
             Assert.That(game.PredatorObject.GetComponent<MissionActorFeedback>().Label, Does.Contain("HUDDLE"));
+            Assert.That(game.PredatorObject.GetComponent<MissionActorFeedback>().Label, Does.Contain("DOUBLE BARK"));
             Assert.That(game.ObjectiveArrows[0].Label, Does.Contain("HUDDLE + BARK"));
             cocoa.transform.position = cheddar.transform.position + Vector3.right;
             scoreBefore = game.Score;
@@ -393,6 +396,7 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(GameManager.FeedbackKind.UnitedBark, game.LastFeedback);
             Assert.AreEqual(GameManager.JuiceFeedbackKind.SuccessPop, game.LastJuiceFeedback);
             Assert.That(game.LastJuiceLabel, Does.Contain("PREDATOR YEETED"));
+            Assert.That(game.PredatorObject.GetComponent<MissionActorFeedback>().Label, Does.Contain("DOUBLE WOOF"));
 
             // Failed predator attack stuns/grabs, then the partner rescues by coming close and barking.
             game.Restart();
@@ -407,6 +411,7 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual("-150 PREDATOR HIT", game.LastScorePopLabel);
             Assert.AreEqual(GameManager.JuiceFeedbackKind.WarningMiss, game.LastJuiceFeedback);
             Assert.IsTrue(cheddar.Mode == MovementMode.Stunned || cocoa.Mode == MovementMode.Stunned);
+            Assert.That(game.PredatorObject.GetComponent<MissionActorFeedback>().Label, Does.Contain("PARTNER BARK"));
             Assert.IsTrue(cheddarFeedback.CurrentPose == DogReadabilityFeedback.Pose.Stunned ||
                           cocoaFeedback.CurrentPose == DogReadabilityFeedback.Pose.Stunned);
             Assert.IsTrue(game.ObjectiveArrows[0].Label.Contains("BARK RESCUE") ||
@@ -443,7 +448,7 @@ namespace CheddarAndCocoa.Tests
             cocoa.transform.position = Vector3.right * 4f;
             yield return null;
             Assert.AreEqual(GameManager.FeedbackKind.TugNeedsPartner, game.LastFeedback);
-            Assert.That(game.RopeObject.GetComponent<MissionActorFeedback>().Label, Does.Contain("WAITING"));
+            Assert.That(game.RopeObject.GetComponent<MissionActorFeedback>().Label, Does.Contain("NEEDS BOTH DOGS"));
             cheddar.transform.position = Vector3.zero;
             cocoa.transform.position = Vector3.right * 0.5f;
             guard = 0f;
@@ -455,7 +460,7 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(GameManager.FeedbackKind.TugTogether, game.LastFeedback);
             Assert.AreEqual(GameManager.JuiceFeedbackKind.SuccessPop, game.LastJuiceFeedback);
             Assert.That(game.LastJuiceLabel, Does.Contain("TUG POP"));
-            Assert.That(game.RopeObject.GetComponent<MissionActorFeedback>().Label, Does.Contain("COMPLETE"));
+            Assert.That(game.RopeObject.GetComponent<MissionActorFeedback>().Label, Does.Contain("TEAM CHOMP"));
             Assert.IsTrue(cheddarFeedback.CurrentPose == DogReadabilityFeedback.Pose.Tug ||
                           cocoaFeedback.CurrentPose == DogReadabilityFeedback.Pose.Tug);
 

@@ -445,7 +445,7 @@ Use this after any placeholder-art, authored-art, or sprite import change:
 
 - Cheddar and Cocoa still read as different long, low dachshunds at gameplay zoom without relying
   only on text labels.
-- Cheddar keeps golden/red chaos reads; Cocoa keeps chocolate/teal spot-queen reads.
+- Cheddar keeps golden/red chaos reads, including the current generated chaos tuft/flash/bolt; Cocoa keeps chocolate/teal spot-queen reads, including the current generated cream chest, extra spot, and larger crown marker.
 - Dog pose states are still distinct: idle, run, bark, tug, stunned, rescued, proud, sad.
 - Bark ring/text, objective arrows, score pops, and playtest overlay remain readable but do not hide
   the dogs or core mission objects.
@@ -456,6 +456,11 @@ Use this after any placeholder-art, authored-art, or sprite import change:
   and rope.
 - Squirrel, predator, and rope expose their expected replacement slots from
   `ArenaArtCatalog` and keep their current role reads: thief, threat, shared tug prop.
+- Predator labels now explicitly say **SHADOW! HUDDLE + DOUBLE BARK!** during warning,
+  **YOINKED [DOG] - PARTNER BARK!** during rescue pressure, and **DOUBLE WOOF YEETED SHADOW**
+  after success. Rope labels now call out **ROPE NEEDS BOTH DOGS**, **BOTH DOGS TUGGING X%**, and
+  **ROPE COMPLETE! TEAM CHOMP!** so a silent observer can verify huddle, rescue, and tug intent
+  without opening the inspector.
 - Mission select, end actions, and session summary remain legible with placeholder IMGUI styling.
 
 ## Known limitations
