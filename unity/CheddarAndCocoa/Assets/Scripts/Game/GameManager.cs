@@ -1231,6 +1231,7 @@ namespace CheddarAndCocoa.Game
 
             _weenieMarkers[markerIndex].SetActive(false);
             _dogCarrying[dogIndex] = true;
+            CreditDog(dogIndex);
             if (_carriedMarkers[dogIndex] != null) _carriedMarkers[dogIndex].SetActive(true);
             AddScore(ScoreEventCatalog.WeeniePickup.Points, ScoreEventCatalog.WeeniePickup.Label);
             LastFeedback = FeedbackKind.PartnerRescue;
@@ -1792,6 +1793,7 @@ namespace CheddarAndCocoa.Game
             }
 
             _threatSweepState.CompleteRescue();
+            CreditDog(dogIndex);
             AddScore(ScoreEventCatalog.ToyRescued.Points, ScoreEventCatalog.ToyRescued.Label);
             LastFeedback = FeedbackKind.PartnerRescue;
             LastCue = $"{DogName(_dogs[dogIndex])} rescued the toy! Now form the united-front bark circle.";
@@ -1869,6 +1871,7 @@ namespace CheddarAndCocoa.Game
             }
 
             _patrolState.AddRepair();
+            CreditDog(dogIndex);
             _coyotePressureHeld = false;
             _patrolState.SelectGap((_patrolState.ActiveGapIndex + 1) % FenceGapCount);
             _fenceGapPosition = _fenceGaps[_patrolState.ActiveGapIndex % _fenceGaps.Length];
