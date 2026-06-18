@@ -350,6 +350,8 @@ namespace CheddarAndCocoa.Game
         private float _nextZoomiesPulseAt;
         private int _selectedMissionIndex;
         private readonly bool[] _sessionCompletedMissions = new bool[MissionOrder.Length];
+        private readonly bool[] _sessionClearedMissions = new bool[MissionOrder.Length];
+        private readonly bool[] _sessionFlawlessMissions = new bool[MissionOrder.Length];
         private readonly int[] _sessionFailuresByMission = new int[MissionOrder.Length];
         private readonly int[] _sessionBestByMission = new int[MissionOrder.Length];
         private bool _roundResultRecorded;
@@ -524,6 +526,8 @@ namespace CheddarAndCocoa.Game
             SessionUniqueMissionsCompleted = 0;
             _sessionRanks.Clear();
             System.Array.Clear(_sessionCompletedMissions, 0, _sessionCompletedMissions.Length);
+            System.Array.Clear(_sessionClearedMissions, 0, _sessionClearedMissions.Length);
+            System.Array.Clear(_sessionFlawlessMissions, 0, _sessionFlawlessMissions.Length);
             System.Array.Clear(_sessionFailuresByMission, 0, _sessionFailuresByMission.Length);
             System.Array.Clear(_sessionBestByMission, 0, _sessionBestByMission.Length);
             SessionSummaryLabel = "Session Summary: no missions played yet.";
@@ -624,6 +628,24 @@ namespace CheddarAndCocoa.Game
         {
             int index = IndexOfMission(variant);
             return index >= 0 && index < _sessionBestByMission.Length ? _sessionBestByMission[index] : 0;
+        }
+
+        public string MissionSelectStatusFor(MissionVariant variant)
+        {
+            int index = IndexOfMission(variant);
+            if (index < 0 || !_sessionCompletedMissions[index]) return "NEW";
+
+            string result = _sessionFlawlessMissions[index]
+                ? "FLAWLESS"
+                : _sessionClearedMissions[index] ? "CLEARED" : "RETRY";
+            return $"{result} • BEST {_sessionBestByMission[index]}";
+        }
+
+        public string MissionSelectDetailsFor(MissionVariant variant)
+        {
+            var mission = BuildMissionDefinition(variant, _tuning);
+            string goal = mission.ItemGoal > 0 ? $"{mission.ItemGoal} {mission.ItemRootName}" : "team objective";
+            return $"{mission.RoundSeconds:0}s • {goal}";
         }
 
         public int FailuresForMission(MissionVariant variant)
@@ -3080,6 +3102,8 @@ namespace CheddarAndCocoa.Game
             {
                 bool playedBefore = _sessionCompletedMissions[missionIndex];
                 _sessionCompletedMissions[missionIndex] = true;
+                if (Outcome == MissionOutcome.Clear) _sessionClearedMissions[missionIndex] = true;
+                if (LastRoundFlawless) _sessionFlawlessMissions[missionIndex] = true;
                 if (Score > _sessionBestByMission[missionIndex])
                 {
                     LastRoundWasBest = playedBefore; // only a "new best" if there was a prior run to beat

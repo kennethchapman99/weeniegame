@@ -139,37 +139,50 @@ namespace CheddarAndCocoa.Game
         private void DrawMissionSelect()
         {
             int count = _game.MissionSelectOptionCount;
-            float w = 760, h = 150 + count * 34 + 70;
-            var box = new Rect((Screen.width - w) * 0.5f, Mathf.Max(8f, (Screen.height - h) * 0.5f), w, h);
+            const int columns = 2;
+            int rows = Mathf.CeilToInt(count / (float)columns);
+            float w = Mathf.Min(900f, Screen.width - 16f);
+            float h = Mathf.Min(458f, Screen.height - 16f);
+            var box = new Rect((Screen.width - w) * 0.5f, (Screen.height - h) * 0.5f, w, h);
             GUI.Box(box, GUIContent.none);
             DrawUiKitAccent(new Rect(box.x + w - 116, box.y + 16, 76, 50));
             GUI.Label(new Rect(box.x, box.y + 14, w, 42), "Cheddar + Cocoa Mission Select", _big);
-            GUI.Label(new Rect(box.x + 40, box.y + 58, w - 80, 26),
-                "Pick a dog emergency. Up/Down chooses, Enter/Start begins, or press the listed number key.",
+            GUI.Label(new Rect(box.x + 32, box.y + 56, w - 64, 26),
+                $"{_game.SessionMissionsPlayed} played • {_game.SessionUniqueMissionsCompleted}/{count} tried • {_game.SessionTotalScore} score • {_game.SessionFlawlessClears} flawless",
                 _mid);
+            GUI.Label(new Rect(box.x + 32, box.y + 82, w - 64, 22),
+                "Up/Down chooses • Enter/Start begins • number keys 1-0 launch missions 1-10",
+                _small);
 
             for (int i = 0; i < count; i++)
-                DrawMissionRow(box, i, _game.MissionVariantAt(i));
+            {
+                int column = i / rows;
+                int row = i % rows;
+                float gap = 10f;
+                float columnWidth = (w - 54f - gap) * 0.5f;
+                var rowRect = new Rect(box.x + 27f + column * (columnWidth + gap), box.y + 110f + row * 42f, columnWidth, 38f);
+                DrawMissionRow(rowRect, i, _game.MissionVariantAt(i));
+            }
 
-            float footY = box.y + 120 + count * 34 + 8;
-            GUI.Label(new Rect(box.x + 40, footY, w - 80, 28), _game.SelectedMissionBriefing, _small);
-            if (GUI.Button(new Rect(box.x + w * 0.5f - 90, footY + 28, 180, 30), $"Start {_game.SelectedMissionName}"))
+            float footY = box.y + 110f + rows * 42f + 4f;
+            GUI.Label(new Rect(box.x + 30, footY, w - 60, 24),
+                $"{_game.SelectedMissionName} • {_game.MissionSelectDetailsFor(_game.SelectedMissionVariant)} • {_game.MissionSelectStatusFor(_game.SelectedMissionVariant)}", _mid);
+            GUI.Label(new Rect(box.x + 40, footY + 24f, w - 80, 34), _game.SelectedMissionBriefing, _small);
+            if (GUI.Button(new Rect(box.x + w * 0.5f - 110, footY + 58f, 220, 30), $"Start {_game.SelectedMissionName}"))
                 _game.StartSelectedMission();
         }
 
-        private void DrawMissionRow(Rect box, int index, GameManager.MissionVariant variant)
+        private void DrawMissionRow(Rect row, int index, GameManager.MissionVariant variant)
         {
-            float y = box.y + 120 + index * 34;
             bool selected = _game.SelectedMissionIndex == index;
-            string prefix = selected ? "> " : "  ";
+            string prefix = selected ? "> " : "";
             string key = index < 9 ? (index + 1).ToString() : index == 9 ? "0" : "-";
             var def = GameManager.BuildMissionDefinition(variant);
-            int best = _game.BestScoreForMission(variant);
-            string bestTag = best > 0 ? $"  (best {best})" : "";
-            GUI.Label(new Rect(box.x + 40, y, 250, 26), $"{prefix}{key}. {def.Name}{bestTag}", selected ? _hud : _mid);
-            GUI.Label(new Rect(box.x + 296, y + 2, 360, 24), def.IntroPrompt, _small);
-            if (GUI.Button(new Rect(box.x + box.width - 96, y, 80, 26), "Start"))
-                _game.StartMission(variant);
+            string label = $"{prefix}{key}. {def.Name}\n{_game.MissionSelectStatusFor(variant)}";
+            Color previous = GUI.color;
+            if (selected) GUI.color = new Color(1f, 0.9f, 0.35f);
+            if (GUI.Button(row, label)) _game.SelectMission(variant);
+            GUI.color = previous;
         }
 
         private void DrawSessionSummary()

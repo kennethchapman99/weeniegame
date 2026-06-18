@@ -773,12 +773,15 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(game.MissionSelectVisible);
 
             game.SelectMission(GameManager.MissionVariant.SnackHeist);
+            Assert.AreEqual("NEW", game.MissionSelectStatusFor(GameManager.MissionVariant.SnackHeist));
+            Assert.That(game.MissionSelectDetailsFor(GameManager.MissionVariant.SnackHeist), Does.Contain("80s"));
             game.StartSelectedMission();
             yield return null;
             Assert.AreEqual(GameManager.MissionVariant.SnackHeist, game.ActiveMissionVariant);
             Assert.That(game.ObjectiveLabel, Does.Contain("Stash snacks"));
             game.ForceGameOver();
             Assert.IsTrue(game.EndScreenVisible);
+            Assert.That(game.MissionSelectStatusFor(GameManager.MissionVariant.SnackHeist), Does.StartWith("RETRY • BEST"));
             Assert.AreEqual("Replay", game.EndReplayActionLabel);
             Assert.AreEqual("Next Mission", game.EndNextActionLabel);
             Assert.AreEqual("Mission Select", game.EndMissionSelectActionLabel);
