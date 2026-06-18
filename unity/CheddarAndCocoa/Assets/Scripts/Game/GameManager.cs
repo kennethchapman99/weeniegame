@@ -182,7 +182,7 @@ namespace CheddarAndCocoa.Game
         public int SessionTotalScore { get; private set; }
         public int SessionStarsEarned { get; private set; }
         public int SessionUniqueMissionsCompleted { get; private set; }
-        public bool SessionSummaryReady => SessionUniqueMissionsCompleted >= 3;
+        public bool SessionSummaryReady => SessionUniqueMissionsCompleted >= MissionOrder.Length;
         public string SessionSummaryLabel { get; private set; } = "Session Summary: no missions played yet.";
         public string SessionRanksEarnedLabel { get; private set; } = "Ranks: none yet.";
         public ArenaMissionTuning Tuning => _tuning;
@@ -1546,7 +1546,7 @@ namespace CheddarAndCocoa.Game
                     return new MissionDefinition
                     {
                         Variant = MissionVariant.SquirrelConspiracy,
-                        Name = "Squirrel Conspiracy",
+                        Name = "The Great Backyard Squirrel Conspiracy",
                         IntroPrompt = "Cheddar + Cocoa must herd the suspicious squirrel, reveal the hidden stash, and crack the backyard conspiracy.",
                         ReadyScoreLabel = "READY TO INVESTIGATE SQUIRRELS",
                         ItemRootName = "Conspiracy Clues",
