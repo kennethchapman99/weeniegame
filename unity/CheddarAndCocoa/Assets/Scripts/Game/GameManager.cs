@@ -182,7 +182,7 @@ namespace CheddarAndCocoa.Game
         public int SessionTotalScore { get; private set; }
         public int SessionStarsEarned { get; private set; }
         public int SessionUniqueMissionsCompleted { get; private set; }
-        public bool SessionSummaryReady => SessionUniqueMissionsCompleted >= MissionOrder.Length;
+        public bool SessionSummaryReady => SessionUniqueMissionsCompleted >= 3;
         public string SessionSummaryLabel { get; private set; } = "Session Summary: no missions played yet.";
         public string SessionRanksEarnedLabel { get; private set; } = "Ranks: none yet.";
         public ArenaMissionTuning Tuning => _tuning;

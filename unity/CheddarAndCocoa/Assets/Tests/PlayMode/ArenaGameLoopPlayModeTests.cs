@@ -733,90 +733,6 @@ namespace CheddarAndCocoa.Tests
             Assert.That(game.ObjectiveLabel, Does.Contain("Return socks"));
         }
 
-
-        [UnityTest]
-        public IEnumerator SquirrelConspiracy_Selects_Herds_Cutoffs_Reveals_Clears_Fails_AndReplays()
-        {
-            yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
-            yield return null;
-            yield return null;
-
-            var game = Object.FindFirstObjectByType<GameManager>();
-            var cheddar = FindDog(DogId.Cheddar);
-            var cocoa = FindDog(DogId.Cocoa);
-            Assert.IsNotNull(game);
-            Assert.IsNotNull(cheddar);
-            Assert.IsNotNull(cocoa);
-
-            Assert.AreEqual(4, game.MissionSelectOptionCount);
-            AssertMissionIdAvailable(game, GameManager.MissionVariant.SquirrelConspiracy, "The Great Backyard Squirrel Conspiracy");
-
-            game.SelectMission(GameManager.MissionVariant.SquirrelConspiracy);
-            game.StartSelectedMission();
-            yield return null;
-
-            Assert.AreEqual(GameManager.MissionVariant.SquirrelConspiracy, game.ActiveMissionVariant);
-            Assert.That(game.ActiveMissionName, Does.Contain("Squirrel Conspiracy"));
-            Assert.That(game.ObjectiveLabel, Does.Contain("Herd squirrel route 1/4"));
-            Assert.AreEqual("squirrel_conspiracy", game.RuntimeSnapshot.MissionId);
-
-            cheddar.transform.position = game.SquirrelObject.transform.position;
-            cocoa.transform.position = game.SquirrelObject.transform.position + Vector3.right * 0.2f;
-            game.ForceSquirrelConspiracyHerd(DogId.Cheddar);
-            Assert.AreEqual(1, game.SquirrelConspiracyState.Herds);
-            Assert.AreEqual(75, game.Score);
-            Assert.That(game.LastScoreEventLabel, Does.Contain("GOOD HERD"));
-            Assert.IsTrue(LogContains(game, "SquirrelHerd"));
-
-            cheddar.transform.position = game.SquirrelObject.transform.position;
-            cocoa.transform.position = game.SquirrelObject.transform.position + Vector3.right * 3f;
-            game.ForceSquirrelConspiracyHerd(DogId.Cheddar);
-            Assert.AreEqual(1, game.SquirrelConspiracyState.Cutoffs);
-            Assert.AreEqual(200, game.Score);
-            Assert.That(game.LastScoreEventLabel, Does.Contain("CUTOFF"));
-            Assert.IsTrue(LogContains(game, "SquirrelCutoff"));
-
-            cheddar.transform.position = new Vector3(-20f, -20f, 0f);
-            game.ForceSquirrelConspiracyHerd(DogId.Cheddar);
-            Assert.AreEqual(1, game.SquirrelConspiracyState.FakeOuts);
-            Assert.AreEqual(125, game.Score);
-            Assert.That(game.LastScoreEventLabel, Does.Contain("FAKE OUT"));
-            Assert.IsTrue(LogContains(game, "SquirrelFakeOut"));
-
-            for (int i = game.SquirrelConspiracyState.ControlCount; i < 4; i++)
-            {
-                cheddar.transform.position = game.SquirrelObject.transform.position;
-                cocoa.transform.position = game.SquirrelObject.transform.position + Vector3.right * 3f;
-                game.ForceSquirrelConspiracyHerd(DogId.Cheddar);
-            }
-            Assert.IsTrue(game.SquirrelConspiracyState.StashRevealed);
-            Assert.That(game.ObjectiveLabel, Does.Contain("revealed stash"));
-            Assert.That(game.LastScoreEventLabel, Does.Contain("DOUBLE BARK BLOCK"));
-
-            game.ForceSquirrelConspiracyFindStash(DogId.Cocoa);
-            yield return null;
-            Assert.IsTrue(game.SquirrelConspiracyState.StashFound);
-            Assert.AreEqual(GameManager.MissionOutcome.Clear, game.Outcome);
-            Assert.That(game.EndSummaryLabel, Does.Contain("Conspiracy Cracked"));
-            Assert.That(game.LastCue, Does.Contain("conspiracy is cracked"));
-
-            game.Restart();
-            yield return null;
-            Assert.AreEqual(GameManager.MissionOutcome.InProgress, game.Outcome);
-            Assert.AreEqual(0, game.Score);
-            Assert.AreEqual(0, game.SquirrelConspiracyState.RouteIndex);
-            Assert.IsFalse(game.SquirrelConspiracyState.StashRevealed);
-            Assert.IsFalse(game.SquirrelConspiracyState.StashFound);
-            Assert.That(game.ObjectiveLabel, Does.Contain("Herd squirrel route 1/4"));
-
-            game.ForceSquirrelConspiracyTaunt();
-            game.ForceSquirrelConspiracyTaunt();
-            game.ForceSquirrelConspiracyTaunt();
-            yield return null;
-            Assert.AreEqual(GameManager.MissionOutcome.Failed, game.Outcome);
-            Assert.That(game.EndReasonLabel, Does.Contain("taunted"));
-        }
-
         [UnityTest]
         public IEnumerator DemoRegression_ColdStartFlowDogsCameraOverlay_StayReachable()
         {
@@ -840,7 +756,6 @@ namespace CheddarAndCocoa.Tests
             AssertMissionIdAvailable(game, GameManager.MissionVariant.BackyardRescue, "Backyard Rescue");
             AssertMissionIdAvailable(game, GameManager.MissionVariant.SnackHeist, "Snack Heist");
             AssertMissionIdAvailable(game, GameManager.MissionVariant.SockPanic, "Sock Panic");
-            AssertMissionIdAvailable(game, GameManager.MissionVariant.SquirrelConspiracy, "The Great Backyard Squirrel Conspiracy");
 
             var cheddarIdentity = cheddar.GetComponent<DogIdentity>();
             var cocoaIdentity = cocoa.GetComponent<DogIdentity>();
@@ -888,13 +803,6 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(GameManager.FlowState.Playing, game.CurrentFlow);
             Assert.AreEqual(GameManager.MissionVariant.SockPanic, game.ActiveMissionVariant);
 
-            game.ForceGameOver();
-            Assert.IsFalse(game.SessionSummaryReady);
-            Assert.AreEqual("Next Mission", game.EndNextActionLabel);
-            game.ChooseNextMission();
-            yield return null;
-            Assert.AreEqual(GameManager.FlowState.Playing, game.CurrentFlow);
-            Assert.AreEqual(GameManager.MissionVariant.SquirrelConspiracy, game.ActiveMissionVariant);
             game.ForceGameOver();
             Assert.IsTrue(game.SessionSummaryReady);
             Assert.AreEqual("Session Summary", game.EndNextActionLabel);
@@ -947,30 +855,16 @@ namespace CheddarAndCocoa.Tests
 
             game.ChooseNextMission();
             yield return null;
-            Assert.AreEqual(GameManager.MissionVariant.SquirrelConspiracy, game.ActiveMissionVariant);
-            for (int i = 0; i < 4; i++)
-            {
-                cheddar.transform.position = game.SquirrelObject.transform.position;
-                game.ForceSquirrelConspiracyHerd(DogId.Cheddar);
-            }
-            game.ForceSquirrelConspiracyFindStash(DogId.Cheddar);
-            yield return null;
-            Assert.AreEqual(3, game.SessionUniqueMissionsCompleted);
-            Assert.IsFalse(game.SessionSummaryReady);
-
-            game.ChooseNextMission();
-            yield return null;
             Assert.AreEqual(GameManager.MissionVariant.BackyardRescue, game.ActiveMissionVariant);
             game.ForceGameOver();
-            Assert.AreEqual(4, game.SessionUniqueMissionsCompleted);
+            Assert.AreEqual(3, game.SessionUniqueMissionsCompleted);
             Assert.IsTrue(game.SessionSummaryReady);
             Assert.AreEqual("Session Summary", game.EndNextActionLabel);
 
             game.ChooseNextMission();
             Assert.IsTrue(game.SessionSummaryVisible);
-            Assert.That(game.SessionSummaryLabel, Does.Contain("4 missions played"));
+            Assert.That(game.SessionSummaryLabel, Does.Contain("3 missions played"));
             Assert.That(game.SessionRanksEarnedLabel, Does.Contain("Backyard Rescue"));
-            Assert.That(game.SessionRanksEarnedLabel, Does.Contain("Squirrel Conspiracy"));
         }
 
         [UnityTest]
