@@ -142,6 +142,15 @@ namespace CheddarAndCocoa.Game
             "Reach all checkpoints without snapping the leash too many times.",
             "The leash snaps taut too many times, or the timer expires.");
 
+        public static readonly ProductionMissionSpec CarRide = new(
+            "car_ride",
+            "Car Ride Balance",
+            ProductionMissionPack.RoadTrip,
+            ProductionMechanicModule.VehicleBalance,
+            "Lean to opposite sides to keep the lurching car level all the way home.",
+            "Ride out every lurch without tipping the car too many times.",
+            "The car tips over too many times, or the timer expires.");
+
         public static readonly ProductionMissionSpec CoyotesFence = new(
             "coyotes_fence",
             "Coyotes at the Fence",

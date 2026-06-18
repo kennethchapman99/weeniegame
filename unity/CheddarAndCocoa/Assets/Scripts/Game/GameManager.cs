@@ -17,7 +17,7 @@ namespace CheddarAndCocoa.Game
         public enum FlowState { MissionSelect, Playing, EndScreen, SessionSummary }
         public enum RoundModifier { SquirrelTrouble, ZoomiesSurge, PancakePanic }
         public enum MissionOutcome { InProgress, Clear, Failed }
-        public enum MissionVariant { BackyardRescue, SnackHeist, SockPanic, SquirrelConspiracy, EagleShadowPanic, CoyotesFence, WeenieRoundup, ScentSearch, ThunderstormComfort, MarkTheYard, LeashWalk }
+        public enum MissionVariant { BackyardRescue, SnackHeist, SockPanic, SquirrelConspiracy, EagleShadowPanic, CoyotesFence, WeenieRoundup, ScentSearch, ThunderstormComfort, MarkTheYard, LeashWalk, CarRide }
         public enum FeedbackKind
         {
             Intro,
@@ -114,7 +114,8 @@ namespace CheddarAndCocoa.Game
             MissionVariant.ScentSearch,
             MissionVariant.ThunderstormComfort,
             MissionVariant.MarkTheYard,
-            MissionVariant.LeashWalk
+            MissionVariant.LeashWalk,
+            MissionVariant.CarRide
         };
 
         [Header("Mission selection")]
@@ -151,6 +152,8 @@ namespace CheddarAndCocoa.Game
         public Vector2[] TerritoryZones => (Vector2[])_territoryZones.Clone();
         public LeashWalkMissionState LeashWalkState => _leashState;
         public Vector2[] LeashCheckpoints => (Vector2[])_leashCheckpoints.Clone();
+        public CarBalanceMissionState CarRideState => _carState;
+        public float CarBalance => _carBalance;
         public MissionRuntimeSnapshot RuntimeSnapshot => BuildRuntimeSnapshot();
         public int SelectedMissionIndex => _selectedMissionIndex;
         public MissionVariant SelectedMissionVariant => MissionOrder[Mathf.Clamp(_selectedMissionIndex, 0, MissionOrder.Length - 1)];
@@ -307,6 +310,13 @@ namespace CheddarAndCocoa.Game
         private const float MaxLeash = 7f;
         private const int MaxLeashSnaps = 4;
         private float _nextLeashSnapAt;
+        private readonly CarBalanceMissionState _carState = new CarBalanceMissionState();
+        private float _carBalance;       // -1 (tipping left) .. +1 (tipping right)
+        private int _carLurchDir = 1;
+        private float _nextLurchAt;
+        private const int CarRequiredLurches = 6;
+        private const int CarMaxSpills = 4;
+        private const float CarLurchInterval = 4f;
         private readonly TerritoryMissionState _territoryState = new TerritoryMissionState();
         private readonly Vector2[] _territoryZones = { new(-18f, 9f), new(18f, 9f), new(-18f, -9f), new(18f, -9f), new(0f, 0f) };
         private GameObject[] _zoneMarkers;
@@ -738,6 +748,9 @@ namespace CheddarAndCocoa.Game
             _stormState.Reset();
             _territoryState.Reset();
             _leashState.Reset();
+            _carState.Reset();
+            _carBalance = 0f;
+            _carLurchDir = 1;
             if (_dogContribution != null) System.Array.Clear(_dogContribution, 0, _dogContribution.Length);
             if (_panic != null) _panic.ResetMeter();
             _bowlPosition = new Vector2(_bounds.xMax - 4f, _bounds.yMin + 3f);
@@ -883,6 +896,19 @@ namespace CheddarAndCocoa.Game
             {
                 SetLeashCheckpointMarkersActive(false);
             }
+            if (_mission.Variant == MissionVariant.CarRide)
+            {
+                _carState.Configure(CarRequiredLurches);
+                _carBalance = 0f;
+                _carLurchDir = 1;
+                _nextLurchAt = Time.time + CarLurchInterval;
+                if (PredatorObject != null)
+                {
+                    PredatorObject.SetActive(true);
+                    PlaceObject(PredatorObject, new Vector2(0f, _bounds.yMax - 1.5f));
+                    SetActorState(PredatorObject, "CAR - LEAN TO KEEP IT LEVEL!", new Color(0.5f, 0.4f, 0.3f), 0.12f);
+                }
+            }
             _lastLoggedObjective = string.Empty;
             LogPlaytestEvent("MissionStarted", $"{_mission.Name} / {ActiveModifierLabel} / {roundDuration:0}s");
             LogObjectiveIfChanged();
@@ -914,6 +940,7 @@ namespace CheddarAndCocoa.Game
             else if (_mission.Variant == MissionVariant.ThunderstormComfort) TickThunderstorm();
             else if (_mission.Variant == MissionVariant.MarkTheYard) TickTerritory();
             else if (_mission.Variant == MissionVariant.LeashWalk) TickLeashWalk();
+            else if (_mission.Variant == MissionVariant.CarRide) TickCarRide();
             else TickSquirrel();
             TickPredator();
             TickTugProximity();
@@ -1827,6 +1854,73 @@ namespace CheddarAndCocoa.Game
                 RegisterLeashSnap();
         }
 
+        // --- Car Ride Balance (vehicle lean) ---
+
+        private void ApplyCarLurch()
+        {
+            if (_carState.ReadyToClear()) return;
+
+            _carBalance += _carLurchDir * 0.4f;
+            _carLurchDir = -_carLurchDir;
+            if (Mathf.Abs(_carBalance) >= 1f) { RegisterCarSpill(); return; }
+
+            _carState.SurviveLurch();
+            AddScore(ScoreEventCatalog.LurchSteadied.Points, ScoreEventCatalog.LurchSteadied.Label);
+            LastFeedback = FeedbackKind.UnitedBark;
+            LastCue = $"Steadied the lurch! ({_carState.LurchesSurvived}/{_carState.RequiredLurches}) Lean to balance.";
+            SetJuice(JuiceFeedbackKind.SuccessPop, ScoreEventCatalog.LurchSteadied.Label);
+            RequestRumble("car_lurch", 0.18f, 0.36f, 0.12f);
+            LogPlaytestEvent("CarSteadied", $"{_carState.LurchesSurvived}/{_carState.RequiredLurches}");
+            if (_carState.ReadyToClear()) { AddScore(ScoreEventCatalog.RideComplete.Points, ScoreEventCatalog.RideComplete.Label); CheckClear(); }
+            else LogObjectiveIfChanged();
+        }
+
+        private void RegisterCarSpill()
+        {
+            _carState.Spill();
+            _carBalance = 0f;
+            AddScore(ScoreEventCatalog.CarSpill.Points, ScoreEventCatalog.CarSpill.Label);
+            LastFeedback = FeedbackKind.SquirrelStoleFood;
+            LastCue = $"The car tipped and everyone spilled! ({_carState.Spills}/{CarMaxSpills}) Lean the other way next time.";
+            SetJuice(JuiceFeedbackKind.WarningMiss, ScoreEventCatalog.CarSpill.Label);
+            RequestRumble("car_spill", 0.22f, 0.45f, 0.16f);
+            LogPlaytestEvent("CarSpill", $"{_carState.Spills}/{CarMaxSpills}");
+            if (_carState.TooManySpills(CarMaxSpills)) EndRound(false);
+            else LogObjectiveIfChanged();
+        }
+
+        private void TickCarRide()
+        {
+            if (_carState.ReadyToClear()) return;
+
+            // The dogs' average side (x) leans the car; to stay level they must sit opposite the tilt.
+            float avgX = 0f;
+            if (_dogs != null && _dogs.Length > 0)
+            {
+                foreach (var d in _dogs) avgX += d.transform.position.x;
+                avgX /= _dogs.Length;
+            }
+            float lean = Mathf.Clamp(avgX / 8f, -1f, 1f);
+            _carBalance = Mathf.Clamp(_carBalance + (lean * 0.6f + _carLurchDir * 0.04f) * Time.deltaTime, -1.4f, 1.4f);
+            if (PredatorObject != null)
+                SetActorState(PredatorObject, $"CAR TILT {(_carBalance >= 0 ? "RIGHT" : "LEFT")} {Mathf.RoundToInt(Mathf.Abs(_carBalance) * 100f)}% - LEAN!", new Color(0.5f, 0.4f, 0.3f), 0.12f);
+
+            if (Mathf.Abs(_carBalance) >= 1f) { RegisterCarSpill(); return; }
+            if (Time.time >= _nextLurchAt) { _nextLurchAt = Time.time + CarLurchInterval; ApplyCarLurch(); }
+        }
+
+        public void ForceCarLurch()
+        {
+            if (MissionActive() && _mission != null && _mission.Variant == MissionVariant.CarRide)
+                ApplyCarLurch();
+        }
+
+        public void ForceCarSpill()
+        {
+            if (MissionActive() && _mission != null && _mission.Variant == MissionVariant.CarRide)
+                RegisterCarSpill();
+        }
+
         private float NearestEagleCoverDistance(Vector2 position)
         {
             float best = float.PositiveInfinity;
@@ -2154,6 +2248,13 @@ namespace CheddarAndCocoa.Game
                 progress = _leashState.Reached;
                 goal = _leashState.RequiredCheckpoints;
                 mistakes = _leashState.Snaps;
+            }
+            else if (_mission != null && _mission.Variant == MissionVariant.CarRide)
+            {
+                missionId = "car_ride";
+                progress = _carState.LurchesSurvived;
+                goal = _carState.RequiredLurches;
+                mistakes = _carState.Spills;
             }
             else
             {
@@ -2495,6 +2596,11 @@ namespace CheddarAndCocoa.Game
                 if (_leashState.ReadyToClear()) EndRound(true);
                 return;
             }
+            if (_mission.Variant == MissionVariant.CarRide)
+            {
+                if (_carState.ReadyToClear()) EndRound(true);
+                return;
+            }
 
             bool hasItems = BreakfastRecovered >= _mission.ItemGoal;
             bool hasPredator = !_mission.RequiresPredator || PredatorResolved;
@@ -2584,6 +2690,8 @@ namespace CheddarAndCocoa.Game
                 funny = MissionOutcomeSummaryBuilder.BuildTerritorySummary(_territoryState);
             else if (_mission != null && _mission.Variant == MissionVariant.LeashWalk)
                 funny = MissionOutcomeSummaryBuilder.BuildLeashSummary(_leashState);
+            else if (_mission != null && _mission.Variant == MissionVariant.CarRide)
+                funny = MissionOutcomeSummaryBuilder.BuildCarBalanceSummary(_carState);
             else
                 funny = Outcome.ToString();
             return $"{funny}: {Score} - {EndRank}";
@@ -2653,6 +2761,11 @@ namespace CheddarAndCocoa.Game
             {
                 return $"Walk the leash together to checkpoint {Mathf.Min(_leashState.Reached + 1, _leashState.RequiredCheckpoints)}/{_leashState.RequiredCheckpoints} - stay close (snaps {_leashState.Snaps}/{MaxLeashSnaps})";
             }
+            if (_mission.Variant == MissionVariant.CarRide)
+            {
+                string tilt = Mathf.Abs(_carBalance) < 0.15f ? "LEVEL" : (_carBalance > 0 ? "tipping RIGHT" : "tipping LEFT");
+                return $"Lean to keep the car level ({tilt}): steadied {_carState.LurchesSurvived}/{_carState.RequiredLurches}, spills {_carState.Spills}/{CarMaxSpills}";
+            }
             if (_mission.Variant == MissionVariant.MarkTheYard)
             {
                 return $"Claim and hold every zone at once: {_territoryState.Claimed}/{_territoryState.ZoneCount} marked (squirrel steals back {_territoryState.Reclaims})";
@@ -2685,6 +2798,7 @@ namespace CheddarAndCocoa.Game
             if (_mission.Variant == MissionVariant.CoyotesFence && _patrolState.TooManyBreaches(CoyoteMaxBreaches)) return "The coyote breached the fence one too many times while the dogs got separated.";
             if (_mission.Variant == MissionVariant.ScentSearch && _scentState.TooManyWastedDigs(ScentMaxWastedDigs)) return "The dogs dug up half the yard chasing cold scents and ran out of patience.";
             if (_mission.Variant == MissionVariant.LeashWalk && _leashState.TooManySnaps(MaxLeashSnaps)) return "The leash snapped taut too many times - the walk fell apart.";
+            if (_mission.Variant == MissionVariant.CarRide && _carState.TooManySpills(CarMaxSpills)) return "The car tipped over too many times on the way home.";
             if (_mission.Variant == MissionVariant.ThunderstormComfort && _panic != null && _panic.Maxed != null) return $"{_panic.Maxed} panicked at the thunder and bolted before the storm passed.";
             if (_mission.UsesSquirrel && StolenFood >= maxStolenFood) return _mission.StolenFailReason;
             if (TimeRemaining <= 0f) return _mission.TimeFailReason;
@@ -3527,6 +3641,63 @@ namespace CheddarAndCocoa.Game
                         ItemAccentColor = new Color(0.7f, 0.82f, 1f),
                         ItemSecondaryColor = new Color(0.18f, 0.24f, 0.36f),
                         ItemPopColor = new Color(0.6f, 0.8f, 1f)
+                    };
+                case MissionVariant.CarRide:
+                    return new MissionDefinition
+                    {
+                        Variant = MissionVariant.CarRide,
+                        Name = "Car Ride Balance",
+                        IntroPrompt = "Cheddar + Cocoa are riding in the back of the car. As it lurches around corners, lean to opposite sides to keep it level all the way home.",
+                        ReadyScoreLabel = "READY FOR THE CAR RIDE",
+                        ItemRootName = "Lurches",
+                        ItemObjectName = "Lurch",
+                        ItemWorldLabel = "Lean!",
+                        ItemArrowLabel = "LEAN",
+                        ItemCollectCueNoun = "a steadied lurch",
+                        CollectObjectiveFormat = "Steady lurches {0}/{1}",
+                        CollectedScoreLabel = "STEADIED",
+                        ItemScore = balance.ItemScore,
+                        SpawnedItemCount = balance.SpawnedItemCount,
+                        ItemGoal = balance.ItemGoal,
+                        RoundSeconds = balance.RoundSeconds,
+                        PawfectScore = balance.PawfectScore,
+                        HeroScore = balance.HeroScore,
+                        SurvivorScore = balance.SurvivorScore,
+                        UsesSquirrel = false,
+                        RequiresPredator = false,
+                        RequiresTug = false,
+                        MaxStolenFood = balance.MaxStolenFood,
+                        SquirrelPenalty = balance.SquirrelPenalty,
+                        SquirrelScareScore = balance.SquirrelScareScore,
+                        SquirrelObjectiveText = "Lean to keep the car level",
+                        SquirrelStealingCue = "No squirrel here - mind the tilt.",
+                        SquirrelStoleCue = "No squirrel here - keep it level.",
+                        SquirrelStealScoreLabel = "SPILL",
+                        SquirrelScareScoreLabel = "STEADIED",
+                        SquirrelStealingActorLabel = "CAR TILT",
+                        SquirrelDroppedActorLabel = "STEADIED",
+                        SquirrelStoleActorLabel = "SPILL",
+                        SquirrelMissPopLabel = "SPILL!",
+                        SquirrelStealJuiceLabel = "SPILL!",
+                        SquirrelScareJuiceLabel = "STEADIED!",
+                        TugObjectiveText = "Keep the car level together",
+                        WaitingObjectiveText = "Hold it level until the ride ends",
+                        ClearObjectiveText = "Made it home - replay Car Ride Balance",
+                        ClearBannerPrefix = "MADE IT HOME!",
+                        ClearScoreLabel = "RIDE COMPLETE",
+                        ReplayPrompt = "Press R / Enter / Start to replay Car Ride Balance",
+                        FailObjectiveText = "Mission failed - replay Car Ride Balance",
+                        GenericFailReason = "Needs smoother counter-leaning before the next drive.",
+                        TimeFailReason = "The drive dragged on and the car never settled.",
+                        StolenFailReason = "The car tipped over one too many times.",
+                        PredatorFailReason = "No predator here, just questionable driving.",
+                        PawfectClearReason = "Two pups counter-balanced every corner - smoothest ride ever.",
+                        HeroClearReason = "The car made it home level with only a wobble or two.",
+                        BasicClearReason = "They got home, even if the snacks slid around a bit.",
+                        ItemColor = new Color(0.5f, 0.42f, 0.32f),
+                        ItemAccentColor = new Color(0.8f, 0.7f, 0.5f),
+                        ItemSecondaryColor = new Color(0.24f, 0.2f, 0.14f),
+                        ItemPopColor = new Color(0.85f, 0.75f, 0.55f)
                     };
                 case MissionVariant.SockPanic:
                     return new MissionDefinition

@@ -211,6 +211,20 @@ namespace CheddarAndCocoa.Game
             SurvivorScore = 300
         };
 
+        public MissionBalance CarRide = new MissionBalance
+        {
+            RoundSeconds = 75f,
+            SpawnedItemCount = 0,
+            ItemGoal = 5,
+            ItemScore = 0,
+            MaxStolenFood = 3,
+            SquirrelPenalty = 50,
+            SquirrelScareScore = 25,
+            PawfectScore = 1300,
+            HeroScore = 900,
+            SurvivorScore = 300
+        };
+
         public static ArenaMissionTuning CreateDefault() => new ArenaMissionTuning();
 
         public MissionBalance BalanceFor(GameManager.MissionVariant variant)
@@ -227,6 +241,7 @@ namespace CheddarAndCocoa.Game
                 GameManager.MissionVariant.ThunderstormComfort => ThunderstormComfort,
                 GameManager.MissionVariant.MarkTheYard => MarkTheYard,
                 GameManager.MissionVariant.LeashWalk => LeashWalk,
+                GameManager.MissionVariant.CarRide => CarRide,
                 _ => BackyardRescue
             };
         }

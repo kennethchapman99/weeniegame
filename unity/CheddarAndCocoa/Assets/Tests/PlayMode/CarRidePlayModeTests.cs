@@ -3,17 +3,16 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
-using CheddarAndCocoa.Dogs;
 using CheddarAndCocoa.Game;
 
 namespace CheddarAndCocoa.Tests
 {
-    public sealed class LeashWalkPlayModeTests
+    public sealed class CarRidePlayModeTests
     {
         private GameManager _game;
 
         [UnityTest]
-        public IEnumerator LeashWalk_AppearsInMissionSelectRotation()
+        public IEnumerator CarRide_AppearsInMissionSelectRotation()
         {
             yield return LoadArena();
             var game = _game;
@@ -23,85 +22,87 @@ namespace CheddarAndCocoa.Tests
             bool found = false;
             for (int i = 0; i < game.MissionSelectOptionCount; i++)
             {
-                if (game.SelectedMissionVariant == GameManager.MissionVariant.LeashWalk) { found = true; break; }
+                if (game.SelectedMissionVariant == GameManager.MissionVariant.CarRide) { found = true; break; }
                 game.SelectNextMission();
                 yield return null;
             }
 
-            Assert.IsTrue(found, "Walkies on the Leash should be reachable from mission select.");
-            Assert.AreEqual("Walkies on the Leash", game.SelectedMissionName);
+            Assert.IsTrue(found, "Car Ride Balance should be reachable from mission select.");
+            Assert.AreEqual("Car Ride Balance", game.SelectedMissionName);
         }
 
         [UnityTest]
-        public IEnumerator LeashWalk_ClearPath_ReachEveryCheckpointTogether()
+        public IEnumerator CarRide_ClearPath_SteadyEveryLurch()
         {
             yield return LoadArena();
             var game = _game;
 
-            game.StartMission(GameManager.MissionVariant.LeashWalk);
+            game.StartMission(GameManager.MissionVariant.CarRide);
             yield return null;
 
-            Assert.AreEqual("leash_walk", game.RuntimeSnapshot.MissionId);
-            Assert.That(game.ObjectiveLabel, Does.Contain("Walk the leash"));
+            Assert.AreEqual("car_ride", game.RuntimeSnapshot.MissionId);
+            Assert.That(game.ObjectiveLabel, Does.Contain("Lean to keep the car level"));
             int required = game.RuntimeSnapshot.ObjectiveGoal;
             Assert.Greater(required, 0);
 
+            // Alternating lurches oscillate the balance without ever tipping over.
             int guard = 0;
             while (game.Outcome == GameManager.MissionOutcome.InProgress && guard++ < 30)
             {
-                game.ForceReachCheckpoint();
+                game.ForceCarLurch();
                 yield return null;
             }
 
-            Assert.AreEqual(required, game.LeashWalkState.Reached);
+            Assert.AreEqual(required, game.CarRideState.LurchesSurvived);
+            Assert.AreEqual(0, game.CarRideState.Spills);
             Assert.AreEqual(GameManager.MissionOutcome.Clear, game.Outcome);
             Assert.IsTrue(game.RuntimeSnapshot.IsClear);
-            Assert.That(game.EndSummaryLabel, Does.Contain("Best Walk Ever"));
+            Assert.That(game.EndSummaryLabel, Does.Contain("Smooth Riders"));
         }
 
         [UnityTest]
-        public IEnumerator LeashWalk_FailPath_TooManyLeashSnaps()
+        public IEnumerator CarRide_FailPath_TooManySpills()
         {
             yield return LoadArena();
             var game = _game;
 
-            game.StartMission(GameManager.MissionVariant.LeashWalk);
+            game.StartMission(GameManager.MissionVariant.CarRide);
             yield return null;
 
             for (int i = 0; i < 4; i++)
             {
-                game.ForceLeashSnap();
+                game.ForceCarSpill();
                 yield return null;
             }
 
-            Assert.AreEqual(4, game.LeashWalkState.Snaps);
+            Assert.AreEqual(4, game.CarRideState.Spills);
             Assert.AreEqual(GameManager.MissionOutcome.Failed, game.Outcome);
             Assert.AreEqual(GameManager.State.GameOver, game.Phase);
             Assert.IsTrue(game.RuntimeSnapshot.IsFailed);
-            Assert.That(game.EndSummaryLabel, Does.Contain("Tangled Leash"));
+            Assert.That(game.EndSummaryLabel, Does.Contain("Car Sick"));
         }
 
         [UnityTest]
-        public IEnumerator LeashWalk_Replay_ResetsWalkState()
+        public IEnumerator CarRide_Replay_ResetsBalanceState()
         {
             yield return LoadArena();
             var game = _game;
 
-            game.StartMission(GameManager.MissionVariant.LeashWalk);
+            game.StartMission(GameManager.MissionVariant.CarRide);
             yield return null;
-            game.ForceReachCheckpoint();
-            game.ForceLeashSnap();
+            game.ForceCarLurch();
+            game.ForceCarSpill();
             yield return null;
-            Assert.Greater(game.LeashWalkState.Reached + game.LeashWalkState.Snaps, 0);
+            Assert.Greater(game.CarRideState.LurchesSurvived + game.CarRideState.Spills, 0);
 
             game.Restart();
             yield return null;
 
-            Assert.AreEqual(GameManager.MissionVariant.LeashWalk, game.ActiveMissionVariant);
+            Assert.AreEqual(GameManager.MissionVariant.CarRide, game.ActiveMissionVariant);
             Assert.AreEqual(GameManager.MissionOutcome.InProgress, game.Outcome);
             Assert.AreEqual(0, game.Score);
-            Assert.AreEqual(0, game.LeashWalkState.Reached);
-            Assert.AreEqual(0, game.LeashWalkState.Snaps);
+            Assert.AreEqual(0, game.CarRideState.LurchesSurvived);
+            Assert.AreEqual(0, game.CarRideState.Spills);
             Assert.AreEqual(1, game.MissionReplayCount);
         }
 

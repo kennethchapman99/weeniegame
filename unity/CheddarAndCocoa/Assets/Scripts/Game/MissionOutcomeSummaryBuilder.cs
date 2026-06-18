@@ -76,6 +76,17 @@ namespace CheddarAndCocoa.Game
             return "Still Walking";
         }
 
+        public static string BuildCarBalanceSummary(CarBalanceMissionState state)
+        {
+            if (state.ReadyToClear())
+                return "Smooth Riders";
+
+            if (state.Spills > 0)
+                return "Car Sick";
+
+            return "Still Riding";
+        }
+
         public static string BuildPatrolSummary(PatrolDefenseMissionState state)
         {
             if (state.FinalPressureComplete)

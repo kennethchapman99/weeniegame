@@ -1,6 +1,6 @@
 # Arena Playable — Mission Variety Spike
 
-`unity/CheddarAndCocoa/Assets/Scenes/ArenaScene.unity` is now a small co-op vertical slice instead of a flat treat loop. The scene still builds itself from `ArenaBootstrap`, but the arena can run multiple small mission variants through one lightweight mission definition path. A cold start now opens a generated in-scene mission select so a new player can choose Backyard Rescue, Snack Heist, Sock Panic, Squirrel Conspiracy, Eagle Shadow Panic, Coyotes at the Fence, Weenie Roundup, Scent Search, Thunderstorm Comfort, Mark the Yard, or Walkies on the Leash (arrow-select) without a developer explaining debug keys.
+`unity/CheddarAndCocoa/Assets/Scenes/ArenaScene.unity` is now a small co-op vertical slice instead of a flat treat loop. The scene still builds itself from `ArenaBootstrap`, but the arena can run multiple small mission variants through one lightweight mission definition path. A cold start now opens a generated in-scene mission select so a new player can choose Backyard Rescue, Snack Heist, Sock Panic, Squirrel Conspiracy, Eagle Shadow Panic, Coyotes at the Fence, Weenie Roundup, Scent Search, Thunderstorm Comfort, Mark the Yard, Walkies on the Leash, or Car Ride Balance (arrow-select) without a developer explaining debug keys.
 
 For current global character art direction, read `docs/ART-DIRECTION.md`. Backyard Mission is the
 playable proof of that direction, not the only place the direction applies. For future external
@@ -54,7 +54,7 @@ Final polish still needed:
 ## Cold-start flow
 
 1. Open `unity/CheddarAndCocoa` in Unity 6 LTS, open `Assets/Scenes/ArenaScene.unity`, and press Play. `ArenaScene` is also the scripted local build entry point.
-2. The mission picker appears immediately. Use **Up/Down** or gamepad **D-pad** to highlight a mission, then press **Enter**, **Space**, gamepad **Start**, or gamepad **South** to start. Keyboard **1-9 and 0** also starts Backyard Rescue, Snack Heist, Sock Panic, Squirrel Conspiracy, Eagle Shadow Panic, Coyotes at the Fence, Weenie Roundup, Scent Search, Thunderstorm Comfort, Mark the Yard, or Walkies on the Leash (arrow-select) directly.
+2. The mission picker appears immediately. Use **Up/Down** or gamepad **D-pad** to highlight a mission, then press **Enter**, **Space**, gamepad **Start**, or gamepad **South** to start. Keyboard **1-9 and 0** also starts Backyard Rescue, Snack Heist, Sock Panic, Squirrel Conspiracy, Eagle Shadow Panic, Coyotes at the Fence, Weenie Roundup, Scent Search, Thunderstorm Comfort, Mark the Yard, Walkies on the Leash, or Car Ride Balance (arrow-select) directly.
 3. Read the one-line mission briefing at the start of the round. The HUD keeps the current mission name, objective, score, timer, controls, modifier, and latest score event visible during play.
 4. When a mission ends, choose **Replay**, **Next Mission**, or **Mission Select** with the on-screen buttons, keyboard, or gamepad:
    - **R / Enter / Start / South** replays the current mission.
@@ -236,6 +236,23 @@ The deterministic test/pacing hooks are `ForceReachCheckpoint()` and `ForceLeash
 
 Manual check: arrow to Walkies on the Leash, keep both dogs close as you walk to each checkpoint in turn, and confirm drifting apart snaps the leash. Reaching all four clears with **Best Walk Ever**.
 
+### Car Ride Balance
+
+Car Ride Balance is a **vehicle-balance** mission using `CarBalanceMissionState` — the twelfth mission (arrow-select), and the one that completes coverage of every mechanic module in the design library. The dogs ride in the back of a car that lurches side to side; the live tilt runs from fully-left (-1) to fully-right (+1), and the dogs lean it by which side of centre they stand on. To stay level they must sit opposite the current tilt. Ride out six lurches without tipping (four spills fails the drive).
+
+Readable differences:
+
+- No squirrel/predator loop; it's continuous balance management under periodic lurches.
+- The car indicator shows the current tilt direction and percentage; the objective reads LEVEL / tipping LEFT / tipping RIGHT.
+- Unique scoring/events include **STEADIED**, **SPILL** (penalty), and **RIDE COMPLETE**.
+- Clear banner: **MADE IT HOME!**; end summary reads **Smooth Riders** on a clear, **Car Sick** when the car spilled.
+
+The deterministic test/pacing hooks are `ForceCarLurch()` and `ForceCarSpill()` (`CarBalance` exposes the live tilt); in normal play lurches fire on a timer and the dogs' average side leans the car.
+
+Manual check: arrow to Car Ride Balance, and as the car tilts one way, move both dogs to the opposite side to bring it level; ride out six lurches to clear with **Smooth Riders**.
+
+> **Mechanic-module coverage:** with Car Ride Balance, all nine `ProductionMechanicModule` values (Herding, ThreatSweep, PatrolDefense, SharedObject, TerritoryControl, ScentSearch, RhythmPanic, VehicleBalance, LeashPhysics) now have at least one playable, tested mission.
+
 ## Level scale and camera
 
 The arena is built at **48 x 28 world units** — a real backyard the dogs have to cover, not a single-screen demo box. The squirrel conspiracy route now sweeps the full yard (corners near `±15, ±9`) and the dogs spawn farther apart (`±9, 0`).
@@ -260,7 +277,7 @@ The end loop is intentionally simple: players see current score, the latest scor
 Mission flow controls:
 
 - Mission select: **Up/Down** or gamepad **D-pad** changes mission; **Enter**, **Space**, gamepad **Start**, or gamepad **South** starts; **1-9 and 0** starts a mission directly.
-- During a run: keyboard **1-9 and 0** still restarts the arena into Backyard Rescue, Snack Heist, Sock Panic, Squirrel Conspiracy, Eagle Shadow Panic, Coyotes at the Fence, Weenie Roundup, Scent Search, Thunderstorm Comfort, Mark the Yard, or Walkies on the Leash (arrow-select) for quick manual comparison.
+- During a run: keyboard **1-9 and 0** still restarts the arena into Backyard Rescue, Snack Heist, Sock Panic, Squirrel Conspiracy, Eagle Shadow Panic, Coyotes at the Fence, Weenie Roundup, Scent Search, Thunderstorm Comfort, Mark the Yard, Walkies on the Leash, or Car Ride Balance (arrow-select) for quick manual comparison.
 - End screen: **R / Enter / Start / South** replays; **N / Right Arrow / Right Shoulder / D-pad Right** advances; **M / Escape / East / D-pad Left** returns to mission select.
 - Session Summary: **Enter**, **Space**, **Start**, **South**, **M**, or **Escape** returns to mission select.
 - Playtest Mode: click the bottom-left **Playtest Mode: On/Off** button or press **F1** / **`**. It toggles a compact top-right diagnostics overlay and does not pause or block normal play.

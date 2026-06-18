@@ -19,6 +19,7 @@ namespace CheddarAndCocoa.Tests
             ProductionMissionCatalog.ThunderstormComfort,
             ProductionMissionCatalog.MarkTheYard,
             ProductionMissionCatalog.LeashWalk,
+            ProductionMissionCatalog.CarRide,
             ProductionMissionCatalog.CoyotesFence,
         };
 
@@ -52,6 +53,7 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual("thunderstorm_comfort", ProductionMissionCatalog.ThunderstormComfort.Id);
             Assert.AreEqual("mark_the_yard", ProductionMissionCatalog.MarkTheYard.Id);
             Assert.AreEqual("leash_walk", ProductionMissionCatalog.LeashWalk.Id);
+            Assert.AreEqual("car_ride", ProductionMissionCatalog.CarRide.Id);
         }
     }
 }
