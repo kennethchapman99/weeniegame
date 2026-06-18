@@ -381,7 +381,10 @@ Manual check: press **F1** during mission select and during play, or click the b
 
 ## Audio/rumble placeholder checks
 
-The arena now has replaceable generated feedback slots in `ArenaFeedbackCatalog`. These are placeholder tones/noises and simple rumble pulses only; they are not final audio direction or final haptics.
+The arena now has replaceable generated feedback slots in `ArenaFeedbackCatalog`, plus a light
+looping procedural backyard music bed that follows the F2 audio toggle. The event cues remain
+placeholder tones/noises and rumble pulses; authored bark recordings, final mixing, and final
+haptics are still required.
 
 Manual audio check:
 

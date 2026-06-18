@@ -646,6 +646,8 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(cocoa);
             Assert.IsTrue(game.AudioEnabled);
             Assert.IsTrue(game.RumbleEnabled);
+            Assert.IsTrue(game.MusicLoopReady, "The arena should configure a looping music bed.");
+            Assert.IsFalse(game.MusicMuted);
 
             game.StartMission(GameManager.MissionVariant.SnackHeist);
             yield return null;
@@ -701,10 +703,12 @@ namespace CheddarAndCocoa.Tests
 
             game.ClearFeedbackRequests();
             game.SetAudioEnabled(false);
+            Assert.IsTrue(game.MusicMuted);
             cheddar.Bark();
             Assert.AreEqual(0, game.AudioCueRequestCount);
 
             game.SetAudioEnabled(true);
+            Assert.IsFalse(game.MusicMuted);
             game.SetRumbleEnabled(false);
             game.ClearFeedbackRequests();
             cheddar.Bark();

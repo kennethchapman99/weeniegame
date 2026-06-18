@@ -234,6 +234,8 @@ namespace CheddarAndCocoa.Game
         public string LastRumbleRequested { get; private set; } = string.Empty;
         public int AudioCueRequestCount => _audioCueRequests.Count;
         public int RumbleRequestCount => _rumbleRequests.Count;
+        public bool MusicLoopReady => _music != null && _music.clip != null && _music.loop;
+        public bool MusicMuted => _music == null || _music.mute;
         public FeedbackKind LastFeedback { get; private set; } = FeedbackKind.Intro;
         public JuiceFeedbackKind LastJuiceFeedback { get; private set; } = JuiceFeedbackKind.None;
         public string LastJuiceLabel { get; private set; } = string.Empty;
@@ -253,6 +255,7 @@ namespace CheddarAndCocoa.Game
         private System.Random _rng;
         private Transform _treatRoot;
         private AudioSource _audio;
+        private AudioSource _music;
         private readonly Dictionary<string, AudioClip> _audioClips = new();
         private readonly Dictionary<string, AudioCueSlot> _audioSlots = ArenaFeedbackCatalog.BuildLookup();
         private readonly List<string> _audioCueRequests = new();
@@ -526,6 +529,8 @@ namespace CheddarAndCocoa.Game
         public void SetAudioEnabled(bool enabled)
         {
             AudioEnabled = enabled;
+            if (_audio != null) _audio.mute = !enabled;
+            if (_music != null) _music.mute = !enabled;
             LogPlaytestEvent("Audio", enabled ? "enabled" : "disabled");
         }
 
@@ -4209,6 +4214,43 @@ namespace CheddarAndCocoa.Game
 
             foreach (var cue in ArenaFeedbackCatalog.RequiredAudioCues)
                 _audioClips[cue.Name] = MakePlaceholderClip(cue);
+
+            _music = gameObject.AddComponent<AudioSource>();
+            _music.playOnAwake = false;
+            _music.loop = true;
+            _music.volume = 0.32f;
+            _music.clip = MakeBackyardMusicLoop();
+            _music.Play();
+        }
+
+        private static AudioClip MakeBackyardMusicLoop()
+        {
+            const int sampleRate = 22050;
+            const float secondsPerBeat = 0.6f;
+            const int beats = 16;
+            int sampleCount = Mathf.CeilToInt(sampleRate * secondsPerBeat * beats);
+            var samples = new float[sampleCount];
+            int[] melodyMidi = { 72, 76, 79, 76, 74, 77, 81, 77, 72, 76, 79, 83, 81, 79, 76, 74 };
+            int[] bassMidi = { 48, 48, 53, 53, 45, 45, 55, 55 };
+
+            for (int i = 0; i < sampleCount; i++)
+            {
+                float t = i / (float)sampleRate;
+                int beat = Mathf.Min(beats - 1, Mathf.FloorToInt(t / secondsPerBeat));
+                float beatT = (t - beat * secondsPerBeat) / secondsPerBeat;
+                float melodyHz = 440f * Mathf.Pow(2f, (melodyMidi[beat] - 69) / 12f);
+                float bassHz = 440f * Mathf.Pow(2f, (bassMidi[beat / 2] - 69) / 12f);
+                float pluck = Mathf.Sin(2f * Mathf.PI * melodyHz * t) * Mathf.Exp(-3.8f * beatT);
+                float bass = Mathf.Sin(2f * Mathf.PI * bassHz * t) * (0.55f + 0.45f * Mathf.Cos(Mathf.PI * beatT));
+                float tailFade = i > sampleCount - sampleRate / 20
+                    ? (sampleCount - i) / (sampleRate / 20f)
+                    : 1f;
+                samples[i] = (pluck * 0.09f + bass * 0.045f) * tailFade;
+            }
+
+            var clip = AudioClip.Create(ArenaFeedbackCatalog.BackyardMusicLoop, sampleCount, 1, sampleRate, false);
+            clip.SetData(samples, 0);
+            return clip;
         }
 
         private AudioClip MakePlaceholderClip(AudioCueSlot cue)

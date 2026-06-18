@@ -18,6 +18,7 @@ namespace CheddarAndCocoa.Game
         public const string MissionFail = "mission_fail";
         public const string UiReplayNextSelect = "ui_replay_next_select";
         public const string ThreatWarning = "threat_warning";
+        public const string BackyardMusicLoop = "backyard_music_loop";
 
         public enum PlaceholderWave { Tone, Noise }
 
