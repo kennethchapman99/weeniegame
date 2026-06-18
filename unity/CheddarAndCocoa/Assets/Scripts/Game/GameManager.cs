@@ -296,6 +296,7 @@ namespace CheddarAndCocoa.Game
         private float _nextThunderAt;
         private const int StormRequiredClaps = 5;
         private const float StormClapInterval = 5.5f;
+        private int[] _dogContribution;
         private readonly TerritoryMissionState _territoryState = new TerritoryMissionState();
         private readonly Vector2[] _territoryZones = { new(-18f, 9f), new(18f, 9f), new(-18f, -9f), new(18f, -9f), new(0f, 0f) };
         private GameObject[] _zoneMarkers;
@@ -337,6 +338,7 @@ namespace CheddarAndCocoa.Game
             _rng = new System.Random(seed);
             _dogStarts = new Vector2[dogs.Length];
             _lastBarks = new float[dogs.Length];
+            _dogContribution = new int[dogs.Length];
             DogFeedback = new DogReadabilityFeedback[dogs.Length];
             ObjectiveArrows = new ObjectiveArrowFeedback[dogs.Length];
             InteractionRangeIndicators = new InteractionRangeIndicator[dogs.Length + 3];
@@ -513,6 +515,22 @@ namespace CheddarAndCocoa.Game
 
         public bool LastRoundWasBest { get; private set; }
         public bool LastRoundFlawless { get; private set; }
+
+        public string MvpLabel
+        {
+            get
+            {
+                if (_dogContribution == null || _dogs == null || _dogs.Length == 0) return "MVP: --";
+                int best = -1, bestIdx = -1; bool tie = false;
+                for (int i = 0; i < _dogContribution.Length; i++)
+                {
+                    if (_dogContribution[i] > best) { best = _dogContribution[i]; bestIdx = i; tie = false; }
+                    else if (_dogContribution[i] == best) tie = true;
+                }
+                if (best <= 0) return "MVP: nobody yet";
+                return tie ? "MVP: Tied effort!" : $"MVP: {DogName(_dogs[bestIdx])} ({best} plays)";
+            }
+        }
 
         public int BestScoreForMission(MissionVariant variant)
         {
@@ -692,6 +710,7 @@ namespace CheddarAndCocoa.Game
             _scentState.Reset();
             _stormState.Reset();
             _territoryState.Reset();
+            if (_dogContribution != null) System.Array.Clear(_dogContribution, 0, _dogContribution.Length);
             if (_panic != null) _panic.ResetMeter();
             _bowlPosition = new Vector2(_bounds.xMax - 4f, _bounds.yMin + 3f);
             if (_dogCarrying != null)
@@ -1229,6 +1248,7 @@ namespace CheddarAndCocoa.Game
             _dogCarrying[dogIndex] = false;
             if (_carriedMarkers[dogIndex] != null) _carriedMarkers[dogIndex].SetActive(false);
             _carryState.Deliver();
+            CreditDog(dogIndex);
             if (dogIndex < DogFeedback.Length && DogFeedback[dogIndex] != null) DogFeedback[dogIndex].ShowProudBrief();
             AddScore(ScoreEventCatalog.WeenieDelivered.Points, ScoreEventCatalog.WeenieDelivered.Label);
             LastFeedback = FeedbackKind.LevelClear;
@@ -1406,6 +1426,7 @@ namespace CheddarAndCocoa.Game
             {
                 _scentState.AddFind();
                 _digMarkers[spotIndex].SetActive(false);
+                CreditDog(dogIndex);
                 if (dogIndex < DogFeedback.Length && DogFeedback[dogIndex] != null) DogFeedback[dogIndex].ShowProudBrief();
                 AddScore(ScoreEventCatalog.BoneFound.Points, ScoreEventCatalog.BoneFound.Label);
                 LastFeedback = FeedbackKind.PartnerRescue;
@@ -1566,6 +1587,7 @@ namespace CheddarAndCocoa.Game
 
             SetZoneClaimed(zoneIndex, true);
             _territoryState.Claim();
+            CreditDog(dogIndex);
             if (dogIndex < DogFeedback.Length && DogFeedback[dogIndex] != null) DogFeedback[dogIndex].ShowProudBrief();
             AddScore(ScoreEventCatalog.ZoneClaimed.Points, ScoreEventCatalog.ZoneClaimed.Label);
             LastFeedback = FeedbackKind.SquirrelScared;
@@ -2172,6 +2194,7 @@ namespace CheddarAndCocoa.Game
             if (dogIndex < 0) return;
 
             BarksUsed++;
+            CreditDog(dogIndex);
             _lastBarks[dogIndex] = Time.time;
             var dog = _dogs[dogIndex];
             bool barkDidSomething = false;
@@ -2524,6 +2547,11 @@ namespace CheddarAndCocoa.Game
         private void LogPlaytestEvent(string kind, string detail)
         {
             _playtestLog.Add(kind, detail);
+        }
+
+        private void CreditDog(int dogIndex)
+        {
+            if (_dogContribution != null && dogIndex >= 0 && dogIndex < _dogContribution.Length) _dogContribution[dogIndex]++;
         }
 
         private void MarkFailedInteraction(DogId dogId, string reason)

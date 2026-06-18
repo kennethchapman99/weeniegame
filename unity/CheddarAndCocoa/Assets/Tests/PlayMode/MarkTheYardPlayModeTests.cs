@@ -67,6 +67,7 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(GameManager.MissionOutcome.Clear, game.Outcome);
             Assert.IsTrue(game.RuntimeSnapshot.IsClear);
             Assert.That(game.EndSummaryLabel, Does.Contain("Yard Is Ours"));
+            Assert.That(game.MvpLabel, Does.Contain("Cheddar"), "Cheddar claimed every zone, so should be MVP.");
         }
 
         [UnityTest]

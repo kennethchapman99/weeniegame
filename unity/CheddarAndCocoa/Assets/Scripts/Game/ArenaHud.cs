@@ -73,7 +73,7 @@ namespace CheddarAndCocoa.Game
                 + (_game.LastRoundWasBest ? "  ** NEW BEST! **" : "");
             GUI.Label(new Rect(box.x, box.y + 114, w, 28), $"Last swing: {_game.LastScoreEventLabel}   Stars: {_game.StarRating}/3", _mid);
             GUI.Label(new Rect(box.x, box.y + 140, w, 24), best, _game.LastRoundWasBest ? _hud : _small);
-            GUI.Label(new Rect(box.x, box.y + 166, w, 24), _game.SessionSummaryLabel, _small);
+            GUI.Label(new Rect(box.x, box.y + 166, w, 24), $"{_game.MvpLabel}   |   {_game.SessionSummaryLabel}", _small);
             GUI.Label(new Rect(box.x, box.y + 190, w, 26), "R/Enter Replay | N/Right Shoulder Next | M/Esc Mission Select", _mid);
 
             float y = box.y + h - 42;
