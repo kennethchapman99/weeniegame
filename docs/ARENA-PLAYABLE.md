@@ -133,7 +133,9 @@ Readable differences:
 - Clear banner: **EAGLE DRIVEN OFF!**; end summary on a clear reads **Backyard Defenders**.
 - Fail reason calls out the eagle shadow catching dogs in the open too many times (**Shadow Trouble** summary).
 
-The deterministic test/pacing hooks are `ForceEagleShadowSafeHide()`, `ForceEagleShadowExposure()`, `ForceEagleShadowRescue(dog)`, and `ForceEagleShadowUnitedFront()`; in normal play the final united-front phase also resolves through the existing huddled united-bark path.
+In real-time play the hide phase is spatial: three labeled **HIDE HERE** cover zones sit in the yard and the eagle shadow physically sweeps left/right across the field. On each sweep pass, a dog caught in the shadow column and not inside a cover zone is exposed; otherwise the dogs score a safe hide. Two clean hides open the rescue.
+
+The deterministic test/pacing hooks are `ForceEagleShadowSafeHide()`, `ForceEagleShadowExposure()`, `ForceEagleShadowSweepPass()`, `ForceEagleShadowRescue(dog)`, and `ForceEagleShadowUnitedFront()` (`EagleCoverZones` exposes the cover positions); in normal play the final united-front phase also resolves through the existing huddled united-bark path.
 
 Manual check: press **5**, hide twice to open the rescue objective, interact near the toy to rescue it, then bring both dogs together and bark to complete the united front. Confirm the end summary says **Backyard Defenders**. Force three exposures and confirm fail/replay reset the threat-sweep counters.
 
@@ -149,7 +151,9 @@ Readable differences:
 - Unique scoring/events include **FENCE HELD**, **DIRT FILLED**, **COYOTE BLOCKED**, **FAKE SNACK BAIT**, **COYOTE BREACH** (penalty), and **YARD DEFENDED**.
 - Clear banner: **YARD DEFENDED!**; end summary on a clear reads **Fence Guardians**, on a breach fail reads **Needs More Patrols**.
 
-The deterministic test/pacing hooks are `ForceCoyoteBarkPressure(dog)`, `ForceCoyoteRepair(dog)`, `ForceCoyoteBreach()`, `ForceCoyoteFakeSnack()`, and `ForceCoyoteFinalBlock()`; in normal play barking pins the coyote and the final push also resolves through the existing huddled united-bark path.
+In real-time play the coyote physically prowls toward the active **WEAK SPOT** (one of four labeled fence gaps around the yard). If the dogs are holding bark pressure when it arrives it is driven back; an unguarded gap breaches.
+
+The deterministic test/pacing hooks are `ForceCoyoteBarkPressure(dog)`, `ForceCoyoteRepair(dog)`, `ForceCoyoteBreach()`, `ForceCoyoteFakeSnack()`, `ForceCoyoteProwlReach()`, and `ForceCoyoteFinalBlock()` (`FenceGaps` exposes the gap positions); in normal play barking pins the coyote and the final push also resolves through the existing huddled united-bark path.
 
 Manual check: press **6**, bark to pin the coyote, then interact at the weak spot to fill it; repeat three times, then bring both dogs together and bark to block the final push. Confirm the end summary says **Fence Guardians**. Force three breaches and confirm fail/replay reset the patrol counters.
 
