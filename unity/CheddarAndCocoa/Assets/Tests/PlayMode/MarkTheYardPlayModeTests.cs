@@ -137,6 +137,27 @@ namespace CheddarAndCocoa.Tests
             Assert.IsFalse(game.LastRoundWasBest, "First time playing a mission is not a 'new best'.");
             Assert.IsTrue(game.LastRoundFlawless, "Claiming every zone with no squirrel steals is a flawless run.");
             Assert.AreEqual(1, game.SessionFlawlessClears, "A flawless clear should count toward the session tally.");
+            Assert.That(game.MvpLabel, Does.Contain("Chaos Crown"));
+            Assert.That(game.FlawlessRivalryLabel, Does.Contain("Cheddar"));
+        }
+
+        [UnityTest]
+        public IEnumerator MarkTheYard_CocoaLeadership_UsesQueenRivalryCopy()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.MarkTheYard);
+            yield return null;
+
+            int guard = 0;
+            while (_game.Outcome == GameManager.MissionOutcome.InProgress && guard++ < 40)
+            {
+                _game.ForceClaimZone(DogId.Cocoa);
+                yield return null;
+            }
+
+            Assert.That(_game.MvpLabel, Does.Contain("Cocoa"));
+            Assert.That(_game.MvpLabel, Does.Contain("Queen of the Yard"));
+            Assert.That(_game.FlawlessRivalryLabel, Does.Contain("Cocoa"));
         }
 
         private IEnumerator LoadArena()

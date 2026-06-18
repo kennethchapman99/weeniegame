@@ -101,7 +101,7 @@ namespace CheddarAndCocoa.Game
             GUI.Label(new Rect(box.x, box.y + 58, w, 30), _game.EndSummaryLabel, _mid);
             GUI.Label(new Rect(box.x, box.y + 84, w, 30), _game.EndReasonLabel, _mid);
             string best = $"Session best ({_game.ActiveMissionName}): {_game.BestScoreForMission(_game.ActiveMissionVariant)}"
-                + (_game.LastRoundFlawless ? "  *** FLAWLESS! ***" : "")
+                + (_game.LastRoundFlawless ? $"  •  {_game.FlawlessRivalryLabel}" : "")
                 + (_game.LastRoundWasBest ? "  ** NEW BEST! **" : "");
             GUI.Label(new Rect(box.x, box.y + 114, w, 28), $"Last swing: {_game.LastScoreEventLabel}   Stars: {_game.StarRating}/3", _mid);
             GUI.Label(new Rect(box.x, box.y + 140, w, 24), best, _game.LastRoundWasBest ? _hud : _small);

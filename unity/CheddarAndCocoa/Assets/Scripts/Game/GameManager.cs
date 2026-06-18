@@ -632,8 +632,25 @@ namespace CheddarAndCocoa.Game
                     if (_dogContribution[i] > best) { best = _dogContribution[i]; bestIdx = i; tie = false; }
                     else if (_dogContribution[i] == best) tie = true;
                 }
-                if (best <= 0) return "MVP: nobody yet";
-                return tie ? "MVP: Tied effort!" : $"MVP: {DogName(_dogs[bestIdx])} ({best} plays)";
+                if (best <= 0) return "MVP: awaiting dog heroics";
+                if (tie) return "MVP: Nose-to-nose draw - chaos meets queen";
+                string dog = DogName(_dogs[bestIdx]);
+                return dog == "Cheddar"
+                    ? $"MVP: Cheddar - Chaos Crown ({best} big plays)"
+                    : $"MVP: Cocoa - Queen of the Yard ({best} clutch plays)";
+            }
+        }
+
+        public string FlawlessRivalryLabel
+        {
+            get
+            {
+                if (!LastRoundFlawless || _dogContribution == null || _dogContribution.Length < 2) return string.Empty;
+                if (_dogContribution[0] == _dogContribution[1]) return "FLAWLESS PACK: chaos + calm";
+                int winner = _dogContribution[0] > _dogContribution[1] ? 0 : 1;
+                return DogName(_dogs[winner]) == "Cheddar"
+                    ? "FLAWLESS: Cheddar caused exactly the right chaos"
+                    : "FLAWLESS: Cocoa upheld the royal standard";
             }
         }
 
