@@ -54,6 +54,17 @@ namespace CheddarAndCocoa.Game
             return "Spooked By Thunder";
         }
 
+        public static string BuildTerritorySummary(TerritoryMissionState state)
+        {
+            if (state.AllClaimed)
+                return "Yard Is Ours";
+
+            if (state.Reclaims > 0)
+                return "Squirrel Keeps Stealing It";
+
+            return "Still Marking";
+        }
+
         public static string BuildPatrolSummary(PatrolDefenseMissionState state)
         {
             if (state.FinalPressureComplete)

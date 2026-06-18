@@ -182,6 +182,20 @@ namespace CheddarAndCocoa.Game
             SurvivorScore = 300
         };
 
+        public MissionBalance MarkTheYard = new MissionBalance
+        {
+            RoundSeconds = 80f,
+            SpawnedItemCount = 0,
+            ItemGoal = 5,
+            ItemScore = 0,
+            MaxStolenFood = 3,
+            SquirrelPenalty = 50,
+            SquirrelScareScore = 25,
+            PawfectScore = 1400,
+            HeroScore = 950,
+            SurvivorScore = 300
+        };
+
         public static ArenaMissionTuning CreateDefault() => new ArenaMissionTuning();
 
         public MissionBalance BalanceFor(GameManager.MissionVariant variant)
@@ -196,6 +210,7 @@ namespace CheddarAndCocoa.Game
                 GameManager.MissionVariant.WeenieRoundup => WeenieRoundup,
                 GameManager.MissionVariant.ScentSearch => ScentSearch,
                 GameManager.MissionVariant.ThunderstormComfort => ThunderstormComfort,
+                GameManager.MissionVariant.MarkTheYard => MarkTheYard,
                 _ => BackyardRescue
             };
         }

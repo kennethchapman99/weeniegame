@@ -124,6 +124,15 @@ namespace CheddarAndCocoa.Game
             "Weather the required thunderclaps without either dog maxing out panic.",
             "Either dog's panic hits the max and they bolt.");
 
+        public static readonly ProductionMissionSpec MarkTheYard = new(
+            "mark_the_yard",
+            "Mark the Yard",
+            ProductionMissionPack.Backyard,
+            ProductionMechanicModule.TerritoryControl,
+            "Claim every territory zone and hold them all at once before the squirrel re-marks them.",
+            "Have every zone claimed simultaneously.",
+            "The timer expires before every zone is held at once.");
+
         public static readonly ProductionMissionSpec CoyotesFence = new(
             "coyotes_fence",
             "Coyotes at the Fence",

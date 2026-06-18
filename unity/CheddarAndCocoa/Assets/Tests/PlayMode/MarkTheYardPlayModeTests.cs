@@ -8,14 +8,14 @@ using CheddarAndCocoa.Game;
 
 namespace CheddarAndCocoa.Tests
 {
-    public sealed class ScentSearchPlayModeTests
+    public sealed class MarkTheYardPlayModeTests
     {
         private GameManager _game;
         private DogController _cheddar;
         private DogController _cocoa;
 
         [UnityTest]
-        public IEnumerator ScentSearch_AppearsInMissionSelectRotation()
+        public IEnumerator MarkTheYard_AppearsInMissionSelectRotation()
         {
             yield return LoadArena();
             var game = _game;
@@ -25,7 +25,7 @@ namespace CheddarAndCocoa.Tests
             bool found = false;
             for (int i = 0; i < game.MissionSelectOptionCount; i++)
             {
-                if (game.SelectedMissionVariant == GameManager.MissionVariant.ScentSearch)
+                if (game.SelectedMissionVariant == GameManager.MissionVariant.MarkTheYard)
                 {
                     found = true;
                     break;
@@ -34,85 +34,84 @@ namespace CheddarAndCocoa.Tests
                 yield return null;
             }
 
-            Assert.IsTrue(found, "Scent Search should be reachable from mission select.");
-            Assert.AreEqual("Scent Search", game.SelectedMissionName);
+            Assert.IsTrue(found, "Mark the Yard should be reachable from mission select.");
+            Assert.AreEqual("Mark the Yard", game.SelectedMissionName);
         }
 
         [UnityTest]
-        public IEnumerator ScentSearch_ClearPath_SniffAndDigUpEveryBone()
+        public IEnumerator MarkTheYard_ClearPath_ClaimEveryZone()
         {
             yield return LoadArena();
             var game = _game;
 
-            game.StartMission(GameManager.MissionVariant.ScentSearch);
+            // Park the dogs off in a corner so the real-time tick doesn't auto-claim mid-test.
+            _cheddar.transform.position = new Vector3(0f, 0f, 0f);
+            _cocoa.transform.position = new Vector3(0f, 0f, 0f);
+
+            game.StartMission(GameManager.MissionVariant.MarkTheYard);
             yield return null;
 
-            Assert.AreEqual("scent_search", game.RuntimeSnapshot.MissionId);
-            Assert.That(game.ObjectiveLabel, Does.Contain("Sniff"));
-            int required = game.RuntimeSnapshot.ObjectiveGoal;
-            Assert.Greater(required, 0);
+            Assert.AreEqual("mark_the_yard", game.RuntimeSnapshot.MissionId);
+            Assert.That(game.ObjectiveLabel, Does.Contain("Claim"));
+            int zones = game.RuntimeSnapshot.ObjectiveGoal;
+            Assert.Greater(zones, 0);
 
             int guard = 0;
-            while (game.Outcome == GameManager.MissionOutcome.InProgress && guard++ < 30)
+            while (game.Outcome == GameManager.MissionOutcome.InProgress && guard++ < 40)
             {
-                game.ForceScentSniff(DogId.Cheddar);
-                game.ForceScentDigCorrect(DogId.Cheddar);
+                game.ForceClaimZone(DogId.Cheddar);
                 yield return null;
             }
 
-            Assert.AreEqual(required, game.ScentSearchState.Found);
-            Assert.AreEqual(0, game.ScentSearchState.WastedDigs);
-            Assert.Greater(game.ScentSearchState.Sniffs, 0);
+            Assert.IsTrue(game.MarkTheYardState.AllClaimed);
             Assert.AreEqual(GameManager.MissionOutcome.Clear, game.Outcome);
             Assert.IsTrue(game.RuntimeSnapshot.IsClear);
-            Assert.That(game.EndSummaryLabel, Does.Contain("Master Sniffers"));
+            Assert.That(game.EndSummaryLabel, Does.Contain("Yard Is Ours"));
         }
 
         [UnityTest]
-        public IEnumerator ScentSearch_FailPath_TooManyColdDigsEndMission()
+        public IEnumerator MarkTheYard_SquirrelReclaim_StealsAClaimedZone()
         {
             yield return LoadArena();
             var game = _game;
 
-            game.StartMission(GameManager.MissionVariant.ScentSearch);
+            game.StartMission(GameManager.MissionVariant.MarkTheYard);
             yield return null;
 
-            for (int i = 0; i < 4; i++)
-            {
-                game.ForceScentDigWrong(DogId.Cheddar);
-                yield return null;
-            }
+            game.ForceClaimZone(DogId.Cheddar);
+            yield return null;
+            int afterClaim = game.MarkTheYardState.Claimed;
+            Assert.Greater(afterClaim, 0);
 
-            Assert.AreEqual(4, game.ScentSearchState.WastedDigs);
-            Assert.AreEqual(GameManager.MissionOutcome.Failed, game.Outcome);
-            Assert.AreEqual(GameManager.State.GameOver, game.Phase);
-            Assert.IsTrue(game.RuntimeSnapshot.IsFailed);
-            Assert.That(game.EndSummaryLabel, Does.Contain("Dug Up The Whole Yard"));
+            game.ForceSquirrelReclaim();
+            yield return null;
+
+            Assert.AreEqual(afterClaim - 1, game.MarkTheYardState.Claimed);
+            Assert.AreEqual(1, game.MarkTheYardState.Reclaims);
         }
 
         [UnityTest]
-        public IEnumerator ScentSearch_Replay_ResetsScentRuntimeState()
+        public IEnumerator MarkTheYard_Replay_ResetsTerritoryState()
         {
             yield return LoadArena();
             var game = _game;
 
-            game.StartMission(GameManager.MissionVariant.ScentSearch);
+            game.StartMission(GameManager.MissionVariant.MarkTheYard);
             yield return null;
-            game.ForceScentSniff(DogId.Cheddar);
-            game.ForceScentDigCorrect(DogId.Cheddar);
+            game.ForceClaimZone(DogId.Cheddar);
+            game.ForceSquirrelReclaim();
             yield return null;
 
-            Assert.AreEqual(1, game.ScentSearchState.Found);
+            Assert.Greater(game.MarkTheYardState.Reclaims, 0);
 
             game.Restart();
             yield return null;
 
-            Assert.AreEqual(GameManager.MissionVariant.ScentSearch, game.ActiveMissionVariant);
+            Assert.AreEqual(GameManager.MissionVariant.MarkTheYard, game.ActiveMissionVariant);
             Assert.AreEqual(GameManager.MissionOutcome.InProgress, game.Outcome);
             Assert.AreEqual(0, game.Score);
-            Assert.AreEqual(0, game.ScentSearchState.Found);
-            Assert.AreEqual(0, game.ScentSearchState.WastedDigs);
-            Assert.AreEqual(0, game.ScentSearchState.Sniffs);
+            Assert.AreEqual(0, game.MarkTheYardState.Claimed);
+            Assert.AreEqual(0, game.MarkTheYardState.Reclaims);
             Assert.AreEqual(1, game.MissionReplayCount);
         }
 
