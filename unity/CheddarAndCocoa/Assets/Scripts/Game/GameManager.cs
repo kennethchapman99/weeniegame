@@ -360,6 +360,7 @@ namespace CheddarAndCocoa.Game
             _sprite = treatSprite;
             _rangeSprite = rangeSprite;
             _bounds = bounds;
+            ConfigureSpatialLayout();
             _rng = new System.Random(seed);
             _dogStarts = new Vector2[dogs.Length];
             _lastBarks = new float[dogs.Length];
@@ -390,6 +391,29 @@ namespace CheddarAndCocoa.Game
             BuildMissionObjects();
             HideInteractionRanges();
             ShowMissionSelect();
+        }
+
+        private void ConfigureSpatialLayout()
+        {
+            Vector2 P(float x, float y) => new Vector2(
+                _bounds.center.x + x * _bounds.width * 0.5f,
+                _bounds.center.y + y * _bounds.height * 0.5f);
+
+            Vector2[] squirrel = { P(-0.78f, 0.68f), P(0f, -0.66f), P(0.78f, 0.68f), P(0.64f, -0.62f) };
+            Vector2[] cover = { P(-0.7f, -0.64f), P(0.7f, -0.64f), P(0f, 0.68f) };
+            Vector2[] gaps = { P(-0.94f, 0.38f), P(-0.94f, -0.38f), P(0.94f, 0.38f), P(0.94f, -0.38f) };
+            Vector2[] weenies = { P(-0.72f, 0.62f), P(0.7f, 0.68f), P(-0.82f, -0.6f), P(0.22f, -0.7f), P(0.82f, -0.18f) };
+            Vector2[] digs = { P(-0.78f, 0.58f), P(0.68f, 0.64f), P(-0.74f, -0.58f), P(0.32f, -0.68f), P(0.82f, 0.08f), P(-0.18f, 0.36f) };
+            Vector2[] leash = { P(-0.72f, -0.62f), P(0.72f, -0.62f), P(0.72f, 0.62f), P(-0.72f, 0.62f) };
+            Vector2[] territory = { P(-0.72f, 0.6f), P(0.72f, 0.6f), P(-0.72f, -0.6f), P(0.72f, -0.6f), P(0f, 0f) };
+
+            squirrel.CopyTo(_squirrelRoute, 0);
+            cover.CopyTo(_eagleCoverZones, 0);
+            gaps.CopyTo(_fenceGaps, 0);
+            weenies.CopyTo(_weenieSpots, 0);
+            digs.CopyTo(_digSpots, 0);
+            leash.CopyTo(_leashCheckpoints, 0);
+            territory.CopyTo(_territoryZones, 0);
         }
 
         public void OnTreatCollected(Treat treat, DogController dog)

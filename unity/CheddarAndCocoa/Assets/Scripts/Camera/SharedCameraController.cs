@@ -22,12 +22,12 @@ namespace CheddarAndCocoa.CameraRig
         [SerializeField] private Transform cocoa;
 
         [Header("Framing")]
-        [SerializeField] private float horizontalMargin = 3f; // world units of side padding
-        [SerializeField] private float verticalMargin = 2.2f;  // world units of top/bottom padding
-        [SerializeField] private float minOrthoSize = 6.8f;    // closest zoom
-        [SerializeField] private float maxOrthoSize = 8.4f;    // widest zoom
-        [SerializeField] private float followLerp = 8f;    // position smoothing
-        [SerializeField] private float zoomLerp = 6f;      // size smoothing
+        [SerializeField] private float horizontalMargin = 5f; // world units of side padding
+        [SerializeField] private float verticalMargin = 4f;   // world units of top/bottom padding
+        [SerializeField] private float minOrthoSize = 7.5f;    // local exploration zoom
+        [SerializeField] private float maxOrthoSize = 34f;     // strategic full-yard zoom
+        [SerializeField] private float followLerp = 9f;    // position smoothing
+        [SerializeField] private float zoomLerp = 7f;      // size smoothing
 
         [Header("Level bounds (optional clamp)")]
         [SerializeField] private bool clampToBounds = false;
@@ -105,9 +105,16 @@ namespace CheddarAndCocoa.CameraRig
         {
             float halfH = orthoSize;
             float halfW = orthoSize * _cam.aspect;
-            pos.x = Mathf.Clamp(pos.x, levelBounds.xMin + halfW, levelBounds.xMax - halfW);
-            pos.y = Mathf.Clamp(pos.y, levelBounds.yMin + halfH, levelBounds.yMax - halfH);
+            pos.x = ClampAxis(pos.x, levelBounds.xMin, levelBounds.xMax, halfW);
+            pos.y = ClampAxis(pos.y, levelBounds.yMin, levelBounds.yMax, halfH);
             return pos;
+        }
+
+        private static float ClampAxis(float value, float min, float max, float viewportHalfSize)
+        {
+            float safeMin = min + viewportHalfSize;
+            float safeMax = max - viewportHalfSize;
+            return safeMin <= safeMax ? Mathf.Clamp(value, safeMin, safeMax) : (min + max) * 0.5f;
         }
     }
 }

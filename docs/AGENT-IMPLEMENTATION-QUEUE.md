@@ -57,7 +57,7 @@ Three more missions were added on top of the queue to broaden the dog-verb cover
 - **Scent Search** (`ScentSearchMissionState`) — the **sniff + dig** verbs: bark to read HOT/COLD on a buried bone, interact to dig the right mound; cold digs are penalized. `ScentSearchPlayModeTests`.
 - **Thunderstorm Comfort** (`ThunderstormMissionState` + `PanicMeter`) — the **comfort** verb: huddle to co-regulate panic and ride out timed thunderclaps; leans into Cheddar (spooks harder) vs Cocoa (steadier). `ThunderstormComfortPlayModeTests`.
 
-The arena was also grown to a real 48x28 yard with a dynamic clamped follow-cam, decorative backyard dressing, and spatial geometry for the threat missions (Eagle cover zones, Coyote fence gaps). Full PlayMode suite green at 59/59.
+The arena was subsequently grown to a 120x68 scrolling yard with a dynamic clamped follow-cam, landmark districts, an explicit <=2% dog-to-property scale contract, and full-yard spatial geometry for the threat missions (Eagle cover zones, Coyote fence gaps).
 
 ## Queue 5: Launch Demo Hardening
 

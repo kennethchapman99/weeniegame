@@ -258,9 +258,11 @@ Manual check: arrow to Car Ride Balance, and as the car tilts one way, move both
 
 ## Level scale and camera
 
-The arena is built at **48 x 28 world units** — a real backyard the dogs have to cover, not a single-screen demo box. The squirrel conspiracy route now sweeps the full yard (corners near `±15, ±9`) and the dogs spawn farther apart (`±9, 0`).
+The backyard is built at **120 x 68 world units**. A runtime dachshund is roughly 2 units long, so a dog occupies about **1.7% of the property width** instead of reading as a giant character in a single-screen demo box. The dogs spawn near the center (`±10, 0`) and mission routes, hide zones, fence gaps, dig sites, loose weenies, territory zones, and leash checkpoints are distributed using normalized coordinates across 70–94% of the yard width.
 
-Because this is one-screen couch co-op, the shared camera is a **dynamic clamped follow-cam**: it pulls in tight (down to `6.8` ortho) when the dogs regroup and zooms out (up to `13` ortho) as they split across the yard, always keeping both on screen, and clamps to the level walls so it never reveals the void outside the fence. This trades a little zoom-out readability when the dogs are at opposite ends for a yard that feels large and exploration-worthy, and it reinforces the co-op design pillar: spreading out is a real choice with a readability cost, so players communicate about when to regroup.
+Because this is one-screen couch co-op, the shared camera is a **dynamic clamped follow-cam with two meaningful modes**. When the dogs regroup it uses a local scrolling view (`7.5` ortho, about 27 units wide at 16:9), revealing less than one quarter of the property width. When they split up it can pull back to a strategic full-yard view (`34` ortho), keeping both players visible. Patio, pond, garden, shade tree, picnic, sandbox, stepping-stone path, and fence dressing divide the property into recognizable districts so the extra traversal space is not an empty green plane.
+
+Outdoor level scale is now a production contract: dogs should remain at or below 2% of a major level's width, close framing must require scrolling, and important mission geometry must span most of the playable bounds. Pool and other future outdoor levels should follow this contract rather than inherit the frozen Canvas prototype's oversized dog-to-feature ratio.
 
 ## Objective
 
@@ -420,21 +422,21 @@ Movement now has a first feel pass instead of instant velocity snaps. Cheddar is
 
 Current movement defaults in ArenaScene:
 
-- Cheddar: base speed `4.8` prototype units (`5.76` Unity units/sec after conversion), acceleration `34`, deceleration `31`, turn response `46`, zoomies multiplier `1.85`.
-- Cocoa: base speed `4.55` prototype units (`5.46` Unity units/sec after conversion), acceleration `29`, deceleration `39`, turn response `52`, zoomies multiplier `1.75`.
+- Cheddar: base speed `6.2` prototype units (`7.44` Unity units/sec after conversion), acceleration `34`, deceleration `31`, turn response `46`, zoomies multiplier `1.85`.
+- Cocoa: base speed `5.9` prototype units (`7.08` Unity units/sec after conversion), acceleration `29`, deceleration `39`, turn response `52`, zoomies multiplier `1.75`.
 - Both: input deadzone `0.25`, stop snap `0.08` Unity units/sec, and run feedback threshold `0.22`.
 
 Manual movement feel check: move each dog from rest, reverse direction, circle around a weenie, and release the stick/keys near the rope. Confirm the dogs feel quick and cute, Cheddar reads a little more chaotic, Cocoa reads more controlled, and neither dog slides past small targets in a frustrating way. The paw trails should appear only while moving and should not compete with objective arrows, labels, or score pops.
 
-The shared camera remains a 2D orthographic backyard camera matching `docs/ART-DIRECTION.md`, but its arena framing is now tuned for readability across all three current missions. It frames dog bounds using horizontal/vertical margins instead of diagonal distance, with a narrow zoom band so the arena, mission props, and HUD context stay readable while still letting dog animation read.
+The shared camera remains a 2D orthographic backyard camera matching `docs/ART-DIRECTION.md`. It frames dog bounds using horizontal/vertical margins and ranges from local scrolling exploration to a strategic full-yard co-op view.
 
 Current camera defaults in ArenaScene:
 
-- Initial orthographic size `7.1`.
-- Min/max orthographic size `6.8 / 8.4`.
-- Horizontal/vertical framing margin `3.0 / 2.2`.
+- Initial orthographic size `8.0`.
+- Min/max orthographic size `7.5 / 34`.
+- Horizontal/vertical framing margin `5.0 / 4.0`.
 - Follow/zoom lerp `9 / 7`.
-- Bounds clamping is off for this generated arena so the full backyard context remains stable.
+- Bounds clamping is on so local exploration never reveals void outside the fence.
 
 Manual camera check: play Backyard Rescue, Snack Heist, and Sock Panic from mission select. Confirm the dogs, nearest collectibles, squirrel pressure, rope, predator warning, score pop area, and end card are readable without losing the 2.5D/isometric-ish backyard feel. The HUD can occupy the top of the screen, but it should not hide the active dog work or mission props.
 
@@ -565,8 +567,8 @@ Current key defaults:
 - Penalties: Backyard squirrel `-50`, Snack squirrel `-90`, Pancake Panic squirrel `-80`, predator hit `-150`, game over `-100`.
 - Squirrel pressure: first steal delay `9.0s` (`7.0s` on Squirrel Trouble), repeat delay `3.4s` (`2.2s` on Squirrel Trouble), move speed `1.9`.
 - Bark/rescue/tug: united bark window `0.8s`, united bark range `3.0`, single bark squirrel range `4.0`, rescue bark range `2.0`, tug together distance `1.6`, tug charge `0.5` per second, interact tug bump `0.2`.
-- Camera: initial ortho `7.1`, min/max ortho `6.8 / 8.4`, horizontal/vertical margins `3.0 / 2.2`, follow/zoom lerp `9 / 7`.
-- Arena dog movement: Cheddar base speed `4.8`, acceleration `34`, deceleration `31`, turn response `46`, zoomies `1.85`; Cocoa base speed `4.55`, acceleration `29`, deceleration `39`, turn response `52`, zoomies `1.75`; both use input deadzone `0.25`, stop snap `0.08`, and run-feedback threshold `0.22`.
+- Camera: initial ortho `8`, min/max ortho `7.5 / 34`, horizontal/vertical margins `5 / 4`, follow/zoom lerp `9 / 7`.
+- Arena dog movement: Cheddar base speed `6.2`, acceleration `34`, deceleration `31`, turn response `46`, zoomies `1.85`; Cocoa base speed `5.9`, acceleration `29`, deceleration `39`, turn response `52`, zoomies `1.75`; both use input deadzone `0.25`, stop snap `0.08`, and run-feedback threshold `0.22`.
 - Range hints: squirrel bark ring `4.0`, rescue bark ring `2.0`, tug together ring `1.6`.
 - Mission counts: Backyard Rescue spawns `5` items and needs `6` recoveries because collected items respawn; Snack Heist spawns/needs `4`; Sock Panic spawns/needs `5`.
 

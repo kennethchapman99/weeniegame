@@ -20,7 +20,7 @@ Playable (all shipped on `main`, deterministic PlayMode tests, selectable from t
 
 **Mechanic-module coverage complete:** all nine `ProductionMechanicModule` values (Herding, ThreatSweep, PatrolDefense, SharedObject, TerritoryControl, ScentSearch, RhythmPanic, VehicleBalance, LeashPhysics) now have at least one playable, tested mission.
 
-The arena is now a real 48x28 yard with a dynamic clamped follow-cam, decorative backyard dressing, and spatial geometry for the threat/territory/leash missions. Dog-verb coverage: chase, rescue, steal, distract, defend, comfort, carry, tug, hide, sniff, dig, bark, mark, balance. Meta: per-mission session-best, flawless bonus + tally, end-card MVP, and a New Session reset. ~84 deterministic PlayMode tests, all green on `main`.
+The arena is now a 120x68 scrolling yard with an explicit <=2% dog-to-property width contract, a dynamic local/strategic shared camera, landmark districts, and full-yard spatial geometry for the threat/territory/leash missions. Dog-verb coverage: chase, rescue, steal, distract, defend, comfort, carry, tug, hide, sniff, dig, bark, mark, balance. Meta: per-mission session-best, flawless bonus + tally, end-card MVP, and a New Session reset. Deterministic PlayMode coverage validates the scale contract and mission geometry.
 
 Reusable now:
 - mission select

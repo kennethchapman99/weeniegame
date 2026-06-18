@@ -8,7 +8,7 @@ using CheddarAndCocoa.Game;
 namespace CheddarAndCocoa.Bootstrap
 {
     /// <summary>
-    /// Builds the first playable couch-co-op LOOP from code: a small walled arena, two
+    /// Builds the first playable couch-co-op LOOP from code: a substantial backyard, two
     /// controller/keyboard-driven dogs, a shared camera, treats to collect, a 60-second round, a
     /// score/timer HUD, and visible bark rings. The ArenaScene file is just one GameObject carrying
     /// this component — everything else is generated at runtime (no art/prefab dependencies).
@@ -21,10 +21,10 @@ namespace CheddarAndCocoa.Bootstrap
     public sealed class ArenaBootstrap : MonoBehaviour
     {
         [Header("Arena (world units)")]
-        // A real backyard, not a demo box: large enough that the dogs must split up, patrol, and
-        // cover ground, with a dynamic shared camera that zooms to frame both and clamps to walls.
-        [SerializeField] private float fieldWidth = 48f;
-        [SerializeField] private float fieldHeight = 28f;
+        // A real backyard, not a demo box. At this scale a dog is under two percent of the yard
+        // width, and the close camera must scroll to reveal the whole property.
+        [SerializeField] private float fieldWidth = ArenaWorldScale.BackyardWidth;
+        [SerializeField] private float fieldHeight = ArenaWorldScale.BackyardHeight;
         [SerializeField] private int treatSeed = 1234; // seeded -> deterministic treat layout for tests
 
         private Sprite _square;
@@ -43,10 +43,10 @@ namespace CheddarAndCocoa.Bootstrap
             var bounds = new Rect(-fieldWidth * 0.5f, -fieldHeight * 0.5f, fieldWidth, fieldHeight);
 
             // Cheddar — golden chaos puppy (P1: pad 0 / WASD + Space).
-            var cheddar = BuildDog(DogId.Cheddar, new Vector2(-9f, 0f), slot: 0,
+            var cheddar = BuildDog(DogId.Cheddar, new Vector2(-10f, 0f), slot: 0,
                 GamepadPlayerInput.KeyboardScheme.WasdSpace, CheddarTuning());
             // Cocoa — chocolate spot queen (P2: pad 1 / arrows + Enter/RShift).
-            var cocoa = BuildDog(DogId.Cocoa, new Vector2(9f, 0f), slot: 1,
+            var cocoa = BuildDog(DogId.Cocoa, new Vector2(10f, 0f), slot: 1,
                 GamepadPlayerInput.KeyboardScheme.ArrowsEnter, CocoaTuning());
 
             var cheddarDog = cheddar.GetComponent<DogController>();
@@ -95,7 +95,7 @@ namespace CheddarAndCocoa.Bootstrap
             t.dog = DogId.Cheddar;
             t.bodyColor = Hex("#e3ab63");
             t.wetBodyColor = Hex("#b07e3f");
-            t.baseSpeed = 4.8f; t.floaterSpeed = 4.9f; t.swimSpeed = 1.6f; t.zoomiesMultiplier = 1.85f;
+            t.baseSpeed = 6.2f; t.floaterSpeed = 6.3f; t.swimSpeed = 2.1f; t.zoomiesMultiplier = 1.85f;
             t.inputDeadzone = 0.25f; t.acceleration = 34f; t.deceleration = 31f; t.turnResponsiveness = 46f; t.stopSpeed = 0.08f; t.runFeedbackSpeed = 0.22f;
             t.wrestleWinChance = 0.70f; t.stairTime = 0.5f;
             t.canChairLeap = true; t.barfChance = 0.18f; t.chewTime = 0.25f;
@@ -108,7 +108,7 @@ namespace CheddarAndCocoa.Bootstrap
             t.dog = DogId.Cocoa;
             t.bodyColor = Hex("#5e3a20");
             t.wetBodyColor = Hex("#3c2410");
-            t.baseSpeed = 4.55f; t.floaterSpeed = 4.9f; t.swimSpeed = 1.6f; t.zoomiesMultiplier = 1.75f;
+            t.baseSpeed = 5.9f; t.floaterSpeed = 6.3f; t.swimSpeed = 2.1f; t.zoomiesMultiplier = 1.75f;
             t.inputDeadzone = 0.25f; t.acceleration = 29f; t.deceleration = 39f; t.turnResponsiveness = 52f; t.stopSpeed = 0.08f; t.runFeedbackSpeed = 0.22f;
             t.wrestleWinChance = 0.78f; t.stairTime = 1.05f;
             t.canChairLeap = false; t.barfChance = 0f; t.chewTime = 0.5f;
@@ -204,17 +204,28 @@ namespace CheddarAndCocoa.Bootstrap
             Prop(root, "Pond", F(-0.55f, 0.58f), new Vector2(fieldWidth * 0.2f, fieldHeight * 0.24f), Hex("#2f6f9e"), -9);
             Prop(root, "PondShallows", F(-0.55f, 0.58f), new Vector2(fieldWidth * 0.13f, fieldHeight * 0.15f), Hex("#4f97c4"), -8);
 
-            // Big shade tree (top-right): trunk + layered canopy.
-            Prop(root, "TreeTrunk", F(0.68f, 0.52f), new Vector2(1.1f, 2.2f), Hex("#5a3a1f"), -7);
-            Prop(root, "TreeCanopy", F(0.68f, 0.66f), new Vector2(7.5f, 6f), Hex("#2c5a23"), -6);
-            Prop(root, "TreeCanopyHi", F(0.62f, 0.7f), new Vector2(4.5f, 3.6f), Hex("#3a7330"), -5);
+            // Big shade tree (top-right): large enough to remain a navigation landmark.
+            Prop(root, "TreeTrunk", F(0.68f, 0.52f), new Vector2(2.2f, 4.4f), Hex("#5a3a1f"), -7);
+            Prop(root, "TreeCanopy", F(0.68f, 0.66f), new Vector2(fieldWidth * 0.16f, fieldHeight * 0.2f), Hex("#2c5a23"), -6);
+            Prop(root, "TreeCanopyHi", F(0.62f, 0.7f), new Vector2(fieldWidth * 0.1f, fieldHeight * 0.12f), Hex("#3a7330"), -5);
 
             // Garden beds along the left fence line.
             Prop(root, "GardenBed", F(-0.92f, 0f), new Vector2(fieldWidth * 0.05f, fieldHeight * 0.7f), Hex("#5b3d22"), -8);
             for (int i = 0; i < 5; i++)
             {
                 float fy = -0.6f + i * 0.3f;
-                Prop(root, $"Flower_{i}", F(-0.92f, fy), new Vector2(0.7f, 0.7f), i % 2 == 0 ? Hex("#d8557f") : Hex("#e8c24a"), -7);
+                Prop(root, $"Flower_{i}", F(-0.92f, fy), new Vector2(1.2f, 1.2f), i % 2 == 0 ? Hex("#d8557f") : Hex("#e8c24a"), -7);
+            }
+
+            // Mid-yard landmarks divide the large property into readable districts instead of
+            // presenting an undifferentiated green plane.
+            Prop(root, "PicnicBlanket", F(-0.18f, -0.48f), new Vector2(fieldWidth * 0.12f, fieldHeight * 0.13f), Hex("#c96b55"), -9);
+            Prop(root, "Sandbox", F(0.18f, 0.34f), new Vector2(fieldWidth * 0.11f, fieldHeight * 0.12f), Hex("#c9a968"), -9);
+            for (int i = 0; i < 9; i++)
+            {
+                float t = i / 8f;
+                Prop(root, $"SteppingStone_{i}", F(Mathf.Lerp(-0.32f, 0.4f, t), Mathf.Lerp(-0.72f, 0.2f, t)),
+                    new Vector2(2.6f, 1.5f), Hex("#8c887e"), -8);
             }
 
             // Bush cover clumps. The first three sit on the Eagle Shadow "HIDE HERE" cover zones
@@ -222,14 +233,14 @@ namespace CheddarAndCocoa.Bootstrap
             // rest are scatter dressing. Decorative only — no colliders.
             var bushes = new[]
             {
-                new Vector2(-14f, -8f), new Vector2(14f, -8f), new Vector2(0f, 9f),
+                F(-0.7f, -0.64f), F(0.7f, -0.64f), F(0f, 0.68f),
                 F(-0.4f, 0.05f), F(0.35f, -0.1f), F(0.0f, -0.05f),
             };
             for (int i = 0; i < bushes.Length; i++)
             {
                 bool coverBush = i < 3;
                 Prop(root, coverBush ? $"CoverBush_{i}" : $"Bush_{i}", bushes[i],
-                    coverBush ? new Vector2(4.2f, 3.2f) : new Vector2(2.6f, 1.9f),
+                    coverBush ? new Vector2(7.2f, 5.2f) : new Vector2(4.2f, 3.1f),
                     coverBush ? Hex("#2f6b27") : Hex("#356b2a"), -7);
             }
 

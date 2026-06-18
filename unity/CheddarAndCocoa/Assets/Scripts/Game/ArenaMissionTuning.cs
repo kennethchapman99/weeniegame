@@ -1,6 +1,19 @@
 namespace CheddarAndCocoa.Game
 {
     /// <summary>
+    /// Physical scale contract for authored outdoor levels. A runtime dog is roughly two world
+    /// units long, so this yard keeps the dogs below two percent of its width instead of making
+    /// them read like giant props in a single-screen arena.
+    /// </summary>
+    public static class ArenaWorldScale
+    {
+        public const float BackyardWidth = 120f;
+        public const float BackyardHeight = 68f;
+        public const float ApproximateDogLength = 2f;
+        public const float MaximumDogToYardWidthRatio = 0.02f;
+    }
+
+    /// <summary>
     /// Single code-side tuning source for the ArenaScene playable slice. Keep this plain data until
     /// there is enough designer workflow to justify ScriptableObject assets.
     /// </summary>
@@ -41,13 +54,13 @@ namespace CheddarAndCocoa.Game
         public float TugChargePerSecond = 0.5f;
         public float TugInteractProgress = 0.2f;
 
-        // Sized for the large backyard (48x28): the shared camera frames both dogs close when they
-        // regroup and pulls way back as they split across the yard, while clamping to the walls.
-        public float CameraInitialOrthoSize = 9f;
-        public float CameraMinOrthoSize = 6.8f;
-        public float CameraMaxOrthoSize = 13f;
-        public float CameraHorizontalMargin = 4.0f;
-        public float CameraVerticalMargin = 3.0f;
+        // The 120x68 yard has two useful camera modes: a close scrolling exploration frame when
+        // the dogs regroup, and a strategic full-yard frame when couch co-op players split up.
+        public float CameraInitialOrthoSize = 8f;
+        public float CameraMinOrthoSize = 7.5f;
+        public float CameraMaxOrthoSize = 34f;
+        public float CameraHorizontalMargin = 5.0f;
+        public float CameraVerticalMargin = 4.0f;
         public float CameraFollowLerp = 9f;
         public float CameraZoomLerp = 7f;
 
@@ -55,7 +68,7 @@ namespace CheddarAndCocoa.Game
         public float RescueRangeIndicatorRadius => RescueBarkRange;
         public float TugRangeIndicatorRadius => TugTogetherDistance;
 
-        // Spawn counts scaled up for the large 48x28 yard so the field reads as busy and worth
+        // Spawn counts scaled for the outdoor yard so the field reads as busy and worth
         // traversing rather than a few specks in a big empty box.
         public MissionBalance BackyardRescue = new MissionBalance
         {
