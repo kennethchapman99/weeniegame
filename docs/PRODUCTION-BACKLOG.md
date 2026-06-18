@@ -15,8 +15,12 @@ Playable (all shipped on `main`, deterministic PlayMode tests, selectable from t
 - Scent Search (sniff hot/cold + dig — `ScentSearchMissionState`)
 - Thunderstorm Comfort (panic co-regulation / huddle — `ThunderstormMissionState` + `PanicMeter`)
 - Mark the Yard (territory control — `TerritoryMissionState`, prowling squirrel rival)
+- Walkies on the Leash (leash physics — `LeashWalkMissionState`, tethered paired checkpoints)
+- Car Ride Balance (vehicle balance — `CarBalanceMissionState`, counter-lean the tilt)
 
-The arena is now a real 48x28 yard with a dynamic clamped follow-cam, decorative backyard dressing, and spatial geometry for the threat/territory missions. Dog-verb coverage: chase, rescue, steal, distract, defend, comfort, carry, tug, hide, sniff, dig, bark, mark.
+**Mechanic-module coverage complete:** all nine `ProductionMechanicModule` values (Herding, ThreatSweep, PatrolDefense, SharedObject, TerritoryControl, ScentSearch, RhythmPanic, VehicleBalance, LeashPhysics) now have at least one playable, tested mission.
+
+The arena is now a real 48x28 yard with a dynamic clamped follow-cam, decorative backyard dressing, and spatial geometry for the threat/territory/leash missions. Dog-verb coverage: chase, rescue, steal, distract, defend, comfort, carry, tug, hide, sniff, dig, bark, mark, balance. Meta: per-mission session-best, flawless bonus + tally, end-card MVP, and a New Session reset. ~84 deterministic PlayMode tests, all green on `main`.
 
 Reusable now:
 - mission select
