@@ -281,6 +281,10 @@ The deterministic test/pacing hooks are `ForceReachCheckpoint()` and `ForceLeash
 
 Manual check: arrow to Walkies on the Leash, keep both dogs close as you walk to each checkpoint in turn, and confirm drifting apart snaps the leash. Reaching all four clears with **Best Walk Ever**.
 
+Checkpoint success now gives both dogs a brief proud pose alongside the score pop. A leash snap
+produces a midpoint `LEASH SNAP!` warning, threat cue, rumble, and synchronized worried flinch before
+normal walking resumes.
+
 ### Car Ride Balance
 
 Car Ride Balance is a **vehicle-balance** mission using `CarBalanceMissionState` — the twelfth mission (arrow-select), and the one that completes coverage of every mechanic module in the design library. The dogs ride in the back of a car that lurches side to side; the live tilt runs from fully-left (-1) to fully-right (+1), and the dogs lean it by which side of centre they stand on. To stay level they must sit opposite the current tilt. Ride out six lurches without tipping (four spills fails the drive).

@@ -105,6 +105,34 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(1, game.MissionReplayCount);
         }
 
+        [UnityTest]
+        public IEnumerator LeashWalk_CheckpointAndSnap_HaveReadableDogReactions()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.LeashWalk);
+            yield return null;
+
+            _game.ForceReachCheckpoint();
+            yield return null;
+            Assert.IsTrue(HasWorldPop("CHECKPOINT"));
+            foreach (var feedback in _game.DogFeedback)
+                Assert.AreEqual(DogReadabilityFeedback.Pose.Proud, feedback.CurrentPose);
+
+            _game.ForceLeashSnap();
+            yield return null;
+            Assert.IsTrue(HasWorldPop("LEASH SNAP"));
+            foreach (var feedback in _game.DogFeedback)
+                Assert.AreEqual(DogReadabilityFeedback.Pose.Sad, feedback.CurrentPose);
+            Assert.AreEqual(ArenaFeedbackCatalog.ThreatWarning, _game.LastAudioCueRequested);
+        }
+
+        private static bool HasWorldPop(string text)
+        {
+            foreach (var pop in Object.FindObjectsByType<MissionWorldPop>(FindObjectsSortMode.None))
+                if (pop.Label.Contains(text)) return true;
+            return false;
+        }
+
         private IEnumerator LoadArena()
         {
             _game = null;

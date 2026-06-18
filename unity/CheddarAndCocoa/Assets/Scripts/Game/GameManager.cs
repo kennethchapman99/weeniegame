@@ -1921,6 +1921,9 @@ namespace CheddarAndCocoa.Game
             LastCue = $"Checkpoint reached together! ({_leashState.Reached}/{_leashState.RequiredCheckpoints}) Stay close.";
             SetJuice(JuiceFeedbackKind.SuccessPop, ScoreEventCatalog.CheckpointReached.Label);
             SpawnWorldPop(_leashCheckpoints[idx], "CHECKPOINT!", new Color(0.6f, 0.8f, 1f));
+            if (DogFeedback != null)
+                foreach (var feedback in DogFeedback)
+                    if (feedback != null) feedback.ShowProudBrief();
             RequestAudioCue(ArenaFeedbackCatalog.TugRescueSuccess);
             RequestRumble("checkpoint", 0.2f, 0.4f, 0.14f);
             LogPlaytestEvent("Checkpoint", $"{_leashState.Reached}/{_leashState.RequiredCheckpoints}");
@@ -1935,6 +1938,14 @@ namespace CheddarAndCocoa.Game
             LastFeedback = FeedbackKind.TugNeedsPartner;
             LastCue = $"The leash snapped taut - too far apart! ({_leashState.Snaps}/{MaxLeashSnaps})";
             SetJuice(JuiceFeedbackKind.WarningMiss, ScoreEventCatalog.LeashSnap.Label);
+            Vector3 midpoint = _dogs != null && _dogs.Length >= 2
+                ? (_dogs[0].transform.position + _dogs[1].transform.position) * 0.5f
+                : Vector3.zero;
+            SpawnWorldPop(midpoint, "LEASH SNAP!", new Color(1f, 0.42f, 0.24f));
+            if (DogFeedback != null)
+                foreach (var feedback in DogFeedback)
+                    if (feedback != null) feedback.ShowPanic();
+            RequestAudioCue(ArenaFeedbackCatalog.ThreatWarning);
             RequestRumble("leash_snap", 0.18f, 0.4f, 0.14f);
             LogPlaytestEvent("LeashSnap", $"{_leashState.Snaps}/{MaxLeashSnaps}");
             if (_leashState.TooManySnaps(MaxLeashSnaps)) EndRound(false);
