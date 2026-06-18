@@ -47,7 +47,7 @@ namespace CheddarAndCocoa.Game
             string squirrelState = _game.MaxStolenFood > 0 ? $"Stolen {_game.StolenFood}/{_game.MaxStolenFood}" : "No squirrel pressure";
             GUI.Label(new Rect(0, 58, Screen.width, 24), $"MISSION: {_game.ActiveMissionName} / {_game.Phase} | {_game.BreakfastRecovered}/{_game.BreakfastGoal} {_game.MissionItemPlural} | {squirrelState}", _mid);
             GUI.Label(new Rect(0, 82, Screen.width, 24), "Move: WASD / Arrows / Sticks | Bark: Space / Enter / X | Tug/Rescue: Y / Right Shift | F1 Overlay | F2 Audio | F3 Rumble", _small);
-            GUI.Label(new Rect(0, 106, Screen.width, 24), $"1 Backyard  2 Snack  3 Sock | United barks: {_game.UnitedBarks} | Tug {Mathf.RoundToInt(_game.TugProgress * 100f)}% | Modifier: {_game.ActiveModifierLabel}", _mid);
+            GUI.Label(new Rect(0, 106, Screen.width, 24), $"1 Backyard  2 Snack  3 Sock  4 Squirrel | United barks: {_game.UnitedBarks} | Tug {Mathf.RoundToInt(_game.TugProgress * 100f)}% | Modifier: {_game.ActiveModifierLabel}", _mid);
             GUI.Label(new Rect(0, 130, Screen.width, 24), _game.LastScoreEventLabel, _mid);
             if (_game.ScorePopVisible)
                 GUI.Label(new Rect(0, 152, Screen.width, 30), _game.LastScorePopLabel, _big);
@@ -118,15 +118,16 @@ namespace CheddarAndCocoa.Game
             DrawUiKitAccent(new Rect(box.x + w - 116, box.y + 16, 76, 50));
             GUI.Label(new Rect(box.x, box.y + 16, w, 42), "Cheddar + Cocoa Mission Select", _big);
             GUI.Label(new Rect(box.x + 40, box.y + 60, w - 80, 48),
-                "Pick a dog emergency. Up/Down chooses, Enter/Start begins, or press 1/2/3 for a mission.",
+                "Pick a dog emergency. Up/Down chooses, Enter/Start begins, or press 1/2/3/4 for a mission.",
                 _mid);
 
             DrawMissionRow(box, 0, GameManager.MissionVariant.BackyardRescue, "Backyard Rescue", "Protect weenies, bark off squirrel crime, huddle against the shadow, finish the rope tug.");
             DrawMissionRow(box, 1, GameManager.MissionVariant.SnackHeist, "Snack Heist", "Stash forbidden snacks before the squirrel union steals too much evidence.");
             DrawMissionRow(box, 2, GameManager.MissionVariant.SockPanic, "Sock Panic", "Return scattered socks before laundry order returns.");
+            DrawMissionRow(box, 3, GameManager.MissionVariant.SquirrelConspiracy, "Squirrel Conspiracy", "Herd routes, hold cutoff zones, expose the stash, and stop squirrel taunts.");
 
-            GUI.Label(new Rect(box.x + 40, box.y + 264, w - 80, 42), _game.SelectedMissionBriefing, _small);
-            if (GUI.Button(new Rect(box.x + w * 0.5f - 90, box.y + 312, 180, 30), $"Start {_game.SelectedMissionName}"))
+            GUI.Label(new Rect(box.x + 40, box.y + 292, w - 80, 42), _game.SelectedMissionBriefing, _small);
+            if (GUI.Button(new Rect(box.x + w * 0.5f - 90, box.y + 324, 180, 30), $"Start {_game.SelectedMissionName}"))
                 _game.StartSelectedMission();
         }
 

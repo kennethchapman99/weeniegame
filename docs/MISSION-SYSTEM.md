@@ -53,3 +53,12 @@ After a mission ends, the same local flow exposes Replay, Next Mission, and Miss
 ## Warning Status
 
 The previous `LevelObjective.surviveSeconds` warning was low-risk and related to objective data. It is now exposed through `LevelObjective.SurviveSeconds`, matching the existing read-only `Kind` and `Label` properties. The `LevelObjective` manager is still a future stub; ArenaScene mission variants currently run through `GameManager.MissionDefinition`.
+
+
+## Backyard Pack: Squirrel Conspiracy (2026-06-18)
+
+- Added `GameManager.MissionVariant.SquirrelConspiracy` / **The Great Backyard Squirrel Conspiracy** to the Arena mission select and mission order.
+- The mission uses `HerdingMissionState` for deterministic route progress, herd/cutoff counts, fake-outs, taunts, stash reveal, and stash found clear state.
+- Gameplay loop: dogs bark near the squirrel to score `GOOD HERD`, split positioning to score `CUTOFF`, lose points on early/far `FAKE OUT`, reveal the stash after four controls with `DOUBLE BARK BLOCK`, then interact with the revealed stash for `STASH FOUND` and `CONSPIRACY CRACKED`.
+- Fail path: repeated squirrel taunts or timer expiry fails the mission; replay resets route, stash, score, and outcome state.
+- Production helpers are now part of the live path where relevant: `MissionRankCalculator`, `ScoreEventCatalog`, `MissionRuntimeSnapshot`, `MissionSeedGenerator`, and `MissionOutcomeSummaryBuilder`.
