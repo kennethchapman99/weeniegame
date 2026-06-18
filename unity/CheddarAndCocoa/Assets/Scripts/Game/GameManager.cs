@@ -1594,11 +1594,35 @@ namespace CheddarAndCocoa.Game
                 }
             }
 
-            if (Time.time >= _nextReclaimAt && _territoryState.Claimed > 0 && !_territoryState.AllClaimed)
+            // The squirrel prowls toward the nearest claimed zone and re-marks it on arrival, so
+            // players can see the threat coming and race to defend rather than getting teleport-sniped.
+            if (SquirrelObject != null && _territoryState.Claimed > 0 && !_territoryState.AllClaimed)
             {
-                _nextReclaimAt = Time.time + ZoneReclaimInterval;
-                SquirrelReclaimZone();
+                int target = NearestClaimedZone(SquirrelObject.transform.position);
+                if (target >= 0)
+                {
+                    SquirrelObject.transform.position = Vector3.MoveTowards(
+                        SquirrelObject.transform.position, _territoryZones[target], Time.deltaTime * (_tuning.SquirrelMoveSpeed * 0.8f));
+                    if (Vector2.Distance(SquirrelObject.transform.position, _territoryZones[target]) < 1f && Time.time >= _nextReclaimAt)
+                    {
+                        _nextReclaimAt = Time.time + 1.5f;
+                        SquirrelReclaimZone();
+                    }
+                }
             }
+        }
+
+        private int NearestClaimedZone(Vector2 from)
+        {
+            int best = -1;
+            float bestDist = float.PositiveInfinity;
+            for (int i = 0; i < _zoneClaimed.Length; i++)
+            {
+                if (!_zoneClaimed[i]) continue;
+                float d = Vector2.Distance(from, _territoryZones[i]);
+                if (d < bestDist) { bestDist = d; best = i; }
+            }
+            return best;
         }
 
         public void ForceClaimZone(DogId dogId = DogId.Cheddar)
