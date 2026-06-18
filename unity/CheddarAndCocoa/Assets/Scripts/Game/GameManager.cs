@@ -208,7 +208,8 @@ namespace CheddarAndCocoa.Game
         public int SessionStarsEarned { get; private set; }
         public int SessionFlawlessClears { get; private set; }
         public int SessionUniqueMissionsCompleted { get; private set; }
-        public bool SessionSummaryReady => SessionUniqueMissionsCompleted >= 3;
+        public bool SessionSummaryReady => SessionUniqueMissionsCompleted >= 3 &&
+            SessionUniqueMissionsCompleted / 3 > _lastSummaryMilestoneShown;
         public string SessionSummaryLabel { get; private set; } = "Session Summary: no missions played yet.";
         public string SessionRanksEarnedLabel { get; private set; } = "Ranks: none yet.";
         public ArenaMissionTuning Tuning => _tuning;
@@ -357,6 +358,7 @@ namespace CheddarAndCocoa.Game
         private bool _roundResultRecorded;
         private string _lastLoggedObjective = string.Empty;
         private Vector2 _missionEntryTarget;
+        private int _lastSummaryMilestoneShown;
 
         public void Init(DogController[] dogs, GamepadPlayerInput[] inputs, Sprite treatSprite, Sprite rangeSprite, Rect bounds, int seed)
         {
@@ -524,6 +526,7 @@ namespace CheddarAndCocoa.Game
             SessionStarsEarned = 0;
             SessionFlawlessClears = 0;
             SessionUniqueMissionsCompleted = 0;
+            _lastSummaryMilestoneShown = 0;
             _sessionRanks.Clear();
             System.Array.Clear(_sessionCompletedMissions, 0, _sessionCompletedMissions.Length);
             System.Array.Clear(_sessionClearedMissions, 0, _sessionClearedMissions.Length);
@@ -562,6 +565,7 @@ namespace CheddarAndCocoa.Game
 
         public void ShowSessionSummary()
         {
+            _lastSummaryMilestoneShown = Mathf.Max(_lastSummaryMilestoneShown, SessionUniqueMissionsCompleted / 3);
             CurrentFlow = FlowState.SessionSummary;
             Phase = State.Intro;
             Outcome = MissionOutcome.InProgress;

@@ -43,6 +43,7 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(0, game.FailuresForMission(GameManager.MissionVariant.MarkTheYard));
             Assert.AreEqual(0, game.BestScoreForMission(GameManager.MissionVariant.MarkTheYard));
             Assert.AreEqual("NEW", game.MissionSelectStatusFor(GameManager.MissionVariant.MarkTheYard));
+            Assert.IsFalse(game.SessionSummaryReady);
             Assert.That(game.SessionSummaryLabel, Does.Contain("no missions played yet"));
         }
     }

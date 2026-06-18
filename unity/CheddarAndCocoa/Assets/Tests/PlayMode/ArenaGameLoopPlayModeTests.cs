@@ -940,6 +940,10 @@ namespace CheddarAndCocoa.Tests
             game.ContinueSession();
             yield return null;
             Assert.AreEqual(GameManager.MissionVariant.EagleShadowPanic, game.ActiveMissionVariant);
+            game.ForceGameOver();
+            Assert.AreEqual(4, game.SessionUniqueMissionsCompleted);
+            Assert.IsFalse(game.SessionSummaryReady, "Summary should stay quiet until the six-mission milestone.");
+            Assert.AreEqual("Next Mission", game.EndNextActionLabel);
         }
 
         [UnityTest]
