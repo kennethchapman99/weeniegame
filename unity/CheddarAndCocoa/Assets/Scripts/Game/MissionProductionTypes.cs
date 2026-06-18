@@ -133,6 +133,15 @@ namespace CheddarAndCocoa.Game
             "Have every zone claimed simultaneously.",
             "The timer expires before every zone is held at once.");
 
+        public static readonly ProductionMissionSpec LeashWalk = new(
+            "leash_walk",
+            "Walkies on the Leash",
+            ProductionMissionPack.RoadTrip,
+            ProductionMechanicModule.LeashPhysics,
+            "Stay close and walk the leash through every checkpoint together.",
+            "Reach all checkpoints without snapping the leash too many times.",
+            "The leash snaps taut too many times, or the timer expires.");
+
         public static readonly ProductionMissionSpec CoyotesFence = new(
             "coyotes_fence",
             "Coyotes at the Fence",

@@ -26,7 +26,7 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(game);
 
             int count = game.MissionSelectOptionCount;
-            Assert.GreaterOrEqual(count, 10, "All ten missions should be in the rotation.");
+            Assert.GreaterOrEqual(count, 11, "All missions should be in the rotation.");
 
             foreach (GameManager.MissionVariant variant in Enum.GetValues(typeof(GameManager.MissionVariant)))
             {

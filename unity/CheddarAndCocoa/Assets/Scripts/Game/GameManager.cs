@@ -17,7 +17,7 @@ namespace CheddarAndCocoa.Game
         public enum FlowState { MissionSelect, Playing, EndScreen, SessionSummary }
         public enum RoundModifier { SquirrelTrouble, ZoomiesSurge, PancakePanic }
         public enum MissionOutcome { InProgress, Clear, Failed }
-        public enum MissionVariant { BackyardRescue, SnackHeist, SockPanic, SquirrelConspiracy, EagleShadowPanic, CoyotesFence, WeenieRoundup, ScentSearch, ThunderstormComfort, MarkTheYard }
+        public enum MissionVariant { BackyardRescue, SnackHeist, SockPanic, SquirrelConspiracy, EagleShadowPanic, CoyotesFence, WeenieRoundup, ScentSearch, ThunderstormComfort, MarkTheYard, LeashWalk }
         public enum FeedbackKind
         {
             Intro,
@@ -113,7 +113,8 @@ namespace CheddarAndCocoa.Game
             MissionVariant.WeenieRoundup,
             MissionVariant.ScentSearch,
             MissionVariant.ThunderstormComfort,
-            MissionVariant.MarkTheYard
+            MissionVariant.MarkTheYard,
+            MissionVariant.LeashWalk
         };
 
         [Header("Mission selection")]
@@ -148,6 +149,8 @@ namespace CheddarAndCocoa.Game
         public PanicMeter Panic => _panic;
         public TerritoryMissionState MarkTheYardState => _territoryState;
         public Vector2[] TerritoryZones => (Vector2[])_territoryZones.Clone();
+        public LeashWalkMissionState LeashWalkState => _leashState;
+        public Vector2[] LeashCheckpoints => (Vector2[])_leashCheckpoints.Clone();
         public MissionRuntimeSnapshot RuntimeSnapshot => BuildRuntimeSnapshot();
         public int SelectedMissionIndex => _selectedMissionIndex;
         public MissionVariant SelectedMissionVariant => MissionOrder[Mathf.Clamp(_selectedMissionIndex, 0, MissionOrder.Length - 1)];
@@ -297,6 +300,13 @@ namespace CheddarAndCocoa.Game
         private const int StormRequiredClaps = 5;
         private const float StormClapInterval = 5.5f;
         private int[] _dogContribution;
+        private readonly LeashWalkMissionState _leashState = new LeashWalkMissionState();
+        private readonly Vector2[] _leashCheckpoints = { new(-18f, -10f), new(18f, -10f), new(18f, 10f), new(-18f, 10f) };
+        private GameObject[] _leashCheckpointMarkers;
+        private const float CheckpointRange = 2.6f;
+        private const float MaxLeash = 7f;
+        private const int MaxLeashSnaps = 4;
+        private float _nextLeashSnapAt;
         private readonly TerritoryMissionState _territoryState = new TerritoryMissionState();
         private readonly Vector2[] _territoryZones = { new(-18f, 9f), new(18f, 9f), new(-18f, -9f), new(18f, -9f), new(0f, 0f) };
         private GameObject[] _zoneMarkers;
@@ -727,6 +737,7 @@ namespace CheddarAndCocoa.Game
             _scentState.Reset();
             _stormState.Reset();
             _territoryState.Reset();
+            _leashState.Reset();
             if (_dogContribution != null) System.Array.Clear(_dogContribution, 0, _dogContribution.Length);
             if (_panic != null) _panic.ResetMeter();
             _bowlPosition = new Vector2(_bounds.xMax - 4f, _bounds.yMin + 3f);
@@ -853,6 +864,25 @@ namespace CheddarAndCocoa.Game
             {
                 SetTerritoryMarkersActive(false);
             }
+            if (_mission.Variant == MissionVariant.LeashWalk)
+            {
+                _leashState.Configure(_leashCheckpoints.Length);
+                _nextLeashSnapAt = 0f;
+                // Start the tethered dogs side by side (default spawns are far enough apart to snap
+                // the leash instantly), then it's on the players to stay close as they walk.
+                if (_dogs != null && _dogs.Length >= 2)
+                {
+                    _dogs[0].transform.position = new Vector2(-1.5f, 0f);
+                    _dogs[1].transform.position = new Vector2(1.5f, 0f);
+                    foreach (var dog in _dogs)
+                        if (dog.TryGetComponent<Rigidbody2D>(out var rb)) rb.linearVelocity = Vector2.zero;
+                }
+                SetLeashCheckpointMarkersActive(true);
+            }
+            else
+            {
+                SetLeashCheckpointMarkersActive(false);
+            }
             _lastLoggedObjective = string.Empty;
             LogPlaytestEvent("MissionStarted", $"{_mission.Name} / {ActiveModifierLabel} / {roundDuration:0}s");
             LogObjectiveIfChanged();
@@ -883,6 +913,7 @@ namespace CheddarAndCocoa.Game
             else if (_mission.Variant == MissionVariant.ScentSearch) { }
             else if (_mission.Variant == MissionVariant.ThunderstormComfort) TickThunderstorm();
             else if (_mission.Variant == MissionVariant.MarkTheYard) TickTerritory();
+            else if (_mission.Variant == MissionVariant.LeashWalk) TickLeashWalk();
             else TickSquirrel();
             TickPredator();
             TickTugProximity();
@@ -1702,6 +1733,100 @@ namespace CheddarAndCocoa.Game
                 SquirrelReclaimZone();
         }
 
+        // --- Walkies on the Leash (tethered checkpoint walk) ---
+
+        private void BuildLeashCheckpointMarkers()
+        {
+            _leashCheckpointMarkers = new GameObject[_leashCheckpoints.Length];
+            for (int i = 0; i < _leashCheckpoints.Length; i++)
+            {
+                var go = new GameObject($"LeashCheckpoint_{i}");
+                go.transform.position = _leashCheckpoints[i];
+                go.transform.localScale = Vector3.one * (CheckpointRange * 1.4f);
+                var sr = go.AddComponent<SpriteRenderer>();
+                sr.sprite = _sprite;
+                sr.color = new Color(0.45f, 0.6f, 0.85f, 0.4f);
+                sr.sortingOrder = 1;
+                AddWorldLabel(go, "CHECKPOINT", Vector3.up * 0.9f, 13, Color.white);
+                go.SetActive(false);
+                _leashCheckpointMarkers[i] = go;
+            }
+        }
+
+        private void SetLeashCheckpointMarkersActive(bool active)
+        {
+            if (_leashCheckpointMarkers == null) return;
+            for (int i = 0; i < _leashCheckpointMarkers.Length; i++)
+                if (_leashCheckpointMarkers[i] != null)
+                    _leashCheckpointMarkers[i].SetActive(active && i >= _leashState.CheckpointIndex);
+        }
+
+        private void RegisterCheckpointReached()
+        {
+            if (_leashState.ReadyToClear()) return;
+            int idx = _leashState.CheckpointIndex;
+            _leashState.ReachCheckpoint();
+            if (idx >= 0 && idx < _leashCheckpointMarkers.Length && _leashCheckpointMarkers[idx] != null)
+                _leashCheckpointMarkers[idx].SetActive(false);
+            AddScore(ScoreEventCatalog.CheckpointReached.Points, ScoreEventCatalog.CheckpointReached.Label);
+            LastFeedback = FeedbackKind.UnitedBark;
+            LastCue = $"Checkpoint reached together! ({_leashState.Reached}/{_leashState.RequiredCheckpoints}) Stay close.";
+            SetJuice(JuiceFeedbackKind.SuccessPop, ScoreEventCatalog.CheckpointReached.Label);
+            SpawnWorldPop(_leashCheckpoints[idx], "CHECKPOINT!", new Color(0.6f, 0.8f, 1f));
+            RequestAudioCue(ArenaFeedbackCatalog.TugRescueSuccess);
+            RequestRumble("checkpoint", 0.2f, 0.4f, 0.14f);
+            LogPlaytestEvent("Checkpoint", $"{_leashState.Reached}/{_leashState.RequiredCheckpoints}");
+            if (_leashState.ReadyToClear()) { AddScore(ScoreEventCatalog.WalkComplete.Points, ScoreEventCatalog.WalkComplete.Label); CheckClear(); }
+            else LogObjectiveIfChanged();
+        }
+
+        private void RegisterLeashSnap()
+        {
+            _leashState.Snap();
+            AddScore(ScoreEventCatalog.LeashSnap.Points, ScoreEventCatalog.LeashSnap.Label);
+            LastFeedback = FeedbackKind.TugNeedsPartner;
+            LastCue = $"The leash snapped taut - too far apart! ({_leashState.Snaps}/{MaxLeashSnaps})";
+            SetJuice(JuiceFeedbackKind.WarningMiss, ScoreEventCatalog.LeashSnap.Label);
+            RequestRumble("leash_snap", 0.18f, 0.4f, 0.14f);
+            LogPlaytestEvent("LeashSnap", $"{_leashState.Snaps}/{MaxLeashSnaps}");
+            if (_leashState.TooManySnaps(MaxLeashSnaps)) EndRound(false);
+            else LogObjectiveIfChanged();
+        }
+
+        private void TickLeashWalk()
+        {
+            if (_dogs == null || _dogs.Length < 2 || _leashState.ReadyToClear()) return;
+
+            // Leash snaps if the dogs drift too far apart (rate-limited so one stretch isn't a barrage).
+            if (Vector2.Distance(_dogs[0].transform.position, _dogs[1].transform.position) > MaxLeash && Time.time >= _nextLeashSnapAt)
+            {
+                _nextLeashSnapAt = Time.time + 1.5f;
+                RegisterLeashSnap();
+                if (_leashState.TooManySnaps(MaxLeashSnaps)) return;
+            }
+
+            // Both dogs must be on the current checkpoint together to bank it.
+            int idx = _leashState.CheckpointIndex;
+            if (idx >= 0 && idx < _leashCheckpoints.Length)
+            {
+                bool a = Vector2.Distance(_dogs[0].transform.position, _leashCheckpoints[idx]) <= CheckpointRange;
+                bool b = Vector2.Distance(_dogs[1].transform.position, _leashCheckpoints[idx]) <= CheckpointRange;
+                if (a && b) RegisterCheckpointReached();
+            }
+        }
+
+        public void ForceReachCheckpoint()
+        {
+            if (MissionActive() && _mission != null && _mission.Variant == MissionVariant.LeashWalk)
+                RegisterCheckpointReached();
+        }
+
+        public void ForceLeashSnap()
+        {
+            if (MissionActive() && _mission != null && _mission.Variant == MissionVariant.LeashWalk)
+                RegisterLeashSnap();
+        }
+
         private float NearestEagleCoverDistance(Vector2 position)
         {
             float best = float.PositiveInfinity;
@@ -2022,6 +2147,13 @@ namespace CheddarAndCocoa.Game
                 progress = _territoryState.Claimed;
                 goal = _territoryState.ZoneCount;
                 mistakes = _territoryState.Reclaims;
+            }
+            else if (_mission != null && _mission.Variant == MissionVariant.LeashWalk)
+            {
+                missionId = "leash_walk";
+                progress = _leashState.Reached;
+                goal = _leashState.RequiredCheckpoints;
+                mistakes = _leashState.Snaps;
             }
             else
             {
@@ -2358,6 +2490,11 @@ namespace CheddarAndCocoa.Game
                 if (_territoryState.AllClaimed) EndRound(true);
                 return;
             }
+            if (_mission.Variant == MissionVariant.LeashWalk)
+            {
+                if (_leashState.ReadyToClear()) EndRound(true);
+                return;
+            }
 
             bool hasItems = BreakfastRecovered >= _mission.ItemGoal;
             bool hasPredator = !_mission.RequiresPredator || PredatorResolved;
@@ -2445,6 +2582,8 @@ namespace CheddarAndCocoa.Game
                 funny = MissionOutcomeSummaryBuilder.BuildThunderstormSummary(_stormState);
             else if (_mission != null && _mission.Variant == MissionVariant.MarkTheYard)
                 funny = MissionOutcomeSummaryBuilder.BuildTerritorySummary(_territoryState);
+            else if (_mission != null && _mission.Variant == MissionVariant.LeashWalk)
+                funny = MissionOutcomeSummaryBuilder.BuildLeashSummary(_leashState);
             else
                 funny = Outcome.ToString();
             return $"{funny}: {Score} - {EndRank}";
@@ -2510,6 +2649,10 @@ namespace CheddarAndCocoa.Game
                 int panicPct = _panic != null ? Mathf.RoundToInt(Mathf.Max(_panic.CheddarPanic, _panic.CocoaPanic) * 100f) : 0;
                 return $"Huddle to stay calm and ride out the storm: claps {_stormState.ClapsSurvived}/{_stormState.RequiredClaps}, panic {panicPct}%";
             }
+            if (_mission.Variant == MissionVariant.LeashWalk)
+            {
+                return $"Walk the leash together to checkpoint {Mathf.Min(_leashState.Reached + 1, _leashState.RequiredCheckpoints)}/{_leashState.RequiredCheckpoints} - stay close (snaps {_leashState.Snaps}/{MaxLeashSnaps})";
+            }
             if (_mission.Variant == MissionVariant.MarkTheYard)
             {
                 return $"Claim and hold every zone at once: {_territoryState.Claimed}/{_territoryState.ZoneCount} marked (squirrel steals back {_territoryState.Reclaims})";
@@ -2541,6 +2684,7 @@ namespace CheddarAndCocoa.Game
             if (_mission.Variant == MissionVariant.EagleShadowPanic && _threatSweepState.TooManyExposures(EagleMaxExposures)) return "The eagle shadow caught the dogs in the open one too many times.";
             if (_mission.Variant == MissionVariant.CoyotesFence && _patrolState.TooManyBreaches(CoyoteMaxBreaches)) return "The coyote breached the fence one too many times while the dogs got separated.";
             if (_mission.Variant == MissionVariant.ScentSearch && _scentState.TooManyWastedDigs(ScentMaxWastedDigs)) return "The dogs dug up half the yard chasing cold scents and ran out of patience.";
+            if (_mission.Variant == MissionVariant.LeashWalk && _leashState.TooManySnaps(MaxLeashSnaps)) return "The leash snapped taut too many times - the walk fell apart.";
             if (_mission.Variant == MissionVariant.ThunderstormComfort && _panic != null && _panic.Maxed != null) return $"{_panic.Maxed} panicked at the thunder and bolted before the storm passed.";
             if (_mission.UsesSquirrel && StolenFood >= maxStolenFood) return _mission.StolenFailReason;
             if (TimeRemaining <= 0f) return _mission.TimeFailReason;
@@ -2860,6 +3004,7 @@ namespace CheddarAndCocoa.Game
             if (!active || _mission == null || _mission.Variant != MissionVariant.WeenieRoundup) SetWeenieRoundupActive(false);
             if (!active || _mission == null || _mission.Variant != MissionVariant.ScentSearch) SetScentSearchActive(false);
             if (!active || _mission == null || _mission.Variant != MissionVariant.MarkTheYard) SetTerritoryMarkersActive(false);
+            if (!active || _mission == null || _mission.Variant != MissionVariant.LeashWalk) SetLeashCheckpointMarkersActive(false);
         }
 
         public static MissionDefinition BuildMissionDefinition(MissionVariant variant) =>
@@ -3326,6 +3471,63 @@ namespace CheddarAndCocoa.Game
                         ItemSecondaryColor = new Color(0.2f, 0.2f, 0.24f),
                         ItemPopColor = new Color(0.45f, 0.9f, 0.55f)
                     };
+                case MissionVariant.LeashWalk:
+                    return new MissionDefinition
+                    {
+                        Variant = MissionVariant.LeashWalk,
+                        Name = "Walkies on the Leash",
+                        IntroPrompt = "Cheddar + Cocoa are clipped to one leash. Walk through every checkpoint together without drifting so far apart the leash snaps.",
+                        ReadyScoreLabel = "READY FOR WALKIES",
+                        ItemRootName = "Checkpoints",
+                        ItemObjectName = "Checkpoint",
+                        ItemWorldLabel = "Walk!",
+                        ItemArrowLabel = "WALK",
+                        ItemCollectCueNoun = "a checkpoint",
+                        CollectObjectiveFormat = "Reach checkpoints {0}/{1}",
+                        CollectedScoreLabel = "CHECKPOINT",
+                        ItemScore = balance.ItemScore,
+                        SpawnedItemCount = balance.SpawnedItemCount,
+                        ItemGoal = balance.ItemGoal,
+                        RoundSeconds = balance.RoundSeconds,
+                        PawfectScore = balance.PawfectScore,
+                        HeroScore = balance.HeroScore,
+                        SurvivorScore = balance.SurvivorScore,
+                        UsesSquirrel = false,
+                        RequiresPredator = false,
+                        RequiresTug = false,
+                        MaxStolenFood = balance.MaxStolenFood,
+                        SquirrelPenalty = balance.SquirrelPenalty,
+                        SquirrelScareScore = balance.SquirrelScareScore,
+                        SquirrelObjectiveText = "Walk the leash together",
+                        SquirrelStealingCue = "No squirrel here - mind the leash.",
+                        SquirrelStoleCue = "No squirrel here - stay close.",
+                        SquirrelStealScoreLabel = "LEASH SNAP",
+                        SquirrelScareScoreLabel = "CHECKPOINT",
+                        SquirrelStealingActorLabel = "LEASH",
+                        SquirrelDroppedActorLabel = "CHECKPOINT",
+                        SquirrelStoleActorLabel = "LEASH SNAP",
+                        SquirrelMissPopLabel = "SNAP!",
+                        SquirrelStealJuiceLabel = "LEASH SNAP!",
+                        SquirrelScareJuiceLabel = "CHECKPOINT!",
+                        TugObjectiveText = "Walk to the checkpoint together",
+                        WaitingObjectiveText = "Walk to the last checkpoint together",
+                        ClearObjectiveText = "Great walk - replay Walkies on the Leash",
+                        ClearBannerPrefix = "WALK COMPLETE!",
+                        ClearScoreLabel = "WALK COMPLETE",
+                        ReplayPrompt = "Press R / Enter / Start to replay Walkies on the Leash",
+                        FailObjectiveText = "Mission failed - replay Walkies on the Leash",
+                        GenericFailReason = "Needs the dogs to walk more in sync next time.",
+                        TimeFailReason = "The walk dragged on and the checkpoints never lined up.",
+                        StolenFailReason = "The leash snapped taut too many times.",
+                        PredatorFailReason = "No predator here, just a tangled leash.",
+                        PawfectClearReason = "Two pups walked the whole route in perfect lockstep - dream walkies.",
+                        HeroClearReason = "Every checkpoint reached with the leash mostly slack.",
+                        BasicClearReason = "They finished the walk, even if the leash got dramatic.",
+                        ItemColor = new Color(0.45f, 0.6f, 0.85f),
+                        ItemAccentColor = new Color(0.7f, 0.82f, 1f),
+                        ItemSecondaryColor = new Color(0.18f, 0.24f, 0.36f),
+                        ItemPopColor = new Color(0.6f, 0.8f, 1f)
+                    };
                 case MissionVariant.SockPanic:
                     return new MissionDefinition
                     {
@@ -3676,6 +3878,7 @@ namespace CheddarAndCocoa.Game
             BuildWeenieRoundupObjects();
             BuildScentSearchMarkers();
             BuildTerritoryMarkers();
+            BuildLeashCheckpointMarkers();
             if (InteractionRangeIndicators != null)
             {
                 int offset = _dogs != null ? _dogs.Length : 0;

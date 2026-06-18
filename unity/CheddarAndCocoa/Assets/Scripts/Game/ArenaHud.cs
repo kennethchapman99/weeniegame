@@ -141,7 +141,7 @@ namespace CheddarAndCocoa.Game
             float y = box.y + 120 + index * 34;
             bool selected = _game.SelectedMissionIndex == index;
             string prefix = selected ? "> " : "  ";
-            string key = index < 9 ? (index + 1).ToString() : "0";
+            string key = index < 9 ? (index + 1).ToString() : index == 9 ? "0" : "-";
             var def = GameManager.BuildMissionDefinition(variant);
             int best = _game.BestScoreForMission(variant);
             string bestTag = best > 0 ? $"  (best {best})" : "";

@@ -65,6 +65,17 @@ namespace CheddarAndCocoa.Game
             return "Still Marking";
         }
 
+        public static string BuildLeashSummary(LeashWalkMissionState state)
+        {
+            if (state.ReadyToClear())
+                return "Best Walk Ever";
+
+            if (state.Snaps > 0)
+                return "Tangled Leash";
+
+            return "Still Walking";
+        }
+
         public static string BuildPatrolSummary(PatrolDefenseMissionState state)
         {
             if (state.FinalPressureComplete)
