@@ -33,8 +33,11 @@ namespace CheddarAndCocoa.Input
         [SerializeField] private KeyboardScheme keyboardScheme = KeyboardScheme.None;
 
         private DogController _dog;
+        private Gamepad _boundPad;
 
         public float Deadzone => deadzone;
+        public bool HasBoundGamepad => _boundPad != null && _boundPad.added;
+        public int BoundGamepadDeviceId => HasBoundGamepad ? _boundPad.deviceId : -1;
 
         private void Awake()
         {
@@ -78,11 +81,13 @@ namespace CheddarAndCocoa.Input
                 {
                     move += ReadKeys(kb.aKey, kb.dKey, kb.sKey, kb.wKey);
                     bark |= kb.spaceKey.wasPressedThisFrame;
+                    interact |= kb.eKey.wasPressedThisFrame;
                 }
                 else // ArrowsEnter
                 {
                     move += ReadKeys(kb.leftArrowKey, kb.rightArrowKey, kb.downArrowKey, kb.upArrowKey);
-                    bark |= kb.enterKey.wasPressedThisFrame || kb.rightShiftKey.wasPressedThisFrame;
+                    bark |= kb.enterKey.wasPressedThisFrame;
+                    interact |= kb.rightShiftKey.wasPressedThisFrame;
                 }
             }
 
@@ -112,10 +117,20 @@ namespace CheddarAndCocoa.Input
 
         private Gamepad ResolvePad()
         {
-            if (gamepadSlot >= 0 && gamepadSlot < Gamepad.all.Count) return Gamepad.all[gamepadSlot];
+            // Once assigned, keep the dog glued to the same device even if another pad becomes the
+            // current device or the Gamepad.all ordering changes. A disconnected pad remains bound
+            // and resumes control when the Input System re-adds that device.
+            if (_boundPad != null)
+                return _boundPad.added ? _boundPad : null;
+
+            if (gamepadSlot >= 0)
+            {
+                if (gamepadSlot >= Gamepad.all.Count) return null;
+                _boundPad = Gamepad.all[gamepadSlot];
+                return _boundPad;
+            }
+
             return Gamepad.current;
-            // TODO: replace with PlayerInput device pairing so P1/P2 stay glued to their controller
-            // across scene loads (mirrors the prototype's P1=pad0 / P2=pad1 slot assignment).
         }
     }
 }

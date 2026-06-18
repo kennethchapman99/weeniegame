@@ -6,6 +6,8 @@ using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.LowLevel; // GamepadState — full-state injection
 using CheddarAndCocoa.Bootstrap;
 using CheddarAndCocoa.Dogs;
+using CheddarAndCocoa.Input;
+using CheddarAndCocoa.Game;
 
 namespace CheddarAndCocoa.Tests
 {
@@ -103,6 +105,102 @@ namespace CheddarAndCocoa.Tests
                 "Bark input (pad0 X / buttonWest) did not produce a response (OnBark never fired).");
 
             Object.Destroy(boot.gameObject);
+        }
+
+        [UnityTest]
+        public IEnumerator OnePad_DrivesOnlyCheddar_NotBothDogs()
+        {
+            foreach (var go in Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None))
+                Object.Destroy(go);
+            yield return null;
+
+            var pad0 = InputSystem.AddDevice<Gamepad>();
+            new GameObject("Boot").AddComponent<GameBootstrap>();
+            yield return null;
+            yield return null;
+
+            DogController cheddar = null, cocoa = null;
+            GamepadPlayerInput cheddarInput = null, cocoaInput = null;
+            foreach (var id in Object.FindObjectsByType<DogIdentity>(FindObjectsSortMode.None))
+            {
+                if (id.Id == DogId.Cheddar)
+                {
+                    cheddar = id.GetComponent<DogController>();
+                    cheddarInput = id.GetComponent<GamepadPlayerInput>();
+                }
+                else if (id.Id == DogId.Cocoa)
+                {
+                    cocoa = id.GetComponent<DogController>();
+                    cocoaInput = id.GetComponent<GamepadPlayerInput>();
+                }
+            }
+
+            Assert.IsNotNull(cheddar);
+            Assert.IsNotNull(cocoa);
+            Vector2 cheddarStart = cheddar.transform.position;
+            Vector2 cocoaStart = cocoa.transform.position;
+
+            for (int i = 0; i < 40; i++)
+            {
+                InputSystem.QueueStateEvent(pad0, new GamepadState { leftStick = Vector2.left });
+                yield return null;
+                yield return new WaitForFixedUpdate();
+            }
+
+            Assert.Less(cheddar.transform.position.x - cheddarStart.x, -0.25f,
+                "The single connected pad should drive Cheddar (slot 0).");
+            Assert.Less(Vector2.Distance(cocoa.transform.position, cocoaStart), 0.05f,
+                "Cocoa (slot 1) must not fall back to the current pad when no second pad exists.");
+            Assert.IsTrue(cheddarInput.HasBoundGamepad);
+            Assert.IsFalse(cocoaInput.HasBoundGamepad);
+        }
+
+        [UnityTest]
+        public IEnumerator KeyboardFallback_ProvidesInteractForBothDogs()
+        {
+            foreach (var go in Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None))
+                Object.Destroy(go);
+            yield return null;
+
+            var keyboard = InputSystem.AddDevice<Keyboard>();
+            new GameObject("Boot").AddComponent<ArenaBootstrap>();
+            yield return null;
+            yield return null;
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            Assert.IsNotNull(game);
+            game.StartSelectedMission();
+            yield return null;
+
+            DogController cheddar = null, cocoa = null;
+            foreach (var id in Object.FindObjectsByType<DogIdentity>(FindObjectsSortMode.None))
+            {
+                if (id.Id == DogId.Cheddar) cheddar = id.GetComponent<DogController>();
+                else if (id.Id == DogId.Cocoa) cocoa = id.GetComponent<DogController>();
+            }
+
+            bool cheddarInteracted = false, cocoaInteracted = false;
+            cheddar.OnInteract += _ => cheddarInteracted = true;
+            cocoa.OnInteract += _ => cocoaInteracted = true;
+
+            for (int i = 0; i < 8 && !cheddarInteracted; i++)
+            {
+                InputSystem.QueueStateEvent(keyboard, new KeyboardState());
+                yield return null;
+                InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.E));
+                yield return null;
+            }
+            InputSystem.QueueStateEvent(keyboard, new KeyboardState());
+            for (int i = 0; i < 8 && !cocoaInteracted; i++)
+            {
+                InputSystem.QueueStateEvent(keyboard, new KeyboardState());
+                yield return null;
+                InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.RightShift));
+                yield return null;
+            }
+
+            Assert.IsTrue(cheddarInteracted, "P1 keyboard interact should be E.");
+            Assert.IsTrue(cocoaInteracted, "P2 keyboard interact should be Right Shift.");
         }
     }
 }

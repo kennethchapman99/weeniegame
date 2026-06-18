@@ -271,8 +271,8 @@ The end loop is intentionally simple: players see current score, the latest scor
 
 | Player | Dog | Controller | Keyboard | Bark | Interact |
 | --- | --- | --- | --- | --- | --- |
-| P1 | Cheddar | Gamepad slot 0 | WASD | Space / X button | Y button |
-| P2 | Cocoa | Gamepad slot 1 | Arrow keys | Enter / Right Shift / X button | Y button |
+| P1 | Cheddar | Gamepad slot 0 | WASD | Space / X button | E / Y button |
+| P2 | Cocoa | Gamepad slot 1 | Arrow keys | Enter / X button | Right Shift / Y button |
 
 Mission flow controls:
 
