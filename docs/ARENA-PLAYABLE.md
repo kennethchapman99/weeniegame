@@ -239,6 +239,10 @@ The deterministic test/pacing hooks are `ForceScentSniff(dog)`, `ForceScentDigCo
 
 Manual check: press **8**, bark near a mound to read the heat, move toward hotter readings, and interact to dig. Confirm digging the hot mound says **BONE DUG UP** and three finds clear with **Master Sniffers**.
 
+A cold dig now adds a worried dog flinch, warning cue, and short rumble to the existing `COLD!` pop
+and score penalty. The failed read is visible, audible, and physical before the player chooses another
+mound.
+
 ### Thunderstorm Comfort
 
 Thunderstorm Comfort is a **comfort / panic co-regulation** mission using the existing `PanicMeter` primitive — and it leans hard into Cheddar/Cocoa identity: Cheddar (chaos puppy) spooks harder at each clap than Cocoa (veteran queen). A storm throws periodic **thunderclaps** that spike both dogs' panic; the only way panic comes down is the two dogs **huddling close** to comfort each other. Weather five claps without either dog's panic maxing out (which makes them bolt and fails the run).

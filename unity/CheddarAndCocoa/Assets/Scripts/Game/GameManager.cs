@@ -1654,7 +1654,10 @@ namespace CheddarAndCocoa.Game
                 LastFeedback = FeedbackKind.SquirrelStoleFood;
                 LastCue = $"{DogName(_dogs[dogIndex])} dug a cold hole - nothing here ({_scentState.WastedDigs}/{ScentMaxWastedDigs}).";
                 SetJuice(JuiceFeedbackKind.WarningMiss, ScoreEventCatalog.ColdDig.Label);
+                if (dogIndex < DogFeedback.Length && DogFeedback[dogIndex] != null) DogFeedback[dogIndex].ShowPanic();
                 SpawnWorldPop(_digSpots[spotIndex], "COLD!", new Color(0.6f, 0.75f, 1f));
+                RequestAudioCue(ArenaFeedbackCatalog.ThreatWarning);
+                RequestRumble("cold_dig", 0.14f, 0.28f, 0.12f);
                 LogPlaytestEvent("ColdDig", $"{_scentState.WastedDigs}/{ScentMaxWastedDigs}");
                 if (_scentState.TooManyWastedDigs(ScentMaxWastedDigs)) { EndRound(false); return; }
             }

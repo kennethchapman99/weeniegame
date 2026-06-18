@@ -133,6 +133,22 @@ namespace CheddarAndCocoa.Tests
                 "Digging up a bone should show a proud pose.");
         }
 
+        [UnityTest]
+        public IEnumerator ScentSearch_ColdDig_ShowsWorriedWarningFeedback()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.ScentSearch);
+            yield return null;
+
+            _game.ForceScentDigWrong(DogId.Cheddar);
+            yield return null;
+
+            Assert.AreEqual(1, _game.ScentSearchState.WastedDigs);
+            Assert.AreEqual(DogReadabilityFeedback.Pose.Sad, _game.DogFeedback[0].CurrentPose);
+            Assert.AreEqual(ArenaFeedbackCatalog.ThreatWarning, _game.LastAudioCueRequested);
+            Assert.AreEqual("cold_dig", _game.LastRumbleRequested);
+        }
+
         private IEnumerator LoadArena()
         {
             _game = null;
