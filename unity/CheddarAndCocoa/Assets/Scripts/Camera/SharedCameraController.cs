@@ -46,6 +46,7 @@ namespace CheddarAndCocoa.CameraRig
         public float ZoomLerp => zoomLerp;
         public bool IsClampedToBounds => clampToBounds;
         public Rect LevelBounds => levelBounds;
+        public float EffectiveMaxOrthoSize => MaximumOrthoSizeForAspect(_cam != null ? _cam.aspect : 16f / 9f);
 
         public void Configure(float initialOrthoSize, float minSize, float maxSize,
             float horizontalPadding, float verticalPadding, float follow, float zoom,
@@ -81,7 +82,7 @@ namespace CheddarAndCocoa.CameraRig
             float halfWidth = Mathf.Abs(a.x - b.x) * 0.5f + horizontalMargin;
             float halfHeight = Mathf.Abs(a.y - b.y) * 0.5f + verticalMargin;
             float aspect = _cam != null && _cam.aspect > 0f ? _cam.aspect : 16f / 9f;
-            float targetSize = Mathf.Clamp(Mathf.Max(halfHeight, halfWidth / aspect), minOrthoSize, maxOrthoSize);
+            float targetSize = Mathf.Clamp(Mathf.Max(halfHeight, halfWidth / aspect), minOrthoSize, MaximumOrthoSizeForAspect(aspect));
 
             // Smooth follow + zoom.
             Vector3 target = new Vector3(mid.x, mid.y, transform.position.z);
@@ -100,6 +101,27 @@ namespace CheddarAndCocoa.CameraRig
 
         /// <summary>Kick the screen shake (cosmetic). Mirrors the TS build's addShake().</summary>
         public void AddShake(float magnitude) => _shake = Mathf.Max(_shake, magnitude);
+
+        /// <summary>
+        /// The authored max is the 16:9 presentation target. Narrower windows need a larger
+        /// orthographic size to preserve the shared-camera promise that neither dog is clipped.
+        /// </summary>
+        public float MaximumOrthoSizeForAspect(float aspect)
+        {
+            float safeAspect = Mathf.Max(0.1f, aspect);
+            if (!clampToBounds) return maxOrthoSize;
+            float fullWidthSize = (levelBounds.width * 0.5f + horizontalMargin) / safeAspect;
+            float fullHeightSize = levelBounds.height * 0.5f + verticalMargin;
+            return Mathf.Max(maxOrthoSize, fullWidthSize, fullHeightSize);
+        }
+
+        public float RequiredOrthoSizeForTargets(Vector2 first, Vector2 second, float aspect)
+        {
+            float safeAspect = Mathf.Max(0.1f, aspect);
+            float halfWidth = Mathf.Abs(first.x - second.x) * 0.5f + horizontalMargin;
+            float halfHeight = Mathf.Abs(first.y - second.y) * 0.5f + verticalMargin;
+            return Mathf.Max(halfHeight, halfWidth / safeAspect);
+        }
 
         private Vector3 ClampToBounds(Vector3 pos, float orthoSize)
         {

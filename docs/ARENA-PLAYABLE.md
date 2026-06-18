@@ -63,6 +63,11 @@ mission-specific verbs (hide, herd, repair, carry, sniff, mark, comfort, and lea
 distance, and scale up during strategic camera zoom so navigation remains readable across the 120x68
 yard.
 
+The shared camera treats its authored maximum zoom as the 16:9 target, then derives a safe wider
+ceiling for narrower and portrait windows. This keeps both dogs framed at maximum separation across
+32:9, 16:9, 4:3, and 9:16 aspect contracts. Cheddar/Cocoa identity labels scale with strategic zoom
+so their names and current emotional poses remain legible when the yard view pulls back.
+
 1. Open `unity/CheddarAndCocoa` in Unity 6 LTS, open `Assets/Scenes/ArenaScene.unity`, and press Play. `ArenaScene` is also the scripted local build entry point.
 2. The mission picker appears immediately. Use **Up/Down** or gamepad **D-pad** to highlight a mission, then press **Enter**, **Space**, gamepad **Start**, or gamepad **South** to start. Keyboard **1-9 and 0** also starts Backyard Rescue, Snack Heist, Sock Panic, Squirrel Conspiracy, Eagle Shadow Panic, Coyotes at the Fence, Weenie Roundup, Scent Search, Thunderstorm Comfort, Mark the Yard, Walkies on the Leash, or Car Ride Balance (arrow-select) directly.
 3. Read the one-line mission briefing at the start of the round. The HUD keeps the current mission name, objective, score, timer, controls, modifier, and latest score event visible during play.

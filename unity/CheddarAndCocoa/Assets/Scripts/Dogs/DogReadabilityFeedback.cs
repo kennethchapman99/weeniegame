@@ -40,6 +40,7 @@ namespace CheddarAndCocoa.Dogs
         private SpriteRenderer _authoredPose;
         private TextMesh _label;
         private Vector3 _baseScale;
+        private Vector3 _labelBaseScale;
         private Vector2 _lastIntentDir = Vector2.right;
         private Pose _forcedPose;
         private float _forcedPoseUntil;
@@ -53,6 +54,7 @@ namespace CheddarAndCocoa.Dogs
         public string IdentityLabel => _label != null ? _label.text : string.Empty;
         public string FacingIntentLabel => _lastIntentDir.x >= 0f ? "FacingRight" : "FacingLeft";
         public string LastMovementJuiceLabel { get; private set; } = string.Empty;
+        public float StrategicLabelScale { get; private set; } = 1f;
         public bool UsesAuthoredPoseArt => _authoredPose != null && _authoredPose.sprite != null;
         public string AuthoredPoseSpriteName => UsesAuthoredPoseArt ? _authoredPose.sprite.name : string.Empty;
         public string ArtDirectionSignature => _identity == null
@@ -250,7 +252,14 @@ namespace CheddarAndCocoa.Dogs
                 }
             }
 
-            if (_label != null) _label.transform.rotation = Quaternion.identity;
+            if (_label != null)
+            {
+                _label.transform.rotation = Quaternion.identity;
+                StrategicLabelScale = Camera.main != null
+                    ? Mathf.Clamp(Camera.main.orthographicSize / 7.5f, 1f, 4f)
+                    : 1f;
+                _label.transform.localScale = _labelBaseScale * StrategicLabelScale;
+            }
             TickMovementJuice(pose, velocity, runFeedbackSpeed);
         }
 
@@ -312,6 +321,7 @@ namespace CheddarAndCocoa.Dogs
             labelGo.transform.SetParent(transform);
             labelGo.transform.localPosition = labelSlot.LocalPosition;
             labelGo.transform.localScale = labelSlot.LocalScale;
+            _labelBaseScale = labelSlot.LocalScale;
             _label = labelGo.AddComponent<TextMesh>();
             _label.anchor = TextAnchor.MiddleCenter;
             _label.alignment = TextAlignment.Center;

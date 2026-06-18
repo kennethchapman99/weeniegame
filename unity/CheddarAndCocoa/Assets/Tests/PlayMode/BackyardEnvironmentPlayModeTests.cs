@@ -37,6 +37,17 @@ namespace CheddarAndCocoa.Tests
             Assert.Less(closeViewWidth, bounds.width * 0.5f, "Regrouped dogs should explore with a scrolling local camera.");
             Assert.GreaterOrEqual(strategicViewWidth, bounds.width, "Split dogs should remain visible at strategic zoom.");
 
+            // The shared-camera contract must survive couch displays and resizable desktop windows,
+            // including portrait/narrow aspects where the configured 16:9 ceiling is insufficient.
+            Vector2 leftDog = new Vector2(bounds.xMin + 1f, bounds.center.y);
+            Vector2 rightDog = new Vector2(bounds.xMax - 1f, bounds.center.y);
+            foreach (float aspect in new[] { 32f / 9f, 16f / 9f, 4f / 3f, 9f / 16f })
+            {
+                float required = cameraRig.RequiredOrthoSizeForTargets(leftDog, rightDog, aspect);
+                Assert.LessOrEqual(required, cameraRig.MaximumOrthoSizeForAspect(aspect),
+                    $"Camera must keep both dogs framed at aspect {aspect:0.00}.");
+            }
+
             // The dog-to-property ratio is an explicit production constraint, not an eyeballed
             // scene preference. Collider width is stable even while pose sprites animate.
             var cheddar = GameObject.Find("Cheddar");
@@ -44,6 +55,11 @@ namespace CheddarAndCocoa.Tests
             float dogLength = cheddar.GetComponent<Collider2D>().bounds.size.x;
             Assert.LessOrEqual(dogLength / bounds.width, ArenaWorldScale.MaximumDogToYardWidthRatio,
                 "A dachshund should occupy no more than two percent of yard width.");
+
+            Camera.main.orthographicSize = cameraRig.MaximumOrthoSizeForAspect(9f / 16f);
+            yield return null;
+            Assert.Greater(cheddar.GetComponent<CheddarAndCocoa.Dogs.DogReadabilityFeedback>().StrategicLabelScale, 1f,
+                "Dog identity labels should grow when strategic zoom makes dog sprites tiny.");
 
             // The cover bushes should sit on the Eagle Shadow hide zones so "HIDE HERE" reads as
             // real backyard cover.
