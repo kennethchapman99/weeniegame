@@ -511,6 +511,7 @@ namespace CheddarAndCocoa.Game
         }
 
         public bool LastRoundWasBest { get; private set; }
+        public bool LastRoundFlawless { get; private set; }
 
         public int BestScoreForMission(MissionVariant variant)
         {
@@ -2327,6 +2328,8 @@ namespace CheddarAndCocoa.Game
             Outcome = clear ? MissionOutcome.Clear : MissionOutcome.Failed;
             if (clear)
             {
+                LastRoundFlawless = BuildRuntimeSnapshot().Mistakes == 0;
+                if (LastRoundFlawless) AddScore(_tuning.FlawlessBonus, "FLAWLESS");
                 AddScore(_tuning.ClearScore + Mathf.CeilToInt(TimeRemaining) * _tuning.TimeBonusMultiplier, _mission.ClearScoreLabel);
                 var rank = MissionRankCalculator.Calculate(Score, true, _mission.PawfectScore, _mission.HeroScore, _mission.SurvivorScore);
                 EndRank = rank.Rank;
@@ -2341,6 +2344,7 @@ namespace CheddarAndCocoa.Game
             }
             else
             {
+                LastRoundFlawless = false;
                 AddScore(-_tuning.GameOverPenalty, "GAME OVER");
                 EndRank = RankForScore(Score, false, _mission);
                 StarRating = 0;

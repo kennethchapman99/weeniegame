@@ -13,6 +13,7 @@ namespace CheddarAndCocoa.Game
         public int RescueScore = 250;
         public int TugScore = 200;
         public int ClearScore = 500;
+        public int FlawlessBonus = 200;
         public int TimeBonusMultiplier = 5;
         public int PredatorFailurePenalty = 150;
         public int PancakeSquirrelPenalty = 80;
