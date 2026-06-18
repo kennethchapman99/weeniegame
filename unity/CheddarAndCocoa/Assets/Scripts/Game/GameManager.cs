@@ -1227,6 +1227,7 @@ namespace CheddarAndCocoa.Game
             _dogCarrying[dogIndex] = false;
             if (_carriedMarkers[dogIndex] != null) _carriedMarkers[dogIndex].SetActive(false);
             _carryState.Deliver();
+            if (dogIndex < DogFeedback.Length && DogFeedback[dogIndex] != null) DogFeedback[dogIndex].ShowProudBrief();
             AddScore(ScoreEventCatalog.WeenieDelivered.Points, ScoreEventCatalog.WeenieDelivered.Label);
             LastFeedback = FeedbackKind.LevelClear;
             LastCue = $"{DogName(_dogs[dogIndex])} delivered a weenie to the bowl! ({_carryState.Delivered}/{WeenieRequiredDeliveries})";
@@ -1255,6 +1256,7 @@ namespace CheddarAndCocoa.Game
             _dogCarrying[dogIndex] = false;
             if (_carriedMarkers[dogIndex] != null) _carriedMarkers[dogIndex].SetActive(false);
             _carryState.Drop();
+            if (dogIndex < DogFeedback.Length && DogFeedback[dogIndex] != null) DogFeedback[dogIndex].ShowPanic();
 
             // The fumbled weenie bounces a couple units away (outside pickup range) so the dog has to
             // chase it down again rather than instantly re-grabbing it at its feet.
@@ -1402,6 +1404,7 @@ namespace CheddarAndCocoa.Game
             {
                 _scentState.AddFind();
                 _digMarkers[spotIndex].SetActive(false);
+                if (dogIndex < DogFeedback.Length && DogFeedback[dogIndex] != null) DogFeedback[dogIndex].ShowProudBrief();
                 AddScore(ScoreEventCatalog.BoneFound.Points, ScoreEventCatalog.BoneFound.Label);
                 LastFeedback = FeedbackKind.PartnerRescue;
                 LastCue = $"{DogName(_dogs[dogIndex])} dug up a buried bone! ({_scentState.Found}/{ScentRequiredFinds})";
@@ -1561,6 +1564,7 @@ namespace CheddarAndCocoa.Game
 
             SetZoneClaimed(zoneIndex, true);
             _territoryState.Claim();
+            if (dogIndex < DogFeedback.Length && DogFeedback[dogIndex] != null) DogFeedback[dogIndex].ShowProudBrief();
             AddScore(ScoreEventCatalog.ZoneClaimed.Points, ScoreEventCatalog.ZoneClaimed.Label);
             LastFeedback = FeedbackKind.SquirrelScared;
             LastCue = $"{DogName(_dogs[dogIndex])} marked a zone! ({_territoryState.Claimed}/{_territoryState.ZoneCount})";

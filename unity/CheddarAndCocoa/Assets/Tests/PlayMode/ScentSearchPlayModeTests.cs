@@ -116,6 +116,23 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(1, game.MissionReplayCount);
         }
 
+        [UnityTest]
+        public IEnumerator ScentSearch_DiggingUpABone_ShowsAProudPose()
+        {
+            yield return LoadArena();
+            var game = _game;
+
+            game.StartMission(GameManager.MissionVariant.ScentSearch);
+            yield return null;
+
+            game.ForceScentDigCorrect(DogId.Cheddar);
+            yield return null;
+
+            Assert.AreEqual(1, game.ScentSearchState.Found);
+            Assert.AreEqual(DogReadabilityFeedback.Pose.Proud, game.DogFeedback[0].CurrentPose,
+                "Digging up a bone should show a proud pose.");
+        }
+
         private IEnumerator LoadArena()
         {
             _game = null;
