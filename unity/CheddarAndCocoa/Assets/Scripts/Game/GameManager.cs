@@ -134,6 +134,7 @@ namespace CheddarAndCocoa.Game
         public HerdingMissionState SquirrelConspiracyState => _herdingState;
         public ThreatSweepMissionState EagleShadowPanicState => _threatSweepState;
         public PatrolDefenseMissionState CoyotesFenceState => _patrolState;
+        public Vector2[] EagleCoverZones => (Vector2[])_eagleCoverZones.Clone();
         public MissionRuntimeSnapshot RuntimeSnapshot => BuildRuntimeSnapshot();
         public int SelectedMissionIndex => _selectedMissionIndex;
         public MissionVariant SelectedMissionVariant => MissionOrder[Mathf.Clamp(_selectedMissionIndex, 0, MissionOrder.Length - 1)];
@@ -247,10 +248,15 @@ namespace CheddarAndCocoa.Game
         private const int FenceGapCount = 4;
         private const int CoyoteRequiredRepairs = 3;
         private const int CoyoteMaxBreaches = 3;
+        private const float EagleCoverRadius = 3f;
+        private const float EagleShadowWidth = 3.5f;
         private Vector2 _stashPosition;
         private Vector2 _toyRescuePosition;
         private Vector2 _fenceGapPosition;
         private bool _coyotePressureHeld;
+        private readonly Vector2[] _eagleCoverZones = { new(-14f, -8f), new(14f, -8f), new(0f, 9f) };
+        private GameObject[] _eagleCoverMarkers;
+        private int _eagleSweepDir = 1;
 
         private readonly List<Treat> _treats = new();
         private readonly List<string> _sessionRanks = new();
@@ -536,6 +542,12 @@ namespace CheddarAndCocoa.Game
                 CompleteEagleShadowUnitedFront();
         }
 
+        public void ForceEagleShadowSweepPass()
+        {
+            if (MissionActive() && _mission != null && _mission.Variant == MissionVariant.EagleShadowPanic)
+                EvaluateEagleShadowSweep();
+        }
+
         public void ForceCoyoteBarkPressure(DogId dogId = DogId.Cocoa)
         {
             if (MissionActive() && _mission != null && _mission.Variant == MissionVariant.CoyotesFence)
@@ -656,10 +668,16 @@ namespace CheddarAndCocoa.Game
             {
                 PredatorObject.SetActive(true);
                 SquirrelObject.SetActive(true);
-                PlaceObject(PredatorObject, new Vector2(0f, _bounds.yMax + 1.5f));
+                PlaceObject(PredatorObject, new Vector2(-(_bounds.xMax - 1.5f), _bounds.yMax - 2f));
                 PlaceObject(SquirrelObject, _toyRescuePosition);
                 SetActorState(PredatorObject, "EAGLE SHADOW SWEEP - HIDE IN COVER!", new Color(0.16f, 0.16f, 0.2f), 0.3f);
                 SetActorState(SquirrelObject, "TOY STUCK IN THE OPEN - RESCUE LATER", new Color(0.55f, 0.78f, 1f), 0.1f);
+                _eagleSweepDir = 1;
+                SetEagleCoverMarkersActive(true);
+            }
+            else
+            {
+                SetEagleCoverMarkersActive(false);
             }
             if (_mission.Variant == MissionVariant.CoyotesFence)
             {
@@ -695,6 +713,7 @@ namespace CheddarAndCocoa.Game
 
             TickModifier();
             if (_mission.Variant == MissionVariant.SquirrelConspiracy) TickSquirrelConspiracy();
+            else if (_mission.Variant == MissionVariant.EagleShadowPanic) TickThreatSweep();
             else TickSquirrel();
             TickPredator();
             TickTugProximity();
@@ -890,6 +909,73 @@ namespace CheddarAndCocoa.Game
             SpawnWorldPop(_stashPosition, "STASH FOUND!", new Color(0.5f, 1f, 0.45f));
             LogPlaytestEvent("SquirrelStashFound", LastCue);
             CheckClear();
+        }
+
+        private void BuildEagleCoverMarkers()
+        {
+            _eagleCoverMarkers = new GameObject[_eagleCoverZones.Length];
+            for (int i = 0; i < _eagleCoverZones.Length; i++)
+            {
+                var go = new GameObject($"EagleCover_{i}");
+                go.transform.position = _eagleCoverZones[i];
+                go.transform.localScale = Vector3.one * (EagleCoverRadius * 1.4f);
+                var sr = go.AddComponent<SpriteRenderer>();
+                sr.sprite = _sprite;
+                sr.color = new Color(0.3f, 0.7f, 0.4f, 0.45f);
+                sr.sortingOrder = 1;
+                AddWorldLabel(go, "HIDE HERE", Vector3.up * 0.9f, 14, Color.white);
+                go.SetActive(false);
+                _eagleCoverMarkers[i] = go;
+            }
+        }
+
+        private void SetEagleCoverMarkersActive(bool active)
+        {
+            if (_eagleCoverMarkers == null) return;
+            foreach (var marker in _eagleCoverMarkers)
+                if (marker != null) marker.SetActive(active);
+        }
+
+        private float NearestEagleCoverDistance(Vector2 position)
+        {
+            float best = float.PositiveInfinity;
+            foreach (var zone in _eagleCoverZones)
+                best = Mathf.Min(best, Vector2.Distance(position, zone));
+            return best;
+        }
+
+        // One sweep pass of the eagle shadow: any dog caught in the shadow column and not tucked
+        // into a cover zone is exposed; otherwise the dogs successfully hid.
+        private void EvaluateEagleShadowSweep()
+        {
+            if (_threatSweepState.RescueObjectiveActive || _threatSweepState.RescueComplete) return;
+
+            bool exposed = false;
+            if (_dogs != null && PredatorObject != null)
+            {
+                float shadowX = PredatorObject.transform.position.x;
+                foreach (var dog in _dogs)
+                {
+                    bool underShadow = Mathf.Abs(dog.transform.position.x - shadowX) < EagleShadowWidth;
+                    bool inCover = NearestEagleCoverDistance(dog.transform.position) < EagleCoverRadius;
+                    if (underShadow && !inCover) { exposed = true; break; }
+                }
+            }
+
+            if (exposed) RegisterEagleShadowExposure();
+            else RegisterEagleShadowSafeHide();
+        }
+
+        private void TickThreatSweep()
+        {
+            if (PredatorObject == null || _threatSweepState.RescueObjectiveActive || _threatSweepState.RescueComplete) return;
+
+            var pos = PredatorObject.transform.position;
+            float limit = _bounds.xMax - 1.5f;
+            pos.x += _eagleSweepDir * Time.deltaTime * (_tuning.SquirrelMoveSpeed * 1.4f);
+            if (pos.x >= limit) { pos.x = limit; _eagleSweepDir = -1; PredatorObject.transform.position = pos; EvaluateEagleShadowSweep(); return; }
+            if (pos.x <= -limit) { pos.x = -limit; _eagleSweepDir = 1; PredatorObject.transform.position = pos; EvaluateEagleShadowSweep(); return; }
+            PredatorObject.transform.position = pos;
         }
 
         private void RegisterEagleShadowSafeHide()
@@ -1876,6 +1962,7 @@ namespace CheddarAndCocoa.Game
             if (PredatorObject != null) PredatorObject.SetActive(active && _mission != null && _mission.RequiresPredator);
             if (RopeObject != null) RopeObject.SetActive(active && _mission != null && _mission.RequiresTug);
             if (_bunnyCameoObject != null) _bunnyCameoObject.SetActive(active);
+            if (!active || _mission == null || _mission.Variant != MissionVariant.EagleShadowPanic) SetEagleCoverMarkersActive(false);
         }
 
         public static MissionDefinition BuildMissionDefinition(MissionVariant variant) =>
@@ -2459,6 +2546,7 @@ namespace CheddarAndCocoa.Game
             PredatorObject = MakeActor(ArenaArtCatalog.Actor(ArenaArtCatalog.ActorKind.Predator));
             RopeObject = MakeActor(ArenaArtCatalog.Actor(ArenaArtCatalog.ActorKind.Rope));
             _bunnyCameoObject = MakeDraftBunnyCameo();
+            BuildEagleCoverMarkers();
             if (InteractionRangeIndicators != null)
             {
                 int offset = _dogs != null ? _dogs.Length : 0;

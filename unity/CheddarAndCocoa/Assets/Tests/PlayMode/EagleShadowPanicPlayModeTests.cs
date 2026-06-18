@@ -130,6 +130,39 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(1, game.MissionReplayCount);
         }
 
+        [UnityTest]
+        public IEnumerator EagleShadowPanic_SweepGeometry_CoverHidesAndOpenGroundExposes()
+        {
+            yield return LoadArena();
+            var game = _game;
+
+            game.StartMission(GameManager.MissionVariant.EagleShadowPanic);
+            yield return null;
+
+            var zones = game.EagleCoverZones;
+            Assert.Greater(zones.Length, 0);
+
+            // Both dogs tucked into a cover zone with the shadow passing over it: a clean safe hide.
+            var cover = zones[0];
+            _cheddar.transform.position = new Vector3(cover.x, cover.y, 0f);
+            _cocoa.transform.position = new Vector3(cover.x, cover.y, 0f);
+            game.PredatorObject.transform.position = new Vector3(cover.x, game.PredatorObject.transform.position.y, 0f);
+            game.ForceEagleShadowSweepPass();
+            yield return null;
+
+            Assert.AreEqual(1, game.EagleShadowPanicState.SafeHides);
+            Assert.AreEqual(0, game.EagleShadowPanicState.Exposures);
+
+            // Caught in the open under the shadow column: an exposure.
+            _cheddar.transform.position = new Vector3(0f, 0f, 0f);
+            _cocoa.transform.position = new Vector3(0f, 0f, 0f);
+            game.PredatorObject.transform.position = new Vector3(0f, game.PredatorObject.transform.position.y, 0f);
+            game.ForceEagleShadowSweepPass();
+            yield return null;
+
+            Assert.AreEqual(1, game.EagleShadowPanicState.Exposures);
+        }
+
         private IEnumerator LoadArena()
         {
             _game = null;
