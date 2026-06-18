@@ -187,6 +187,20 @@ namespace CheddarAndCocoa.Game
         public string LastScorePopLabel { get; private set; } = string.Empty;
         public bool ScorePopVisible => Time.time < _scorePopUntil;
         public string ObjectiveLabel => BuildObjectiveLabel();
+        public string TeamGuidanceLabel
+        {
+            get
+            {
+                if (!MissionActive() || ObjectiveArrows == null || _dogs == null) return string.Empty;
+                var guidance = new List<string>(ObjectiveArrows.Length);
+                for (int i = 0; i < ObjectiveArrows.Length && i < _dogs.Length; i++)
+                {
+                    string route = ObjectiveArrows[i] != null ? ObjectiveArrows[i].GuidanceLabel : string.Empty;
+                    if (!string.IsNullOrEmpty(route)) guidance.Add($"{DogName(_dogs[i])}: {route}");
+                }
+                return guidance.Count == 0 ? string.Empty : string.Join("  •  ", guidance);
+            }
+        }
         public MissionVariant ActiveMissionVariant => _mission != null ? _mission.Variant : startingMission;
         public string ActiveMissionName => _mission != null ? _mission.Name : "Backyard Rescue";
         public string MissionItemPlural => _mission != null ? _mission.ItemRootName : "Breakfast/Weenies";

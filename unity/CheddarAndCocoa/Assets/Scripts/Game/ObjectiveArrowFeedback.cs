@@ -13,9 +13,14 @@ namespace CheddarAndCocoa.Game
         private string _copy = string.Empty;
         private float _hideDistance = 0.9f;
         private Vector3 _baseScale;
+        private float _distanceToTarget;
 
         public string Label => _target != null ? _copy : string.Empty;
         public bool IsVisible => _label != null && _label.gameObject.activeSelf;
+        public float DistanceToTarget => _target != null ? _distanceToTarget : 0f;
+        public string GuidanceLabel => _target == null
+            ? string.Empty
+            : _distanceToTarget <= _hideDistance ? "ON TARGET" : $"{_copy} {Mathf.CeilToInt(_distanceToTarget)}m";
 
         public void Init(Color color)
         {
@@ -43,6 +48,7 @@ namespace CheddarAndCocoa.Game
         {
             _target = null;
             _copy = string.Empty;
+            _distanceToTarget = 0f;
             if (_label != null) _label.gameObject.SetActive(false);
         }
 
@@ -56,7 +62,8 @@ namespace CheddarAndCocoa.Game
             }
 
             var delta = _target.position - transform.position;
-            if (delta.magnitude <= _hideDistance)
+            _distanceToTarget = delta.magnitude;
+            if (_distanceToTarget <= _hideDistance)
             {
                 _label.gameObject.SetActive(false);
                 return;
@@ -68,7 +75,7 @@ namespace CheddarAndCocoa.Game
             _label.transform.rotation = Quaternion.identity;
             float zoomScale = Camera.main != null ? Mathf.Clamp(Camera.main.orthographicSize / 7.5f, 1f, 3.2f) : 1f;
             _label.transform.localScale = _baseScale * zoomScale;
-            _label.text = $"{ArrowGlyph(dir)} {_copy}  {Mathf.CeilToInt(delta.magnitude)}m";
+            _label.text = $"{ArrowGlyph(dir)} {_copy}  {Mathf.CeilToInt(_distanceToTarget)}m";
         }
 
         private static string ArrowGlyph(Vector2 dir)

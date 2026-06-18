@@ -65,9 +65,10 @@ namespace CheddarAndCocoa.Game
             if (_game.ScorePopVisible)
                 GUI.Label(new Rect(0, 152, Screen.width, 30), _game.LastScorePopLabel, _big);
             GUI.Label(new Rect(0, 180, Screen.width, 24), $"Objective: {_game.ObjectiveLabel}", _mid);
-            GUI.Label(new Rect(0, 204, Screen.width, 24), _game.LastCue, _mid);
+            GUI.Label(new Rect(0, 204, Screen.width, 24), _game.TeamGuidanceLabel, _small);
+            GUI.Label(new Rect(0, 228, Screen.width, 24), _game.LastCue, _mid);
             if (!string.IsNullOrEmpty(_game.MissionBanner) && !_game.IsGameOver && !_game.IsLevelClear)
-                GUI.Label(new Rect(0, 236, Screen.width, 34), _game.MissionBanner, _big);
+                GUI.Label(new Rect(0, 260, Screen.width, 34), _game.MissionBanner, _big);
 
             if (_game.IsGameOver || _game.IsLevelClear) DrawEndCard();
         }

@@ -142,6 +142,9 @@ namespace CheddarAndCocoa.Tests
                 {
                     Assert.IsTrue(game.ObjectiveArrows[0].IsVisible, $"{mission} should immediately guide Cheddar.");
                     Assert.IsTrue(game.ObjectiveArrows[1].IsVisible, $"{mission} should immediately guide Cocoa.");
+                    Assert.That(game.TeamGuidanceLabel, Does.Contain("Cheddar:"));
+                    Assert.That(game.TeamGuidanceLabel, Does.Contain("Cocoa:"));
+                    Assert.That(game.TeamGuidanceLabel, Does.Contain("m"));
                 }
             }
         }
