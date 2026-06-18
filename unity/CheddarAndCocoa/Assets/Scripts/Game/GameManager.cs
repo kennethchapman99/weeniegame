@@ -682,7 +682,7 @@ namespace CheddarAndCocoa.Game
             LastCue = $"Shadow over {DogName(_dogs[_predatorTarget])}! Huddle together and bark!";
             PredatorObject.name = "Predator Warning";
             PlaceObject(PredatorObject, (Vector2)_dogs[_predatorTarget].transform.position + Vector2.up * 2f);
-            SetActorState(PredatorObject, "HUDDLE + BARK!", new Color(1f, 0.08f, 0.08f), 0.42f);
+            SetActorState(PredatorObject, "SHADOW! HUDDLE + DOUBLE BARK!", new Color(1f, 0.08f, 0.08f), 0.42f);
             RequestAudioCue(ArenaFeedbackCatalog.ThreatWarning);
             RequestRumble("predator_warning", 0.16f, 0.3f, 0.14f);
             LogPlaytestEvent("PredatorWarning", LastCue);
@@ -697,7 +697,7 @@ namespace CheddarAndCocoa.Game
 
             PredatorObject.name = "Predator Attack";
             PlaceObject(PredatorObject, _dogs[_predatorTarget].transform.position);
-            SetActorState(PredatorObject, "PREDATOR ATTACK!", new Color(0.8f, 0f, 0f), 0.45f);
+            SetActorState(PredatorObject, $"YOINKED {DogName(_dogs[_predatorTarget]).ToUpperInvariant()} - PARTNER BARK!", new Color(0.8f, 0f, 0f), 0.45f);
 
             _grabbedDog = _predatorTarget;
             _dogs[_grabbedDog].SetMode(MovementMode.Stunned);
@@ -723,7 +723,7 @@ namespace CheddarAndCocoa.Game
             LastCue = "DOUBLE WOOF drove the predator away!";
             PredatorObject.name = "Predator Driven Away";
             PlaceObject(PredatorObject, new Vector2(0f, _bounds.yMax + 2f));
-            SetActorState(PredatorObject, "PREDATOR YEETED", Color.gray, 0.08f);
+            SetActorState(PredatorObject, "DOUBLE WOOF YEETED SHADOW", Color.gray, 0.08f);
             SetJuice(JuiceFeedbackKind.SuccessPop, "PREDATOR YEETED!");
             SpawnWorldPop(_dogs[0].transform.position + Vector3.up, "DOUBLE WOOF!", new Color(1f, 0.95f, 0.25f));
             RequestAudioCue(ArenaFeedbackCatalog.TugRescueSuccess);
@@ -746,7 +746,7 @@ namespace CheddarAndCocoa.Game
                     LastFeedback = FeedbackKind.TugNeedsPartner;
                     LastCue = "Rope wiggles: both dogs have to commit together!";
                     string waitingFor = cheddarNear ? "WAITING FOR COCOA" : "WAITING FOR CHEDDAR";
-                    SetActorState(RopeObject, $"Rope/Tug - {waitingFor}", new Color(1f, 0.8f, 0.28f), 0.2f);
+                    SetActorState(RopeObject, $"ROPE NEEDS BOTH DOGS - {waitingFor}", new Color(1f, 0.8f, 0.28f), 0.2f);
                     LogObjectiveIfChanged();
                 }
                 return;
@@ -757,7 +757,7 @@ namespace CheddarAndCocoa.Game
             TugProgress = Mathf.Min(1f, TugProgress + Time.deltaTime * _tuning.TugChargePerSecond);
             LastFeedback = FeedbackKind.TugTogether;
             LastCue = "Both dogs are tugging - tiny sausage teamwork!";
-            SetActorState(RopeObject, $"BOTH TUGGING {Mathf.RoundToInt(TugProgress * 100f)}%", new Color(1f, 0.78f, 0.22f), 0.22f);
+            SetActorState(RopeObject, $"BOTH DOGS TUGGING {Mathf.RoundToInt(TugProgress * 100f)}%", new Color(1f, 0.78f, 0.22f), 0.22f);
             if (TugProgress >= 1f) CompleteTug();
         }
 
@@ -789,7 +789,7 @@ namespace CheddarAndCocoa.Game
             TugProgress = Mathf.Min(1f, TugProgress + _tuning.TugInteractProgress);
             LastFeedback = FeedbackKind.TugNeedsPartner;
             LastCue = $"{DogName(_dogs[dogIndex])} has the rope - partner pile on!";
-            SetActorState(RopeObject, $"Rope/Tug {Mathf.RoundToInt(TugProgress * 100f)}% - NEED PARTNER", new Color(1f, 0.78f, 0.22f), 0.2f);
+            SetActorState(RopeObject, $"ROPE {Mathf.RoundToInt(TugProgress * 100f)}% - NEED PARTNER DOG", new Color(1f, 0.78f, 0.22f), 0.2f);
             RequestAudioCue(ArenaFeedbackCatalog.Bark);
             LogPlaytestEvent("Tug", LastCue);
             if (TugProgress >= 1f) CompleteTug();
@@ -802,7 +802,7 @@ namespace CheddarAndCocoa.Game
             LastFeedback = FeedbackKind.TugTogether;
             LastCue = "Rope tug complete - dramatic victory chomps!";
             RopeObject.name = "Rope/Tug Complete";
-            SetActorState(RopeObject, "ROPE COMPLETE!", new Color(0.3f, 1f, 0.3f), 0.08f);
+            SetActorState(RopeObject, "ROPE COMPLETE! TEAM CHOMP!", new Color(0.3f, 1f, 0.3f), 0.08f);
             SetJuice(JuiceFeedbackKind.SuccessPop, "TUG POP! ROPE COMPLETE");
             SpawnWorldPop(RopeObject.transform.position, "TUG POP!", new Color(0.45f, 1f, 0.35f));
             RequestAudioCue(ArenaFeedbackCatalog.TugRescueSuccess);
