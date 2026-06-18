@@ -200,6 +200,7 @@ namespace CheddarAndCocoa.Game
         public int SessionMissionsPlayed { get; private set; }
         public int SessionTotalScore { get; private set; }
         public int SessionStarsEarned { get; private set; }
+        public int SessionFlawlessClears { get; private set; }
         public int SessionUniqueMissionsCompleted { get; private set; }
         public bool SessionSummaryReady => SessionUniqueMissionsCompleted >= 3;
         public string SessionSummaryLabel { get; private set; } = "Session Summary: no missions played yet.";
@@ -2700,6 +2701,7 @@ namespace CheddarAndCocoa.Game
             SessionMissionsPlayed++;
             SessionTotalScore += Score;
             SessionStarsEarned += StarRating;
+            if (LastRoundFlawless) SessionFlawlessClears++;
             int missionIndex = IndexOfMission(_mission.Variant);
             LastRoundWasBest = false;
             if (missionIndex >= 0)
@@ -2756,7 +2758,7 @@ namespace CheddarAndCocoa.Game
 
         private void UpdateSessionSummaryLabel()
         {
-            SessionSummaryLabel = $"Session Summary: {SessionMissionsPlayed} missions played, {SessionTotalScore} total score, {SessionStarsEarned} stars, {SessionUniqueMissionsCompleted}/{MissionOrder.Length} missions finished.";
+            SessionSummaryLabel = $"Session Summary: {SessionMissionsPlayed} missions played, {SessionTotalScore} total score, {SessionStarsEarned} stars, {SessionFlawlessClears} flawless, {SessionUniqueMissionsCompleted}/{MissionOrder.Length} missions finished.";
             SessionRanksEarnedLabel = _sessionRanks.Count == 0 ? "Ranks: none yet." : $"Ranks: {string.Join(" | ", _sessionRanks)}";
         }
 

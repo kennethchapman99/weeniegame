@@ -135,6 +135,7 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(game.Score, game.BestScoreForMission(GameManager.MissionVariant.MarkTheYard));
             Assert.IsFalse(game.LastRoundWasBest, "First time playing a mission is not a 'new best'.");
             Assert.IsTrue(game.LastRoundFlawless, "Claiming every zone with no squirrel steals is a flawless run.");
+            Assert.AreEqual(1, game.SessionFlawlessClears, "A flawless clear should count toward the session tally.");
         }
 
         private IEnumerator LoadArena()
