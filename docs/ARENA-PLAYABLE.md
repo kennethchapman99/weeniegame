@@ -300,6 +300,10 @@ The deterministic test/pacing hooks are `ForceCarLurch()` and `ForceCarSpill()` 
 
 Manual check: arrow to Car Ride Balance, and as the car tilts one way, move both dogs to the opposite side to bring it level; ride out six lurches to clear with **Smooth Riders**.
 
+Each survived lurch now produces a shared `STEADIED!` pop, success cue, rumble, and proud pack pose.
+A spill produces `CAR SPILL!`, a threat cue, stronger rumble, and synchronized worried flinch so the
+cause of lost balance reads before the next lurch.
+
 > **Mechanic-module coverage:** with Car Ride Balance, all nine `ProductionMechanicModule` values (Herding, ThreatSweep, PatrolDefense, SharedObject, TerritoryControl, ScentSearch, RhythmPanic, VehicleBalance, LeashPhysics) now have at least one playable, tested mission.
 
 ## Level scale and camera

@@ -3,6 +3,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
+using CheddarAndCocoa.Dogs;
 using CheddarAndCocoa.Game;
 
 namespace CheddarAndCocoa.Tests
@@ -104,6 +105,35 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(0, game.CarRideState.LurchesSurvived);
             Assert.AreEqual(0, game.CarRideState.Spills);
             Assert.AreEqual(1, game.MissionReplayCount);
+        }
+
+        [UnityTest]
+        public IEnumerator CarRide_LurchAndSpill_HaveReadablePackReactions()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.CarRide);
+            yield return null;
+
+            _game.ForceCarLurch();
+            yield return null;
+            Assert.IsTrue(HasWorldPop("STEADIED"));
+            foreach (var feedback in _game.DogFeedback)
+                Assert.AreEqual(DogReadabilityFeedback.Pose.Proud, feedback.CurrentPose);
+            Assert.AreEqual(ArenaFeedbackCatalog.TugRescueSuccess, _game.LastAudioCueRequested);
+
+            _game.ForceCarSpill();
+            yield return null;
+            Assert.IsTrue(HasWorldPop("CAR SPILL"));
+            foreach (var feedback in _game.DogFeedback)
+                Assert.AreEqual(DogReadabilityFeedback.Pose.Sad, feedback.CurrentPose);
+            Assert.AreEqual(ArenaFeedbackCatalog.ThreatWarning, _game.LastAudioCueRequested);
+        }
+
+        private static bool HasWorldPop(string text)
+        {
+            foreach (var pop in Object.FindObjectsByType<MissionWorldPop>(FindObjectsSortMode.None))
+                if (pop.Label.Contains(text)) return true;
+            return false;
         }
 
         private IEnumerator LoadArena()

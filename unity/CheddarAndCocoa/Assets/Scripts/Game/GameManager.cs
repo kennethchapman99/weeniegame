@@ -2001,6 +2001,14 @@ namespace CheddarAndCocoa.Game
             LastFeedback = FeedbackKind.UnitedBark;
             LastCue = $"Steadied the lurch! ({_carState.LurchesSurvived}/{_carState.RequiredLurches}) Lean to balance.";
             SetJuice(JuiceFeedbackKind.SuccessPop, ScoreEventCatalog.LurchSteadied.Label);
+            Vector3 midpoint = _dogs != null && _dogs.Length >= 2
+                ? (_dogs[0].transform.position + _dogs[1].transform.position) * 0.5f
+                : (Vector3)_bounds.center;
+            SpawnWorldPop(midpoint, "STEADIED!", new Color(0.55f, 1f, 0.7f));
+            if (DogFeedback != null)
+                foreach (var feedback in DogFeedback)
+                    if (feedback != null) feedback.ShowProudBrief();
+            RequestAudioCue(ArenaFeedbackCatalog.TugRescueSuccess);
             RequestRumble("car_lurch", 0.18f, 0.36f, 0.12f);
             LogPlaytestEvent("CarSteadied", $"{_carState.LurchesSurvived}/{_carState.RequiredLurches}");
             if (_carState.ReadyToClear()) { AddScore(ScoreEventCatalog.RideComplete.Points, ScoreEventCatalog.RideComplete.Label); CheckClear(); }
@@ -2015,6 +2023,14 @@ namespace CheddarAndCocoa.Game
             LastFeedback = FeedbackKind.SquirrelStoleFood;
             LastCue = $"The car tipped and everyone spilled! ({_carState.Spills}/{CarMaxSpills}) Lean the other way next time.";
             SetJuice(JuiceFeedbackKind.WarningMiss, ScoreEventCatalog.CarSpill.Label);
+            Vector3 midpoint = _dogs != null && _dogs.Length >= 2
+                ? (_dogs[0].transform.position + _dogs[1].transform.position) * 0.5f
+                : (Vector3)_bounds.center;
+            SpawnWorldPop(midpoint, "CAR SPILL!", new Color(1f, 0.38f, 0.22f));
+            if (DogFeedback != null)
+                foreach (var feedback in DogFeedback)
+                    if (feedback != null) feedback.ShowPanic();
+            RequestAudioCue(ArenaFeedbackCatalog.ThreatWarning);
             RequestRumble("car_spill", 0.22f, 0.45f, 0.16f);
             LogPlaytestEvent("CarSpill", $"{_carState.Spills}/{CarMaxSpills}");
             if (_carState.TooManySpills(CarMaxSpills)) EndRound(false);
