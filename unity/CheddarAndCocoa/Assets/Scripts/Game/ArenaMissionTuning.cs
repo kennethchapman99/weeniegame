@@ -54,10 +54,12 @@ namespace CheddarAndCocoa.Game
         public float RescueRangeIndicatorRadius => RescueBarkRange;
         public float TugRangeIndicatorRadius => TugTogetherDistance;
 
+        // Spawn counts scaled up for the large 48x28 yard so the field reads as busy and worth
+        // traversing rather than a few specks in a big empty box.
         public MissionBalance BackyardRescue = new MissionBalance
         {
             RoundSeconds = 90f,
-            SpawnedItemCount = 5,
+            SpawnedItemCount = 10,
             ItemGoal = 6,
             ItemScore = 50,
             MaxStolenFood = 3,
@@ -70,8 +72,8 @@ namespace CheddarAndCocoa.Game
 
         public MissionBalance SnackHeist = new MissionBalance
         {
-            RoundSeconds = 70f,
-            SpawnedItemCount = 4,
+            RoundSeconds = 80f,
+            SpawnedItemCount = 7,
             ItemGoal = 4,
             ItemScore = 60,
             MaxStolenFood = 2,
@@ -84,8 +86,8 @@ namespace CheddarAndCocoa.Game
 
         public MissionBalance SockPanic = new MissionBalance
         {
-            RoundSeconds = 55f,
-            SpawnedItemCount = 5,
+            RoundSeconds = 70f,
+            SpawnedItemCount = 9,
             ItemGoal = 5,
             ItemScore = 40,
             MaxStolenFood = 0,
