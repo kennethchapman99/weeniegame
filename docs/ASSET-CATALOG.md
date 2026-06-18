@@ -9,8 +9,10 @@ or authored assets in the external drop folder first:
 ```
 
 The current arena uses generated placeholders and named replacement slots, plus a first imported
-DRAFT pass under `unity/CheddarAndCocoa/Assets/Art/Resources/ArenaDraft/`. This catalog describes
-what to make, how to name it, and what "ready to import" means.
+DRAFT pass. Runtime-loaded badges live under
+`unity/CheddarAndCocoa/Assets/Art/Resources/ArenaDraft/`; unused source/reference sheets live under
+`unity/CheddarAndCocoa/Assets/Art/ReferenceOnly/ArenaDraft/` so they are not bundled into players.
+This catalog describes what to make, how to name it, and what "ready to import" means.
 
 ## Current Imported DRAFT Pass
 
@@ -30,8 +32,10 @@ unity/CheddarAndCocoa/Assets/Art/Resources/ArenaDraft/
   VFX/
 ```
 
-Unity imports these files as single sprites via `Assets/Scripts/Editor/ArenaDraftArtImporter.cs`.
-Runtime access goes through `Assets/Scripts/Game/ArenaDraftArt.cs`.
+Unity imports the runtime files as single sprites via
+`Assets/Scripts/Editor/ArenaDraftArtImporter.cs`. Runtime access goes through
+`Assets/Scripts/Game/ArenaDraftArt.cs`; reference-only sheets retain their `.meta` files but are not
+included by Unity's `Resources` build pipeline.
 
 Current status:
 

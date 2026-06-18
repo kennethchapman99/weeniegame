@@ -9,7 +9,9 @@ sprite/audio collection before Unity import, use `docs/ASSET-CATALOG.md`.
 ## Draft art import pass
 
 The first readable imported-art pass now lives under
-`unity/CheddarAndCocoa/Assets/Art/Resources/ArenaDraft/` with Unity-generated `.meta` files:
+`unity/CheddarAndCocoa/Assets/Art/Resources/ArenaDraft/` with Unity-generated `.meta` files. Only
+the 11 runtime-loaded badges remain in `Resources`; unused pose/expression/reference sheets live in
+`Assets/Art/ReferenceOnly/ArenaDraft/` to keep them out of release builds:
 
 - `Characters/Dogs/`: Cheddar and Cocoa portrait, pose, and expression draft sheets.
 - `Characters/Squirrel/`: squirrel reference, character, pose, and expression draft sheets.
