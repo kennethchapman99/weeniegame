@@ -551,6 +551,15 @@ namespace CheddarAndCocoa.Game
             StartMission(MissionOrder[next]);
         }
 
+        public void ContinueSession()
+        {
+            RequestAudioCue(ArenaFeedbackCatalog.UiReplayNextSelect);
+            int current = _mission != null ? IndexOfMission(_mission.Variant) : _selectedMissionIndex;
+            int next = NextUnfinishedMissionIndex(current);
+            LogPlaytestEvent("ContinueSession", MissionOrder[next].ToString());
+            StartMission(MissionOrder[next]);
+        }
+
         public void ShowSessionSummary()
         {
             CurrentFlow = FlowState.SessionSummary;
@@ -3010,10 +3019,20 @@ namespace CheddarAndCocoa.Game
 
             if (SessionSummaryVisible)
             {
+                bool continueSession = false;
                 bool back = false;
-                if (kb != null) back |= kb.enterKey.wasPressedThisFrame || kb.spaceKey.wasPressedThisFrame || kb.mKey.wasPressedThisFrame || kb.escapeKey.wasPressedThisFrame;
-                if (pad != null) back |= pad.startButton.wasPressedThisFrame || pad.buttonSouth.wasPressedThisFrame || pad.buttonEast.wasPressedThisFrame;
+                if (kb != null)
+                {
+                    continueSession |= kb.enterKey.wasPressedThisFrame || kb.spaceKey.wasPressedThisFrame || kb.nKey.wasPressedThisFrame;
+                    back |= kb.mKey.wasPressedThisFrame || kb.escapeKey.wasPressedThisFrame;
+                }
+                if (pad != null)
+                {
+                    continueSession |= pad.startButton.wasPressedThisFrame || pad.buttonSouth.wasPressedThisFrame || pad.rightShoulder.wasPressedThisFrame;
+                    back |= pad.buttonEast.wasPressedThisFrame;
+                }
                 if (back) ReturnToMissionSelect();
+                else if (continueSession) ContinueSession();
             }
         }
 

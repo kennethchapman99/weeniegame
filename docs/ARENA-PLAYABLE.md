@@ -78,7 +78,7 @@ so their names and current emotional poses remain legible when the yard view pul
    - **R / Enter / Start / South** replays the current mission.
    - **N / Right Arrow / Right Shoulder / D-pad Right** starts the next unfinished mission.
    - **M / Escape / East button / D-pad Left** returns to mission select.
-5. After the core three mission variants have ended at least once in the session, the Next action opens a simple **Session Summary** with missions played, total score, stars, and ranks earned.
+5. After three mission variants have ended at least once in the session, the Next action opens a simple **Session Summary** with missions played, total score, stars, and ranks earned. Choose **Continue Session** (Enter/Start) to launch the next unfinished mission, **Mission Select** to choose freely, or **New Session** to reset local stats.
 
 No progress is saved; the session loop is intentionally local and lightweight.
 

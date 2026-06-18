@@ -875,8 +875,11 @@ namespace CheddarAndCocoa.Tests
             game.ChooseNextMission();
             Assert.AreEqual(GameManager.FlowState.SessionSummary, game.CurrentFlow);
             Assert.IsTrue(game.SessionSummaryVisible);
-            game.ReturnToMissionSelect();
-            Assert.AreEqual(GameManager.FlowState.MissionSelect, game.CurrentFlow);
+            game.ContinueSession();
+            yield return null;
+            Assert.AreEqual(GameManager.FlowState.Playing, game.CurrentFlow);
+            Assert.AreEqual(GameManager.MissionVariant.SquirrelConspiracy, game.ActiveMissionVariant);
+            Assert.IsTrue(LogContains(game, "ContinueSession: SquirrelConspiracy"));
         }
 
         [UnityTest]
@@ -931,6 +934,9 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(game.SessionSummaryVisible);
             Assert.That(game.SessionSummaryLabel, Does.Contain("3 missions played"));
             Assert.That(game.SessionRanksEarnedLabel, Does.Contain("Squirrel Conspiracy"));
+            game.ContinueSession();
+            yield return null;
+            Assert.AreEqual(GameManager.MissionVariant.EagleShadowPanic, game.ActiveMissionVariant);
         }
 
         [UnityTest]

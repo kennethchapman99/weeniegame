@@ -187,17 +187,22 @@ namespace CheddarAndCocoa.Game
 
         private void DrawSessionSummary()
         {
-            float w = 680, h = 270;
+            float w = 680, h = 292;
             var box = new Rect((Screen.width - w) * 0.5f, (Screen.height - h) * 0.5f, w, h);
             GUI.Box(box, GUIContent.none);
             GUI.Label(new Rect(box.x, box.y + 18, w, 42), "Session Summary", _big);
             GUI.Label(new Rect(box.x + 40, box.y + 76, w - 80, 32), _game.SessionSummaryLabel, _mid);
             GUI.Label(new Rect(box.x + 40, box.y + 116, w - 80, 72), _game.SessionRanksEarnedLabel, _small);
-            GUI.Label(new Rect(box.x + 40, box.y + 188, w - 80, 28), "Enter / Start / M returns to mission select for another tiny dog crisis.", _mid);
+            GUI.Label(new Rect(box.x + 40, box.y + 188, w - 80, 28), "Enter / Start continues • M / Escape opens mission select", _mid);
 
-            if (GUI.Button(new Rect(box.x + w * 0.5f - 210, box.y + h - 44, 200, 30), "Mission Select"))
+            float buttonWidth = 180f;
+            float buttonGap = 12f;
+            float buttonStart = box.x + (w - buttonWidth * 3f - buttonGap * 2f) * 0.5f;
+            if (GUI.Button(new Rect(buttonStart, box.y + h - 44, buttonWidth, 30), "Continue Session"))
+                _game.ContinueSession();
+            if (GUI.Button(new Rect(buttonStart + buttonWidth + buttonGap, box.y + h - 44, buttonWidth, 30), "Mission Select"))
                 _game.ReturnToMissionSelect();
-            if (GUI.Button(new Rect(box.x + w * 0.5f + 10, box.y + h - 44, 200, 30), "New Session"))
+            if (GUI.Button(new Rect(buttonStart + (buttonWidth + buttonGap) * 2f, box.y + h - 44, buttonWidth, 30), "New Session"))
             {
                 _game.ResetSession();
                 _game.ReturnToMissionSelect();
