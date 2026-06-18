@@ -4,10 +4,19 @@ This backlog organizes the game into reusable mechanic slices. Do not build isol
 
 ## Current Foundation
 
-Playable:
-- Backyard Rescue
-- Snack Heist
-- Sock Panic
+Playable (all shipped on `main`, deterministic PlayMode tests, selectable from the in-scene mission select via keys 1-9/0):
+- Backyard Rescue (collect + squirrel + predator + tug)
+- Snack Heist (protect-and-collect)
+- Sock Panic (timed collect)
+- Squirrel Conspiracy (chase / herding — `HerdingMissionState`)
+- Eagle Shadow Panic (threat-sweep hide + rescue + united bark — `ThreatSweepMissionState`, real cover zones + sweeping shadow)
+- Coyotes at the Fence (patrol defense — `PatrolDefenseMissionState`, real fence gaps + prowling coyote)
+- Weenie Roundup (carry-to-bowl — `CarryRoundupMissionState`)
+- Scent Search (sniff hot/cold + dig — `ScentSearchMissionState`)
+- Thunderstorm Comfort (panic co-regulation / huddle — `ThunderstormMissionState` + `PanicMeter`)
+- Mark the Yard (territory control — `TerritoryMissionState`, prowling squirrel rival)
+
+The arena is now a real 48x28 yard with a dynamic clamped follow-cam, decorative backyard dressing, and spatial geometry for the threat/territory missions. Dog-verb coverage: chase, rescue, steal, distract, defend, comfort, carry, tug, hide, sniff, dig, bark, mark.
 
 Reusable now:
 - mission select
