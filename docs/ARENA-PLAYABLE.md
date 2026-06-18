@@ -219,6 +219,10 @@ The deterministic test/pacing hooks are `ForceWeeniePickup(dog)`, `ForceWeenieDe
 
 Manual check: press **7**, walk a dog onto a weenie to grab it, carry it to the bowl, and repeat (split the dogs up) until the bowl shows 5/5. Confirm the end summary says **Weenie Wranglers**.
 
+Pickup now produces `WEENIE GRABBED!`, a proud carrier pose, collection cue, and light rumble. A drop
+produces `FUMBLE!` at the bounced weenie, a worried flinch, warning cue, and stronger rumble before
+the chase resumes.
+
 ### Scent Search
 
 Scent Search is a **sniff + dig** mission using `ScentSearchMissionState` — the info-gathering verbs the other levels don't use. Six **DIG?** mounds are scattered across the yard; one hides a bone. **Bark to sniff**: the closer the sniffing dog is to the buried bone, the hotter the readout (`RED HOT` / `WARM` / `COLD`). **Interact to dig** the mound you think is hot; the right one yields a bone and re-buries the next one elsewhere, a cold one wastes a dig. Find three bones before four cold digs (or the timer) end the run.

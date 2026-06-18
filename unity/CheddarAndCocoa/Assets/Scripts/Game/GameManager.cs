@@ -1433,7 +1433,10 @@ namespace CheddarAndCocoa.Game
             LastFeedback = FeedbackKind.PartnerRescue;
             LastCue = $"{DogName(_dogs[dogIndex])} grabbed a weenie - carry it to the bowl!";
             SetJuice(JuiceFeedbackKind.SuccessPop, ScoreEventCatalog.WeeniePickup.Label);
+            if (dogIndex < DogFeedback.Length && DogFeedback[dogIndex] != null) DogFeedback[dogIndex].ShowProudBrief();
+            SpawnWorldPop(_dogs[dogIndex].transform.position, "WEENIE GRABBED!", new Color(1f, 0.78f, 0.3f));
             RequestAudioCue(ArenaFeedbackCatalog.SnackSockCollect);
+            RequestRumble("weenie_pickup", 0.12f, 0.22f, 0.1f);
             LogPlaytestEvent("WeeniePickup", $"loose {_carryState.Loose}");
             LogObjectiveIfChanged();
         }
@@ -1495,6 +1498,9 @@ namespace CheddarAndCocoa.Game
             LastFeedback = FeedbackKind.SquirrelStoleFood;
             LastCue = $"{DogName(_dogs[dogIndex])} fumbled the weenie - go grab it again!";
             SetJuice(JuiceFeedbackKind.WarningMiss, ScoreEventCatalog.WeenieDropped.Label);
+            SpawnWorldPop(dropAt, "FUMBLE!", new Color(1f, 0.4f, 0.22f));
+            RequestAudioCue(ArenaFeedbackCatalog.ThreatWarning);
+            RequestRumble("weenie_fumble", 0.18f, 0.34f, 0.14f);
             LogPlaytestEvent("WeenieDropped", $"drops {_carryState.Drops}");
             LogObjectiveIfChanged();
         }

@@ -84,11 +84,16 @@ namespace CheddarAndCocoa.Tests
             game.ForceWeeniePickup(DogId.Cheddar);
             yield return null;
             Assert.AreEqual(looseAtStart - 1, game.WeenieRoundupState.Loose);
+            Assert.AreEqual(DogReadabilityFeedback.Pose.Proud, game.DogFeedback[0].CurrentPose);
+            Assert.IsTrue(HasWorldPop("WEENIE GRABBED"));
 
             game.ForceWeenieDrop(DogId.Cheddar);
             yield return null;
             Assert.AreEqual(looseAtStart, game.WeenieRoundupState.Loose, "A fumbled weenie returns to the yard.");
             Assert.AreEqual(1, game.WeenieRoundupState.Drops);
+            Assert.AreEqual(DogReadabilityFeedback.Pose.Sad, game.DogFeedback[0].CurrentPose);
+            Assert.IsTrue(HasWorldPop("FUMBLE"));
+            Assert.AreEqual(ArenaFeedbackCatalog.ThreatWarning, game.LastAudioCueRequested);
         }
 
         [UnityTest]
@@ -136,6 +141,13 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(_game);
             Assert.IsNotNull(_cheddar);
             Assert.IsNotNull(_cocoa);
+        }
+
+        private static bool HasWorldPop(string text)
+        {
+            foreach (var pop in Object.FindObjectsByType<MissionWorldPop>(FindObjectsSortMode.None))
+                if (pop.Label.Contains(text)) return true;
+            return false;
         }
     }
 }
