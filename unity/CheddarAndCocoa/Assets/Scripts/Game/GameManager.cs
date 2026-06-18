@@ -687,6 +687,10 @@ namespace CheddarAndCocoa.Game
             _toyRescuePosition = new Vector2(_bounds.xMax - 1.7f, _bounds.yMin + 1.7f);
             _fenceGapPosition = _fenceGaps[0];
             _carryState.Reset();
+            _scentState.Reset();
+            _stormState.Reset();
+            _territoryState.Reset();
+            if (_panic != null) _panic.ResetMeter();
             _bowlPosition = new Vector2(_bounds.xMax - 4f, _bounds.yMin + 3f);
             if (_dogCarrying != null)
                 for (int i = 0; i < _dogCarrying.Length; i++) _dogCarrying[i] = false;
