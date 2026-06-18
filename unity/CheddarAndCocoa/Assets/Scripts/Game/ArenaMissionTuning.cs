@@ -94,6 +94,20 @@ namespace CheddarAndCocoa.Game
             SurvivorScore = 200
         };
 
+        public MissionBalance SquirrelConspiracy = new MissionBalance
+        {
+            RoundSeconds = 75f,
+            SpawnedItemCount = 0,
+            ItemGoal = 1,
+            ItemScore = 0,
+            MaxStolenFood = 3,
+            SquirrelPenalty = 75,
+            SquirrelScareScore = 75,
+            PawfectScore = 1500,
+            HeroScore = 1050,
+            SurvivorScore = 350
+        };
+
         public static ArenaMissionTuning CreateDefault() => new ArenaMissionTuning();
 
         public MissionBalance BalanceFor(GameManager.MissionVariant variant)
@@ -102,6 +116,7 @@ namespace CheddarAndCocoa.Game
             {
                 GameManager.MissionVariant.SnackHeist => SnackHeist,
                 GameManager.MissionVariant.SockPanic => SockPanic,
+                GameManager.MissionVariant.SquirrelConspiracy => SquirrelConspiracy,
                 _ => BackyardRescue
             };
         }

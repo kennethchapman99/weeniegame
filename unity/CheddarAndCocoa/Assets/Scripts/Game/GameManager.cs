@@ -17,7 +17,7 @@ namespace CheddarAndCocoa.Game
         public enum FlowState { MissionSelect, Playing, EndScreen, SessionSummary }
         public enum RoundModifier { SquirrelTrouble, ZoomiesSurge, PancakePanic }
         public enum MissionOutcome { InProgress, Clear, Failed }
-        public enum MissionVariant { BackyardRescue, SnackHeist, SockPanic }
+        public enum MissionVariant { BackyardRescue, SnackHeist, SockPanic, SquirrelConspiracy }
         public enum FeedbackKind
         {
             Intro,
@@ -106,7 +106,8 @@ namespace CheddarAndCocoa.Game
         {
             MissionVariant.BackyardRescue,
             MissionVariant.SnackHeist,
-            MissionVariant.SockPanic
+            MissionVariant.SockPanic,
+            MissionVariant.SquirrelConspiracy
         };
 
         [Header("Mission selection")]
@@ -128,6 +129,8 @@ namespace CheddarAndCocoa.Game
         public bool EndScreenVisible => CurrentFlow == FlowState.EndScreen;
         public bool SessionSummaryVisible => CurrentFlow == FlowState.SessionSummary;
         public int MissionSelectOptionCount => MissionOrder.Length;
+        public HerdingMissionState SquirrelConspiracyState => _herdingState;
+        public MissionRuntimeSnapshot RuntimeSnapshot => BuildRuntimeSnapshot();
         public int SelectedMissionIndex => _selectedMissionIndex;
         public MissionVariant SelectedMissionVariant => MissionOrder[Mathf.Clamp(_selectedMissionIndex, 0, MissionOrder.Length - 1)];
         public string SelectedMissionName => BuildMissionDefinition(SelectedMissionVariant, _tuning).Name;
@@ -179,7 +182,7 @@ namespace CheddarAndCocoa.Game
         public int SessionTotalScore { get; private set; }
         public int SessionStarsEarned { get; private set; }
         public int SessionUniqueMissionsCompleted { get; private set; }
-        public bool SessionSummaryReady => SessionUniqueMissionsCompleted >= MissionOrder.Length;
+        public bool SessionSummaryReady => SessionUniqueMissionsCompleted >= 3;
         public string SessionSummaryLabel { get; private set; } = "Session Summary: no missions played yet.";
         public string SessionRanksEarnedLabel { get; private set; } = "Ranks: none yet.";
         public ArenaMissionTuning Tuning => _tuning;
@@ -230,6 +233,9 @@ namespace CheddarAndCocoa.Game
         private readonly List<string> _rumbleRequests = new();
         private MissionDefinition _mission;
         private GameObject _bunnyCameoObject;
+        private readonly HerdingMissionState _herdingState = new HerdingMissionState();
+        private readonly Vector2[] _squirrelRoute = { new(-5.8f, 2.8f), new(0f, -2.6f), new(5.8f, 2.8f), new(4.6f, -2.4f) };
+        private Vector2 _stashPosition;
 
         private readonly List<Treat> _treats = new();
         private readonly List<string> _sessionRanks = new();
@@ -472,6 +478,25 @@ namespace CheddarAndCocoa.Game
 
         public void ForceGameOver() => EndRound(false);
 
+
+        public void ForceSquirrelConspiracyHerd(DogId dogId = DogId.Cheddar)
+        {
+            if (MissionActive() && _mission != null && _mission.Variant == MissionVariant.SquirrelConspiracy)
+                TryProgressSquirrelConspiracyBark(IndexOfDog(dogId));
+        }
+
+        public void ForceSquirrelConspiracyTaunt()
+        {
+            if (!MissionActive() || _mission == null || _mission.Variant != MissionVariant.SquirrelConspiracy) return;
+            RegisterSquirrelTaunt();
+        }
+
+        public void ForceSquirrelConspiracyFindStash(DogId dogId = DogId.Cocoa)
+        {
+            if (MissionActive() && _mission != null && _mission.Variant == MissionVariant.SquirrelConspiracy)
+                TryFindConspiracyStash(dogId, true);
+        }
+
         private void BeginRound()
         {
             if (_mission == null) _mission = BuildMissionDefinition(startingMission, _tuning);
@@ -510,7 +535,10 @@ namespace CheddarAndCocoa.Game
             FailedInteractions = 0;
             ObjectiveChangeCount = 0;
 
+            _rng = new System.Random(MissionSeedGenerator.StableSeed(_mission.Variant.ToString(), SessionMissionsPlayed, _selectedMissionIndex));
             ActiveModifier = (RoundModifier)_rng.Next(0, 3);
+            _herdingState.Reset();
+            _stashPosition = new Vector2(_bounds.xMax - 1.7f, _bounds.yMin + 1.7f);
             _nextUnitedBarkAt = 0f;
             _teamBarkFeedbackUntil = 0f;
             _scorePopUntil = 0f;
@@ -539,7 +567,7 @@ namespace CheddarAndCocoa.Game
             ClearTreats();
             for (int i = 0; i < treatCount; i++) SpawnTreat();
 
-            PlaceObject(SquirrelObject, new Vector2(_bounds.xMax - 2f, _bounds.yMax - 2f));
+            PlaceObject(SquirrelObject, _mission.Variant == MissionVariant.SquirrelConspiracy ? _squirrelRoute[0] : new Vector2(_bounds.xMax - 2f, _bounds.yMax - 2f));
             PlaceObject(PredatorObject, new Vector2(0f, _bounds.yMax + 2f));
             PlaceObject(RopeObject, Vector2.zero);
             PlaceObject(_bunnyCameoObject, new Vector2(_bounds.xMin + 1.4f, _bounds.yMin + 1.0f));
@@ -547,7 +575,7 @@ namespace CheddarAndCocoa.Game
             PredatorObject.SetActive(_mission.RequiresPredator);
             RopeObject.SetActive(_mission.RequiresTug);
             if (_bunnyCameoObject != null) _bunnyCameoObject.SetActive(true);
-            if (_mission.UsesSquirrel) SetActorState(SquirrelObject, "Squirrel: WAITING", new Color(0.55f, 0.32f, 0.12f), 0.06f);
+            if (_mission.UsesSquirrel) SetActorState(SquirrelObject, _mission.Variant == MissionVariant.SquirrelConspiracy ? "SQUIRREL CONSPIRACY ROUTE 1" : "Squirrel: WAITING", new Color(0.55f, 0.32f, 0.12f), 0.06f);
             if (_mission.RequiresPredator) SetActorState(PredatorObject, "Predator: OFFSCREEN", Color.gray, 0.04f);
             if (_mission.RequiresTug) SetActorState(RopeObject, "Rope/Tug - BOTH DOGS", new Color(0.95f, 0.7f, 0.15f), 0.08f);
             _lastLoggedObjective = string.Empty;
@@ -573,7 +601,8 @@ namespace CheddarAndCocoa.Game
             }
 
             TickModifier();
-            TickSquirrel();
+            if (_mission.Variant == MissionVariant.SquirrelConspiracy) TickSquirrelConspiracy();
+            else TickSquirrel();
             TickPredator();
             TickTugProximity();
             CheckClear();
@@ -666,6 +695,119 @@ namespace CheddarAndCocoa.Game
             if (StolenFood >= maxStolenFood) EndRound(false);
         }
 
+
+        private void TickSquirrelConspiracy()
+        {
+            if (!_mission.UsesSquirrel || SquirrelObject == null) return;
+
+            _squirrelTimer -= Time.deltaTime;
+            Vector2 target = _herdingState.StashRevealed ? _stashPosition : _squirrelRoute[_herdingState.RouteIndex];
+            SquirrelObject.transform.position = Vector3.MoveTowards(
+                SquirrelObject.transform.position,
+                target,
+                Time.deltaTime * (_tuning.SquirrelMoveSpeed * 0.65f));
+
+            if (!_herdingState.StashRevealed && _squirrelTimer <= 0f)
+                RegisterSquirrelTaunt();
+        }
+
+        private bool TryProgressSquirrelConspiracyBark(int dogIndex)
+        {
+            if (dogIndex < 0 || dogIndex >= _dogs.Length || _herdingState.StashFound) return false;
+
+            float distance = Vector2.Distance(_dogs[dogIndex].transform.position, SquirrelObject.transform.position);
+            if (distance > _tuning.SingleBarkSquirrelRange)
+            {
+                _herdingState.AddFakeOut();
+                AddScore(ScoreEventCatalog.FakeOut.Points, ScoreEventCatalog.FakeOut.Label);
+                LastCue = "The squirrel sold a fake-out and the dogs barked at absolutely nothing.";
+                SetJuice(JuiceFeedbackKind.WarningMiss, "FAKE OUT!");
+                LogPlaytestEvent("SquirrelFakeOut", LastCue);
+                return false;
+            }
+
+            bool cutoff = _dogs.Length > 1 && Vector2.Distance(_dogs[0].transform.position, _dogs[1].transform.position) >= 2.25f;
+            var scoreEvent = cutoff ? ScoreEventCatalog.Cutoff : ScoreEventCatalog.GoodHerd;
+            if (cutoff) _herdingState.AddCutoff();
+            else _herdingState.AddHerd();
+            _herdingState.AdvanceRoute(_squirrelRoute.Length);
+            _squirrelTimer = 5.5f;
+            AddScore(scoreEvent.Points, scoreEvent.Label);
+            LastFeedback = FeedbackKind.SquirrelScared;
+            LastCue = cutoff ? "Perfect cutoff! The squirrel route is collapsing." : "Good herd! The squirrel conspiracy is losing ground.";
+            SetActorState(SquirrelObject, $"ROUTE {_herdingState.RouteIndex + 1} / CONTROLS {_herdingState.ControlCount}/4", new Color(0.85f, 0.55f, 0.12f), cutoff ? 0.28f : 0.16f);
+            SetJuice(JuiceFeedbackKind.SuccessPop, scoreEvent.Label);
+            SpawnWorldPop(SquirrelObject.transform.position, cutoff ? "CUTOFF!" : "HERD!", new Color(1f, 0.9f, 0.25f));
+            RequestAudioCue(ArenaFeedbackCatalog.TugRescueSuccess);
+            LogPlaytestEvent(cutoff ? "SquirrelCutoff" : "SquirrelHerd", $"controls {_herdingState.ControlCount}/4");
+
+            if (_herdingState.ReadyForStash(4))
+            {
+                _herdingState.RevealStash();
+                AddScore(ScoreEventCatalog.DoubleBarkBlock.Points, ScoreEventCatalog.DoubleBarkBlock.Label);
+                PlaceObject(SquirrelObject, _stashPosition + Vector2.left * 1.2f);
+                SetActorState(SquirrelObject, "STASH REVEALED - SNIFF + INTERACT!", new Color(1f, 0.72f, 0.18f), 0.34f);
+                LastCue = "The squirrel stash is exposed! Get a dog to the stash and interact.";
+                LogPlaytestEvent("SquirrelStashRevealed", LastCue);
+            }
+
+            LogObjectiveIfChanged();
+            return true;
+        }
+
+        private void RegisterSquirrelTaunt()
+        {
+            _herdingState.AddTaunt();
+            AddScore(ScoreEventCatalog.FakeOut.Points, "SQUIRREL TAUNT");
+            _herdingState.AdvanceRoute(_squirrelRoute.Length);
+            _squirrelTimer = 5.5f;
+            PlaceObject(SquirrelObject, _squirrelRoute[_herdingState.RouteIndex]);
+            LastFeedback = FeedbackKind.SquirrelStoleFood;
+            LastCue = $"The squirrel taunted the dogs ({_herdingState.Taunts}/3). Cut it off before yard gossip wins.";
+            SetActorState(SquirrelObject, $"TAUNT {_herdingState.Taunts}/3 - CUT OFF!", Color.gray, 0.3f);
+            SetJuice(JuiceFeedbackKind.WarningMiss, "SQUIRREL TAUNT!");
+            RequestAudioCue(ArenaFeedbackCatalog.SquirrelStealMiss);
+            LogPlaytestEvent("SquirrelTaunt", LastCue);
+            if (_herdingState.TooManyTaunts(3)) EndRound(false);
+            else LogObjectiveIfChanged();
+        }
+
+        private void TryFindConspiracyStash(DogId dogId, bool force = false)
+        {
+            int dogIndex = IndexOfDog(dogId);
+            if (dogIndex < 0) return;
+            if (!_herdingState.StashRevealed)
+            {
+                MarkFailedInteraction(dogId, "stash is not revealed yet");
+                return;
+            }
+
+            if (!force && Vector2.Distance(_dogs[dogIndex].transform.position, _stashPosition) > 2f)
+            {
+                MarkFailedInteraction(dogId, "too far from squirrel stash");
+                return;
+            }
+
+            _herdingState.FindStash();
+            AddScore(ScoreEventCatalog.StashFound.Points, ScoreEventCatalog.StashFound.Label);
+            AddScore(ScoreEventCatalog.ConspiracyCracked.Points, ScoreEventCatalog.ConspiracyCracked.Label);
+            LastCue = $"{DogName(_dogs[dogIndex])} found the stash. The conspiracy is cracked!";
+            SetActorState(SquirrelObject, "CONSPIRACY CRACKED!", new Color(0.3f, 1f, 0.35f), 0.12f);
+            SetJuice(JuiceFeedbackKind.SuccessPop, "STASH FOUND!");
+            SpawnWorldPop(_stashPosition, "STASH FOUND!", new Color(0.5f, 1f, 0.45f));
+            LogPlaytestEvent("SquirrelStashFound", LastCue);
+            CheckClear();
+        }
+
+        private MissionRuntimeSnapshot BuildRuntimeSnapshot()
+        {
+            string missionId = _mission != null && _mission.Variant == MissionVariant.SquirrelConspiracy ? "squirrel_conspiracy" : ActiveMissionVariant.ToString();
+            int progress = _mission != null && _mission.Variant == MissionVariant.SquirrelConspiracy ? _herdingState.ControlCount + (_herdingState.StashFound ? 1 : 0) : BreakfastRecovered;
+            int goal = _mission != null && _mission.Variant == MissionVariant.SquirrelConspiracy ? 5 : BreakfastGoal;
+            int mistakes = _mission != null && _mission.Variant == MissionVariant.SquirrelConspiracy ? _herdingState.FakeOuts + _herdingState.Taunts : StolenFood + FailedInteractions;
+            return new MissionRuntimeSnapshot(missionId, Score, TimeRemaining, progress, goal, mistakes, Outcome == MissionOutcome.Clear, Outcome == MissionOutcome.Failed);
+        }
+
         private void TickPredator()
         {
             if (!_mission.RequiresPredator) return;
@@ -685,7 +827,7 @@ namespace CheddarAndCocoa.Game
             LastCue = $"Shadow over {DogName(_dogs[_predatorTarget])}! Huddle together and bark!";
             PredatorObject.name = "Predator Warning";
             PlaceObject(PredatorObject, (Vector2)_dogs[_predatorTarget].transform.position + Vector2.up * 2f);
-            SetActorState(PredatorObject, "HUDDLE + BARK!", new Color(1f, 0.08f, 0.08f), 0.42f);
+            SetActorState(PredatorObject, "SHADOW! HUDDLE + DOUBLE BARK!", new Color(1f, 0.08f, 0.08f), 0.42f);
             RequestAudioCue(ArenaFeedbackCatalog.ThreatWarning);
             RequestRumble("predator_warning", 0.16f, 0.3f, 0.14f);
             LogPlaytestEvent("PredatorWarning", LastCue);
@@ -700,7 +842,7 @@ namespace CheddarAndCocoa.Game
 
             PredatorObject.name = "Predator Attack";
             PlaceObject(PredatorObject, _dogs[_predatorTarget].transform.position);
-            SetActorState(PredatorObject, "PREDATOR ATTACK!", new Color(0.8f, 0f, 0f), 0.45f);
+            SetActorState(PredatorObject, $"YOINKED {DogName(_dogs[_predatorTarget]).ToUpperInvariant()} - PARTNER BARK!", new Color(0.8f, 0f, 0f), 0.45f);
 
             _grabbedDog = _predatorTarget;
             _dogs[_grabbedDog].SetMode(MovementMode.Stunned);
@@ -726,7 +868,7 @@ namespace CheddarAndCocoa.Game
             LastCue = "DOUBLE WOOF drove the predator away!";
             PredatorObject.name = "Predator Driven Away";
             PlaceObject(PredatorObject, new Vector2(0f, _bounds.yMax + 2f));
-            SetActorState(PredatorObject, "PREDATOR YEETED", Color.gray, 0.08f);
+            SetActorState(PredatorObject, "DOUBLE WOOF YEETED SHADOW", Color.gray, 0.08f);
             SetJuice(JuiceFeedbackKind.SuccessPop, "PREDATOR YEETED!");
             SpawnWorldPop(_dogs[0].transform.position + Vector3.up, "DOUBLE WOOF!", new Color(1f, 0.95f, 0.25f));
             RequestAudioCue(ArenaFeedbackCatalog.TugRescueSuccess);
@@ -749,7 +891,7 @@ namespace CheddarAndCocoa.Game
                     LastFeedback = FeedbackKind.TugNeedsPartner;
                     LastCue = "Rope wiggles: both dogs have to commit together!";
                     string waitingFor = cheddarNear ? "WAITING FOR COCOA" : "WAITING FOR CHEDDAR";
-                    SetActorState(RopeObject, $"Rope/Tug - {waitingFor}", new Color(1f, 0.8f, 0.28f), 0.2f);
+                    SetActorState(RopeObject, $"ROPE NEEDS BOTH DOGS - {waitingFor}", new Color(1f, 0.8f, 0.28f), 0.2f);
                     LogObjectiveIfChanged();
                 }
                 return;
@@ -760,13 +902,19 @@ namespace CheddarAndCocoa.Game
             TugProgress = Mathf.Min(1f, TugProgress + Time.deltaTime * _tuning.TugChargePerSecond);
             LastFeedback = FeedbackKind.TugTogether;
             LastCue = "Both dogs are tugging - tiny sausage teamwork!";
-            SetActorState(RopeObject, $"BOTH TUGGING {Mathf.RoundToInt(TugProgress * 100f)}%", new Color(1f, 0.78f, 0.22f), 0.22f);
+            SetActorState(RopeObject, $"BOTH DOGS TUGGING {Mathf.RoundToInt(TugProgress * 100f)}%", new Color(1f, 0.78f, 0.22f), 0.22f);
             if (TugProgress >= 1f) CompleteTug();
         }
 
         private void OnDogInteracted(DogId dogId)
         {
             if (!MissionActive()) return;
+
+            if (_mission != null && _mission.Variant == MissionVariant.SquirrelConspiracy)
+            {
+                TryFindConspiracyStash(dogId);
+                return;
+            }
 
             if (_mission == null || !_mission.RequiresTug)
             {
@@ -792,7 +940,7 @@ namespace CheddarAndCocoa.Game
             TugProgress = Mathf.Min(1f, TugProgress + _tuning.TugInteractProgress);
             LastFeedback = FeedbackKind.TugNeedsPartner;
             LastCue = $"{DogName(_dogs[dogIndex])} has the rope - partner pile on!";
-            SetActorState(RopeObject, $"Rope/Tug {Mathf.RoundToInt(TugProgress * 100f)}% - NEED PARTNER", new Color(1f, 0.78f, 0.22f), 0.2f);
+            SetActorState(RopeObject, $"ROPE {Mathf.RoundToInt(TugProgress * 100f)}% - NEED PARTNER DOG", new Color(1f, 0.78f, 0.22f), 0.2f);
             RequestAudioCue(ArenaFeedbackCatalog.Bark);
             LogPlaytestEvent("Tug", LastCue);
             if (TugProgress >= 1f) CompleteTug();
@@ -805,7 +953,7 @@ namespace CheddarAndCocoa.Game
             LastFeedback = FeedbackKind.TugTogether;
             LastCue = "Rope tug complete - dramatic victory chomps!";
             RopeObject.name = "Rope/Tug Complete";
-            SetActorState(RopeObject, "ROPE COMPLETE!", new Color(0.3f, 1f, 0.3f), 0.08f);
+            SetActorState(RopeObject, "ROPE COMPLETE! TEAM CHOMP!", new Color(0.3f, 1f, 0.3f), 0.08f);
             SetJuice(JuiceFeedbackKind.SuccessPop, "TUG POP! ROPE COMPLETE");
             SpawnWorldPop(RopeObject.transform.position, "TUG POP!", new Color(0.45f, 1f, 0.35f));
             RequestAudioCue(ArenaFeedbackCatalog.TugRescueSuccess);
@@ -829,7 +977,11 @@ namespace CheddarAndCocoa.Game
             RequestRumble("bark", 0.08f, 0.18f, 0.08f);
             LogPlaytestEvent("Bark", DogName(dog));
 
-            if (_mission.UsesSquirrel && Vector2.Distance(dog.transform.position, SquirrelObject.transform.position) < _tuning.SingleBarkSquirrelRange)
+            if (_mission.Variant == MissionVariant.SquirrelConspiracy)
+            {
+                barkDidSomething = TryProgressSquirrelConspiracyBark(dogIndex);
+            }
+            else if (_mission.UsesSquirrel && Vector2.Distance(dog.transform.position, SquirrelObject.transform.position) < _tuning.SingleBarkSquirrelRange)
             {
                 ScareSquirrel(_tuning.SingleBarkScareSeconds, $"{DogName(dog)} scared the squirrel!", true);
                 barkDidSomething = true;
@@ -910,6 +1062,12 @@ namespace CheddarAndCocoa.Game
         private void CheckClear()
         {
             if (Phase == State.LevelClear || Phase == State.GameOver) return;
+            if (_mission.Variant == MissionVariant.SquirrelConspiracy)
+            {
+                if (_herdingState.StashFound) EndRound(true);
+                return;
+            }
+
             bool hasItems = BreakfastRecovered >= _mission.ItemGoal;
             bool hasPredator = !_mission.RequiresPredator || PredatorResolved;
             bool hasTug = !_mission.RequiresTug || TugComplete;
@@ -924,8 +1082,9 @@ namespace CheddarAndCocoa.Game
             if (clear)
             {
                 AddScore(_tuning.ClearScore + Mathf.CeilToInt(TimeRemaining) * _tuning.TimeBonusMultiplier, _mission.ClearScoreLabel);
-                EndRank = RankForScore(Score, true, _mission);
-                StarRating = Score >= _mission.PawfectScore ? 3 : Score >= _mission.HeroScore ? 2 : 1;
+                var rank = MissionRankCalculator.Calculate(Score, true, _mission.PawfectScore, _mission.HeroScore, _mission.SurvivorScore);
+                EndRank = rank.Rank;
+                StarRating = rank.Stars;
                 LastFeedback = FeedbackKind.LevelClear;
                 LastCue = $"{_mission.ClearBannerPrefix} {EndRank}. Score {Score}";
                 MissionBanner = $"{_mission.ClearBannerPrefix} {EndRank}";
@@ -947,7 +1106,7 @@ namespace CheddarAndCocoa.Game
                 RequestAudioCue(ArenaFeedbackCatalog.MissionFail);
                 RequestRumble("mission_fail", 0.24f, 0.5f, 0.24f);
             }
-            EndSummaryLabel = $"{Outcome}: {Score} - {EndRank}";
+            EndSummaryLabel = BuildOutcomeSummaryLabel();
 
             foreach (var dog in _dogs)
             {
@@ -972,6 +1131,15 @@ namespace CheddarAndCocoa.Game
             RecordSessionResult();
             LogPlaytestEvent(clear ? "MissionClear" : "MissionFail", EndSummaryLabel);
             LogObjectiveIfChanged();
+        }
+
+
+        private string BuildOutcomeSummaryLabel()
+        {
+            string funny = _mission != null && _mission.Variant == MissionVariant.SquirrelConspiracy
+                ? MissionOutcomeSummaryBuilder.BuildSquirrelSummary(_herdingState)
+                : Outcome.ToString();
+            return $"{funny}: {Score} - {EndRank}";
         }
 
         private bool MissionActive() => Phase == State.Playing || Phase == State.PredatorWarning || Phase == State.PredatorAttack;
@@ -1001,6 +1169,11 @@ namespace CheddarAndCocoa.Game
                 return $"Rescue {DogName(_dogs[_grabbedDog])}";
             if (Phase == State.PredatorWarning)
                 return "Huddle + bark at the shadow";
+            if (_mission.Variant == MissionVariant.SquirrelConspiracy)
+            {
+                if (_herdingState.StashRevealed) return "Sniff the revealed stash and interact";
+                return $"Herd squirrel route {_herdingState.RouteIndex + 1}/4: controls {_herdingState.ControlCount}/4, taunts {_herdingState.Taunts}/3";
+            }
             if (_squirrelTarget != null)
                 return _mission.SquirrelObjectiveText;
             if (_mission.RequiresTug && !TugComplete && BreakfastRecovered >= Mathf.Max(2, recoveryGoal / 2))
@@ -1024,6 +1197,7 @@ namespace CheddarAndCocoa.Game
                 return _mission.BasicClearReason;
             }
 
+            if (_mission.Variant == MissionVariant.SquirrelConspiracy && _herdingState.TooManyTaunts(3)) return "The squirrel taunted the dogs into a full backyard misinformation spiral.";
             if (_mission.UsesSquirrel && StolenFood >= maxStolenFood) return _mission.StolenFailReason;
             if (TimeRemaining <= 0f) return _mission.TimeFailReason;
             if (_mission.RequiresPredator && PredatorFailed) return _mission.PredatorFailReason;
@@ -1059,10 +1233,7 @@ namespace CheddarAndCocoa.Game
 
         private static string RankForScore(int score, bool clear, MissionDefinition mission)
         {
-            if (clear && score >= mission.PawfectScore) return "Pawfect Yard";
-            if (clear && score >= mission.HeroScore) return "Backyard Heroes";
-            if (score >= mission.SurvivorScore) return "Snack Survivors";
-            return "Needs More Bark";
+            return MissionRankCalculator.Calculate(score, clear, mission.PawfectScore, mission.HeroScore, mission.SurvivorScore).Rank;
         }
 
         private float SquirrelDelay()
@@ -1094,6 +1265,7 @@ namespace CheddarAndCocoa.Game
                     if (kb.digit1Key.wasPressedThisFrame) { StartMission(MissionVariant.BackyardRescue); return; }
                     if (kb.digit2Key.wasPressedThisFrame) { StartMission(MissionVariant.SnackHeist); return; }
                     if (kb.digit3Key.wasPressedThisFrame) { StartMission(MissionVariant.SockPanic); return; }
+                    if (kb.digit4Key.wasPressedThisFrame) { StartMission(MissionVariant.SquirrelConspiracy); return; }
                     previous |= kb.upArrowKey.wasPressedThisFrame || kb.leftArrowKey.wasPressedThisFrame;
                     next |= kb.downArrowKey.wasPressedThisFrame || kb.rightArrowKey.wasPressedThisFrame || kb.tabKey.wasPressedThisFrame;
                     start |= kb.enterKey.wasPressedThisFrame || kb.spaceKey.wasPressedThisFrame;
@@ -1151,6 +1323,7 @@ namespace CheddarAndCocoa.Game
             if (kb.digit1Key.wasPressedThisFrame) StartMission(MissionVariant.BackyardRescue);
             else if (kb.digit2Key.wasPressedThisFrame) StartMission(MissionVariant.SnackHeist);
             else if (kb.digit3Key.wasPressedThisFrame) StartMission(MissionVariant.SockPanic);
+            else if (kb.digit4Key.wasPressedThisFrame) StartMission(MissionVariant.SquirrelConspiracy);
         }
 
         private void ShowMissionSelect()
@@ -1252,12 +1425,12 @@ namespace CheddarAndCocoa.Game
 
         private string BuildMissionFailureSummaryLabel()
         {
-            return $"Failures: Backyard {_sessionFailuresByMission[0]} / Snack {_sessionFailuresByMission[1]} / Sock {_sessionFailuresByMission[2]}";
+            return $"Failures: Backyard {_sessionFailuresByMission[0]} / Snack {_sessionFailuresByMission[1]} / Sock {_sessionFailuresByMission[2]} / Squirrel {_sessionFailuresByMission[3]}";
         }
 
         private void UpdateSessionSummaryLabel()
         {
-            SessionSummaryLabel = $"Session Summary: {SessionMissionsPlayed} missions played, {SessionTotalScore} total score, {SessionStarsEarned} stars, {SessionUniqueMissionsCompleted}/3 missions finished.";
+            SessionSummaryLabel = $"Session Summary: {SessionMissionsPlayed} missions played, {SessionTotalScore} total score, {SessionStarsEarned} stars, {SessionUniqueMissionsCompleted}/{MissionOrder.Length} missions finished.";
             SessionRanksEarnedLabel = _sessionRanks.Count == 0 ? "Ranks: none yet." : $"Ranks: {string.Join(" | ", _sessionRanks)}";
         }
 
@@ -1371,6 +1544,63 @@ namespace CheddarAndCocoa.Game
                         ItemColor = new Color(0.95f, 0.58f, 0.18f),
                         ItemAccentColor = new Color(1f, 0.88f, 0.18f),
                         ItemSecondaryColor = new Color(0.38f, 0.18f, 0.08f),
+                        ItemPopColor = new Color(1f, 0.78f, 0.25f)
+                    };
+                case MissionVariant.SquirrelConspiracy:
+                    return new MissionDefinition
+                    {
+                        Variant = MissionVariant.SquirrelConspiracy,
+                        Name = "Squirrel Conspiracy",
+                        IntroPrompt = "Cheddar + Cocoa must herd the suspicious squirrel, reveal the hidden stash, and crack the backyard conspiracy.",
+                        ReadyScoreLabel = "READY TO INVESTIGATE SQUIRRELS",
+                        ItemRootName = "Conspiracy Clues",
+                        ItemObjectName = "Conspiracy Clue",
+                        ItemWorldLabel = "Clue!",
+                        ItemArrowLabel = "CLUE",
+                        ItemCollectCueNoun = "a clue",
+                        CollectObjectiveFormat = "Crack squirrel route {0}/{1}",
+                        CollectedScoreLabel = "CLUE FOUND",
+                        ItemScore = balance.ItemScore,
+                        SpawnedItemCount = balance.SpawnedItemCount,
+                        ItemGoal = balance.ItemGoal,
+                        RoundSeconds = balance.RoundSeconds,
+                        PawfectScore = balance.PawfectScore,
+                        HeroScore = balance.HeroScore,
+                        SurvivorScore = balance.SurvivorScore,
+                        UsesSquirrel = true,
+                        RequiresPredator = false,
+                        RequiresTug = false,
+                        MaxStolenFood = balance.MaxStolenFood,
+                        SquirrelPenalty = balance.SquirrelPenalty,
+                        SquirrelScareScore = balance.SquirrelScareScore,
+                        SquirrelObjectiveText = "Herd and cutoff the suspicious squirrel",
+                        SquirrelStealingCue = "The squirrel is running its conspiracy route - cut it off!",
+                        SquirrelStoleCue = "The squirrel taunted the yard and moved the stash gossip forward!",
+                        SquirrelStealScoreLabel = "SQUIRREL TAUNT",
+                        SquirrelScareScoreLabel = "GOOD HERD",
+                        SquirrelStealingActorLabel = "SQUIRREL ROUTE - HERD!",
+                        SquirrelDroppedActorLabel = "SQUIRREL ROUTE BLOCKED!",
+                        SquirrelStoleActorLabel = "SQUIRREL TAUNTED!",
+                        SquirrelMissPopLabel = "TAUNT!",
+                        SquirrelStealJuiceLabel = "MISS! SQUIRREL TAUNT",
+                        SquirrelScareJuiceLabel = "HERD POP!",
+                        TugObjectiveText = "Reveal the squirrel stash",
+                        WaitingObjectiveText = "Track the squirrel route together",
+                        ClearObjectiveText = "Conspiracy cracked - replay Squirrel Conspiracy",
+                        ClearBannerPrefix = "CONSPIRACY CRACKED!",
+                        ClearScoreLabel = "SQUIRREL CASE CLOSED",
+                        ReplayPrompt = "Press R / Enter / Start to replay Squirrel Conspiracy",
+                        FailObjectiveText = "Mission failed - replay Squirrel Conspiracy",
+                        GenericFailReason = "Needs more coordinated backyard detective barking.",
+                        TimeFailReason = "The squirrel moved the stash before the dogs solved the case.",
+                        StolenFailReason = "The squirrel taunted the yard into believing fake snack news.",
+                        PredatorFailReason = "No predator here, just squirrel propaganda.",
+                        PawfectClearReason = "Tiny detectives cracked the squirrel conspiracy with elite cutoffs.",
+                        HeroClearReason = "The stash was found before squirrel gossip took over.",
+                        BasicClearReason = "The conspiracy collapsed under respectable dog pressure.",
+                        ItemColor = new Color(0.7f, 0.42f, 0.12f),
+                        ItemAccentColor = new Color(1f, 0.88f, 0.22f),
+                        ItemSecondaryColor = new Color(0.24f, 0.12f, 0.04f),
                         ItemPopColor = new Color(1f, 0.78f, 0.25f)
                     };
                 case MissionVariant.SockPanic:

@@ -1,0 +1,20 @@
+namespace CheddarAndCocoa.Game
+{
+    public static class ScoreEventCatalog
+    {
+        public static readonly ProductionScoreEvent GoodHerd = new("GOOD HERD", 75);
+        public static readonly ProductionScoreEvent Cutoff = new("CUTOFF", 125, true);
+        public static readonly ProductionScoreEvent DoubleBarkBlock = new("DOUBLE BARK BLOCK", 150, true);
+        public static readonly ProductionScoreEvent FakeOut = new("FAKE OUT", -75);
+        public static readonly ProductionScoreEvent StashFound = new("STASH FOUND", 300);
+        public static readonly ProductionScoreEvent ConspiracyCracked = new("CONSPIRACY CRACKED", 500, true);
+
+        public static readonly ProductionScoreEvent SafeHide = new("SAFE HIDE", 100);
+        public static readonly ProductionScoreEvent ToyRescued = new("TOY RESCUED", 250, true);
+        public static readonly ProductionScoreEvent UnitedFront = new("UNITED FRONT", 300, true);
+
+        public static readonly ProductionScoreEvent FenceHeld = new("FENCE HELD", 100, true);
+        public static readonly ProductionScoreEvent DirtFilled = new("DIRT FILLED", 125);
+        public static readonly ProductionScoreEvent YardDefended = new("YARD DEFENDED", 500, true);
+    }
+}
