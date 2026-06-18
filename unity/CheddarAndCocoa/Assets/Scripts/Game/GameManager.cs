@@ -1030,6 +1030,7 @@ namespace CheddarAndCocoa.Game
             TickTugProximity();
             CheckClear();
             UpdateObjectiveArrows();
+            UpdateTravelAssists();
             UpdateInteractionRanges();
             LogObjectiveIfChanged();
         }
@@ -3209,6 +3210,9 @@ namespace CheddarAndCocoa.Game
 
         private void DisableDogInputs()
         {
+            if (_dogs != null)
+                foreach (var dog in _dogs)
+                    if (dog != null) dog.SetTravelAssist(false);
             if (_inputs == null) return;
             for (int i = 0; i < _inputs.Length; i++)
             {
@@ -4007,6 +4011,26 @@ namespace CheddarAndCocoa.Game
                     arrow.PointAt(target, copy, hideDistance);
                 else
                     arrow.Hide();
+            }
+        }
+
+        private void UpdateTravelAssists()
+        {
+            if (_dogs == null) return;
+            for (int i = 0; i < _dogs.Length; i++)
+            {
+                var dog = _dogs[i];
+                if (dog == null) continue;
+                bool active = false;
+                if (TryGetObjectiveTarget(i, out var target, out _, out _) && target != null)
+                {
+                    float distance = Vector2.Distance(dog.transform.position, target.position);
+                    float threshold = dog.TravelAssist
+                        ? _tuning.TravelAssistReleaseDistance
+                        : _tuning.TravelAssistEngageDistance;
+                    active = distance > threshold;
+                }
+                dog.SetTravelAssist(active, _tuning.TravelAssistSpeedMultiplier);
             }
         }
 

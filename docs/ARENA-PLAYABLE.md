@@ -63,6 +63,11 @@ mission-specific verbs (hide, herd, repair, carry, sniff, mark, comfort, and lea
 distance, and scale up during strategic camera zoom so navigation remains readable across the 120x68
 yard.
 
+When an active objective is more than 28 world units away, that dog's objective arrow enables a
+modest `1.55x` trail-travel speed assist. The identity label changes to `TRAIL READY`/`TRAIL SPRINT`,
+and normal close-control speed returns inside 20 units. The hysteresis prevents flicker and keeps
+bark, tug, pickup, dig, hide, and leash interactions on their existing precision tuning.
+
 The shared camera treats its authored maximum zoom as the 16:9 target, then derives a safe wider
 ceiling for narrower and portrait windows. This keeps both dogs framed at maximum separation across
 32:9, 16:9, 4:3, and 9:16 aspect contracts. Cheddar/Cocoa identity labels scale with strategic zoom

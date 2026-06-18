@@ -64,6 +64,12 @@ namespace CheddarAndCocoa.Game
         public float CameraFollowLerp = 9f;
         public float CameraZoomLerp = 7f;
 
+        // Normal handling remains unchanged around objectives; distant targets get a modest
+        // top-speed lift so crossing the 120-unit yard does not become dead travel time.
+        public float TravelAssistEngageDistance = 28f;
+        public float TravelAssistReleaseDistance = 20f;
+        public float TravelAssistSpeedMultiplier = 1.55f;
+
         public float SquirrelRangeIndicatorRadius => SingleBarkSquirrelRange;
         public float RescueRangeIndicatorRadius => RescueBarkRange;
         public float TugRangeIndicatorRadius => TugTogetherDistance;

@@ -134,6 +134,38 @@ namespace CheddarAndCocoa.Tests
             }
         }
 
+        [UnityTest]
+        public IEnumerator DistantObjective_EnablesVisibleTravelAssist_AndReleasesNearTarget()
+        {
+            yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
+            yield return null;
+            yield return null;
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            var cheddarObject = GameObject.Find("Cheddar");
+            Assert.IsNotNull(game);
+            Assert.IsNotNull(cheddarObject);
+            var cheddar = cheddarObject.GetComponent<CheddarAndCocoa.Dogs.DogController>();
+            var feedback = cheddarObject.GetComponent<CheddarAndCocoa.Dogs.DogReadabilityFeedback>();
+
+            game.StartMission(GameManager.MissionVariant.SquirrelConspiracy);
+            yield return null;
+            float normalSpeed = cheddar.MaxSpeedUnitsPerSecond;
+            cheddarObject.transform.position = new Vector2(55f, -25f);
+            yield return null;
+            yield return null;
+
+            Assert.IsTrue(cheddar.TravelAssist);
+            Assert.Greater(cheddar.MaxSpeedUnitsPerSecond, normalSpeed);
+            Assert.That(feedback.IdentityLabel, Does.Contain("TRAIL READY"));
+
+            cheddarObject.transform.position = game.SquirrelObject.transform.position;
+            yield return null;
+            yield return null;
+            Assert.IsFalse(cheddar.TravelAssist);
+            Assert.AreEqual(1f, cheddar.TravelAssistMultiplier);
+        }
+
         private static void AssertSpatialSpread(Vector2[] points, float minimumWidth, string label)
         {
             Assert.IsNotEmpty(points);

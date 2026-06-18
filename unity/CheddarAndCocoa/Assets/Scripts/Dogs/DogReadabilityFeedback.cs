@@ -121,7 +121,8 @@ namespace CheddarAndCocoa.Dogs
 
         private void ApplyPose(Pose pose)
         {
-            if (CurrentPose == pose && _label != null && !string.IsNullOrEmpty(_label.text)) return;
+            string expectedLabel = $"{DogTitle()}\n{PoseCopy(pose)}";
+            if (CurrentPose == pose && _label != null && _label.text == expectedLabel) return;
             CurrentPose = pose;
 
             if (_authoredPose != null)
@@ -129,7 +130,7 @@ namespace CheddarAndCocoa.Dogs
 
             if (_label != null)
             {
-                _label.text = $"{DogTitle()}\n{PoseCopy(pose)}";
+                _label.text = expectedLabel;
                 _label.color = pose switch
                 {
                     Pose.Stunned => new Color(1f, 0.45f, 0.45f),
@@ -384,8 +385,8 @@ namespace CheddarAndCocoa.Dogs
 
         private string PoseCopy(Pose pose) => pose switch
         {
-            Pose.Idle => _art.IdlePoseLabel,
-            Pose.Run => _art.RunPoseLabel,
+            Pose.Idle => _dog != null && _dog.TravelAssist ? "TRAIL READY" : _art.IdlePoseLabel,
+            Pose.Run => _dog != null && _dog.TravelAssist ? "TRAIL SPRINT" : _art.RunPoseLabel,
             Pose.Bark => "WOOF!",
             Pose.Tug => "TUG!",
             Pose.Stunned => "STUNNED",

@@ -66,6 +66,8 @@ namespace CheddarAndCocoa.Dogs
 
         // Overlays (do not change Mode):
         public bool Zoomies { get; private set; }
+        public bool TravelAssist { get; private set; }
+        public float TravelAssistMultiplier { get; private set; } = 1f;
         private float _zoomiesUntil;
         public bool Immune { get; private set; }   // belly-rub power-up — blocks wrestle/predator
         private float _wetTimer;                    // dryT: slick render + AI avoids floaties
@@ -152,7 +154,8 @@ namespace CheddarAndCocoa.Dogs
         {
             // Convert prototype per-frame target (already ratio-correct) to units/sec.
             float baseUnitsPerSec = tuning.baseSpeed / pixelsPerUnit * 60f;
-            return Zoomies ? baseUnitsPerSec * tuning.zoomiesMultiplier : baseUnitsPerSec;
+            float speed = Zoomies ? baseUnitsPerSec * tuning.zoomiesMultiplier : baseUnitsPerSec;
+            return TravelAssist ? speed * TravelAssistMultiplier : speed;
         }
 
         private float MovementResponse(Vector2 currentVelocity, Vector2 desiredVelocity)
@@ -176,6 +179,12 @@ namespace CheddarAndCocoa.Dogs
         {
             Zoomies = true;
             _zoomiesUntil = Time.time + tuning.zoomiesDuration;
+        }
+
+        public void SetTravelAssist(bool active, float multiplier = 1f)
+        {
+            TravelAssist = active;
+            TravelAssistMultiplier = active ? Mathf.Max(1f, multiplier) : 1f;
         }
 
         public void SetMode(MovementMode mode) => Mode = mode; // single mutation point for mode changes

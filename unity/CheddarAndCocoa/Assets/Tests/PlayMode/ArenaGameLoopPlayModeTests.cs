@@ -32,6 +32,9 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(34f, tuning.CameraMaxOrthoSize);
             Assert.AreEqual(5.0f, tuning.CameraHorizontalMargin);
             Assert.AreEqual(4.0f, tuning.CameraVerticalMargin);
+            Assert.AreEqual(28f, tuning.TravelAssistEngageDistance);
+            Assert.AreEqual(20f, tuning.TravelAssistReleaseDistance);
+            Assert.AreEqual(1.55f, tuning.TravelAssistSpeedMultiplier);
             Assert.AreEqual(tuning.SingleBarkSquirrelRange, tuning.SquirrelRangeIndicatorRadius);
             Assert.AreEqual(tuning.RescueBarkRange, tuning.RescueRangeIndicatorRadius);
             Assert.AreEqual(tuning.TugTogetherDistance, tuning.TugRangeIndicatorRadius);
