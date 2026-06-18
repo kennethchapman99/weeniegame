@@ -11,12 +11,24 @@ namespace CheddarAndCocoa.EditorTools
     {
         private const string ArenaScenePath = "Assets/Scenes/ArenaScene.unity";
         private const string DefaultOutputRelativeToProject = "../builds/dev/CheddarAndCocoa-Arena.app";
+        private const string ReleaseOutputRelativeToProject = "../builds/release/CheddarAndCocoa-Demo.app";
 
         [MenuItem("Cheddar And Cocoa/Build Arena Dev Mac")]
         public static void BuildDevMac()
         {
+            BuildMac(DefaultOutputRelativeToProject, BuildOptions.Development | BuildOptions.AllowDebugging, "Arena dev");
+        }
+
+        [MenuItem("Cheddar And Cocoa/Build Arena Release Mac")]
+        public static void BuildReleaseMac()
+        {
+            BuildMac(ReleaseOutputRelativeToProject, BuildOptions.CompressWithLz4HC, "Arena release");
+        }
+
+        private static void BuildMac(string outputRelativeToProject, BuildOptions buildOptions, string label)
+        {
             string projectRoot = Directory.GetParent(Application.dataPath).FullName;
-            string outputPath = Path.GetFullPath(Path.Combine(projectRoot, DefaultOutputRelativeToProject));
+            string outputPath = Path.GetFullPath(Path.Combine(projectRoot, outputRelativeToProject));
             Directory.CreateDirectory(Path.GetDirectoryName(outputPath));
 
             var options = new BuildPlayerOptions
@@ -24,15 +36,15 @@ namespace CheddarAndCocoa.EditorTools
                 scenes = new[] { ArenaScenePath },
                 locationPathName = outputPath,
                 target = BuildTarget.StandaloneOSX,
-                options = BuildOptions.Development | BuildOptions.AllowDebugging
+                options = buildOptions
             };
 
             BuildReport report = BuildPipeline.BuildPlayer(options);
             BuildSummary summary = report.summary;
-            Debug.Log($"Arena dev build result: {summary.result}; output: {outputPath}; size: {summary.totalSize} bytes");
+            Debug.Log($"{label} build result: {summary.result}; output: {outputPath}; size: {summary.totalSize} bytes");
 
             if (summary.result != BuildResult.Succeeded)
-                throw new Exception($"Arena dev build failed with result {summary.result}. See Unity log for details.");
+                throw new Exception($"{label} build failed with result {summary.result}. See Unity log for details.");
         }
     }
 }
