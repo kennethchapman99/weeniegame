@@ -17,7 +17,7 @@ namespace CheddarAndCocoa.Game
         public enum FlowState { MissionSelect, Playing, EndScreen, SessionSummary }
         public enum RoundModifier { SquirrelTrouble, ZoomiesSurge, PancakePanic }
         public enum MissionOutcome { InProgress, Clear, Failed }
-        public enum MissionVariant { BackyardRescue, SnackHeist, SockPanic, SquirrelConspiracy, EagleShadowPanic, CoyotesFence, WeenieRoundup, ScentSearch }
+        public enum MissionVariant { BackyardRescue, SnackHeist, SockPanic, SquirrelConspiracy, EagleShadowPanic, CoyotesFence, WeenieRoundup, ScentSearch, ThunderstormComfort }
         public enum FeedbackKind
         {
             Intro,
@@ -111,7 +111,8 @@ namespace CheddarAndCocoa.Game
             MissionVariant.EagleShadowPanic,
             MissionVariant.CoyotesFence,
             MissionVariant.WeenieRoundup,
-            MissionVariant.ScentSearch
+            MissionVariant.ScentSearch,
+            MissionVariant.ThunderstormComfort
         };
 
         [Header("Mission selection")]
@@ -142,6 +143,8 @@ namespace CheddarAndCocoa.Game
         public Vector2 BowlPosition => _bowlPosition;
         public ScentSearchMissionState ScentSearchState => _scentState;
         public Vector2[] DigSpots => (Vector2[])_digSpots.Clone();
+        public ThunderstormMissionState ThunderstormState => _stormState;
+        public PanicMeter Panic => _panic;
         public MissionRuntimeSnapshot RuntimeSnapshot => BuildRuntimeSnapshot();
         public int SelectedMissionIndex => _selectedMissionIndex;
         public MissionVariant SelectedMissionVariant => MissionOrder[Mathf.Clamp(_selectedMissionIndex, 0, MissionOrder.Length - 1)];
@@ -283,6 +286,11 @@ namespace CheddarAndCocoa.Game
         private const int ScentRequiredFinds = 3;
         private const int ScentMaxWastedDigs = 4;
         private const float DigRange = 2f;
+        private readonly ThunderstormMissionState _stormState = new ThunderstormMissionState();
+        private PanicMeter _panic;
+        private float _nextThunderAt;
+        private const int StormRequiredClaps = 5;
+        private const float StormClapInterval = 5.5f;
 
         private readonly List<Treat> _treats = new();
         private readonly List<string> _sessionRanks = new();
@@ -334,6 +342,7 @@ namespace CheddarAndCocoa.Game
             }
 
             _playtestLog.Clear();
+            _panic = gameObject.AddComponent<PanicMeter>();
             _mission = BuildMissionDefinition(startingMission, _tuning);
             _selectedMissionIndex = IndexOfMission(startingMission);
             _treatRoot = new GameObject(_mission.ItemRootName).transform;
@@ -757,6 +766,18 @@ namespace CheddarAndCocoa.Game
             {
                 SetScentSearchActive(false);
             }
+            if (_mission.Variant == MissionVariant.ThunderstormComfort)
+            {
+                _stormState.Configure(StormRequiredClaps);
+                if (_panic != null) _panic.ResetMeter();
+                _nextThunderAt = Time.time + StormClapInterval;
+                if (PredatorObject != null)
+                {
+                    PredatorObject.SetActive(true);
+                    PlaceObject(PredatorObject, new Vector2(0f, _bounds.yMax - 1.5f));
+                    SetActorState(PredatorObject, "STORM CLOUD - HUDDLE TO STAY CALM!", new Color(0.32f, 0.34f, 0.45f), 0.18f);
+                }
+            }
             _lastLoggedObjective = string.Empty;
             LogPlaytestEvent("MissionStarted", $"{_mission.Name} / {ActiveModifierLabel} / {roundDuration:0}s");
             LogObjectiveIfChanged();
@@ -784,6 +805,8 @@ namespace CheddarAndCocoa.Game
             else if (_mission.Variant == MissionVariant.EagleShadowPanic) TickThreatSweep();
             else if (_mission.Variant == MissionVariant.CoyotesFence) TickPatrolDefense();
             else if (_mission.Variant == MissionVariant.WeenieRoundup) TickCarryRoundup();
+            else if (_mission.Variant == MissionVariant.ScentSearch) { }
+            else if (_mission.Variant == MissionVariant.ThunderstormComfort) TickThunderstorm();
             else TickSquirrel();
             TickPredator();
             TickTugProximity();
@@ -1394,6 +1417,63 @@ namespace CheddarAndCocoa.Game
                 }
         }
 
+        // --- Thunderstorm Comfort (panic co-regulation) ---
+
+        private void TickThunderstorm()
+        {
+            if (_panic == null || _dogs == null || _dogs.Length < 2) return;
+
+            _panic.Step(_dogs[0].transform.position, _dogs[1].transform.position, Time.deltaTime);
+            if (_panic.Maxed != null) { EndRound(false); return; }
+
+            if (Time.time >= _nextThunderAt)
+            {
+                _nextThunderAt = Time.time + StormClapInterval;
+                ThunderClap();
+            }
+        }
+
+        private void ThunderClap()
+        {
+            if (_panic == null) return;
+
+            // Cheddar (chaos puppy) spooks harder than Cocoa (veteran queen).
+            _panic.AddSpike(DogId.Cheddar, 0.26f);
+            _panic.AddSpike(DogId.Cocoa, 0.16f);
+            RequestAudioCue(ArenaFeedbackCatalog.ThreatWarning);
+            RequestRumble("thunderclap", 0.3f, 0.55f, 0.2f);
+            SpawnWorldPop(new Vector2(0f, _bounds.yMax - 2f), "BOOM!", new Color(0.8f, 0.85f, 1f));
+            if (PredatorObject != null) SetActorState(PredatorObject, "THUNDERCLAP - HUDDLE!", new Color(0.3f, 0.32f, 0.42f), 0.4f);
+
+            if (_panic.Maxed != null) { EndRound(false); return; }
+
+            _stormState.SurviveClap();
+            AddScore(ScoreEventCatalog.StormWeathered.Points, ScoreEventCatalog.StormWeathered.Label);
+            LastFeedback = FeedbackKind.PredatorHuddle;
+            LastCue = $"Thunderclap weathered! ({_stormState.ClapsSurvived}/{_stormState.RequiredClaps}) Keep huddling.";
+            SetJuice(JuiceFeedbackKind.SuccessPop, ScoreEventCatalog.StormWeathered.Label);
+            LogPlaytestEvent("Thunderclap", $"{_stormState.ClapsSurvived}/{_stormState.RequiredClaps}");
+            CheckClear();
+        }
+
+        public void ForceThunderclap()
+        {
+            if (MissionActive() && _mission != null && _mission.Variant == MissionVariant.ThunderstormComfort)
+                ThunderClap();
+        }
+
+        public void ForceComfortStep(float seconds)
+        {
+            if (!MissionActive() || _mission == null || _mission.Variant != MissionVariant.ThunderstormComfort) return;
+            if (_panic == null || _dogs == null || _dogs.Length < 2) return;
+
+            float before = Mathf.Max(_panic.CheddarPanic, _panic.CocoaPanic);
+            _panic.Step(_dogs[0].transform.position, _dogs[1].transform.position, seconds);
+            float after = Mathf.Max(_panic.CheddarPanic, _panic.CocoaPanic);
+            if (after < before) AddScore(ScoreEventCatalog.StormComfort.Points, ScoreEventCatalog.StormComfort.Label);
+            if (_panic.Maxed != null) EndRound(false);
+        }
+
         private float NearestEagleCoverDistance(Vector2 position)
         {
             float best = float.PositiveInfinity;
@@ -1698,6 +1778,13 @@ namespace CheddarAndCocoa.Game
                 progress = _scentState.Found;
                 goal = ScentRequiredFinds;
                 mistakes = _scentState.WastedDigs;
+            }
+            else if (_mission != null && _mission.Variant == MissionVariant.ThunderstormComfort)
+            {
+                missionId = "thunderstorm_comfort";
+                progress = _stormState.ClapsSurvived;
+                goal = _stormState.RequiredClaps;
+                mistakes = 0;
             }
             else
             {
@@ -2019,6 +2106,15 @@ namespace CheddarAndCocoa.Game
                 if (_scentState.ReadyToClear(ScentRequiredFinds)) EndRound(true);
                 return;
             }
+            if (_mission.Variant == MissionVariant.ThunderstormComfort)
+            {
+                if (_stormState.ReadyToClear())
+                {
+                    AddScore(ScoreEventCatalog.StormCleared.Points, ScoreEventCatalog.StormCleared.Label);
+                    EndRound(true);
+                }
+                return;
+            }
 
             bool hasItems = BreakfastRecovered >= _mission.ItemGoal;
             bool hasPredator = !_mission.RequiresPredator || PredatorResolved;
@@ -2099,6 +2195,8 @@ namespace CheddarAndCocoa.Game
                 funny = MissionOutcomeSummaryBuilder.BuildCarrySummary(_carryState, WeenieRequiredDeliveries);
             else if (_mission != null && _mission.Variant == MissionVariant.ScentSearch)
                 funny = MissionOutcomeSummaryBuilder.BuildScentSummary(_scentState, ScentRequiredFinds);
+            else if (_mission != null && _mission.Variant == MissionVariant.ThunderstormComfort)
+                funny = MissionOutcomeSummaryBuilder.BuildThunderstormSummary(_stormState);
             else
                 funny = Outcome.ToString();
             return $"{funny}: {Score} - {EndRank}";
@@ -2159,6 +2257,11 @@ namespace CheddarAndCocoa.Game
             {
                 return $"Sniff (bark) for HOT/COLD, then dig (interact): bones {_scentState.Found}/{ScentRequiredFinds}, cold digs {_scentState.WastedDigs}/{ScentMaxWastedDigs}";
             }
+            if (_mission.Variant == MissionVariant.ThunderstormComfort)
+            {
+                int panicPct = _panic != null ? Mathf.RoundToInt(Mathf.Max(_panic.CheddarPanic, _panic.CocoaPanic) * 100f) : 0;
+                return $"Huddle to stay calm and ride out the storm: claps {_stormState.ClapsSurvived}/{_stormState.RequiredClaps}, panic {panicPct}%";
+            }
             if (_squirrelTarget != null)
                 return _mission.SquirrelObjectiveText;
             if (_mission.RequiresTug && !TugComplete && BreakfastRecovered >= Mathf.Max(2, recoveryGoal / 2))
@@ -2186,6 +2289,7 @@ namespace CheddarAndCocoa.Game
             if (_mission.Variant == MissionVariant.EagleShadowPanic && _threatSweepState.TooManyExposures(EagleMaxExposures)) return "The eagle shadow caught the dogs in the open one too many times.";
             if (_mission.Variant == MissionVariant.CoyotesFence && _patrolState.TooManyBreaches(CoyoteMaxBreaches)) return "The coyote breached the fence one too many times while the dogs got separated.";
             if (_mission.Variant == MissionVariant.ScentSearch && _scentState.TooManyWastedDigs(ScentMaxWastedDigs)) return "The dogs dug up half the yard chasing cold scents and ran out of patience.";
+            if (_mission.Variant == MissionVariant.ThunderstormComfort && _panic != null && _panic.Maxed != null) return $"{_panic.Maxed} panicked at the thunder and bolted before the storm passed.";
             if (_mission.UsesSquirrel && StolenFood >= maxStolenFood) return _mission.StolenFailReason;
             if (TimeRemaining <= 0f) return _mission.TimeFailReason;
             if (_mission.RequiresPredator && PredatorFailed) return _mission.PredatorFailReason;
@@ -2258,6 +2362,7 @@ namespace CheddarAndCocoa.Game
                     if (kb.digit6Key.wasPressedThisFrame) { StartMission(MissionVariant.CoyotesFence); return; }
                     if (kb.digit7Key.wasPressedThisFrame) { StartMission(MissionVariant.WeenieRoundup); return; }
                     if (kb.digit8Key.wasPressedThisFrame) { StartMission(MissionVariant.ScentSearch); return; }
+                    if (kb.digit9Key.wasPressedThisFrame) { StartMission(MissionVariant.ThunderstormComfort); return; }
                     previous |= kb.upArrowKey.wasPressedThisFrame || kb.leftArrowKey.wasPressedThisFrame;
                     next |= kb.downArrowKey.wasPressedThisFrame || kb.rightArrowKey.wasPressedThisFrame || kb.tabKey.wasPressedThisFrame;
                     start |= kb.enterKey.wasPressedThisFrame || kb.spaceKey.wasPressedThisFrame;
@@ -2320,6 +2425,7 @@ namespace CheddarAndCocoa.Game
             else if (kb.digit6Key.wasPressedThisFrame) StartMission(MissionVariant.CoyotesFence);
             else if (kb.digit7Key.wasPressedThisFrame) StartMission(MissionVariant.WeenieRoundup);
             else if (kb.digit8Key.wasPressedThisFrame) StartMission(MissionVariant.ScentSearch);
+            else if (kb.digit9Key.wasPressedThisFrame) StartMission(MissionVariant.ThunderstormComfort);
         }
 
         private void ShowMissionSelect()
@@ -2830,6 +2936,63 @@ namespace CheddarAndCocoa.Game
                         ItemAccentColor = new Color(0.7f, 0.55f, 0.3f),
                         ItemSecondaryColor = new Color(0.2f, 0.14f, 0.07f),
                         ItemPopColor = new Color(0.95f, 0.9f, 0.7f)
+                    };
+                case MissionVariant.ThunderstormComfort:
+                    return new MissionDefinition
+                    {
+                        Variant = MissionVariant.ThunderstormComfort,
+                        Name = "Thunderstorm Comfort",
+                        IntroPrompt = "A storm is rolling in. Cheddar + Cocoa must huddle close to keep each other calm and ride out every thunderclap together.",
+                        ReadyScoreLabel = "READY TO RIDE OUT THE STORM",
+                        ItemRootName = "Storm",
+                        ItemObjectName = "Thunderclap",
+                        ItemWorldLabel = "Boom!",
+                        ItemArrowLabel = "HUDDLE",
+                        ItemCollectCueNoun = "a weathered clap",
+                        CollectObjectiveFormat = "Weather claps {0}/{1}",
+                        CollectedScoreLabel = "CLAP WEATHERED",
+                        ItemScore = balance.ItemScore,
+                        SpawnedItemCount = balance.SpawnedItemCount,
+                        ItemGoal = balance.ItemGoal,
+                        RoundSeconds = balance.RoundSeconds,
+                        PawfectScore = balance.PawfectScore,
+                        HeroScore = balance.HeroScore,
+                        SurvivorScore = balance.SurvivorScore,
+                        UsesSquirrel = false,
+                        RequiresPredator = false,
+                        RequiresTug = false,
+                        MaxStolenFood = balance.MaxStolenFood,
+                        SquirrelPenalty = balance.SquirrelPenalty,
+                        SquirrelScareScore = balance.SquirrelScareScore,
+                        SquirrelObjectiveText = "Huddle to stay calm",
+                        SquirrelStealingCue = "No squirrel here - just thunder.",
+                        SquirrelStoleCue = "No squirrel here - mind the panic.",
+                        SquirrelStealScoreLabel = "PANIC SPIKE",
+                        SquirrelScareScoreLabel = "COMFORT HUDDLE",
+                        SquirrelStealingActorLabel = "STORM CLOUD",
+                        SquirrelDroppedActorLabel = "CLAP WEATHERED",
+                        SquirrelStoleActorLabel = "PANIC!",
+                        SquirrelMissPopLabel = "BOOM!",
+                        SquirrelStealJuiceLabel = "PANIC SPIKE!",
+                        SquirrelScareJuiceLabel = "COMFORT HUDDLE!",
+                        TugObjectiveText = "Huddle through the storm",
+                        WaitingObjectiveText = "Stay close until the storm passes",
+                        ClearObjectiveText = "Storm passed - replay Thunderstorm Comfort",
+                        ClearBannerPrefix = "STORM WEATHERED!",
+                        ClearScoreLabel = "STORM PASSED",
+                        ReplayPrompt = "Press R / Enter / Start to replay Thunderstorm Comfort",
+                        FailObjectiveText = "Mission failed - replay Thunderstorm Comfort",
+                        GenericFailReason = "Needs tighter huddling before the next storm front.",
+                        TimeFailReason = "The storm dragged on and the dogs lost their nerve.",
+                        StolenFailReason = "The panic spiked past the breaking point.",
+                        PredatorFailReason = "A dog bolted from the thunder.",
+                        PawfectClearReason = "Two brave pups out-cuddled the whole storm without a single bolt.",
+                        HeroClearReason = "The storm passed with the dogs keeping each other steady.",
+                        BasicClearReason = "They rode it out, even if a few claps got hairy.",
+                        ItemColor = new Color(0.32f, 0.34f, 0.45f),
+                        ItemAccentColor = new Color(0.6f, 0.65f, 0.85f),
+                        ItemSecondaryColor = new Color(0.16f, 0.17f, 0.24f),
+                        ItemPopColor = new Color(0.8f, 0.85f, 1f)
                     };
                 case MissionVariant.SockPanic:
                     return new MissionDefinition

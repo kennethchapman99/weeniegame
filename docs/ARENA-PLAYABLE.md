@@ -1,6 +1,6 @@
 # Arena Playable — Mission Variety Spike
 
-`unity/CheddarAndCocoa/Assets/Scenes/ArenaScene.unity` is now a small co-op vertical slice instead of a flat treat loop. The scene still builds itself from `ArenaBootstrap`, but the arena can run multiple small mission variants through one lightweight mission definition path. A cold start now opens a generated in-scene mission select so a new player can choose Backyard Rescue, Snack Heist, Sock Panic, Squirrel Conspiracy, Eagle Shadow Panic, Coyotes at the Fence, Weenie Roundup, or Scent Search without a developer explaining debug keys.
+`unity/CheddarAndCocoa/Assets/Scenes/ArenaScene.unity` is now a small co-op vertical slice instead of a flat treat loop. The scene still builds itself from `ArenaBootstrap`, but the arena can run multiple small mission variants through one lightweight mission definition path. A cold start now opens a generated in-scene mission select so a new player can choose Backyard Rescue, Snack Heist, Sock Panic, Squirrel Conspiracy, Eagle Shadow Panic, Coyotes at the Fence, Weenie Roundup, Scent Search, or Thunderstorm Comfort without a developer explaining debug keys.
 
 For current global character art direction, read `docs/ART-DIRECTION.md`. Backyard Mission is the
 playable proof of that direction, not the only place the direction applies. For future external
@@ -54,7 +54,7 @@ Final polish still needed:
 ## Cold-start flow
 
 1. Open `unity/CheddarAndCocoa` in Unity 6 LTS, open `Assets/Scenes/ArenaScene.unity`, and press Play. `ArenaScene` is also the scripted local build entry point.
-2. The mission picker appears immediately. Use **Up/Down** or gamepad **D-pad** to highlight a mission, then press **Enter**, **Space**, gamepad **Start**, or gamepad **South** to start. Keyboard **1 / 2 / 3 / 4 / 5 / 6 / 7 / 8** also starts Backyard Rescue, Snack Heist, Sock Panic, Squirrel Conspiracy, Eagle Shadow Panic, Coyotes at the Fence, Weenie Roundup, or Scent Search directly.
+2. The mission picker appears immediately. Use **Up/Down** or gamepad **D-pad** to highlight a mission, then press **Enter**, **Space**, gamepad **Start**, or gamepad **South** to start. Keyboard **1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9** also starts Backyard Rescue, Snack Heist, Sock Panic, Squirrel Conspiracy, Eagle Shadow Panic, Coyotes at the Fence, Weenie Roundup, Scent Search, or Thunderstorm Comfort directly.
 3. Read the one-line mission briefing at the start of the round. The HUD keeps the current mission name, objective, score, timer, controls, modifier, and latest score event visible during play.
 4. When a mission ends, choose **Replay**, **Next Mission**, or **Mission Select** with the on-screen buttons, keyboard, or gamepad:
    - **R / Enter / Start / South** replays the current mission.
@@ -189,6 +189,21 @@ The deterministic test/pacing hooks are `ForceScentSniff(dog)`, `ForceScentDigCo
 
 Manual check: press **8**, bark near a mound to read the heat, move toward hotter readings, and interact to dig. Confirm digging the hot mound says **BONE DUG UP** and three finds clear with **Master Sniffers**.
 
+### Thunderstorm Comfort
+
+Thunderstorm Comfort is a **comfort / panic co-regulation** mission using the existing `PanicMeter` primitive — and it leans hard into Cheddar/Cocoa identity: Cheddar (chaos puppy) spooks harder at each clap than Cocoa (veteran queen). A storm throws periodic **thunderclaps** that spike both dogs' panic; the only way panic comes down is the two dogs **huddling close** to comfort each other. Weather five claps without either dog's panic maxing out (which makes them bolt and fails the run).
+
+Readable differences:
+
+- No collect/squirrel loop; the whole mission is positioning — stay close through each clap, drift apart and panic climbs.
+- A STORM CLOUD indicator flashes "HUDDLE!" on each clap; the HUD objective shows claps weathered and current panic %.
+- Unique scoring/events include **CLAP WEATHERED**, **COMFORT HUDDLE**, and **STORM PASSED**.
+- Clear banner: **STORM WEATHERED!**; end summary reads **Weathered The Storm** on a clear, **Spooked By Thunder** on a bolt.
+
+The deterministic test/pacing hooks are `ForceThunderclap()` and `ForceComfortStep(seconds)` (`Panic` and `ThunderstormState` expose the live values); in normal play claps fire on a timer and `PanicMeter.Step` drains panic while the dogs are within cuddle range.
+
+Manual check: press **9**, keep both dogs close together, and ride out the claps; confirm panic falls while huddled and rises when split, and that five weathered claps clear with **Weathered The Storm**.
+
 ## Level scale and camera
 
 The arena is built at **48 x 28 world units** — a real backyard the dogs have to cover, not a single-screen demo box. The squirrel conspiracy route now sweeps the full yard (corners near `±15, ±9`) and the dogs spawn farther apart (`±9, 0`).
@@ -212,8 +227,8 @@ The end loop is intentionally simple: players see current score, the latest scor
 
 Mission flow controls:
 
-- Mission select: **Up/Down** or gamepad **D-pad** changes mission; **Enter**, **Space**, gamepad **Start**, or gamepad **South** starts; **1 / 2 / 3 / 4 / 5 / 6 / 7 / 8** starts a mission directly.
-- During a run: keyboard **1 / 2 / 3 / 4 / 5 / 6 / 7 / 8** still restarts the arena into Backyard Rescue, Snack Heist, Sock Panic, Squirrel Conspiracy, Eagle Shadow Panic, Coyotes at the Fence, Weenie Roundup, or Scent Search for quick manual comparison.
+- Mission select: **Up/Down** or gamepad **D-pad** changes mission; **Enter**, **Space**, gamepad **Start**, or gamepad **South** starts; **1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9** starts a mission directly.
+- During a run: keyboard **1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9** still restarts the arena into Backyard Rescue, Snack Heist, Sock Panic, Squirrel Conspiracy, Eagle Shadow Panic, Coyotes at the Fence, Weenie Roundup, Scent Search, or Thunderstorm Comfort for quick manual comparison.
 - End screen: **R / Enter / Start / South** replays; **N / Right Arrow / Right Shoulder / D-pad Right** advances; **M / Escape / East / D-pad Left** returns to mission select.
 - Session Summary: **Enter**, **Space**, **Start**, **South**, **M**, or **Escape** returns to mission select.
 - Playtest Mode: click the bottom-left **Playtest Mode: On/Off** button or press **F1** / **`**. It toggles a compact top-right diagnostics overlay and does not pause or block normal play.

@@ -20,7 +20,7 @@ namespace CheddarAndCocoa.Tests
             yield return LoadArena();
             var game = _game;
 
-            Assert.AreEqual(8, game.MissionSelectOptionCount);
+            Assert.AreEqual(9, game.MissionSelectOptionCount);
 
             bool found = false;
             for (int i = 0; i < game.MissionSelectOptionCount; i++)

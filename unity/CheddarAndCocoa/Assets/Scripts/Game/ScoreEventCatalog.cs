@@ -23,6 +23,10 @@ namespace CheddarAndCocoa.Game
         public static readonly ProductionScoreEvent ColdDig = new("COLD DIG", -40);
         public static readonly ProductionScoreEvent ScentSearchComplete = new("SEARCH COMPLETE", 500, true);
 
+        public static readonly ProductionScoreEvent StormWeathered = new("CLAP WEATHERED", 120, true);
+        public static readonly ProductionScoreEvent StormComfort = new("COMFORT HUDDLE", 30, true);
+        public static readonly ProductionScoreEvent StormCleared = new("STORM PASSED", 500, true);
+
         public static readonly ProductionScoreEvent FenceHeld = new("FENCE HELD", 100, true);
         public static readonly ProductionScoreEvent DirtFilled = new("DIRT FILLED", 125);
         public static readonly ProductionScoreEvent YardDefended = new("YARD DEFENDED", 500, true);

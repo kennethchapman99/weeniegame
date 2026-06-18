@@ -115,6 +115,15 @@ namespace CheddarAndCocoa.Game
             "Dig up enough buried bones before the timer expires.",
             "Too many cold digs, or the timer expires.");
 
+        public static readonly ProductionMissionSpec ThunderstormComfort = new(
+            "thunderstorm_comfort",
+            "Thunderstorm Comfort",
+            ProductionMissionPack.HouseChaos,
+            ProductionMechanicModule.RhythmPanic,
+            "Huddle close to keep each other calm and ride out every thunderclap.",
+            "Weather the required thunderclaps without either dog maxing out panic.",
+            "Either dog's panic hits the max and they bolt.");
+
         public static readonly ProductionMissionSpec CoyotesFence = new(
             "coyotes_fence",
             "Coyotes at the Fence",

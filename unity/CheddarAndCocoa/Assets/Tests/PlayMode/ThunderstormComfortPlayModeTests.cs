@@ -8,14 +8,14 @@ using CheddarAndCocoa.Game;
 
 namespace CheddarAndCocoa.Tests
 {
-    public sealed class ScentSearchPlayModeTests
+    public sealed class ThunderstormComfortPlayModeTests
     {
         private GameManager _game;
         private DogController _cheddar;
         private DogController _cocoa;
 
         [UnityTest]
-        public IEnumerator ScentSearch_AppearsInMissionSelectRotation()
+        public IEnumerator ThunderstormComfort_AppearsInMissionSelectRotation()
         {
             yield return LoadArena();
             var game = _game;
@@ -25,7 +25,7 @@ namespace CheddarAndCocoa.Tests
             bool found = false;
             for (int i = 0; i < game.MissionSelectOptionCount; i++)
             {
-                if (game.SelectedMissionVariant == GameManager.MissionVariant.ScentSearch)
+                if (game.SelectedMissionVariant == GameManager.MissionVariant.ThunderstormComfort)
                 {
                     found = true;
                     break;
@@ -34,85 +34,90 @@ namespace CheddarAndCocoa.Tests
                 yield return null;
             }
 
-            Assert.IsTrue(found, "Scent Search should be reachable from mission select.");
-            Assert.AreEqual("Scent Search", game.SelectedMissionName);
+            Assert.IsTrue(found, "Thunderstorm Comfort should be reachable from mission select.");
+            Assert.AreEqual("Thunderstorm Comfort", game.SelectedMissionName);
         }
 
         [UnityTest]
-        public IEnumerator ScentSearch_ClearPath_SniffAndDigUpEveryBone()
+        public IEnumerator ThunderstormComfort_ClearPath_HuddleThroughEveryClap()
         {
             yield return LoadArena();
             var game = _game;
 
-            game.StartMission(GameManager.MissionVariant.ScentSearch);
+            game.StartMission(GameManager.MissionVariant.ThunderstormComfort);
             yield return null;
 
-            Assert.AreEqual("scent_search", game.RuntimeSnapshot.MissionId);
-            Assert.That(game.ObjectiveLabel, Does.Contain("Sniff"));
-            int required = game.RuntimeSnapshot.ObjectiveGoal;
-            Assert.Greater(required, 0);
+            Assert.AreEqual("thunderstorm_comfort", game.RuntimeSnapshot.MissionId);
+            Assert.That(game.ObjectiveLabel, Does.Contain("Huddle"));
+
+            // Keep both dogs huddled together so comfort drains the panic each clap adds.
+            _cheddar.transform.position = Vector3.zero;
+            _cocoa.transform.position = Vector3.zero;
 
             int guard = 0;
             while (game.Outcome == GameManager.MissionOutcome.InProgress && guard++ < 30)
             {
-                game.ForceScentSniff(DogId.Cheddar);
-                game.ForceScentDigCorrect(DogId.Cheddar);
+                _cheddar.transform.position = Vector3.zero;
+                _cocoa.transform.position = Vector3.zero;
+                game.ForceThunderclap();
+                game.ForceComfortStep(2f);
                 yield return null;
             }
 
-            Assert.AreEqual(required, game.ScentSearchState.Found);
-            Assert.AreEqual(0, game.ScentSearchState.WastedDigs);
-            Assert.Greater(game.ScentSearchState.Sniffs, 0);
             Assert.AreEqual(GameManager.MissionOutcome.Clear, game.Outcome);
+            Assert.IsTrue(game.ThunderstormState.ReadyToClear());
             Assert.IsTrue(game.RuntimeSnapshot.IsClear);
-            Assert.That(game.EndSummaryLabel, Does.Contain("Master Sniffers"));
+            Assert.That(game.EndSummaryLabel, Does.Contain("Weathered The Storm"));
         }
 
         [UnityTest]
-        public IEnumerator ScentSearch_FailPath_TooManyColdDigsEndMission()
+        public IEnumerator ThunderstormComfort_FailPath_PanicMaxesWhenApart()
         {
             yield return LoadArena();
             var game = _game;
 
-            game.StartMission(GameManager.MissionVariant.ScentSearch);
+            game.StartMission(GameManager.MissionVariant.ThunderstormComfort);
             yield return null;
 
-            for (int i = 0; i < 4; i++)
+            // Dogs kept far apart: nothing drains panic, so repeated claps max it out and they bolt.
+            _cheddar.transform.position = new Vector3(-12f, 0f, 0f);
+            _cocoa.transform.position = new Vector3(12f, 0f, 0f);
+
+            int guard = 0;
+            while (game.Outcome == GameManager.MissionOutcome.InProgress && guard++ < 12)
             {
-                game.ForceScentDigWrong(DogId.Cheddar);
+                game.ForceThunderclap();
                 yield return null;
             }
 
-            Assert.AreEqual(4, game.ScentSearchState.WastedDigs);
             Assert.AreEqual(GameManager.MissionOutcome.Failed, game.Outcome);
             Assert.AreEqual(GameManager.State.GameOver, game.Phase);
             Assert.IsTrue(game.RuntimeSnapshot.IsFailed);
-            Assert.That(game.EndSummaryLabel, Does.Contain("Dug Up The Whole Yard"));
+            Assert.That(game.EndSummaryLabel, Does.Contain("Spooked By Thunder"));
         }
 
         [UnityTest]
-        public IEnumerator ScentSearch_Replay_ResetsScentRuntimeState()
+        public IEnumerator ThunderstormComfort_Replay_ResetsStormAndPanic()
         {
             yield return LoadArena();
             var game = _game;
 
-            game.StartMission(GameManager.MissionVariant.ScentSearch);
+            game.StartMission(GameManager.MissionVariant.ThunderstormComfort);
             yield return null;
-            game.ForceScentSniff(DogId.Cheddar);
-            game.ForceScentDigCorrect(DogId.Cheddar);
+            game.ForceThunderclap();
             yield return null;
 
-            Assert.AreEqual(1, game.ScentSearchState.Found);
+            Assert.Greater(game.ThunderstormState.ClapsSurvived + (game.Panic.CheddarPanic > 0f ? 1 : 0), 0);
 
             game.Restart();
             yield return null;
 
-            Assert.AreEqual(GameManager.MissionVariant.ScentSearch, game.ActiveMissionVariant);
+            Assert.AreEqual(GameManager.MissionVariant.ThunderstormComfort, game.ActiveMissionVariant);
             Assert.AreEqual(GameManager.MissionOutcome.InProgress, game.Outcome);
             Assert.AreEqual(0, game.Score);
-            Assert.AreEqual(0, game.ScentSearchState.Found);
-            Assert.AreEqual(0, game.ScentSearchState.WastedDigs);
-            Assert.AreEqual(0, game.ScentSearchState.Sniffs);
+            Assert.AreEqual(0, game.ThunderstormState.ClapsSurvived);
+            Assert.Less(game.Panic.CheddarPanic, 0.1f);
+            Assert.Less(game.Panic.CocoaPanic, 0.1f);
             Assert.AreEqual(1, game.MissionReplayCount);
         }
 

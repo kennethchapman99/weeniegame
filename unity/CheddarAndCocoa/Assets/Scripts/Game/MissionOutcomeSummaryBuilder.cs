@@ -46,6 +46,14 @@ namespace CheddarAndCocoa.Game
             return "Still Sniffing";
         }
 
+        public static string BuildThunderstormSummary(ThunderstormMissionState state)
+        {
+            if (state.ReadyToClear())
+                return "Weathered The Storm";
+
+            return "Spooked By Thunder";
+        }
+
         public static string BuildPatrolSummary(PatrolDefenseMissionState state)
         {
             if (state.FinalPressureComplete)
