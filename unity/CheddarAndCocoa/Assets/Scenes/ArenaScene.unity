@@ -167,6 +167,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c1a2b3c4d5e6f70819203a4b5c6d7e01, type: 3}
   m_Name:
   m_EditorClassIdentifier:
-  fieldWidth: 20
-  fieldHeight: 12
+  fieldWidth: 48
+  fieldHeight: 28
   treatSeed: 1234

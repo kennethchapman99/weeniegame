@@ -19,6 +19,7 @@ namespace CheddarAndCocoa.Game
         public const string GameManagerObjectName = "GameManager";
         public const string DogReadabilityLabelName = "DogReadabilityLabel";
         public const string ObjectiveArrowLabelName = "ObjectiveArrowLabel";
+        public const string BackyardEnvironmentObjectName = "BackyardEnvironment";
 
         public static readonly Color FloorColor = Hex("#3c6b2f");
         public static readonly Color CameraBackgroundColor = Hex("#243a1c");

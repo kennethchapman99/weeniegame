@@ -37,6 +37,7 @@ namespace CheddarAndCocoa.Bootstrap
             _ring = MakeRingSprite();
 
             BuildFloorAndBounds();
+            BuildBackyardEnvironment();
             var camGo = BuildCamera();
             var cam = camGo.GetComponent<Camera>();
             var bounds = new Rect(-fieldWidth * 0.5f, -fieldHeight * 0.5f, fieldWidth, fieldHeight);
@@ -182,6 +183,75 @@ namespace CheddarAndCocoa.Bootstrap
             var go = new GameObject(name);
             go.transform.position = center;
             go.AddComponent<BoxCollider2D>().size = size;
+        }
+
+        // Deterministic, purely decorative backyard dressing so the large yard reads as a real,
+        // lived-in place (patio, pond, tree, garden beds, bush cover, fence line) rather than an
+        // empty box. No colliders: the perimeter walls already handle collision, and keeping these
+        // non-solid guarantees treats stay reachable and movement/collection tests stay green.
+        // Coordinates are expressed as fractions of the field so they scale with the arena size.
+        private void BuildBackyardEnvironment()
+        {
+            var root = new GameObject(ArenaArtCatalog.BackyardEnvironmentObjectName);
+            float hw = fieldWidth * 0.5f, hh = fieldHeight * 0.5f;
+            Vector2 F(float fx, float fy) => new Vector2(fx * hw, fy * hh);
+
+            // Stone patio off the back door (bottom-right), with a darker rug accent.
+            Prop(root, "Patio", F(0.52f, -0.6f), new Vector2(fieldWidth * 0.26f, fieldHeight * 0.3f), Hex("#9b9384"), -9);
+            Prop(root, "PatioRug", F(0.52f, -0.62f), new Vector2(fieldWidth * 0.16f, fieldHeight * 0.16f), Hex("#7d5a3a"), -8);
+
+            // Koi pond (top-left) with a lighter shallow rim.
+            Prop(root, "Pond", F(-0.55f, 0.58f), new Vector2(fieldWidth * 0.2f, fieldHeight * 0.24f), Hex("#2f6f9e"), -9);
+            Prop(root, "PondShallows", F(-0.55f, 0.58f), new Vector2(fieldWidth * 0.13f, fieldHeight * 0.15f), Hex("#4f97c4"), -8);
+
+            // Big shade tree (top-right): trunk + layered canopy.
+            Prop(root, "TreeTrunk", F(0.68f, 0.52f), new Vector2(1.1f, 2.2f), Hex("#5a3a1f"), -7);
+            Prop(root, "TreeCanopy", F(0.68f, 0.66f), new Vector2(7.5f, 6f), Hex("#2c5a23"), -6);
+            Prop(root, "TreeCanopyHi", F(0.62f, 0.7f), new Vector2(4.5f, 3.6f), Hex("#3a7330"), -5);
+
+            // Garden beds along the left fence line.
+            Prop(root, "GardenBed", F(-0.92f, 0f), new Vector2(fieldWidth * 0.05f, fieldHeight * 0.7f), Hex("#5b3d22"), -8);
+            for (int i = 0; i < 5; i++)
+            {
+                float fy = -0.6f + i * 0.3f;
+                Prop(root, $"Flower_{i}", F(-0.92f, fy), new Vector2(0.7f, 0.7f), i % 2 == 0 ? Hex("#d8557f") : Hex("#e8c24a"), -7);
+            }
+
+            // Bush cover clumps scattered for "hide here" reads (deterministic positions).
+            var bushes = new[] { F(-0.2f, -0.55f), F(0.1f, 0.4f), F(-0.4f, 0.05f), F(0.35f, -0.1f), F(0.0f, -0.05f) };
+            for (int i = 0; i < bushes.Length; i++)
+                Prop(root, $"Bush_{i}", bushes[i], new Vector2(2.6f, 1.9f), Hex("#356b2a"), -7);
+
+            // Decorative fence posts just inside the walls so the boundary reads as a backyard fence.
+            BuildFenceLine(root, hw, hh);
+        }
+
+        private void BuildFenceLine(GameObject root, float hw, float hh)
+        {
+            var post = Hex("#b89b6a");
+            const float inset = 0.6f, step = 3f, size = 0.55f;
+            for (float x = -hw + inset; x <= hw - inset; x += step)
+            {
+                Prop(root, "FencePost", new Vector2(x, hh - inset), new Vector2(size, size), post, -6);
+                Prop(root, "FencePost", new Vector2(x, -hh + inset), new Vector2(size, size), post, -6);
+            }
+            for (float y = -hh + inset; y <= hh - inset; y += step)
+            {
+                Prop(root, "FencePost", new Vector2(-hw + inset, y), new Vector2(size, size), post, -6);
+                Prop(root, "FencePost", new Vector2(hw - inset, y), new Vector2(size, size), post, -6);
+            }
+        }
+
+        private void Prop(GameObject root, string name, Vector2 pos, Vector2 size, Color color, int sortingOrder)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(root.transform);
+            go.transform.position = new Vector3(pos.x, pos.y, 0f);
+            go.transform.localScale = new Vector3(size.x, size.y, 1f);
+            var sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = _square;
+            sr.color = color;
+            sr.sortingOrder = sortingOrder;
         }
 
         // --- Sprite helpers ---
