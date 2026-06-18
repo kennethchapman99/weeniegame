@@ -29,6 +29,25 @@ namespace CheddarAndCocoa.Tests
             Assert.GreaterOrEqual(bounds.height, 24f, "Arena should read as a real yard (tall).");
             Assert.IsTrue(cameraRig.IsClampedToBounds, "Large yard camera should clamp to the level bounds.");
 
+            // The cover bushes should sit on the Eagle Shadow hide zones so "HIDE HERE" reads as
+            // real backyard cover.
+            var game = Object.FindFirstObjectByType<GameManager>();
+            Assert.IsNotNull(game);
+            foreach (var zone in game.EagleCoverZones)
+            {
+                bool hasBushOnZone = false;
+                foreach (Transform child in env.transform)
+                {
+                    if (!child.name.StartsWith("CoverBush")) continue;
+                    if (Vector2.Distance(new Vector2(child.position.x, child.position.y), zone) < 0.5f)
+                    {
+                        hasBushOnZone = true;
+                        break;
+                    }
+                }
+                Assert.IsTrue(hasBushOnZone, $"A cover bush should sit on hide zone {zone}.");
+            }
+
             // Every prop should sit inside the walls and render behind gameplay actors.
             foreach (Transform child in env.transform)
             {
