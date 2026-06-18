@@ -1,6 +1,6 @@
 # Arena Playable — Mission Variety Spike
 
-`unity/CheddarAndCocoa/Assets/Scenes/ArenaScene.unity` is now a small co-op vertical slice instead of a flat treat loop. The scene still builds itself from `ArenaBootstrap`, but the arena can run multiple small mission variants through one lightweight mission definition path. A cold start now opens a generated in-scene mission select so a new player can choose Backyard Rescue, Snack Heist, or Sock Panic without a developer explaining debug keys.
+`unity/CheddarAndCocoa/Assets/Scenes/ArenaScene.unity` is now a small co-op vertical slice instead of a flat treat loop. The scene still builds itself from `ArenaBootstrap`, but the arena can run multiple small mission variants through one lightweight mission definition path. A cold start now opens a generated in-scene mission select so a new player can choose Backyard Rescue, Snack Heist, Sock Panic, or Squirrel Conspiracy without a developer explaining debug keys.
 
 For current global character art direction, read `docs/ART-DIRECTION.md`. Backyard Mission is the
 playable proof of that direction, not the only place the direction applies. For future external
@@ -9,13 +9,13 @@ sprite/audio collection before Unity import, use `docs/ASSET-CATALOG.md`.
 ## Cold-start flow
 
 1. Open `unity/CheddarAndCocoa` in Unity 6 LTS, open `Assets/Scenes/ArenaScene.unity`, and press Play. `ArenaScene` is also the scripted local build entry point.
-2. The mission picker appears immediately. Use **Up/Down** or gamepad **D-pad** to highlight a mission, then press **Enter**, **Space**, gamepad **Start**, or gamepad **South** to start. Keyboard **1 / 2 / 3** also starts Backyard Rescue, Snack Heist, or Sock Panic directly.
+2. The mission picker appears immediately. Use **Up/Down** or gamepad **D-pad** to highlight a mission, then press **Enter**, **Space**, gamepad **Start**, or gamepad **South** to start. Keyboard **1 / 2 / 3 / 4** also starts Backyard Rescue, Snack Heist, Sock Panic, or Squirrel Conspiracy directly.
 3. Read the one-line mission briefing at the start of the round. The HUD keeps the current mission name, objective, score, timer, controls, modifier, and latest score event visible during play.
 4. When a mission ends, choose **Replay**, **Next Mission**, or **Mission Select** with the on-screen buttons, keyboard, or gamepad:
    - **R / Enter / Start / South** replays the current mission.
    - **N / Right Arrow / Right Shoulder / D-pad Right** starts the next unfinished mission.
    - **M / Escape / East button / D-pad Left** returns to mission select.
-5. After all three mission variants have ended at least once in the session, the Next action opens a simple **Session Summary** with missions played, total score, stars, and ranks earned.
+5. After the core three mission variants have ended at least once in the session, the Next action opens a simple **Session Summary** with missions played, total score, stars, and ranks earned.
 
 No progress is saved; the session loop is intentionally local and lightweight.
 
@@ -61,6 +61,20 @@ Readable differences:
 
 Manual check: press **3**, collect one sock, confirm **+40 SOCK RESCUED** and **Return socks 1/5**. Let the timer expire and confirm Sock Panic replay/fail copy.
 
+### Squirrel Conspiracy
+
+Squirrel Conspiracy is the first production-mission slice using `HerdingMissionState`. Cheddar and Cocoa must herd the suspicious squirrel around its route, earn coordinated cutoff progress, survive fake-outs/taunts, reveal the hidden stash, then interact to crack the case before the squirrel reaches `3` taunts.
+
+Readable differences:
+
+- The squirrel stays active as the primary objective instead of stealing spawned collectibles.
+- Objective text tracks route/control progress, stash reveal, and taunt pressure.
+- Unique scoring/events include **GOOD HERD**, **CUTOFF**, **DOUBLE BARK BLOCK**, **FAKE OUT**, **STASH FOUND**, and **CONSPIRACY CRACKED** from the production score catalog.
+- Clear banner: **CONSPIRACY CRACKED!**.
+- Fail reason calls out the squirrel taunting the yard into a misinformation spiral.
+
+Manual check: press **4**, bark near the squirrel from useful positions until controls reach `4/4`, then move to the revealed stash and interact. Confirm the end summary says **Conspiracy Cracked**. Let or force three taunts and confirm fail/replay reset the herding counters.
+
 ## Objective
 
 The round can end in **LevelClear** or **GameOver**, and either result can be restarted. Current pacing is hand-tuned for a first two-player playtest: `90 / 70 / 55` second mission timers, a 5-second mission intro banner, delayed first squirrel pressure, an ~25-second predator telegraph in Backyard Rescue, and a short but readable tug charge so both players have to stay committed for a moment.
@@ -79,7 +93,7 @@ The end loop is intentionally simple: players see current score, the latest scor
 Mission flow controls:
 
 - Mission select: **Up/Down** or gamepad **D-pad** changes mission; **Enter**, **Space**, gamepad **Start**, or gamepad **South** starts; **1 / 2 / 3** starts a mission directly.
-- During a run: keyboard **1 / 2 / 3** still restarts the arena into Backyard Rescue, Snack Heist, or Sock Panic for quick manual comparison.
+- During a run: keyboard **1 / 2 / 3 / 4** still restarts the arena into Backyard Rescue, Snack Heist, Sock Panic, or Squirrel Conspiracy for quick manual comparison.
 - End screen: **R / Enter / Start / South** replays; **N / Right Arrow / Right Shoulder / D-pad Right** advances; **M / Escape / East / D-pad Left** returns to mission select.
 - Session Summary: **Enter**, **Space**, **Start**, **South**, **M**, or **Escape** returns to mission select.
 - Playtest Mode: click the bottom-left **Playtest Mode: On/Off** button or press **F1** / **`**. It toggles a compact top-right diagnostics overlay and does not pause or block normal play.
@@ -93,7 +107,7 @@ Use this protocol before changing tuning again:
 2. Start on mission select. Do not explain the game at first; let the two players try to identify their dogs, choose a mission, move, bark, and react.
 3. Watch silently for the first run unless they are fully blocked by hardware/input confusion.
 4. After the first end screen, ask short questions, then have them use **Replay** and **Next Mission** without a mouse.
-5. Run all three missions at least once: **Backyard Rescue**, **Snack Heist**, and **Sock Panic**.
+5. Run the core three missions at least once: **Backyard Rescue**, **Snack Heist**, and **Sock Panic**. Also run **Squirrel Conspiracy** when validating the production herding slice.
 6. After all three have ended, use **Next / Session Summary** and confirm the players understand the session totals.
 7. Write down confusion points using the playtest overlay and event log rather than fixing during the session.
 

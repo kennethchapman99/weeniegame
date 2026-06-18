@@ -39,6 +39,7 @@ namespace CheddarAndCocoa.Tests
             AssertMissionBalance(GameManager.MissionVariant.BackyardRescue, tuning, expectSquirrel: true, expectPredator: true, expectTug: true);
             AssertMissionBalance(GameManager.MissionVariant.SnackHeist, tuning, expectSquirrel: true, expectPredator: false, expectTug: false);
             AssertMissionBalance(GameManager.MissionVariant.SockPanic, tuning, expectSquirrel: false, expectPredator: false, expectTug: false);
+            AssertMissionBalance(GameManager.MissionVariant.SquirrelConspiracy, tuning, expectSquirrel: true, expectPredator: false, expectTug: false);
         }
 
         [Test]
@@ -212,7 +213,7 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(game);
             Assert.IsTrue(game.MissionSelectVisible);
             Assert.AreEqual(GameManager.FlowState.MissionSelect, game.CurrentFlow);
-            Assert.AreEqual(3, game.MissionSelectOptionCount);
+            Assert.AreEqual(4, game.MissionSelectOptionCount);
             Assert.AreEqual(GameManager.MissionVariant.BackyardRescue, game.SelectedMissionVariant);
             Assert.AreEqual("Backyard Rescue", game.SelectedMissionName);
             Assert.That(game.ObjectiveLabel, Does.Contain("Choose a mission"));
@@ -748,7 +749,7 @@ namespace CheddarAndCocoa.Tests
 
             Assert.AreEqual(GameManager.FlowState.MissionSelect, game.CurrentFlow);
             Assert.IsTrue(game.MissionSelectVisible);
-            Assert.AreEqual(3, game.MissionSelectOptionCount);
+            Assert.AreEqual(4, game.MissionSelectOptionCount);
             Assert.That(game.ObjectiveLabel, Does.Contain("Choose a mission"));
             Assert.IsTrue(LogContains(game, "MissionSelect: Backyard Rescue"));
 
