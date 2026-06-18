@@ -61,12 +61,16 @@ The arena was also grown to a real 48x28 yard with a dynamic clamped follow-cam,
 
 ## Queue 5: Launch Demo Hardening
 
-Tasks:
-- controller pass;
-- readability pass;
-- art replacement slots;
-- audio pass;
-- Steam demo checklist.
+Automated hardening complete:
+- isolated P1/P2 controller ownership plus full two-player keyboard interactions;
+- authored Cheddar/Cocoa pose-atlas runtime art with fallback slots;
+- pause/resume/select/quit flow;
+- event audio/rumble slots plus looped backyard music;
+- compressed release build, metadata verification, and packaged startup smoke;
+- `87/87` PlayMode tests green.
+
+Remaining gates require a two-player blind playtest, final audio/art approval, and public signing/
+distribution credentials. See `docs/PRODUCTION-READINESS.md`.
 
 ## Agent Reporting Format
 
