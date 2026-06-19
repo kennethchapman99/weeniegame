@@ -14,6 +14,7 @@ All primitives are **pure logic** (no `MonoBehaviour`), in `CheddarAndCocoa.Game
 | `CoopDistractSneakPuzzle` | #2 Distract-and-sneak | Squeeze: under-distract → enemy **Watchfulness** returns; over-distract → **Annoyance** turns the enemy anyway | **Spotted** → back only to the last banked **checkpoint** |
 | `CoopSequenceChainPuzzle` | #4 cause/effect + #5 role reversal | Each step is **role-gated and ordered**; alternating owners force the dogs to take turns | Wrong dog/order = harmless **Fumble**; dawdling = chain **Settles** back a step |
 | `CoopRescueTimingPuzzle` | #8 rescue + #7 dual-timing | Held dog alone opens a **weakness window** (wiggle); free dog alone can **pull**, only inside it | Mistimed pull = **MissedPull** (no permanent punish) |
+| `CoopHumanDistractionPuzzle` | #2 + soft asymmetry | Same human distraction, two signature moves: Cheddar's **burp** (burst + cooldown → timed sneak windows) or Cocoa's **belly-rub flop** (sustain, but committed + stamina-limited); partner sneaks only while `HumanDistracted` | Eager re-burp = **WastedBurp**; flop runs out → Cocoa gets up; exposed sneak = **Exposure** (stall, no punish) |
 
 Each primitive also ships a `MonoBehaviour` **driver** that turns it into an in-scene beat:
 
@@ -21,8 +22,11 @@ Each primitive also ships a `MonoBehaviour` **driver** that turns it into an in-
 - `CoopDistractSneakBeat` — continuous proximity (distractor in enemy zone, sneaker in lane).
 - `CoopSequenceChainBeat` — discrete interaction (a dog interacts at the next step's station).
 - `CoopRescueTimingBeat` — input events + proximity gate (held dog wiggles; free dog pulls only when adjacent).
+- `CoopHumanDistractionBeat` — input + proximity (Cheddar burps / Cocoa flops; whichever dog isn't distracting sneaks the lane).
 
 These give missions a template for every interaction style (continuous, discrete-interact, input-event).
+
+Artwork the beats need (poses, VFX, human states, markers) is catalogued in `COOP-PUZZLE-ART-NEEDS.md` so a later art pass can fill them against the already-exposed primitive state.
 
 ## API at a glance
 
