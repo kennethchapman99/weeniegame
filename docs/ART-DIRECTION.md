@@ -217,8 +217,10 @@ Rope:
 
 ## Future Art Replacement Contract
 
-Do not start a production AI art workflow yet. When authored or AI-assisted assets are introduced,
-they should satisfy this contract before replacing the runtime placeholders.
+AI-assisted character motion exploration is now active as a staged, review-first workflow. Generated
+turnaround and key-pose boards remain under `ReferenceOnly/GeneratedCharacterMotion`; they do not
+replace runtime sprites until a human approves identity, camera, silhouette, and consistency. See
+`docs/CHARACTER-MOTION-PACK.md` for the direction/clip matrix and promotion gates.
 
 ### Camera And Perspective
 

@@ -61,6 +61,25 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNull(ArenaArtReviewCapture.OutputDirectoryFromArgs(new[] { "player", "--unrelated" }));
         }
 
+        [Test]
+        public void CharacterMotionArt_BuildsStableDirectionalPathsAndFallsBackSafely()
+        {
+            Assert.AreEqual(
+                "ArenaFinal/Characters/Dogs/Cheddar/Motion/cheddar_run_se_02",
+                CharacterMotionArt.ResourcePath(DogId.Cheddar, CharacterMotionArt.Clip.Run,
+                    CharacterMotionArt.Facing8.SE, 2));
+            Assert.AreEqual(
+                "ArenaFinal/Characters/Dogs/Cocoa/Motion/cocoa_bark_n_00",
+                CharacterMotionArt.ResourcePath(DogId.Cocoa, CharacterMotionArt.Clip.Bark,
+                    CharacterMotionArt.Facing8.N, -4));
+            Assert.IsNull(CharacterMotionArt.Load(DogId.Cheddar, CharacterMotionArt.Clip.Run,
+                CharacterMotionArt.Facing8.SE, 2));
+            Assert.AreEqual("cheddar_run", CharacterMotionArt.LoadOrFallback(DogId.Cheddar,
+                CharacterMotionArt.Clip.Run, CharacterMotionArt.Facing8.SE, 2).name);
+            Assert.AreEqual("cocoa_idle", CharacterMotionArt.LoadOrFallback(DogId.Cocoa,
+                CharacterMotionArt.Clip.Carry, CharacterMotionArt.Facing8.N, 1).name);
+        }
+
         [UnityTest]
         public IEnumerator BackyardRescue_UsesFinalSpritesWithoutReplacingGameplayObjects()
         {

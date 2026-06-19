@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "dogs": ["cheddar", "cocoa"],
+  "directions": ["e", "se", "s", "sw", "w", "nw", "n", "ne"],
+  "review_boards": [
+    "cheddar_turnaround_v01.png",
+    "cheddar_action_keyposes_v01.png",
+    "cocoa_turnaround_v01.png",
+    "cocoa_action_keyposes_v01.png"
+  ],
+  "clips": [
+    { "name": "idle", "directions": "all", "frames": 2, "priority": "A" },
+    { "name": "run", "directions": "all", "frames": 4, "priority": "A" },
+    { "name": "bark", "directions": "all", "frames": 3, "priority": "A" },
+    { "name": "tug", "directions": ["e", "w"], "frames": 3, "priority": "A" },
+    { "name": "dig", "directions": ["e", "s", "w"], "frames": 4, "priority": "B" },
+    { "name": "carry", "directions": "all", "frames": 2, "priority": "B" },
+    { "name": "herd", "directions": ["e", "se", "sw", "w"], "frames": 3, "priority": "B" },
+    { "name": "hide", "directions": ["s", "n"], "frames": 2, "priority": "B" },
+    { "name": "comfort", "directions": ["e", "w"], "frames": 3, "priority": "B" },
+    { "name": "stunned", "directions": ["e", "w"], "frames": 2, "priority": "B" },
+    { "name": "rescued", "directions": ["e", "w"], "frames": 2, "priority": "B" },
+    { "name": "proud", "directions": ["e", "w"], "frames": 2, "priority": "B" },
+    { "name": "sad", "directions": ["e", "w"], "frames": 2, "priority": "B" }
+  ]
+}

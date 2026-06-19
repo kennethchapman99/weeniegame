@@ -46,13 +46,14 @@ Current status:
 - Keep the generated `ArenaArtCatalog` silhouettes as the primary gameplay read until the draft art
   is sliced/exported into final transparent assets.
 
-Next art task:
+Current character-motion task:
 
-- Export individual transparent sprites for each needed state (`cheddar_idle_01.png`,
-  `cocoa_bark_01.png`, `squirrel_steal_01.png`, `mission_rope_tug_01.png`,
-  `vfx_bark_burst_01.png`, etc.).
-- Preserve the current folder/category organization and update this catalog when a draft badge is
-  replaced by a final gameplay sprite.
+- Generate and approve eight-direction turnaround plus action-key-pose boards for Cheddar and Cocoa.
+- Follow `docs/CHARACTER-MOTION-PACK.md` and `tools/art/character_motion_manifest.json` rather than
+  adding ad hoc pose names.
+- Keep generated boards reference-only. Promote only reviewed, individually exported transparent
+  frames into `ArenaFinal/Characters/Dogs/<Dog>/Motion/`.
+- Preserve the current eight-pose runtime sprites as deterministic fallbacks throughout the rollout.
 
 ## External Folder Structure
 
