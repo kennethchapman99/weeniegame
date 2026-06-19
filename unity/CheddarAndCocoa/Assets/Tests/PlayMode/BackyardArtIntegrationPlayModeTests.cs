@@ -15,6 +15,14 @@ namespace CheddarAndCocoa.Tests
         }
 
         [Test]
+        public void FinalGameplayArt_ProvidesStableRuntimeResourcePaths()
+        {
+            Assert.AreEqual("ArenaFinal/Characters/Squirrel/squirrel_idle", FinalGameplayArt.PathFor(RuntimeArtSpriteFactory.RuntimeSpriteId.Squirrel));
+            Assert.AreEqual("ArenaFinal/Props/Mission/weenie_collectible", FinalGameplayArt.PathFor(RuntimeArtSpriteFactory.RuntimeSpriteId.WeenieCollectible));
+            Assert.AreEqual("ArenaFinal/VFX/bark_burst", FinalGameplayArt.PathFor(RuntimeArtSpriteFactory.RuntimeSpriteId.BarkBurst));
+        }
+
+        [Test]
         public void ArtSpriteOverlay_WithNullSprite_DoesNotBreakFallbackObject()
         {
             var go = new GameObject("OverlayFallbackTest");
@@ -55,7 +63,30 @@ namespace CheddarAndCocoa.Tests
         [Test]
         public void BackyardArtVfxPulse_MissingDraftSprite_ReturnsNullSafely()
         {
-            Assert.DoesNotThrow(() => BackyardArtVfxPulse.Spawn(Vector3.zero, RuntimeArtSpriteFactory.RuntimeSpriteId.WarningAlert, Vector3.one, 10, Color.white, 0.1f));
+            BackyardArtVfxPulse pulse = null;
+            Assert.DoesNotThrow(() => pulse = BackyardArtVfxPulse.Spawn(Vector3.zero, RuntimeArtSpriteFactory.RuntimeSpriteId.WarningAlert, Vector3.one, 10, Color.white, 0.1f));
+            if (pulse != null) Object.DestroyImmediate(pulse.gameObject);
+        }
+
+        [Test]
+        public void DynamicTreatArtEnhancer_NoFinalArtStillScansSafely()
+        {
+            var go = new GameObject("DynamicTreatArtEnhancerTest");
+            var treatGo = new GameObject("TreatArtCandidate");
+            try
+            {
+                treatGo.AddComponent<CircleCollider2D>();
+                treatGo.AddComponent<Treat>();
+                var enhancer = go.AddComponent<DynamicTreatArtEnhancer>();
+
+                Assert.DoesNotThrow(() => enhancer.ScanTreats());
+                Assert.GreaterOrEqual(enhancer.EnhancedTreatCount, 0);
+            }
+            finally
+            {
+                Object.DestroyImmediate(treatGo);
+                Object.DestroyImmediate(go);
+            }
         }
     }
 }
