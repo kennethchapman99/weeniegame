@@ -4,7 +4,7 @@ Companion to `COOP-PUZZLE-DESIGN.md` (the doctrine). That doc says *what* a co-o
 
 All primitives are **pure logic** (no `MonoBehaviour`), in `CheddarAndCocoa.Game`, so a mission drives them from real dog positions/inputs while PlayMode tests drive them deterministically. Each has scene-free unit tests under `Assets/Tests/PlayMode/`. Roles are soft — either dog can take either side; defaults below are for comedy/clarity, not hard locks.
 
-> Status: primitives + one position driver landed on branch `claude/post-art-followups`, full PlayMode suite green. Wiring into specific missions is a small follow-up (each is a few lines in the mission's `Begin/Tick/Force*` and a `MissionDefinition`).
+> Status: all four primitives **and** a position/input driver each landed on branch `claude/post-art-followups`, full PlayMode suite green. Wiring into specific missions is a small follow-up (each is a few lines in the mission's `Begin/Tick/Force*` and a `MissionDefinition`).
 
 ## The toolkit
 
@@ -15,7 +15,14 @@ All primitives are **pure logic** (no `MonoBehaviour`), in `CheddarAndCocoa.Game
 | `CoopSequenceChainPuzzle` | #4 cause/effect + #5 role reversal | Each step is **role-gated and ordered**; alternating owners force the dogs to take turns | Wrong dog/order = harmless **Fumble**; dawdling = chain **Settles** back a step |
 | `CoopRescueTimingPuzzle` | #8 rescue + #7 dual-timing | Held dog alone opens a **weakness window** (wiggle); free dog alone can **pull**, only inside it | Mistimed pull = **MissedPull** (no permanent punish) |
 
-Plus `CoopHoldReleaseBeat` (a `MonoBehaviour`) that drives `CoopHoldReleasePuzzle` from two dog transforms and a hold zone / cross corridor — the pattern for turning any primitive into an in-scene beat.
+Each primitive also ships a `MonoBehaviour` **driver** that turns it into an in-scene beat:
+
+- `CoopHoldReleaseBeat` — continuous proximity (anchor in hold zone, crosser in cross corridor).
+- `CoopDistractSneakBeat` — continuous proximity (distractor in enemy zone, sneaker in lane).
+- `CoopSequenceChainBeat` — discrete interaction (a dog interacts at the next step's station).
+- `CoopRescueTimingBeat` — input events + proximity gate (held dog wiggles; free dog pulls only when adjacent).
+
+These give missions a template for every interaction style (continuous, discrete-interact, input-event).
 
 ## API at a glance
 
