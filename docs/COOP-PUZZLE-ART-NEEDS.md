@@ -31,6 +31,7 @@ The marquee beat: Cheddar distracts a human with a **burp cloud** (burst), Cocoa
 - **Sequence chain** (`CoopSequenceChainPuzzle`): per-step **station markers** (latch, gate, gap) with a clear "next step here" highlight on the current owner's station, a wrong-dog **fumble** puff, and a **settle** animation when the contraption eases back.
 - **Rescue timing** (`CoopRescueTimingPuzzle`): the held dog's **wiggle** tell that opens the window (a shake + a brief glowing "pull now!" cue), the captor grip visibly loosening, and a **miss** spark for a mistimed pull.
 - **Scent relay** (`CoopScentRelayPuzzle`): a **scent source** prop the reader noses; identical-looking **dig-spot stations** (so the digger genuinely can't tell them apart); a clear **reader's call** signal on the revealed station (a glowing scent puff / arrow that only shows while `Known`), driven by `RevealedTarget`; a "bone!" reveal on a find and a sneeze/decoy puff on a `WrongDig`.
+- **Stretch span** (`CoopStretchSpanPuzzle`): a **stretched blanket / span sprite** drawn between the two dogs that visibly sags when `Slack`, pulls **taut** in band, and tears with a rip VFX when `Overstretched`; the dogs gripping a corner each; falling-item sprites with a **catch** pop when caught and a splat when `Missed`. A subtle taut/slack tint sells the spacing read.
 
 ## Acceptance for the art pass
 - Gameplay stays fully legible if the art is absent (generated shapes + labels remain the source of truth).
