@@ -165,7 +165,7 @@ namespace CheddarAndCocoa.Game
                 $"{_game.SessionMissionsPlayed} played • {_game.SessionUniqueMissionsCompleted}/{count} tried • {_game.SessionTotalScore} score • {_game.SessionFlawlessClears} flawless",
                 _mid);
             GUI.Label(new Rect(box.x + 32, box.y + 82, w - 64, 22),
-                "Up/Down chooses • Enter/Start begins • number keys 1-0 launch missions 1-10",
+                "D-pad / arrows move through the grid • Enter/Start begins • number keys 1-0 launch missions 1-10",
                 _small);
 
             for (int i = 0; i < count; i++)

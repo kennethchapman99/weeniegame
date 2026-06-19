@@ -340,7 +340,7 @@ The end loop is intentionally simple: players see current score, the latest scor
 
 Mission flow controls:
 
-- Mission select: **Up/Down** or gamepad **D-pad** changes mission; **Enter**, **Space**, gamepad **Start**, or gamepad **South** starts; **1-9 and 0** starts a mission directly.
+- Mission select: keyboard **arrow keys** or gamepad **D-pad** move in the visible two-column grid (up/down stays in a column; left/right crosses columns); **Enter**, **Space**, gamepad **Start**, or gamepad **South** starts; **1-9 and 0** starts a mission directly.
 - During a run: keyboard **1-9 and 0** still restarts the arena into Backyard Rescue, Snack Heist, Sock Panic, Squirrel Conspiracy, Eagle Shadow Panic, Coyotes at the Fence, Weenie Roundup, Scent Search, Thunderstorm Comfort, Mark the Yard, Walkies on the Leash, or Car Ride Balance (arrow-select) for quick manual comparison.
 - During a run: **Escape** or gamepad **Start** pauses. The pause card can resume, return safely to
   mission select, or quit the packaged player; pausing freezes mission time and dog input.

@@ -523,6 +523,28 @@ namespace CheddarAndCocoa.Game
             SelectMission(SelectedMissionVariant);
         }
 
+        public void SelectMissionAbove() => SelectMissionGridStep(0, -1);
+        public void SelectMissionBelow() => SelectMissionGridStep(0, 1);
+        public void SelectMissionLeft() => SelectMissionGridStep(-1, 0);
+        public void SelectMissionRight() => SelectMissionGridStep(1, 0);
+
+        private void SelectMissionGridStep(int columnDelta, int rowDelta)
+        {
+            const int columns = 2;
+            int rows = Mathf.CeilToInt(MissionOrder.Length / (float)columns);
+            int currentColumn = _selectedMissionIndex / rows;
+            int currentRow = _selectedMissionIndex % rows;
+            int targetColumn = (currentColumn + columnDelta + columns) % columns;
+            int targetRow = (currentRow + rowDelta + rows) % rows;
+            int targetIndex = targetColumn * rows + targetRow;
+
+            // Keep grid navigation safe if the final column is not full.
+            if (targetIndex >= MissionOrder.Length)
+                targetIndex = MissionOrder.Length - 1;
+
+            SelectMission(MissionOrder[targetIndex]);
+        }
+
         public void StartSelectedMission() => StartMission(SelectedMissionVariant);
 
         public void ReturnToMissionSelect()
@@ -3034,7 +3056,10 @@ namespace CheddarAndCocoa.Game
 
             if (MissionSelectVisible)
             {
-                bool previous = false;
+                bool up = false;
+                bool down = false;
+                bool left = false;
+                bool right = false;
                 bool next = false;
                 bool start = false;
                 if (kb != null)
@@ -3049,18 +3074,26 @@ namespace CheddarAndCocoa.Game
                     if (kb.digit8Key.wasPressedThisFrame) { StartMission(MissionVariant.ScentSearch); return; }
                     if (kb.digit9Key.wasPressedThisFrame) { StartMission(MissionVariant.ThunderstormComfort); return; }
                     if (kb.digit0Key.wasPressedThisFrame) { StartMission(MissionVariant.MarkTheYard); return; }
-                    previous |= kb.upArrowKey.wasPressedThisFrame || kb.leftArrowKey.wasPressedThisFrame;
-                    next |= kb.downArrowKey.wasPressedThisFrame || kb.rightArrowKey.wasPressedThisFrame || kb.tabKey.wasPressedThisFrame;
+                    up |= kb.upArrowKey.wasPressedThisFrame;
+                    down |= kb.downArrowKey.wasPressedThisFrame;
+                    left |= kb.leftArrowKey.wasPressedThisFrame;
+                    right |= kb.rightArrowKey.wasPressedThisFrame;
+                    next |= kb.tabKey.wasPressedThisFrame;
                     start |= kb.enterKey.wasPressedThisFrame || kb.spaceKey.wasPressedThisFrame;
                 }
                 if (pad != null)
                 {
-                    previous |= pad.dpad.up.wasPressedThisFrame || pad.dpad.left.wasPressedThisFrame;
-                    next |= pad.dpad.down.wasPressedThisFrame || pad.dpad.right.wasPressedThisFrame;
+                    up |= pad.dpad.up.wasPressedThisFrame;
+                    down |= pad.dpad.down.wasPressedThisFrame;
+                    left |= pad.dpad.left.wasPressedThisFrame;
+                    right |= pad.dpad.right.wasPressedThisFrame;
                     start |= pad.startButton.wasPressedThisFrame || pad.buttonSouth.wasPressedThisFrame;
                 }
 
-                if (previous) SelectPreviousMission();
+                if (up) SelectMissionAbove();
+                else if (down) SelectMissionBelow();
+                else if (left) SelectMissionLeft();
+                else if (right) SelectMissionRight();
                 else if (next) SelectNextMission();
                 else if (start) StartSelectedMission();
                 return;

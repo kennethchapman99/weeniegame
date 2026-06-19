@@ -767,6 +767,21 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(game);
             Assert.IsTrue(game.MissionSelectVisible);
 
+            // The selector is rendered as two columns of six. Directional navigation must match
+            // that visible grid instead of walking one linear list in every direction.
+            game.SelectMission(GameManager.MissionVariant.BackyardRescue); // top-left
+            game.SelectMissionRight();
+            Assert.AreEqual(GameManager.MissionVariant.WeenieRoundup, game.SelectedMissionVariant);
+            game.SelectMissionBelow();
+            Assert.AreEqual(GameManager.MissionVariant.ScentSearch, game.SelectedMissionVariant);
+            game.SelectMissionLeft();
+            Assert.AreEqual(GameManager.MissionVariant.SnackHeist, game.SelectedMissionVariant);
+            game.SelectMissionAbove();
+            Assert.AreEqual(GameManager.MissionVariant.BackyardRescue, game.SelectedMissionVariant);
+            game.SelectMissionAbove();
+            Assert.AreEqual(GameManager.MissionVariant.CoyotesFence, game.SelectedMissionVariant,
+                "Vertical navigation should wrap within the visible column.");
+
             game.SelectMission(GameManager.MissionVariant.BackyardRescue);
             game.StartSelectedMission();
             yield return null;
