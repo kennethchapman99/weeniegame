@@ -36,22 +36,37 @@ After a mission ends, the same local flow exposes Replay, Next Mission, and Miss
 | Walkies on the Leash | Reach checkpoints together while managing leash snaps | Leash physics, checkpoints, snap penalties | `CHECKPOINT`, `LEASH SNAP`, `WALK COMPLETE` |
 | Car Ride Balance | Balance against car lurches and avoid spills | Vehicle balance, lurches, spill pressure | `STEADIED`, `SPILL`, `RIDE COMPLETE` |
 
+## Co-op Puzzle Beat Requirement
+
+The current variants prove mechanic coverage, but future work should raise the bar from "objective loop" to "co-op puzzle beat." Use `docs/COOP-PUZZLE-DESIGN.md` as the standard.
+
+A mission definition should identify at least one beat where:
+
+- Dog A creates the opening through a dog-authentic action: bark, bait, hold, sniff, distract, anchor, tug, block, or survive.
+- Dog B converts that opening into progress through a different action.
+- The world changes visibly after success.
+- Failure is funny and teaches the missing dependency.
+- The beat can be checked manually and, where feasible, through deterministic PlayMode hooks.
+
+For the current ArenaScene set, the weakest puzzle candidates are the most direct objective loops: Backyard Rescue, Snack Heist, Sock Panic, Weenie Roundup, and Mark the Yard. They are playable and useful, but future polish should add specific co-op locks rather than simply increasing counts, speed, or timers.
+
 ## Adding The Next Mission
 
 Do not add the next mission yet. The current priority is the AdventureMap/progression spine. Once the progression layer is playable and tested, use this sequence for future mission work:
 
 1. Decide which location owns the mission in `AdventureLocationCatalog` or future location assets.
-2. Add a new value to `GameManager.MissionVariant`.
-3. Add the value to `GameManager.MissionOrder` only if it should appear in the generated arena picker and local session loop.
-4. Add a new `MissionDefinition` branch in `BuildMissionDefinition`.
-5. Decide which existing systems are enabled:
+2. Name the **Co-op Puzzle Beat** before adding code: player roles, lock/key relationship, readable hints, funny fail, world-state change, and test hooks.
+3. Add a new value to `GameManager.MissionVariant`.
+4. Add the value to `GameManager.MissionOrder` only if it should appear in the generated arena picker and local session loop.
+5. Add a new `MissionDefinition` branch in `BuildMissionDefinition`.
+6. Decide which existing systems are enabled:
    - `UsesSquirrel`
    - `RequiresPredator`
    - `RequiresTug`
-6. Give the mission unique objective text, score labels, clear banner, replay prompt, and fail reasons.
-7. Add readable placeholder collectible art in `BuildCollectibleArt` if the existing shapes do not fit.
-8. Add deterministic PlayMode coverage that starts the mission from mission select, checks objective copy, scores one unique event, reaches clear/fail, and verifies replay/next/mission-select state.
-9. Update `docs/ARENA-PLAYABLE.md` and `docs/PROGRESSION-SYSTEM.md` if the mission affects location unlocks or saved progress.
+7. Give the mission unique objective text, score labels, clear banner, replay prompt, and fail reasons.
+8. Add readable placeholder collectible art in `BuildCollectibleArt` if the existing shapes do not fit.
+9. Add deterministic PlayMode coverage that starts the mission from mission select, checks objective copy, scores one unique event, reaches clear/fail, verifies the co-op puzzle beat state change, and verifies replay/next/mission-select state.
+10. Update `docs/ARENA-PLAYABLE.md`, `docs/COOP-PUZZLE-DESIGN.md`, and `docs/PROGRESSION-SYSTEM.md` if the mission affects location unlocks, saved progress, or the reusable puzzle vocabulary.
 
 ## Guardrails
 
@@ -61,6 +76,7 @@ Do not add the next mission yet. The current priority is the AdventureMap/progre
 - Bark should remain useful in at least some active mission pressure. If a mission disables squirrel/predator, document that it is a collect/timer proof rather than the new default loop.
 - Prefer one or two meaningful objective differences over many shallow variants.
 - Do not add more mission variants before AdventureMap, save/load, and unlock tests are in place.
+- Do not approve a new mission whose only co-op requirement is parallel collection, simultaneous standing in a circle, or shared survival without a lock/key puzzle beat.
 
 ## Warning Status
 
