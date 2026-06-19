@@ -15,7 +15,7 @@ The current product priority is in-game visual quality, not menu/progression pol
 - Prefers final transparent sprites under `Resources/ArenaFinal` via `FinalGameplayArt`.
 - Falls back to the existing draft art sheets in `Resources/ArenaDraft`.
 - Applies simple background keying to remove near-flat sheet backgrounds from draft sheets.
-- Provides IDs for squirrel, eagle/coyote threat, backyard props, rope, weenie, bark burst, pickup sparkle, success pop, and warning alert.
+- Provides IDs for dog-adjacent gameplay objects, squirrel states, threat states, backyard props, rope, weenie, and VFX.
 - Returns `null` safely when art is missing or unreadable so generated gameplay fallback remains intact.
 
 ### Final art path contracts
@@ -39,13 +39,14 @@ The current product priority is in-game visual quality, not menu/progression pol
 - Keeps original generated objects, labels, colliders, and tests intact.
 - Adds a simple shadow child.
 - Supports pulse feedback.
+- Supports runtime sprite swaps when gameplay state changes.
 
 ### VFX pulse
 
 `unity/CheddarAndCocoa/Assets/Scripts/Game/BackyardArtVfxPulse.cs`
 
 - Spawns short-lived art-driven VFX sprites from final art or the draft VFX sheet.
-- Used for bark bursts, warning alerts, success pops, and pickup sparkle.
+- Used for bark bursts/rings, warning alerts, success pops, rescue bursts, fail puffs, and pickup sparkle.
 
 ### Arena auto-enhancer
 
@@ -60,6 +61,7 @@ The current product priority is in-game visual quality, not menu/progression pol
   - Cheddar/Cocoa shadows
   - a few backyard set-dressing accents
 - Watches `GameManager.LastFeedback` and `LastScoreEventLabel` to spawn art VFX without modifying gameplay rules.
+- Swaps overlay sprites for squirrel steal/scared, sky-threat action, and rope-complete states when those final sprites exist.
 - Backyard Rescue gets ambient sparkle/leaf-style pops for more life.
 
 ### Dynamic treat art
@@ -81,6 +83,7 @@ Covers:
 - final-art resource paths remain stable;
 - final dog pose paths remain stable;
 - overlays do not break fallback objects when no sprite is available;
+- overlays can swap sprites at runtime;
 - generated runtime sprite reports correctly;
 - VFX spawn path is safe;
 - dynamic treat art scanning is safe.
@@ -124,20 +127,35 @@ Assets/Art/Resources/ArenaFinal/
         cocoa_rescued.png
         cocoa_proud.png
         cocoa_sad.png
-    Squirrel/squirrel_idle.png
-    Eagle/eagle_threat.png
-    Coyote/coyote_threat.png
+    Squirrel/
+      squirrel_idle.png
+      squirrel_steal.png
+      squirrel_scared.png
+    Eagle/
+      eagle_threat.png
+      eagle_action.png
+    Coyote/
+      coyote_threat.png
   Props/
-    Backyard/bush.png
-    Backyard/fence_section.png
-    Backyard/rock.png
-    Mission/rope_tug.png
-    Mission/weenie_collectible.png
+    Backyard/
+      bush.png
+      fence_section.png
+      rock.png
+      grass_patch.png
+      dig_spot.png
+    Mission/
+      rope_tug.png
+      rope_complete.png
+      weenie_collectible.png
+      dog_bowl.png
   VFX/
     bark_burst.png
+    bark_ring.png
     pickup_sparkle.png
     success_pop.png
     warning_alert.png
+    rescue_burst.png
+    fail_puff.png
 ```
 
 ## Important Guardrails
@@ -155,7 +173,7 @@ Assets/Art/Resources/ArenaFinal/
 3. Play Backyard Rescue and adjust overlay scales/positions.
 4. Replace approximate sheet slice rects in `RuntimeArtSpriteFactory` with exact rects after viewing source sheets in Unity.
 5. Export actual tightly cropped transparent sprites to `Resources/ArenaFinal/...`; no code change should be required for the mapped sprite IDs.
-6. Add richer final sprite slots for squirrel states, predator states, rope completion, rescue burst, fail puff, bark ring, grass patch, dog bowl, and dig spots.
+6. Add direct final art support for dog bowl, dig spot, grass patch, and mission-specific props as soon as those PNGs exist.
 7. Reduce label dependence only after final art is readable at both local camera and full-yard zoom.
 
 ## Asset Export Checklist
@@ -183,16 +201,21 @@ For the next manual art export pass, prioritize transparent PNGs, tightly croppe
 - `squirrel_idle.png`
 - `squirrel_steal.png`
 - `squirrel_scared.png`
+- `eagle_threat.png`
+- `eagle_action.png`
+- `coyote_threat.png`
 
 ### Backyard props
 
 - `weenie_collectible.png`
 - `rope_tug.png`
+- `rope_complete.png`
 - `dog_bowl.png`
 - `fence_section.png`
 - `bush.png`
 - `grass_patch.png`
 - `dig_spot.png`
+- `rock.png`
 
 ### VFX
 
