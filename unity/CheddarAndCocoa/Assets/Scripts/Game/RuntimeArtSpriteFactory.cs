@@ -13,16 +13,26 @@ namespace CheddarAndCocoa.Game
         public enum RuntimeSpriteId
         {
             Squirrel,
+            SquirrelSteal,
+            SquirrelScared,
             EagleThreat,
+            PredatorAttack,
             CoyoteThreat,
             BackyardBush,
             BackyardFence,
             BackyardRock,
+            GrassPatch,
+            DigSpot,
+            DogBowl,
             BarkBurst,
+            BarkRing,
             PickupSparkle,
             SuccessPop,
             WarningAlert,
+            RescueBurst,
+            FailPuff,
             RopeToy,
+            RopeComplete,
             WeenieCollectible
         }
 
@@ -49,8 +59,11 @@ namespace CheddarAndCocoa.Game
             switch (id)
             {
                 case RuntimeSpriteId.Squirrel:
+                case RuntimeSpriteId.SquirrelSteal:
+                case RuntimeSpriteId.SquirrelScared:
                     return FullSprite(ArenaDraftArt.SpriteId.SquirrelCharacter, id, 220f, new Vector2(0.5f, 0.25f));
                 case RuntimeSpriteId.EagleThreat:
+                case RuntimeSpriteId.PredatorAttack:
                     return FullSprite(ArenaDraftArt.SpriteId.EagleReference, id, 230f, new Vector2(0.5f, 0.35f));
                 case RuntimeSpriteId.CoyoteThreat:
                     return FullSprite(ArenaDraftArt.SpriteId.CoyoteReference, id, 230f, new Vector2(0.5f, 0.25f));
@@ -60,15 +73,28 @@ namespace CheddarAndCocoa.Game
                     return SheetSlice(ArenaDraftArt.SpriteId.BackyardProps, id, new Rect(0.28f, 0.48f, 0.24f, 0.25f), 220f, new Vector2(0.5f, 0.2f));
                 case RuntimeSpriteId.BackyardRock:
                     return SheetSlice(ArenaDraftArt.SpriteId.BackyardProps, id, new Rect(0.54f, 0.48f, 0.18f, 0.2f), 220f, new Vector2(0.5f, 0.2f));
+                case RuntimeSpriteId.GrassPatch:
+                    return SheetSlice(ArenaDraftArt.SpriteId.BackyardProps, id, new Rect(0.74f, 0.48f, 0.2f, 0.18f), 220f, new Vector2(0.5f, 0.18f));
+                case RuntimeSpriteId.DigSpot:
+                    return SheetSlice(ArenaDraftArt.SpriteId.BackyardProps, id, new Rect(0.52f, 0.2f, 0.2f, 0.16f), 220f, new Vector2(0.5f, 0.25f));
+                case RuntimeSpriteId.DogBowl:
+                    return SheetSlice(ArenaDraftArt.SpriteId.BackyardProps, id, new Rect(0.74f, 0.2f, 0.2f, 0.18f), 220f, new Vector2(0.5f, 0.25f));
                 case RuntimeSpriteId.BarkBurst:
                     return SheetSlice(ArenaDraftArt.SpriteId.Vfx, id, new Rect(0.03f, 0.58f, 0.25f, 0.28f), 220f, new Vector2(0.5f, 0.5f));
+                case RuntimeSpriteId.BarkRing:
+                    return SheetSlice(ArenaDraftArt.SpriteId.Vfx, id, new Rect(0.03f, 0.28f, 0.25f, 0.24f), 220f, new Vector2(0.5f, 0.5f));
                 case RuntimeSpriteId.PickupSparkle:
                     return SheetSlice(ArenaDraftArt.SpriteId.Vfx, id, new Rect(0.3f, 0.58f, 0.2f, 0.25f), 220f, new Vector2(0.5f, 0.5f));
                 case RuntimeSpriteId.SuccessPop:
                     return SheetSlice(ArenaDraftArt.SpriteId.Vfx, id, new Rect(0.52f, 0.58f, 0.22f, 0.25f), 220f, new Vector2(0.5f, 0.5f));
                 case RuntimeSpriteId.WarningAlert:
                     return SheetSlice(ArenaDraftArt.SpriteId.Vfx, id, new Rect(0.75f, 0.58f, 0.2f, 0.25f), 220f, new Vector2(0.5f, 0.5f));
+                case RuntimeSpriteId.RescueBurst:
+                    return SheetSlice(ArenaDraftArt.SpriteId.Vfx, id, new Rect(0.30f, 0.28f, 0.2f, 0.24f), 220f, new Vector2(0.5f, 0.5f));
+                case RuntimeSpriteId.FailPuff:
+                    return SheetSlice(ArenaDraftArt.SpriteId.Vfx, id, new Rect(0.52f, 0.28f, 0.22f, 0.24f), 220f, new Vector2(0.5f, 0.5f));
                 case RuntimeSpriteId.RopeToy:
+                case RuntimeSpriteId.RopeComplete:
                     return SheetSlice(ArenaDraftArt.SpriteId.BackyardProps, id, new Rect(0.05f, 0.2f, 0.22f, 0.18f), 220f, new Vector2(0.5f, 0.35f));
                 case RuntimeSpriteId.WeenieCollectible:
                     return SheetSlice(ArenaDraftArt.SpriteId.BackyardProps, id, new Rect(0.30f, 0.2f, 0.20f, 0.16f), 220f, new Vector2(0.5f, 0.35f));
