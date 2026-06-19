@@ -109,6 +109,13 @@ namespace CheddarAndCocoa.Game
             return overlay;
         }
 
+        private void SetOverlaySprite(ArtSpriteOverlay overlay, RuntimeArtSpriteFactory.RuntimeSpriteId spriteId)
+        {
+            if (overlay == null) return;
+            Sprite sprite = RuntimeArtSpriteFactory.Get(spriteId);
+            if (sprite != null) overlay.SetSprite(sprite);
+        }
+
         private void EnhanceDogShadows()
         {
             foreach (var feedback in FindObjectsByType<DogReadabilityFeedback>(FindObjectsSortMode.None))
@@ -135,6 +142,8 @@ namespace CheddarAndCocoa.Game
             AddWorldArt("ActualArtBushRight", RuntimeArtSpriteFactory.RuntimeSpriteId.BackyardBush, new Vector3(25f, 12f, 0.2f), new Vector3(0.06f, 0.06f, 1f), 2, new Color(1f, 1f, 1f, 0.82f));
             AddWorldArt("ActualArtFenceAccent", RuntimeArtSpriteFactory.RuntimeSpriteId.BackyardFence, new Vector3(0f, 16f, 0.25f), new Vector3(0.08f, 0.08f, 1f), 1, new Color(1f, 1f, 1f, 0.75f));
             AddWorldArt("ActualArtRockAccent", RuntimeArtSpriteFactory.RuntimeSpriteId.BackyardRock, new Vector3(-7f, -14f, 0.2f), new Vector3(0.055f, 0.055f, 1f), 2, new Color(1f, 1f, 1f, 0.8f));
+            AddWorldArt("ActualArtGrassPatchA", RuntimeArtSpriteFactory.RuntimeSpriteId.GrassPatch, new Vector3(-18f, 4f, 0.18f), new Vector3(0.07f, 0.07f, 1f), 1, new Color(1f, 1f, 1f, 0.45f));
+            AddWorldArt("ActualArtGrassPatchB", RuntimeArtSpriteFactory.RuntimeSpriteId.GrassPatch, new Vector3(14f, -7f, 0.18f), new Vector3(0.07f, 0.07f, 1f), 1, new Color(1f, 1f, 1f, 0.45f));
         }
 
         private void AddWorldArt(string name, RuntimeArtSpriteFactory.RuntimeSpriteId spriteId, Vector3 position, Vector3 scale, int sortingOrder, Color tint)
@@ -158,21 +167,32 @@ namespace CheddarAndCocoa.Game
             switch (feedback)
             {
                 case GameManager.FeedbackKind.SquirrelStealing:
+                    SetOverlaySprite(_squirrelOverlay, RuntimeArtSpriteFactory.RuntimeSpriteId.SquirrelSteal);
                     _squirrelOverlay?.Pulse(0.5f, 0.12f);
                     SpawnAt(_game.SquirrelObject, RuntimeArtSpriteFactory.RuntimeSpriteId.WarningAlert, 0.045f, new Color(1f, 0.88f, 0.35f, 0.9f));
                     break;
                 case GameManager.FeedbackKind.SquirrelScared:
+                    SetOverlaySprite(_squirrelOverlay, RuntimeArtSpriteFactory.RuntimeSpriteId.SquirrelScared);
                     _squirrelOverlay?.Pulse(0.35f, 0.16f);
                     SpawnAt(_game.SquirrelObject, RuntimeArtSpriteFactory.RuntimeSpriteId.SuccessPop, 0.045f, new Color(0.7f, 1f, 0.65f, 0.9f));
                     break;
                 case GameManager.FeedbackKind.SquirrelStoleFood:
+                    SetOverlaySprite(_squirrelOverlay, RuntimeArtSpriteFactory.RuntimeSpriteId.SquirrelSteal);
                     _squirrelOverlay?.Pulse(0.6f, 0.18f);
-                    SpawnAt(_game.SquirrelObject, RuntimeArtSpriteFactory.RuntimeSpriteId.WarningAlert, 0.05f, new Color(1f, 0.35f, 0.25f, 0.9f));
+                    SpawnAt(_game.SquirrelObject, RuntimeArtSpriteFactory.RuntimeSpriteId.FailPuff, 0.05f, new Color(1f, 0.35f, 0.25f, 0.9f));
                     break;
                 case GameManager.FeedbackKind.PredatorHuddle:
-                case GameManager.FeedbackKind.PredatorAttack:
+                    SetOverlaySprite(_predatorOverlay, RuntimeArtSpriteFactory.RuntimeSpriteId.EagleThreat);
                     _predatorOverlay?.Pulse(0.7f, 0.12f);
                     SpawnAt(_game.PredatorObject, RuntimeArtSpriteFactory.RuntimeSpriteId.WarningAlert, 0.06f, new Color(1f, 0.2f, 0.2f, 0.82f));
+                    break;
+                case GameManager.FeedbackKind.PredatorAttack:
+                    SetOverlaySprite(_predatorOverlay, RuntimeArtSpriteFactory.RuntimeSpriteId.PredatorAttack);
+                    _predatorOverlay?.Pulse(0.7f, 0.14f);
+                    SpawnAt(_game.PredatorObject, RuntimeArtSpriteFactory.RuntimeSpriteId.WarningAlert, 0.06f, new Color(1f, 0.2f, 0.2f, 0.82f));
+                    break;
+                case GameManager.FeedbackKind.PartnerRescue:
+                    SpawnAt(_game.PredatorObject, RuntimeArtSpriteFactory.RuntimeSpriteId.RescueBurst, 0.055f, new Color(0.55f, 1f, 0.7f, 0.9f));
                     break;
                 case GameManager.FeedbackKind.UnitedBark:
                     SpawnTeamBarkBurst();
@@ -182,11 +202,15 @@ namespace CheddarAndCocoa.Game
                     SpawnAt(_game.RopeObject, RuntimeArtSpriteFactory.RuntimeSpriteId.SuccessPop, 0.045f, new Color(1f, 0.92f, 0.35f, 0.9f));
                     break;
                 case GameManager.FeedbackKind.LevelClear:
+                    SetOverlaySprite(_ropeOverlay, RuntimeArtSpriteFactory.RuntimeSpriteId.RopeComplete);
                     SpawnAt(_game.RopeObject, RuntimeArtSpriteFactory.RuntimeSpriteId.SuccessPop, 0.08f, new Color(0.65f, 1f, 0.55f, 0.9f));
                     SpawnTeamBarkBurst();
                     break;
                 case GameManager.FeedbackKind.GameOver:
-                    SpawnAt(_game.PredatorObject != null && _game.PredatorObject.activeInHierarchy ? _game.PredatorObject : _game.SquirrelObject, RuntimeArtSpriteFactory.RuntimeSpriteId.WarningAlert, 0.07f, new Color(1f, 0.35f, 0.3f, 0.9f));
+                    SpawnAt(_game.PredatorObject != null && _game.PredatorObject.activeInHierarchy ? _game.PredatorObject : _game.SquirrelObject, RuntimeArtSpriteFactory.RuntimeSpriteId.FailPuff, 0.07f, new Color(1f, 0.35f, 0.3f, 0.9f));
+                    break;
+                default:
+                    SetOverlaySprite(_squirrelOverlay, RuntimeArtSpriteFactory.RuntimeSpriteId.Squirrel);
                     break;
             }
         }
@@ -209,8 +233,9 @@ namespace CheddarAndCocoa.Game
             }
             if (count > 0) pos /= count;
             pos += Vector3.up * 0.65f;
+            BackyardArtVfxPulse.Spawn(pos, RuntimeArtSpriteFactory.RuntimeSpriteId.BarkRing, new Vector3(0.11f, 0.11f, 1f), 59, new Color(1f, 1f, 1f, 0.65f), 0.65f, 90f);
             BackyardArtVfxPulse.Spawn(pos, RuntimeArtSpriteFactory.RuntimeSpriteId.BarkBurst, new Vector3(0.075f, 0.075f, 1f), 60, new Color(1f, 1f, 1f, 0.9f), 0.55f, 120f);
-            VfxSpawnCount++;
+            VfxSpawnCount += 2;
         }
 
         private void SpawnAt(GameObject target, RuntimeArtSpriteFactory.RuntimeSpriteId spriteId, float scale, Color tint)
