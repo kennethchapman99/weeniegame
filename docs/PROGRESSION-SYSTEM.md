@@ -1,6 +1,6 @@
 # Adventure Progression System
 
-Status: foundation plus first generated map/bridge pass are committed. Unity still needs to be opened locally to import the new scripts and run the full PlayMode suite before this should be treated as green.
+Status: foundation, generated map UI, generated AdventureMap scene, build-settings entry, ArenaScene launch bridge, and progression tests are committed to `main`. Unity still needs to be opened locally to import the new scripts/scene and run the full PlayMode suite before this should be treated as green.
 
 ## Why This Exists
 
@@ -38,7 +38,9 @@ The implementation is intentionally boring:
 
 `unity/CheddarAndCocoa/Assets/Scripts/Game/AdventureMapHud.cs` is a generated IMGUI map HUD for early testing. It shows location nodes, locked state, mission rows, bests, and launches unlocked missions. It is intentionally not final UI.
 
-`unity/CheddarAndCocoa/Assets/Scripts/Game/AdventureMapBootstrap.cs` can be placed into a future empty AdventureMap scene to create the generated HUD.
+`unity/CheddarAndCocoa/Assets/Scripts/Game/AdventureMapBootstrap.cs` creates `AdventureMapHud` in the generated scene.
+
+`unity/CheddarAndCocoa/Assets/Scenes/AdventureMapScene.unity` is a hand-authored minimal scene containing `AdventureMapBootstrap`. It is now listed first in `ProjectSettings/EditorBuildSettings.asset`, ahead of `ArenaScene`, so packaged startup should open the map once Unity validates the scene.
 
 This is a code-first bridge. A later pass can move the location catalog into authored ScriptableObject assets without changing the save format.
 
@@ -89,19 +91,20 @@ Rules:
 
 ## Current Map Flow
 
-1. A future AdventureMap scene should contain `AdventureMapBootstrap` or directly add `AdventureMapHud`.
-2. `AdventureMapHud` loads progress with `AdventureProgressService.LoadDefault()`.
-3. `AdventureMapController` renders/gates locations and mission rows.
-4. Starting an unlocked mission calls `AdventureMissionLaunch.QueueMission(...)` and loads `ArenaScene`.
-5. `AdventureArenaProgressBridge` sees the queued launch when ArenaScene loads, starts the selected mission, and waits for the end screen.
-6. On clear/fail, it records:
+1. Build startup now points at `Assets/Scenes/AdventureMapScene.unity`.
+2. `AdventureMapBootstrap` creates `AdventureMapHud`.
+3. `AdventureMapHud` loads progress with `AdventureProgressService.LoadDefault()`.
+4. `AdventureMapController` renders/gates locations and mission rows.
+5. Starting an unlocked mission calls `AdventureMissionLaunch.QueueMission(...)` and loads `ArenaScene`.
+6. `AdventureArenaProgressBridge` sees the queued launch when ArenaScene loads, starts the selected mission, and waits for the end screen.
+7. On clear/fail, it records:
 
 ```csharp
 progress.RecordMissionResult(game.ActiveMissionVariant, game.Score, game.StarRating, game.EndRank, game.Outcome == GameManager.MissionOutcome.Clear);
 progress.Save();
 ```
 
-7. Returning to the map is not implemented yet; current flow proves launch + record. The next pass should add an explicit Map/Continue action on the end screen or a separate return mechanism.
+8. Returning to the map is not implemented yet; current flow proves launch + record. The next pass should add an explicit Map/Continue action on the end screen or a separate return mechanism.
 
 ## Tests Added
 
@@ -124,14 +127,16 @@ progress.Save();
 
 ## Remaining Validation / Next Pass
 
-1. Open Unity so the new scripts and `.meta` files import.
+1. Open Unity so the new scripts, tests, scene, and `.meta` files import.
 2. Run the full PlayMode suite.
 3. Fix compile/import issues from the new files if any.
-4. Create an actual `AdventureMap` scene with `AdventureMapBootstrap`.
-5. Add it to build settings ahead of ArenaScene if that is the desired launch order.
-6. Add a return-to-map path from ArenaScene end screen.
-7. Decide whether direct ArenaScene play should remain local-only or also persist results.
-8. Update `docs/ARENA-PLAYABLE.md` once scene flow is verified in Unity.
+4. Verify packaged startup opens AdventureMapScene.
+5. Start Backyard Rescue from the map and confirm ArenaScene starts that mission.
+6. Complete or fail the mission and confirm `adventure-progress.json` is written.
+7. Relaunch and confirm best score/stars/rank appear on the map.
+8. Add a return-to-map path from ArenaScene end screen.
+9. Decide whether direct ArenaScene play should remain local-only or also persist results.
+10. Update `docs/ARENA-PLAYABLE.md` once scene flow is verified in Unity.
 
 ## Guardrails
 
