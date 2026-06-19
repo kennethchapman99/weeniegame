@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using UnityEngine;
 using CheddarAndCocoa.Game;
+using CheddarAndCocoa.Dogs;
 
 namespace CheddarAndCocoa.Tests
 {
@@ -20,6 +21,15 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual("ArenaFinal/Characters/Squirrel/squirrel_idle", FinalGameplayArt.PathFor(RuntimeArtSpriteFactory.RuntimeSpriteId.Squirrel));
             Assert.AreEqual("ArenaFinal/Props/Mission/weenie_collectible", FinalGameplayArt.PathFor(RuntimeArtSpriteFactory.RuntimeSpriteId.WeenieCollectible));
             Assert.AreEqual("ArenaFinal/VFX/bark_burst", FinalGameplayArt.PathFor(RuntimeArtSpriteFactory.RuntimeSpriteId.BarkBurst));
+        }
+
+        [Test]
+        public void FinalDogPoseArt_ProvidesStableCheddarCocoaPosePaths()
+        {
+            Assert.AreEqual("ArenaFinal/Characters/Dogs/Cheddar/cheddar_idle", FinalDogPoseArt.PathFor(DogId.Cheddar, DogReadabilityFeedback.Pose.Idle));
+            Assert.AreEqual("ArenaFinal/Characters/Dogs/Cheddar/cheddar_bark", FinalDogPoseArt.PathFor(DogId.Cheddar, DogReadabilityFeedback.Pose.Bark));
+            Assert.AreEqual("ArenaFinal/Characters/Dogs/Cocoa/cocoa_run", FinalDogPoseArt.PathFor(DogId.Cocoa, DogReadabilityFeedback.Pose.Run));
+            Assert.DoesNotThrow(() => ArenaDogPoseSprites.For(DogId.Cheddar, DogReadabilityFeedback.Pose.Idle));
         }
 
         [Test]
