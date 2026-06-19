@@ -15,6 +15,9 @@ namespace CheddarAndCocoa.Dogs
 
         public static Sprite For(DogId dog, DogReadabilityFeedback.Pose pose)
         {
+            Sprite final = FinalDogPoseArt.For(dog, pose);
+            if (final != null) return final;
+
             string key = $"{dog}_{pose}";
             if (Cache.TryGetValue(key, out var cached)) return cached;
 

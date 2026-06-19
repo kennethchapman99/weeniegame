@@ -287,8 +287,8 @@ namespace CheddarAndCocoa.Tests
             Assert.That(cocoaFeedback.ArtDirectionSignature, Does.Contain("chocolate-spot"));
             Assert.IsTrue(cheddarFeedback.UsesAuthoredPoseArt);
             Assert.IsTrue(cocoaFeedback.UsesAuthoredPoseArt);
-            Assert.That(cheddarFeedback.AuthoredPoseSpriteName, Does.Contain("Cheddar_Idle"));
-            Assert.That(cocoaFeedback.AuthoredPoseSpriteName, Does.Contain("Cocoa_Idle"));
+            Assert.That(cheddarFeedback.AuthoredPoseSpriteName, Is.EqualTo("cheddar_idle"));
+            Assert.That(cocoaFeedback.AuthoredPoseSpriteName, Is.EqualTo("cocoa_idle"));
             AssertHasChildren(cheddar.transform, ArenaArtCatalog.DogPartNames(DogId.Cheddar));
             AssertHasChildren(cocoa.transform, ArenaArtCatalog.DogPartNames(DogId.Cocoa));
             Assert.IsNotNull(cheddar.transform.Find(ArenaDraftArt.CheddarPortraitBadgeName));
@@ -314,14 +314,14 @@ namespace CheddarAndCocoa.Tests
             yield return null;
             Assert.IsTrue(LogContains(game, "Bark: Cheddar"));
             Assert.AreEqual(DogReadabilityFeedback.Pose.Bark, cheddarFeedback.CurrentPose);
-            Assert.That(cheddarFeedback.AuthoredPoseSpriteName, Does.Contain("Cheddar_Bark"));
+            Assert.That(cheddarFeedback.AuthoredPoseSpriteName, Is.EqualTo("cheddar_bark"));
             Assert.That(cheddarFeedback.IdentityLabel, Does.Contain("WOOF!"));
             Assert.AreEqual(GameManager.FeedbackKind.SoloBark, game.LastFeedback);
             Assert.AreEqual(GameManager.JuiceFeedbackKind.BarkBurst, game.LastJuiceFeedback);
             Assert.That(game.LastJuiceLabel, Does.Contain("BARK BURST"));
             Assert.IsNotNull(GameObject.Find(ArenaArtCatalog.BarkFeedback.BurstName));
             Assert.IsNotNull(GameObject.Find(ArenaArtCatalog.BarkFeedback.RingName));
-            Assert.IsNotNull(GameObject.Find(ArenaDraftArt.VfxBarkBadgeName));
+            Assert.IsNotNull(GameObject.Find(BarkEffect.FinalBurstName));
 
             var rb = cheddar.GetComponent<Rigidbody2D>();
             cheddar.GetComponent<CheddarAndCocoa.Input.GamepadPlayerInput>().enabled = false;

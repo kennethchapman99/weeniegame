@@ -76,6 +76,9 @@ namespace CheddarAndCocoa.Bootstrap
                 new[] { cheddar.GetComponent<GamepadPlayerInput>(), cocoa.GetComponent<GamepadPlayerInput>() },
                 _square, _ring, bounds, treatSeed);
 
+            game.gameObject.AddComponent<BackyardRescueArtEnhancer>().Init(game);
+            game.gameObject.AddComponent<DynamicTreatArtEnhancer>().Init(game);
+
             // Score/timer/game-over overlay.
             var hud = new GameObject(ArenaArtCatalog.ArenaHudObjectName).AddComponent<ArenaHud>();
             hud.Init(game);
