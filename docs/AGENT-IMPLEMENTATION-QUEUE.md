@@ -83,15 +83,16 @@ Read:
 - `docs/GAME-DESIGN-BIBLE.md` / **Co-op puzzle magic standard**
 - `docs/MISSION-SYSTEM.md` / **Co-op Puzzle Beat Requirement**
 - `docs/PRODUCTION-BACKLOG.md` / **Phase 0: Co-op Puzzle Quality Pass**
-- `docs/PUZZLE-BEAT-DISHWASHER-CATAPULT.md` as a concrete example of the desired lock/key, gross comedy, and dog-specific co-op dependency for future Kitchen / House Chaos work.
+- `docs/PUZZLE-BEAT-DISHWASHER-CATAPULT.md` as concrete examples of two separate future Kitchen / House Chaos puzzle beats.
 
 First targets:
 1. **Backyard Rescue** — add a squirrel trap / redirected escape beat.
 2. **Snack Heist** — add a distract-and-sneak food theft beat.
 3. **Sock Panic** — add a laundry basket / hidden sock beat.
 
-Future Kitchen candidate:
-- **Dishwasher Catapult / Barf Pressure Plate** — Cheddar eats people food to charge a Barf Meter and activate a gross pressure sensor, while Cocoa/partner pins the springy dishwasher door so the dogs can reach the food without being launched.
+Future Kitchen candidates:
+- **Cheddar Barf Pressure Sensor** — Cheddar eats people food to charge a Barf Meter and activate a gross pressure sensor; the partner helps guide, block, or position him so the barf lands on the target.
+- **Dishwasher Catapult / Hold-Down Platform** — one dog pins the springy dishwasher door so the partner can safely reach/eat/cross; otherwise the unpinned door launches the dog standing on it.
 
 Acceptance:
 - Each upgraded mission has a named Co-op Puzzle Beat in docs and code comments/test names where useful.
