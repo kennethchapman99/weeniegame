@@ -88,5 +88,33 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(0, game.LeashWalkState.Snaps);
             Assert.AreEqual(0, game.CarRideState.Spills);
         }
+
+        [UnityTest]
+        public IEnumerator CompleteTwelveMissionSession_OffersExplicitVictoryLap()
+        {
+            yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
+            yield return null;
+            yield return null;
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            Assert.IsNotNull(game);
+
+            for (int i = 0; i < game.MissionSelectOptionCount; i++)
+            {
+                game.StartMission(game.MissionVariantAt(i));
+                game.ForceGameOver();
+            }
+
+            Assert.IsTrue(game.SessionAllMissionsCompleted);
+            Assert.AreEqual(12, game.SessionUniqueMissionsCompleted);
+            Assert.AreEqual("Victory Lap", game.SessionContinueActionLabel);
+            Assert.That(game.SessionSummaryLabel, Does.StartWith("Backyard legends! Cheddar + Cocoa"));
+
+            game.ShowSessionSummary();
+            game.ContinueSession();
+            Assert.AreEqual(GameManager.MissionVariant.BackyardRescue, game.ActiveMissionVariant,
+                "A victory lap should wrap cleanly to the first mission.");
+            Assert.AreEqual(GameManager.FlowState.Playing, game.CurrentFlow);
+        }
     }
 }

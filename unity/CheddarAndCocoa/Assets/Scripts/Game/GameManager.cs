@@ -224,8 +224,10 @@ namespace CheddarAndCocoa.Game
         public int SessionStarsEarned { get; private set; }
         public int SessionFlawlessClears { get; private set; }
         public int SessionUniqueMissionsCompleted { get; private set; }
+        public bool SessionAllMissionsCompleted => SessionUniqueMissionsCompleted >= MissionOrder.Length;
         public bool SessionSummaryReady => SessionUniqueMissionsCompleted >= 3 &&
             SessionUniqueMissionsCompleted / 3 > _lastSummaryMilestoneShown;
+        public string SessionContinueActionLabel => SessionAllMissionsCompleted ? "Victory Lap" : "Continue Session";
         public string SessionSummaryLabel { get; private set; } = "Session Summary: no missions played yet.";
         public string SessionRanksEarnedLabel { get; private set; } = "Ranks: none yet.";
         public ArenaMissionTuning Tuning => _tuning;
@@ -3281,7 +3283,10 @@ namespace CheddarAndCocoa.Game
 
         private void UpdateSessionSummaryLabel()
         {
-            SessionSummaryLabel = $"Session Summary: {SessionMissionsPlayed} missions played, {SessionTotalScore} total score, {SessionStarsEarned} stars, {SessionFlawlessClears} flawless, {SessionUniqueMissionsCompleted}/{MissionOrder.Length} missions finished.";
+            string lead = SessionAllMissionsCompleted
+                ? "Backyard legends! Cheddar + Cocoa finished every mission."
+                : "Session Summary:";
+            SessionSummaryLabel = $"{lead} {SessionMissionsPlayed} missions played, {SessionTotalScore} score, {SessionStarsEarned} stars, {SessionFlawlessClears} flawless, {SessionUniqueMissionsCompleted}/{MissionOrder.Length} finished.";
             if (_sessionRanks.Count == 0)
             {
                 SessionRanksEarnedLabel = "Recent ranks: none yet.";

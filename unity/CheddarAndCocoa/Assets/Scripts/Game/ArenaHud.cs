@@ -207,12 +207,13 @@ namespace CheddarAndCocoa.Game
             GUI.Label(new Rect(box.x, box.y + 18, w, 42), "Session Summary", _big);
             GUI.Label(new Rect(box.x + 40, box.y + 76, w - 80, 32), _game.SessionSummaryLabel, _mid);
             GUI.Label(new Rect(box.x + 40, box.y + 116, w - 80, 72), _game.SessionRanksEarnedLabel, _small);
-            GUI.Label(new Rect(box.x + 40, box.y + 188, w - 80, 28), "Enter / Start continues • M / Escape opens mission select", _mid);
+            string continuePrompt = _game.SessionAllMissionsCompleted ? "begins a Victory Lap" : "continues";
+            GUI.Label(new Rect(box.x + 40, box.y + 188, w - 80, 28), $"Enter / Start {continuePrompt} • M / Escape opens mission select", _mid);
 
             float buttonGap = 10f;
             float buttonWidth = (w - 40f - buttonGap * 2f) / 3f;
             float buttonStart = box.x + (w - buttonWidth * 3f - buttonGap * 2f) * 0.5f;
-            if (GUI.Button(new Rect(buttonStart, box.y + h - 44, buttonWidth, 30), "Continue Session"))
+            if (GUI.Button(new Rect(buttonStart, box.y + h - 44, buttonWidth, 30), _game.SessionContinueActionLabel))
                 _game.ContinueSession();
             if (GUI.Button(new Rect(buttonStart + buttonWidth + buttonGap, box.y + h - 44, buttonWidth, 30), "Mission Select"))
                 _game.ReturnToMissionSelect();

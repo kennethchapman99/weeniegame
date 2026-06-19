@@ -346,7 +346,7 @@ Mission flow controls:
 - During a run: **Escape** or gamepad **Start** pauses. The pause card can resume, return safely to
   mission select, or quit the packaged player; pausing freezes mission time and dog input.
 - End screen: **R / Enter / Start / South** replays; **N / Right Arrow / Right Shoulder / D-pad Right** advances; **M / Escape / East / D-pad Left** returns to mission select.
-- Session Summary: **Enter**, **Space**, **Start**, **South**, **M**, or **Escape** returns to mission select.
+- Session Summary: **Enter**, **Space**, **Start**, **South**, or **Right Shoulder** continues to the next unfinished mission; **M**, **Escape**, or gamepad **East** returns to mission select. Finishing all 12 changes Continue to an explicit **Victory Lap** that wraps to mission one; **New Session** clears all local results.
 - Playtest Mode: click the bottom-left **Playtest Mode: On/Off** button or press **F1** / **`**. It toggles a compact top-right diagnostics overlay and does not pause or block normal play.
 - Placeholder feedback toggles: **F2** toggles generated audio cues; **F3** toggles gamepad rumble requests. Both default to on.
 
