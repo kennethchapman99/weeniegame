@@ -26,20 +26,35 @@ ArenaFinal/
         cocoa_rescued.png
         cocoa_proud.png
         cocoa_sad.png
-    Squirrel/squirrel_idle.png
-    Eagle/eagle_threat.png
-    Coyote/coyote_threat.png
+    Squirrel/
+      squirrel_idle.png
+      squirrel_steal.png
+      squirrel_scared.png
+    Eagle/
+      eagle_threat.png
+      eagle_action.png
+    Coyote/
+      coyote_threat.png
   Props/
-    Backyard/bush.png
-    Backyard/fence_section.png
-    Backyard/rock.png
-    Mission/rope_tug.png
-    Mission/weenie_collectible.png
+    Backyard/
+      bush.png
+      fence_section.png
+      rock.png
+      grass_patch.png
+      dig_spot.png
+    Mission/
+      rope_tug.png
+      rope_complete.png
+      weenie_collectible.png
+      dog_bowl.png
   VFX/
     bark_burst.png
+    bark_ring.png
     pickup_sparkle.png
     success_pop.png
     warning_alert.png
+    rescue_burst.png
+    fail_puff.png
 ```
 
 Import guidance:
