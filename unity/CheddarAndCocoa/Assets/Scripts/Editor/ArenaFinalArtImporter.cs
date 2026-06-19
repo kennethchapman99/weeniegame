@@ -15,6 +15,14 @@ namespace CheddarAndCocoa.EditorTools
             importer.textureType = TextureImporterType.Sprite;
             importer.spriteImportMode = SpriteImportMode.Single;
             importer.spritePixelsPerUnit = 256f;
+            if (assetPath.Contains("/Motion/", System.StringComparison.Ordinal))
+            {
+                var settings = new TextureImporterSettings();
+                importer.ReadTextureSettings(settings);
+                settings.spriteAlignment = (int)SpriteAlignment.Custom;
+                settings.spritePivot = new Vector2(0.5f, 0.0625f);
+                importer.SetTextureSettings(settings);
+            }
             importer.mipmapEnabled = false;
             importer.alphaSource = TextureImporterAlphaSource.FromInput;
             importer.alphaIsTransparency = true;

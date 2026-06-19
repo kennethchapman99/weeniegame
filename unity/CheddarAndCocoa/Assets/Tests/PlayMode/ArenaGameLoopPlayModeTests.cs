@@ -287,8 +287,8 @@ namespace CheddarAndCocoa.Tests
             Assert.That(cocoaFeedback.ArtDirectionSignature, Does.Contain("chocolate-spot"));
             Assert.IsTrue(cheddarFeedback.UsesAuthoredPoseArt);
             Assert.IsTrue(cocoaFeedback.UsesAuthoredPoseArt);
-            Assert.That(cheddarFeedback.AuthoredPoseSpriteName, Is.EqualTo("cheddar_idle"));
-            Assert.That(cocoaFeedback.AuthoredPoseSpriteName, Is.EqualTo("cocoa_idle"));
+            Assert.That(cheddarFeedback.AuthoredPoseSpriteName, Does.StartWith("cheddar_idle"));
+            Assert.That(cocoaFeedback.AuthoredPoseSpriteName, Does.StartWith("cocoa_idle"));
             AssertHasChildren(cheddar.transform, ArenaArtCatalog.DogPartNames(DogId.Cheddar));
             AssertHasChildren(cocoa.transform, ArenaArtCatalog.DogPartNames(DogId.Cocoa));
             Assert.IsNotNull(cheddar.transform.Find(ArenaDraftArt.CheddarPortraitBadgeName));
@@ -314,7 +314,7 @@ namespace CheddarAndCocoa.Tests
             yield return null;
             Assert.IsTrue(LogContains(game, "Bark: Cheddar"));
             Assert.AreEqual(DogReadabilityFeedback.Pose.Bark, cheddarFeedback.CurrentPose);
-            Assert.That(cheddarFeedback.AuthoredPoseSpriteName, Is.EqualTo("cheddar_bark"));
+            Assert.That(cheddarFeedback.AuthoredPoseSpriteName, Does.StartWith("cheddar_bark"));
             Assert.That(cheddarFeedback.IdentityLabel, Does.Contain("WOOF!"));
             Assert.AreEqual(GameManager.FeedbackKind.SoloBark, game.LastFeedback);
             Assert.AreEqual(GameManager.JuiceFeedbackKind.BarkBurst, game.LastJuiceFeedback);

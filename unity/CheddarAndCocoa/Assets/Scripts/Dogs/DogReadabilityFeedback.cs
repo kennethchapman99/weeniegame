@@ -11,6 +11,9 @@ namespace CheddarAndCocoa.Dogs
     [RequireComponent(typeof(DogIdentity))]
     public sealed class DogReadabilityFeedback : MonoBehaviour
     {
+        private static readonly Vector3 AuthoredFallbackScale = new Vector3(0.8f, 1.65f, 1f);
+        private static readonly Vector3 AuthoredMotionScale = new Vector3(1.12f, 2.3f, 1f);
+
         public enum Pose
         {
             Idle,
@@ -45,6 +48,7 @@ namespace CheddarAndCocoa.Dogs
         private Pose _forcedPose;
         private float _forcedPoseUntil;
         private float _barkUntil;
+        private float _barkStartedAt;
         private float _nextPawTrailAt;
         private Sprite _sprite;
         private DogVisualSlot _art;
@@ -57,6 +61,8 @@ namespace CheddarAndCocoa.Dogs
         public float StrategicLabelScale { get; private set; } = 1f;
         public bool UsesAuthoredPoseArt => _authoredPose != null && _authoredPose.sprite != null;
         public string AuthoredPoseSpriteName => UsesAuthoredPoseArt ? _authoredPose.sprite.name : string.Empty;
+        public int MotionFrameIndex { get; private set; } = -1;
+        public string MotionClipLabel { get; private set; } = string.Empty;
         public string ArtDirectionSignature => _identity == null
             ? string.Empty
             : ArenaArtCatalog.Dog(_identity.Id).ArtDirectionSignature;
@@ -94,7 +100,11 @@ namespace CheddarAndCocoa.Dogs
             if (_dog != null) _dog.OnBark -= OnBark;
         }
 
-        private void OnBark(DogId _) => _barkUntil = Time.time + 0.35f;
+        private void OnBark(DogId _)
+        {
+            _barkStartedAt = Time.time;
+            _barkUntil = Time.time + 0.35f;
+        }
 
         private void ForcePose(Pose pose, float seconds)
         {
@@ -130,7 +140,10 @@ namespace CheddarAndCocoa.Dogs
             CurrentPose = pose;
 
             if (_authoredPose != null)
+            {
                 _authoredPose.sprite = ArenaDogPoseSprites.For(_identity.Id, pose);
+                _authoredPose.transform.localScale = AuthoredFallbackScale;
+            }
 
             if (_label != null)
             {
@@ -161,6 +174,7 @@ namespace CheddarAndCocoa.Dogs
                 : 0.22f;
             if (velocity.magnitude > runFeedbackSpeed) _lastIntentDir = velocity.normalized;
             if (_authoredPose != null) _authoredPose.flipX = _lastIntentDir.x < 0f;
+            AnimateAuthoredMotion(pose);
 
             transform.localRotation = pose switch
             {
@@ -268,6 +282,32 @@ namespace CheddarAndCocoa.Dogs
             TickMovementJuice(pose, velocity, runFeedbackSpeed);
         }
 
+        private void AnimateAuthoredMotion(Pose pose)
+        {
+            if (_authoredPose == null || !CharacterMotionArt.TryClip(pose, out var clip))
+            {
+                MotionFrameIndex = -1;
+                MotionClipLabel = string.Empty;
+                return;
+            }
+
+            float elapsed = clip == CharacterMotionArt.Clip.Bark ? Time.time - _barkStartedAt : Time.time;
+            int frame = CharacterMotionArt.FrameAtTime(_identity.Id, clip, elapsed);
+            Sprite sprite = CharacterMotionArt.Load(_identity.Id, clip, CharacterMotionArt.Facing8.E, frame);
+            if (sprite == null)
+            {
+                MotionFrameIndex = -1;
+                MotionClipLabel = string.Empty;
+                return;
+            }
+
+            _authoredPose.sprite = sprite;
+            _authoredPose.transform.localScale = AuthoredMotionScale;
+            _authoredPose.flipX = _lastIntentDir.x < 0f;
+            MotionFrameIndex = frame;
+            MotionClipLabel = clip.ToString();
+        }
+
         private void TickMovementJuice(Pose pose, Vector2 velocity, float runFeedbackSpeed)
         {
             if (pose != Pose.Run || velocity.magnitude <= runFeedbackSpeed || Time.time < _nextPawTrailAt)
@@ -345,7 +385,7 @@ namespace CheddarAndCocoa.Dogs
             var go = new GameObject($"{_identity.Id}AuthoredPose");
             go.transform.SetParent(transform);
             go.transform.localPosition = new Vector3(0f, -0.12f, -0.2f);
-            go.transform.localScale = new Vector3(0.8f, 1.65f, 1f);
+            go.transform.localScale = AuthoredFallbackScale;
             _authoredPose = go.AddComponent<SpriteRenderer>();
             _authoredPose.sprite = idle;
             _authoredPose.sortingOrder = 30;

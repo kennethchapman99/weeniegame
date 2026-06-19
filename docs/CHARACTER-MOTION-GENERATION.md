@@ -35,3 +35,9 @@ Same 4x3 action order, but motion language is purposeful run, authoritative bark
 - Cheddar's action board is the stronger motion-language reference. Cocoa's hide includes a bush and comfort reads as a composed sit; those cells need targeted regeneration if selected for production.
 
 Next generation should be clip-by-clip after human board approval, one direction and animation strip at a time. This reduces identity drift and makes transparent extraction, frame spacing, and paw-baseline validation tractable.
+
+## Tier-A locomotion generation
+
+After the reference boards were approved, the built-in tool generated one 4x3 east-facing sheet per dog against a flat near-white background. Each sheet uses four idle frames, four run frames, and four bark frames. The Cheddar prompt emphasized settle/head-lift/tail-wag, airborne chaos-run phases, and explosive bark recovery. The Cocoa prompt used the same timing contract with planted landings, controlled tail motion, and an authoritative bark.
+
+`tools/art/export_character_motion_tier_a.py` removes only edge-connected near-white background, excludes neighboring-cell bleed, applies one scale per dog sheet, places every frame on a 512x384 canvas with a common 24-pixel paw baseline, and exports 24 runtime PNGs. `--contact-sheet` produces a temporary visual QA board. The promoted files pass true-alpha validation; the RGB source sheets remain reference-only.

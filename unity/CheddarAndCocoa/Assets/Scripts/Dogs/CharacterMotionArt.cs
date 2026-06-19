@@ -26,6 +26,30 @@ namespace CheddarAndCocoa.Dogs
             return directional != null ? directional : FinalDogPoseArt.For(dog, FallbackPose(clip));
         }
 
+        public static bool TryClip(DogReadabilityFeedback.Pose pose, out Clip clip)
+        {
+            switch (pose)
+            {
+                case DogReadabilityFeedback.Pose.Idle: clip = Clip.Idle; return true;
+                case DogReadabilityFeedback.Pose.Run: clip = Clip.Run; return true;
+                case DogReadabilityFeedback.Pose.Bark: clip = Clip.Bark; return true;
+                default: clip = default; return false;
+            }
+        }
+
+        public static int FrameAtTime(DogId dog, Clip clip, float elapsedSeconds)
+        {
+            float fps = clip switch
+            {
+                Clip.Idle => dog == DogId.Cheddar ? 3.2f : 2.5f,
+                Clip.Run => dog == DogId.Cheddar ? 10f : 8.5f,
+                Clip.Bark => 11f,
+                _ => 1f
+            };
+            int frame = Mathf.Max(0, Mathf.FloorToInt(Mathf.Max(0f, elapsedSeconds) * fps));
+            return clip == Clip.Bark ? Mathf.Min(3, frame) : frame % 4;
+        }
+
         private static DogReadabilityFeedback.Pose FallbackPose(Clip clip) => clip switch
         {
             Clip.Run => DogReadabilityFeedback.Pose.Run,

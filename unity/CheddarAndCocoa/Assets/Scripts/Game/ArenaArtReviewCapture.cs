@@ -4,6 +4,7 @@ using System.IO;
 using System.Text;
 using CheddarAndCocoa.CameraRig;
 using CheddarAndCocoa.Dogs;
+using CheddarAndCocoa.Input;
 using UnityEngine;
 
 namespace CheddarAndCocoa.Game
@@ -47,13 +48,28 @@ namespace CheddarAndCocoa.Game
             yield return Capture("01-local-gameplay.ppm");
 
             DogController[] dogs = FindObjectsByType<DogController>(FindObjectsSortMode.None);
+            foreach (var dog in dogs)
+            {
+                var input = dog.GetComponent<GamepadPlayerInput>();
+                if (input != null) input.enabled = false;
+                dog.GetComponent<Rigidbody2D>().linearVelocity = Vector2.right * 5f;
+            }
+            yield return new WaitForSecondsRealtime(0.14f);
+            yield return Capture("02-run.ppm");
+            foreach (var dog in dogs)
+            {
+                dog.GetComponent<Rigidbody2D>().linearVelocity = Vector2.zero;
+                var input = dog.GetComponent<GamepadPlayerInput>();
+                if (input != null) input.enabled = true;
+            }
+
             if (dogs.Length > 0) dogs[0].Bark();
             yield return new WaitForSecondsRealtime(0.08f);
-            yield return Capture("02-bark.ppm");
+            yield return Capture("03-bark.ppm");
 
             _game.ForcePredatorWarning();
             yield return new WaitForSecondsRealtime(0.12f);
-            yield return Capture("03-warning.ppm");
+            yield return Capture("04-warning.ppm");
             yield return new WaitForSecondsRealtime(0.8f);
 
             _game.ForcePredatorAttack();
@@ -64,7 +80,7 @@ namespace CheddarAndCocoa.Game
                 dog.Bark();
             }
             yield return new WaitForSecondsRealtime(0.12f);
-            yield return Capture("04-rescue.ppm");
+            yield return Capture("05-rescue.ppm");
             yield return new WaitForSecondsRealtime(0.9f);
 
             Camera camera = Camera.main;
@@ -78,7 +94,7 @@ namespace CheddarAndCocoa.Game
                 camera.orthographicSize = Mathf.Max(bounds.height * 0.5f + 2f, bounds.width * 0.5f / aspect + 2f);
             }
             yield return new WaitForSecondsRealtime(0.2f);
-            yield return Capture("05-full-yard.ppm");
+            yield return Capture("06-full-yard.ppm");
 
             Debug.Log($"Arena art review captures complete: {_outputDirectory}");
             Application.Quit();

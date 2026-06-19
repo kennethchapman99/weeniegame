@@ -8,10 +8,14 @@
     "cocoa_turnaround_v01.png",
     "cocoa_action_keyposes_v01.png"
   ],
+  "tier_a_boards": [
+    "cheddar_tier_a_east_v01.png",
+    "cocoa_tier_a_east_v01.png"
+  ],
   "clips": [
-    { "name": "idle", "directions": "all", "frames": 2, "priority": "A" },
+    { "name": "idle", "directions": "all", "frames": 4, "priority": "A" },
     { "name": "run", "directions": "all", "frames": 4, "priority": "A" },
-    { "name": "bark", "directions": "all", "frames": 3, "priority": "A" },
+    { "name": "bark", "directions": "all", "frames": 4, "priority": "A" },
     { "name": "tug", "directions": ["e", "w"], "frames": 3, "priority": "A" },
     { "name": "dig", "directions": ["e", "s", "w"], "frames": 4, "priority": "B" },
     { "name": "carry", "directions": "all", "frames": 2, "priority": "B" },

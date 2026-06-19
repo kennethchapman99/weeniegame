@@ -14,6 +14,8 @@ Generated exploration lives under `Assets/Art/ReferenceOnly/GeneratedCharacterMo
 
 The initial four V01 boards are generated and intentionally remain reference-only. They establish a strong Cheddar/Cocoa identity and useful action silhouettes, but validation correctly rejects them as runtime sources because the generator baked a checkerboard into RGB output instead of producing true alpha. Direction ordering and Cocoa's comfort/hide props also need human review before any slicing.
 
+Tier A east-facing idle/run/bark boards are now generated separately against flat near-white backgrounds. The extraction pipeline exports 24 normalized 512x384 true-alpha frames with a shared paw-baseline pivot. Live gameplay plays those four-frame loops and mirrors them for west travel; north/south/diagonal direction art and every Tier B clip still use the established single-pose fallback. Current completion is **24/336 frames**.
+
 ## Camera and direction contract
 
 Directions are world-relative: `e`, `se`, `s`, `sw`, `w`, `nw`, `n`, `ne`. Every angle uses the same elevated three-quarter 2.5D gameplay camera, consistent body length, paw baseline, soft down-right grounding shadow, and centered body pivot. East/west may be mirrored only after asymmetric markings and collar reads have been checked.
@@ -22,13 +24,13 @@ At couch distance the order of importance is: long-low dachshund silhouette, fac
 
 ## Clip matrix
 
-The machine-readable source is `tools/art/character_motion_manifest.json`; it currently plans 288 individual frames across both dogs.
+The machine-readable source is `tools/art/character_motion_manifest.json`; it currently plans 336 individual frames across both dogs.
 
 | Tier | Clip | Directions | Frames/direction | Gameplay read |
 | --- | --- | ---: | ---: | --- |
-| A | idle | 8 | 2 | breathing/tail personality |
+| A | idle | 8 | 4 | breathing/tail personality |
 | A | run | 8 | 4 | traversal and facing |
-| A | bark | 8 | 3 | anticipation, bark pop, settle |
+| A | bark | 8 | 4 | anticipation, bark pop, settle |
 | A | tug | E/W | 3 | brace, pull, recover |
 | B | dig | E/S/W | 4 | sniff, paws, dirt kick, recover |
 | B | carry | 8 | 2 | readable held-object silhouette |
@@ -60,4 +62,4 @@ Cheddar motion should overshoot, lead with the head, and use loose ears/tail. Co
 - A 1920x1080 local-camera and full-yard capture confirms each motion remains readable.
 - Human approval is required before a generated board is sliced or promoted into ArenaFinal runtime frames.
 
-Run `python3 tools/art/validate_character_motion_pack.py --require-boards` after generating the four boards. Use `--require-runtime` only when an entire 288-frame pack is expected.
+Run `python3 tools/art/validate_character_motion_pack.py --require-boards` after generating the source boards. Use `--require-runtime` only when an entire 336-frame pack is expected.

@@ -32,6 +32,18 @@ namespace CheddarAndCocoa.Tests
             foreach (DogReadabilityFeedback.Pose pose in System.Enum.GetValues(typeof(DogReadabilityFeedback.Pose)))
                 Assert.IsNotNull(FinalDogPoseArt.For(dog, pose), $"Missing final pose {dog}/{pose}.");
 
+            foreach (DogId dog in new[] { DogId.Cheddar, DogId.Cocoa })
+            foreach (var clip in new[] { CharacterMotionArt.Clip.Idle, CharacterMotionArt.Clip.Run, CharacterMotionArt.Clip.Bark })
+            foreach (int frame in new[] { 0, 1, 2, 3 })
+                Assert.IsNotNull(CharacterMotionArt.Load(dog, clip, CharacterMotionArt.Facing8.E, frame),
+                    $"Missing Tier-A motion frame {dog}/{clip}/E/{frame}.");
+
+            Sprite motion = CharacterMotionArt.Load(DogId.Cheddar, CharacterMotionArt.Clip.Run,
+                CharacterMotionArt.Facing8.E, 0);
+            Assert.AreEqual(512, motion.rect.width);
+            Assert.AreEqual(384, motion.rect.height);
+            Assert.AreEqual(24f, motion.pivot.y, 0.1f, "Motion sprites should pivot on the normalized paw baseline.");
+
             Assert.IsNull(FinalGameplayArt.Load(FinalGameplayArt.Root + "missing_optional_sprite"));
         }
 
@@ -72,12 +84,18 @@ namespace CheddarAndCocoa.Tests
                 "ArenaFinal/Characters/Dogs/Cocoa/Motion/cocoa_bark_n_00",
                 CharacterMotionArt.ResourcePath(DogId.Cocoa, CharacterMotionArt.Clip.Bark,
                     CharacterMotionArt.Facing8.N, -4));
+            Assert.AreEqual("cheddar_run_e_02", CharacterMotionArt.Load(DogId.Cheddar,
+                CharacterMotionArt.Clip.Run, CharacterMotionArt.Facing8.E, 2).name);
             Assert.IsNull(CharacterMotionArt.Load(DogId.Cheddar, CharacterMotionArt.Clip.Run,
                 CharacterMotionArt.Facing8.SE, 2));
             Assert.AreEqual("cheddar_run", CharacterMotionArt.LoadOrFallback(DogId.Cheddar,
                 CharacterMotionArt.Clip.Run, CharacterMotionArt.Facing8.SE, 2).name);
             Assert.AreEqual("cocoa_idle", CharacterMotionArt.LoadOrFallback(DogId.Cocoa,
                 CharacterMotionArt.Clip.Carry, CharacterMotionArt.Facing8.N, 1).name);
+
+            Assert.AreEqual(0, CharacterMotionArt.FrameAtTime(DogId.Cheddar, CharacterMotionArt.Clip.Idle, 0f));
+            Assert.AreEqual(2, CharacterMotionArt.FrameAtTime(DogId.Cheddar, CharacterMotionArt.Clip.Run, 0.2f));
+            Assert.AreEqual(3, CharacterMotionArt.FrameAtTime(DogId.Cocoa, CharacterMotionArt.Clip.Bark, 10f));
         }
 
         [UnityTest]
@@ -98,6 +116,23 @@ namespace CheddarAndCocoa.Tests
             var cocoa = GameObject.Find("Cocoa");
             Assert.That(cheddar.GetComponent<DogReadabilityFeedback>().AuthoredPoseSpriteName, Does.Contain("cheddar_idle"));
             Assert.That(cocoa.GetComponent<DogReadabilityFeedback>().AuthoredPoseSpriteName, Does.Contain("cocoa_idle"));
+            Assert.That(cheddar.GetComponent<DogReadabilityFeedback>().MotionClipLabel, Is.EqualTo("Idle"));
+            Assert.That(cocoa.GetComponent<DogReadabilityFeedback>().MotionFrameIndex, Is.InRange(0, 3));
+            var cheddarInput = cheddar.GetComponent<CheddarAndCocoa.Input.GamepadPlayerInput>();
+            cheddarInput.enabled = false;
+            var cheddarBody = cheddar.GetComponent<Rigidbody2D>();
+            cheddarBody.linearVelocity = Vector2.right * 4f;
+            yield return new WaitForSeconds(0.14f);
+            var cheddarMotion = cheddar.GetComponent<DogReadabilityFeedback>();
+            Assert.AreEqual("Run", cheddarMotion.MotionClipLabel);
+            Assert.That(cheddarMotion.AuthoredPoseSpriteName, Does.StartWith("cheddar_run_e_"));
+            Assert.IsFalse(cheddar.transform.Find("CheddarAuthoredPose").GetComponent<SpriteRenderer>().flipX);
+            cheddarBody.linearVelocity = Vector2.left * 4f;
+            yield return new WaitForSeconds(0.14f);
+            Assert.IsTrue(cheddar.transform.Find("CheddarAuthoredPose").GetComponent<SpriteRenderer>().flipX,
+                "West travel should mirror the approved east-facing strip until west art is promoted.");
+            cheddarBody.linearVelocity = Vector2.zero;
+            cheddarInput.enabled = true;
             Assert.IsNotNull(cheddar.GetComponent<Collider2D>(), "Final art must not replace dog collision.");
             Assert.IsNotNull(game.SquirrelObject.transform.Find(BackyardRescueArtEnhancer.SquirrelOverlayName));
             Assert.IsNotNull(game.PredatorObject.transform.Find(BackyardRescueArtEnhancer.PredatorOverlayName));
