@@ -6,6 +6,8 @@ This is the execution queue for local Codex/Claude agents.
 
 Do not skip ahead to new levels until the current queue item is playable and tested.
 
+Every new or expanded mission must now include a named **Co-op Puzzle Beat** per `docs/COOP-PUZZLE-DESIGN.md`: player roles, lock/key dependency, readable hints, funny fail, world-state change, and deterministic test hooks where feasible.
+
 ## Queue 1: Wire Production Systems
 
 Goal: stop the new production types from being passive scaffolding.
@@ -71,6 +73,28 @@ Automated hardening complete:
 
 Remaining gates require a two-player blind playtest, final audio/art approval, and public signing/
 distribution credentials. See `docs/PRODUCTION-READINESS.md`.
+
+## Queue 6: Co-op Puzzle Quality Pass — NEXT
+
+Goal: upgrade the current mission set from straightforward objective loops into memorable co-op puzzle beats before adding many more levels.
+
+Read:
+- `docs/COOP-PUZZLE-DESIGN.md`
+- `docs/GAME-DESIGN-BIBLE.md` / **Co-op puzzle magic standard**
+- `docs/MISSION-SYSTEM.md` / **Co-op Puzzle Beat Requirement**
+- `docs/PRODUCTION-BACKLOG.md` / **Phase 0: Co-op Puzzle Quality Pass**
+
+First targets:
+1. **Backyard Rescue** — add a squirrel trap / redirected escape beat.
+2. **Snack Heist** — add a distract-and-sneak food theft beat.
+3. **Sock Panic** — add a laundry basket / hidden sock beat.
+
+Acceptance:
+- Each upgraded mission has a named Co-op Puzzle Beat in docs and code comments/test names where useful.
+- Each beat includes a role split, lock/key dependency, readable hinting, funny fail, and visible world-state change.
+- Each beat has deterministic PlayMode coverage where feasible.
+- Existing mission select, replay, next mission, pause, audio/rumble toggles, and release validation keep working.
+- The missions become more surprising without becoming harder to understand.
 
 ## Agent Reporting Format
 
