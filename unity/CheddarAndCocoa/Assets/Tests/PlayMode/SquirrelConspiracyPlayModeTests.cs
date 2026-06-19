@@ -13,6 +13,53 @@ namespace CheddarAndCocoa.Tests
         private GameManager _game;
         private DogController _cheddar;
         private DogController _cocoa;
+
+        [UnityTest]
+        public IEnumerator SquirrelConspiracy_AppearsInSelectWithDeterministicRouteAndCutoffs()
+        {
+            yield return LoadArena();
+
+            bool found = false;
+            for (int i = 0; i < _game.MissionSelectOptionCount; i++)
+                found |= _game.MissionVariantAt(i) == GameManager.MissionVariant.SquirrelConspiracy;
+
+            Assert.IsTrue(found);
+            Assert.AreEqual(4, _game.SquirrelRouteNodes.Length);
+            Assert.AreEqual(_game.SquirrelRouteNodes.Length, _game.SquirrelCutoffZones.Length);
+            Assert.AreNotEqual(_game.SquirrelRouteNodes[0], _game.SquirrelCutoffZones[0]);
+            Assert.IsTrue(_game.DemoReadiness.Ready);
+            Assert.That(_game.DemoReadinessLabel, Does.Contain("READY"));
+        }
+
+        [UnityTest]
+        public IEnumerator SquirrelConspiracy_HerdCutoffAndEarlyBarkHaveDistinctResults()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.SquirrelConspiracy);
+            yield return null;
+
+            Assert.That(_game.TeamGuidanceLabel, Does.Contain("BARK HERD"));
+            Assert.That(_game.TeamGuidanceLabel, Does.Contain("HOLD CUTOFF"));
+
+            _cheddar.transform.position = _game.SquirrelObject.transform.position + Vector3.right * 20f;
+            _game.ForceSquirrelConspiracyHerd(DogId.Cheddar);
+            Assert.AreEqual(1, _game.SquirrelConspiracyState.FakeOuts);
+            Assert.AreEqual(ScoreEventCatalog.FakeOut.Points, _game.Score);
+            Assert.That(_game.LastScoreEventLabel, Does.Contain(ScoreEventCatalog.FakeOut.Label));
+
+            _cheddar.transform.position = _game.SquirrelObject.transform.position;
+            _cocoa.transform.position = _game.SquirrelObject.transform.position;
+            _game.ForceSquirrelConspiracyHerd(DogId.Cheddar);
+            Assert.AreEqual(1, _game.SquirrelConspiracyState.Herds);
+            Assert.That(_game.LastScoreEventLabel, Does.Contain(ScoreEventCatalog.GoodHerd.Label));
+
+            _cheddar.transform.position = _game.SquirrelObject.transform.position;
+            _cocoa.transform.position = _game.ActiveSquirrelCutoffZone;
+            _game.ForceSquirrelConspiracyHerd(DogId.Cheddar);
+            Assert.AreEqual(1, _game.SquirrelConspiracyState.Cutoffs);
+            Assert.That(_game.LastScoreEventLabel, Does.Contain(ScoreEventCatalog.Cutoff.Label));
+        }
+
         [UnityTest]
         public IEnumerator SquirrelConspiracy_ClearPath_RevealsFindsStashAndSummarizesOutcome()
         {
@@ -30,8 +77,8 @@ namespace CheddarAndCocoa.Tests
 
             for (int i = 0; i < 4; i++)
             {
-                cheddar.transform.position = game.SquirrelObject.transform.position + Vector3.left;
-                cocoa.transform.position = game.SquirrelObject.transform.position + Vector3.right * 2.6f;
+                cheddar.transform.position = game.SquirrelObject.transform.position;
+                cocoa.transform.position = game.ActiveSquirrelCutoffZone;
                 game.ForceSquirrelConspiracyHerd(DogId.Cheddar);
                 yield return null;
             }
@@ -85,6 +132,8 @@ namespace CheddarAndCocoa.Tests
 
             game.StartMission(GameManager.MissionVariant.SquirrelConspiracy);
             yield return null;
+            int originalSeed = game.CurrentMissionSeed;
+            var originalModifier = game.ActiveModifier;
             game.ForceSquirrelConspiracyHerd(DogId.Cheddar);
             game.ForceSquirrelConspiracyTaunt();
             yield return null;
@@ -101,6 +150,10 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(0, game.SquirrelConspiracyState.Taunts);
             Assert.IsFalse(game.SquirrelConspiracyState.StashRevealed);
             Assert.IsFalse(game.SquirrelConspiracyState.StashFound);
+            Assert.AreEqual(game.SquirrelCutoffZones[0], game.ActiveSquirrelCutoffZone);
+            Assert.IsNotNull(GameObject.Find("SquirrelCutoff_0"), "Replay should reactivate the first cutoff zone.");
+            Assert.AreEqual(originalSeed, game.CurrentMissionSeed, "Replay must preserve the deterministic mission seed.");
+            Assert.AreEqual(originalModifier, game.ActiveModifier, "Replay should reproduce the same seeded modifier.");
             Assert.AreEqual(1, game.MissionReplayCount);
         }
 

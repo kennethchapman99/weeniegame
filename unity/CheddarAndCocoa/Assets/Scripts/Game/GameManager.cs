@@ -138,6 +138,9 @@ namespace CheddarAndCocoa.Game
         public bool SessionSummaryVisible => CurrentFlow == FlowState.SessionSummary;
         public int MissionSelectOptionCount => MissionOrder.Length;
         public HerdingMissionState SquirrelConspiracyState => _herdingState;
+        public Vector2[] SquirrelRouteNodes => (Vector2[])_squirrelRoute.Clone();
+        public Vector2[] SquirrelCutoffZones => (Vector2[])_squirrelCutoffZones.Clone();
+        public Vector2 ActiveSquirrelCutoffZone => _squirrelCutoffZones[Mathf.Clamp(_herdingState.RouteIndex, 0, _squirrelCutoffZones.Length - 1)];
         public ThreatSweepMissionState EagleShadowPanicState => _threatSweepState;
         public PatrolDefenseMissionState CoyotesFenceState => _patrolState;
         public Vector2[] EagleCoverZones => (Vector2[])_eagleCoverZones.Clone();
@@ -155,6 +158,11 @@ namespace CheddarAndCocoa.Game
         public CarBalanceMissionState CarRideState => _carState;
         public float CarBalance => _carBalance;
         public MissionRuntimeSnapshot RuntimeSnapshot => BuildRuntimeSnapshot();
+        public int CurrentMissionSeed => _missionSeed;
+        public DemoReadinessResult DemoReadiness => DemoReadinessGate.Evaluate(DemoReadinessGate.RequiredForBackyardDemo);
+        public string DemoReadinessLabel => DemoReadiness.Ready
+            ? "Demo gate: READY (select/clear/fail/replay/controller/readability)"
+            : $"Demo gate: BLOCKED - missing {DemoReadiness.Missing}";
         public int SelectedMissionIndex => _selectedMissionIndex;
         public MissionVariant SelectedMissionVariant => MissionOrder[Mathf.Clamp(_selectedMissionIndex, 0, MissionOrder.Length - 1)];
         public MissionVariant MissionVariantAt(int index) => MissionOrder[Mathf.Clamp(index, 0, MissionOrder.Length - 1)];
@@ -276,6 +284,8 @@ namespace CheddarAndCocoa.Game
         private Sprite _rangeSprite;
         private Rect _bounds;
         private System.Random _rng;
+        private int _missionSeed;
+        private bool _reuseMissionSeedOnNextBegin;
         private Transform _treatRoot;
         private AudioSource _audio;
         private AudioSource _music;
@@ -289,6 +299,9 @@ namespace CheddarAndCocoa.Game
         private readonly ThreatSweepMissionState _threatSweepState = new ThreatSweepMissionState();
         private readonly PatrolDefenseMissionState _patrolState = new PatrolDefenseMissionState();
         private readonly Vector2[] _squirrelRoute = { new(-15f, 9f), new(0f, -9f), new(15f, 9f), new(12f, -8f) };
+        private readonly Vector2[] _squirrelCutoffZones = { new(-8f, -3f), new(8f, -3f), new(16f, 2f), new(-3f, 3f) };
+        private GameObject[] _squirrelCutoffMarkers;
+        private const float SquirrelCutoffRadius = 3f;
         private const int ShadowSweepCount = 4;
         private const int EagleRequiredHides = 2;
         private const int EagleMaxExposures = 3;
@@ -425,6 +438,7 @@ namespace CheddarAndCocoa.Game
                 _bounds.center.y + y * _bounds.height * 0.5f);
 
             Vector2[] squirrel = { P(-0.78f, 0.68f), P(0f, -0.66f), P(0.78f, 0.68f), P(0.64f, -0.62f) };
+            Vector2[] cutoffs = { P(-0.36f, -0.12f), P(0.36f, -0.12f), P(0.72f, 0.08f), P(-0.12f, 0.12f) };
             Vector2[] cover = { P(-0.7f, -0.64f), P(0.7f, -0.64f), P(0f, 0.68f) };
             Vector2[] gaps = { P(-0.94f, 0.38f), P(-0.94f, -0.38f), P(0.94f, 0.38f), P(0.94f, -0.38f) };
             Vector2[] weenies = { P(-0.72f, 0.62f), P(0.7f, 0.68f), P(-0.82f, -0.6f), P(0.22f, -0.7f), P(0.82f, -0.18f) };
@@ -433,6 +447,7 @@ namespace CheddarAndCocoa.Game
             Vector2[] territory = { P(-0.72f, 0.6f), P(0.72f, 0.6f), P(-0.72f, -0.6f), P(0.72f, -0.6f), P(0f, 0f) };
 
             squirrel.CopyTo(_squirrelRoute, 0);
+            cutoffs.CopyTo(_squirrelCutoffZones, 0);
             cover.CopyTo(_eagleCoverZones, 0);
             gaps.CopyTo(_fenceGaps, 0);
             weenies.CopyTo(_weenieSpots, 0);
@@ -472,6 +487,7 @@ namespace CheddarAndCocoa.Game
             MissionReplayCount++;
             LogPlaytestEvent("Replay", _mission.Name);
             RequestAudioCue(ArenaFeedbackCatalog.UiReplayNextSelect);
+            _reuseMissionSeedOnNextBegin = true;
             StartMission(_mission.Variant);
         }
 
@@ -877,7 +893,10 @@ namespace CheddarAndCocoa.Game
             FailedInteractions = 0;
             ObjectiveChangeCount = 0;
 
-            _rng = new System.Random(MissionSeedGenerator.StableSeed(_mission.Variant.ToString(), SessionMissionsPlayed, _selectedMissionIndex));
+            if (!_reuseMissionSeedOnNextBegin)
+                _missionSeed = MissionSeedGenerator.StableSeed(_mission.Variant.ToString(), SessionMissionsPlayed, _selectedMissionIndex);
+            _reuseMissionSeedOnNextBegin = false;
+            _rng = new System.Random(_missionSeed);
             ActiveModifier = (RoundModifier)_rng.Next(0, 3);
             _herdingState.Reset();
             _threatSweepState.Reset();
@@ -937,6 +956,8 @@ namespace CheddarAndCocoa.Game
             RopeObject.SetActive(_mission.RequiresTug);
             if (_bunnyCameoObject != null) _bunnyCameoObject.SetActive(true);
             if (_mission.UsesSquirrel) SetActorState(SquirrelObject, _mission.Variant == MissionVariant.SquirrelConspiracy ? "SQUIRREL CONSPIRACY ROUTE 1" : "Squirrel: WAITING", new Color(0.55f, 0.32f, 0.12f), 0.06f);
+            if (_mission.Variant == MissionVariant.SquirrelConspiracy) UpdateSquirrelCutoffMarkers();
+            else SetSquirrelCutoffMarkersActive(false);
             if (_mission.RequiresPredator) SetActorState(PredatorObject, "Predator: OFFSCREEN", Color.gray, 0.04f);
             if (_mission.RequiresTug) SetActorState(RopeObject, "Rope/Tug - BOTH DOGS", new Color(0.95f, 0.7f, 0.15f), 0.08f);
             if (_mission.Variant == MissionVariant.EagleShadowPanic)
@@ -1208,15 +1229,18 @@ namespace CheddarAndCocoa.Game
                 AddScore(ScoreEventCatalog.FakeOut.Points, ScoreEventCatalog.FakeOut.Label);
                 LastCue = "The squirrel sold a fake-out and the dogs barked at absolutely nothing.";
                 SetJuice(JuiceFeedbackKind.WarningMiss, "FAKE OUT!");
+                SpawnWorldPop(_dogs[dogIndex].transform.position, "FAKE OUT!", new Color(1f, 0.42f, 0.24f));
+                RequestAudioCue(ArenaFeedbackCatalog.SquirrelStealMiss);
                 LogPlaytestEvent("SquirrelFakeOut", LastCue);
                 return false;
             }
 
-            bool cutoff = _dogs.Length > 1 && Vector2.Distance(_dogs[0].transform.position, _dogs[1].transform.position) >= 2.25f;
+            bool cutoff = IsPartnerHoldingSquirrelCutoff(dogIndex);
             var scoreEvent = cutoff ? ScoreEventCatalog.Cutoff : ScoreEventCatalog.GoodHerd;
             if (cutoff) _herdingState.AddCutoff();
             else _herdingState.AddHerd();
             _herdingState.AdvanceRoute(_squirrelRoute.Length);
+            UpdateSquirrelCutoffMarkers();
             _squirrelTimer = 5.5f;
             AddScore(scoreEvent.Points, scoreEvent.Label);
             LastFeedback = FeedbackKind.SquirrelScared;
@@ -1230,6 +1254,7 @@ namespace CheddarAndCocoa.Game
             if (_herdingState.ReadyForStash(4))
             {
                 _herdingState.RevealStash();
+                SetSquirrelCutoffMarkersActive(false);
                 AddScore(ScoreEventCatalog.DoubleBarkBlock.Points, ScoreEventCatalog.DoubleBarkBlock.Label);
                 PlaceObject(SquirrelObject, _stashPosition + Vector2.left * 1.2f);
                 SetActorState(SquirrelObject, "STASH REVEALED - SNIFF + INTERACT!", new Color(1f, 0.72f, 0.18f), 0.34f);
@@ -1241,11 +1266,23 @@ namespace CheddarAndCocoa.Game
             return true;
         }
 
+        private bool IsPartnerHoldingSquirrelCutoff(int barkingDogIndex)
+        {
+            Vector2 zone = ActiveSquirrelCutoffZone;
+            for (int i = 0; i < _dogs.Length; i++)
+            {
+                if (i == barkingDogIndex || _dogs[i] == null) continue;
+                if (Vector2.Distance(_dogs[i].transform.position, zone) <= SquirrelCutoffRadius) return true;
+            }
+            return false;
+        }
+
         private void RegisterSquirrelTaunt()
         {
             _herdingState.AddTaunt();
             AddScore(ScoreEventCatalog.FakeOut.Points, "SQUIRREL TAUNT");
             _herdingState.AdvanceRoute(_squirrelRoute.Length);
+            UpdateSquirrelCutoffMarkers();
             _squirrelTimer = 5.5f;
             PlaceObject(SquirrelObject, _squirrelRoute[_herdingState.RouteIndex]);
             LastFeedback = FeedbackKind.SquirrelStoleFood;
@@ -1301,6 +1338,49 @@ namespace CheddarAndCocoa.Game
                 go.SetActive(false);
                 _eagleCoverMarkers[i] = go;
             }
+        }
+
+        private void BuildSquirrelCutoffMarkers()
+        {
+            _squirrelCutoffMarkers = new GameObject[_squirrelCutoffZones.Length];
+            for (int i = 0; i < _squirrelCutoffZones.Length; i++)
+            {
+                var go = new GameObject($"SquirrelCutoff_{i}");
+                go.transform.position = _squirrelCutoffZones[i];
+                go.transform.localScale = Vector3.one * (SquirrelCutoffRadius * 1.25f);
+                var sr = go.AddComponent<SpriteRenderer>();
+                sr.sprite = _rangeSprite != null ? _rangeSprite : _sprite;
+                sr.color = new Color(1f, 0.72f, 0.18f, 0.38f);
+                sr.sortingOrder = 1;
+                AddWorldLabel(go, "HOLD CUTOFF", Vector3.up * 0.38f, 14, Color.white);
+                go.SetActive(false);
+                _squirrelCutoffMarkers[i] = go;
+            }
+        }
+
+        private void UpdateSquirrelCutoffMarkers()
+        {
+            if (_squirrelCutoffMarkers == null) return;
+            for (int i = 0; i < _squirrelCutoffMarkers.Length; i++)
+            {
+                if (_squirrelCutoffMarkers[i] == null) continue;
+                _squirrelCutoffMarkers[i].transform.position = _squirrelCutoffZones[i];
+                _squirrelCutoffMarkers[i].SetActive(_mission != null &&
+                    _mission.Variant == MissionVariant.SquirrelConspiracy &&
+                    MissionActive() && !_herdingState.StashRevealed && i == _herdingState.RouteIndex);
+            }
+        }
+
+        private void SetSquirrelCutoffMarkersActive(bool active)
+        {
+            if (!active)
+            {
+                if (_squirrelCutoffMarkers != null)
+                    foreach (var marker in _squirrelCutoffMarkers)
+                        if (marker != null) marker.SetActive(false);
+                return;
+            }
+            UpdateSquirrelCutoffMarkers();
         }
 
         private void SetEagleCoverMarkersActive(bool active)
@@ -2848,6 +2928,7 @@ namespace CheddarAndCocoa.Game
 
             HideObjectiveArrows();
             HideInteractionRanges();
+            SetSquirrelCutoffMarkersActive(false);
             RecordSessionResult();
             LogPlaytestEvent(clear ? "MissionClear" : "MissionFail", EndSummaryLabel);
             LogObjectiveIfChanged();
@@ -3369,6 +3450,7 @@ namespace CheddarAndCocoa.Game
             if (RopeObject != null) RopeObject.SetActive(active && _mission != null && _mission.RequiresTug);
             if (_bunnyCameoObject != null) _bunnyCameoObject.SetActive(active);
             if (!active || _mission == null || _mission.Variant != MissionVariant.EagleShadowPanic) SetEagleCoverMarkersActive(false);
+            if (!active || _mission == null || _mission.Variant != MissionVariant.SquirrelConspiracy) SetSquirrelCutoffMarkersActive(false);
             if (!active || _mission == null || _mission.Variant != MissionVariant.CoyotesFence) SetCoyoteGapMarkersActive(false);
             if (!active || _mission == null || _mission.Variant != MissionVariant.WeenieRoundup) SetWeenieRoundupActive(false);
             if (!active || _mission == null || _mission.Variant != MissionVariant.ScentSearch) SetScentSearchActive(false);
@@ -4229,8 +4311,28 @@ namespace CheddarAndCocoa.Game
             switch (_mission.Variant)
             {
                 case MissionVariant.SquirrelConspiracy:
-                    target = SquirrelObject != null ? SquirrelObject.transform : null;
-                    copy = _herdingState.StashRevealed ? "CRACK STASH" : "HERD SQUIRREL";
+                    if (_herdingState.StashRevealed)
+                    {
+                        target = SquirrelObject != null ? SquirrelObject.transform : null;
+                        copy = "CRACK STASH";
+                    }
+                    else
+                    {
+                        int herder = ClosestDogIndex(SquirrelObject != null ? (Vector2)SquirrelObject.transform.position : Vector2.zero);
+                        if (dogIndex == herder)
+                        {
+                            target = SquirrelObject != null ? SquirrelObject.transform : null;
+                            copy = "BARK HERD";
+                        }
+                        else
+                        {
+                            int markerCount = _squirrelCutoffMarkers != null ? _squirrelCutoffMarkers.Length : 0;
+                            int route = markerCount > 0 ? Mathf.Clamp(_herdingState.RouteIndex, 0, markerCount - 1) : 0;
+                            target = markerCount > 0 && _squirrelCutoffMarkers[route] != null ? _squirrelCutoffMarkers[route].transform : null;
+                            copy = "HOLD CUTOFF";
+                            hideDistance = SquirrelCutoffRadius;
+                        }
+                    }
                     break;
                 case MissionVariant.EagleShadowPanic:
                     if (_threatSweepState.RescueObjectiveActive && !_threatSweepState.RescueComplete)
@@ -4317,6 +4419,21 @@ namespace CheddarAndCocoa.Game
                 nearestDistance = distance;
             }
             return nearest;
+        }
+
+        private int ClosestDogIndex(Vector2 position)
+        {
+            int best = 0;
+            float bestDistance = float.PositiveInfinity;
+            for (int i = 0; i < _dogs.Length; i++)
+            {
+                if (_dogs[i] == null) continue;
+                float distance = Vector2.Distance(_dogs[i].transform.position, position);
+                if (distance >= bestDistance) continue;
+                best = i;
+                bestDistance = distance;
+            }
+            return best;
         }
 
         private Transform FindNearestUnclaimedZone(Vector2 position)
@@ -4481,6 +4598,7 @@ namespace CheddarAndCocoa.Game
             RopeObject = MakeActor(ArenaArtCatalog.Actor(ArenaArtCatalog.ActorKind.Rope));
             _bunnyCameoObject = MakeDraftBunnyCameo();
             BuildEagleCoverMarkers();
+            BuildSquirrelCutoffMarkers();
             BuildCoyoteGapMarkers();
             BuildWeenieRoundupObjects();
             BuildScentSearchMarkers();

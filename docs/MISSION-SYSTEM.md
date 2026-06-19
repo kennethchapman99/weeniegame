@@ -14,18 +14,21 @@ The ArenaScene mission spike is deliberately small. It proves that the existing 
 
 Manual selection now has two paths:
 
-- Cold start opens the generated IMGUI mission picker. Up/Down or D-pad changes selection; Enter/Space/Start/South starts the selected mission.
-- `1`, `2`, and `3` still start Backyard Rescue, Snack Heist, and Sock Panic directly for fast testing.
+- Cold start opens the generated two-column IMGUI mission picker. Arrow keys or D-pad move in the visible grid; Enter/Space/Start/South starts the selected mission.
+- Number keys `1-9` and `0` directly start the first ten missions for fast testing; Walkies and Car Ride remain grid-selectable.
 
-After a mission ends, the same local flow exposes Replay, Next Mission, and Mission Select. Once all three variants have ended in the current Play session, Next opens Session Summary. This is not a campaign structure. Keep it that way until there are enough proven missions to justify persistence, unlocks, or authored level data.
+After a mission ends, the same local flow exposes Replay, Next Mission, and Mission Select. Session Summary appears at three-unique-mission milestones, and completing all twelve exposes an explicit Victory Lap. This is not a campaign structure; session state remains local to the current Play session.
 
-## Current Variants
+## Foundation And First Production Variant
 
 | Variant | Objective | Enabled systems | Unique scoring |
 | --- | --- | --- | --- |
 | Backyard Rescue | Save weenies, stop squirrel pressure, resolve predator, complete tug | Collectibles, squirrel, predator, tug | `WEENIE SAVED`, `SQUIRREL SCARED`, `PREDATOR YEETED`, `PARTNER RESCUE`, `TUG COMPLETE` |
 | Snack Heist | Stash snacks before squirrel steals too many | Collectibles, squirrel | `SNACK STASHED`, `SNACK GUARD BARK`, `SNACK THIEF` |
 | Sock Panic | Return scattered socks before time expires | Collectibles, timer | `SOCK RESCUED` |
+| Squirrel Conspiracy | Herd the squirrel, hold route cutoffs, reveal and find its stash | Herding route, cutoff zones, bark timing, stash | `GOOD HERD`, `CUTOFF`, `FAKE OUT`, `STASH FOUND`, `CONSPIRACY CRACKED` |
+
+The arena now contains twelve tested backyard missions; `docs/ARENA-PLAYABLE.md` is the complete playable catalog and manual-check source of truth.
 
 ## Adding The Next Mission
 
@@ -59,6 +62,8 @@ The previous `LevelObjective.surviveSeconds` warning was low-risk and related to
 
 - Added `GameManager.MissionVariant.SquirrelConspiracy` / **The Great Backyard Squirrel Conspiracy** to the Arena mission select and mission order.
 - The mission uses `HerdingMissionState` for deterministic route progress, herd/cutoff counts, fake-outs, taunts, stash reveal, and stash found clear state.
-- Gameplay loop: dogs bark near the squirrel to score `GOOD HERD`, split positioning to score `CUTOFF`, lose points on early/far `FAKE OUT`, reveal the stash after four controls with `DOUBLE BARK BLOCK`, then interact with the revealed stash for `STASH FOUND` and `CONSPIRACY CRACKED`.
+- Gameplay loop: the nearest dog follows **BARK HERD** guidance while the partner holds the active generated **HOLD CUTOFF** zone. A nearby bark scores `GOOD HERD`; a nearby bark while the partner occupies that route's zone scores `CUTOFF`; an early/far bark scores a visible `FAKE OUT` penalty. Four controls reveal the stash with `DOUBLE BARK BLOCK`, then interaction awards `STASH FOUND` and `CONSPIRACY CRACKED`.
 - Fail path: repeated squirrel taunts or timer expiry fails the mission; replay resets route, stash, score, and outcome state.
 - Production helpers are now part of the live path where relevant: `MissionRankCalculator`, `ScoreEventCatalog`, `MissionRuntimeSnapshot`, `MissionSeedGenerator`, and `MissionOutcomeSummaryBuilder`.
+- A replay reuses the exact `MissionSeedGenerator` seed, preserving the round modifier and deterministic layout instead of advancing with session counters.
+- `DemoReadinessGate` now reports its backyard acceptance status in the F1 playtest overlay.

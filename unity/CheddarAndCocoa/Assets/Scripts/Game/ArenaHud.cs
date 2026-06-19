@@ -124,7 +124,7 @@ namespace CheddarAndCocoa.Game
         private void DrawPlaytestOverlay()
         {
             float w = Mathf.Min(440f, Mathf.Max(1f, Screen.width - 24f));
-            float h = Mathf.Min(322f, Mathf.Max(1f, Screen.height - 24f));
+            float h = Mathf.Min(344f, Mathf.Max(1f, Screen.height - 24f));
             var box = new Rect(Mathf.Max(12f, Screen.width - w - 12f), 12f, w, h);
             GUI.Box(box, GUIContent.none);
 
@@ -142,6 +142,7 @@ namespace CheddarAndCocoa.Game
             GUI.Label(new Rect(box.x + 12f, box.y + 244f, w - 24f, 20f), $"{_game.MvpLabel}   Flawless clears: {_game.SessionFlawlessClears}", _overlay);
             GUI.Label(new Rect(box.x + 12f, box.y + 266f, w - 24f, 26f), $"Event: {_game.LastPlaytestEvent}", _overlay);
             GUI.Label(new Rect(box.x + 12f, box.y + 290f, w - 24f, 20f), $"Audio: {(_game.AudioEnabled ? "on" : "off")} {_game.LastAudioCueRequested}   Rumble: {(_game.RumbleEnabled ? "on" : "off")} {_game.LastRumbleRequested}", _overlay);
+            GUI.Label(new Rect(box.x + 12f, box.y + 312f, w - 24f, 20f), _game.DemoReadinessLabel, _overlay);
         }
 
         private void DrawPlaytestModeToggle()

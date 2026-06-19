@@ -155,7 +155,7 @@ Manual check: press **3**, collect one sock, confirm **+40 SOCK RESCUED** and **
 
 ### Squirrel Conspiracy
 
-Squirrel Conspiracy is the first production-mission slice using `HerdingMissionState`. Cheddar and Cocoa must herd the suspicious squirrel around its route, earn coordinated cutoff progress, survive fake-outs/taunts, reveal the hidden stash, then interact to crack the case before the squirrel reaches `3` taunts.
+Squirrel Conspiracy is the first production-mission slice using `HerdingMissionState`. Cheddar and Cocoa must herd the suspicious squirrel around its route, earn coordinated cutoff progress, survive fake-outs/taunts, reveal the hidden stash, then interact to crack the case before the squirrel reaches `3` taunts. Each route step now activates one visible **HOLD CUTOFF** zone: the dog nearest the squirrel receives **BARK HERD** guidance while the partner is routed to that zone. A cutoff scores only when the partner is actually holding the active zone; ordinary separation no longer counts.
 
 Readable differences:
 
@@ -764,6 +764,8 @@ The same test file also verifies **Snack Heist** and **Sock Panic** can initiali
 
 - Added `GameManager.MissionVariant.SquirrelConspiracy` / **The Great Backyard Squirrel Conspiracy** to the Arena mission select and mission order.
 - The mission uses `HerdingMissionState` for deterministic route progress, herd/cutoff counts, fake-outs, taunts, stash reveal, and stash found clear state.
+- Four deterministic route nodes now pair with four generated cutoff-zone markers. Only the current route's zone is visible, objective arrows split the dogs into herd/cutoff roles, and the markers reset to route one on replay.
 - Gameplay loop: dogs bark near the squirrel to score `GOOD HERD`, split positioning to score `CUTOFF`, lose points on early/far `FAKE OUT`, reveal the stash after four controls with `DOUBLE BARK BLOCK`, then interact with the revealed stash for `STASH FOUND` and `CONSPIRACY CRACKED`.
 - Fail path: repeated squirrel taunts or timer expiry fails the mission; replay resets route, stash, score, and outcome state.
 - Production helpers are now part of the live path where relevant: `MissionRankCalculator`, `ScoreEventCatalog`, `MissionRuntimeSnapshot`, `MissionSeedGenerator`, and `MissionOutcomeSummaryBuilder`.
+- `DemoReadinessGate` is surfaced in the F1 playtest overlay so the packaged backyard acceptance contract is visible during diagnostics.
