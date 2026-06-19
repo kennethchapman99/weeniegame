@@ -1,12 +1,31 @@
 # ArenaFinal Runtime Art
 
-Drop final transparent PNG gameplay sprites here when they are ready. Files under this `Resources/ArenaFinal` tree are preferred by `FinalGameplayArt` / `RuntimeArtSpriteFactory` before draft-sheet crops.
+Drop final transparent PNG gameplay sprites here when they are ready. Files under this `Resources/ArenaFinal` tree are preferred by `FinalGameplayArt`, `FinalDogPoseArt`, `RuntimeArtSpriteFactory`, and `ArenaDogPoseSprites` before draft-sheet crops.
 
 Expected paths:
 
 ```text
 ArenaFinal/
   Characters/
+    Dogs/
+      Cheddar/
+        cheddar_idle.png
+        cheddar_run.png
+        cheddar_bark.png
+        cheddar_tug.png
+        cheddar_stunned.png
+        cheddar_rescued.png
+        cheddar_proud.png
+        cheddar_sad.png
+      Cocoa/
+        cocoa_idle.png
+        cocoa_run.png
+        cocoa_bark.png
+        cocoa_tug.png
+        cocoa_stunned.png
+        cocoa_rescued.png
+        cocoa_proud.png
+        cocoa_sad.png
     Squirrel/squirrel_idle.png
     Eagle/eagle_threat.png
     Coyote/coyote_threat.png
