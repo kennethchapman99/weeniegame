@@ -4,8 +4,9 @@ using UnityEngine;
 namespace CheddarAndCocoa.Game
 {
     /// <summary>
-    /// Runtime extraction bridge from draft sheets to actual gameplay sprites. This is intentionally
-    /// conservative: if art is missing or unreadable, callers keep the generated geometry fallback.
+    /// Runtime extraction bridge from final transparent art or draft sheets to actual gameplay sprites.
+    /// If final art exists under Resources/ArenaFinal it wins. Otherwise the factory falls back to draft
+    /// sheet crops, and then to null so generated gameplay geometry remains safe.
     /// </summary>
     public static class RuntimeArtSpriteFactory
     {
@@ -38,8 +39,13 @@ namespace CheddarAndCocoa.Game
 
         public static bool Has(RuntimeSpriteId id) => Get(id) != null;
 
+        public static void ClearCacheForTests() => Cache.Clear();
+
         private static Sprite Build(RuntimeSpriteId id)
         {
+            Sprite final = FinalGameplayArt.Load(id);
+            if (final != null) return final;
+
             switch (id)
             {
                 case RuntimeSpriteId.Squirrel:
