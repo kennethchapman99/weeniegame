@@ -18,13 +18,18 @@ The current product priority is in-game visual quality, not menu/progression pol
 - Provides IDs for squirrel, eagle/coyote threat, backyard props, rope, weenie, bark burst, pickup sparkle, success pop, and warning alert.
 - Returns `null` safely when art is missing or unreadable so generated gameplay fallback remains intact.
 
-### Final art path contract
+### Final art path contracts
 
 `unity/CheddarAndCocoa/Assets/Scripts/Game/FinalGameplayArt.cs`
 
 - Defines stable `Resources/ArenaFinal/...` paths for runtime-ready transparent PNGs.
 - Lets you drop final exported sprites into the project without changing gameplay code.
 - Documented in `unity/CheddarAndCocoa/Assets/Art/Resources/ArenaFinal/README.md`.
+
+`unity/CheddarAndCocoa/Assets/Scripts/Dogs/FinalDogPoseArt.cs`
+
+- Defines stable paths for Cheddar/Cocoa per-state final sprites.
+- `ArenaDogPoseSprites` now prefers these final sprites before falling back to draft pose-sheet crops.
 
 ### Art overlays
 
@@ -74,6 +79,7 @@ Covers:
 
 - runtime sprite factory is safe to query whether draft/final art exists or not;
 - final-art resource paths remain stable;
+- final dog pose paths remain stable;
 - overlays do not break fallback objects when no sprite is available;
 - generated runtime sprite reports correctly;
 - VFX spawn path is safe;
@@ -87,7 +93,7 @@ The current in-game art stack is now:
 2. **Final transparent sprites** under `Resources/ArenaFinal` are preferred when present.
 3. **Draft-art crops/overlays** sit visually above generated objects when final art is not present.
 4. **Art VFX pulses** react to gameplay feedback events.
-5. **Cheddar/Cocoa pose sprites** continue to use `ArenaDogPoseSprites` when draft pose sheets are readable.
+5. **Cheddar/Cocoa pose sprites** prefer final per-state sprites, then fall back to `ArenaDogPoseSprites` draft crops when sheets are readable.
 6. **Labels/debug readability** remain available until final sprites are strong enough to reduce text reliance.
 
 This is the right intermediate stage: more beautiful, still safe.
@@ -99,6 +105,25 @@ Expected final sprite locations:
 ```text
 Assets/Art/Resources/ArenaFinal/
   Characters/
+    Dogs/
+      Cheddar/
+        cheddar_idle.png
+        cheddar_run.png
+        cheddar_bark.png
+        cheddar_tug.png
+        cheddar_stunned.png
+        cheddar_rescued.png
+        cheddar_proud.png
+        cheddar_sad.png
+      Cocoa/
+        cocoa_idle.png
+        cocoa_run.png
+        cocoa_bark.png
+        cocoa_tug.png
+        cocoa_stunned.png
+        cocoa_rescued.png
+        cocoa_proud.png
+        cocoa_sad.png
     Squirrel/squirrel_idle.png
     Eagle/eagle_threat.png
     Coyote/coyote_threat.png
@@ -130,15 +155,8 @@ Assets/Art/Resources/ArenaFinal/
 3. Play Backyard Rescue and adjust overlay scales/positions.
 4. Replace approximate sheet slice rects in `RuntimeArtSpriteFactory` with exact rects after viewing source sheets in Unity.
 5. Export actual tightly cropped transparent sprites to `Resources/ArenaFinal/...`; no code change should be required for the mapped sprite IDs.
-6. Add final dog sprite path support for individual Cheddar/Cocoa states, replacing the current pose-sheet crop path.
-7. Add final sprite slots for:
-   - Cheddar idle/run/bark/tug/stunned/proud/sad;
-   - Cocoa idle/run/bark/tug/stunned/proud/sad;
-   - squirrel idle/run/scared/steal;
-   - predator warning/attack;
-   - rope/tug complete;
-   - weenie collectible;
-   - pickup sparkle/bark burst/warning/success.
+6. Add richer final sprite slots for squirrel states, predator states, rope completion, rescue burst, fail puff, bark ring, grass patch, dog bowl, and dig spots.
+7. Reduce label dependence only after final art is readable at both local camera and full-yard zoom.
 
 ## Asset Export Checklist
 
@@ -151,6 +169,7 @@ For the next manual art export pass, prioritize transparent PNGs, tightly croppe
 - `cheddar_bark.png`
 - `cheddar_tug.png`
 - `cheddar_stunned.png`
+- `cheddar_rescued.png`
 - `cheddar_proud.png`
 - `cheddar_sad.png`
 - `cocoa_idle.png`
@@ -158,6 +177,7 @@ For the next manual art export pass, prioritize transparent PNGs, tightly croppe
 - `cocoa_bark.png`
 - `cocoa_tug.png`
 - `cocoa_stunned.png`
+- `cocoa_rescued.png`
 - `cocoa_proud.png`
 - `cocoa_sad.png`
 - `squirrel_idle.png`
