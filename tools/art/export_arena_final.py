@@ -65,7 +65,7 @@ EXPORTS = (
     Export("props.png", "Props/Mission/dog_bowl.png", (720, 540, 1120, 1020)),
     # Backyard props: 4 x 3 sheet.
     Export("backyard props.png", "Props/Backyard/grass_patch.png", (0, 20, 470, 320)),
-    Export("backyard props.png", "Props/Backyard/bush.png", (450, 20, 805, 325)),
+    Export("backyard props.png", "Props/Backyard/bush.png", (475, 20, 805, 325)),
     Export("backyard props.png", "Props/Backyard/rock.png", (820, 50, 1060, 325)),
     Export("backyard props.png", "Props/Backyard/fence_section.png", (1070, 20, 1536, 345)),
     Export("backyard props.png", "Props/Backyard/dig_spot.png", (0, 370, 430, 670)),

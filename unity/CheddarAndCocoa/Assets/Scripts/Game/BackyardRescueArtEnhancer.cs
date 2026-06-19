@@ -74,15 +74,29 @@ namespace CheddarAndCocoa.Game
             foreach (var child in originalChildren)
             {
                 if (child.name.StartsWith("CoverBush") || child.name.StartsWith("Bush_"))
-                    RuntimeArtSpriteFactory.AddWorldOverlay(environment.transform, $"FinalBush_{bush++}",
-                        FinalGameplayArt.Bush, child.position, child.name.StartsWith("CoverBush") ? 5.8f : 3.8f, -4);
-                else if (child.name.StartsWith("SteppingStone") && rock++ % 3 == 0)
-                    RuntimeArtSpriteFactory.AddWorldOverlay(environment.transform, $"FinalRock_{rock}",
-                        FinalGameplayArt.Rock, child.position, 2.5f, -5);
+                {
+                    var overlay = RuntimeArtSpriteFactory.AddWorldOverlay(environment.transform, $"FinalBush_{bush++}",
+                        FinalGameplayArt.Bush, child.position, child.name.StartsWith("CoverBush") ? 5.2f : 3.5f, -4);
+                    HideFallbackRenderer(child, overlay);
+                }
+                else if (child.name.StartsWith("SteppingStone"))
+                {
+                    rock++;
+                    var overlay = RuntimeArtSpriteFactory.AddWorldOverlay(environment.transform, $"FinalRock_{rock}",
+                        FinalGameplayArt.Rock, child.position, 1.7f + (rock % 3) * 0.25f, -5);
+                    HideFallbackRenderer(child, overlay);
+                }
                 else if ((child.name == "GardenBed" || child.name == "PicnicBlanket") && grass++ < 2)
                     RuntimeArtSpriteFactory.AddWorldOverlay(environment.transform, $"FinalGrass_{grass}",
                         FinalGameplayArt.Grass, child.position, child.name == "GardenBed" ? 4.5f : 7f, -5);
             }
+        }
+
+        private static void HideFallbackRenderer(Transform fallback, SpriteRenderer overlay)
+        {
+            if (overlay == null || fallback == null) return;
+            var renderer = fallback.GetComponent<SpriteRenderer>();
+            if (renderer != null) renderer.enabled = false;
         }
     }
 }

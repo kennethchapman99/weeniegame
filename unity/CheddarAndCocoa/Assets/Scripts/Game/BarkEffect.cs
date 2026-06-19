@@ -55,6 +55,7 @@ namespace CheddarAndCocoa.Game
             var text = burst.AddComponent<TextMesh>();
             text.text = art.BurstText;
             text.fontSize = art.BurstFontSize;
+            text.characterSize = 0.12f;
             text.anchor = TextAnchor.MiddleCenter;
             text.alignment = TextAlignment.Center;
             text.color = _tint;

@@ -78,6 +78,8 @@ namespace CheddarAndCocoa.Bootstrap
 
             game.gameObject.AddComponent<BackyardRescueArtEnhancer>().Init(game);
             game.gameObject.AddComponent<DynamicTreatArtEnhancer>().Init(game);
+            game.gameObject.AddComponent<FinalJuiceEffect>().Init(game);
+            ArenaArtReviewCapture.TryAttach(game);
 
             // Score/timer/game-over overlay.
             var hud = new GameObject(ArenaArtCatalog.ArenaHudObjectName).AddComponent<ArenaHud>();

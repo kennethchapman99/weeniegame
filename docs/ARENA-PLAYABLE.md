@@ -6,7 +6,7 @@ For current global character art direction, read `docs/ART-DIRECTION.md`. Backya
 playable proof of that direction, not the only place the direction applies. For future external
 sprite/audio collection before Unity import, use `docs/ASSET-CATALOG.md`.
 
-## Draft art import pass
+## Draft and ArenaFinal art pass
 
 The first readable imported-art pass now lives under
 `unity/CheddarAndCocoa/Assets/Art/Resources/ArenaDraft/` with Unity-generated `.meta` files. Only
@@ -21,38 +21,36 @@ the 11 runtime-loaded badges remain in `Resources`; unused pose/expression/refer
 - `UI/`: draft UI kit sheet.
 - `VFX/`: draft VFX sheet.
 
-These imported files are intentionally used as **draft badges/reference sprites**, not final gameplay
-sprites. The current sheets have full backgrounds, broad pose-sheet layouts, or reference-card
-composition, so the arena keeps the deterministic generated silhouettes for collision-safe gameplay
-readability and layers small imported badges behind/near them:
+Individual transparent gameplay sprites now live under
+`Assets/Art/Resources/ArenaFinal/`; `docs/ART-INTEGRATION-SLICE.md` records their source sheets,
+runtime mappings, and review limits. The earlier ArenaDraft imports remain safe reference/fallback
+accents:
 
 - Cheddar and Cocoa each carry an imported portrait badge behind the generated long-low body,
   collar, feet, snout, ears, and pose-state pieces.
 - Squirrel, rope, and predator actors keep generated role silhouettes while loading squirrel,
   backyard-prop, eagle, and coyote draft badges as background reference accents.
 - A noninteractive bunny cameo appears at the yard edge as a placeholder/background prop.
-- Bark feedback keeps the generated ring/text and adds a faint imported VFX-sheet accent.
+- Bark feedback uses the transparent final ring and bark burst while retaining generated text.
+- Pickup, success, warning, rescue, and failure events use distinct short-lived ArenaFinal effects.
+- Final dog poses, squirrel/eagle/coyote states, rope, weenies, bushes, rocks, and selected ground
+  dressing are live. Generated gameplay objects and colliders remain authoritative.
 - Mission select/end-card HUD keeps IMGUI text controls and draws a subtle imported UI-kit accent.
 
-Still placeholder:
+Still placeholder or deliberately deferred:
 
-- Dog idle/run/bark/tug/stunned/rescued/proud/sad states now use cropped pose-atlas sprites with
-  keyed transparency. Generated identity pieces remain as a fallback and collision/readability
-  contract; a future final export should replace the runtime background key with native alpha.
-- Squirrel, eagle/coyote predator, rope, weenie/snack/sock, score pops, range rings, and objective
-  arrows still rely on generated geometry/text for the primary gameplay read.
+- Dog sprites and gameplay effects are extracted draft art rather than final animation-ready assets.
+- Snack/sock mission collectibles, range rings, objective arrows, buildings, pond/patio, and most
+  large environment districts still rely on generated geometry/text for the primary gameplay read.
 - The bunny is decorative only and has no mission logic.
-- The imported prop/UI/VFX sheets are reference accents until individual transparent sprites are
-  sliced or exported.
+- Menu/UI art remains deferred; the UI kit is still a subtle reference accent.
 
 Final polish still needed:
 
-- Export transparent, tightly bounded gameplay sprites from the draft sheets or a final art pass.
-- Replace the badge approach with real sprite/prefab slots while preserving the `ArenaArtCatalog`
-  child names or equivalent stable slot components.
-- Author state-specific dog sprites/animation and threat/rope/VFX sprites that read at current
-  gameplay zoom without relying on full reference sheets.
-- Do a two-player manual readability pass after final sprites land.
+- Replace duplicate rescued/proud and rope tug/complete source poses when distinct art exists.
+- Author animation-ready dog/threat sprites and replace remaining generated environment districts.
+- Run a two-player television readability pass; the automated 1920x1080 local/full-yard/action
+  capture gate verifies composition but cannot judge player attention.
 
 ## Cold-start flow
 

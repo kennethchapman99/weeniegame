@@ -35,6 +35,32 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNull(FinalGameplayArt.Load(FinalGameplayArt.Root + "missing_optional_sprite"));
         }
 
+        [Test]
+        public void FinalJuiceEffect_MapsGameplayFeedbackToDistinctReadableSprites()
+        {
+            Assert.AreEqual(FinalGameplayArt.PickupSparkle,
+                FinalJuiceEffect.SelectSpritePath(GameManager.JuiceFeedbackKind.ScoreDelta, "+50", 50, false));
+            Assert.AreEqual(FinalGameplayArt.FailPuff,
+                FinalJuiceEffect.SelectSpritePath(GameManager.JuiceFeedbackKind.ScoreDelta, "-50", -50, false));
+            Assert.AreEqual(FinalGameplayArt.SuccessPop,
+                FinalJuiceEffect.SelectSpritePath(GameManager.JuiceFeedbackKind.SuccessPop, "STASH FOUND", 50, false));
+            Assert.AreEqual(FinalGameplayArt.RescueBurst,
+                FinalJuiceEffect.SelectSpritePath(GameManager.JuiceFeedbackKind.SuccessPop, "RESCUE POP", 50, false));
+            Assert.AreEqual(FinalGameplayArt.WarningAlert,
+                FinalJuiceEffect.SelectSpritePath(GameManager.JuiceFeedbackKind.WarningMiss, "SQUIRREL TAUNT", -50, false));
+            Assert.AreEqual(FinalGameplayArt.FailPuff,
+                FinalJuiceEffect.SelectSpritePath(GameManager.JuiceFeedbackKind.WarningMiss, "SAD FLOP", -50, true));
+            Assert.IsNull(FinalJuiceEffect.SelectSpritePath(GameManager.JuiceFeedbackKind.BarkBurst, "BARK", 0, false));
+        }
+
+        [Test]
+        public void ArtReviewCapture_ParsesOnlyExplicitOutputArgument()
+        {
+            Assert.AreEqual("/tmp/arena-review", ArenaArtReviewCapture.OutputDirectoryFromArgs(
+                new[] { "player", "--arena-art-review=/tmp/arena-review" }));
+            Assert.IsNull(ArenaArtReviewCapture.OutputDirectoryFromArgs(new[] { "player", "--unrelated" }));
+        }
+
         [UnityTest]
         public IEnumerator BackyardRescue_UsesFinalSpritesWithoutReplacingGameplayObjects()
         {
@@ -44,6 +70,8 @@ namespace CheddarAndCocoa.Tests
 
             var game = Object.FindFirstObjectByType<GameManager>();
             Assert.IsNotNull(game);
+            var juice = game.GetComponent<FinalJuiceEffect>();
+            Assert.IsNotNull(juice);
             game.StartMission(GameManager.MissionVariant.BackyardRescue);
             yield return new WaitForSeconds(0.3f);
 
@@ -60,10 +88,29 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(treat);
             Assert.IsNotNull(treat.transform.Find(DynamicTreatArtEnhancer.OverlayName));
             Assert.IsNotNull(treat.GetComponent<Collider2D>(), "Final weenie overlay must not replace collection collision.");
+            treat.CollectBy(cheddar.GetComponent<DogController>());
+            juice.RefreshNow();
+            Assert.AreEqual("pickup_sparkle", juice.LastSpawnedSpriteName);
+            Assert.IsNotNull(juice.LastSpawnedObject.GetComponent<SpriteRenderer>());
+
+            game.ForceSquirrelStealAttempt();
+            juice.RefreshNow();
+            Assert.AreEqual("warning_alert", juice.LastSpawnedSpriteName);
+            var warning = juice.LastSpawnedObject;
+            yield return new WaitForSecondsRealtime(0.9f);
+            Assert.IsTrue(warning == null, "Final juice effects must self-clean between gameplay beats.");
 
             var environment = GameObject.Find(ArenaArtCatalog.BackyardEnvironmentObjectName);
             Assert.IsNotNull(environment.transform.Find("FinalBush_0"));
             Assert.IsNotNull(environment.transform.Find("FinalRock_1"));
+            var fallbackBush = environment.transform.Find("CoverBush_0");
+            var fallbackRock = environment.transform.Find("SteppingStone_0");
+            Assert.IsNotNull(fallbackBush, "Generated fallback objects must remain available.");
+            Assert.IsNotNull(fallbackRock, "Generated fallback objects must remain available.");
+            Assert.IsFalse(fallbackBush.GetComponent<SpriteRenderer>().enabled,
+                "The fallback bush renderer should not show a box behind loaded final art.");
+            Assert.IsFalse(fallbackRock.GetComponent<SpriteRenderer>().enabled,
+                "The fallback rock renderer should not show a box behind loaded final art.");
 
             cheddar.GetComponent<DogController>().Bark();
             yield return null;

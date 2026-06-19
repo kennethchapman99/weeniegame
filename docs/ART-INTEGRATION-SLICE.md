@@ -11,7 +11,7 @@
 - Backyard props: bush, fence section, rock, grass patch, and dig spot.
 - VFX: bark burst/ring, pickup sparkle, success pop, warning alert, rescue burst, and fail puff.
 
-The current live pass wires dog poses, squirrel state, eagle/coyote threat state, rope state, dynamic Backyard Rescue treats, selected backyard landmarks, and bark VFX. Other exported props and VFX have stable `FinalGameplayArt` paths ready for later feedback hooks.
+The current live pass wires dog poses, squirrel state, eagle/coyote threat state, rope state, dynamic Backyard Rescue treats, backyard bushes/rocks, and bark VFX. `FinalJuiceEffect` now consumes the sequenced gameplay-feedback stream and displays pickup sparkle, success pop, warning alert, rescue burst, or fail puff without changing gameplay state. A newer event replaces the previous transient effect so rapid couch-play beats remain readable instead of stacking.
 
 ## Sources and export
 
@@ -30,10 +30,14 @@ Use `--inventory-only` to refresh only the source inventory, or `--contact-sheet
 - `proud` and `rescued` currently use the same best available win pose for each dog.
 - `rope_tug` and `rope_complete` currently use the same source drawing; the separate runtime paths preserve a clean future replacement point.
 - Bunny sprites were easy to isolate and are included, but only the idle cameo is currently live.
-- Generated gameplay objects remain authoritative for transforms and collision. Sprite bounds do not affect gameplay.
+- Generated gameplay objects remain authoritative for transforms and collision. When a final bush or rock loads, only the rectangular fallback renderer is hidden; the fallback object remains available and is shown normally if the final sprite is missing. Sprite bounds do not affect gameplay.
 
-## Human visual review still required
+## Rendered visual review
 
-Review scale and pivot feel with two players on a television, especially dog foot contact, full-yard zoom readability, and overlays against bright yard areas. Check the soft pale edge left by background removal, sorting at fence/cover intersections, and the eagle/coyote scale during active threats. Capture local-camera, full-yard, and bark/rescue/warning frames after those tuning decisions.
+The macOS release player was reviewed at a 1920x1080 camera target in local gameplay, bark, warning, rescue, and full-yard states. That pass removed visible rectangular bush/rock fallbacks, tightened the bush extraction to remove adjacent-sheet fragments, reduced oversized bark/world-pop text, replaced all nine stepping-stone rectangles with varied final rocks, and verified distinct warning and rescue art.
 
-The deterministic PlayMode coverage verifies resource loading, pose mapping, live overlays, retained colliders, dynamic treat art, and safe missing-resource fallback; it cannot judge composition or animation quality.
+The opt-in standalone review harness avoids macOS Screen Recording permissions. Pass `--arena-art-review=/absolute/output/path` to the built player; it writes five PPM frames and exits. The harness is dormant during normal play and its argument parsing is covered by PlayMode tests.
+
+A real two-player television session is still required to judge attention, dog foot contact during movement, and whether the warning/rescue scale feels appropriately loud at couch distance. The current rendered frames establish that assets are transparent, positioned, non-boxed, and readable at local and full-yard zoom.
+
+The deterministic PlayMode coverage verifies resource loading, pose mapping, live overlays, retained fallback objects/colliders, hidden loaded fallback renderers, dynamic treat art, VFX mapping/lifetime, capture argument safety, and safe missing-resource fallback.

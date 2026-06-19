@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -268,6 +269,8 @@ namespace CheddarAndCocoa.Game
         public FeedbackKind LastFeedback { get; private set; } = FeedbackKind.Intro;
         public JuiceFeedbackKind LastJuiceFeedback { get; private set; } = JuiceFeedbackKind.None;
         public string LastJuiceLabel { get; private set; } = string.Empty;
+        public int JuiceFeedbackSequence { get; private set; }
+        public event Action<JuiceFeedbackKind, string> OnJuiceFeedback;
         public GameObject SquirrelObject { get; private set; }
         public GameObject PredatorObject { get; private set; }
         public GameObject RopeObject { get; private set; }
@@ -276,6 +279,7 @@ namespace CheddarAndCocoa.Game
         public InteractionRangeIndicator[] InteractionRangeIndicators { get; private set; }
         public Vector2 MissionEntryTarget => _missionEntryTarget;
         public float MaximumMissionEntryDistance => 12f;
+        public Rect ArenaBounds => _bounds;
 
         private DogController[] _dogs;
         private GamepadPlayerInput[] _inputs;
@@ -2549,6 +2553,7 @@ namespace CheddarAndCocoa.Game
             PredatorObject.name = "Predator Warning";
             PlaceObject(PredatorObject, (Vector2)_dogs[_predatorTarget].transform.position + Vector2.up * 2f);
             SetActorState(PredatorObject, "SHADOW! HUDDLE + DOUBLE BARK!", new Color(1f, 0.08f, 0.08f), 0.42f);
+            SetJuice(JuiceFeedbackKind.WarningMiss, "SHADOW WARNING!");
             RequestAudioCue(ArenaFeedbackCatalog.ThreatWarning);
             RequestRumble("predator_warning", 0.16f, 0.3f, 0.14f);
             LogPlaytestEvent("PredatorWarning", LastCue);
@@ -3074,6 +3079,8 @@ namespace CheddarAndCocoa.Game
         {
             LastJuiceFeedback = kind;
             LastJuiceLabel = label;
+            JuiceFeedbackSequence++;
+            OnJuiceFeedback?.Invoke(kind, label);
         }
 
         private void LogObjectiveIfChanged()
@@ -4737,6 +4744,7 @@ namespace CheddarAndCocoa.Game
             var label = go.AddComponent<TextMesh>();
             label.text = text;
             label.fontSize = art.FontSize;
+            label.characterSize = 0.08f;
             label.anchor = TextAnchor.MiddleCenter;
             label.alignment = TextAlignment.Center;
             label.color = color;
