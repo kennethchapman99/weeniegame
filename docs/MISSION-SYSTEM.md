@@ -1,6 +1,6 @@
 # Arena Mission System
 
-The ArenaScene mission spike is deliberately small. It proves that the existing Cheddar/Cocoa arena loop can run multiple dog-game objectives without a second scene, external assets, or a campaign/menu system.
+The ArenaScene mission spike now proves that the existing Cheddar/Cocoa arena loop can run a broad set of dog-game objectives without needing bespoke scenes for each mission. It is still the gameplay proving ground, but campaign ownership is moving to the Adventure Progression layer in `docs/PROGRESSION-SYSTEM.md`.
 
 ## Runtime Shape
 
@@ -15,9 +15,9 @@ The ArenaScene mission spike is deliberately small. It proves that the existing 
 Manual selection now has two paths:
 
 - Cold start opens the generated IMGUI mission picker. Up/Down or D-pad changes selection; Enter/Space/Start/South starts the selected mission.
-- `1`, `2`, and `3` still start Backyard Rescue, Snack Heist, and Sock Panic directly for fast testing.
+- `1-9` and `0` still start the first ten mission variants directly for fast testing; arrow-select covers the full 12-mission rotation.
 
-After a mission ends, the same local flow exposes Replay, Next Mission, and Mission Select. Once all three variants have ended in the current Play session, Next opens Session Summary. This is not a campaign structure. Keep it that way until there are enough proven missions to justify persistence, unlocks, or authored level data.
+After a mission ends, the same local flow exposes Replay, Next Mission, and Mission Select. Session Summary remains a local run recap. Persistent stars, best ranks, location unlocks, and saved progress now belong to the Adventure Progression layer rather than this arena-local session loop.
 
 ## Current Variants
 
@@ -26,34 +26,45 @@ After a mission ends, the same local flow exposes Replay, Next Mission, and Miss
 | Backyard Rescue | Save weenies, stop squirrel pressure, resolve predator, complete tug | Collectibles, squirrel, predator, tug | `WEENIE SAVED`, `SQUIRREL SCARED`, `PREDATOR YEETED`, `PARTNER RESCUE`, `TUG COMPLETE` |
 | Snack Heist | Stash snacks before squirrel steals too many | Collectibles, squirrel | `SNACK STASHED`, `SNACK GUARD BARK`, `SNACK THIEF` |
 | Sock Panic | Return scattered socks before time expires | Collectibles, timer | `SOCK RESCUED` |
+| Squirrel Conspiracy | Herd the squirrel, reveal the stash, crack the case | Herding route, cutoff positioning, stash reveal | `GOOD HERD`, `CUTOFF`, `DOUBLE BARK BLOCK`, `STASH FOUND` |
+| Eagle Shadow Panic | Hide from sweeping eagle danger, rescue the toy, form a united front | Threat sweep, cover, rescue, united bark | `SAFE HIDE`, `SHADOW DISTRACTED`, `TOY RESCUED`, `UNITED FRONT` |
+| Coyotes at the Fence | Bark-pin the coyote and repair weak fence gaps | Patrol defense, repair, lure, united block | `FENCE HELD`, `DIRT FILLED`, `COYOTE BLOCKED`, `YARD DEFENDED` |
+| Weenie Roundup | Pick up loose weenies and deliver them to the bowl | Carry, pickup, drop/fumble, bowl delivery | `PICKUP`, `DELIVERED`, `FUMBLE`, `ROUNDUP CLEAR` |
+| Scent Search | Sniff/dig the right mound and avoid cold digs | Scent reads, dig spots, hot/cold feedback | `WARM SNIFF`, `BONE DUG UP`, `COLD DIG` |
+| Thunderstorm Comfort | Huddle to calm panic through thunderclaps | Panic meter, storm pulses, comfort proximity | `COMFORT`, `CLAP SURVIVED`, `PANIC FAIL` |
+| Mark the Yard | Claim and defend territory zones | Territory zones, reclaim pressure | `ZONE MARKED`, `RECLAIMED`, `YARD CLAIMED` |
+| Walkies on the Leash | Reach checkpoints together while managing leash snaps | Leash physics, checkpoints, snap penalties | `CHECKPOINT`, `LEASH SNAP`, `WALK COMPLETE` |
+| Car Ride Balance | Balance against car lurches and avoid spills | Vehicle balance, lurches, spill pressure | `STEADIED`, `SPILL`, `RIDE COMPLETE` |
 
 ## Adding The Next Mission
 
-1. Add a new value to `GameManager.MissionVariant`.
-2. Add the value to `GameManager.MissionOrder` if it should appear in the generated mission picker and session loop.
-3. Add a new `MissionDefinition` branch in `BuildMissionDefinition`.
-4. Decide which existing systems are enabled:
+Do not add the next mission yet. The current priority is the AdventureMap/progression spine. Once the progression layer is playable and tested, use this sequence for future mission work:
+
+1. Decide which location owns the mission in `AdventureLocationCatalog` or future location assets.
+2. Add a new value to `GameManager.MissionVariant`.
+3. Add the value to `GameManager.MissionOrder` only if it should appear in the generated arena picker and local session loop.
+4. Add a new `MissionDefinition` branch in `BuildMissionDefinition`.
+5. Decide which existing systems are enabled:
    - `UsesSquirrel`
    - `RequiresPredator`
    - `RequiresTug`
-5. Give the mission unique objective text, score labels, clear banner, replay prompt, and fail reasons.
-6. Add readable placeholder collectible art in `BuildCollectibleArt` if the existing weenie/snack/sock shapes do not fit.
-7. Add a keyboard debug selection if manual testing needs it.
+6. Give the mission unique objective text, score labels, clear banner, replay prompt, and fail reasons.
+7. Add readable placeholder collectible art in `BuildCollectibleArt` if the existing shapes do not fit.
 8. Add deterministic PlayMode coverage that starts the mission from mission select, checks objective copy, scores one unique event, reaches clear/fail, and verifies replay/next/mission-select state.
-9. Update `docs/ARENA-PLAYABLE.md` with cold-start instructions, manual checks, and limitations.
+9. Update `docs/ARENA-PLAYABLE.md` and `docs/PROGRESSION-SYSTEM.md` if the mission affects location unlocks or saved progress.
 
 ## Guardrails
 
-- Do not create a new scene for a small variant.
+- Do not create a new scene for a small mission variant.
 - Do not bypass `AddScore`, `EndRound`, or `StartMission`; tests rely on those single mutation paths.
-- Keep Cheddar/Cocoa art and identity generated by the existing dog feedback components.
+- Keep Cheddar/Cocoa art and identity generated by the existing dog feedback components until final sprite/prefab slots are ready.
 - Bark should remain useful in at least some active mission pressure. If a mission disables squirrel/predator, document that it is a collect/timer proof rather than the new default loop.
 - Prefer one or two meaningful objective differences over many shallow variants.
+- Do not add more mission variants before AdventureMap, save/load, and unlock tests are in place.
 
 ## Warning Status
 
 The previous `LevelObjective.surviveSeconds` warning was low-risk and related to objective data. It is now exposed through `LevelObjective.SurviveSeconds`, matching the existing read-only `Kind` and `Label` properties. The `LevelObjective` manager is still a future stub; ArenaScene mission variants currently run through `GameManager.MissionDefinition`.
-
 
 ## Backyard Pack: Squirrel Conspiracy (2026-06-18)
 
