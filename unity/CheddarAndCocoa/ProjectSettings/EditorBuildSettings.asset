@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/AdventureMapScene.unity
+    guid: 91ca7d0a71864d7ea2efad62a82d945f
+  - enabled: 1
     path: Assets/Scenes/ArenaScene.unity
     guid: c1a2b3c4d5e6f70819203a4b5c6d7e07
   - enabled: 1
