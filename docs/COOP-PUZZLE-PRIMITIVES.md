@@ -15,6 +15,7 @@ All primitives are **pure logic** (no `MonoBehaviour`), in `CheddarAndCocoa.Game
 | `CoopSequenceChainPuzzle` | #4 cause/effect + #5 role reversal | Each step is **role-gated and ordered**; alternating owners force the dogs to take turns | Wrong dog/order = harmless **Fumble**; dawdling = chain **Settles** back a step |
 | `CoopRescueTimingPuzzle` | #8 rescue + #7 dual-timing | Held dog alone opens a **weakness window** (wiggle); free dog alone can **pull**, only inside it | Mistimed pull = **MissedPull** (no permanent punish) |
 | `CoopHumanDistractionPuzzle` | #2 + soft asymmetry | Same human distraction, two signature moves: Cheddar's **burp** (burst + cooldown → timed sneak windows) or Cocoa's **belly-rub flop** (sustain, but committed + stamina-limited); partner sneaks only while `HumanDistracted` | Eager re-burp = **WastedBurp**; flop runs out → Cocoa gets up; exposed sneak = **Exposure** (stall, no punish) |
+| `CoopScentRelayPuzzle` | #3 smell-and-act + #6 split info | **Information** asymmetry: only the reader can **Reveal** which look-alike target is real; only the digger can **ActOn** one. Digger can't act blind, so it must wait for and dig the reader's call | Acting before a reveal = **BlindAct**; wrong dig = harmless **decoy** (`WrongDigs`), reader still knows |
 
 Each primitive also ships a `MonoBehaviour` **driver** that turns it into an in-scene beat:
 
@@ -23,6 +24,7 @@ Each primitive also ships a `MonoBehaviour` **driver** that turns it into an in-
 - `CoopSequenceChainBeat` — discrete interaction (a dog interacts at the next step's station).
 - `CoopRescueTimingBeat` — input events + proximity gate (held dog wiggles; free dog pulls only when adjacent).
 - `CoopHumanDistractionBeat` — input + proximity (Cheddar burps / Cocoa flops; whichever dog isn't distracting sneaks the lane).
+- `CoopScentRelayBeat` — proximity (reader reveals at the scent source; digger digs the station it stands on).
 
 These give missions a template for every interaction style (continuous, discrete-interact, input-event).
 
