@@ -12,7 +12,7 @@ namespace CheddarAndCocoa.Game
         private Vector3 _baseScale;
         private float _pulseUntil;
         private float _pulseStrength;
-        private string _runtimeSpriteName;
+        private string _runtimeSpriteName = string.Empty;
 
         public bool HasRuntimeSprite => _renderer != null && _renderer.sprite != null;
         public string RuntimeSpriteName => _runtimeSpriteName;
@@ -30,7 +30,8 @@ namespace CheddarAndCocoa.Game
                 _renderer = go.AddComponent<SpriteRenderer>();
             }
 
-            SetSprite(sprite);
+            if (sprite != null) SetSprite(sprite);
+            else if (_renderer.sprite == null) _runtimeSpriteName = string.Empty;
             _renderer.color = tint;
             _renderer.sortingOrder = sortingOrder;
 
