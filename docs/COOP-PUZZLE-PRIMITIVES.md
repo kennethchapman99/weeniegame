@@ -17,6 +17,7 @@ All primitives are **pure logic** (no `MonoBehaviour`), in `CheddarAndCocoa.Game
 | `CoopHumanDistractionPuzzle` | #2 + soft asymmetry | Same human distraction, two signature moves: Cheddar's **burp** (burst + cooldown → timed sneak windows) or Cocoa's **belly-rub flop** (sustain, but committed + stamina-limited); partner sneaks only while `HumanDistracted` | Eager re-burp = **WastedBurp**; flop runs out → Cocoa gets up; exposed sneak = **Exposure** (stall, no punish) |
 | `CoopScentRelayPuzzle` | #3 smell-and-act + #6 split info | **Information** asymmetry: only the reader can **Reveal** which look-alike target is real; only the digger can **ActOn** one. Digger can't act blind, so it must wait for and dig the reader's call | Acting before a reveal = **BlindAct**; wrong dig = harmless **decoy** (`WrongDigs`), reader still knows |
 | `CoopStretchSpanPuzzle` | #5 long-dog geometry / bridge | **Two-body spacing band**: both dogs stretch a span (blanket / long-dog bridge); usable only when their **separation** is in band (too close `Slack`, too far `Overstretched`) and the **midpoint** is under the target | Over-stretching **Rips** (once per event); slack/off-centre/ripped = **Missed** catch |
+| `CoopChaosMachinePuzzle` | #10 cooperative chaos machine | Pre-position, pull the lever, and the **cascade runs itself** through junctions; it only rolls on while each junction's helper dog is in its **assist window** | A missing helper **misfires** and the machine **stalls visibly** at that stage (`StalledStage`); re-trigger resumes from there |
 
 Each primitive also ships a `MonoBehaviour` **driver** that turns it into an in-scene beat:
 
@@ -27,6 +28,7 @@ Each primitive also ships a `MonoBehaviour` **driver** that turns it into an in-
 - `CoopHumanDistractionBeat` — input + proximity (Cheddar burps / Cocoa flops; whichever dog isn't distracting sneaks the lane).
 - `CoopScentRelayBeat` — proximity (reader reveals at the scent source; digger digs the station it stands on).
 - `CoopStretchSpanBeat` — two-transform geometry (separation + midpoint from both dogs; mission calls `CatchItem` at catch height).
+- `CoopChaosMachineBeat` — junction positions + per-stage owner; `Trigger` pulls the lever, the cascade rolls while each junction's helper is in range.
 
 These give missions a template for every interaction style (continuous, discrete-interact, input-event).
 
