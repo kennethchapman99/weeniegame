@@ -11,7 +11,9 @@ namespace CheddarAndCocoa.Tests
         public void RuntimeArtSpriteFactory_MissingOrPresentDraftArt_IsSafeToQuery()
         {
             Assert.DoesNotThrow(() => RuntimeArtSpriteFactory.Get(RuntimeArtSpriteFactory.RuntimeSpriteId.Squirrel));
+            Assert.DoesNotThrow(() => RuntimeArtSpriteFactory.Get(RuntimeArtSpriteFactory.RuntimeSpriteId.SquirrelSteal));
             Assert.DoesNotThrow(() => RuntimeArtSpriteFactory.Get(RuntimeArtSpriteFactory.RuntimeSpriteId.BarkBurst));
+            Assert.DoesNotThrow(() => RuntimeArtSpriteFactory.Get(RuntimeArtSpriteFactory.RuntimeSpriteId.RescueBurst));
             Assert.DoesNotThrow(() => RuntimeArtSpriteFactory.Has(RuntimeArtSpriteFactory.RuntimeSpriteId.BackyardBush));
         }
 
@@ -19,8 +21,12 @@ namespace CheddarAndCocoa.Tests
         public void FinalGameplayArt_ProvidesStableRuntimeResourcePaths()
         {
             Assert.AreEqual("ArenaFinal/Characters/Squirrel/squirrel_idle", FinalGameplayArt.PathFor(RuntimeArtSpriteFactory.RuntimeSpriteId.Squirrel));
+            Assert.AreEqual("ArenaFinal/Characters/Squirrel/squirrel_steal", FinalGameplayArt.PathFor(RuntimeArtSpriteFactory.RuntimeSpriteId.SquirrelSteal));
+            Assert.AreEqual("ArenaFinal/Characters/Eagle/eagle_action", FinalGameplayArt.PathFor(RuntimeArtSpriteFactory.RuntimeSpriteId.PredatorAttack));
             Assert.AreEqual("ArenaFinal/Props/Mission/weenie_collectible", FinalGameplayArt.PathFor(RuntimeArtSpriteFactory.RuntimeSpriteId.WeenieCollectible));
+            Assert.AreEqual("ArenaFinal/Props/Mission/rope_complete", FinalGameplayArt.PathFor(RuntimeArtSpriteFactory.RuntimeSpriteId.RopeComplete));
             Assert.AreEqual("ArenaFinal/VFX/bark_burst", FinalGameplayArt.PathFor(RuntimeArtSpriteFactory.RuntimeSpriteId.BarkBurst));
+            Assert.AreEqual("ArenaFinal/VFX/rescue_burst", FinalGameplayArt.PathFor(RuntimeArtSpriteFactory.RuntimeSpriteId.RescueBurst));
         }
 
         [Test]
@@ -60,6 +66,25 @@ namespace CheddarAndCocoa.Tests
             {
                 var overlay = go.AddComponent<ArtSpriteOverlay>();
                 overlay.Init(SpriteShapeCache.WhiteSquare, Vector3.zero, Vector3.one, 10, Color.white, true);
+
+                Assert.IsTrue(overlay.HasRuntimeSprite);
+                Assert.That(overlay.RuntimeSpriteName, Does.Contain("RuntimeWhiteSquare"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(go);
+            }
+        }
+
+        [Test]
+        public void ArtSpriteOverlay_CanSwapRuntimeSprite()
+        {
+            var go = new GameObject("OverlaySwapTest");
+            try
+            {
+                var overlay = go.AddComponent<ArtSpriteOverlay>();
+                overlay.Init(SpriteShapeCache.WhiteSquare, Vector3.zero, Vector3.one, 10, Color.white, true);
+                overlay.SetSprite(SpriteShapeCache.WhiteSquare);
 
                 Assert.IsTrue(overlay.HasRuntimeSprite);
                 Assert.That(overlay.RuntimeSpriteName, Does.Contain("RuntimeWhiteSquare"));
