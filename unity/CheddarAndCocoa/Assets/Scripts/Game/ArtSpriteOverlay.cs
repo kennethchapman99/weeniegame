@@ -30,10 +30,9 @@ namespace CheddarAndCocoa.Game
                 _renderer = go.AddComponent<SpriteRenderer>();
             }
 
-            _renderer.sprite = sprite;
+            SetSprite(sprite);
             _renderer.color = tint;
             _renderer.sortingOrder = sortingOrder;
-            _runtimeSpriteName = sprite != null ? sprite.name : string.Empty;
 
             if (shadow && _shadow == null)
             {
@@ -47,6 +46,19 @@ namespace CheddarAndCocoa.Game
                 _shadow.color = new Color(0f, 0f, 0f, 0.22f);
                 _shadow.sortingOrder = sortingOrder - 2;
             }
+        }
+
+        public void SetSprite(Sprite sprite)
+        {
+            if (_renderer == null) return;
+            if (sprite == null) return;
+            _renderer.sprite = sprite;
+            _runtimeSpriteName = sprite.name;
+        }
+
+        public void SetTint(Color color)
+        {
+            if (_renderer != null) _renderer.color = color;
         }
 
         public void Pulse(float seconds, float strength)
