@@ -65,8 +65,9 @@ yard.
 
 When an active objective is more than 28 world units away, that dog's objective arrow enables a
 modest `1.55x` trail-travel speed assist. The identity label changes to `TRAIL READY`/`TRAIL SPRINT`,
-and normal close-control speed returns inside 20 units. The hysteresis prevents flicker and keeps
-bark, tug, pickup, dig, hide, and leash interactions on their existing precision tuning.
+the shared per-dog guidance line adds `[TRAIL SPRINT]`, and normal close-control speed returns inside
+20 units. The hysteresis prevents flicker and keeps bark, tug, pickup, dig, hide, and leash
+interactions on their existing precision tuning.
 
 The shared camera treats its authored maximum zoom as the 16:9 target, then derives a safe wider
 ceiling for narrower and portrait windows. This keeps both dogs framed at maximum separation across

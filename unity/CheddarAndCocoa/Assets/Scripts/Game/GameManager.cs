@@ -196,7 +196,9 @@ namespace CheddarAndCocoa.Game
                 for (int i = 0; i < ObjectiveArrows.Length && i < _dogs.Length; i++)
                 {
                     string route = ObjectiveArrows[i] != null ? ObjectiveArrows[i].GuidanceLabel : string.Empty;
-                    if (!string.IsNullOrEmpty(route)) guidance.Add($"{DogName(_dogs[i])}: {route}");
+                    if (string.IsNullOrEmpty(route)) continue;
+                    string travel = _dogs[i] != null && _dogs[i].TravelAssist ? " [TRAIL SPRINT]" : string.Empty;
+                    guidance.Add($"{DogName(_dogs[i])}: {route}{travel}");
                 }
                 return guidance.Count == 0 ? string.Empty : string.Join("  •  ", guidance);
             }

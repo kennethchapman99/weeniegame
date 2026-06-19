@@ -173,12 +173,17 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(cheddar.TravelAssist);
             Assert.Greater(cheddar.MaxSpeedUnitsPerSecond, normalSpeed);
             Assert.That(feedback.IdentityLabel, Does.Contain("TRAIL READY"));
+            Assert.That(game.TeamGuidanceLabel, Does.Contain("Cheddar:"));
+            Assert.That(game.TeamGuidanceLabel, Does.Contain("[TRAIL SPRINT]"),
+                "The shared HUD should tell the couch when a distant route has accelerated.");
 
             cheddarObject.transform.position = game.SquirrelObject.transform.position;
             yield return null;
             yield return null;
             Assert.IsFalse(cheddar.TravelAssist);
             Assert.AreEqual(1f, cheddar.TravelAssistMultiplier);
+            Assert.That(game.TeamGuidanceLabel, Does.Contain("Cheddar: ON TARGET"));
+            Assert.That(game.TeamGuidanceLabel, Does.Not.Contain("Cheddar: ON TARGET [TRAIL SPRINT]"));
         }
 
         [UnityTest]
