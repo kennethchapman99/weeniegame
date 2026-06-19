@@ -5,9 +5,8 @@ using CheddarAndCocoa.Game;
 namespace CheddarAndCocoa.Dogs
 {
     /// <summary>
-    /// Converts the imported draft pose atlases into tightly cropped, transparent runtime sprites.
-    /// The source sheets use a near-white background, so a small color-distance key removes only
-    /// that backdrop while preserving fur, outlines, and soft contact shadows.
+    /// Provides runtime dog pose sprites. Final sprites under Resources/ArenaFinal win; draft
+    /// pose-atlas crops remain the fallback until final exports exist.
     /// </summary>
     public static class ArenaDogPoseSprites
     {
@@ -17,6 +16,13 @@ namespace CheddarAndCocoa.Dogs
         {
             string key = $"{dog}_{pose}";
             if (Cache.TryGetValue(key, out var cached)) return cached;
+
+            Sprite final = FinalDogPoseArt.Load(dog, pose);
+            if (final != null)
+            {
+                Cache[key] = final;
+                return final;
+            }
 
             var atlasId = dog == DogId.Cheddar
                 ? ArenaDraftArt.SpriteId.CheddarPoses
@@ -59,6 +65,8 @@ namespace CheddarAndCocoa.Dogs
             Cache[key] = sprite;
             return sprite;
         }
+
+        public static void ClearCacheForTests() => Cache.Clear();
 
         private static RectInt RectFor(DogId dog, DogReadabilityFeedback.Pose pose)
         {
