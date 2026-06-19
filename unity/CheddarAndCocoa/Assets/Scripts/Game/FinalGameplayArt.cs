@@ -23,7 +23,7 @@ namespace CheddarAndCocoa.Game
                 case RuntimeArtSpriteFactory.RuntimeSpriteId.EagleThreat:
                     return Root + "/Characters/Eagle/eagle_threat";
                 case RuntimeArtSpriteFactory.RuntimeSpriteId.PredatorAttack:
-                    return Root + "/Characters/Eagle/eagle_attack";
+                    return Root + "/Characters/Eagle/eagle_action";
                 case RuntimeArtSpriteFactory.RuntimeSpriteId.CoyoteThreat:
                     return Root + "/Characters/Coyote/coyote_threat";
                 case RuntimeArtSpriteFactory.RuntimeSpriteId.BackyardBush:
