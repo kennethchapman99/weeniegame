@@ -1,18 +1,18 @@
 # Adventure Progression System
 
-Status: foundation started. The game still launches through the existing ArenaScene mission carousel until the AdventureMap scene is wired.
+Status: foundation plus first generated map/bridge pass are committed. Unity still needs to be opened locally to import the new scripts and run the full PlayMode suite before this should be treated as green.
 
 ## Why This Exists
 
 The project now has enough proven missions to stop growing as a single-scene sandbox. The progression layer turns the existing 12 mission variants into a durable game shell with locations, unlocks, and saved best results.
 
-The first implementation is intentionally boring:
+The implementation is intentionally boring:
 
 - no new missions;
 - no new art dependency;
 - no deep UI redesign;
 - no rewrite of `GameManager`;
-- additive service/catalog code that can be tested before any scene-flow changes.
+- additive services/controllers that can be tested before real menu art/prefabs exist.
 
 ## Runtime Pieces
 
@@ -23,6 +23,22 @@ The first implementation is intentionally boring:
 - `AdventureProgressSnapshot` - JSON-serializable save payload.
 - `MissionProgressRecord` - attempts, clears, best score, best stars, and best rank per mission.
 - `AdventureProgressService` - load/save, corrupt-save fallback, mission-result recording, star totals, unlock recalculation, and test-only in-memory construction.
+
+`unity/CheddarAndCocoa/Assets/Scripts/Game/AdventureMapController.cs` introduces UI-agnostic map state:
+
+- selected location;
+- selected mission within that location;
+- locked/unlocked labels;
+- mission best-score/star/rank rows;
+- launch gating so locked nodes cannot start missions.
+
+`unity/CheddarAndCocoa/Assets/Scripts/Game/AdventureMissionLaunch.cs` is the tiny handoff between map and arena. It queues a selected mission/location before loading ArenaScene.
+
+`unity/CheddarAndCocoa/Assets/Scripts/Game/AdventureArenaProgressBridge.cs` watches ArenaScene only when a mission was launched from AdventureMap. It consumes the queued mission, starts it through existing `GameManager.StartMission`, watches for the end screen, records the result in `AdventureProgressService`, and saves.
+
+`unity/CheddarAndCocoa/Assets/Scripts/Game/AdventureMapHud.cs` is a generated IMGUI map HUD for early testing. It shows location nodes, locked state, mission rows, bests, and launches unlocked missions. It is intentionally not final UI.
+
+`unity/CheddarAndCocoa/Assets/Scripts/Game/AdventureMapBootstrap.cs` can be placed into a future empty AdventureMap scene to create the generated HUD.
 
 This is a code-first bridge. A later pass can move the location catalog into authored ScriptableObject assets without changing the save format.
 
@@ -71,41 +87,55 @@ Rules:
 - Missing, empty, unreadable, or corrupt saves fall back to a fresh snapshot.
 - Tests should use `AdventureProgressService.CreateInMemoryForTests()` or an isolated temp path, then `ClearSave()`.
 
-## Integration Contract
+## Current Map Flow
 
-The next implementation pass should add thin adapters rather than a `GameManager` rewrite:
-
-1. Add an `AdventureMap` scene or bootstrap.
-2. Load `AdventureProgressService.LoadDefault()` at map start.
-3. Render location nodes from `AdventureLocationCatalog.CreateDefault()`.
-4. Selecting an unlocked location shows its mission list.
-5. Locked nodes show required stars and current total stars.
-6. Starting a mission still routes to the existing ArenaScene/GameManager path.
-7. When a mission ends, record the result with:
+1. A future AdventureMap scene should contain `AdventureMapBootstrap` or directly add `AdventureMapHud`.
+2. `AdventureMapHud` loads progress with `AdventureProgressService.LoadDefault()`.
+3. `AdventureMapController` renders/gates locations and mission rows.
+4. Starting an unlocked mission calls `AdventureMissionLaunch.QueueMission(...)` and loads `ArenaScene`.
+5. `AdventureArenaProgressBridge` sees the queued launch when ArenaScene loads, starts the selected mission, and waits for the end screen.
+6. On clear/fail, it records:
 
 ```csharp
 progress.RecordMissionResult(game.ActiveMissionVariant, game.Score, game.StarRating, game.EndRank, game.Outcome == GameManager.MissionOutcome.Clear);
 progress.Save();
 ```
 
-8. Mission select tiles should read best score/stars/rank from the progression service once the map owns the flow.
+7. Returning to the map is not implemented yet; current flow proves launch + record. The next pass should add an explicit Map/Continue action on the end screen or a separate return mechanism.
 
-## Test Requirements For Next Pass
+## Tests Added
 
-Add PlayMode coverage for:
+`AdventureProgressionPlayModeTests` covers:
 
-- fresh player defaults: only Backyard unlocked, zero stars, empty mission records;
-- recording a clear updates attempts, clears, best score, best stars, best rank, and total stars;
-- weaker replay result does not lower best score/stars;
-- save/load round-trip persists mission records and unlocks;
-- corrupt save falls back to fresh Backyard-only state;
-- reaching 6/9/18 total stars unlocks Front Yard, House Interior, and Neighborhood Park;
-- AdventureMap displays locked/unlocked state and mission bests;
-- existing `AllMissionsSmokePlayModeTests` still pass.
+- fresh player defaults;
+- star thresholds unlocking locations;
+- weaker replay not lowering best result;
+- save/load round trip;
+- corrupt save fallback;
+- 18-star park unlock.
+
+`AdventureMapControllerPlayModeTests` covers:
+
+- fresh map selecting unlocked Backyard;
+- locked Front Yard refusing launch;
+- unlocked Front Yard queuing selected mission;
+- mission rows showing persisted best result;
+- location selection wrapping and mission selection reset.
+
+## Remaining Validation / Next Pass
+
+1. Open Unity so the new scripts and `.meta` files import.
+2. Run the full PlayMode suite.
+3. Fix compile/import issues from the new files if any.
+4. Create an actual `AdventureMap` scene with `AdventureMapBootstrap`.
+5. Add it to build settings ahead of ArenaScene if that is the desired launch order.
+6. Add a return-to-map path from ArenaScene end screen.
+7. Decide whether direct ArenaScene play should remain local-only or also persist results.
+8. Update `docs/ARENA-PLAYABLE.md` once scene flow is verified in Unity.
 
 ## Guardrails
 
-- Do not add more mission variants until the map/save layer works.
+- Do not add more mission variants until the map/save layer works end-to-end.
 - Do not move mission scoring into the save layer; save only records results.
 - Do not make location unlocks depend on session counters; use persisted best stars.
 - Keep corrupt-save recovery silent and safe for families/non-technical players.
