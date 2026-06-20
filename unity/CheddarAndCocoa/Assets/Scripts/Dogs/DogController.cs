@@ -79,6 +79,7 @@ namespace CheddarAndCocoa.Dogs
         public float TurnResponsivenessUnitsPerSecond => tuning != null ? tuning.turnResponsiveness : 0f;
         public float StopSpeed => tuning != null ? tuning.stopSpeed : 0f;
         public Vector2 CurrentVelocity => _body != null ? _body.linearVelocity : Vector2.zero;
+        public float BarkVisualPulse => 1f + _barkPop * 1.2f;
 
         private void Awake()
         {
@@ -145,8 +146,14 @@ namespace CheddarAndCocoa.Dogs
             if (_barkPop > 0f)
             {
                 _barkPop = Mathf.Max(0f, _barkPop - Time.deltaTime);
-                float s = 1f + _barkPop * 1.2f; // brief puff-up
-                transform.localScale = new Vector3(_baseScale.x * s, _baseScale.y * s, _baseScale.z);
+                // The arena readability component applies the pulse to its visual child so the
+                // physics silhouette stays stable. Keep this root-scale fallback for the minimal
+                // controller test scene, which deliberately has no art-feedback component.
+                if (!TryGetComponent<DogReadabilityFeedback>(out _))
+                {
+                    float s = BarkVisualPulse;
+                    transform.localScale = new Vector3(_baseScale.x * s, _baseScale.y * s, _baseScale.z);
+                }
             }
         }
 

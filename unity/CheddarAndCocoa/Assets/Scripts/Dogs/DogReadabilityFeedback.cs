@@ -58,6 +58,7 @@ namespace CheddarAndCocoa.Dogs
         public string CurrentPoseLabel => CurrentPose.ToString();
         public string IdentityLabel => _label != null ? _label.text : string.Empty;
         public string FacingIntentLabel => _lastIntentDir.x >= 0f ? "FacingRight" : "FacingLeft";
+        public string DetailedFacingIntentLabel => $"Facing{CharacterMotionArt.FacingLabel(_lastIntentDir)}";
         public string LastMovementJuiceLabel { get; private set; } = string.Empty;
         public float StrategicLabelScale { get; private set; } = 1f;
         public bool UsesAuthoredPoseArt => _authoredPose != null && _authoredPose.sprite != null;
@@ -65,6 +66,7 @@ namespace CheddarAndCocoa.Dogs
         public int MotionFrameIndex { get; private set; } = -1;
         public string MotionClipLabel { get; private set; } = string.Empty;
         public bool IsCarrying { get; private set; }
+        public string MotionPersonalityLabel { get; private set; } = string.Empty;
         public string ArtDirectionSignature => _identity == null
             ? string.Empty
             : ArenaArtCatalog.Dog(_identity.Id).ArtDirectionSignature;
@@ -194,31 +196,10 @@ namespace CheddarAndCocoa.Dogs
             if (_authoredPose != null) _authoredPose.flipX = _lastIntentDir.x < 0f;
             AnimateAuthoredMotion(pose);
 
-            transform.localRotation = pose switch
-            {
-                Pose.Run => Quaternion.Euler(0f, 0f, Mathf.Sin(t * 16f) * 3f - _lastIntentDir.x * 3.5f),
-                Pose.Bark => Quaternion.Euler(0f, 0f, Mathf.Sin(t * 30f) * 7f),
-                Pose.Stunned => Quaternion.Euler(0f, 0f, 12f),
-                Pose.Sad => Quaternion.Euler(0f, 0f, -7f),
-                Pose.Proud => Quaternion.Euler(0f, 0f, Mathf.Sin(t * 4f) * 2f),
-                Pose.Tug => Quaternion.Euler(0f, 0f, Mathf.Sin(t * 22f) * 5f),
-                _ => Quaternion.identity
-            };
-
-            float pop = pose switch
-            {
-                Pose.Bark => 1.18f,
-                Pose.Stunned => 0.86f,
-                Pose.Rescued => 1.16f,
-                Pose.Proud => 1.12f,
-                Pose.Sad => 0.92f,
-                Pose.Tug => 1.06f,
-                Pose.Run => 1f + Mathf.Sin(t * 18f) * 0.025f,
-                _ => 1f
-            };
-            float stretch = pose == Pose.Run ? 1f + Mathf.Clamp01(velocity.magnitude / 6f) * 0.05f : 1f;
-            float squash = pose == Pose.Run ? 1f - Mathf.Clamp01(velocity.magnitude / 6f) * 0.035f : 1f;
-            transform.localScale = new Vector3(_baseScale.x * pop * stretch, _baseScale.y * pop * squash, _baseScale.z);
+            float speed01 = Mathf.Clamp01(velocity.magnitude / 6f);
+            var personality = DogMotionPersonality.At(_identity.Id, pose, t, speed01, _dog.Zoomies);
+            MotionPersonalityLabel = personality.Signature;
+            ApplyPersonalityMotion(personality);
 
             if (_tail != null)
             {
@@ -330,6 +311,23 @@ namespace CheddarAndCocoa.Dogs
             _authoredPose.flipX = mirror;
             MotionFrameIndex = frame;
             MotionClipLabel = clip.ToString();
+        }
+
+        private void ApplyPersonalityMotion(DogMotionPersonality.Sample personality)
+        {
+            // Keep the Rigidbody/collider root stable. All squash, lean, and bounce belongs to art.
+            transform.localRotation = Quaternion.identity;
+            transform.localScale = _baseScale;
+            if (_authoredPose == null) return;
+
+            Vector3 authoredBase = MotionFrameIndex >= 0 ? AuthoredMotionScale : AuthoredFallbackScale;
+            float barkPulse = _dog != null ? _dog.BarkVisualPulse : 1f;
+            _authoredPose.transform.localScale = new Vector3(
+                authoredBase.x * personality.Scale.x * barkPulse,
+                authoredBase.y * personality.Scale.y * barkPulse,
+                authoredBase.z);
+            _authoredPose.transform.localRotation = Quaternion.Euler(0f, 0f, personality.RotationDegrees);
+            _authoredPose.transform.localPosition = new Vector3(0f, -0.12f + personality.VerticalOffset, -0.2f);
         }
 
         private void TickMovementJuice(Pose pose, Vector2 velocity, float runFeedbackSpeed)

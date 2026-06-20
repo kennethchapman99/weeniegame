@@ -76,6 +76,19 @@ namespace CheddarAndCocoa.Dogs
             return Facing8.E;
         }
 
+        public static string FacingLabel(Vector2 direction)
+        {
+            Facing8 facing = FacingForDirection(direction, out bool mirror);
+            if (!mirror) return facing.ToString();
+            return facing switch
+            {
+                Facing8.E => Facing8.W.ToString(),
+                Facing8.NE => Facing8.NW.ToString(),
+                Facing8.SE => Facing8.SW.ToString(),
+                _ => facing.ToString()
+            };
+        }
+
         private static DogReadabilityFeedback.Pose FallbackPose(Clip clip) => clip switch
         {
             Clip.Run => DogReadabilityFeedback.Pose.Run,
