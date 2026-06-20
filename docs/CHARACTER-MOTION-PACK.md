@@ -14,7 +14,7 @@ Generated exploration lives under `Assets/Art/ReferenceOnly/GeneratedCharacterMo
 
 The initial four V01 boards are generated and intentionally remain reference-only. They establish a strong Cheddar/Cocoa identity and useful action silhouettes, but validation correctly rejects them as runtime sources because the generator baked a checkerboard into RGB output instead of producing true alpha. Direction ordering and Cocoa's comfort/hide props also need human review before any slicing.
 
-Tier A east-facing idle/run/bark boards are now generated separately against flat near-white backgrounds. The extraction pipeline exports 24 normalized 512x384 true-alpha frames with a shared paw-baseline pivot. Live gameplay plays those four-frame loops and mirrors them for west travel; north/south/diagonal direction art and every Tier B clip still use the established single-pose fallback. Current completion is **24/336 frames**.
+Tier A idle/run/bark boards are generated separately against flat near-white backgrounds. The extraction pipeline exports normalized 512x384 true-alpha frames with a shared paw-baseline pivot. Live gameplay now has east idle/bark loops plus east, southeast, and northeast run loops; west-side travel mirrors them. Pure north/south chooses the closest diagonal, while missing non-run direction art and every Tier B clip retain the established single-pose fallback. Current completion is **40/336 frames**.
 
 ## Camera and direction contract
 

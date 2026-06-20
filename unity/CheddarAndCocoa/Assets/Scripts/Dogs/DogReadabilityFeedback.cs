@@ -293,7 +293,13 @@ namespace CheddarAndCocoa.Dogs
 
             float elapsed = clip == CharacterMotionArt.Clip.Bark ? Time.time - _barkStartedAt : Time.time;
             int frame = CharacterMotionArt.FrameAtTime(_identity.Id, clip, elapsed);
-            Sprite sprite = CharacterMotionArt.Load(_identity.Id, clip, CharacterMotionArt.Facing8.E, frame);
+            CharacterMotionArt.Facing8 facing = CharacterMotionArt.FacingForDirection(_lastIntentDir, out bool mirror);
+            Sprite sprite = CharacterMotionArt.Load(_identity.Id, clip, facing, frame);
+            if (sprite == null && facing != CharacterMotionArt.Facing8.E)
+            {
+                mirror = _lastIntentDir.x < 0f;
+                sprite = CharacterMotionArt.Load(_identity.Id, clip, CharacterMotionArt.Facing8.E, frame);
+            }
             if (sprite == null)
             {
                 MotionFrameIndex = -1;
@@ -303,7 +309,7 @@ namespace CheddarAndCocoa.Dogs
 
             _authoredPose.sprite = sprite;
             _authoredPose.transform.localScale = AuthoredMotionScale;
-            _authoredPose.flipX = _lastIntentDir.x < 0f;
+            _authoredPose.flipX = mirror;
             MotionFrameIndex = frame;
             MotionClipLabel = clip.ToString();
         }

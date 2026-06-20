@@ -86,16 +86,22 @@ namespace CheddarAndCocoa.Tests
                     CharacterMotionArt.Facing8.N, -4));
             Assert.AreEqual("cheddar_run_e_02", CharacterMotionArt.Load(DogId.Cheddar,
                 CharacterMotionArt.Clip.Run, CharacterMotionArt.Facing8.E, 2).name);
-            Assert.IsNull(CharacterMotionArt.Load(DogId.Cheddar, CharacterMotionArt.Clip.Run,
-                CharacterMotionArt.Facing8.SE, 2));
-            Assert.AreEqual("cheddar_run", CharacterMotionArt.LoadOrFallback(DogId.Cheddar,
-                CharacterMotionArt.Clip.Run, CharacterMotionArt.Facing8.SE, 2).name);
+            foreach (DogId dog in new[] { DogId.Cheddar, DogId.Cocoa })
+            foreach (var facing in new[] { CharacterMotionArt.Facing8.SE, CharacterMotionArt.Facing8.NE })
+            foreach (int frame in new[] { 0, 1, 2, 3 })
+                Assert.IsNotNull(CharacterMotionArt.Load(dog, CharacterMotionArt.Clip.Run, facing, frame));
             Assert.AreEqual("cocoa_idle", CharacterMotionArt.LoadOrFallback(DogId.Cocoa,
                 CharacterMotionArt.Clip.Carry, CharacterMotionArt.Facing8.N, 1).name);
 
             Assert.AreEqual(0, CharacterMotionArt.FrameAtTime(DogId.Cheddar, CharacterMotionArt.Clip.Idle, 0f));
             Assert.AreEqual(2, CharacterMotionArt.FrameAtTime(DogId.Cheddar, CharacterMotionArt.Clip.Run, 0.2f));
             Assert.AreEqual(3, CharacterMotionArt.FrameAtTime(DogId.Cocoa, CharacterMotionArt.Clip.Bark, 10f));
+            Assert.AreEqual(CharacterMotionArt.Facing8.NE,
+                CharacterMotionArt.FacingForDirection(new Vector2(-1f, 1f), out bool mirror));
+            Assert.IsTrue(mirror);
+            Assert.AreEqual(CharacterMotionArt.Facing8.SE,
+                CharacterMotionArt.FacingForDirection(new Vector2(1f, -1f), out mirror));
+            Assert.IsFalse(mirror);
         }
 
         [UnityTest]

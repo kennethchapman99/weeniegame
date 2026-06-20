@@ -50,6 +50,15 @@ namespace CheddarAndCocoa.Dogs
             return clip == Clip.Bark ? Mathf.Min(3, frame) : frame % 4;
         }
 
+        public static Facing8 FacingForDirection(Vector2 direction, out bool mirror)
+        {
+            float angle = Mathf.Atan2(direction.y, Mathf.Abs(direction.x)) * Mathf.Rad2Deg;
+            mirror = direction.x < 0f;
+            if (angle >= 22.5f) return Facing8.NE;
+            if (angle <= -22.5f) return Facing8.SE;
+            return Facing8.E;
+        }
+
         private static DogReadabilityFeedback.Pose FallbackPose(Clip clip) => clip switch
         {
             Clip.Run => DogReadabilityFeedback.Pose.Run,

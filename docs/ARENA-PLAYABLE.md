@@ -35,9 +35,9 @@ accents:
 - Pickup, success, warning, rescue, and failure events use distinct short-lived ArenaFinal effects.
 - Final dog poses, squirrel/eagle/coyote states, rope, weenies, bushes, rocks, and selected ground
   dressing are live. Generated gameplay objects and colliders remain authoritative.
-- Cheddar and Cocoa now play distinct four-frame east-facing idle, run, and bark strips, mirrored for
-  west travel. Their different cadence reinforces chaos-pup versus spot-queen identity; unsupported
-  angles and actions retain the safe single-pose fallback.
+- Cheddar and Cocoa now play distinct four-frame idle, run, and bark strips. Run uses authored east,
+  southeast, and northeast angles with mirrored west-side travel. Their different cadence reinforces
+  chaos-pup versus spot-queen identity; unsupported actions retain the safe single-pose fallback.
 - Mission select/end-card HUD keeps IMGUI text controls and draws a subtle imported UI-kit accent.
 
 Still placeholder or deliberately deferred:

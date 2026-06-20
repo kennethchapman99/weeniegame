@@ -10,7 +10,9 @@
   ],
   "tier_a_boards": [
     "cheddar_tier_a_east_v01.png",
-    "cocoa_tier_a_east_v01.png"
+    "cocoa_tier_a_east_v01.png",
+    "cheddar_run_diagonals_v01.png",
+    "cocoa_run_diagonals_v01.png"
   ],
   "clips": [
     { "name": "idle", "directions": "all", "frames": 4, "priority": "A" },
