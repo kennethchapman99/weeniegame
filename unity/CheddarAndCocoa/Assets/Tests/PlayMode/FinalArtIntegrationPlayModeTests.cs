@@ -47,6 +47,12 @@ namespace CheddarAndCocoa.Tests
             foreach (int frame in new[] { 0, 1, 2, 3 })
                 Assert.IsNotNull(CharacterMotionArt.Load(dog, CharacterMotionArt.Clip.Bark, facing, frame),
                     $"Missing directional bark frame {dog}/{facing}/{frame}.");
+            foreach (DogId dog in new[] { DogId.Cheddar, DogId.Cocoa })
+            foreach (var facing in new[] { CharacterMotionArt.Facing8.SE, CharacterMotionArt.Facing8.S,
+                         CharacterMotionArt.Facing8.N, CharacterMotionArt.Facing8.NE })
+            foreach (int frame in new[] { 0, 1, 2, 3 })
+                Assert.IsNotNull(CharacterMotionArt.Load(dog, CharacterMotionArt.Clip.Idle, facing, frame),
+                    $"Missing directional idle frame {dog}/{facing}/{frame}.");
 
             Sprite motion = CharacterMotionArt.Load(DogId.Cheddar, CharacterMotionArt.Clip.Run,
                 CharacterMotionArt.Facing8.E, 0);
@@ -195,6 +201,8 @@ namespace CheddarAndCocoa.Tests
             cheddarBody.linearVelocity = Vector2.up * 4f;
             yield return new WaitForSeconds(0.14f);
             cheddarBody.linearVelocity = Vector2.zero;
+            yield return new WaitForSeconds(0.14f);
+            Assert.That(cheddarMotion.AuthoredPoseSpriteName, Does.StartWith("cheddar_idle_n_"));
             cheddar.GetComponent<DogController>().Bark();
             yield return new WaitForSeconds(0.08f);
             Assert.That(cheddarMotion.AuthoredPoseSpriteName, Does.StartWith("cheddar_bark_n_"));

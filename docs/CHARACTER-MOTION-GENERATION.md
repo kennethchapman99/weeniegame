@@ -47,3 +47,5 @@ The directional run boards use strict 4x2 layouts: SE above NE, then S above N. 
 The east-facing tug strips contain brace, pull, and recovery frames with no baked rope prop. `export_character_tug.py` promotes six frames; gameplay mirrors them west and keeps the live rope actor visually authoritative. Cheddar uses a faster, airborne overcommit while Cocoa stays planted and controlled.
 
 Directional bark uses matching SE/NE and S/N 4x2 boards. `export_character_bark_directions.py` promotes 32 frames; west-side angles mirror at runtime. Each direction preserves anticipation, open-mouth burst, recoil, and settle, while the separate bark ring remains the authoritative gameplay-radius read.
+
+Directional idle uses the same SE/NE and S/N board contract. `export_character_idle_directions.py` promotes 32 subtle breathe/look/tail/settle frames. Cheddar's loop is eager and loose; Cocoa's is measured and composed. Combined with mirroring, idle, run, bark, and tug now have their complete Tier-A gameplay-facing coverage.

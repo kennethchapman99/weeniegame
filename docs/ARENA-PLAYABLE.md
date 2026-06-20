@@ -37,7 +37,7 @@ accents:
   dressing are live. Generated gameplay objects and colliders remain authoritative.
 - Cheddar and Cocoa now play distinct four-frame idle, run, and bark strips. Run has complete eight-way
   coverage using authored east/southeast/south/northeast/north and mirrored west-side travel. Their cadence reinforces
-  chaos-pup versus spot-queen identity. Bark now preserves all eight facing directions, and tug uses distinct three-frame brace/pull/recover loops;
+  chaos-pup versus spot-queen identity. Idle, run, and bark preserve all eight facing directions, and tug uses distinct three-frame brace/pull/recover loops;
   unsupported actions retain the safe single-pose fallback.
 - Mission select/end-card HUD keeps IMGUI text controls and draws a subtle imported UI-kit accent.
 
