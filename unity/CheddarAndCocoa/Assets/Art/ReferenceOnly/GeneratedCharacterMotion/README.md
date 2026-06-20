@@ -21,6 +21,7 @@ Generated first batch:
 - `cheddar_idle_diagonals_v01.png` / `cocoa_idle_diagonals_v01.png` — SE/NE idle boards
 - `cheddar_idle_straights_v01.png` / `cocoa_idle_straights_v01.png` — S/N idle boards
 - `cheddar_outcomes_east_v01.png` / `cocoa_outcomes_east_v01.png` — stunned/rescued/proud/sad pairs
+- `cheddar_carry_east_v01.png` / `cocoa_carry_east_v01.png` — prop-free persistent carry pair
 
 See `docs/CHARACTER-MOTION-PACK.md` for approval gates and runtime export naming.
 
@@ -29,5 +30,5 @@ checkerboard instead of true alpha. Keep these boards out of ArenaFinal; use the
 angles, and pose language before per-frame generation/background extraction.
 
 The Tier-A boards deliberately use flat near-white backgrounds and are deterministic extraction
-sources. Their 142 normalized true-alpha cells are the generated motion art currently promoted to
+sources. Their 146 normalized true-alpha cells are the generated motion art currently promoted to
 ArenaFinal.

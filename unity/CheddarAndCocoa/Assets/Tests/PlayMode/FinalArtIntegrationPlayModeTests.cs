@@ -59,6 +59,10 @@ namespace CheddarAndCocoa.Tests
             foreach (int frame in new[] { 0, 1 })
                 Assert.IsNotNull(CharacterMotionArt.Load(dog, clip, CharacterMotionArt.Facing8.E, frame),
                     $"Missing outcome frame {dog}/{clip}/{frame}.");
+            foreach (DogId dog in new[] { DogId.Cheddar, DogId.Cocoa })
+            foreach (int frame in new[] { 0, 1 })
+                Assert.IsNotNull(CharacterMotionArt.Load(dog, CharacterMotionArt.Clip.Carry,
+                    CharacterMotionArt.Facing8.E, frame), $"Missing carry frame {dog}/{frame}.");
 
             Sprite motion = CharacterMotionArt.Load(DogId.Cheddar, CharacterMotionArt.Clip.Run,
                 CharacterMotionArt.Facing8.E, 0);

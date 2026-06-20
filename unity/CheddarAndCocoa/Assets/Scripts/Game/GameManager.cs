@@ -941,6 +941,7 @@ namespace CheddarAndCocoa.Game
                 _lastBarks[i] = float.NegativeInfinity;
                 _dogs[i].SetMode(MovementMode.Free);
                 _dogs[i].SetTravelAssist(false);
+                if (DogFeedback[i] != null) DogFeedback[i].SetCarrying(false);
                 if (DogFeedback[i] != null) DogFeedback[i].ClearMissionPose();
                 _dogs[i].transform.position = _dogStarts[i];
                 if (_dogs[i].TryGetComponent<Rigidbody2D>(out var rb)) rb.linearVelocity = Vector2.zero;
@@ -1537,6 +1538,7 @@ namespace CheddarAndCocoa.Game
 
             _weenieMarkers[markerIndex].SetActive(false);
             _dogCarrying[dogIndex] = true;
+            if (dogIndex < DogFeedback.Length && DogFeedback[dogIndex] != null) DogFeedback[dogIndex].SetCarrying(true);
             CreditDog(dogIndex);
             if (_carriedMarkers[dogIndex] != null) _carriedMarkers[dogIndex].SetActive(true);
             AddScore(ScoreEventCatalog.WeeniePickup.Points, ScoreEventCatalog.WeeniePickup.Label);
@@ -1556,6 +1558,7 @@ namespace CheddarAndCocoa.Game
             if (dogIndex < 0 || dogIndex >= _dogCarrying.Length || !_dogCarrying[dogIndex]) return;
 
             _dogCarrying[dogIndex] = false;
+            if (dogIndex < DogFeedback.Length && DogFeedback[dogIndex] != null) DogFeedback[dogIndex].SetCarrying(false);
             if (_carriedMarkers[dogIndex] != null) _carriedMarkers[dogIndex].SetActive(false);
             _carryState.Deliver();
             CreditDog(dogIndex);
@@ -1586,6 +1589,7 @@ namespace CheddarAndCocoa.Game
             if (dogIndex < 0 || dogIndex >= _dogCarrying.Length || !_dogCarrying[dogIndex]) return;
 
             _dogCarrying[dogIndex] = false;
+            if (dogIndex < DogFeedback.Length && DogFeedback[dogIndex] != null) DogFeedback[dogIndex].SetCarrying(false);
             if (_carriedMarkers[dogIndex] != null) _carriedMarkers[dogIndex].SetActive(false);
             _carryState.Drop();
             if (dogIndex < DogFeedback.Length && DogFeedback[dogIndex] != null) DogFeedback[dogIndex].ShowPanic();

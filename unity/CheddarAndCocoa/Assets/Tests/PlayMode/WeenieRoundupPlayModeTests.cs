@@ -97,6 +97,26 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator WeenieRoundup_CarryPosePersistsUntilCargoLeavesDog()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.WeenieRoundup);
+            yield return null;
+
+            _game.ForceWeeniePickup(DogId.Cheddar);
+            Assert.IsTrue(_game.DogFeedback[0].IsCarrying);
+            yield return new WaitForSeconds(1.2f);
+            Assert.AreEqual(DogReadabilityFeedback.Pose.Carry, _game.DogFeedback[0].CurrentPose);
+            Assert.That(_game.DogFeedback[0].AuthoredPoseSpriteName, Does.Contain("cheddar_carry_e_"));
+            Assert.AreEqual("Carry", _game.DogFeedback[0].MotionClipLabel);
+
+            _game.ForceWeenieDrop(DogId.Cheddar);
+            yield return null;
+            Assert.IsFalse(_game.DogFeedback[0].IsCarrying);
+            Assert.AreEqual(DogReadabilityFeedback.Pose.Sad, _game.DogFeedback[0].CurrentPose);
+        }
+
+        [UnityTest]
         public IEnumerator WeenieRoundup_Replay_ResetsCarryRuntimeState()
         {
             yield return LoadArena();
@@ -118,6 +138,7 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(0, game.Score);
             Assert.AreEqual(0, game.WeenieRoundupState.Delivered);
             Assert.AreEqual(0, game.WeenieRoundupState.Drops);
+            Assert.IsFalse(game.DogFeedback[0].IsCarrying);
             Assert.Greater(game.WeenieRoundupState.Loose, 0);
             Assert.AreEqual(1, game.MissionReplayCount);
         }

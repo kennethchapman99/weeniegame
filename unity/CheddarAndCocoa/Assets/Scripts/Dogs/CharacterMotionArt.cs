@@ -34,6 +34,7 @@ namespace CheddarAndCocoa.Dogs
                 case DogReadabilityFeedback.Pose.Run: clip = Clip.Run; return true;
                 case DogReadabilityFeedback.Pose.Bark: clip = Clip.Bark; return true;
                 case DogReadabilityFeedback.Pose.Tug: clip = Clip.Tug; return true;
+                case DogReadabilityFeedback.Pose.Carry: clip = Clip.Carry; return true;
                 case DogReadabilityFeedback.Pose.Stunned: clip = Clip.Stunned; return true;
                 case DogReadabilityFeedback.Pose.Rescued: clip = Clip.Rescued; return true;
                 case DogReadabilityFeedback.Pose.Proud: clip = Clip.Proud; return true;
@@ -50,6 +51,7 @@ namespace CheddarAndCocoa.Dogs
                 Clip.Run => dog == DogId.Cheddar ? 10f : 8.5f,
                 Clip.Bark => 11f,
                 Clip.Tug => dog == DogId.Cheddar ? 9f : 7f,
+                Clip.Carry => dog == DogId.Cheddar ? 5f : 4f,
                 Clip.Stunned => 6f,
                 Clip.Rescued => dog == DogId.Cheddar ? 6f : 4.5f,
                 Clip.Proud => dog == DogId.Cheddar ? 5f : 3.5f,
@@ -59,7 +61,7 @@ namespace CheddarAndCocoa.Dogs
             int frame = Mathf.Max(0, Mathf.FloorToInt(Mathf.Max(0f, elapsedSeconds) * fps));
             if (clip == Clip.Bark) return Mathf.Min(3, frame);
             int frameCount = clip == Clip.Tug ? 3 :
-                clip == Clip.Stunned || clip == Clip.Rescued || clip == Clip.Proud || clip == Clip.Sad ? 2 : 4;
+                clip == Clip.Carry || clip == Clip.Stunned || clip == Clip.Rescued || clip == Clip.Proud || clip == Clip.Sad ? 2 : 4;
             return frame % frameCount;
         }
 
@@ -79,6 +81,7 @@ namespace CheddarAndCocoa.Dogs
             Clip.Run => DogReadabilityFeedback.Pose.Run,
             Clip.Bark => DogReadabilityFeedback.Pose.Bark,
             Clip.Tug => DogReadabilityFeedback.Pose.Tug,
+            Clip.Carry => DogReadabilityFeedback.Pose.Carry,
             Clip.Stunned => DogReadabilityFeedback.Pose.Stunned,
             Clip.Rescued => DogReadabilityFeedback.Pose.Rescued,
             Clip.Proud => DogReadabilityFeedback.Pose.Proud,

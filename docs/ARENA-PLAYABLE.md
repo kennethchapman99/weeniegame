@@ -39,6 +39,7 @@ accents:
   coverage using authored east/southeast/south/northeast/north and mirrored west-side travel. Their cadence reinforces
   chaos-pup versus spot-queen identity. Idle, run, and bark preserve all eight facing directions, and tug uses distinct three-frame brace/pull/recover loops;
   stunned, rescued, proud, and sad now use distinct two-frame personality loops. Unsupported actions retain the safe single-pose fallback.
+  Weenie Roundup carry now persists visually from pickup through delivery/drop while the separate carried-weenie marker remains authoritative.
 - Mission select/end-card HUD keeps IMGUI text controls and draws a subtle imported UI-kit accent.
 
 Still placeholder or deliberately deferred:

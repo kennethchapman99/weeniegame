@@ -26,7 +26,9 @@
     "cheddar_idle_straights_v01.png",
     "cocoa_idle_straights_v01.png",
     "cheddar_outcomes_east_v01.png",
-    "cocoa_outcomes_east_v01.png"
+    "cocoa_outcomes_east_v01.png",
+    "cheddar_carry_east_v01.png",
+    "cocoa_carry_east_v01.png"
   ],
   "clips": [
     { "name": "idle", "directions": "all", "frames": 4, "priority": "A" },

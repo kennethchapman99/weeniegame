@@ -20,6 +20,7 @@ namespace CheddarAndCocoa.Dogs
             Run,
             Bark,
             Tug,
+            Carry,
             Stunned,
             Rescued,
             Proud,
@@ -63,6 +64,7 @@ namespace CheddarAndCocoa.Dogs
         public string AuthoredPoseSpriteName => UsesAuthoredPoseArt ? _authoredPose.sprite.name : string.Empty;
         public int MotionFrameIndex { get; private set; } = -1;
         public string MotionClipLabel { get; private set; } = string.Empty;
+        public bool IsCarrying { get; private set; }
         public string ArtDirectionSignature => _identity == null
             ? string.Empty
             : ArenaArtCatalog.Dog(_identity.Id).ArtDirectionSignature;
@@ -89,6 +91,11 @@ namespace CheddarAndCocoa.Dogs
         public void ShowSad() => ForcePose(Pose.Sad, 999f);
         public void ShowPanic() => ForcePose(Pose.Sad, 0.6f);     // brief flinch (e.g. a thunderclap)
         public void ShowComfort() => ForcePose(Pose.Proud, 0.5f); // brief reassurance while huddling
+        public void SetCarrying(bool carrying)
+        {
+            IsCarrying = carrying;
+            if (!carrying && CurrentPose == Pose.Carry) ApplyPose(Pose.Idle);
+        }
         public void ClearMissionPose()
         {
             _forcedPoseUntil = 0f;
@@ -126,6 +133,7 @@ namespace CheddarAndCocoa.Dogs
             if (_dog.Mode == MovementMode.Stunned) return Pose.Stunned;
             if (_dog.Mode == MovementMode.Tug) return Pose.Tug;
             if (Time.time < _barkUntil) return Pose.Bark;
+            if (IsCarrying) return Pose.Carry;
 
             if (TryGetComponent<Rigidbody2D>(out var rb) && rb.linearVelocity.sqrMagnitude > 0.05f)
                 return Pose.Run;
@@ -155,6 +163,7 @@ namespace CheddarAndCocoa.Dogs
                     Pose.Proud => new Color(1f, 0.96f, 0.35f),
                     Pose.Sad => new Color(0.72f, 0.82f, 1f),
                     Pose.Tug => new Color(1f, 0.85f, 0.35f),
+                    Pose.Carry => new Color(1f, 0.78f, 0.3f),
                     _ => Color.white
                 };
             }
@@ -439,6 +448,7 @@ namespace CheddarAndCocoa.Dogs
             Pose.Run => _dog != null && _dog.TravelAssist ? "TRAIL SPRINT" : _art.RunPoseLabel,
             Pose.Bark => "WOOF!",
             Pose.Tug => "TUG!",
+            Pose.Carry => "CARRY!",
             Pose.Stunned => "STUNNED",
             Pose.Rescued => "RESCUED!",
             Pose.Proud => "PROUD!",
