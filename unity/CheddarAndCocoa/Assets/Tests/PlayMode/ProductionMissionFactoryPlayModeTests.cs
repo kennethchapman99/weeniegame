@@ -22,6 +22,39 @@ namespace CheddarAndCocoa.Tests
         }
 
         [Test]
+        public void ProductionMissionFactory_ResolvesEveryCatalogIdToItself()
+        {
+            foreach (var spec in ProductionMissionCatalog.All)
+            {
+                var resolved = ProductionMissionFactory.GetById(spec.Id);
+                Assert.AreEqual(spec.Id, resolved.Id, $"Factory should resolve {spec.Id} to its own spec.");
+                Assert.AreEqual(spec.Title, resolved.Title, $"Factory returned the wrong title for {spec.Id}.");
+            }
+        }
+
+        [Test]
+        public void ProductionMissionFactory_UnknownIdFallsBackToSquirrelConspiracy()
+        {
+            Assert.AreEqual(
+                ProductionMissionCatalog.SquirrelConspiracy.Id,
+                ProductionMissionFactory.GetById("not_a_real_mission").Id);
+
+            Assert.AreEqual(
+                ProductionMissionCatalog.SquirrelConspiracy.Id,
+                ProductionMissionFactory.GetById(null).Id);
+        }
+
+        [Test]
+        public void ProductionMissionFactory_TryGetByIdReportsMatchAndMiss()
+        {
+            Assert.IsTrue(ProductionMissionFactory.TryGetById("weenie_roundup", out var hit));
+            Assert.AreEqual("weenie_roundup", hit.Id);
+
+            Assert.IsFalse(ProductionMissionFactory.TryGetById("not_a_real_mission", out _));
+            Assert.IsFalse(ProductionMissionFactory.TryGetById(null, out _));
+        }
+
+        [Test]
         public void SummaryBuilder_ProducesOutcomeLabels()
         {
             var squirrel = new HerdingMissionState();
