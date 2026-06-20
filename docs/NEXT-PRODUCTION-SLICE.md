@@ -1,40 +1,42 @@
 # Next Production Slice
 
-Build next: Great Backyard Squirrel Conspiracy.
+Build next: **Kitchen Falling Food Frenzy** (Game Design Bible #8).
 
-Purpose: expand the current ArenaScene from three prototype missions into a real chase/herding mission while reusing existing squirrel, bark, score, replay, objective, and PlayMode test systems.
+Purpose: turn the documented arcade-collection-with-danger-filtering level into a real, playable
+HouseChaos mission. It introduces a new dog-authentic co-op split — Cheddar scouts the counter and
+tips food down; Cocoa sweeps the floor catching the good and dodging the gross/spicy/hot — without
+needing a bespoke scene.
 
-First pass:
+## Landed so far
 
-- Add `SquirrelConspiracy` as a selectable mission variant.
-- Add deterministic squirrel route nodes.
-- Add cutoff zones for the second dog.
-- Add bark timing so early bark causes a fake-out and correct bark applies pressure.
-- Reveal a hidden stash after enough successful herds.
-- End the mission on stash found, timer expiry, or repeated squirrel taunts.
+- `ProductionMechanicModule.FallingFood` and the `kitchen_food_frenzy` catalog spec
+  (`ProductionMissionCatalog.KitchenFoodFrenzy`), so the mission is addressable by id through
+  `ProductionMissionFactory` and covered by the catalog-consistency guards.
+- `KitchenFoodFrenzyMissionState` — the deterministic, UnityEngine-free core loop:
+  - Scout `TriggerDrop(Food)` tips one item into flight at a time (forces the call-out hand-off).
+  - Sweeper `Catch()` / `LetFall()` resolves it; scout `Nudge()` redirects danger into the safe
+    landing zone for a teamwork save.
+  - Good catches build a combo multiplier; bad/hot catches are strikes; dropped good food and
+    nudged-away good food are combo-breaking misses; three strikes fail the round.
+- `KitchenFoodFrenzyMissionStateTests` — deterministic coverage for the hand-off lock, combo
+  scaling to clear, danger filtering, teamwork nudges, miss handling, fail, post-round no-ops, and
+  config clamping/reset.
 
-Score events:
+## Remaining to make it playable
 
-- `+75 GOOD HERD`
-- `+125 CUTOFF`
-- `+150 DOUBLE BARK BLOCK`
-- `-75 FAKE OUT`
-- `+300 STASH FOUND`
-- `+500 CONSPIRACY CRACKED`
+- Add a `KitchenFoodFrenzy` value to `GameManager.MissionVariant` and a `MissionDefinition` that
+  drives `KitchenFoodFrenzyMissionState` from real falling-item timing (warning circles for hot
+  drops), wiring scout/sweeper roles to Cheddar/Cocoa.
+- Route catch/dodge/nudge results onto the existing score path with readable labels, e.g.
+  `+YUM`, `+COMBO`, `TEAMWORK SAVE`, `BAD BITE`, `BURN`, `MISSED TREAT`.
+- Surface it in the mission picker/HUD and `MissionOutcomeSummaryBuilder`.
+- Add a `MissionRuntimeSnapshot` id matching `kitchen_food_frenzy`.
+- Author the explicit co-op puzzle beat per `docs/COOP-PUZZLE-DESIGN.md`: some items must be nudged
+  into the safe zone by the scout before the sweeper can act, so neither dog can clear it alone.
 
-Tests required:
+## Guardrails
 
-- Mission select includes the new mission.
-- Starting the mission sets the right objective copy.
-- Cutoff success awards score.
-- Early bark applies fake-out penalty.
-- Stash reveal updates objective copy.
-- Replay resets score, route state, stash state, and outcome.
-
-Guardrails:
-
-- Keep this inside ArenaScene.
-- Do not add campaign persistence yet.
-- Do not require final art.
+- Keep it inside ArenaScene; no new campaign persistence required for the first pass.
+- Do not require final art — placeholder good/bad/hot readability is fine.
 - Keep score mutations on the existing score path.
-- Keep the round short, readable, and replayable.
+- Keep the round short, readable, and replayable; reset all frenzy state on replay/scene entry.
