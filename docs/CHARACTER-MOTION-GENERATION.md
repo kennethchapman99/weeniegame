@@ -43,3 +43,5 @@ After the reference boards were approved, the built-in tool generated one 4x3 ea
 `tools/art/export_character_motion_tier_a.py` removes only edge-connected near-white background, excludes neighboring-cell bleed, applies one scale per dog sheet, places every frame on a 512x384 canvas with a common 24-pixel paw baseline, and exports 24 runtime PNGs. `--contact-sheet` produces a temporary visual QA board. The promoted files pass true-alpha validation; the RGB source sheets remain reference-only.
 
 The directional run boards use strict 4x2 layouts: SE above NE, then S above N. `export_character_run_diagonals.py` promotes those into 32 additional frames. SW and NW are mirrored at runtime, completing eight-way traversal coverage without duplicating symmetric west-side art.
+
+The east-facing tug strips contain brace, pull, and recovery frames with no baked rope prop. `export_character_tug.py` promotes six frames; gameplay mirrors them west and keeps the live rope actor visually authoritative. Cheddar uses a faster, airborne overcommit while Cocoa stays planted and controlled.

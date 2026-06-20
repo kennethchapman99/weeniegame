@@ -14,6 +14,8 @@ Generated first batch:
 - `cocoa_run_diagonals_v01.png` — southeast/northeast run, four frames per row
 - `cheddar_run_straights_v01.png` — south/north run, four frames per row
 - `cocoa_run_straights_v01.png` — south/north run, four frames per row
+- `cheddar_tug_east_v01.png` — east tug brace/pull/recovery strip
+- `cocoa_tug_east_v01.png` — east tug brace/pull/recovery strip
 
 See `docs/CHARACTER-MOTION-PACK.md` for approval gates and runtime export naming.
 
@@ -22,5 +24,5 @@ checkerboard instead of true alpha. Keep these boards out of ArenaFinal; use the
 angles, and pose language before per-frame generation/background extraction.
 
 The Tier-A boards deliberately use flat near-white backgrounds and are deterministic extraction
-sources. Their 56 normalized true-alpha cells are the generated motion art currently promoted to
+sources. Their 62 normalized true-alpha cells are the generated motion art currently promoted to
 ArenaFinal.

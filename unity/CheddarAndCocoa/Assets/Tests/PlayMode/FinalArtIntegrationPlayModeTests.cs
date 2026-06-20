@@ -37,6 +37,10 @@ namespace CheddarAndCocoa.Tests
             foreach (int frame in new[] { 0, 1, 2, 3 })
                 Assert.IsNotNull(CharacterMotionArt.Load(dog, clip, CharacterMotionArt.Facing8.E, frame),
                     $"Missing Tier-A motion frame {dog}/{clip}/E/{frame}.");
+            foreach (DogId dog in new[] { DogId.Cheddar, DogId.Cocoa })
+            foreach (int frame in new[] { 0, 1, 2 })
+                Assert.IsNotNull(CharacterMotionArt.Load(dog, CharacterMotionArt.Clip.Tug,
+                    CharacterMotionArt.Facing8.E, frame), $"Missing tug frame {dog}/{frame}.");
 
             Sprite motion = CharacterMotionArt.Load(DogId.Cheddar, CharacterMotionArt.Clip.Run,
                 CharacterMotionArt.Facing8.E, 0);
@@ -97,6 +101,8 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(0, CharacterMotionArt.FrameAtTime(DogId.Cheddar, CharacterMotionArt.Clip.Idle, 0f));
             Assert.AreEqual(2, CharacterMotionArt.FrameAtTime(DogId.Cheddar, CharacterMotionArt.Clip.Run, 0.2f));
             Assert.AreEqual(3, CharacterMotionArt.FrameAtTime(DogId.Cocoa, CharacterMotionArt.Clip.Bark, 10f));
+            Assert.AreEqual(2, CharacterMotionArt.FrameAtTime(DogId.Cheddar, CharacterMotionArt.Clip.Tug, 2f / 9f));
+            Assert.AreEqual(0, CharacterMotionArt.FrameAtTime(DogId.Cheddar, CharacterMotionArt.Clip.Tug, 1f / 3f));
             Assert.AreEqual(CharacterMotionArt.Facing8.NE,
                 CharacterMotionArt.FacingForDirection(new Vector2(-1f, 1f), out bool mirror));
             Assert.IsTrue(mirror);

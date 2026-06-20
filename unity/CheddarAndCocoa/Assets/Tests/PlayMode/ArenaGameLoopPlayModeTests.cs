@@ -494,6 +494,10 @@ namespace CheddarAndCocoa.Tests
             Assert.That(game.RopeObject.GetComponent<MissionActorFeedback>().Label, Does.Contain("TEAM CHOMP"));
             Assert.IsTrue(cheddarFeedback.CurrentPose == DogReadabilityFeedback.Pose.Tug ||
                           cocoaFeedback.CurrentPose == DogReadabilityFeedback.Pose.Tug);
+            var tugFeedback = cheddarFeedback.CurrentPose == DogReadabilityFeedback.Pose.Tug
+                ? cheddarFeedback : cocoaFeedback;
+            Assert.That(tugFeedback.AuthoredPoseSpriteName, Does.Contain("_tug_e_"));
+            Assert.AreEqual("Tug", tugFeedback.MotionClipLabel);
 
             // Level clear requires food, tug, and predator resolution.
             game.ForcePredatorWarning();
