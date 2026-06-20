@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Reflection;
 using NUnit.Framework;
 using CheddarAndCocoa.Game;
 
@@ -10,18 +11,7 @@ namespace CheddarAndCocoa.Tests
     /// </summary>
     public sealed class ProductionCatalogConsistencyTests
     {
-        private static readonly ProductionMissionSpec[] Specs =
-        {
-            ProductionMissionCatalog.SquirrelConspiracy,
-            ProductionMissionCatalog.EagleShadowPanic,
-            ProductionMissionCatalog.WeenieRoundup,
-            ProductionMissionCatalog.ScentSearch,
-            ProductionMissionCatalog.ThunderstormComfort,
-            ProductionMissionCatalog.MarkTheYard,
-            ProductionMissionCatalog.LeashWalk,
-            ProductionMissionCatalog.CarRide,
-            ProductionMissionCatalog.CoyotesFence,
-        };
+        private static readonly ProductionMissionSpec[] Specs = ProductionMissionCatalog.All;
 
         [Test]
         public void CatalogIdsAndTitlesAreUniqueAndNonEmpty()
@@ -54,6 +44,36 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual("mark_the_yard", ProductionMissionCatalog.MarkTheYard.Id);
             Assert.AreEqual("leash_walk", ProductionMissionCatalog.LeashWalk.Id);
             Assert.AreEqual("car_ride", ProductionMissionCatalog.CarRide.Id);
+        }
+
+        [Test]
+        public void AllArrayCoversEveryDeclaredCatalogSpec()
+        {
+            // Reflectively gather every spec field on the catalog so a newly authored mission that is
+            // forgotten in ProductionMissionCatalog.All trips this guard instead of silently dropping
+            // out of factory id lookups.
+            var declared = new List<string>();
+            foreach (var field in typeof(ProductionMissionCatalog).GetFields(BindingFlags.Public | BindingFlags.Static))
+            {
+                if (field.FieldType == typeof(ProductionMissionSpec))
+                {
+                    declared.Add(((ProductionMissionSpec)field.GetValue(null)).Id);
+                }
+            }
+
+            var inAll = new HashSet<string>();
+            foreach (var spec in ProductionMissionCatalog.All)
+            {
+                inAll.Add(spec.Id);
+            }
+
+            Assert.AreEqual(declared.Count, ProductionMissionCatalog.All.Length,
+                "ProductionMissionCatalog.All must list every declared mission spec exactly once.");
+
+            foreach (var id in declared)
+            {
+                Assert.IsTrue(inAll.Contains(id), $"Mission {id} is declared but missing from ProductionMissionCatalog.All.");
+            }
         }
     }
 }

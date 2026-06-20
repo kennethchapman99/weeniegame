@@ -159,5 +159,23 @@ namespace CheddarAndCocoa.Game
             "Patrol fence gaps, bark pressure, and fill weak spots together.",
             "Repair enough weak spots and block the final coyote pressure.",
             "The coyote breaches the fence or isolates a dog too many times.");
+
+        /// <summary>
+        /// Every production mission spec, in catalog order. This is the single source of truth the
+        /// factory and consistency tests build from so a newly authored mission can't silently fall
+        /// out of id lookups.
+        /// </summary>
+        public static readonly ProductionMissionSpec[] All =
+        {
+            SquirrelConspiracy,
+            EagleShadowPanic,
+            WeenieRoundup,
+            ScentSearch,
+            ThunderstormComfort,
+            MarkTheYard,
+            LeashWalk,
+            CarRide,
+            CoyotesFence,
+        };
     }
 }
