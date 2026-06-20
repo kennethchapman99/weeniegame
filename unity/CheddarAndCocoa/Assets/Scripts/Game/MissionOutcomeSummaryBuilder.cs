@@ -164,6 +164,17 @@ namespace CheddarAndCocoa.Game
             return "Setting It Up";
         }
 
+        public static string BuildBlanketCatchSummary(CoopStretchSpanPuzzle state)
+        {
+            if (state.Solved)
+                return "Dinner Saved";
+
+            if (state.Rips > 0)
+                return "Tattered Blanket";
+
+            return "Working The Span";
+        }
+
         public static string BuildPatrolSummary(PatrolDefenseMissionState state)
         {
             if (state.FinalPressureComplete)

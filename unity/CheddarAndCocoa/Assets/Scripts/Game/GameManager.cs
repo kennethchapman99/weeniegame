@@ -18,7 +18,7 @@ namespace CheddarAndCocoa.Game
         public enum FlowState { MissionSelect, Playing, EndScreen, SessionSummary }
         public enum RoundModifier { SquirrelTrouble, ZoomiesSurge, PancakePanic }
         public enum MissionOutcome { InProgress, Clear, Failed }
-        public enum MissionVariant { BackyardRescue, SnackHeist, SockPanic, SquirrelConspiracy, EagleShadowPanic, CoyotesFence, WeenieRoundup, ScentSearch, ThunderstormComfort, MarkTheYard, LeashWalk, CarRide, GateCrash, TableStealth, SquirrelSwitcheroo, WalkCampaign, BoneRelay, GreatEscape, ChaosMachine }
+        public enum MissionVariant { BackyardRescue, SnackHeist, SockPanic, SquirrelConspiracy, EagleShadowPanic, CoyotesFence, WeenieRoundup, ScentSearch, ThunderstormComfort, MarkTheYard, LeashWalk, CarRide, GateCrash, TableStealth, SquirrelSwitcheroo, WalkCampaign, BoneRelay, GreatEscape, ChaosMachine, BlanketCatch }
         public enum FeedbackKind
         {
             Intro,
@@ -123,7 +123,8 @@ namespace CheddarAndCocoa.Game
             MissionVariant.WalkCampaign,
             MissionVariant.BoneRelay,
             MissionVariant.GreatEscape,
-            MissionVariant.ChaosMachine
+            MissionVariant.ChaosMachine,
+            MissionVariant.BlanketCatch
         };
 
         [Header("Mission selection")]
@@ -195,6 +196,9 @@ namespace CheddarAndCocoa.Game
         public Vector2 ChaosLeverZone => _chaosLeverZone;
         public Vector2 ChaosJunctionSpot(int index) => index >= 0 && index < _chaosJunctionSpots.Length ? _chaosJunctionSpots[index] : Vector2.zero;
         public ChainActor ChaosJunctionOwner(int index) => index >= 0 && index < _chaosOwners.Length ? _chaosOwners[index] : ChainActor.Either;
+        public CoopStretchSpanPuzzle BlanketPuzzle => _blanket;
+        public Vector2 BlanketItemPosition => new(_blanketItemX, _blanketItemY);
+        public float BlanketCatchY => BlanketCatchLineY;
         public MissionRuntimeSnapshot RuntimeSnapshot => BuildRuntimeSnapshot();
         public int CurrentMissionSeed => _missionSeed;
         public DemoReadinessResult DemoReadiness => DemoReadinessGate.Evaluate(DemoReadinessGate.RequiredForBackyardDemo);
@@ -522,6 +526,28 @@ namespace CheddarAndCocoa.Game
         private const float ChaosJunctionRange = 3f;
         private const float ChaosWindowPerStage = 3f; // assist window at each junction
         private const int ChaosMaxStalls = 4;
+        // The Blanket Catch (Stretch-Span co-op puzzle): both dogs grip a blanket stretched between them
+        // to catch food falling from the counter. The span is only usable in a taut SEPARATION band -
+        // too close and it sags (slack), too far and it rips - and its MIDPOINT must be under the falling
+        // item. Both dogs must coordinate spacing AND position. Over-stretching rips the blanket; too many
+        // rips and it's done. Catch enough to win.
+        private readonly CoopStretchSpanPuzzle _blanket = new CoopStretchSpanPuzzle();
+        private GameObject _blanketObject;       // the stretched blanket sprite (midpoint, scaled by span)
+        private TextMesh _blanketLabel;
+        private GameObject _blanketFallingItem;  // the current falling snack
+        private float _blanketItemX;
+        private float _blanketItemY;
+        private int _blanketCaughtSeen;
+        private int _blanketMissedSeen;
+        private int _blanketRipsSeen;
+        private const float BlanketMinSeparation = 4f;
+        private const float BlanketMaxSeparation = 11f;
+        private const float BlanketCatchTolerance = 2.5f;
+        private const int BlanketCatchesNeeded = 5;
+        private const int BlanketMaxRips = 3;
+        private const float BlanketCatchLineY = -6f;  // the height the dogs hold the blanket at
+        private const float BlanketSpawnY = 11f;      // food falls from up here
+        private const float BlanketFallSpeed = 7f;
         private readonly TerritoryMissionState _territoryState = new TerritoryMissionState();
         private readonly Vector2[] _territoryZones = { new(-18f, 9f), new(18f, 9f), new(-18f, -9f), new(18f, -9f), new(0f, 0f) };
         private GameObject[] _zoneMarkers;
@@ -1451,6 +1477,21 @@ namespace CheddarAndCocoa.Game
             {
                 SetChaosJunctionsActive(false);
             }
+            if (_mission.Variant == MissionVariant.BlanketCatch)
+            {
+                _blanket.Configure(BlanketMinSeparation, BlanketMaxSeparation, BlanketCatchTolerance, BlanketCatchesNeeded, BlanketMaxRips);
+                _blanketCaughtSeen = 0;
+                _blanketMissedSeen = 0;
+                _blanketRipsSeen = 0;
+                if (_blanketObject != null) _blanketObject.SetActive(true);
+                SpawnBlanketItem();
+                UpdateBlanketVisuals();
+            }
+            else
+            {
+                if (_blanketObject != null) _blanketObject.SetActive(false);
+                if (_blanketFallingItem != null) _blanketFallingItem.SetActive(false);
+            }
             StageDogsForMissionEntry();
             UpdateObjectiveArrows();
             _lastLoggedObjective = string.Empty;
@@ -1493,6 +1534,7 @@ namespace CheddarAndCocoa.Game
             else if (_mission.Variant == MissionVariant.BoneRelay) TickBoneRelay();
             else if (_mission.Variant == MissionVariant.GreatEscape) TickGreatEscape();
             else if (_mission.Variant == MissionVariant.ChaosMachine) TickChaosMachine();
+            else if (_mission.Variant == MissionVariant.BlanketCatch) TickBlanketCatch();
             else TickSquirrel();
             TickPredator();
             TickTugProximity();
@@ -2142,6 +2184,29 @@ namespace CheddarAndCocoa.Game
             if (_chaosJunctions == null) return;
             foreach (var marker in _chaosJunctions)
                 if (marker != null) marker.SetActive(active);
+        }
+
+        private void BuildBlanketObjects()
+        {
+            _blanketObject = new GameObject("CatchBlanket");
+            _blanketObject.transform.position = new Vector3(0f, BlanketCatchLineY, 0f);
+            _blanketObject.transform.localScale = new Vector3(BlanketMinSeparation, 0.5f, 1f);
+            var bsr = _blanketObject.AddComponent<SpriteRenderer>();
+            bsr.sprite = _sprite;
+            bsr.color = new Color(0.45f, 0.85f, 0.55f);
+            bsr.sortingOrder = 3;
+            _blanketLabel = AddWorldLabel(_blanketObject, "BLANKET", Vector3.up * 1.6f, 12, Color.white);
+            _blanketObject.SetActive(false);
+
+            _blanketFallingItem = new GameObject("FallingSnack");
+            _blanketFallingItem.transform.position = new Vector3(0f, BlanketSpawnY, 0f);
+            _blanketFallingItem.transform.localScale = new Vector3(0.9f, 0.9f, 1f);
+            var isr = _blanketFallingItem.AddComponent<SpriteRenderer>();
+            isr.sprite = _sprite;
+            isr.color = new Color(0.95f, 0.8f, 0.4f);
+            isr.sortingOrder = 4;
+            AddWorldLabel(_blanketFallingItem, "SNACK", Vector3.up * 1.1f, 11, Color.white);
+            _blanketFallingItem.SetActive(false);
         }
 
         private void ChooseBuriedSpot()
@@ -3238,6 +3303,123 @@ namespace CheddarAndCocoa.Game
             if (Phase != State.GameOver) { UpdateChaosVisuals(); CheckClear(); }
         }
 
+        private void TickBlanketCatch()
+        {
+            if (_blanket.Solved) return;
+
+            int a = IndexOfDog(DogId.Cheddar);
+            int b = IndexOfDog(DogId.Cocoa);
+            if (a < 0 || b < 0) return;
+
+            // The blanket is defined by BOTH dogs: separation (taut band) and midpoint (catch alignment).
+            Vector2 pa = _dogs[a].transform.position;
+            Vector2 pb = _dogs[b].transform.position;
+            _blanket.UpdateSpan(Vector2.Distance(pa, pb), (pa.x + pb.x) * 0.5f);
+            HandleBlanketRips();
+
+            // The current snack falls; when it reaches the blanket line, the span tries to catch it.
+            _blanketItemY -= BlanketFallSpeed * Time.deltaTime;
+            if (_blanketItemY <= BlanketCatchLineY)
+            {
+                _blanket.TryCatch(_blanketItemX);
+                HandleBlanketProgress();
+                if (Phase == State.GameOver) return;
+                if (!_blanket.Solved) SpawnBlanketItem();
+            }
+            UpdateBlanketVisuals();
+        }
+
+        private void SpawnBlanketItem()
+        {
+            _blanketItemX = Mathf.Lerp(_bounds.xMin + 3f, _bounds.xMax - 3f, (float)_rng.NextDouble());
+            _blanketItemY = BlanketSpawnY;
+            if (_blanketFallingItem != null)
+            {
+                _blanketFallingItem.SetActive(true);
+                _blanketFallingItem.transform.position = new Vector3(_blanketItemX, _blanketItemY, 0f);
+            }
+        }
+
+        private void HandleBlanketRips()
+        {
+            if (_blanket.Rips > _blanketRipsSeen)
+            {
+                _blanketRipsSeen = _blanket.Rips;
+                AddScore(ScoreEventCatalog.WeenieDropped.Points, "BLANKET RIP");
+                LastFeedback = FeedbackKind.SquirrelStoleFood;
+                LastCue = $"Over-stretched! The blanket ripped. ({_blanket.Rips}/{BlanketMaxRips})";
+                SetJuice(JuiceFeedbackKind.WarningMiss, "RIP!");
+                LogPlaytestEvent("BlanketRip", $"{_blanket.Rips}/{BlanketMaxRips}");
+                if (_blanket.TooManyRips) EndRound(false);
+            }
+        }
+
+        private void HandleBlanketProgress()
+        {
+            if (_blanket.Caught > _blanketCaughtSeen)
+            {
+                _blanketCaughtSeen = _blanket.Caught;
+                AddScore(ScoreEventCatalog.WeenieDelivered.Points, "SNACK CAUGHT");
+                LastFeedback = FeedbackKind.SquirrelScared;
+                LastCue = $"Nice catch! The blanket snagged the snack. ({_blanket.Caught}/{BlanketCatchesNeeded})";
+                SetJuice(JuiceFeedbackKind.SuccessPop, "CAUGHT!");
+                SpawnWorldPop(new Vector2(_blanketItemX, BlanketCatchLineY), "CAUGHT!", new Color(0.5f, 0.95f, 0.55f));
+                LogPlaytestEvent("BlanketCatch", $"{_blanket.Caught}/{BlanketCatchesNeeded}");
+            }
+
+            if (_blanket.Missed > _blanketMissedSeen)
+            {
+                _blanketMissedSeen = _blanket.Missed;
+                LastFeedback = FeedbackKind.SquirrelStoleFood;
+                LastCue = _blanket.Slack ? "Too close - the blanket sagged and the snack bounced off."
+                    : _blanket.Overstretched ? "Blanket's torn - close the gap to fix the span."
+                    : "Missed - get the middle of the blanket under the snack.";
+                SetJuice(JuiceFeedbackKind.WarningMiss, "MISSED!");
+                SpawnWorldPop(new Vector2(_blanketItemX, BlanketCatchLineY), "SPLAT!", new Color(0.85f, 0.5f, 0.3f));
+                LogPlaytestEvent("BlanketMiss", $"{_blanket.Missed}");
+            }
+        }
+
+        private void UpdateBlanketVisuals()
+        {
+            if (_blanketFallingItem != null)
+                _blanketFallingItem.transform.position = new Vector3(_blanketItemX, _blanketItemY, 0f);
+            if (_blanketObject == null) return;
+            Color tint = _blanket.Taut ? new Color(0.45f, 0.85f, 0.55f)
+                : _blanket.Overstretched ? new Color(0.9f, 0.35f, 0.25f)
+                : new Color(0.85f, 0.8f, 0.35f); // slack
+            _blanketObject.transform.position = new Vector3(_blanket.MidpointX, BlanketCatchLineY, 0f);
+            float width = Mathf.Clamp(_blanket.Separation, 1f, BlanketMaxSeparation + 2f);
+            _blanketObject.transform.localScale = new Vector3(width, 0.5f, 1f);
+            if (_blanketObject.TryGetComponent<SpriteRenderer>(out var sr)) sr.color = tint;
+            if (_blanketLabel != null)
+            {
+                _blanketLabel.text = _blanket.Taut ? $"BLANKET TAUT - CATCH! ({_blanket.Caught}/{BlanketCatchesNeeded})"
+                    : _blanket.Overstretched ? "TOO FAR - RIPPING!" : "TOO CLOSE - SAGGING";
+                // Keep the label upright and a readable size despite the blanket's horizontal stretch.
+                _blanketLabel.transform.localScale = new Vector3(0.08f / Mathf.Max(width, 0.01f), 0.16f, 1f);
+            }
+        }
+
+        /// <summary>Test hook: set the blanket span directly (separation + midpoint), as if from dog positions.</summary>
+        public void ForceBlanketSpan(float separation, float midpointX)
+        {
+            if (!MissionActive() || _mission == null || _mission.Variant != MissionVariant.BlanketCatch) return;
+            _blanket.UpdateSpan(separation, midpointX);
+            HandleBlanketRips();
+            if (Phase != State.GameOver) UpdateBlanketVisuals();
+        }
+
+        /// <summary>Test hook: a snack reaches the blanket line at <paramref name="itemX"/>; the span tries to catch it.</summary>
+        public void ForceBlanketCatch(float itemX)
+        {
+            if (!MissionActive() || _mission == null || _mission.Variant != MissionVariant.BlanketCatch) return;
+            _blanketItemX = itemX;
+            _blanket.TryCatch(itemX);
+            HandleBlanketProgress();
+            if (Phase != State.GameOver) { UpdateBlanketVisuals(); CheckClear(); }
+        }
+
         private float NearestEagleCoverDistance(Vector2 position)
         {
             float best = float.PositiveInfinity;
@@ -3737,6 +3919,13 @@ namespace CheddarAndCocoa.Game
                 goal = _chaos.StageCount;
                 mistakes = _chaos.Stalls;
             }
+            else if (_mission != null && _mission.Variant == MissionVariant.BlanketCatch)
+            {
+                missionId = "blanket_catch";
+                progress = _blanket.Caught;
+                goal = BlanketCatchesNeeded;
+                mistakes = _blanket.Rips + _blanket.Missed;
+            }
             else
             {
                 missionId = ActiveMissionVariant.ToString();
@@ -4193,6 +4382,11 @@ namespace CheddarAndCocoa.Game
                 if (_chaos.Solved) EndRound(true);
                 return;
             }
+            if (_mission.Variant == MissionVariant.BlanketCatch)
+            {
+                if (_blanket.Solved) EndRound(true);
+                return;
+            }
 
             bool hasItems = BreakfastRecovered >= _mission.ItemGoal;
             bool hasPredator = !_mission.RequiresPredator || PredatorResolved;
@@ -4299,6 +4493,8 @@ namespace CheddarAndCocoa.Game
                 funny = MissionOutcomeSummaryBuilder.BuildGreatEscapeSummary(_escape);
             else if (_mission != null && _mission.Variant == MissionVariant.ChaosMachine)
                 funny = MissionOutcomeSummaryBuilder.BuildChaosMachineSummary(_chaos);
+            else if (_mission != null && _mission.Variant == MissionVariant.BlanketCatch)
+                funny = MissionOutcomeSummaryBuilder.BuildBlanketCatchSummary(_blanket);
             else
                 funny = Outcome.ToString();
             return $"{funny}: {Score} - {EndRank}";
@@ -4419,6 +4615,11 @@ namespace CheddarAndCocoa.Game
                 string who = _chaosOwners[stage] == ChainActor.Cheddar ? "Cheddar" : "Cocoa";
                 return $"{who}: be at the {_chaosJunctionActions[stage].ToLowerInvariant()} junction NOW - the cascade's rolling! (junctions {_chaos.Stage}/{_chaos.StageCount}, misfires {_chaos.Stalls}/{ChaosMaxStalls})";
             }
+            if (_mission.Variant == MissionVariant.BlanketCatch)
+            {
+                string span = _blanket.Taut ? "taut - slide the middle under the snack" : _blanket.Overstretched ? "too far apart - close up before it rips!" : "too close - spread out to pull it taut";
+                return $"Hold the blanket {span} (caught {_blanket.Caught}/{BlanketCatchesNeeded}, rips {_blanket.Rips}/{BlanketMaxRips})";
+            }
             if (_mission.Variant == MissionVariant.MarkTheYard)
             {
                 return $"Claim and hold every zone at once: {_territoryState.Claimed}/{_territoryState.ZoneCount} marked (squirrel steals back {_territoryState.Reclaims})";
@@ -4459,6 +4660,7 @@ namespace CheddarAndCocoa.Game
             if (_mission.Variant == MissionVariant.BoneRelay && _boneRelay.BlindActs + _boneRelay.WrongDigs >= BoneMaxWasted) return "The dogs dug up half the yard guessing instead of waiting for Cocoa's call.";
             if (_mission.Variant == MissionVariant.GreatEscape && _escape.Fumbles + _escape.Settles >= EscapeMaxWasted) return "They botched the contraption too many times - the gate never opened and the breakout fizzled.";
             if (_mission.Variant == MissionVariant.ChaosMachine && _chaos.Stalls >= ChaosMaxStalls) return "The machine misfired too many times - the cascade never made it to the end.";
+            if (_mission.Variant == MissionVariant.BlanketCatch && _blanket.TooManyRips) return "The blanket tore to shreds - too many over-stretches and there was nothing left to catch with.";
             if (_mission.Variant == MissionVariant.ThunderstormComfort && _panic != null && _panic.Maxed != null) return $"{_panic.Maxed} panicked at the thunder and bolted before the storm passed.";
             if (_mission.UsesSquirrel && StolenFood >= maxStolenFood) return _mission.StolenFailReason;
             if (TimeRemaining <= 0f) return _mission.TimeFailReason;
@@ -5833,6 +6035,63 @@ namespace CheddarAndCocoa.Game
                         ItemSecondaryColor = new Color(0.32f, 0.34f, 0.4f),
                         ItemPopColor = new Color(0.6f, 0.85f, 0.95f)
                     };
+                case MissionVariant.BlanketCatch:
+                    return new MissionDefinition
+                    {
+                        Variant = MissionVariant.BlanketCatch,
+                        Name = "The Blanket Catch",
+                        IntroPrompt = "Food's tumbling off the counter! Cheddar and Cocoa each grab a corner of a blanket and stretch it between them - too close and it sags, too far and it RIPS, so find the taut band. Then slide the middle of the blanket under each falling snack to catch it. Rip the blanket too many times and it's done.",
+                        ReadyScoreLabel = "READY TO CATCH SOME SNACKS",
+                        ItemRootName = "Snack",
+                        ItemObjectName = "Snack",
+                        ItemWorldLabel = "Catch!",
+                        ItemArrowLabel = "SNACK",
+                        ItemCollectCueNoun = "a caught snack",
+                        CollectObjectiveFormat = "Catch the falling snacks {0}/{1}",
+                        CollectedScoreLabel = "SNACK CAUGHT",
+                        ItemScore = balance.ItemScore,
+                        SpawnedItemCount = balance.SpawnedItemCount,
+                        ItemGoal = balance.ItemGoal,
+                        RoundSeconds = balance.RoundSeconds,
+                        PawfectScore = balance.PawfectScore,
+                        HeroScore = balance.HeroScore,
+                        SurvivorScore = balance.SurvivorScore,
+                        UsesSquirrel = false,
+                        RequiresPredator = false,
+                        RequiresTug = false,
+                        MaxStolenFood = balance.MaxStolenFood,
+                        SquirrelPenalty = balance.SquirrelPenalty,
+                        SquirrelScareScore = balance.SquirrelScareScore,
+                        SquirrelObjectiveText = "Stretch the blanket / catch the food",
+                        SquirrelStealingCue = "Find the taut band and get under the snack.",
+                        SquirrelStoleCue = "Missed - re-center the blanket.",
+                        SquirrelStealScoreLabel = "BLANKET RIP",
+                        SquirrelScareScoreLabel = "SNACK CAUGHT",
+                        SquirrelStealingActorLabel = "BLANKET",
+                        SquirrelDroppedActorLabel = "CAUGHT",
+                        SquirrelStoleActorLabel = "RIPPED",
+                        SquirrelMissPopLabel = "SPLAT!",
+                        SquirrelStealJuiceLabel = "RIP!",
+                        SquirrelScareJuiceLabel = "CAUGHT!",
+                        TugObjectiveText = "Stretch the blanket together",
+                        WaitingObjectiveText = "Slide the taut blanket under the next snack",
+                        ClearObjectiveText = "Snacks caught - replay The Blanket Catch",
+                        ClearBannerPrefix = "DINNER!",
+                        ClearScoreLabel = "BLANKET CATCH CLEAR",
+                        ReplayPrompt = "Press R / Enter / Start to replay The Blanket Catch",
+                        FailObjectiveText = "Mission failed - replay The Blanket Catch",
+                        GenericFailReason = "The blanket needs a steadier taut span before the next snack.",
+                        TimeFailReason = "The snacks all hit the floor before the blanket caught enough.",
+                        StolenFailReason = "The blanket ripped one too many times.",
+                        PredatorFailReason = "No predator here, just gravity and snacks.",
+                        PawfectClearReason = "Cheddar and Cocoa held a perfect taut blanket and caught every snack without a single tear.",
+                        HeroClearReason = "They caught the haul with only a small tear or two.",
+                        BasicClearReason = "They got dinner, even if the blanket took a beating.",
+                        ItemColor = new Color(0.95f, 0.8f, 0.4f),
+                        ItemAccentColor = new Color(0.5f, 0.85f, 0.55f),
+                        ItemSecondaryColor = new Color(0.4f, 0.3f, 0.15f),
+                        ItemPopColor = new Color(0.5f, 0.95f, 0.55f)
+                    };
                 case MissionVariant.SockPanic:
                     return new MissionDefinition
                     {
@@ -6326,6 +6585,11 @@ namespace CheddarAndCocoa.Game
                         hideDistance = ChaosJunctionRange;
                     }
                     break;
+                case MissionVariant.BlanketCatch:
+                    target = _blanketFallingItem != null && _blanketFallingItem.activeSelf ? _blanketFallingItem.transform : null;
+                    copy = "GET UNDER SNACK";
+                    hideDistance = BlanketCatchTolerance;
+                    break;
                 case MissionVariant.CarRide:
                 default:
                     return false;
@@ -6412,6 +6676,7 @@ namespace CheddarAndCocoa.Game
                 case MissionVariant.CarRide: return _bounds.center;
                 case MissionVariant.MarkTheYard: return _territoryZones[_territoryZones.Length - 1];
                 case MissionVariant.LeashWalk: return _leashCheckpoints[0];
+                case MissionVariant.BlanketCatch: return new Vector2(0f, BlanketCatchLineY);
                 default:
                     var nearestTreat = FindNearestTreat(_bounds.center);
                     return nearestTreat != null ? (Vector2)nearestTreat.transform.position : _bounds.center;
@@ -6538,6 +6803,7 @@ namespace CheddarAndCocoa.Game
             BuildBoneRelayMarkers();
             BuildEscapeStations();
             BuildChaosJunctions();
+            BuildBlanketObjects();
             BuildTerritoryMarkers();
             BuildLeashCheckpointMarkers();
             if (InteractionRangeIndicators != null)

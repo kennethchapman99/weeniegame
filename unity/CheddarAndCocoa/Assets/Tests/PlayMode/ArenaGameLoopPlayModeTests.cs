@@ -230,7 +230,7 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(game);
             Assert.IsTrue(game.MissionSelectVisible);
             Assert.AreEqual(GameManager.FlowState.MissionSelect, game.CurrentFlow);
-            Assert.AreEqual(19, game.MissionSelectOptionCount);
+            Assert.AreEqual(20, game.MissionSelectOptionCount);
             Assert.AreEqual(GameManager.MissionVariant.BackyardRescue, game.SelectedMissionVariant);
             Assert.AreEqual("Backyard Rescue", game.SelectedMissionName);
             Assert.That(game.ObjectiveLabel, Does.Contain("Choose a mission"));
@@ -783,8 +783,8 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(game);
             Assert.IsTrue(game.MissionSelectVisible);
 
-            // The selector is rendered as two columns (19 missions, rows = ceil(19/2) = 10: column 0 holds
-            // indices 0-9, column 1 holds 10-18). Directional navigation must match that visible grid
+            // The selector is rendered as two columns (20 missions, rows = ceil(20/2) = 10: column 0 holds
+            // indices 0-9, column 1 holds 10-19). Directional navigation must match that visible grid
             // instead of walking one linear list in every direction.
             game.SelectMission(GameManager.MissionVariant.BackyardRescue); // top-left (index 0)
             game.SelectMissionRight();
@@ -850,7 +850,7 @@ namespace CheddarAndCocoa.Tests
 
             Assert.AreEqual(GameManager.FlowState.MissionSelect, game.CurrentFlow);
             Assert.IsTrue(game.MissionSelectVisible);
-            Assert.AreEqual(19, game.MissionSelectOptionCount);
+            Assert.AreEqual(20, game.MissionSelectOptionCount);
             Assert.That(game.ObjectiveLabel, Does.Contain("Choose a mission"));
             Assert.IsTrue(LogContains(game, "MissionSelect: Backyard Rescue"));
 
