@@ -54,6 +54,8 @@ namespace CheddarAndCocoa.Dogs
         {
             float angle = Mathf.Atan2(direction.y, Mathf.Abs(direction.x)) * Mathf.Rad2Deg;
             mirror = direction.x < 0f;
+            if (angle >= 67.5f) return Facing8.N;
+            if (angle <= -67.5f) return Facing8.S;
             if (angle >= 22.5f) return Facing8.NE;
             if (angle <= -22.5f) return Facing8.SE;
             return Facing8.E;

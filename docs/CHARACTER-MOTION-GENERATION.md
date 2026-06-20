@@ -42,4 +42,4 @@ After the reference boards were approved, the built-in tool generated one 4x3 ea
 
 `tools/art/export_character_motion_tier_a.py` removes only edge-connected near-white background, excludes neighboring-cell bleed, applies one scale per dog sheet, places every frame on a 512x384 canvas with a common 24-pixel paw baseline, and exports 24 runtime PNGs. `--contact-sheet` produces a temporary visual QA board. The promoted files pass true-alpha validation; the RGB source sheets remain reference-only.
 
-The follow-up diagonal run boards use a strict 4x2 layout: SE run above NE run. `export_character_run_diagonals.py` promotes those into 16 additional frames; SW and NW are mirrored at runtime. Pure north/south movement intentionally selects the closest diagonal until dedicated straight-angle boards land.
+The directional run boards use strict 4x2 layouts: SE above NE, then S above N. `export_character_run_diagonals.py` promotes those into 32 additional frames. SW and NW are mirrored at runtime, completing eight-way traversal coverage without duplicating symmetric west-side art.

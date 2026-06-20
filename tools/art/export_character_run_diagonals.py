@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
-"""Extract SE/NE run boards into normalized true-alpha runtime frames."""
+"""Extract directional run boards into normalized true-alpha runtime frames."""
 
 from pathlib import Path
 from PIL import Image
 from export_character_motion_tier_a import BASELINE_Y, CANVAS, OUTPUT_ROOT, PADDING_X, SOURCE_ROOT, connected_background_mask
 
-SHEETS = {dog: SOURCE_ROOT / f"{dog}_run_diagonals_v01.png" for dog in ("cheddar", "cocoa")}
-DIRECTIONS = ("se", "ne")
+SHEET_GROUPS = (
+    ("diagonals", ("se", "ne")),
+    ("straights", ("s", "n")),
+)
 
 
 def extract_cells(sheet_path: Path) -> list[Image.Image]:
@@ -28,19 +30,22 @@ def extract_cells(sheet_path: Path) -> list[Image.Image]:
 
 
 def main() -> None:
-    for dog, sheet_path in SHEETS.items():
-        cells = extract_cells(sheet_path)
-        scale = min((CANVAS[0] - PADDING_X * 2) / max(c.width for c in cells),
-                    (BASELINE_Y - 12) / max(c.height for c in cells), 1.0)
-        for index, cell in enumerate(cells):
-            if scale < 1.0:
-                cell = cell.resize((round(cell.width * scale), round(cell.height * scale)), Image.Resampling.LANCZOS)
-            canvas = Image.new("RGBA", CANVAS, (0, 0, 0, 0))
-            canvas.alpha_composite(cell, ((CANVAS[0] - cell.width) // 2, BASELINE_Y - cell.height))
-            output = OUTPUT_ROOT / dog.capitalize() / "Motion" / f"{dog}_run_{DIRECTIONS[index // 4]}_{index % 4:02d}.png"
-            output.parent.mkdir(parents=True, exist_ok=True)
-            canvas.save(output, optimize=True)
-    print("Exported 16 diagonal run frames.")
+    exported = 0
+    for group, directions in SHEET_GROUPS:
+        for dog in ("cheddar", "cocoa"):
+            cells = extract_cells(SOURCE_ROOT / f"{dog}_run_{group}_v01.png")
+            scale = min((CANVAS[0] - PADDING_X * 2) / max(c.width for c in cells),
+                        (BASELINE_Y - 12) / max(c.height for c in cells), 1.0)
+            for index, cell in enumerate(cells):
+                if scale < 1.0:
+                    cell = cell.resize((round(cell.width * scale), round(cell.height * scale)), Image.Resampling.LANCZOS)
+                canvas = Image.new("RGBA", CANVAS, (0, 0, 0, 0))
+                canvas.alpha_composite(cell, ((CANVAS[0] - cell.width) // 2, BASELINE_Y - cell.height))
+                output = OUTPUT_ROOT / dog.capitalize() / "Motion" / f"{dog}_run_{directions[index // 4]}_{index % 4:02d}.png"
+                output.parent.mkdir(parents=True, exist_ok=True)
+                canvas.save(output, optimize=True)
+                exported += 1
+    print(f"Exported {exported} directional run frames.")
 
 
 if __name__ == "__main__":

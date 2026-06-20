@@ -87,7 +87,8 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual("cheddar_run_e_02", CharacterMotionArt.Load(DogId.Cheddar,
                 CharacterMotionArt.Clip.Run, CharacterMotionArt.Facing8.E, 2).name);
             foreach (DogId dog in new[] { DogId.Cheddar, DogId.Cocoa })
-            foreach (var facing in new[] { CharacterMotionArt.Facing8.SE, CharacterMotionArt.Facing8.NE })
+            foreach (var facing in new[] { CharacterMotionArt.Facing8.SE, CharacterMotionArt.Facing8.NE,
+                         CharacterMotionArt.Facing8.S, CharacterMotionArt.Facing8.N })
             foreach (int frame in new[] { 0, 1, 2, 3 })
                 Assert.IsNotNull(CharacterMotionArt.Load(dog, CharacterMotionArt.Clip.Run, facing, frame));
             Assert.AreEqual("cocoa_idle", CharacterMotionArt.LoadOrFallback(DogId.Cocoa,
@@ -102,6 +103,11 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(CharacterMotionArt.Facing8.SE,
                 CharacterMotionArt.FacingForDirection(new Vector2(1f, -1f), out mirror));
             Assert.IsFalse(mirror);
+            Assert.AreEqual(CharacterMotionArt.Facing8.N,
+                CharacterMotionArt.FacingForDirection(Vector2.up, out mirror));
+            Assert.IsFalse(mirror);
+            Assert.AreEqual(CharacterMotionArt.Facing8.S,
+                CharacterMotionArt.FacingForDirection(Vector2.down, out mirror));
         }
 
         [UnityTest]
@@ -137,6 +143,15 @@ namespace CheddarAndCocoa.Tests
             yield return new WaitForSeconds(0.14f);
             Assert.IsTrue(cheddar.transform.Find("CheddarAuthoredPose").GetComponent<SpriteRenderer>().flipX,
                 "West travel should mirror the approved east-facing strip until west art is promoted.");
+            cheddarBody.linearVelocity = Vector2.up * 4f;
+            yield return new WaitForSeconds(0.14f);
+            Assert.That(cheddarMotion.AuthoredPoseSpriteName, Does.StartWith("cheddar_run_n_"));
+            Assert.IsFalse(cheddar.transform.Find("CheddarAuthoredPose").GetComponent<SpriteRenderer>().flipX);
+            cheddarBody.linearVelocity = new Vector2(-4f, -4f);
+            yield return new WaitForSeconds(0.14f);
+            Assert.That(cheddarMotion.AuthoredPoseSpriteName, Does.StartWith("cheddar_run_se_"));
+            Assert.IsTrue(cheddar.transform.Find("CheddarAuthoredPose").GetComponent<SpriteRenderer>().flipX,
+                "Southwest travel should mirror the southeast strip.");
             cheddarBody.linearVelocity = Vector2.zero;
             cheddarInput.enabled = true;
             Assert.IsNotNull(cheddar.GetComponent<Collider2D>(), "Final art must not replace dog collision.");

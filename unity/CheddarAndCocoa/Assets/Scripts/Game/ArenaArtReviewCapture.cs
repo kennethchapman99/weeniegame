@@ -55,7 +55,13 @@ namespace CheddarAndCocoa.Game
                 dog.GetComponent<Rigidbody2D>().linearVelocity = Vector2.right * 5f;
             }
             yield return new WaitForSecondsRealtime(0.14f);
-            yield return Capture("02-run.ppm");
+            yield return Capture("02-run-east.ppm");
+            foreach (var dog in dogs) dog.GetComponent<Rigidbody2D>().linearVelocity = Vector2.up * 5f;
+            yield return new WaitForSecondsRealtime(0.14f);
+            yield return Capture("03-run-north.ppm");
+            foreach (var dog in dogs) dog.GetComponent<Rigidbody2D>().linearVelocity = Vector2.down * 5f;
+            yield return new WaitForSecondsRealtime(0.14f);
+            yield return Capture("04-run-south.ppm");
             foreach (var dog in dogs)
             {
                 dog.GetComponent<Rigidbody2D>().linearVelocity = Vector2.zero;
@@ -65,11 +71,11 @@ namespace CheddarAndCocoa.Game
 
             if (dogs.Length > 0) dogs[0].Bark();
             yield return new WaitForSecondsRealtime(0.08f);
-            yield return Capture("03-bark.ppm");
+            yield return Capture("05-bark.ppm");
 
             _game.ForcePredatorWarning();
             yield return new WaitForSecondsRealtime(0.12f);
-            yield return Capture("04-warning.ppm");
+            yield return Capture("06-warning.ppm");
             yield return new WaitForSecondsRealtime(0.8f);
 
             _game.ForcePredatorAttack();
@@ -80,7 +86,7 @@ namespace CheddarAndCocoa.Game
                 dog.Bark();
             }
             yield return new WaitForSecondsRealtime(0.12f);
-            yield return Capture("05-rescue.ppm");
+            yield return Capture("07-rescue.ppm");
             yield return new WaitForSecondsRealtime(0.9f);
 
             Camera camera = Camera.main;
@@ -94,7 +100,7 @@ namespace CheddarAndCocoa.Game
                 camera.orthographicSize = Mathf.Max(bounds.height * 0.5f + 2f, bounds.width * 0.5f / aspect + 2f);
             }
             yield return new WaitForSecondsRealtime(0.2f);
-            yield return Capture("06-full-yard.ppm");
+            yield return Capture("08-full-yard.ppm");
 
             Debug.Log($"Arena art review captures complete: {_outputDirectory}");
             Application.Quit();
