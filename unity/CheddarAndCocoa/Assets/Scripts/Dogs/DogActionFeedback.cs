@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace CheddarAndCocoa.Dogs
@@ -126,6 +127,9 @@ namespace CheddarAndCocoa.Dogs
         private bool _carry;
         private bool _zoomies;
 
+        /// <summary>Dog-local timing hook for feedback that must land on the visual action phases.</summary>
+        public event Action<DogFeedbackAction, DogFeedbackPhase> PhaseChanged;
+
         public DogFeedbackAction CurrentAction { get; private set; }
         public DogFeedbackPhase CurrentPhase { get; private set; } = DogFeedbackPhase.Idle;
         public Vector2 VisualScale { get; private set; } = Vector2.one;
@@ -206,11 +210,11 @@ namespace CheddarAndCocoa.Dogs
             }
 
             CurrentAction = action;
-            CurrentPhase = DogFeedbackPhase.Anticipation;
             _style = DogActionFeedbackProfile.For(_identity.Id, action);
             _phaseElapsed = 0f;
             _actionElapsed = 0f;
             _transient = transient;
+            SetPhase(DogFeedbackPhase.Anticipation);
         }
 
         private void AdvancePhase()
@@ -226,20 +230,20 @@ namespace CheddarAndCocoa.Dogs
                 switch (CurrentPhase)
                 {
                     case DogFeedbackPhase.Anticipation:
-                        CurrentPhase = DogFeedbackPhase.Impact;
+                        SetPhase(DogFeedbackPhase.Impact);
                         EmitImpactParticles();
                         advanced = true;
                         break;
                     case DogFeedbackPhase.Impact:
-                        if (!_transient && IsSustained(CurrentAction)) CurrentPhase = DogFeedbackPhase.Sustain;
-                        else CurrentPhase = DogFeedbackPhase.Recovery;
+                        if (!_transient && IsSustained(CurrentAction)) SetPhase(DogFeedbackPhase.Sustain);
+                        else SetPhase(DogFeedbackPhase.Recovery);
                         advanced = true;
                         break;
                     case DogFeedbackPhase.Sustain:
                         if (!IsSustained(CurrentAction))
                         {
-                            CurrentPhase = DogFeedbackPhase.Recovery;
                             _phaseElapsed = 0f;
+                            SetPhase(DogFeedbackPhase.Recovery);
                         }
                         break;
                     case DogFeedbackPhase.Recovery:
@@ -303,8 +307,14 @@ namespace CheddarAndCocoa.Dogs
 
         private void BeginRecovery()
         {
-            CurrentPhase = DogFeedbackPhase.Recovery;
             _phaseElapsed = 0f;
+            SetPhase(DogFeedbackPhase.Recovery);
+        }
+
+        private void SetPhase(DogFeedbackPhase phase)
+        {
+            CurrentPhase = phase;
+            PhaseChanged?.Invoke(CurrentAction, phase);
         }
 
         private void ResetNeutral()

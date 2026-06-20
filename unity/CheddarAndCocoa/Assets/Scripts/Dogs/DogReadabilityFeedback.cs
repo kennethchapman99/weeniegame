@@ -52,6 +52,7 @@ namespace CheddarAndCocoa.Dogs
         private float _barkStartedAt;
         private DogVisualSlot _art;
         private DogActionFeedback _actionFeedback;
+        private DogProceduralAudio _proceduralAudio;
 
         public Pose CurrentPose { get; private set; } = Pose.Idle;
         public string CurrentPoseLabel => CurrentPose.ToString();
@@ -67,6 +68,7 @@ namespace CheddarAndCocoa.Dogs
         public bool IsCarrying { get; private set; }
         public string MotionPersonalityLabel { get; private set; } = string.Empty;
         public DogActionFeedback ActionFeedback => _actionFeedback;
+        public DogProceduralAudio ProceduralAudio => _proceduralAudio;
         public string ArtDirectionSignature => _identity == null
             ? string.Empty
             : ArenaArtCatalog.Dog(_identity.Id).ArtDirectionSignature;
@@ -84,6 +86,9 @@ namespace CheddarAndCocoa.Dogs
             _actionFeedback = GetComponent<DogActionFeedback>();
             if (_actionFeedback == null) _actionFeedback = gameObject.AddComponent<DogActionFeedback>();
             _actionFeedback.Initialize(_authoredPose != null ? _authoredPose.transform : transform, sprite);
+            _proceduralAudio = GetComponent<DogProceduralAudio>();
+            if (_proceduralAudio == null) _proceduralAudio = gameObject.AddComponent<DogProceduralAudio>();
+            _proceduralAudio.Initialize(_actionFeedback);
             _dog.OnBark += OnBark;
             ApplyPose(Pose.Idle);
         }
