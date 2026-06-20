@@ -120,6 +120,17 @@ namespace CheddarAndCocoa.Game
             return "Working The Bait";
         }
 
+        public static string BuildWalkCampaignSummary(CoopSocialManipulationPuzzle state)
+        {
+            if (state.Solved)
+                return "Walkies Secured";
+
+            if (state.Misreads > 0)
+                return "Mixed Signals";
+
+            return "Working The Human";
+        }
+
         public static string BuildPatrolSummary(PatrolDefenseMissionState state)
         {
             if (state.FinalPressureComplete)
