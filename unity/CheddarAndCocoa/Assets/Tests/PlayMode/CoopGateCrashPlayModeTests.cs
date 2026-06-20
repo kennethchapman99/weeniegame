@@ -22,7 +22,7 @@ namespace CheddarAndCocoa.Tests
         public IEnumerator GateCrash_AppearsInMissionSelectRotation()
         {
             yield return LoadArena();
-            Assert.AreEqual(18, _game.MissionSelectOptionCount);
+            Assert.AreEqual(19, _game.MissionSelectOptionCount);
 
             bool found = false;
             for (int i = 0; i < _game.MissionSelectOptionCount; i++)

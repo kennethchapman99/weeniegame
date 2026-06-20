@@ -153,6 +153,17 @@ namespace CheddarAndCocoa.Game
             return "Rigging It Up";
         }
 
+        public static string BuildChaosMachineSummary(CoopChaosMachinePuzzle state)
+        {
+            if (state.Solved)
+                return "Cascade Complete";
+
+            if (state.Stalls > 0)
+                return "Misfired";
+
+            return "Setting It Up";
+        }
+
         public static string BuildPatrolSummary(PatrolDefenseMissionState state)
         {
             if (state.FinalPressureComplete)
