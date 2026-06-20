@@ -98,6 +98,17 @@ namespace CheddarAndCocoa.Game
             return "At The Gate";
         }
 
+        public static string BuildTableStealthSummary(CoopHumanDistractionPuzzle state)
+        {
+            if (state.Solved)
+                return "Steak Sneaked";
+
+            if (state.Exposures > 0)
+                return "Caught At The Table";
+
+            return "Under The Table";
+        }
+
         public static string BuildPatrolSummary(PatrolDefenseMissionState state)
         {
             if (state.FinalPressureComplete)
