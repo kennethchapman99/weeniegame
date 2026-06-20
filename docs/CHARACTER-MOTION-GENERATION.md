@@ -45,3 +45,5 @@ After the reference boards were approved, the built-in tool generated one 4x3 ea
 The directional run boards use strict 4x2 layouts: SE above NE, then S above N. `export_character_run_diagonals.py` promotes those into 32 additional frames. SW and NW are mirrored at runtime, completing eight-way traversal coverage without duplicating symmetric west-side art.
 
 The east-facing tug strips contain brace, pull, and recovery frames with no baked rope prop. `export_character_tug.py` promotes six frames; gameplay mirrors them west and keeps the live rope actor visually authoritative. Cheddar uses a faster, airborne overcommit while Cocoa stays planted and controlled.
+
+Directional bark uses matching SE/NE and S/N 4x2 boards. `export_character_bark_directions.py` promotes 32 frames; west-side angles mirror at runtime. Each direction preserves anticipation, open-mouth burst, recoil, and settle, while the separate bark ring remains the authoritative gameplay-radius read.

@@ -41,6 +41,12 @@ namespace CheddarAndCocoa.Tests
             foreach (int frame in new[] { 0, 1, 2 })
                 Assert.IsNotNull(CharacterMotionArt.Load(dog, CharacterMotionArt.Clip.Tug,
                     CharacterMotionArt.Facing8.E, frame), $"Missing tug frame {dog}/{frame}.");
+            foreach (DogId dog in new[] { DogId.Cheddar, DogId.Cocoa })
+            foreach (var facing in new[] { CharacterMotionArt.Facing8.SE, CharacterMotionArt.Facing8.S,
+                         CharacterMotionArt.Facing8.N, CharacterMotionArt.Facing8.NE })
+            foreach (int frame in new[] { 0, 1, 2, 3 })
+                Assert.IsNotNull(CharacterMotionArt.Load(dog, CharacterMotionArt.Clip.Bark, facing, frame),
+                    $"Missing directional bark frame {dog}/{facing}/{frame}.");
 
             Sprite motion = CharacterMotionArt.Load(DogId.Cheddar, CharacterMotionArt.Clip.Run,
                 CharacterMotionArt.Facing8.E, 0);
@@ -185,8 +191,15 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(environment.transform.Find("CoverBush_0"), "Generated fallback objects must remain available.");
             Assert.IsNotNull(environment.transform.Find("SteppingStone_0"), "Generated fallback objects must remain available.");
 
+            cheddarInput.enabled = false;
+            cheddarBody.linearVelocity = Vector2.up * 4f;
+            yield return new WaitForSeconds(0.14f);
+            cheddarBody.linearVelocity = Vector2.zero;
             cheddar.GetComponent<DogController>().Bark();
-            yield return null;
+            yield return new WaitForSeconds(0.08f);
+            Assert.That(cheddarMotion.AuthoredPoseSpriteName, Does.StartWith("cheddar_bark_n_"));
+            Assert.IsFalse(cheddar.transform.Find("CheddarAuthoredPose").GetComponent<SpriteRenderer>().flipX);
+            cheddarInput.enabled = true;
             var ring = GameObject.Find(ArenaArtCatalog.BarkFeedback.RingName);
             Assert.IsNotNull(ring);
             Assert.AreEqual("bark_ring", ring.GetComponent<SpriteRenderer>().sprite.name);

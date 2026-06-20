@@ -16,7 +16,11 @@
     "cheddar_run_straights_v01.png",
     "cocoa_run_straights_v01.png",
     "cheddar_tug_east_v01.png",
-    "cocoa_tug_east_v01.png"
+    "cocoa_tug_east_v01.png",
+    "cheddar_bark_diagonals_v01.png",
+    "cocoa_bark_diagonals_v01.png",
+    "cheddar_bark_straights_v01.png",
+    "cocoa_bark_straights_v01.png"
   ],
   "clips": [
     { "name": "idle", "directions": "all", "frames": 4, "priority": "A" },
