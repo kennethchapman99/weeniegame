@@ -34,6 +34,10 @@ namespace CheddarAndCocoa.Dogs
                 case DogReadabilityFeedback.Pose.Run: clip = Clip.Run; return true;
                 case DogReadabilityFeedback.Pose.Bark: clip = Clip.Bark; return true;
                 case DogReadabilityFeedback.Pose.Tug: clip = Clip.Tug; return true;
+                case DogReadabilityFeedback.Pose.Stunned: clip = Clip.Stunned; return true;
+                case DogReadabilityFeedback.Pose.Rescued: clip = Clip.Rescued; return true;
+                case DogReadabilityFeedback.Pose.Proud: clip = Clip.Proud; return true;
+                case DogReadabilityFeedback.Pose.Sad: clip = Clip.Sad; return true;
                 default: clip = default; return false;
             }
         }
@@ -46,11 +50,17 @@ namespace CheddarAndCocoa.Dogs
                 Clip.Run => dog == DogId.Cheddar ? 10f : 8.5f,
                 Clip.Bark => 11f,
                 Clip.Tug => dog == DogId.Cheddar ? 9f : 7f,
+                Clip.Stunned => 6f,
+                Clip.Rescued => dog == DogId.Cheddar ? 6f : 4.5f,
+                Clip.Proud => dog == DogId.Cheddar ? 5f : 3.5f,
+                Clip.Sad => 2.5f,
                 _ => 1f
             };
             int frame = Mathf.Max(0, Mathf.FloorToInt(Mathf.Max(0f, elapsedSeconds) * fps));
             if (clip == Clip.Bark) return Mathf.Min(3, frame);
-            return frame % (clip == Clip.Tug ? 3 : 4);
+            int frameCount = clip == Clip.Tug ? 3 :
+                clip == Clip.Stunned || clip == Clip.Rescued || clip == Clip.Proud || clip == Clip.Sad ? 2 : 4;
+            return frame % frameCount;
         }
 
         public static Facing8 FacingForDirection(Vector2 direction, out bool mirror)

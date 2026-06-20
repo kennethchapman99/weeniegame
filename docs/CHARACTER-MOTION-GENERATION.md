@@ -49,3 +49,5 @@ The east-facing tug strips contain brace, pull, and recovery frames with no bake
 Directional bark uses matching SE/NE and S/N 4x2 boards. `export_character_bark_directions.py` promotes 32 frames; west-side angles mirror at runtime. Each direction preserves anticipation, open-mouth burst, recoil, and settle, while the separate bark ring remains the authoritative gameplay-radius read.
 
 Directional idle uses the same SE/NE and S/N board contract. `export_character_idle_directions.py` promotes 32 subtle breathe/look/tail/settle frames. Cheddar's loop is eager and loose; Cocoa's is measured and composed. Combined with mirroring, idle, run, bark, and tug now have their complete Tier-A gameplay-facing coverage.
+
+The outcome boards use a 4x2 contract: stunned pair, rescued pair, proud pair, sad pair. `export_character_outcomes.py` promotes 16 east-facing frames for west mirroring. Cheddar's outcomes bounce and overreact; Cocoa's remain controlled and queenly. Detached stars/motion marks were explicitly removed before extraction so gameplay VFX stay authoritative.

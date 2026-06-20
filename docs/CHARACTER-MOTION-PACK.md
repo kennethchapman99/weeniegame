@@ -14,7 +14,7 @@ Generated exploration lives under `Assets/Art/ReferenceOnly/GeneratedCharacterMo
 
 The initial four V01 boards are generated and intentionally remain reference-only. They establish a strong Cheddar/Cocoa identity and useful action silhouettes, but validation correctly rejects them as runtime sources because the generator baked a checkerboard into RGB output instead of producing true alpha. Direction ordering and Cocoa's comfort/hide props also need human review before any slicing.
 
-Tier A clips are generated separately against flat near-white backgrounds. The extraction pipeline exports normalized 512x384 true-alpha frames with a shared paw-baseline pivot. Live gameplay has complete eight-way idle, run, and bark coverage: east, southeast, south, northeast, and north are authored, with west-side angles mirrored. Tug is authored east and mirrored west. Every Tier B clip retains the established single-pose fallback. Current completion is **126/336 source frames**, with symmetric runtime mirroring supplying the remaining Tier-A west angles.
+Tier A clips are generated separately against flat near-white backgrounds. The extraction pipeline exports normalized 512x384 true-alpha frames with a shared paw-baseline pivot. Live gameplay has complete eight-way idle, run, and bark coverage: east, southeast, south, northeast, and north are authored, with west-side angles mirrored. Tug and the stunned/rescued/proud/sad outcome loops are authored east and mirrored west. Remaining Tier B verbs retain the established single-pose fallback. Current completion is **142/336 source frames**, with symmetric runtime mirroring supplying the west angles.
 
 ## Camera and direction contract
 

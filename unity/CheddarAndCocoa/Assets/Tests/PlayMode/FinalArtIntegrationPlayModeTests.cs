@@ -53,6 +53,12 @@ namespace CheddarAndCocoa.Tests
             foreach (int frame in new[] { 0, 1, 2, 3 })
                 Assert.IsNotNull(CharacterMotionArt.Load(dog, CharacterMotionArt.Clip.Idle, facing, frame),
                     $"Missing directional idle frame {dog}/{facing}/{frame}.");
+            foreach (DogId dog in new[] { DogId.Cheddar, DogId.Cocoa })
+            foreach (var clip in new[] { CharacterMotionArt.Clip.Stunned, CharacterMotionArt.Clip.Rescued,
+                         CharacterMotionArt.Clip.Proud, CharacterMotionArt.Clip.Sad })
+            foreach (int frame in new[] { 0, 1 })
+                Assert.IsNotNull(CharacterMotionArt.Load(dog, clip, CharacterMotionArt.Facing8.E, frame),
+                    $"Missing outcome frame {dog}/{clip}/{frame}.");
 
             Sprite motion = CharacterMotionArt.Load(DogId.Cheddar, CharacterMotionArt.Clip.Run,
                 CharacterMotionArt.Facing8.E, 0);
@@ -115,6 +121,8 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(3, CharacterMotionArt.FrameAtTime(DogId.Cocoa, CharacterMotionArt.Clip.Bark, 10f));
             Assert.AreEqual(2, CharacterMotionArt.FrameAtTime(DogId.Cheddar, CharacterMotionArt.Clip.Tug, 2f / 9f));
             Assert.AreEqual(0, CharacterMotionArt.FrameAtTime(DogId.Cheddar, CharacterMotionArt.Clip.Tug, 1f / 3f));
+            Assert.AreEqual(1, CharacterMotionArt.FrameAtTime(DogId.Cheddar, CharacterMotionArt.Clip.Proud, 0.2f));
+            Assert.AreEqual(0, CharacterMotionArt.FrameAtTime(DogId.Cheddar, CharacterMotionArt.Clip.Proud, 0.4f));
             Assert.AreEqual(CharacterMotionArt.Facing8.NE,
                 CharacterMotionArt.FacingForDirection(new Vector2(-1f, 1f), out bool mirror));
             Assert.IsTrue(mirror);

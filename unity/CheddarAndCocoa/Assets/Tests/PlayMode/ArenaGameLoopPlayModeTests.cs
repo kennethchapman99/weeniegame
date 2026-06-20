@@ -445,6 +445,10 @@ namespace CheddarAndCocoa.Tests
             Assert.That(game.PredatorObject.GetComponent<MissionActorFeedback>().Label, Does.Contain("PARTNER BARK"));
             Assert.IsTrue(cheddarFeedback.CurrentPose == DogReadabilityFeedback.Pose.Stunned ||
                           cocoaFeedback.CurrentPose == DogReadabilityFeedback.Pose.Stunned);
+            var stunnedFeedback = cheddarFeedback.CurrentPose == DogReadabilityFeedback.Pose.Stunned
+                ? cheddarFeedback : cocoaFeedback;
+            Assert.That(stunnedFeedback.AuthoredPoseSpriteName, Does.Contain("_stunned_e_"));
+            Assert.AreEqual("Stunned", stunnedFeedback.MotionClipLabel);
             Assert.IsTrue(game.ObjectiveArrows[0].Label.Contains("BARK RESCUE") ||
                           game.ObjectiveArrows[1].Label.Contains("BARK RESCUE"));
             cheddar.transform.position = cocoa.transform.position;
@@ -461,6 +465,10 @@ namespace CheddarAndCocoa.Tests
                           cocoaFeedback.CurrentPose == DogReadabilityFeedback.Pose.Rescued ||
                           cheddarFeedback.CurrentPose == DogReadabilityFeedback.Pose.Proud ||
                           cocoaFeedback.CurrentPose == DogReadabilityFeedback.Pose.Proud);
+            Assert.IsTrue(cheddarFeedback.AuthoredPoseSpriteName.Contains("_rescued_e_") ||
+                          cocoaFeedback.AuthoredPoseSpriteName.Contains("_rescued_e_") ||
+                          cheddarFeedback.AuthoredPoseSpriteName.Contains("_proud_e_") ||
+                          cocoaFeedback.AuthoredPoseSpriteName.Contains("_proud_e_"));
 
             // Tug completes when both dogs coordinate on the rope.
             game.Restart();
@@ -539,6 +547,8 @@ namespace CheddarAndCocoa.Tests
             yield return null;
             Assert.AreEqual(DogReadabilityFeedback.Pose.Proud, cheddarFeedback.CurrentPose);
             Assert.AreEqual(DogReadabilityFeedback.Pose.Proud, cocoaFeedback.CurrentPose);
+            Assert.That(cheddarFeedback.AuthoredPoseSpriteName, Does.Contain("cheddar_proud_e_"));
+            Assert.That(cocoaFeedback.AuthoredPoseSpriteName, Does.Contain("cocoa_proud_e_"));
 
             game.Restart();
             game.ForceGameOver();
@@ -561,6 +571,8 @@ namespace CheddarAndCocoa.Tests
             yield return null;
             Assert.AreEqual(DogReadabilityFeedback.Pose.Sad, cheddarFeedback.CurrentPose);
             Assert.AreEqual(DogReadabilityFeedback.Pose.Sad, cocoaFeedback.CurrentPose);
+            Assert.That(cheddarFeedback.AuthoredPoseSpriteName, Does.Contain("cheddar_sad_e_"));
+            Assert.That(cocoaFeedback.AuthoredPoseSpriteName, Does.Contain("cocoa_sad_e_"));
             game.Restart();
             Assert.AreEqual(GameManager.FlowState.Playing, game.CurrentFlow);
             Assert.AreEqual(GameManager.State.Playing, game.Phase);

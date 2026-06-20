@@ -131,6 +131,8 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(1, game.ScentSearchState.Found);
             Assert.AreEqual(DogReadabilityFeedback.Pose.Proud, game.DogFeedback[0].CurrentPose,
                 "Digging up a bone should show a proud pose.");
+            Assert.That(game.DogFeedback[0].AuthoredPoseSpriteName, Does.Contain("cheddar_proud_e_"));
+            Assert.AreEqual("Proud", game.DogFeedback[0].MotionClipLabel);
         }
 
         [UnityTest]
@@ -145,6 +147,8 @@ namespace CheddarAndCocoa.Tests
 
             Assert.AreEqual(1, _game.ScentSearchState.WastedDigs);
             Assert.AreEqual(DogReadabilityFeedback.Pose.Sad, _game.DogFeedback[0].CurrentPose);
+            Assert.That(_game.DogFeedback[0].AuthoredPoseSpriteName, Does.Contain("cheddar_sad_e_"));
+            Assert.AreEqual("Sad", _game.DogFeedback[0].MotionClipLabel);
             Assert.AreEqual(ArenaFeedbackCatalog.ThreatWarning, _game.LastAudioCueRequested);
             Assert.AreEqual("cold_dig", _game.LastRumbleRequested);
         }
