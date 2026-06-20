@@ -88,7 +88,7 @@ Read:
 First targets:
 1. **Backyard Rescue** — add a squirrel trap / redirected escape beat.
 2. **Snack Heist** — add a distract-and-sneak food theft beat.
-3. **Sock Panic** — add a laundry basket / hidden sock beat.
+3. **Sock Panic — DONE** — **Tip and Dive**: one dog tips/holds the laundry basket while the partner collects the briefly exposed sock; same-dog grabs and timeouts create a recoverable decoy fumble. Deterministic state and PlayMode coverage verify the role lock, clear/fail path, and replay reset.
 
 Future Kitchen candidates:
 - **Cheddar Barf Pressure Sensor** — Cheddar eats people food to charge a Barf Meter and activate a gross pressure sensor; the partner helps guide, block, or position him so the barf lands on the target.

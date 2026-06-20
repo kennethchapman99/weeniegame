@@ -11,7 +11,7 @@ namespace CheddarAndCocoa.Game
     /// </summary>
     public static class ArenaArtCatalog
     {
-        public enum ActorKind { Squirrel, Predator, Rope }
+        public enum ActorKind { Squirrel, Predator, Rope, LaundryBasket }
         public enum ColorRole { Fixed, MissionPrimary, MissionAccent, MissionSecondary }
 
         public const string ArenaHudObjectName = "ArenaHud";
@@ -20,6 +20,7 @@ namespace CheddarAndCocoa.Game
         public const string DogReadabilityLabelName = "DogReadabilityLabel";
         public const string ObjectiveArrowLabelName = "ObjectiveArrowLabel";
         public const string BackyardEnvironmentObjectName = "BackyardEnvironment";
+        public const string LaundryBasketObjectName = "Sock Panic Laundry Basket";
 
         public static readonly Color FloorColor = Hex("#3c6b2f");
         public static readonly Color CameraBackgroundColor = Hex("#243a1c");
@@ -128,6 +129,19 @@ namespace CheddarAndCocoa.Game
         {
             return kind switch
             {
+                ActorKind.LaundryBasket => new ActorVisualSlot(
+                    LaundryBasketObjectName, new Color(0.78f, 0.56f, 0.3f), 1.1f, "LAUNDRY BASKET - TIP IT!",
+                    Vector3.up * 1.9f, 0.08f, Vector3.zero,
+                    new Vector3(1.35f, 0.7f, 1f),
+                    new[]
+                    {
+                        new PartSlot("BasketRim", new Color(0.95f, 0.78f, 0.48f), new Vector3(0f, 0.42f, -0.03f), new Vector3(1.15f, 0.16f, 1f), 8),
+                        new PartSlot("BasketSlatA", new Color(0.35f, 0.2f, 0.1f), new Vector3(-0.42f, 0f, -0.04f), new Vector3(0.12f, 0.58f, 1f), 9),
+                        new PartSlot("BasketSlatB", new Color(0.35f, 0.2f, 0.1f), new Vector3(0f, 0f, -0.04f), new Vector3(0.12f, 0.58f, 1f), 9),
+                        new PartSlot("BasketSlatC", new Color(0.35f, 0.2f, 0.1f), new Vector3(0.42f, 0f, -0.04f), new Vector3(0.12f, 0.58f, 1f), 9),
+                        new PartSlot("HiddenSockPeek", new Color(0.42f, 0.72f, 1f), new Vector3(0.28f, 0.55f, -0.05f), new Vector3(0.28f, 0.36f, 1f), 10)
+                    },
+                    new ArenaDraftArt.SpriteId[0]),
                 ActorKind.Predator => new ActorVisualSlot(
                     "Predator Warning", new Color(0.7f, 0.05f, 0.08f), 1.1f, "Predator Warning",
                     Vector3.up * 1.8f, 0.25f, Vector3.zero,

@@ -63,11 +63,12 @@ Add a distract-and-sneak food theft beat.
 
 ### Sock Panic puzzle pass
 
-Add a laundry basket / hidden sock beat.
+Implemented as **Tip and Dive**.
 
-- One dog pulls, holds, or tips the basket/blanket.
-- The other dives, sniffs, or grabs the exposed sock.
-- Wrong sock or mistimed release creates a decoy/fumble instead of a silent miss.
+- One dog tips the generated laundry basket and creates a six-second opening.
+- Only the partner can grab the exposed sock and turn that opening into progress.
+- A same-dog grab or timeout creates a scored decoy/fumble, visibly closes the basket, and immediately allows recovery.
+- Objective arrows split into `TIP BASKET`, `HOLD BASKET`, and `DIVE FOR SOCK`; deterministic hooks cover tip, collection, timeout, clear/fail, and reset.
 
 ### Weenie Roundup puzzle pass
 

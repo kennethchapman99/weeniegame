@@ -42,5 +42,9 @@ namespace CheddarAndCocoa.Game
         public static readonly ProductionScoreEvent FenceHeld = new("FENCE HELD", 100, true);
         public static readonly ProductionScoreEvent DirtFilled = new("DIRT FILLED", 125);
         public static readonly ProductionScoreEvent YardDefended = new("YARD DEFENDED", 500, true);
+
+        public static readonly ProductionScoreEvent BasketTipped = new("BASKET TIPPED", 20, true);
+        public static readonly ProductionScoreEvent SockDive = new("PARTNER SOCK DIVE", 40, true);
+        public static readonly ProductionScoreEvent SockDecoy = new("DECOY SOCK FUMBLE", -15);
     }
 }

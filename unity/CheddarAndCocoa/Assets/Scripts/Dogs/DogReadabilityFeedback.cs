@@ -85,6 +85,15 @@ namespace CheddarAndCocoa.Dogs
         }
 
         public void ShowTug() => ForcePose(Pose.Tug, 0.25f);
+        /// <summary>
+        /// Tug while facing <paramref name="faceDir"/> so two dogs flanking a rope visibly lean into it
+        /// from opposite sides (a readable tug-of-war silhouette) instead of holding stale travel facing.
+        /// </summary>
+        public void ShowTug(Vector2 faceDir)
+        {
+            if (faceDir.sqrMagnitude > 0.0001f) _lastIntentDir = faceDir.normalized;
+            ForcePose(Pose.Tug, 0.25f);
+        }
         public void ShowRescued() => ForcePose(Pose.Rescued, 1.1f);
         public void ShowProudBrief() => ForcePose(Pose.Proud, 1.1f);
         public void ShowProud() => ForcePose(Pose.Proud, 999f);

@@ -830,7 +830,7 @@ namespace CheddarAndCocoa.Tests
             game.StartSelectedMission();
             yield return null;
             Assert.AreEqual(GameManager.MissionVariant.SockPanic, game.ActiveMissionVariant);
-            Assert.That(game.ObjectiveLabel, Does.Contain("Return socks"));
+            Assert.That(game.ObjectiveLabel, Does.Contain("Tip the laundry basket"));
         }
 
         [UnityTest]
@@ -1048,8 +1048,10 @@ namespace CheddarAndCocoa.Tests
             yield return null;
 
             var game = Object.FindFirstObjectByType<GameManager>();
+            var cheddar = FindDog(DogId.Cheddar);
             var cocoa = FindDog(DogId.Cocoa);
             Assert.IsNotNull(game);
+            Assert.IsNotNull(cheddar);
             Assert.IsNotNull(cocoa);
 
             Assert.IsTrue(game.MissionSelectVisible);
@@ -1058,22 +1060,36 @@ namespace CheddarAndCocoa.Tests
 
             Assert.AreEqual(GameManager.MissionVariant.SockPanic, game.ActiveMissionVariant);
             Assert.AreEqual("Sock Panic", game.ActiveMissionName);
-            Assert.That(game.MissionIntroPrompt, Does.Contain("scattered socks"));
-            Assert.That(game.ObjectiveLabel, Does.Contain("Return socks"));
+            Assert.That(game.MissionIntroPrompt, Does.Contain("laundry basket"));
+            Assert.That(game.ObjectiveLabel, Does.Contain("Tip the laundry basket"));
             Assert.IsFalse(game.SquirrelObject.activeSelf);
             Assert.IsFalse(game.PredatorObject.activeSelf);
             Assert.IsFalse(game.RopeObject.activeSelf);
+            Assert.IsTrue(game.LaundryBasketObject.activeSelf);
+            Assert.IsFalse(game.SockPanicState.BasketOpen);
 
-            var firstSock = FirstTreat();
+            game.ForceSockBasketTip(DogId.Cocoa);
+            var firstSock = game.ExposedSock;
+            Assert.IsNotNull(firstSock);
+            Assert.IsTrue(game.SockPanicState.BasketOpen);
+            Assert.That(game.ObjectiveLabel, Does.Contain("Partner dive"));
             AssertHasChildren(firstSock.transform, ArenaArtCatalog.CollectiblePartNames(GameManager.MissionVariant.SockPanic));
             firstSock.CollectBy(cocoa);
+            Assert.AreEqual(-15, game.LastScoreDelta);
+            Assert.AreEqual(1, game.SockPanicState.Fumbles);
+            Assert.IsFalse(game.SockPanicState.BasketOpen);
+
+            game.ForceSockBasketTip(DogId.Cocoa);
+            game.ExposedSock.CollectBy(cheddar);
             Assert.AreEqual(40, game.LastScoreDelta);
-            Assert.AreEqual("+40 SOCK RESCUED", game.LastScoreEventLabel);
-            Assert.That(game.ObjectiveLabel, Does.Contain("Return socks 1/5"));
+            Assert.AreEqual("+40 PARTNER SOCK DIVE", game.LastScoreEventLabel);
+            Assert.AreEqual(1, game.SockPanicState.SuccessfulDives);
+            Assert.That(game.ObjectiveLabel, Does.Contain("socks 1/5"));
 
             while (game.BreakfastRecovered < game.BreakfastGoal)
             {
-                FirstTreat().CollectBy(cocoa);
+                game.ForceSockBasketTip(DogId.Cocoa);
+                game.ExposedSock.CollectBy(cheddar);
                 yield return null;
             }
 
@@ -1084,6 +1100,9 @@ namespace CheddarAndCocoa.Tests
             Assert.That(game.LastScoreEventLabel, Does.Contain("SOCK PANIC CLEAR"));
 
             game.StartMission(GameManager.MissionVariant.SockPanic);
+            Assert.AreEqual(0, game.SockPanicState.SuccessfulDives);
+            Assert.AreEqual(0, game.SockPanicState.Fumbles);
+            Assert.IsFalse(game.SockPanicState.BasketOpen);
             game.SetRoundDuration(0.02f);
             yield return WaitForOutcome(game, GameManager.MissionOutcome.Failed);
             Assert.AreEqual(GameManager.MissionOutcome.Failed, game.Outcome);
@@ -1115,7 +1134,18 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(game);
             while (game.BreakfastRecovered < game.BreakfastGoal)
             {
-                FirstTreat().CollectBy(dog);
+                if (game.ActiveMissionVariant == GameManager.MissionVariant.SockPanic)
+                {
+                    var collectorId = dog.GetComponent<DogIdentity>().Id;
+                    var openerId = collectorId == DogId.Cheddar ? DogId.Cocoa : DogId.Cheddar;
+                    game.ForceSockBasketTip(openerId);
+                    Assert.IsNotNull(game.ExposedSock);
+                    game.ExposedSock.CollectBy(dog);
+                }
+                else
+                {
+                    FirstTreat().CollectBy(dog);
+                }
                 yield return null;
             }
         }

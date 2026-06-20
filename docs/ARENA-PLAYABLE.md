@@ -144,17 +144,20 @@ Manual check: press **2**, collect one snack, confirm **+60 SNACK STASHED** and 
 
 ### Sock Panic
 
-Sock Panic is a time-boxed collect mission using the same arena, dogs, score/replay loop, and generated prop path, but with squirrel, predator, and rope actors disabled. Cheddar and Cocoa must retrieve `5` scattered socks before the `55` second timer expires.
+Sock Panic is now built around the **Tip and Dive** co-op puzzle beat. One dog interacts beside the laundry basket to tip it open; the other dog has `6` seconds to dive onto the exposed sock. The basket-tipper cannot collect their own exposed sock, so players must alternate or deliberately keep their roles. Cheddar and Cocoa must return `5` socks before the `55` second timer expires, with squirrel, predator, and rope actors disabled.
 
 Readable differences:
 
-- Collectibles are blue sock placeholders with cuff/toe/stripe markers and **Sock!** labels.
-- Objective text starts as **Return socks 0/5**.
-- Unique scoring/events include **+40 SOCK RESCUED** and **SOCK PANIC CLEAR**.
+- A generated slatted **LAUNDRY BASKET** is the shared puzzle object; hidden socks only become visible after a tip.
+- Objective arrows show **TIP BASKET**, then split into **HOLD BASKET** and **DIVE FOR SOCK** roles.
+- Objective text tracks returned socks and fumbles, then calls out the temporary partner-dive window.
+- Unique scoring/events include **+20 BASKET TIPPED**, **+40 PARTNER SOCK DIVE**, **-15 DECOY SOCK FUMBLE**, and **SOCK PANIC CLEAR**.
 - Clear banner: **SOCKS SORTED!**.
 - Time failure reason: **Laundry order returned before the final sock was rescued.**
 
-Manual check: press **3**, collect one sock, confirm **+40 SOCK RESCUED** and **Return socks 1/5**. Let the timer expire and confirm Sock Panic replay/fail copy.
+Funny failure/recovery: if the basket-tipper grabs the sock or the opening times out, the sock is exposed as a decoy/fumble and the basket flops shut. Nothing is permanently lost; either dog can tip it again.
+
+Manual check: press **3**, move one dog to the basket and interact, then use the partner to collect the exposed sock. Confirm **+20 BASKET TIPPED**, **+40 PARTNER SOCK DIVE**, and `1/5` returned. Intentionally grab with the basket-tipper and let one opening time out; confirm both produce **-15 DECOY SOCK FUMBLE** and reset to **TIP BASKET**. Replay and confirm socks, fumbles, basket state, and score reset.
 
 ### Squirrel Conspiracy
 
@@ -742,7 +745,7 @@ Use this after any placeholder-art, authored-art, or sprite import change:
 - Mission select, end actions, and session summary are generated IMGUI placeholders with a small
   imported UI-kit accent, not authored production UI.
 - The playtest overlay and event log are debug/playtest aids only. They are not analytics, persistence, telemetry, or player-facing production UI.
-- Snack Heist and Sock Panic are architecture proofs inside the existing arena, not finished level designs. They reuse the same camera, spawn bounds, scoring HUD, restart flow, and generated placeholder prop system.
+- Snack Heist remains an architecture proof inside the existing arena. Sock Panic now has a complete first-pass co-op lock/key beat, but still uses generated basket/sock placeholder art.
 - Dog identity art, pose labels, collars, expression markers, prop silhouettes, and objective arrows are generated placeholders. They are intentionally readable and easy to delete once authored sprites/animation exist.
 - The squirrel and predator use intentionally simple movement/state rules so the PlayMode tests remain deterministic.
 - The intro, bark, squirrel, predator, tug, clear, fail, score-pop, and objective feedback are still text/scale/audio-placeholder driven; they are designed to be replaced by authored animation/SFX later.
