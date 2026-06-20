@@ -18,7 +18,7 @@ namespace CheddarAndCocoa.Game
         public enum FlowState { MissionSelect, Playing, EndScreen, SessionSummary }
         public enum RoundModifier { SquirrelTrouble, ZoomiesSurge, PancakePanic }
         public enum MissionOutcome { InProgress, Clear, Failed }
-        public enum MissionVariant { BackyardRescue, SnackHeist, SockPanic, SquirrelConspiracy, EagleShadowPanic, CoyotesFence, WeenieRoundup, ScentSearch, ThunderstormComfort, MarkTheYard, LeashWalk, CarRide, GateCrash, TableStealth, SquirrelSwitcheroo, WalkCampaign, BoneRelay }
+        public enum MissionVariant { BackyardRescue, SnackHeist, SockPanic, SquirrelConspiracy, EagleShadowPanic, CoyotesFence, WeenieRoundup, ScentSearch, ThunderstormComfort, MarkTheYard, LeashWalk, CarRide, GateCrash, TableStealth, SquirrelSwitcheroo, WalkCampaign, BoneRelay, GreatEscape }
         public enum FeedbackKind
         {
             Intro,
@@ -121,7 +121,8 @@ namespace CheddarAndCocoa.Game
             MissionVariant.TableStealth,
             MissionVariant.SquirrelSwitcheroo,
             MissionVariant.WalkCampaign,
-            MissionVariant.BoneRelay
+            MissionVariant.BoneRelay,
+            MissionVariant.GreatEscape
         };
 
         [Header("Mission selection")]
@@ -182,6 +183,10 @@ namespace CheddarAndCocoa.Game
         public int BoneMoundCount => _boneMoundSpots.Length;
         public Vector2 BoneScentZone => _boneScentZone;
         public Vector2 BoneMoundSpot(int index) => index >= 0 && index < _boneMoundSpots.Length ? _boneMoundSpots[index] : Vector2.zero;
+        public CoopSequenceChainPuzzle GreatEscapePuzzle => _escape;
+        public int EscapeStationCount => _escapeStationSpots.Length;
+        public Vector2 EscapeStationSpot(int index) => index >= 0 && index < _escapeStationSpots.Length ? _escapeStationSpots[index] : Vector2.zero;
+        public ChainActor EscapeStationOwner(int index) => index >= 0 && index < _escapeOwners.Length ? _escapeOwners[index] : ChainActor.Either;
         public MissionRuntimeSnapshot RuntimeSnapshot => BuildRuntimeSnapshot();
         public int CurrentMissionSeed => _missionSeed;
         public DemoReadinessResult DemoReadiness => DemoReadinessGate.Evaluate(DemoReadinessGate.RequiredForBackyardDemo);
@@ -464,6 +469,24 @@ namespace CheddarAndCocoa.Game
         private const float BoneDigRange = 3f;
         private const int BoneFindsNeeded = 3;
         private const int BoneMaxWasted = 5; // blind digs + wrong-mound digs before the team gives up
+        // The Great Escape (Sequence-Chain co-op puzzle): the dogs run an ordered contraption chain to
+        // bust out for zoomies - Cocoa paws the latch, Cheddar shoulders the gate, Cocoa drags the cooler
+        // to prop it, Cheddar squeezes through. Owners alternate, so neither dog can rush the whole chain
+        // alone; the active station glows for its owner. Wrong dog / wrong order is a harmless fumble, and
+        // dawdling lets the contraption ease back a step. Botch it too many times and the breakout fails.
+        private readonly CoopSequenceChainPuzzle _escape = new CoopSequenceChainPuzzle();
+        private readonly ChainActor[] _escapeOwners = { ChainActor.Cocoa, ChainActor.Cheddar, ChainActor.Cocoa, ChainActor.Cheddar };
+        private readonly Vector2[] _escapeStationSpots = { new(-13f, 7f), new(-5f, -7f), new(6f, 7f), new(14f, -6f) };
+        private readonly string[] _escapeStepActions = { "PAW THE LATCH", "SHOULDER THE GATE", "DRAG THE COOLER", "SQUEEZE THROUGH" };
+        private GameObject[] _escapeStations;
+        private TextMesh[] _escapeStationLabels;
+        private int _escapeDogInside = -1;
+        private int _escapeStepSeen;
+        private int _escapeFumblesSeen;
+        private int _escapeSettlesSeen;
+        private const float EscapeStationRange = 3f;
+        private const float EscapeSettleTime = 7f; // dawdle this long and the contraption eases back a step
+        private const int EscapeMaxWasted = 6;     // fumbles + settles before the breakout falls apart
         private readonly TerritoryMissionState _territoryState = new TerritoryMissionState();
         private readonly Vector2[] _territoryZones = { new(-18f, 9f), new(18f, 9f), new(-18f, -9f), new(18f, -9f), new(0f, 0f) };
         private GameObject[] _zoneMarkers;
@@ -1350,6 +1373,20 @@ namespace CheddarAndCocoa.Game
             {
                 SetBoneRelayActive(false);
             }
+            if (_mission.Variant == MissionVariant.GreatEscape)
+            {
+                _escape.Configure(_escapeOwners, EscapeSettleTime);
+                _escapeDogInside = -1;
+                _escapeStepSeen = 0;
+                _escapeFumblesSeen = 0;
+                _escapeSettlesSeen = 0;
+                SetEscapeStationsActive(true);
+                UpdateEscapeStationVisuals();
+            }
+            else
+            {
+                SetEscapeStationsActive(false);
+            }
             StageDogsForMissionEntry();
             UpdateObjectiveArrows();
             _lastLoggedObjective = string.Empty;
@@ -1390,6 +1427,7 @@ namespace CheddarAndCocoa.Game
             else if (_mission.Variant == MissionVariant.SquirrelSwitcheroo) TickSwitcheroo();
             else if (_mission.Variant == MissionVariant.WalkCampaign) TickWalkCampaign();
             else if (_mission.Variant == MissionVariant.BoneRelay) TickBoneRelay();
+            else if (_mission.Variant == MissionVariant.GreatEscape) TickGreatEscape();
             else TickSquirrel();
             TickPredator();
             TickTugProximity();
@@ -1986,6 +2024,32 @@ namespace CheddarAndCocoa.Game
         {
             if (_boneMounds == null) return;
             foreach (var marker in _boneMounds)
+                if (marker != null) marker.SetActive(active);
+        }
+
+        private void BuildEscapeStations()
+        {
+            _escapeStations = new GameObject[_escapeStationSpots.Length];
+            _escapeStationLabels = new TextMesh[_escapeStationSpots.Length];
+            for (int i = 0; i < _escapeStationSpots.Length; i++)
+            {
+                var go = new GameObject($"EscapeStation_{i}");
+                go.transform.position = _escapeStationSpots[i];
+                go.transform.localScale = new Vector3(1.7f, 1.3f, 1f);
+                var sr = go.AddComponent<SpriteRenderer>();
+                sr.sprite = _sprite;
+                sr.color = new Color(0.3f, 0.3f, 0.34f);
+                sr.sortingOrder = 3;
+                _escapeStationLabels[i] = AddWorldLabel(go, $"{i + 1}.", Vector3.up * 1.3f, 12, Color.white);
+                go.SetActive(false);
+                _escapeStations[i] = go;
+            }
+        }
+
+        private void SetEscapeStationsActive(bool active)
+        {
+            if (_escapeStations == null) return;
+            foreach (var marker in _escapeStations)
                 if (marker != null) marker.SetActive(active);
         }
 
@@ -2870,6 +2934,116 @@ namespace CheddarAndCocoa.Game
             if (Phase != State.GameOver) { UpdateBoneMoundVisuals(); CheckClear(); }
         }
 
+        private void TickGreatEscape()
+        {
+            if (_escape.Solved || _escapeStations == null) return;
+
+            int cheddar = IndexOfDog(DogId.Cheddar);
+            int cocoa = IndexOfDog(DogId.Cocoa);
+            if (cheddar < 0 || cocoa < 0) return;
+
+            int active = Mathf.Clamp(_escape.Step, 0, _escapeStationSpots.Length - 1);
+            Vector2 station = _escapeStationSpots[active];
+            ChainActor owner = _escape.NextOwner;
+
+            bool cheddarThere = Vector2.Distance(_dogs[cheddar].transform.position, station) <= EscapeStationRange;
+            bool cocoaThere = Vector2.Distance(_dogs[cocoa].transform.position, station) <= EscapeStationRange;
+
+            // Prefer the owner if present at the active station; a wrong-dog visit registers as a fumble.
+            int insideDog = -1;
+            ChainActor insideActor = ChainActor.Either;
+            if (owner == ChainActor.Cheddar && cheddarThere) { insideDog = cheddar; insideActor = ChainActor.Cheddar; }
+            else if (owner == ChainActor.Cocoa && cocoaThere) { insideDog = cocoa; insideActor = ChainActor.Cocoa; }
+            else if (cheddarThere) { insideDog = cheddar; insideActor = ChainActor.Cheddar; }
+            else if (cocoaThere) { insideDog = cocoa; insideActor = ChainActor.Cocoa; }
+
+            if (insideDog >= 0 && insideDog != _escapeDogInside) _escape.TryStep(insideActor);
+            _escapeDogInside = insideDog;
+
+            _escape.Advance(Time.deltaTime);
+
+            HandleGreatEscapeProgress();
+            if (Phase == State.GameOver) return;
+            UpdateEscapeStationVisuals();
+        }
+
+        private void HandleGreatEscapeProgress()
+        {
+            if (_escape.Step > _escapeStepSeen)
+            {
+                _escapeStepSeen = _escape.Step;
+                AddScore(ScoreEventCatalog.ContraptionStep.Points, ScoreEventCatalog.ContraptionStep.Label);
+                LastFeedback = FeedbackKind.SquirrelScared;
+                LastCue = $"Clunk! The contraption advanced. ({_escape.Step}/{_escape.StepCount})";
+                SetJuice(JuiceFeedbackKind.SuccessPop, "CLUNK!");
+                int doneStep = Mathf.Clamp(_escape.Step - 1, 0, _escapeStationSpots.Length - 1);
+                SpawnWorldPop(_escapeStationSpots[doneStep], "CLUNK!", new Color(0.6f, 0.85f, 0.95f));
+                LogPlaytestEvent("EscapeStep", $"{_escape.Step}/{_escape.StepCount}");
+            }
+
+            bool wasted = false;
+            if (_escape.Fumbles > _escapeFumblesSeen)
+            {
+                _escapeFumblesSeen = _escape.Fumbles;
+                wasted = true;
+                LastCue = "Wrong dog or wrong order - nothing budged.";
+            }
+            if (_escape.Settles > _escapeSettlesSeen)
+            {
+                _escapeSettlesSeen = _escape.Settles;
+                wasted = true;
+                LastCue = "Too slow - the contraption eased back a step. Keep pace!";
+            }
+            if (wasted)
+            {
+                AddScore(ScoreEventCatalog.ContraptionFumble.Points, ScoreEventCatalog.ContraptionFumble.Label);
+                LastFeedback = FeedbackKind.SquirrelStoleFood;
+                SetJuice(JuiceFeedbackKind.WarningMiss, "CLANK!");
+                int totalWasted = _escape.Fumbles + _escape.Settles;
+                LogPlaytestEvent("EscapeWaste", $"{totalWasted}/{EscapeMaxWasted}");
+                if (totalWasted >= EscapeMaxWasted) EndRound(false);
+            }
+        }
+
+        private void UpdateEscapeStationVisuals()
+        {
+            if (_escapeStations == null) return;
+            int active = Mathf.Clamp(_escape.Step, 0, _escapeStations.Length - 1);
+            for (int i = 0; i < _escapeStations.Length; i++)
+            {
+                if (_escapeStations[i] == null) continue;
+                bool isActive = i == active && !_escape.Solved;
+                bool done = i < _escape.Step;
+                ChainActor owner = _escapeOwners[i];
+                Color ownerTint = owner == ChainActor.Cheddar ? new Color(0.95f, 0.72f, 0.3f) : new Color(0.55f, 0.78f, 1f);
+                Color shown = done ? new Color(0.3f, 0.55f, 0.32f) : (isActive ? ownerTint : new Color(0.3f, 0.3f, 0.34f));
+                if (_escapeStations[i].TryGetComponent<SpriteRenderer>(out var sr)) sr.color = shown;
+                if (_escapeStationLabels != null && _escapeStationLabels[i] != null)
+                {
+                    string who = owner == ChainActor.Cheddar ? "CHEDDAR" : "COCOA";
+                    _escapeStationLabels[i].text = done ? "DONE" : $"{i + 1}. {who}: {_escapeStepActions[i]}";
+                }
+            }
+        }
+
+        /// <summary>Test hook: a dog attempts the next contraption step.</summary>
+        public void ForceEscapeStep(ChainActor actor)
+        {
+            if (!MissionActive() || _mission == null || _mission.Variant != MissionVariant.GreatEscape) return;
+            _escape.TryStep(actor);
+            HandleGreatEscapeProgress();
+            if (Phase != State.GameOver) { UpdateEscapeStationVisuals(); CheckClear(); }
+        }
+
+        /// <summary>Test hook: let the contraption sit idle for <paramref name="seconds"/> (dawdle regression).</summary>
+        public void ForceEscapeIdle(float seconds)
+        {
+            if (!MissionActive() || _mission == null || _mission.Variant != MissionVariant.GreatEscape) return;
+            _escape.Advance(seconds);
+            HandleGreatEscapeProgress();
+            if (Phase != State.GameOver) UpdateEscapeStationVisuals();
+        }
+
         private float NearestEagleCoverDistance(Vector2 position)
         {
             float best = float.PositiveInfinity;
@@ -3239,6 +3413,13 @@ namespace CheddarAndCocoa.Game
                 progress = _boneRelay.Finds;
                 goal = BoneFindsNeeded;
                 mistakes = _boneRelay.BlindActs + _boneRelay.WrongDigs;
+            }
+            else if (_mission != null && _mission.Variant == MissionVariant.GreatEscape)
+            {
+                missionId = "great_escape";
+                progress = _escape.Step;
+                goal = _escape.StepCount;
+                mistakes = _escape.Fumbles + _escape.Settles;
             }
             else
             {
@@ -3686,6 +3867,11 @@ namespace CheddarAndCocoa.Game
                 if (_boneRelay.Solved) EndRound(true);
                 return;
             }
+            if (_mission.Variant == MissionVariant.GreatEscape)
+            {
+                if (_escape.Solved) EndRound(true);
+                return;
+            }
 
             bool hasItems = BreakfastRecovered >= _mission.ItemGoal;
             bool hasPredator = !_mission.RequiresPredator || PredatorResolved;
@@ -3788,6 +3974,8 @@ namespace CheddarAndCocoa.Game
                 funny = MissionOutcomeSummaryBuilder.BuildWalkCampaignSummary(_walkPuzzle);
             else if (_mission != null && _mission.Variant == MissionVariant.BoneRelay)
                 funny = MissionOutcomeSummaryBuilder.BuildBoneRelaySummary(_boneRelay);
+            else if (_mission != null && _mission.Variant == MissionVariant.GreatEscape)
+                funny = MissionOutcomeSummaryBuilder.BuildGreatEscapeSummary(_escape);
             else
                 funny = Outcome.ToString();
             return $"{funny}: {Score} - {EndRank}";
@@ -3894,6 +4082,13 @@ namespace CheddarAndCocoa.Game
                 if (!_boneRelay.Known) return $"Cocoa: sniff the scent post to call the real mound - Cheddar, wait for it! (bones {_boneRelay.Finds}/{BoneFindsNeeded}, wasted {wasted}/{BoneMaxWasted})";
                 return $"Cheddar: dig the glowing mound Cocoa called! (bones {_boneRelay.Finds}/{BoneFindsNeeded}, wasted {wasted}/{BoneMaxWasted})";
             }
+            if (_mission.Variant == MissionVariant.GreatEscape)
+            {
+                int wasted = _escape.Fumbles + _escape.Settles;
+                int active = Mathf.Clamp(_escape.Step, 0, _escapeStepActions.Length - 1);
+                string who = _escape.NextOwner == ChainActor.Cheddar ? "Cheddar" : "Cocoa";
+                return $"{who}: {_escapeStepActions[active].ToLowerInvariant()} - it's your turn in the chain (step {_escape.Step}/{_escape.StepCount}, botched {wasted}/{EscapeMaxWasted})";
+            }
             if (_mission.Variant == MissionVariant.MarkTheYard)
             {
                 return $"Claim and hold every zone at once: {_territoryState.Claimed}/{_territoryState.ZoneCount} marked (squirrel steals back {_territoryState.Reclaims})";
@@ -3932,6 +4127,7 @@ namespace CheddarAndCocoa.Game
             if (_mission.Variant == MissionVariant.SquirrelSwitcheroo && _switcherooPuzzle.Backfires >= SwitcherooMaxBackfires) return "Cheddar over-baited and the squirrel wised up too many times - it never left the stash.";
             if (_mission.Variant == MissionVariant.WalkCampaign && _walkPuzzle.Misreads >= WalkMaxMisreads) return "Too many mixed signals - the human gave up and brought the wrong thing one time too many.";
             if (_mission.Variant == MissionVariant.BoneRelay && _boneRelay.BlindActs + _boneRelay.WrongDigs >= BoneMaxWasted) return "The dogs dug up half the yard guessing instead of waiting for Cocoa's call.";
+            if (_mission.Variant == MissionVariant.GreatEscape && _escape.Fumbles + _escape.Settles >= EscapeMaxWasted) return "They botched the contraption too many times - the gate never opened and the breakout fizzled.";
             if (_mission.Variant == MissionVariant.ThunderstormComfort && _panic != null && _panic.Maxed != null) return $"{_panic.Maxed} panicked at the thunder and bolted before the storm passed.";
             if (_mission.UsesSquirrel && StolenFood >= maxStolenFood) return _mission.StolenFailReason;
             if (TimeRemaining <= 0f) return _mission.TimeFailReason;
@@ -5192,6 +5388,63 @@ namespace CheddarAndCocoa.Game
                         ItemSecondaryColor = new Color(0.3f, 0.22f, 0.12f),
                         ItemPopColor = new Color(0.5f, 0.9f, 0.55f)
                     };
+                case MissionVariant.GreatEscape:
+                    return new MissionDefinition
+                    {
+                        Variant = MissionVariant.GreatEscape,
+                        Name = "The Great Escape",
+                        IntroPrompt = "Zoomies time - but the gate's latched. Run the contraption chain in order, taking turns: Cocoa paws the latch, Cheddar shoulders the gate, Cocoa drags the cooler to prop it, Cheddar squeezes through. The active station glows for whoever's turn it is. Wrong dog or wrong order does nothing; dawdle and the contraption eases back a step.",
+                        ReadyScoreLabel = "READY TO BUST OUT",
+                        ItemRootName = "Step",
+                        ItemObjectName = "Step",
+                        ItemWorldLabel = "Clunk!",
+                        ItemArrowLabel = "STEP",
+                        ItemCollectCueNoun = "a contraption step",
+                        CollectObjectiveFormat = "Work the contraption {0}/{1}",
+                        CollectedScoreLabel = "CONTRAPTION STEP",
+                        ItemScore = balance.ItemScore,
+                        SpawnedItemCount = balance.SpawnedItemCount,
+                        ItemGoal = balance.ItemGoal,
+                        RoundSeconds = balance.RoundSeconds,
+                        PawfectScore = balance.PawfectScore,
+                        HeroScore = balance.HeroScore,
+                        SurvivorScore = balance.SurvivorScore,
+                        UsesSquirrel = false,
+                        RequiresPredator = false,
+                        RequiresTug = false,
+                        MaxStolenFood = balance.MaxStolenFood,
+                        SquirrelPenalty = balance.SquirrelPenalty,
+                        SquirrelScareScore = balance.SquirrelScareScore,
+                        SquirrelObjectiveText = "Take turns down the chain",
+                        SquirrelStealingCue = "Whose turn is it? Read the glowing station.",
+                        SquirrelStoleCue = "Botched it - reset to the glowing step.",
+                        SquirrelStealScoreLabel = "CONTRAPTION FUMBLE",
+                        SquirrelScareScoreLabel = "CONTRAPTION STEP",
+                        SquirrelStealingActorLabel = "CONTRAPTION",
+                        SquirrelDroppedActorLabel = "CLUNK",
+                        SquirrelStoleActorLabel = "JAMMED",
+                        SquirrelMissPopLabel = "CLANK!",
+                        SquirrelStealJuiceLabel = "CLANK!",
+                        SquirrelScareJuiceLabel = "CLUNK!",
+                        TugObjectiveText = "Run the chain together",
+                        WaitingObjectiveText = "Do your step when the station glows for you",
+                        ClearObjectiveText = "Busted out - replay The Great Escape",
+                        ClearBannerPrefix = "JAILBREAK!",
+                        ClearScoreLabel = "GREAT ESCAPE CLEAR",
+                        ReplayPrompt = "Press R / Enter / Start to replay The Great Escape",
+                        FailObjectiveText = "Mission failed - replay The Great Escape",
+                        GenericFailReason = "The chain needs cleaner hand-offs before the gate gives.",
+                        TimeFailReason = "The contraption never made it down the chain in time.",
+                        StolenFailReason = "Too many botched hand-offs jammed the contraption.",
+                        PredatorFailReason = "No predator here, just a stubborn latch.",
+                        PawfectClearReason = "Cheddar and Cocoa ran the whole chain clean, hand-off after hand-off, straight out the gate.",
+                        HeroClearReason = "They busted out with only a clank or two along the way.",
+                        BasicClearReason = "They got out, even after the contraption jammed a few times.",
+                        ItemColor = new Color(0.6f, 0.62f, 0.68f),
+                        ItemAccentColor = new Color(0.8f, 0.7f, 0.4f),
+                        ItemSecondaryColor = new Color(0.32f, 0.34f, 0.4f),
+                        ItemPopColor = new Color(0.6f, 0.85f, 0.95f)
+                    };
                 case MissionVariant.SockPanic:
                     return new MissionDefinition
                     {
@@ -5646,6 +5899,17 @@ namespace CheddarAndCocoa.Game
                         hideDistance = BoneDigRange;
                     }
                     break;
+                case MissionVariant.GreatEscape:
+                    {
+                        int active = Mathf.Clamp(_escape.Step, 0, _escapeStationSpots.Length - 1);
+                        target = _escapeStations != null && _escapeStations[active] != null ? _escapeStations[active].transform : null;
+                        ChainActor owner = _escape.NextOwner;
+                        bool isOwner = (owner == ChainActor.Cheddar && IndexOfDog(DogId.Cheddar) == dogIndex)
+                            || (owner == ChainActor.Cocoa && IndexOfDog(DogId.Cocoa) == dogIndex);
+                        copy = isOwner ? "YOUR STEP" : "LET PARTNER GO";
+                        hideDistance = EscapeStationRange;
+                    }
+                    break;
                 case MissionVariant.CarRide:
                 default:
                     return false;
@@ -5856,6 +6120,7 @@ namespace CheddarAndCocoa.Game
             BuildWeenieRoundupObjects();
             BuildScentSearchMarkers();
             BuildBoneRelayMarkers();
+            BuildEscapeStations();
             BuildTerritoryMarkers();
             BuildLeashCheckpointMarkers();
             if (InteractionRangeIndicators != null)

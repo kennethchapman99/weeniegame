@@ -142,6 +142,17 @@ namespace CheddarAndCocoa.Game
             return "On The Scent";
         }
 
+        public static string BuildGreatEscapeSummary(CoopSequenceChainPuzzle state)
+        {
+            if (state.Solved)
+                return "Jailbreak!";
+
+            if (state.Fumbles + state.Settles > 0)
+                return "Botched Contraption";
+
+            return "Rigging It Up";
+        }
+
         public static string BuildPatrolSummary(PatrolDefenseMissionState state)
         {
             if (state.FinalPressureComplete)

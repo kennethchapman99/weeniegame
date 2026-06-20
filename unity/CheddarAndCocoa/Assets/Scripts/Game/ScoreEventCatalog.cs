@@ -50,5 +50,8 @@ namespace CheddarAndCocoa.Game
         public static readonly ProductionScoreEvent HumanGettingIt = new("THEY'RE GETTING IT", 120, true);
         public static readonly ProductionScoreEvent HumanMisread = new("HUMAN CONFUSED", -55);
         public static readonly ProductionScoreEvent WalkConned = new("WALK CONNED", 500, true);
+
+        public static readonly ProductionScoreEvent ContraptionStep = new("CONTRAPTION STEP", 90, true);
+        public static readonly ProductionScoreEvent ContraptionFumble = new("CONTRAPTION FUMBLE", -40);
     }
 }
