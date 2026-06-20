@@ -124,8 +124,15 @@ This is the existing mission loop and remains the default when `ArenaScene` star
 2. Keep the **Squirrel** from stealing too many items (`3` stolen food ends the run).
 3. Resolve the **Predator Warning / Predator Attack** with a united-front bark or a rescue.
 4. Complete the **Rope/Tug** shared-object objective.
+5. Complete the authored **Squirrel Trap** twice. Pass one assigns Cheddar to bark-pressure the squirrel while Cocoa holds the marked escape gap; the redirect drops the targeted weenie, and only Cocoa can recover it. Pass two reverses the roles: Cocoa pressures while Cheddar holds the gap and recovers the drop.
+
+The HUD objective and dog-local arrows name the current pressure dog, route the partner to the visible **ESCAPE GAP - HOLD HERE** marker, and switch to **RECOVER DROP / PARTNER ONLY** after a redirect. Barking with the wrong dog or before the gap is held makes the squirrel take a comic fake route and loop back. If the pressure dog touches its own dropped weenie, the weenie bounces away with a **HOT POTATO! PARTNER ONLY!** cue; the drop remains live, so no trap mistake hard-fails the mission.
 
 Unique scoring/events include **+50 WEENIE SAVED**, **+25 SQUIRREL SCARED**, **+300 PREDATOR YEETED**, **+250 PARTNER RESCUE**, **+200 TUG COMPLETE**, and **+500 LEVEL CLEAR** plus time bonus.
+
+Deterministic hooks are `ForceBackyardTrapRedirect(pressureDog, gapHeld)` and `ForceBackyardTrapRecovery(dog)`. `BackyardSquirrelTrapPlayModeTests` covers wrong-role/open-gap recovery, partner-only pickup, role reversal, completion, event logging, and replay reset. Backyard clear now additionally requires both trap recoveries; the existing collect, squirrel-steal limit, predator, and tug requirements are unchanged.
+
+Manual acceptance check: start Backyard Rescue with **1**. Confirm the blue escape-gap marker and the initial Cheddar/Cocoa role copy are readable. Let the squirrel target a weenie, park Cocoa in the gap, and bark near the squirrel as Cheddar. Confirm the squirrel redirects and drops the weenie. Touch it first as Cheddar and confirm the comic bounce is recoverable; collect it as Cocoa and confirm the guidance swaps. Repeat with Cocoa pressuring and Cheddar holding/recovering. Then finish the original food, predator, and tug objectives and confirm the mission clears. Also verify barking before the holder reaches the gap produces a fake route without losing the run.
 
 ### Snack Heist
 

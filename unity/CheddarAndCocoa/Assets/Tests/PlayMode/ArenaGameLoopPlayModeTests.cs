@@ -389,21 +389,24 @@ namespace CheddarAndCocoa.Tests
             Assert.That(game.SquirrelObject.GetComponent<MissionActorFeedback>().Label, Does.Contain("GOT A WEENIE"));
             Assert.IsTrue(FindWorldPopContaining("MISS"));
 
-            // Bark near the squirrel should scare it and reward a small score bump.
+            // Backyard bark pressure only redirects when Cocoa is holding the escape gap.
             target = Object.FindObjectsByType<Treat>(FindObjectsSortMode.None)[0];
             game.ForceSquirrelStealAttempt();
             game.SquirrelObject.transform.position = target.transform.position;
             cheddar.transform.position = game.SquirrelObject.transform.position;
+            cocoa.transform.position = game.BackyardTrapGapPosition;
             scoreBefore = game.Score;
             cheddar.Bark();
             Assert.Greater(game.Score, scoreBefore, "Barking near squirrel should affect game state.");
             Assert.AreEqual(25, game.LastScoreDelta);
-            Assert.AreEqual("+25 SQUIRREL SCARED", game.LastScoreEventLabel);
+            Assert.AreEqual("+25 SQUIRREL REDIRECTED", game.LastScoreEventLabel);
             Assert.That(game.LastCue, Does.Contain("squirrel").IgnoreCase);
             Assert.AreEqual(GameManager.FeedbackKind.SquirrelScared, game.LastFeedback);
             Assert.AreEqual(GameManager.JuiceFeedbackKind.SuccessPop, game.LastJuiceFeedback);
-            Assert.That(game.LastJuiceLabel, Does.Contain("SQUIRREL DROP"));
-            Assert.That(game.SquirrelObject.GetComponent<MissionActorFeedback>().Label, Does.Contain("DROPPED"));
+            Assert.That(game.LastJuiceLabel, Does.Contain("SQUIRREL REDIRECT"));
+            Assert.That(game.SquirrelObject.GetComponent<MissionActorFeedback>().Label, Does.Contain("PARTNER RECOVER"));
+            Assert.IsTrue(game.BackyardTrapState.WeenieDropped);
+            game.ForceBackyardTrapRecovery(DogId.Cocoa);
 
             // Predator warning/attack can be resolved by united bark.
             cheddar.transform.position = new Vector3(-4f, 4f, 0f);
@@ -507,9 +510,14 @@ namespace CheddarAndCocoa.Tests
             Assert.That(tugFeedback.AuthoredPoseSpriteName, Does.Contain("_tug_e_"));
             Assert.AreEqual("Tug", tugFeedback.MotionClipLabel);
 
-            // Level clear requires food, tug, and predator resolution.
+            // Level clear requires food, the two-pass squirrel trap, tug, and predator resolution.
             game.ForcePredatorWarning();
             cheddar.Bark(); cocoa.Bark();
+            game.ForceBackyardTrapRedirect(DogId.Cheddar, true);
+            game.ForceBackyardTrapRecovery(DogId.Cocoa);
+            game.ForceBackyardTrapRedirect(DogId.Cocoa, true);
+            game.ForceBackyardTrapRecovery(DogId.Cheddar);
+            Assert.IsTrue(game.BackyardTrapState.Complete);
             guard = 0f;
             while (game.BreakfastRecovered < game.BreakfastGoal && guard < 5f)
             {
