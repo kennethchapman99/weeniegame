@@ -18,7 +18,7 @@ namespace CheddarAndCocoa.Game
         public enum FlowState { MissionSelect, Playing, EndScreen, SessionSummary }
         public enum RoundModifier { SquirrelTrouble, ZoomiesSurge, PancakePanic }
         public enum MissionOutcome { InProgress, Clear, Failed }
-        public enum MissionVariant { BackyardRescue, SnackHeist, SockPanic, SquirrelConspiracy, EagleShadowPanic, CoyotesFence, WeenieRoundup, ScentSearch, ThunderstormComfort, MarkTheYard, LeashWalk, CarRide, GateCrash, TableStealth, SquirrelSwitcheroo, WalkCampaign }
+        public enum MissionVariant { BackyardRescue, SnackHeist, SockPanic, SquirrelConspiracy, EagleShadowPanic, CoyotesFence, WeenieRoundup, ScentSearch, ThunderstormComfort, MarkTheYard, LeashWalk, CarRide, GateCrash, TableStealth, SquirrelSwitcheroo, WalkCampaign, BoneRelay }
         public enum FeedbackKind
         {
             Intro,
@@ -120,7 +120,8 @@ namespace CheddarAndCocoa.Game
             MissionVariant.GateCrash,
             MissionVariant.TableStealth,
             MissionVariant.SquirrelSwitcheroo,
-            MissionVariant.WalkCampaign
+            MissionVariant.WalkCampaign,
+            MissionVariant.BoneRelay
         };
 
         [Header("Mission selection")]
@@ -177,6 +178,10 @@ namespace CheddarAndCocoa.Game
         public CoopSocialManipulationPuzzle WalkCampaignPuzzle => _walkPuzzle;
         public Vector2 WalkDoorZone => _walkDoorZone;
         public Vector2 WalkLeashZone => _walkLeashZone;
+        public CoopScentRelayPuzzle BoneRelayPuzzle => _boneRelay;
+        public int BoneMoundCount => _boneMoundSpots.Length;
+        public Vector2 BoneScentZone => _boneScentZone;
+        public Vector2 BoneMoundSpot(int index) => index >= 0 && index < _boneMoundSpots.Length ? _boneMoundSpots[index] : Vector2.zero;
         public MissionRuntimeSnapshot RuntimeSnapshot => BuildRuntimeSnapshot();
         public int CurrentMissionSeed => _missionSeed;
         public DemoReadinessResult DemoReadiness => DemoReadinessGate.Evaluate(DemoReadinessGate.RequiredForBackyardDemo);
@@ -439,6 +444,26 @@ namespace CheddarAndCocoa.Game
         private const int WalkMaxMisreads = 3;
         // The required message: Cocoa stares at the door, Cheddar presents the leash. Neither alone reads.
         private const SocialStimulus WalkRequiredMessage = SocialStimulus.DoorStare | SocialStimulus.PresentLeash;
+        // The Bone Detail (Scent-Relay split-information co-op puzzle): several look-alike dirt mounds, only
+        // one hiding the real bone. Cocoa (the reader) noses the scent post to call which mound is real;
+        // Cheddar (the digger) is the only one who can dig, but can't tell them apart on his own - so he
+        // must wait for her call. Digging blind, or digging a decoy mound, just wastes a dig (recoverable);
+        // waste too many and the team gives up. Each find re-buries the bone elsewhere, forcing a re-relay.
+        private readonly CoopScentRelayPuzzle _boneRelay = new CoopScentRelayPuzzle();
+        private readonly Vector2[] _boneMoundSpots = { new(-12f, -6f), new(12f, -6f), new(-12f, 6f), new(12f, 6f) };
+        private Vector2 _boneScentZone = new(0f, 9f);
+        private GameObject[] _boneMounds;
+        private TextMesh[] _boneMoundLabels;
+        private int _boneDiggerInside = -1;
+        private int _boneFindsSeen;
+        private int _boneBlindSeen;
+        private int _boneWrongSeen;
+        private static readonly Color BoneMoundIdleColor = new(0.42f, 0.3f, 0.16f);
+        private static readonly Color BoneMoundCallColor = new(0.5f, 0.9f, 0.55f);
+        private const float BoneScentRange = 3.5f;
+        private const float BoneDigRange = 3f;
+        private const int BoneFindsNeeded = 3;
+        private const int BoneMaxWasted = 5; // blind digs + wrong-mound digs before the team gives up
         private readonly TerritoryMissionState _territoryState = new TerritoryMissionState();
         private readonly Vector2[] _territoryZones = { new(-18f, 9f), new(18f, 9f), new(-18f, -9f), new(18f, -9f), new(0f, 0f) };
         private GameObject[] _zoneMarkers;
@@ -1304,6 +1329,27 @@ namespace CheddarAndCocoa.Game
                     SetActorState(SquirrelObject, "LEASH - CHEDDAR PRESENT IT!", new Color(0.6f, 0.8f, 1f), 0.1f);
                 }
             }
+            if (_mission.Variant == MissionVariant.BoneRelay)
+            {
+                _boneRelay.Configure(_boneMoundSpots.Length, BoneFindsNeeded, _missionSeed);
+                _boneDiggerInside = -1;
+                _boneFindsSeen = 0;
+                _boneBlindSeen = 0;
+                _boneWrongSeen = 0;
+                SetBoneRelayActive(true);
+                // Reuse the squirrel actor as the scent post Cocoa noses to call the real mound.
+                if (SquirrelObject != null)
+                {
+                    SquirrelObject.SetActive(true);
+                    PlaceObject(SquirrelObject, _boneScentZone);
+                    SetActorState(SquirrelObject, "SCENT POST - COCOA SNIFF HERE", new Color(0.7f, 0.6f, 0.95f), 0.12f);
+                }
+                UpdateBoneMoundVisuals();
+            }
+            else
+            {
+                SetBoneRelayActive(false);
+            }
             StageDogsForMissionEntry();
             UpdateObjectiveArrows();
             _lastLoggedObjective = string.Empty;
@@ -1343,6 +1389,7 @@ namespace CheddarAndCocoa.Game
             else if (_mission.Variant == MissionVariant.TableStealth) TickTableStealth();
             else if (_mission.Variant == MissionVariant.SquirrelSwitcheroo) TickSwitcheroo();
             else if (_mission.Variant == MissionVariant.WalkCampaign) TickWalkCampaign();
+            else if (_mission.Variant == MissionVariant.BoneRelay) TickBoneRelay();
             else TickSquirrel();
             TickPredator();
             TickTugProximity();
@@ -1913,6 +1960,32 @@ namespace CheddarAndCocoa.Game
         {
             if (_digMarkers == null) return;
             foreach (var marker in _digMarkers)
+                if (marker != null) marker.SetActive(active);
+        }
+
+        private void BuildBoneRelayMarkers()
+        {
+            _boneMounds = new GameObject[_boneMoundSpots.Length];
+            _boneMoundLabels = new TextMesh[_boneMoundSpots.Length];
+            for (int i = 0; i < _boneMoundSpots.Length; i++)
+            {
+                var go = new GameObject($"BoneMound_{i}");
+                go.transform.position = _boneMoundSpots[i];
+                go.transform.localScale = new Vector3(1.8f, 1.1f, 1f);
+                var sr = go.AddComponent<SpriteRenderer>();
+                sr.sprite = _sprite;
+                sr.color = BoneMoundIdleColor;
+                sr.sortingOrder = 3;
+                _boneMoundLabels[i] = AddWorldLabel(go, "DIG?", Vector3.up * 1.2f, 13, Color.white);
+                go.SetActive(false);
+                _boneMounds[i] = go;
+            }
+        }
+
+        private void SetBoneRelayActive(bool active)
+        {
+            if (_boneMounds == null) return;
+            foreach (var marker in _boneMounds)
                 if (marker != null) marker.SetActive(active);
         }
 
@@ -2693,6 +2766,110 @@ namespace CheddarAndCocoa.Game
             if (Phase != State.GameOver) CheckClear();
         }
 
+        private void TickBoneRelay()
+        {
+            if (_boneRelay.Solved || _boneMounds == null) return;
+
+            int reader = IndexOfDog(DogId.Cocoa);
+            int digger = IndexOfDog(DogId.Cheddar);
+            if (reader < 0 || digger < 0) return;
+
+            // Cocoa reads the scent post: while she's nosing it she can call which mound holds the bone.
+            if (Vector2.Distance(_dogs[reader].transform.position, _boneScentZone) <= BoneScentRange)
+                _boneRelay.Reveal();
+
+            // Cheddar digs a mound on entry (one dig per approach, so he must leave and re-enter to dig again).
+            int inside = -1;
+            for (int i = 0; i < _boneMounds.Length; i++)
+            {
+                if (_boneMounds[i] == null || !_boneMounds[i].activeSelf) continue;
+                if (Vector2.Distance(_dogs[digger].transform.position, _boneMounds[i].transform.position) <= BoneDigRange)
+                { inside = i; break; }
+            }
+            if (inside >= 0 && inside != _boneDiggerInside) _boneRelay.ActOn(inside);
+            _boneDiggerInside = inside;
+
+            HandleBoneRelayProgress();
+            if (Phase == State.GameOver) return;
+            UpdateBoneMoundVisuals();
+        }
+
+        private void HandleBoneRelayProgress()
+        {
+            int digger = IndexOfDog(DogId.Cheddar);
+            Vector2 digPos = digger >= 0 ? (Vector2)_dogs[digger].transform.position : _boneScentZone;
+
+            if (_boneRelay.Finds > _boneFindsSeen)
+            {
+                _boneFindsSeen = _boneRelay.Finds;
+                AddScore(ScoreEventCatalog.BoneFound.Points, ScoreEventCatalog.BoneFound.Label);
+                LastFeedback = FeedbackKind.SquirrelScared;
+                LastCue = $"Cocoa called it, Cheddar dug it up! ({_boneRelay.Finds}/{BoneFindsNeeded})";
+                SetJuice(JuiceFeedbackKind.SuccessPop, "BONE!");
+                SpawnWorldPop(digPos, "BONE!", new Color(0.5f, 0.9f, 0.55f));
+                LogPlaytestEvent("BoneFound", $"{_boneRelay.Finds}/{BoneFindsNeeded}");
+            }
+
+            bool wasted = false;
+            if (_boneRelay.BlindActs > _boneBlindSeen)
+            {
+                _boneBlindSeen = _boneRelay.BlindActs;
+                wasted = true;
+                LastCue = "Cheddar dug blind - wait for Cocoa's call!";
+            }
+            if (_boneRelay.WrongDigs > _boneWrongSeen)
+            {
+                _boneWrongSeen = _boneRelay.WrongDigs;
+                wasted = true;
+                LastCue = "Wrong mound - that one's a decoy.";
+            }
+            if (wasted)
+            {
+                AddScore(ScoreEventCatalog.ColdDig.Points, ScoreEventCatalog.ColdDig.Label);
+                LastFeedback = FeedbackKind.SquirrelStoleFood;
+                SetJuice(JuiceFeedbackKind.WarningMiss, "NOPE!");
+                SpawnWorldPop(digPos, "NOPE!", new Color(0.85f, 0.5f, 0.3f));
+                int totalWasted = _boneRelay.BlindActs + _boneRelay.WrongDigs;
+                LogPlaytestEvent("BoneWaste", $"{totalWasted}/{BoneMaxWasted}");
+                if (totalWasted >= BoneMaxWasted) EndRound(false);
+            }
+        }
+
+        private void UpdateBoneMoundVisuals()
+        {
+            if (_boneMounds == null) return;
+            int call = _boneRelay.RevealedTarget;
+            for (int i = 0; i < _boneMounds.Length; i++)
+            {
+                if (_boneMounds[i] == null) continue;
+                bool isCall = i == call;
+                if (_boneMounds[i].TryGetComponent<SpriteRenderer>(out var sr))
+                    sr.color = isCall ? BoneMoundCallColor : BoneMoundIdleColor;
+                if (_boneMoundLabels != null && _boneMoundLabels[i] != null)
+                    _boneMoundLabels[i].text = isCall ? "DIG HERE!" : "DIG?";
+            }
+            if (SquirrelObject != null)
+                SetActorState(SquirrelObject, _boneRelay.Known ? "SCENT POST - SHE'S CALLING IT!" : "SCENT POST - COCOA SNIFF HERE",
+                    _boneRelay.Known ? BoneMoundCallColor : new Color(0.7f, 0.6f, 0.95f), 0.12f);
+        }
+
+        /// <summary>Test hook: Cocoa noses the scent post and calls the real mound.</summary>
+        public void ForceBoneReveal()
+        {
+            if (!MissionActive() || _mission == null || _mission.Variant != MissionVariant.BoneRelay) return;
+            _boneRelay.Reveal();
+            UpdateBoneMoundVisuals();
+        }
+
+        /// <summary>Test hook: Cheddar digs mound <paramref name="target"/>; finds only the called mound.</summary>
+        public void ForceBoneDig(int target)
+        {
+            if (!MissionActive() || _mission == null || _mission.Variant != MissionVariant.BoneRelay) return;
+            _boneRelay.ActOn(target);
+            HandleBoneRelayProgress();
+            if (Phase != State.GameOver) { UpdateBoneMoundVisuals(); CheckClear(); }
+        }
+
         private float NearestEagleCoverDistance(Vector2 position)
         {
             float best = float.PositiveInfinity;
@@ -3055,6 +3232,13 @@ namespace CheddarAndCocoa.Game
                 progress = _walkPuzzle.Solved ? 1 : 0;
                 goal = 1;
                 mistakes = _walkPuzzle.Misreads;
+            }
+            else if (_mission != null && _mission.Variant == MissionVariant.BoneRelay)
+            {
+                missionId = "bone_relay";
+                progress = _boneRelay.Finds;
+                goal = BoneFindsNeeded;
+                mistakes = _boneRelay.BlindActs + _boneRelay.WrongDigs;
             }
             else
             {
@@ -3497,6 +3681,11 @@ namespace CheddarAndCocoa.Game
                 if (_walkPuzzle.Solved) EndRound(true);
                 return;
             }
+            if (_mission.Variant == MissionVariant.BoneRelay)
+            {
+                if (_boneRelay.Solved) EndRound(true);
+                return;
+            }
 
             bool hasItems = BreakfastRecovered >= _mission.ItemGoal;
             bool hasPredator = !_mission.RequiresPredator || PredatorResolved;
@@ -3597,6 +3786,8 @@ namespace CheddarAndCocoa.Game
                 funny = MissionOutcomeSummaryBuilder.BuildSwitcherooSummary(_switcherooPuzzle);
             else if (_mission != null && _mission.Variant == MissionVariant.WalkCampaign)
                 funny = MissionOutcomeSummaryBuilder.BuildWalkCampaignSummary(_walkPuzzle);
+            else if (_mission != null && _mission.Variant == MissionVariant.BoneRelay)
+                funny = MissionOutcomeSummaryBuilder.BuildBoneRelaySummary(_boneRelay);
             else
                 funny = Outcome.ToString();
             return $"{funny}: {Score} - {EndRank}";
@@ -3697,6 +3888,12 @@ namespace CheddarAndCocoa.Game
                 if (_walkPuzzle.ExactMatch) return $"Hold it together! Cocoa stares the door, Cheddar holds the leash - the human's {Mathf.RoundToInt(_walkPuzzle.Comprehension / WalkComprehendNeeded * 100)}% sold (confused {_walkPuzzle.Misreads}/{WalkMaxMisreads})";
                 return $"Send ONE message: Cocoa stare at the door AND Cheddar present the leash at once (confused {_walkPuzzle.Misreads}/{WalkMaxMisreads})";
             }
+            if (_mission.Variant == MissionVariant.BoneRelay)
+            {
+                int wasted = _boneRelay.BlindActs + _boneRelay.WrongDigs;
+                if (!_boneRelay.Known) return $"Cocoa: sniff the scent post to call the real mound - Cheddar, wait for it! (bones {_boneRelay.Finds}/{BoneFindsNeeded}, wasted {wasted}/{BoneMaxWasted})";
+                return $"Cheddar: dig the glowing mound Cocoa called! (bones {_boneRelay.Finds}/{BoneFindsNeeded}, wasted {wasted}/{BoneMaxWasted})";
+            }
             if (_mission.Variant == MissionVariant.MarkTheYard)
             {
                 return $"Claim and hold every zone at once: {_territoryState.Claimed}/{_territoryState.ZoneCount} marked (squirrel steals back {_territoryState.Reclaims})";
@@ -3734,6 +3931,7 @@ namespace CheddarAndCocoa.Game
             if (_mission.Variant == MissionVariant.TableStealth && _tablePuzzle.Exposures >= TableMaxExposures) return "Cheddar kept sneaking while the human was watching - they got caught at the table too many times.";
             if (_mission.Variant == MissionVariant.SquirrelSwitcheroo && _switcherooPuzzle.Backfires >= SwitcherooMaxBackfires) return "Cheddar over-baited and the squirrel wised up too many times - it never left the stash.";
             if (_mission.Variant == MissionVariant.WalkCampaign && _walkPuzzle.Misreads >= WalkMaxMisreads) return "Too many mixed signals - the human gave up and brought the wrong thing one time too many.";
+            if (_mission.Variant == MissionVariant.BoneRelay && _boneRelay.BlindActs + _boneRelay.WrongDigs >= BoneMaxWasted) return "The dogs dug up half the yard guessing instead of waiting for Cocoa's call.";
             if (_mission.Variant == MissionVariant.ThunderstormComfort && _panic != null && _panic.Maxed != null) return $"{_panic.Maxed} panicked at the thunder and bolted before the storm passed.";
             if (_mission.UsesSquirrel && StolenFood >= maxStolenFood) return _mission.StolenFailReason;
             if (TimeRemaining <= 0f) return _mission.TimeFailReason;
@@ -4937,6 +5135,63 @@ namespace CheddarAndCocoa.Game
                         ItemSecondaryColor = new Color(0.3f, 0.35f, 0.5f),
                         ItemPopColor = new Color(0.5f, 0.9f, 0.55f)
                     };
+                case MissionVariant.BoneRelay:
+                    return new MissionDefinition
+                    {
+                        Variant = MissionVariant.BoneRelay,
+                        Name = "The Bone Detail",
+                        IntroPrompt = "Four look-alike dirt mounds, only one hiding the real bone. Cocoa's the nose: she sniffs the scent post to call which mound is real. Cheddar's the only one who can dig - but he can't tell them apart, so he has to wait for her call. Dig blind or dig a decoy and it's a wasted dig; waste too many and the team gives up. Each bone re-buries the next somewhere new.",
+                        ReadyScoreLabel = "READY TO WORK THE SCENT",
+                        ItemRootName = "Bone",
+                        ItemObjectName = "Bone",
+                        ItemWorldLabel = "Bone!",
+                        ItemArrowLabel = "MOUND",
+                        ItemCollectCueNoun = "a buried bone",
+                        CollectObjectiveFormat = "Dig up the bones {0}/{1}",
+                        CollectedScoreLabel = "BONE DUG UP",
+                        ItemScore = balance.ItemScore,
+                        SpawnedItemCount = balance.SpawnedItemCount,
+                        ItemGoal = balance.ItemGoal,
+                        RoundSeconds = balance.RoundSeconds,
+                        PawfectScore = balance.PawfectScore,
+                        HeroScore = balance.HeroScore,
+                        SurvivorScore = balance.SurvivorScore,
+                        UsesSquirrel = false,
+                        RequiresPredator = false,
+                        RequiresTug = false,
+                        MaxStolenFood = balance.MaxStolenFood,
+                        SquirrelPenalty = balance.SquirrelPenalty,
+                        SquirrelScareScore = balance.SquirrelScareScore,
+                        SquirrelObjectiveText = "Read the scent / dig the call",
+                        SquirrelStealingCue = "Wait for Cocoa to call the mound.",
+                        SquirrelStoleCue = "Wasted dig - read the call first.",
+                        SquirrelStealScoreLabel = "COLD DIG",
+                        SquirrelScareScoreLabel = "BONE DUG UP",
+                        SquirrelStealingActorLabel = "SCENT POST",
+                        SquirrelDroppedActorLabel = "CALLING IT",
+                        SquirrelStoleActorLabel = "COLD",
+                        SquirrelMissPopLabel = "NOPE!",
+                        SquirrelStealJuiceLabel = "NOPE!",
+                        SquirrelScareJuiceLabel = "BONE!",
+                        TugObjectiveText = "Sniff and dig together",
+                        WaitingObjectiveText = "Dig the mound Cocoa calls",
+                        ClearObjectiveText = "Bones recovered - replay The Bone Detail",
+                        ClearBannerPrefix = "BONES!",
+                        ClearScoreLabel = "BONE DETAIL CLEAR",
+                        ReplayPrompt = "Press R / Enter / Start to replay The Bone Detail",
+                        FailObjectiveText = "Mission failed - replay The Bone Detail",
+                        GenericFailReason = "Too much guessing - read the scent before digging.",
+                        TimeFailReason = "The bones stayed buried - the relay never clicked in time.",
+                        StolenFailReason = "Too many blind digs wasted the whole yard.",
+                        PredatorFailReason = "No predator here, just a lot of dirt.",
+                        PawfectClearReason = "Cocoa called every mound and Cheddar dug them clean - not a single wasted scoop.",
+                        HeroClearReason = "The bones came up with only a stray dig or two.",
+                        BasicClearReason = "They got the bones, even after digging up a good chunk of the yard.",
+                        ItemColor = new Color(0.5f, 0.38f, 0.22f),
+                        ItemAccentColor = new Color(0.78f, 0.7f, 0.5f),
+                        ItemSecondaryColor = new Color(0.3f, 0.22f, 0.12f),
+                        ItemPopColor = new Color(0.5f, 0.9f, 0.55f)
+                    };
                 case MissionVariant.SockPanic:
                     return new MissionDefinition
                     {
@@ -5373,6 +5628,24 @@ namespace CheddarAndCocoa.Game
                     }
                     hideDistance = WalkStationRange;
                     break;
+                case MissionVariant.BoneRelay:
+                    if (IndexOfDog(DogId.Cocoa) == dogIndex)
+                    {
+                        target = SquirrelObject != null ? SquirrelObject.transform : null; // the scent post Cocoa reads
+                        copy = "SNIFF SCENT";
+                        hideDistance = BoneScentRange;
+                    }
+                    else
+                    {
+                        int call = _boneRelay.RevealedTarget;
+                        if (call >= 0 && _boneMounds != null && call < _boneMounds.Length && _boneMounds[call] != null)
+                            target = _boneMounds[call].transform; // the mound Cocoa called
+                        else
+                            target = FindNearestActiveMarker(_boneMounds, _dogs[dogIndex].transform.position);
+                        copy = call >= 0 ? "DIG THE CALL" : "WAIT FOR CALL";
+                        hideDistance = BoneDigRange;
+                    }
+                    break;
                 case MissionVariant.CarRide:
                 default:
                     return false;
@@ -5582,6 +5855,7 @@ namespace CheddarAndCocoa.Game
             BuildCoyoteGapMarkers();
             BuildWeenieRoundupObjects();
             BuildScentSearchMarkers();
+            BuildBoneRelayMarkers();
             BuildTerritoryMarkers();
             BuildLeashCheckpointMarkers();
             if (InteractionRangeIndicators != null)

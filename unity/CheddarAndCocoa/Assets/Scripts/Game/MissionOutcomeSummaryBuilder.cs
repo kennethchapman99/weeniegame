@@ -131,6 +131,17 @@ namespace CheddarAndCocoa.Game
             return "Working The Human";
         }
 
+        public static string BuildBoneRelaySummary(CoopScentRelayPuzzle state)
+        {
+            if (state.Solved)
+                return "Bones Recovered";
+
+            if (state.BlindActs + state.WrongDigs > 0)
+                return "Dug Up The Yard";
+
+            return "On The Scent";
+        }
+
         public static string BuildPatrolSummary(PatrolDefenseMissionState state)
         {
             if (state.FinalPressureComplete)
