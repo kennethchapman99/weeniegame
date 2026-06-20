@@ -4,7 +4,7 @@ Companion to `COOP-PUZZLE-DESIGN.md` (the doctrine). That doc says *what* a co-o
 
 All primitives are **pure logic** (no `MonoBehaviour`), in `CheddarAndCocoa.Game`, so a mission drives them from real dog positions/inputs while PlayMode tests drive them deterministically. Each has scene-free unit tests under `Assets/Tests/PlayMode/`. Roles are soft — either dog can take either side; defaults below are for comedy/clarity, not hard locks.
 
-> Status: all four primitives **and** a position/input driver each landed on branch `claude/post-art-followups`, full PlayMode suite green. Wiring into specific missions is a small follow-up (each is a few lines in the mission's `Begin/Tick/Force*` and a `MissionDefinition`).
+> Status: all primitives **and** a position/input driver each landed on branch `claude/post-art-followups`, full PlayMode suite green. The Hold-and-Release beat is now also **wired into a real mission — Gate Crash** (Cocoa anchors the gate, Cheddar squeezes through; let go mid-squeeze and it snaps), proving the end-to-end integration pattern: a primitive field on `GameManager`, a `BeginRound` setup block, a `Tick*` driving it from dog positions, `Force*` test hooks, per-dog guidance, and a `MissionDefinition`. Wiring the rest is the same shape.
 
 ## The toolkit
 
