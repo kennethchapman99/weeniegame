@@ -44,6 +44,7 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual("mark_the_yard", ProductionMissionCatalog.MarkTheYard.Id);
             Assert.AreEqual("leash_walk", ProductionMissionCatalog.LeashWalk.Id);
             Assert.AreEqual("car_ride", ProductionMissionCatalog.CarRide.Id);
+            Assert.AreEqual("kitchen_food_frenzy", ProductionMissionCatalog.KitchenFoodFrenzy.Id);
         }
 
         [Test]
