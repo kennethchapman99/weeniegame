@@ -18,7 +18,7 @@ namespace CheddarAndCocoa.Game
         public enum FlowState { MissionSelect, Playing, EndScreen, SessionSummary }
         public enum RoundModifier { SquirrelTrouble, ZoomiesSurge, PancakePanic }
         public enum MissionOutcome { InProgress, Clear, Failed }
-        public enum MissionVariant { BackyardRescue, SnackHeist, SockPanic, SquirrelConspiracy, EagleShadowPanic, CoyotesFence, WeenieRoundup, ScentSearch, ThunderstormComfort, MarkTheYard, LeashWalk, CarRide }
+        public enum MissionVariant { BackyardRescue, SnackHeist, SockPanic, SquirrelConspiracy, EagleShadowPanic, CoyotesFence, WeenieRoundup, ScentSearch, ThunderstormComfort, MarkTheYard, LeashWalk, CarRide, GateCrash, TableStealth }
         public enum FeedbackKind
         {
             Intro,
@@ -116,7 +116,9 @@ namespace CheddarAndCocoa.Game
             MissionVariant.ThunderstormComfort,
             MissionVariant.MarkTheYard,
             MissionVariant.LeashWalk,
-            MissionVariant.CarRide
+            MissionVariant.CarRide,
+            MissionVariant.GateCrash,
+            MissionVariant.TableStealth
         };
 
         [Header("Mission selection")]
@@ -161,6 +163,12 @@ namespace CheddarAndCocoa.Game
         public SockBasketMissionState SockPanicState => _sockBasketState;
         public GameObject LaundryBasketObject => _laundryBasketObject;
         public Treat ExposedSock => _exposedSock;
+        public CoopHoldReleasePuzzle GateCrashPuzzle => _gatePuzzle;
+        public Vector2 GateHoldZone => _gateHoldZone;
+        public Vector2 GateCrossZone => _gateCrossZone;
+        public CoopHumanDistractionPuzzle TableStealthPuzzle => _tablePuzzle;
+        public Vector2 TableHumanZone => _tableHumanZone;
+        public Vector2 TableStealZone => _tableStealZone;
         public MissionRuntimeSnapshot RuntimeSnapshot => BuildRuntimeSnapshot();
         public int CurrentMissionSeed => _missionSeed;
         public DemoReadinessResult DemoReadiness => DemoReadinessGate.Evaluate(DemoReadinessGate.RequiredForBackyardDemo);
@@ -363,6 +371,33 @@ namespace CheddarAndCocoa.Game
         private const int CarRequiredLurches = 6;
         private const int CarMaxSpills = 4;
         private const float CarLurchInterval = 4f;
+        // Gate Crash (Hold-and-Release co-op puzzle): Cocoa anchors the gate, Cheddar squeezes through.
+        private readonly CoopHoldReleasePuzzle _gatePuzzle = new CoopHoldReleasePuzzle();
+        private Vector2 _gateHoldZone;
+        private Vector2 _gateCrossZone;
+        private int _gateSnapsSeen;
+        private const float GateHoldRange = 4f;
+        private const float GateCrossRange = 4f;
+        private const float GateCrossNeeded = 0.8f;
+        private const float GateHoldWindow = 30f; // generous; snaps come from releasing, not timeout
+        private const int GateMaxSnaps = 4;
+        // Table Stealth (Human-Distraction co-op puzzle): Cocoa flops belly-up to hold the human's gaze
+        // (sustain) while Cheddar sneaks the dropped steak from under the table; sneaking while the human
+        // is looking gets the pair spotted (a recoverable exposure, not a silent punish).
+        private readonly CoopHumanDistractionPuzzle _tablePuzzle = new CoopHumanDistractionPuzzle();
+        private Vector2 _tableHumanZone;
+        private Vector2 _tableStealZone;
+        private int _tableExposuresSeen;
+        private const float TableDistractRange = 4f;
+        private const float TableSneakRange = 4f;
+        private const float TableSneakNeeded = 1.5f;
+        private const float TableAttentionThreshold = 0.3f;
+        private const float TableAttentionDecay = 0.25f;
+        private const float TableBurpSpike = 0.8f;
+        private const float TableBurpCooldown = 1.5f;
+        private const float TableFlopRise = 3f;
+        private const float TableFlopStamina = 8f;
+        private const int TableMaxExposures = 4;
         private readonly TerritoryMissionState _territoryState = new TerritoryMissionState();
         private readonly Vector2[] _territoryZones = { new(-18f, 9f), new(18f, 9f), new(-18f, -9f), new(18f, -9f), new(0f, 0f) };
         private GameObject[] _zoneMarkers;
@@ -964,6 +999,10 @@ namespace CheddarAndCocoa.Game
             _sockOpeningUntil = 0f;
             _carBalance = 0f;
             _carLurchDir = 1;
+            _gatePuzzle.Reset();
+            _gateSnapsSeen = 0;
+            _tablePuzzle.Reset();
+            _tableExposuresSeen = 0;
             if (_dogContribution != null) System.Array.Clear(_dogContribution, 0, _dogContribution.Length);
             if (_panic != null) _panic.ResetMeter();
             _bowlPosition = new Vector2(_bounds.xMax - 4f, _bounds.yMin + 3f);
@@ -1136,6 +1175,47 @@ namespace CheddarAndCocoa.Game
                     SetActorState(_laundryBasketObject, "LAUNDRY BASKET - ONE DOG TIP, PARTNER DIVE!", new Color(0.78f, 0.56f, 0.3f), 0.08f);
                 }
             }
+            if (_mission.Variant == MissionVariant.GateCrash)
+            {
+                _gatePuzzle.Configure(GateCrossNeeded, GateHoldWindow);
+                _gateSnapsSeen = 0;
+                _gateHoldZone = new Vector2(_bounds.center.x - 10f, _bounds.center.y);
+                _gateCrossZone = new Vector2(_bounds.center.x + 10f, _bounds.center.y);
+                // Reuse the predator actor as the gate (at the hold zone) and the squirrel as the toy goal.
+                if (PredatorObject != null)
+                {
+                    PredatorObject.SetActive(true);
+                    PlaceObject(PredatorObject, _gateHoldZone);
+                    SetActorState(PredatorObject, "COCOA: HOLD THE GATE!", new Color(0.7f, 0.5f, 0.2f), 0.12f);
+                }
+                if (SquirrelObject != null)
+                {
+                    SquirrelObject.SetActive(true);
+                    PlaceObject(SquirrelObject, _gateCrossZone);
+                    SetActorState(SquirrelObject, "TOY - CHEDDAR SQUEEZE THROUGH!", new Color(0.6f, 0.8f, 1f), 0.1f);
+                }
+            }
+            if (_mission.Variant == MissionVariant.TableStealth)
+            {
+                _tablePuzzle.Configure(TableSneakNeeded, TableAttentionThreshold, TableAttentionDecay,
+                    TableBurpSpike, TableBurpCooldown, TableFlopRise, TableFlopStamina);
+                _tableExposuresSeen = 0;
+                _tableHumanZone = new Vector2(_bounds.center.x - 10f, _bounds.center.y);
+                _tableStealZone = new Vector2(_bounds.center.x + 10f, _bounds.center.y);
+                // Reuse the predator actor as the seated human (the distraction point) and the squirrel as the steak.
+                if (PredatorObject != null)
+                {
+                    PredatorObject.SetActive(true);
+                    PlaceObject(PredatorObject, _tableHumanZone);
+                    SetActorState(PredatorObject, "COCOA: FLOP TO DISTRACT THE HUMAN!", new Color(0.7f, 0.5f, 0.2f), 0.12f);
+                }
+                if (SquirrelObject != null)
+                {
+                    SquirrelObject.SetActive(true);
+                    PlaceObject(SquirrelObject, _tableStealZone);
+                    SetActorState(SquirrelObject, "STEAK - CHEDDAR SNEAK IT!", new Color(0.6f, 0.8f, 1f), 0.1f);
+                }
+            }
             StageDogsForMissionEntry();
             UpdateObjectiveArrows();
             _lastLoggedObjective = string.Empty;
@@ -1171,6 +1251,8 @@ namespace CheddarAndCocoa.Game
             else if (_mission.Variant == MissionVariant.MarkTheYard) TickTerritory();
             else if (_mission.Variant == MissionVariant.LeashWalk) TickLeashWalk();
             else if (_mission.Variant == MissionVariant.CarRide) TickCarRide();
+            else if (_mission.Variant == MissionVariant.GateCrash) TickGateCrash();
+            else if (_mission.Variant == MissionVariant.TableStealth) TickTableStealth();
             else TickSquirrel();
             TickPredator();
             TickTugProximity();
@@ -2250,6 +2332,123 @@ namespace CheddarAndCocoa.Game
                 RegisterCarSpill();
         }
 
+        // --- Gate Crash (Hold-and-Release co-op puzzle) ---
+
+        private void TickGateCrash()
+        {
+            if (_gatePuzzle.Solved) return;
+
+            int anchor = IndexOfDog(DogId.Cocoa);
+            int crosser = IndexOfDog(DogId.Cheddar);
+            if (anchor < 0 || crosser < 0) return;
+
+            bool held = Vector2.Distance(_dogs[anchor].transform.position, _gateHoldZone) <= GateHoldRange;
+            _gatePuzzle.SetHeld(held);
+            if (Vector2.Distance(_dogs[crosser].transform.position, _gateCrossZone) <= GateCrossRange)
+                _gatePuzzle.Advance(Time.deltaTime);
+
+            HandleGateSnaps();
+            if (Phase == State.GameOver) return;
+
+            if (PredatorObject != null)
+                SetActorState(PredatorObject, _gatePuzzle.Held ? "GATE HELD - SQUEEZE THROUGH!" : "COCOA: HOLD THE GATE!",
+                    _gatePuzzle.Held ? new Color(0.4f, 0.8f, 0.5f) : new Color(0.7f, 0.5f, 0.2f), 0.12f);
+            if (SquirrelObject != null)
+                SetActorState(SquirrelObject, $"TOY - SQUEEZE {Mathf.RoundToInt(_gatePuzzle.CrossRatio * 100f)}%", new Color(0.6f, 0.8f, 1f), 0.1f);
+        }
+
+        private void HandleGateSnaps()
+        {
+            if (_gatePuzzle.Snaps <= _gateSnapsSeen) return;
+
+            _gateSnapsSeen = _gatePuzzle.Snaps;
+            AddScore(ScoreEventCatalog.FakeOut.Points, "GATE SNAP");
+            LastFeedback = FeedbackKind.SquirrelStoleFood;
+            LastCue = $"The gate snapped shut! ({_gatePuzzle.Snaps}/{GateMaxSnaps}) Cocoa has to brace it.";
+            SetJuice(JuiceFeedbackKind.WarningMiss, "GATE SNAP!");
+            if (SquirrelObject != null) SpawnWorldPop(_gateCrossZone, "SNAP!", new Color(1f, 0.35f, 0.2f));
+            LogPlaytestEvent("GateSnap", $"{_gatePuzzle.Snaps}/{GateMaxSnaps}");
+            if (_gatePuzzle.Snaps >= GateMaxSnaps) EndRound(false);
+        }
+
+        public void ForceGateHold(bool held = true)
+        {
+            if (!MissionActive() || _mission == null || _mission.Variant != MissionVariant.GateCrash) return;
+            _gatePuzzle.SetHeld(held);
+            HandleGateSnaps();
+        }
+
+        public void ForceGateCross(float seconds)
+        {
+            if (!MissionActive() || _mission == null || _mission.Variant != MissionVariant.GateCrash) return;
+            _gatePuzzle.Advance(seconds);
+            HandleGateSnaps();
+            if (Phase != State.GameOver) CheckClear();
+        }
+
+        private void TickTableStealth()
+        {
+            if (_tablePuzzle.Solved) return;
+
+            int distractor = IndexOfDog(DogId.Cocoa);
+            int sneaker = IndexOfDog(DogId.Cheddar);
+            if (distractor < 0 || sneaker < 0) return;
+
+            // Cocoa flops belly-up (sustained distraction) while she stands by the human; Cheddar sneaks
+            // the steak only while the human is held looking the other way.
+            bool flopping = Vector2.Distance(_dogs[distractor].transform.position, _tableHumanZone) <= TableDistractRange;
+            _tablePuzzle.SetBellyFlop(flopping);
+            bool sneaking = Vector2.Distance(_dogs[sneaker].transform.position, _tableStealZone) <= TableSneakRange;
+            _tablePuzzle.Advance(Time.deltaTime, sneaking);
+
+            HandleTableExposures();
+            if (Phase == State.GameOver) return;
+
+            if (PredatorObject != null)
+                SetActorState(PredatorObject, _tablePuzzle.HumanDistracted ? "HUMAN DISTRACTED - SNEAK IT!" : "COCOA: FLOP TO DISTRACT!",
+                    _tablePuzzle.HumanDistracted ? new Color(0.4f, 0.8f, 0.5f) : new Color(0.7f, 0.5f, 0.2f), 0.12f);
+            if (SquirrelObject != null)
+                SetActorState(SquirrelObject, $"STEAK - SNEAK {Mathf.RoundToInt(_tablePuzzle.SneakRatio * 100f)}%", new Color(0.6f, 0.8f, 1f), 0.1f);
+        }
+
+        private void HandleTableExposures()
+        {
+            if (_tablePuzzle.Exposures <= _tableExposuresSeen) return;
+
+            _tableExposuresSeen = _tablePuzzle.Exposures;
+            AddScore(ScoreEventCatalog.FakeOut.Points, "SPOTTED");
+            LastFeedback = FeedbackKind.SquirrelStoleFood;
+            LastCue = $"The human glanced over! ({_tablePuzzle.Exposures}/{TableMaxExposures}) Keep them distracted before sneaking.";
+            SetJuice(JuiceFeedbackKind.WarningMiss, "SPOTTED!");
+            if (SquirrelObject != null) SpawnWorldPop(_tableStealZone, "SPOTTED!", new Color(1f, 0.35f, 0.2f));
+            LogPlaytestEvent("TableSpotted", $"{_tablePuzzle.Exposures}/{TableMaxExposures}");
+            if (_tablePuzzle.Exposures >= TableMaxExposures) EndRound(false);
+        }
+
+        /// <summary>Test hook: Cocoa commits to / releases the belly-flop distraction (the sustain hold).</summary>
+        public void ForceTableFlop(bool flopped = true)
+        {
+            if (!MissionActive() || _mission == null || _mission.Variant != MissionVariant.TableStealth) return;
+            _tablePuzzle.SetBellyFlop(flopped);
+        }
+
+        /// <summary>Test hook: Cheddar fires a burp-cloud distraction (the burst spike).</summary>
+        public void ForceTableBurp()
+        {
+            if (!MissionActive() || _mission == null || _mission.Variant != MissionVariant.TableStealth) return;
+            _tablePuzzle.Burp();
+        }
+
+        /// <summary>Test hook: advance the sneak by <paramref name="seconds"/> with the partner in the steak lane.</summary>
+        public void ForceTableSneak(float seconds)
+        {
+            if (!MissionActive() || _mission == null || _mission.Variant != MissionVariant.TableStealth) return;
+            _tablePuzzle.Advance(seconds, true);
+            _tablePuzzle.Advance(0.0001f, false); // reset the exposure edge so repeated forced sneaks each register
+            HandleTableExposures();
+            if (Phase != State.GameOver) CheckClear();
+        }
+
         private float NearestEagleCoverDistance(Vector2 position)
         {
             float best = float.PositiveInfinity;
@@ -2584,6 +2783,20 @@ namespace CheddarAndCocoa.Game
                 progress = _carState.LurchesSurvived;
                 goal = _carState.RequiredLurches;
                 mistakes = _carState.Spills;
+            }
+            else if (_mission != null && _mission.Variant == MissionVariant.GateCrash)
+            {
+                missionId = "gate_crash";
+                progress = _gatePuzzle.Solved ? 1 : 0;
+                goal = 1;
+                mistakes = _gatePuzzle.Snaps;
+            }
+            else if (_mission != null && _mission.Variant == MissionVariant.TableStealth)
+            {
+                missionId = "table_stealth";
+                progress = _tablePuzzle.Solved ? 1 : 0;
+                goal = 1;
+                mistakes = _tablePuzzle.Exposures;
             }
             else
             {
@@ -3006,6 +3219,16 @@ namespace CheddarAndCocoa.Game
                 if (_carState.ReadyToClear()) EndRound(true);
                 return;
             }
+            if (_mission.Variant == MissionVariant.GateCrash)
+            {
+                if (_gatePuzzle.Solved) EndRound(true);
+                return;
+            }
+            if (_mission.Variant == MissionVariant.TableStealth)
+            {
+                if (_tablePuzzle.Solved) EndRound(true);
+                return;
+            }
 
             bool hasItems = BreakfastRecovered >= _mission.ItemGoal;
             bool hasPredator = !_mission.RequiresPredator || PredatorResolved;
@@ -3098,6 +3321,10 @@ namespace CheddarAndCocoa.Game
                 funny = MissionOutcomeSummaryBuilder.BuildLeashSummary(_leashState);
             else if (_mission != null && _mission.Variant == MissionVariant.CarRide)
                 funny = MissionOutcomeSummaryBuilder.BuildCarBalanceSummary(_carState);
+            else if (_mission != null && _mission.Variant == MissionVariant.GateCrash)
+                funny = MissionOutcomeSummaryBuilder.BuildGateCrashSummary(_gatePuzzle);
+            else if (_mission != null && _mission.Variant == MissionVariant.TableStealth)
+                funny = MissionOutcomeSummaryBuilder.BuildTableStealthSummary(_tablePuzzle);
             else
                 funny = Outcome.ToString();
             return $"{funny}: {Score} - {EndRank}";
@@ -3178,6 +3405,16 @@ namespace CheddarAndCocoa.Game
                 string tilt = Mathf.Abs(_carBalance) < 0.15f ? "LEVEL" : (_carBalance > 0 ? "tipping RIGHT" : "tipping LEFT");
                 return $"Lean to keep the car level ({tilt}): steadied {_carState.LurchesSurvived}/{_carState.RequiredLurches}, spills {_carState.Spills}/{CarMaxSpills}";
             }
+            if (_mission.Variant == MissionVariant.GateCrash)
+            {
+                if (!_gatePuzzle.Held) return $"Cocoa: hold the gate open at the marker (squeeze {Mathf.RoundToInt(_gatePuzzle.CrossRatio * 100)}%, snaps {_gatePuzzle.Snaps}/{GateMaxSnaps})";
+                return $"Cheddar: squeeze through while Cocoa holds ({Mathf.RoundToInt(_gatePuzzle.CrossRatio * 100)}%, snaps {_gatePuzzle.Snaps}/{GateMaxSnaps})";
+            }
+            if (_mission.Variant == MissionVariant.TableStealth)
+            {
+                if (!_tablePuzzle.HumanDistracted) return $"Cocoa: flop belly-up by the human to hold their gaze (sneak {Mathf.RoundToInt(_tablePuzzle.SneakRatio * 100)}%, spotted {_tablePuzzle.Exposures}/{TableMaxExposures})";
+                return $"Cheddar: sneak the steak while the human is distracted ({Mathf.RoundToInt(_tablePuzzle.SneakRatio * 100)}%, spotted {_tablePuzzle.Exposures}/{TableMaxExposures})";
+            }
             if (_mission.Variant == MissionVariant.MarkTheYard)
             {
                 return $"Claim and hold every zone at once: {_territoryState.Claimed}/{_territoryState.ZoneCount} marked (squirrel steals back {_territoryState.Reclaims})";
@@ -3211,6 +3448,8 @@ namespace CheddarAndCocoa.Game
             if (_mission.Variant == MissionVariant.ScentSearch && _scentState.TooManyWastedDigs(ScentMaxWastedDigs)) return "The dogs dug up half the yard chasing cold scents and ran out of patience.";
             if (_mission.Variant == MissionVariant.LeashWalk && _leashState.TooManySnaps(MaxLeashSnaps)) return "The leash snapped taut too many times - the walk fell apart.";
             if (_mission.Variant == MissionVariant.CarRide && _carState.TooManySpills(CarMaxSpills)) return "The car tipped over too many times on the way home.";
+            if (_mission.Variant == MissionVariant.GateCrash && _gatePuzzle.Snaps >= GateMaxSnaps) return "The gate snapped shut too many times before Cheddar could squeeze through.";
+            if (_mission.Variant == MissionVariant.TableStealth && _tablePuzzle.Exposures >= TableMaxExposures) return "Cheddar kept sneaking while the human was watching - they got caught at the table too many times.";
             if (_mission.Variant == MissionVariant.ThunderstormComfort && _panic != null && _panic.Maxed != null) return $"{_panic.Maxed} panicked at the thunder and bolted before the storm passed.";
             if (_mission.UsesSquirrel && StolenFood >= maxStolenFood) return _mission.StolenFailReason;
             if (TimeRemaining <= 0f) return _mission.TimeFailReason;
@@ -4186,6 +4425,120 @@ namespace CheddarAndCocoa.Game
                         ItemSecondaryColor = new Color(0.24f, 0.2f, 0.14f),
                         ItemPopColor = new Color(0.85f, 0.75f, 0.55f)
                     };
+                case MissionVariant.GateCrash:
+                    return new MissionDefinition
+                    {
+                        Variant = MissionVariant.GateCrash,
+                        Name = "Gate Crash",
+                        IntroPrompt = "The toy rolled under the heavy gate. Cocoa has to brace the gate open while Cheddar squeezes through to grab it - if she lets go mid-squeeze, the gate snaps shut.",
+                        ReadyScoreLabel = "READY TO CRASH THE GATE",
+                        ItemRootName = "Gate",
+                        ItemObjectName = "Gate",
+                        ItemWorldLabel = "Hold!",
+                        ItemArrowLabel = "GATE",
+                        ItemCollectCueNoun = "a squeeze-through",
+                        CollectObjectiveFormat = "Squeeze through {0}/{1}",
+                        CollectedScoreLabel = "SQUEEZED THROUGH",
+                        ItemScore = balance.ItemScore,
+                        SpawnedItemCount = balance.SpawnedItemCount,
+                        ItemGoal = balance.ItemGoal,
+                        RoundSeconds = balance.RoundSeconds,
+                        PawfectScore = balance.PawfectScore,
+                        HeroScore = balance.HeroScore,
+                        SurvivorScore = balance.SurvivorScore,
+                        UsesSquirrel = false,
+                        RequiresPredator = false,
+                        RequiresTug = false,
+                        MaxStolenFood = balance.MaxStolenFood,
+                        SquirrelPenalty = balance.SquirrelPenalty,
+                        SquirrelScareScore = balance.SquirrelScareScore,
+                        SquirrelObjectiveText = "Hold the gate / squeeze through",
+                        SquirrelStealingCue = "No squirrel here - mind the gate.",
+                        SquirrelStoleCue = "No squirrel here - hold it open.",
+                        SquirrelStealScoreLabel = "GATE SNAP",
+                        SquirrelScareScoreLabel = "SQUEEZED THROUGH",
+                        SquirrelStealingActorLabel = "GATE",
+                        SquirrelDroppedActorLabel = "GATE HELD",
+                        SquirrelStoleActorLabel = "GATE SNAP",
+                        SquirrelMissPopLabel = "SNAP!",
+                        SquirrelStealJuiceLabel = "GATE SNAP!",
+                        SquirrelScareJuiceLabel = "SQUEEZED THROUGH!",
+                        TugObjectiveText = "Hold the gate together",
+                        WaitingObjectiveText = "Squeeze through while the gate is held",
+                        ClearObjectiveText = "Toy rescued - replay Gate Crash",
+                        ClearBannerPrefix = "GATE CRASHED!",
+                        ClearScoreLabel = "GATE CRASH CLEAR",
+                        ReplayPrompt = "Press R / Enter / Start to replay Gate Crash",
+                        FailObjectiveText = "Mission failed - replay Gate Crash",
+                        GenericFailReason = "Needs steadier holding before the next squeeze.",
+                        TimeFailReason = "The squeeze took too long and the toy stayed stuck.",
+                        StolenFailReason = "The gate snapped shut too many times.",
+                        PredatorFailReason = "No predator here, just a heavy gate.",
+                        PawfectClearReason = "Cocoa braced like a champ and Cheddar slipped through in one clean go.",
+                        HeroClearReason = "The toy came home with only a wobble of the gate.",
+                        BasicClearReason = "They got the toy, even if the gate slammed a couple of times.",
+                        ItemColor = new Color(0.55f, 0.45f, 0.3f),
+                        ItemAccentColor = new Color(0.8f, 0.65f, 0.4f),
+                        ItemSecondaryColor = new Color(0.26f, 0.2f, 0.12f),
+                        ItemPopColor = new Color(0.6f, 0.8f, 1f)
+                    };
+                case MissionVariant.TableStealth:
+                    return new MissionDefinition
+                    {
+                        Variant = MissionVariant.TableStealth,
+                        Name = "Table Stealth",
+                        IntroPrompt = "A steak dropped under the dinner table. One dog has to hold the human's attention - Cocoa flops belly-up for a rub, Cheddar burps a cloud - while the other sneaks the steak. Sneak while the human is watching and you get spotted.",
+                        ReadyScoreLabel = "READY TO RAID THE TABLE",
+                        ItemRootName = "Steak",
+                        ItemObjectName = "Steak",
+                        ItemWorldLabel = "Sneak!",
+                        ItemArrowLabel = "STEAK",
+                        ItemCollectCueNoun = "a clean sneak",
+                        CollectObjectiveFormat = "Sneak the steak {0}/{1}",
+                        CollectedScoreLabel = "STEAK SNEAKED",
+                        ItemScore = balance.ItemScore,
+                        SpawnedItemCount = balance.SpawnedItemCount,
+                        ItemGoal = balance.ItemGoal,
+                        RoundSeconds = balance.RoundSeconds,
+                        PawfectScore = balance.PawfectScore,
+                        HeroScore = balance.HeroScore,
+                        SurvivorScore = balance.SurvivorScore,
+                        UsesSquirrel = false,
+                        RequiresPredator = false,
+                        RequiresTug = false,
+                        MaxStolenFood = balance.MaxStolenFood,
+                        SquirrelPenalty = balance.SquirrelPenalty,
+                        SquirrelScareScore = balance.SquirrelScareScore,
+                        SquirrelObjectiveText = "Distract the human / sneak the steak",
+                        SquirrelStealingCue = "No squirrel here - mind the human.",
+                        SquirrelStoleCue = "No squirrel here - keep them distracted.",
+                        SquirrelStealScoreLabel = "SPOTTED",
+                        SquirrelScareScoreLabel = "STEAK SNEAKED",
+                        SquirrelStealingActorLabel = "HUMAN",
+                        SquirrelDroppedActorLabel = "DISTRACTED",
+                        SquirrelStoleActorLabel = "SPOTTED",
+                        SquirrelMissPopLabel = "SPOTTED!",
+                        SquirrelStealJuiceLabel = "SPOTTED!",
+                        SquirrelScareJuiceLabel = "STEAK SNEAKED!",
+                        TugObjectiveText = "Distract and sneak together",
+                        WaitingObjectiveText = "Sneak the steak while the human is distracted",
+                        ClearObjectiveText = "Steak rescued - replay Table Stealth",
+                        ClearBannerPrefix = "STEAK SNEAKED!",
+                        ClearScoreLabel = "TABLE STEALTH CLEAR",
+                        ReplayPrompt = "Press R / Enter / Start to replay Table Stealth",
+                        FailObjectiveText = "Mission failed - replay Table Stealth",
+                        GenericFailReason = "Needs a steadier distraction before the next sneak.",
+                        TimeFailReason = "The sneak took too long and the steak stayed under the table.",
+                        StolenFailReason = "The human caught the sneaky pup too many times.",
+                        PredatorFailReason = "No predator here, just a hungry human.",
+                        PawfectClearReason = "Cocoa held the human spellbound and Cheddar lifted the steak without a sound.",
+                        HeroClearReason = "The steak came home with only a nervous glance or two.",
+                        BasicClearReason = "They got the steak, even if the human nearly caught them.",
+                        ItemColor = new Color(0.6f, 0.3f, 0.28f),
+                        ItemAccentColor = new Color(0.85f, 0.5f, 0.4f),
+                        ItemSecondaryColor = new Color(0.3f, 0.14f, 0.12f),
+                        ItemPopColor = new Color(0.6f, 0.8f, 1f)
+                    };
                 case MissionVariant.SockPanic:
                     return new MissionDefinition
                     {
@@ -4569,6 +4922,32 @@ namespace CheddarAndCocoa.Game
                         target = _leashCheckpointMarkers[checkpoint].transform;
                     copy = "WALK TOGETHER";
                     hideDistance = CheckpointRange;
+                    break;
+                case MissionVariant.GateCrash:
+                    if (IndexOfDog(DogId.Cocoa) == dogIndex)
+                    {
+                        target = PredatorObject != null ? PredatorObject.transform : null; // the gate
+                        copy = "HOLD GATE";
+                    }
+                    else
+                    {
+                        target = SquirrelObject != null ? SquirrelObject.transform : null; // the toy beyond
+                        copy = "SQUEEZE THROUGH";
+                    }
+                    hideDistance = GateHoldRange;
+                    break;
+                case MissionVariant.TableStealth:
+                    if (IndexOfDog(DogId.Cocoa) == dogIndex)
+                    {
+                        target = PredatorObject != null ? PredatorObject.transform : null; // the human to distract
+                        copy = "FLOP TO DISTRACT";
+                    }
+                    else
+                    {
+                        target = SquirrelObject != null ? SquirrelObject.transform : null; // the steak under the table
+                        copy = "SNEAK THE STEAK";
+                    }
+                    hideDistance = TableDistractRange;
                     break;
                 case MissionVariant.CarRide:
                 default:

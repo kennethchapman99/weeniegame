@@ -90,7 +90,7 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
-        public IEnumerator CompleteTwelveMissionSession_OffersExplicitVictoryLap()
+        public IEnumerator CompleteFullMissionSession_OffersExplicitVictoryLap()
         {
             yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
             yield return null;
@@ -106,7 +106,7 @@ namespace CheddarAndCocoa.Tests
             }
 
             Assert.IsTrue(game.SessionAllMissionsCompleted);
-            Assert.AreEqual(12, game.SessionUniqueMissionsCompleted);
+            Assert.AreEqual(game.MissionSelectOptionCount, game.SessionUniqueMissionsCompleted);
             Assert.AreEqual("Victory Lap", game.SessionContinueActionLabel);
             Assert.That(game.SessionSummaryLabel, Does.StartWith("Backyard legends! Cheddar + Cocoa"));
 
