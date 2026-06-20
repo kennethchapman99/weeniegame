@@ -43,24 +43,135 @@ namespace CheddarAndCocoa.Dogs
             {
                 case DogFeedbackPhase.Anticipation:
                     return new DogProceduralCueStyle(actionBase * (cheddar ? 1.18f : 0.82f),
-                        cheddar ? 0.055f : 0.085f, 0.26f, 0.09f, identityHarmonic, 0.05f,
+                        AnticipationDuration(dog, action), AnticipationVolume(action),
+                        ImpactCooldown(action), identityHarmonic, 0.05f,
                         $"{dogName} {actionName} WIND-UP");
                 case DogFeedbackPhase.Impact:
                     return new DogProceduralCueStyle(actionBase * (action == DogFeedbackAction.Bark ? 0.72f : 1.35f),
-                        action == DogFeedbackAction.Rescue ? 0.2f : 0.13f, action == DogFeedbackAction.Bark ? 0.72f : 0.5f,
-                        action == DogFeedbackAction.Bark ? 0.18f : 0.12f, identityHarmonic,
+                        ImpactDuration(action), ImpactVolume(action), ImpactCooldown(action), identityHarmonic,
                         action == DogFeedbackAction.Bark ? (cheddar ? 0.32f : 0.18f) : 0.1f,
                         $"{dogName} {actionName} HIT");
                 case DogFeedbackPhase.Sustain:
                     return new DogProceduralCueStyle(actionBase * (cheddar ? 1.48f : 1.05f),
-                        cheddar ? 0.11f : 0.16f, 0.3f, 0.28f, identityHarmonic, 0.04f,
+                        SustainDuration(dog, action), SustainVolume(action), 1.2f,
+                        identityHarmonic, 0.04f,
                         $"{dogName} {actionName} LOOP");
                 case DogFeedbackPhase.Recovery:
                     return new DogProceduralCueStyle(actionBase * (cheddar ? 0.88f : 0.64f),
-                        cheddar ? 0.075f : 0.12f, 0.22f, 0.1f, identityHarmonic, 0.03f,
+                        RecoveryDuration(dog, action), RecoveryVolume(action), ImpactCooldown(action),
+                        identityHarmonic, 0.03f,
                         $"{dogName} {actionName} SETTLE");
                 default:
                     return new DogProceduralCueStyle(0f, 0f, 0f, 0f, 0f, 0f, "SILENT");
+            }
+        }
+
+        private static float AnticipationDuration(DogId dog, DogFeedbackAction action)
+        {
+            bool cheddar = dog == DogId.Cheddar;
+            switch (action)
+            {
+                case DogFeedbackAction.Bark: return cheddar ? 0.045f : 0.075f;
+                case DogFeedbackAction.Tug: return cheddar ? 0.08f : 0.13f;
+                case DogFeedbackAction.Carry: return cheddar ? 0.07f : 0.11f;
+                case DogFeedbackAction.Rescue: return cheddar ? 0.09f : 0.12f;
+                case DogFeedbackAction.Zoomies: return cheddar ? 0.035f : 0.06f;
+                default: return 0.05f;
+            }
+        }
+
+        private static float ImpactDuration(DogFeedbackAction action)
+        {
+            switch (action)
+            {
+                case DogFeedbackAction.Bark: return 0.12f;
+                case DogFeedbackAction.Tug: return 0.11f;
+                case DogFeedbackAction.Carry: return 0.1f;
+                case DogFeedbackAction.Rescue: return 0.2f;
+                case DogFeedbackAction.Zoomies: return 0.12f;
+                default: return 0.1f;
+            }
+        }
+
+        private static float SustainDuration(DogId dog, DogFeedbackAction action)
+        {
+            float identityOffset = dog == DogId.Cheddar ? 0f : 0.05f;
+            switch (action)
+            {
+                case DogFeedbackAction.Tug: return 0.2f + identityOffset;
+                case DogFeedbackAction.Carry: return 0.3f + identityOffset;
+                case DogFeedbackAction.Zoomies: return 0.24f + identityOffset;
+                default: return 0.25f + identityOffset;
+            }
+        }
+
+        private static float RecoveryDuration(DogId dog, DogFeedbackAction action)
+        {
+            bool cheddar = dog == DogId.Cheddar;
+            if (action == DogFeedbackAction.Rescue) return cheddar ? 0.12f : 0.16f;
+            return cheddar ? 0.07f : 0.1f;
+        }
+
+        private static float AnticipationVolume(DogFeedbackAction action)
+        {
+            switch (action)
+            {
+                case DogFeedbackAction.Bark: return 0.14f;
+                case DogFeedbackAction.Tug: return 0.12f;
+                case DogFeedbackAction.Carry: return 0.09f;
+                case DogFeedbackAction.Rescue: return 0.16f;
+                case DogFeedbackAction.Zoomies: return 0.08f;
+                default: return 0.1f;
+            }
+        }
+
+        private static float ImpactVolume(DogFeedbackAction action)
+        {
+            switch (action)
+            {
+                case DogFeedbackAction.Bark: return 0.58f;
+                case DogFeedbackAction.Tug: return 0.4f;
+                case DogFeedbackAction.Carry: return 0.3f;
+                case DogFeedbackAction.Rescue: return 0.66f;
+                case DogFeedbackAction.Zoomies: return 0.27f;
+                default: return 0.25f;
+            }
+        }
+
+        private static float SustainVolume(DogFeedbackAction action)
+        {
+            switch (action)
+            {
+                case DogFeedbackAction.Tug: return 0.15f;
+                case DogFeedbackAction.Carry: return 0.09f;
+                case DogFeedbackAction.Zoomies: return 0.12f;
+                default: return 0.1f;
+            }
+        }
+
+        private static float RecoveryVolume(DogFeedbackAction action)
+        {
+            switch (action)
+            {
+                case DogFeedbackAction.Bark: return 0.08f;
+                case DogFeedbackAction.Tug: return 0.07f;
+                case DogFeedbackAction.Carry: return 0.06f;
+                case DogFeedbackAction.Rescue: return 0.12f;
+                case DogFeedbackAction.Zoomies: return 0.06f;
+                default: return 0.06f;
+            }
+        }
+
+        private static float ImpactCooldown(DogFeedbackAction action)
+        {
+            switch (action)
+            {
+                case DogFeedbackAction.Bark: return 0.3f;
+                case DogFeedbackAction.Tug: return 0.4f;
+                case DogFeedbackAction.Carry: return 0.5f;
+                case DogFeedbackAction.Rescue: return 0.7f;
+                case DogFeedbackAction.Zoomies: return 0.8f;
+                default: return 0.3f;
             }
         }
     }
@@ -74,7 +185,7 @@ namespace CheddarAndCocoa.Dogs
     [RequireComponent(typeof(DogActionFeedback))]
     public sealed class DogProceduralAudio : MonoBehaviour
     {
-        public const int VoiceLimit = 3;
+        public const int VoiceLimit = 2;
         private const int SampleRate = 22050;
 
         private sealed class Voice

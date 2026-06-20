@@ -466,6 +466,37 @@ Manual audio check:
 - Use Replay, Next Mission, and Mission Select. Confirm a small UI blip plays.
 - Press **F2** and repeat bark/collect. Confirm normal gameplay continues while generated audio is muted.
 
+### Dog-local action audio tuning (2026-06-20)
+
+The Backyard dog-local procedural layer was checked separately from the arena-wide placeholder cues.
+The repeatable two-player check drives Cheddar and Cocoa at the same time, verifies their action
+signatures, and exercises bark over an active carry bed. It is an in-engine mix/concurrency check;
+the final authored-SFX pass still needs a physical two-person television listening session.
+
+Concrete findings and resulting profile changes:
+
+- Cheddar and Cocoa were already separated reliably by pitch and harmonic content. Their impact
+  fundamentals remain distinct across bark (`237.6 / 147.6 Hz`), tug (`508.95 / 318.6 Hz`), carry
+  (`572.4 / 360.45 Hz`), rescue (`635.85 / 402.3 Hz`), and zoomies (`699.3 / 444.15 Hz`).
+- Rescue, tug, carry, and zoomies previously shared the same `0.50` impact volume, so the critical
+  rescue read had no priority. Impact volumes are now rescue `0.66`, bark `0.58`, tug `0.40`, carry
+  `0.30`, and zoomies `0.27`.
+- All sustained actions previously looped at `0.30`, which let two dogs' continuous beds mask bark
+  and rescue. Tug/carry/zoomies sustain volumes are now `0.15 / 0.09 / 0.12`, with longer loop
+  grains to reduce repetition.
+- Sustained cue restart cooldown is now `1.2s`. A bark or rescue can override the visible action
+  without stacking a second tug/carry/zoomies loop when the dog returns to that action.
+- The dog-local limit is now two voices per dog instead of three. Simultaneous Cheddar/Cocoa carry
+  plus bark peaks at four local voices while preserving both dogs' bark impacts; a six-voice local
+  pile-up is no longer possible.
+- One-shot cooldowns now match importance and expected cadence: bark `0.30s`, tug `0.40s`, carry
+  `0.50s`, rescue `0.70s`, and zoomies `0.80s`.
+
+Automated acceptance is in `DogProceduralAudioPlayModeTests`: both identities cover all five action
+profiles, action-volume priority is explicit, sustained restart throttling is checked for both dogs,
+and the combined two-dog voice ceiling is asserted. No mission state, scoring, objective, input, or
+movement tuning changed in this pass.
+
 Manual rumble check with a gamepad:
 
 - Bark gives a small pulse.
