@@ -34,6 +34,37 @@ This is not just a dog skin on a generic platformer. The fun should come from as
 6. **Personal jokes become mechanics**
    - Inside jokes are strongest when they affect play. Example: a phone-absorbed teenager is not just dialogue; it becomes a co-op puzzle where the dogs manipulate the environment to trigger a pee break.
 
+7. **Co-op puzzle magic**
+   - Every substantial mission should include at least one authored co-op puzzle beat where one dog creates an opening and the other dog turns it into progress.
+   - The target feeling is: **I can do my dog thing, but only you can make it matter.**
+   - Parallel collection, shared timers, and both-dogs-in-a-circle gates are not enough by themselves. Add role locks, split information, deception, misdirection, sequential cause/effect, role reversal, or funny failure.
+   - Detailed design doctrine lives in `docs/COOP-PUZZLE-DESIGN.md` and should be treated as required reading for new mission prompts.
+
+## Co-op puzzle magic standard
+
+Cheddar & Cocoa should borrow the best lesson from premium two-player adventure games without copying their themes: the delight comes from constantly discovering a new way the other player is the missing piece.
+
+A good Cheddar & Cocoa puzzle beat is short, physical, readable, and dog-authentic:
+
+- one dog can reach, smell, see, hold, distract, bait, or survive something the other cannot;
+- the other dog has the action that converts that opening into progress;
+- success changes the world visibly;
+- failure teaches the solution through comedy, not punishment;
+- the beat escalates or flips roles before it becomes repetitive.
+
+Use these puzzle families repeatedly across levels:
+
+- **Hold-and-release:** Cocoa anchors a blanket/leash/pool noodle while Cheddar crosses, jumps, steals, or squeezes through.
+- **Distract-and-sneak:** one dog draws a human/vacuum/squirrel/coyote attention cone while the other steals, rescues, or repositions.
+- **Smell-and-act:** one dog reads scent information while the other digs, carries, opens, or blocks.
+- **Bait-and-switch:** one dog tempts an enemy or human into the wrong route while the other sets the trap.
+- **Long-dog geometry:** dachshund body, leash, blanket, ramp, or toy becomes a bridge, wedge, pulley, shield, or catch net.
+- **Timed double action:** Dog A opens a short window; Dog B finishes inside it.
+- **Rescue-as-puzzle:** the stuck dog still contributes by wiggling, leaning, whining, or revealing timing while the free dog changes the environment.
+- **Social manipulation:** humans are puzzle systems; dogs combine leash, shoe, bark, stare, charger, toy, and blocked hallway to make humans do dog-relevant things.
+
+New mission prompts should include a **Co-op Puzzle Beat** section naming the beat, roles, lock/key dependency, hints, funny failure, world-state change, and test hooks.
+
 ## Existing playable direction to preserve
 
 The current Unity direction already has a strong base: Cheddar and Cocoa in a Backyard Mission arena, shared scoring, breakfast/weenie recovery, squirrel stealing pressure, predator warning/attack/rescue, rope/tug objective, united bark, modifiers, stars, and PlayMode tests. Future work should build on this rather than replace it.
@@ -146,6 +177,7 @@ Co-op chase/herding level.
 - Barking too early causes squirrel fake-outs.
 - Hidden objective: find squirrel stash of stolen kibble/acorns.
 - Failure: squirrel reaches taunt branch and drops leaves.
+- Co-op puzzle upgrade: one dog baits the squirrel into a false route while the other blocks the real escape gap; the stash only reveals after both routes are controlled.
 
 Core verbs: chase, bark, herd, defend.
 
@@ -157,6 +189,7 @@ Survival/rescue level.
 - Dogs hide under deck chairs, tables, cabana, human legs.
 - One dog distracts while the other rescues a toy/treat.
 - Final phase: united-front bark circle.
+- Co-op puzzle upgrade: Cocoa holds a patio umbrella/tablecloth open as temporary shade while Cheddar dashes through the shade window, then the next sweep reverses the safe role.
 
 Core verbs: hide, rescue, bark, defend.
 
@@ -169,6 +202,7 @@ Defensive patrol level.
 - One barks while the other kicks dirt/fills holes.
 - If dogs split too far, coyote targets the isolated dog.
 - Boss gag: fake snack lure that Cheddar absolutely believes.
+- Co-op puzzle upgrade: bark-pin, dirt-fill, then tug a board/hose into place before the coyote returns; each step needs a different dog role.
 
 Core verbs: defend, rescue, bark, distract.
 
@@ -180,6 +214,7 @@ Precision/platforming level.
 - Falling in triggers swim/wet/shake recovery.
 - One dog pushes a floaty into position for the other.
 - Wet dog makes indoor floors slippery afterward.
+- Co-op puzzle upgrade: one dog anchors a pool noodle bridge while the other crosses, then the wet crossing dog must shake water onto a stuck floaty to make it slide.
 
 Core verbs: balance, rescue, carry, shake.
 
@@ -192,6 +227,7 @@ Toy retrieval mission.
 - Move pool noodles, knock beach balls, ride floaties.
 - Cocoa anchors; Cheddar leaps.
 - Bonus: avoid pool robot patrol.
+- Co-op puzzle upgrade: one dog lures the pool robot away with ripples/barks while the other nudges the floaty route into place.
 
 Core verbs: retrieve, balance, push, rescue.
 
@@ -205,6 +241,7 @@ Stealth/chaos level.
 - Hide under couch during vacuum pass.
 - Steal a dropped cleaning cloth and drag it to the dog couch.
 - One dog distracts cleaner while the other sneaks.
+- Co-op puzzle upgrade: Cheddar creates a noisy decoy with a toy basket while Cocoa sneaks through the vacuum's blind side to rescue the sacred toy.
 
 Core verbs: hide, steal, distract, rescue.
 
@@ -224,6 +261,8 @@ Tasks:
 
 Meter: Bladder Emergency.
 
+Co-op puzzle upgrade: one dog manipulates the charger/phone attention while the other assembles the walk evidence at the door; the teenager only understands when both signals line up.
+
 Core verbs: distract, carry, bark, manipulate.
 
 ### 8. Kitchen Falling Food Frenzy
@@ -235,6 +274,7 @@ Arcade collection with danger filtering.
 - One dog acts as table scout, one as floor sweeper.
 - Hot food lands with warning circles.
 - Combo for catching crumbs before they hit floor.
+- Co-op puzzle upgrade: Cheddar can trigger drops from the chair/counter route while Cocoa catches or blocks bad items on the floor; some food must be nudged into a safe landing zone before it can be eaten.
 
 Good drops:
 - pancake;
@@ -262,6 +302,7 @@ Social stealth.
 - Avoid strict human line-of-sight.
 - Use head tilt, paw tap, dramatic sigh, tiny whine.
 - Cocoa uses royal stare; Cheddar causes chaos under table.
+- Co-op puzzle upgrade: Cocoa locks a soft-hearted human into pity mode while Cheddar moves under the table to redirect dropped food away from the strict human's sightline.
 
 Core verbs: distract, beg, sneak, time.
 
@@ -274,6 +315,7 @@ Territory-control level/minigame.
 - Squishmallows spawn as temporary nap buffs.
 - One dog defends couch while other gathers toys.
 - Humans sit down and become moving hazards.
+- Co-op puzzle upgrade: one dog lures a human off the couch while the other drags a blanket/toy to reserve the sacred spot before the sunbeam moves.
 
 Core verbs: hold, steal, wrestle, defend.
 
@@ -286,6 +328,7 @@ House exploration/scent mission.
 - Wrong toys are decoys.
 - Trail gets confused by laundry, shoes, food, other dog scent.
 - One dog sniffs while the other moves obstacles.
+- Co-op puzzle upgrade: Cheddar detects food-contaminated decoy trails while Cocoa identifies the true toy/human scent; players must compare clues before digging into the wrong pile.
 
 Possible toy names:
 - The Honky Pig;
@@ -307,6 +350,8 @@ Stages:
 - exam table escape;
 - nail grinder boss.
 
+Co-op puzzle upgrade: held/stressed dog can wiggle, lean, or whine to expose timing while the free dog distracts staff, drags towel, or knocks treats to open the escape/rescue window.
+
 Core verbs: calm, distract, escape, rescue.
 
 ### 13. Nail Clip Nightmare
@@ -317,6 +362,7 @@ Boss/minigame.
 - Held dog plays timing game to pull paws back.
 - Free dog distracts by barking, knocking treats, dragging towel, tangling leash.
 - Boss phases: clippers, grinder, paw inspection, "just one more nail."
+- Co-op puzzle upgrade: the held dog chooses which paw to protect while the free dog creates one of several distractions; wrong distraction protects the wrong paw.
 
 Core verbs: distract, rescue, rhythm, panic.
 
@@ -328,6 +374,7 @@ Balance/window-smell level.
 - Window sniff gives points but increases danger.
 - Bark at motorcycles, mail trucks, dogs, walkers.
 - One dog balances while other collects window smells.
+- Co-op puzzle upgrade: one dog sees incoming lurch cues through the window while the other must counterweight first; sliding toys/snacks tempt the wrong movement.
 
 Meter: Smell Data Download.
 
@@ -342,6 +389,7 @@ Movement puzzle.
 - Other dogs trigger bark meter.
 - Perfect teamwork earns synchronized trot bonus.
 - One dog wants destination; other wants one blade of grass for 14 seconds.
+- Co-op puzzle upgrade: leash wrapping becomes a tool for opening gates, redirecting the human, or pulling objects, but must be undone before tension annoys everyone.
 
 Core verbs: pull, untangle, bark, sniff.
 
@@ -354,6 +402,7 @@ Comfort/co-regulation level.
 - Dogs gather blankets/toys and find safe spots.
 - One dog calms the other by staying close.
 - Final objective: reach Sue/Ken/blanket nest.
+- Co-op puzzle upgrade: one dog maintains the comfort huddle while the other fetches the currently needed comfort object; thunder changes which object matters next.
 
 Core verbs: hide, comfort, carry, survive.
 
@@ -365,6 +414,7 @@ Doorbell chaos level.
 - Dogs race to front door.
 - Need enough barking to defend house, not so much they get locked away.
 - Package may contain toy, treats, or boring human thing.
+- Co-op puzzle upgrade: one dog barks through the window to hold the delivery driver's attention while the other verifies/smells whether the package is worth defending or ignoring.
 
 Core verbs: bark, defend, control, chase.
 
@@ -376,6 +426,7 @@ Movement discipline level.
 - Cheddar wants to launch himself like an idiot.
 - Cocoa uses stairs with queenly patience.
 - Bonus for safe landings and synchronized movement.
+- Co-op puzzle upgrade: Cocoa can model/hold the safe path while Cheddar must be intercepted or redirected away from unsafe jumps.
 
 Core verbs: navigate, wait, time, protect.
 
@@ -387,6 +438,7 @@ Comedy movement level.
 - Cheddar gets stuck in ridiculous outfit.
 - Cocoa gets royal costume buff.
 - Movement changes based on costume.
+- Co-op puzzle upgrade: one costume blocks one dog but enables a weird tool for the other, forcing players to decide whether to escape or use the humiliation.
 
 Core verbs: wiggle, escape, use, chase.
 
@@ -398,6 +450,7 @@ Fantasy expansion.
 - Dogs become heroic versions of themselves.
 - Real-life toys become legendary artifacts.
 - Boss can be absurd neighborhood villain or mythic squirrel.
+- Co-op puzzle upgrade: real-life dog objects become legendary co-op tools — leash lasso, squeaky relic, blanket shield, long-dog bridge — each requiring both dogs to unlock the punchline.
 
 Core verbs: adventure, chase, rescue, defend.
 
@@ -448,15 +501,23 @@ Recommended order:
    - distinct Cheddar/Cocoa silhouettes, colors, idle poses, movement feel;
    - visible personality states: zoomies, wet, stunned, barking, tugging, proud, sad.
 
-3. **Kitchen Falling Food Frenzy vertical slice**
+3. **Co-op puzzle beat pass on the current mission set**
+   - upgrade at least three existing ArenaScene missions from objective loops into authored co-op puzzle beats;
+   - start with Backyard Rescue, Snack Heist, and Sock Panic because they are the most straightforward today;
+   - each upgraded mission needs a named Co-op Puzzle Beat, role split, funny fail, and deterministic PlayMode tests.
+
+4. **Kitchen Falling Food Frenzy vertical slice**
    - compact, high-replay, funny, easy to test;
-   - introduces catch/dodge and good-food/bad-food filtering.
+   - introduces catch/dodge and good-food/bad-food filtering;
+   - must include at least one counter/floor role dependency rather than pure parallel catching.
 
-4. **Cleaning Day stealth/chaos prototype**
-   - moving hazards, toy rescue, hide/distract roles.
+5. **Cleaning Day stealth/chaos prototype**
+   - moving hazards, toy rescue, hide/distract roles;
+   - should prove distract-and-sneak as a reusable puzzle family.
 
-5. **Operation Pee Break puzzle prototype**
-   - uniquely personal co-op puzzle; strong identity differentiator.
+6. **Operation Pee Break puzzle prototype**
+   - uniquely personal co-op puzzle; strong identity differentiator;
+   - should prove social manipulation as a durable mission system.
 
 ## Implementation guardrails for agents
 
@@ -471,10 +532,12 @@ When implementing any new idea:
    - visible feedback;
    - failure/recovery path;
    - at least one co-op interaction;
+   - at least one authored co-op puzzle beat for substantial missions;
    - a manual acceptance checklist;
    - automated PlayMode coverage where feasible.
-6. Do not erase the prototype/docs history.
-7. Update this document or a linked design doc when adding a major mechanic or level.
+6. New mission prompts must include a **Co-op Puzzle Beat** section with player roles, lock/key dependency, readable hints, funny fail, world-state change, and test hooks.
+7. Do not erase the prototype/docs history.
+8. Update this document or a linked design doc when adding a major mechanic or level.
 
 ## Acceptance criteria for a "great" new level idea
 
@@ -483,6 +546,8 @@ A level idea is strong enough to build when it answers:
 - What dog fantasy is this level delivering?
 - What are Cheddar and Cocoa each doing differently?
 - What forces players to communicate?
+- What is the co-op puzzle beat where one dog creates an opening and the other turns it into progress?
+- What is the twist, role reversal, deception, or complication before the beat gets stale?
 - What can go wrong in a funny way?
 - What is the 10-second video clip that would make Sue laugh?
 - What is the simplest version that can be PlayMode tested?

@@ -9,8 +9,9 @@
 This repository is a personal couch co-op game starring Cheddar and Cocoa. Before implementing gameplay, read:
 
 1. `docs/GAME-DESIGN-BIBLE.md` — creative north star, level ideas, mechanics, build priorities.
-2. `docs/ARENA-PLAYABLE.md` — current Unity vertical slice and acceptance checks.
-3. `docs/UNITY-FIRST-PLAYABLE.md` — Unity setup/runtime proof history.
+2. `docs/COOP-PUZZLE-DESIGN.md` — co-op puzzle doctrine: role locks, asymmetry, surprise, funny failure, and mission-beat acceptance checks.
+3. `docs/ARENA-PLAYABLE.md` — current Unity vertical slice and acceptance checks.
+4. `docs/UNITY-FIRST-PLAYABLE.md` — Unity setup/runtime proof history.
 
 ## Non-negotiable project intent
 
@@ -23,6 +24,7 @@ Build a joyful, personal, replayable couch co-op game for Ken and Sue to play as
 - Every new mechanic should map to dog-authentic verbs: chase, rescue, steal, distract, defend, comfort, carry, tug, hide, sniff, bark.
 - Bark must remain gameplay-relevant, not only cosmetic.
 - New levels should create co-op communication, readable chaos, and funny failure/recovery.
+- Every substantial mission should include at least one authored co-op puzzle beat where one dog creates the opening and the other turns it into progress.
 - Do not discard the working Unity prototype, tests, or docs.
 
 ## Engineering guardrails

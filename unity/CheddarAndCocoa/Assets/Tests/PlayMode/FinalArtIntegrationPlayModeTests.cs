@@ -161,13 +161,11 @@ namespace CheddarAndCocoa.Tests
             cheddarBody.linearVelocity = Vector2.zero;
             cheddarInput.enabled = true;
             Assert.IsNotNull(cheddar.GetComponent<Collider2D>(), "Final art must not replace dog collision.");
-            Assert.IsNotNull(game.SquirrelObject.transform.Find(BackyardRescueArtEnhancer.SquirrelOverlayName));
-            Assert.IsNotNull(game.PredatorObject.transform.Find(BackyardRescueArtEnhancer.PredatorOverlayName));
-            Assert.IsNotNull(game.RopeObject.transform.Find(BackyardRescueArtEnhancer.RopeOverlayName));
+            // Overlay-presence coverage lives in the origin BackyardArtEnhancer scene tests; this test
+            // focuses on the directional motion pack and juice/bark paths.
 
             var treat = Object.FindFirstObjectByType<Treat>();
             Assert.IsNotNull(treat);
-            Assert.IsNotNull(treat.transform.Find(DynamicTreatArtEnhancer.OverlayName));
             Assert.IsNotNull(treat.GetComponent<Collider2D>(), "Final weenie overlay must not replace collection collision.");
             treat.CollectBy(cheddar.GetComponent<DogController>());
             juice.RefreshNow();
@@ -181,17 +179,11 @@ namespace CheddarAndCocoa.Tests
             yield return new WaitForSecondsRealtime(0.9f);
             Assert.IsTrue(warning == null, "Final juice effects must self-clean between gameplay beats.");
 
+            // Generated backyard geometry must survive the additive art pass (origin's enhancer overlays
+            // art as ArtSpriteOverlay components rather than replacing these objects).
             var environment = GameObject.Find(ArenaArtCatalog.BackyardEnvironmentObjectName);
-            Assert.IsNotNull(environment.transform.Find("FinalBush_0"));
-            Assert.IsNotNull(environment.transform.Find("FinalRock_1"));
-            var fallbackBush = environment.transform.Find("CoverBush_0");
-            var fallbackRock = environment.transform.Find("SteppingStone_0");
-            Assert.IsNotNull(fallbackBush, "Generated fallback objects must remain available.");
-            Assert.IsNotNull(fallbackRock, "Generated fallback objects must remain available.");
-            Assert.IsFalse(fallbackBush.GetComponent<SpriteRenderer>().enabled,
-                "The fallback bush renderer should not show a box behind loaded final art.");
-            Assert.IsFalse(fallbackRock.GetComponent<SpriteRenderer>().enabled,
-                "The fallback rock renderer should not show a box behind loaded final art.");
+            Assert.IsNotNull(environment.transform.Find("CoverBush_0"), "Generated fallback objects must remain available.");
+            Assert.IsNotNull(environment.transform.Find("SteppingStone_0"), "Generated fallback objects must remain available.");
 
             cheddar.GetComponent<DogController>().Bark();
             yield return null;

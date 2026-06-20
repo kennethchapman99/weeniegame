@@ -1,35 +1,56 @@
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace CheddarAndCocoa.Game
 {
-    /// <summary>Keeps respawned Backyard Rescue treats decorated with final weenie sprites.</summary>
+    /// <summary>
+    /// Treats are spawned/despawned during play, so art overlays need to follow new Treat instances.
+    /// This keeps pickup visuals art-driven without changing Treat or GameManager spawning rules.
+    /// </summary>
     public sealed class DynamicTreatArtEnhancer : MonoBehaviour
     {
-        public const string OverlayName = "FinalWeenieOverlay";
-        private GameManager _game;
-        private float _nextScan;
+        private readonly HashSet<int> _enhanced = new HashSet<int>();
+        private float _nextScanAt;
 
-        public void Init(GameManager game)
+        public int EnhancedTreatCount { get; private set; }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        private static void InstallSceneHook()
         {
-            _game = game;
-            Refresh();
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+            SceneManager.sceneLoaded += OnSceneLoaded;
+        }
+
+        private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            if (scene.name != "ArenaScene") return;
+            var go = new GameObject("DynamicTreatArtEnhancer");
+            go.AddComponent<DynamicTreatArtEnhancer>();
         }
 
         private void Update()
         {
-            if (Time.unscaledTime < _nextScan) return;
-            _nextScan = Time.unscaledTime + 0.25f;
-            Refresh();
+            if (Time.time < _nextScanAt) return;
+            _nextScanAt = Time.time + 0.35f;
+            ScanTreats();
         }
 
-        private void Refresh()
+        public void ScanTreats()
         {
-            bool visible = _game != null && _game.ActiveMissionVariant == GameManager.MissionVariant.BackyardRescue;
+            Sprite sprite = RuntimeArtSpriteFactory.Get(RuntimeArtSpriteFactory.RuntimeSpriteId.WeenieCollectible);
+            if (sprite == null) return;
+
             foreach (var treat in FindObjectsByType<Treat>(FindObjectsSortMode.None))
             {
-                var overlay = RuntimeArtSpriteFactory.AddOverlay(treat.transform, OverlayName, FinalGameplayArt.Weenie,
-                    Vector3.zero, Vector3.one * 1.15f, 14);
-                if (overlay != null) overlay.gameObject.SetActive(visible);
+                if (treat == null) continue;
+                int id = treat.GetInstanceID();
+                if (_enhanced.Contains(id)) continue;
+
+                var overlay = treat.GetComponent<ArtSpriteOverlay>() ?? treat.gameObject.AddComponent<ArtSpriteOverlay>();
+                overlay.Init(sprite, new Vector3(0f, 0f, -0.22f), new Vector3(0.032f, 0.032f, 1f), 31, new Color(1f, 1f, 1f, 0.94f), true);
+                _enhanced.Add(id);
+                EnhancedTreatCount++;
             }
         }
     }

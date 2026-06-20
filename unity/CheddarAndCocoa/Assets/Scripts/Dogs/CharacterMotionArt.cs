@@ -13,7 +13,7 @@ namespace CheddarAndCocoa.Dogs
         {
             string dogName = dog == DogId.Cheddar ? "cheddar" : "cocoa";
             string folder = dog == DogId.Cheddar ? "Cheddar" : "Cocoa";
-            return $"{FinalGameplayArt.Root}Characters/Dogs/{folder}/Motion/" +
+            return $"{FinalGameplayArt.Root}/Characters/Dogs/{folder}/Motion/" +
                    $"{dogName}_{clip.ToString().ToLowerInvariant()}_{facing.ToString().ToLowerInvariant()}_{Mathf.Max(0, frame):00}";
         }
 

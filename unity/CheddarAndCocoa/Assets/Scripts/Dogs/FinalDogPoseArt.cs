@@ -1,27 +1,43 @@
-using UnityEngine;
 using CheddarAndCocoa.Game;
+using UnityEngine;
 
 namespace CheddarAndCocoa.Dogs
 {
-    /// <summary>Maps dog identity/pose state to extracted transparent final sprite resources.</summary>
+    /// <summary>
+    /// Stable Resources path contract for final transparent Cheddar/Cocoa gameplay pose sprites.
+    /// </summary>
     public static class FinalDogPoseArt
     {
-        public static Sprite For(DogId dog, DogReadabilityFeedback.Pose pose)
+        public const string Root = "ArenaFinal/Characters/Dogs";
+
+        public static string PathFor(DogId dog, DogReadabilityFeedback.Pose pose)
         {
-            string dogPath = dog == DogId.Cheddar ? "Cheddar/cheddar_" : "Cocoa/cocoa_";
-            string posePath = pose switch
+            string folder = dog == DogId.Cheddar ? "Cheddar" : "Cocoa";
+            string prefix = dog == DogId.Cheddar ? "cheddar" : "cocoa";
+            return $"{Root}/{folder}/{prefix}_{PoseSuffix(pose)}";
+        }
+
+        public static Sprite Load(DogId dog, DogReadabilityFeedback.Pose pose)
+        {
+            return Resources.Load<Sprite>(PathFor(dog, pose));
+        }
+
+        /// <summary>Compatibility alias for the motion layer; identical to <see cref="Load"/>.</summary>
+        public static Sprite For(DogId dog, DogReadabilityFeedback.Pose pose) => Load(dog, pose);
+
+        private static string PoseSuffix(DogReadabilityFeedback.Pose pose)
+        {
+            switch (pose)
             {
-                DogReadabilityFeedback.Pose.Idle => "idle",
-                DogReadabilityFeedback.Pose.Run => "run",
-                DogReadabilityFeedback.Pose.Bark => "bark",
-                DogReadabilityFeedback.Pose.Tug => "tug",
-                DogReadabilityFeedback.Pose.Stunned => "stunned",
-                DogReadabilityFeedback.Pose.Rescued => "rescued",
-                DogReadabilityFeedback.Pose.Proud => "proud",
-                DogReadabilityFeedback.Pose.Sad => "sad",
-                _ => "idle"
-            };
-            return FinalGameplayArt.Load($"{FinalGameplayArt.Root}Characters/Dogs/{dogPath}{posePath}");
+                case DogReadabilityFeedback.Pose.Run: return "run";
+                case DogReadabilityFeedback.Pose.Bark: return "bark";
+                case DogReadabilityFeedback.Pose.Tug: return "tug";
+                case DogReadabilityFeedback.Pose.Stunned: return "stunned";
+                case DogReadabilityFeedback.Pose.Rescued: return "rescued";
+                case DogReadabilityFeedback.Pose.Proud: return "proud";
+                case DogReadabilityFeedback.Pose.Sad: return "sad";
+                default: return "idle";
+            }
         }
     }
 }

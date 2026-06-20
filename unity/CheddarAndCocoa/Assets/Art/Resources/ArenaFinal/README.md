@@ -1,13 +1,69 @@
-# ArenaFinal Runtime Sprites
+# ArenaFinal Runtime Art
 
-This folder contains individual transparent gameplay sprites generated from the repository's existing draft art. Do not place source sheets here.
+Drop final transparent PNG gameplay sprites here when they are ready. Files under this `Resources/ArenaFinal` tree are preferred by `FinalGameplayArt`, `FinalDogPoseArt`, `RuntimeArtSpriteFactory`, and `ArenaDogPoseSprites` before draft-sheet crops.
 
-Regenerate the sprites and source inventory from the repository root:
+Expected paths:
 
-```sh
-python3 tools/art/export_arena_final.py
+```text
+ArenaFinal/
+  Characters/
+    Dogs/
+      Cheddar/
+        cheddar_idle.png
+        cheddar_run.png
+        cheddar_bark.png
+        cheddar_tug.png
+        cheddar_stunned.png
+        cheddar_rescued.png
+        cheddar_proud.png
+        cheddar_sad.png
+      Cocoa/
+        cocoa_idle.png
+        cocoa_run.png
+        cocoa_bark.png
+        cocoa_tug.png
+        cocoa_stunned.png
+        cocoa_rescued.png
+        cocoa_proud.png
+        cocoa_sad.png
+    Squirrel/
+      squirrel_idle.png
+      squirrel_steal.png
+      squirrel_scared.png
+    Eagle/
+      eagle_threat.png
+      eagle_action.png
+    Coyote/
+      coyote_threat.png
+  Props/
+    Backyard/
+      bush.png
+      fence_section.png
+      rock.png
+      grass_patch.png
+      dig_spot.png
+    Mission/
+      rope_tug.png
+      rope_complete.png
+      weenie_collectible.png
+      dog_bowl.png
+  VFX/
+    bark_burst.png
+    bark_ring.png
+    pickup_sparkle.png
+    success_pop.png
+    warning_alert.png
+    rescue_burst.png
+    fail_puff.png
 ```
 
-Unity imports these PNGs as single sprites at 256 pixels per unit, with input alpha, transparency processing, bilinear filtering, no mipmaps, and high-quality compression. Unity's default tight sprite mesh is retained. Runtime code must treat these sprites as cosmetic overlays: generated objects and colliders remain the gameplay authority, and missing sprites must fall back safely.
+Import guidance:
 
-See `docs/ART-INTEGRATION-SLICE.md` for the live mappings, source limitations, and review checklist.
+- Texture Type: Sprite (2D and UI)
+- Alpha Source: Input Texture Alpha
+- Mesh Type: Tight where safe, Full Rect if slicing creates artifacts
+- Pixels Per Unit: tune visually, but keep RuntimeArtSpriteFactory overlay scales stable after final art lands
+- Background: transparent, not keyed white
+- Crop: tight around the gameplay object, not a full design sheet
+
+Do not place pose/expression sheets here. This folder is for individual runtime sprites only.

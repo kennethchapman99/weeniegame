@@ -76,8 +76,9 @@ namespace CheddarAndCocoa.Bootstrap
                 new[] { cheddar.GetComponent<GamepadPlayerInput>(), cocoa.GetComponent<GamepadPlayerInput>() },
                 _square, _ring, bounds, treatSeed);
 
-            game.gameObject.AddComponent<BackyardRescueArtEnhancer>().Init(game);
-            game.gameObject.AddComponent<DynamicTreatArtEnhancer>().Init(game);
+            // Origin's enhancers self-wire (Start coroutine / scene hook); just guarantee presence here.
+            game.gameObject.AddComponent<BackyardRescueArtEnhancer>();
+            game.gameObject.AddComponent<DynamicTreatArtEnhancer>();
             game.gameObject.AddComponent<FinalJuiceEffect>().Init(game);
             ArenaArtReviewCapture.TryAttach(game);
 
