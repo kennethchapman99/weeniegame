@@ -109,6 +109,17 @@ namespace CheddarAndCocoa.Game
             return "Under The Table";
         }
 
+        public static string BuildSwitcherooSummary(CoopBaitSwitchPuzzle state)
+        {
+            if (state.Solved)
+                return "Switcheroo Pulled";
+
+            if (state.Backfires > 0)
+                return "Squirrel Wised Up";
+
+            return "Working The Bait";
+        }
+
         public static string BuildPatrolSummary(PatrolDefenseMissionState state)
         {
             if (state.FinalPressureComplete)

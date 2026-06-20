@@ -4,9 +4,10 @@ Companion to `COOP-PUZZLE-DESIGN.md` (the doctrine). That doc says *what* a co-o
 
 All primitives are **pure logic** (no `MonoBehaviour`), in `CheddarAndCocoa.Game`, so a mission drives them from real dog positions/inputs while PlayMode tests drive them deterministically. Each has scene-free unit tests under `Assets/Tests/PlayMode/`. Roles are soft — either dog can take either side; defaults below are for comedy/clarity, not hard locks.
 
-> Status: all primitives **and** a position/input driver each landed on branch `claude/post-art-followups`, full PlayMode suite green. Two beats are now **wired into real missions**, proving the end-to-end integration pattern: a primitive field on `GameManager`, a `BeginRound` setup block, a `Tick*` driving it from dog positions, `Force*` test hooks, per-dog guidance, and a `MissionDefinition`. Wiring the rest is the same shape.
+> Status: all primitives **and** a position/input driver each landed on branch `claude/post-art-followups`, full PlayMode suite green. Three beats are now **wired into real missions**, proving the end-to-end integration pattern: a primitive field on `GameManager`, a `BeginRound` setup block, a `Tick*` driving it from dog positions, `Force*` test hooks, per-dog guidance, and a `MissionDefinition`. Wiring the rest is the same shape.
 > - **Gate Crash** (Hold-and-Release): Cocoa anchors the gate, Cheddar squeezes through; let go mid-squeeze and it snaps.
 > - **Table Stealth** (Human-Distraction): Cocoa flops belly-up to hold the human's gaze while Cheddar sneaks the dropped steak; sneak while the human is watching and you get spotted.
+> - **The Ol' Switcheroo** (Bait-and-Switch): Cheddar feints at a decoy nut pile to commit the squirrel off its buried stash; Cocoa raids the stash only while the squirrel is committed. Hold the feint too long and the squirrel wises up (backfire).
 
 ## The toolkit
 
@@ -21,6 +22,7 @@ All primitives are **pure logic** (no `MonoBehaviour`), in `CheddarAndCocoa.Game
 | `CoopStretchSpanPuzzle` | #5 long-dog geometry / bridge | **Two-body spacing band**: both dogs stretch a span (blanket / long-dog bridge); usable only when their **separation** is in band (too close `Slack`, too far `Overstretched`) and the **midpoint** is under the target | Over-stretching **Rips** (once per event); slack/off-centre/ripped = **Missed** catch |
 | `CoopChaosMachinePuzzle` | #10 cooperative chaos machine | Pre-position, pull the lever, and the **cascade runs itself** through junctions; it only rolls on while each junction's helper dog is in its **assist window** | A missing helper **misfires** and the machine **stalls visibly** at that stage (`StalledStage`); re-trigger resumes from there |
 | `CoopSocialManipulationPuzzle` | #9 social manipulation | A human reads an **exact combination** of stimuli (door-stare, present-leash, …) drawn from **both** dogs — neither can send the message alone | Wrong/incomplete combo builds `Confusion` (faster with an off-message stimulus); maxed → the human **Misreads** (brings the wrong thing) and resets |
+| `CoopBaitSwitchPuzzle` | #4 bait-and-switch + #7 readable deception | **Commitment + overbait hold**: the baiter feints an enemy onto a decoy; the striker's snatch lands anywhere in the **Committed** band (threshold→full), so the baiter commits then feathers rather than pinning, and the striker reads the window | Under-bait = **Whiff** (enemy still guarding); *holding* the pin at full past the overbait tolerance → enemy wises up / Cheddar takes his own bait = **Backfire** (window snaps shut) |
 
 Each primitive also ships a `MonoBehaviour` **driver** that turns it into an in-scene beat:
 
@@ -33,8 +35,9 @@ Each primitive also ships a `MonoBehaviour` **driver** that turns it into an in-
 - `CoopStretchSpanBeat` — two-transform geometry (separation + midpoint from both dogs; mission calls `CatchItem` at catch height).
 - `CoopChaosMachineBeat` — junction positions + per-stage owner; `Trigger` pulls the lever, the cascade rolls while each junction's helper is in range.
 - `CoopSocialManipulationBeat` — stimulus stations + owner; a stimulus is active while its owner dog stands at its station, so the required combo needs both dogs in place.
+- `CoopBaitSwitchBeat` — proximity feint (baiter inside `BaitRange` of the decoy spot raises the enemy's commitment; back off and it decays); mission calls `StrikeTarget` when the striker reaches the real prize.
 
-This now covers the doctrine's full puzzle-family taxonomy (#1–#10).
+This now covers the doctrine's full puzzle-family taxonomy (#1–#10), including the previously-missing #4 bait-and-switch / readable-deception beat.
 
 These give missions a template for every interaction style (continuous, discrete-interact, input-event).
 
@@ -46,6 +49,7 @@ Artwork the beats need (poses, VFX, human states, markers) is catalogued in `COO
 - **DistractSneak**: `Configure(segments, segmentTime)`; `Advance(dt, distracting, sneaking)`; read `Segment/Solved/Spotted/Watchfulness/Annoyance`. Checkpoints are safe; only an **exposed** sneaker is spotted.
 - **SequenceChain**: `Configure(ChainActor[] owners, settleTime)`; `TryStep(ChainActor)`; `Advance(dt)`; read `Step/Solved/Fumbles/Settles/NextOwner`. `settleTime <= 0` disables regression.
 - **RescueTiming**: `Configure(pullsNeeded, windowDuration)`; `Wiggle()` (held dog); `Pull()` (free dog); `Advance(dt)`; read `Freed/Pulls/MissedPulls/WindowOpen`.
+- **BaitSwitch**: `Configure(commitThreshold, commitRate, decayRate, overbaitTolerance, hitsNeeded, maxBackfires)`; `Advance(dt, baiting)` (baiter feints); `Strike()` (striker snatches); read `Committed/Overbaited/Hits/Whiffs/Backfires/Solved/TooManyBackfires`. The strike window is the whole `Committed` band; only *holding* commitment pinned at full past `overbaitTolerance` backfires, so the baiter commits then eases off.
 
 ## Recommended mission wiring (from the doctrine's example upgrades)
 
@@ -53,6 +57,7 @@ Artwork the beats need (poses, VFX, human states, markers) is catalogued in `COO
 - **Snack Heist → table stealth** (`CoopDistractSneakPuzzle`): Cheddar distracts the table-watcher; Cocoa sneaks the snack along a safe lane in segments. Over-bark and the human turns; go quiet and they look back.
 - **Coyotes at the Fence → repair contraption** (`CoopSequenceChainPuzzle`): owners `[Cocoa bark-pin, Cheddar dig/fill, Cocoa tug board across]`; dawdle and the dirt settles back.
 - **Eagle Shadow Panic → real rescue** (`CoopRescueTimingPuzzle`): the snatched dog wiggles to crack the talon grip; the free dog pulls in the window. Replaces proximity-only bark rescue.
+- **Squirrel Conspiracy → the ol' switcheroo** (`CoopBaitSwitchPuzzle`): Cheddar feints a chase to lure the squirrel onto a decoy nut pile while Cocoa raids the real buried stash — but only while the squirrel is committed. Over-feint and the squirrel bolts (or Cheddar chases his own decoy) and the window snaps shut.
 
 ## Integration checklist (per mission)
 

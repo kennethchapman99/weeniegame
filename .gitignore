@@ -5,6 +5,9 @@ dist/
 .vite/
 coverage/
 
+# Large local art-reference capture pack (raw Insta360 backyard stills, ~1.7GB) - reference only, not a build input
+MAPS - template/
+
 # Transient Unity PlayMode test output (committed snapshot lives in unity/test-results/)
 unity/playmode-results.xml
 unity/local-builds/

@@ -230,7 +230,7 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(game);
             Assert.IsTrue(game.MissionSelectVisible);
             Assert.AreEqual(GameManager.FlowState.MissionSelect, game.CurrentFlow);
-            Assert.AreEqual(14, game.MissionSelectOptionCount);
+            Assert.AreEqual(15, game.MissionSelectOptionCount);
             Assert.AreEqual(GameManager.MissionVariant.BackyardRescue, game.SelectedMissionVariant);
             Assert.AreEqual("Backyard Rescue", game.SelectedMissionName);
             Assert.That(game.ObjectiveLabel, Does.Contain("Choose a mission"));
@@ -783,19 +783,20 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(game);
             Assert.IsTrue(game.MissionSelectVisible);
 
-            // The selector is rendered as two columns of seven (14 missions). Directional navigation
-            // must match that visible grid instead of walking one linear list in every direction.
-            game.SelectMission(GameManager.MissionVariant.BackyardRescue); // top-left
+            // The selector is rendered as two columns of eight (15 missions: column 0 holds indices 0-7,
+            // column 1 holds 8-14). Directional navigation must match that visible grid instead of
+            // walking one linear list in every direction.
+            game.SelectMission(GameManager.MissionVariant.BackyardRescue); // top-left (index 0)
             game.SelectMissionRight();
-            Assert.AreEqual(GameManager.MissionVariant.ScentSearch, game.SelectedMissionVariant);
+            Assert.AreEqual(GameManager.MissionVariant.ThunderstormComfort, game.SelectedMissionVariant); // index 8
             game.SelectMissionBelow();
-            Assert.AreEqual(GameManager.MissionVariant.ThunderstormComfort, game.SelectedMissionVariant);
+            Assert.AreEqual(GameManager.MissionVariant.MarkTheYard, game.SelectedMissionVariant); // index 9
             game.SelectMissionLeft();
-            Assert.AreEqual(GameManager.MissionVariant.SnackHeist, game.SelectedMissionVariant);
+            Assert.AreEqual(GameManager.MissionVariant.SnackHeist, game.SelectedMissionVariant); // index 1
             game.SelectMissionAbove();
-            Assert.AreEqual(GameManager.MissionVariant.BackyardRescue, game.SelectedMissionVariant);
+            Assert.AreEqual(GameManager.MissionVariant.BackyardRescue, game.SelectedMissionVariant); // index 0
             game.SelectMissionAbove();
-            Assert.AreEqual(GameManager.MissionVariant.WeenieRoundup, game.SelectedMissionVariant,
+            Assert.AreEqual(GameManager.MissionVariant.ScentSearch, game.SelectedMissionVariant, // wraps to index 7
                 "Vertical navigation should wrap within the visible column.");
 
             game.SelectMission(GameManager.MissionVariant.BackyardRescue);
@@ -849,7 +850,7 @@ namespace CheddarAndCocoa.Tests
 
             Assert.AreEqual(GameManager.FlowState.MissionSelect, game.CurrentFlow);
             Assert.IsTrue(game.MissionSelectVisible);
-            Assert.AreEqual(14, game.MissionSelectOptionCount);
+            Assert.AreEqual(15, game.MissionSelectOptionCount);
             Assert.That(game.ObjectiveLabel, Does.Contain("Choose a mission"));
             Assert.IsTrue(LogContains(game, "MissionSelect: Backyard Rescue"));
 
