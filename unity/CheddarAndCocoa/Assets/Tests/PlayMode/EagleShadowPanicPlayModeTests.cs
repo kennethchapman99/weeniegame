@@ -61,12 +61,13 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(0, game.EagleShadowPanicState.Exposures);
             Assert.IsTrue(game.EagleShadowPanicState.RescueObjectiveActive);
             Assert.Greater(game.Score, scoreBeforeHides, "Safe hides should award score, not penalize.");
-            Assert.That(game.ObjectiveLabel, Does.Contain("rescue the toy"));
+            Assert.That(game.ObjectiveLabel, Does.Contain("snatched Cheddar"));
 
             game.ForceEagleShadowRescue(DogId.Cocoa);
             yield return null;
 
             Assert.IsTrue(game.EagleShadowPanicState.RescueComplete);
+            Assert.IsTrue(game.EagleRescuePuzzle.Freed);
             Assert.That(game.ObjectiveLabel, Does.Contain("United-front"));
 
             game.ForceEagleShadowUnitedFront();
@@ -78,6 +79,57 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(game.RuntimeSnapshot.IsComplete);
             Assert.IsTrue(game.RuntimeSnapshot.IsClear);
             Assert.That(game.EndSummaryLabel, Does.Contain("Backyard Defenders"));
+        }
+
+        [UnityTest]
+        public IEnumerator EagleShadowPanic_Rescue_WiggleOpensWindow_PullInWindowFreesHim()
+        {
+            yield return LoadArena();
+            var game = _game;
+
+            game.StartMission(GameManager.MissionVariant.EagleShadowPanic);
+            yield return null;
+            game.ForceEagleShadowSafeHide();
+            game.ForceEagleShadowSafeHide();
+            yield return null;
+            Assert.IsTrue(game.EagleShadowPanicState.RescueObjectiveActive);
+
+            int needed = game.EagleRescuePuzzle.PullsNeeded;
+            for (int i = 0; i < needed; i++)
+            {
+                game.ForceEagleShadowWiggle();              // Cheddar cracks the grip open
+                Assert.IsTrue(game.EagleRescuePuzzle.WindowOpen);
+                game.ForceEagleShadowPull();                // Cocoa pulls in the window
+            }
+
+            Assert.AreEqual(needed, game.EagleRescuePuzzle.Pulls);
+            Assert.AreEqual(0, game.EagleRescuePuzzle.MissedPulls);
+            Assert.IsTrue(game.EagleRescuePuzzle.Freed);
+            Assert.IsTrue(game.EagleShadowPanicState.RescueComplete);
+        }
+
+        [UnityTest]
+        public IEnumerator EagleShadowPanic_Rescue_PullWithNoWindow_IsAMistimedMiss()
+        {
+            yield return LoadArena();
+            var game = _game;
+
+            game.StartMission(GameManager.MissionVariant.EagleShadowPanic);
+            yield return null;
+            game.ForceEagleShadowSafeHide();
+            game.ForceEagleShadowSafeHide();
+            yield return null;
+
+            // Wiggle to open the window, then let it fully re-tighten before pulling.
+            game.ForceEagleShadowWiggle();
+            game.ForceEagleRescueAdvance(5f);
+            Assert.IsFalse(game.EagleRescuePuzzle.WindowOpen);
+            game.ForceEagleShadowPull();
+
+            Assert.AreEqual(0, game.EagleRescuePuzzle.Pulls);
+            Assert.AreEqual(1, game.EagleRescuePuzzle.MissedPulls);
+            Assert.IsFalse(game.EagleRescuePuzzle.Freed);
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, game.Outcome);
         }
 
         [UnityTest]

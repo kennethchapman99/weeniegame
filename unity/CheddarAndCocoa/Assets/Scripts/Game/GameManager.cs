@@ -150,6 +150,8 @@ namespace CheddarAndCocoa.Game
         public Vector2[] SquirrelCutoffZones => (Vector2[])_squirrelCutoffZones.Clone();
         public Vector2 ActiveSquirrelCutoffZone => _squirrelCutoffZones[Mathf.Clamp(_herdingState.RouteIndex, 0, _squirrelCutoffZones.Length - 1)];
         public ThreatSweepMissionState EagleShadowPanicState => _threatSweepState;
+        public CoopRescueTimingPuzzle EagleRescuePuzzle => _eagleRescue;
+        public Vector2 EagleSnatchPosition => _eagleSnatchPosition;
         public PatrolDefenseMissionState CoyotesFenceState => _patrolState;
         public Vector2[] EagleCoverZones => (Vector2[])_eagleCoverZones.Clone();
         public Vector2[] FenceGaps => (Vector2[])_fenceGaps.Clone();
@@ -344,13 +346,23 @@ namespace CheddarAndCocoa.Game
         private const int ShadowSweepCount = 4;
         private const int EagleRequiredHides = 2;
         private const int EagleMaxExposures = 3;
+        // Eagle Shadow Panic rescue phase (Rescue-Timing co-op puzzle): after the hides, the eagle SNATCHES
+        // Cheddar into its talons. The held dog (Cheddar) wiggles (Tug/Rescue button) to crack the grip and
+        // open a brief window; the free dog (Cocoa) pulls in that window to yank him down. Pulling with no
+        // window open is a mistimed miss (recoverable). Enough well-timed pulls free him -> united front.
+        private readonly CoopRescueTimingPuzzle _eagleRescue = new CoopRescueTimingPuzzle();
+        private Vector2 _eagleSnatchPosition;
+        private int _eagleRescuePullsSeen;
+        private int _eagleRescueMissesSeen;
+        private const int EagleRescuePulls = 3;
+        private const float EagleRescueWindow = 1.2f; // a wiggle cracks the grip open for this long
+        private const float EagleRescueRange = 3.5f;  // the free dog must be this close to pull
         private const int FenceGapCount = 4;
         private const int CoyoteRequiredRepairs = 3;
         private const int CoyoteMaxBreaches = 3;
         private const float EagleCoverRadius = 3f;
         private const float EagleShadowWidth = 3.5f;
         private Vector2 _stashPosition;
-        private Vector2 _toyRescuePosition;
         private Vector2 _fenceGapPosition;
         private bool _coyotePressureHeld;
         private readonly Vector2[] _eagleCoverZones = { new(-14f, -8f), new(14f, -8f), new(0f, 9f) };
@@ -983,10 +995,18 @@ namespace CheddarAndCocoa.Game
                 RegisterEagleShadowExposure();
         }
 
+        /// <summary>Test/convenience hook: run the full wiggle+pull rescue to free the snatched dog.</summary>
         public void ForceEagleShadowRescue(DogId dogId = DogId.Cheddar)
         {
-            if (MissionActive() && _mission != null && _mission.Variant == MissionVariant.EagleShadowPanic)
-                TryCompleteEagleShadowRescue(dogId, true);
+            if (!MissionActive() || _mission == null || _mission.Variant != MissionVariant.EagleShadowPanic) return;
+            if (!_threatSweepState.RescueObjectiveActive || _threatSweepState.RescueComplete) return;
+            int guard = 0;
+            while (!_eagleRescue.Freed && guard++ < 50)
+            {
+                _eagleRescue.Wiggle();   // crack the grip open
+                _eagleRescue.Pull();     // and pull within the window
+                HandleEagleRescueProgress();
+            }
         }
 
         public void ForceEagleShadowUnitedFront()
@@ -1098,7 +1118,6 @@ namespace CheddarAndCocoa.Game
             _patrolState.Reset();
             _coyotePressureHeld = false;
             _stashPosition = new Vector2(_bounds.xMax - 1.7f, _bounds.yMin + 1.7f);
-            _toyRescuePosition = new Vector2(_bounds.xMax - 1.7f, _bounds.yMin + 1.7f);
             _fenceGapPosition = _fenceGaps[0];
             _carryState.Reset();
             _scentState.Reset();
@@ -1166,11 +1185,14 @@ namespace CheddarAndCocoa.Game
             if (_mission.Variant == MissionVariant.EagleShadowPanic)
             {
                 PredatorObject.SetActive(true);
-                SquirrelObject.SetActive(true);
                 PlaceObject(PredatorObject, new Vector2(-(_bounds.xMax - 1.5f), _bounds.yMax - 2f));
-                PlaceObject(SquirrelObject, _toyRescuePosition);
                 SetActorState(PredatorObject, "EAGLE SHADOW SWEEP - HIDE IN COVER!", new Color(0.16f, 0.16f, 0.2f), 0.3f);
-                SetActorState(SquirrelObject, "TOY STUCK IN THE OPEN - RESCUE LATER", new Color(0.55f, 0.78f, 1f), 0.1f);
+                // The talon-grip indicator (reuses the squirrel actor) only appears once a dog is snatched.
+                _eagleSnatchPosition = new Vector2(0f, _bounds.yMax - 2f);
+                if (SquirrelObject != null) SquirrelObject.SetActive(false);
+                _eagleRescue.Reset();
+                _eagleRescuePullsSeen = 0;
+                _eagleRescueMissesSeen = 0;
                 _eagleSweepDir = 1;
                 SetEagleCoverMarkersActive(true);
             }
@@ -3248,7 +3270,10 @@ namespace CheddarAndCocoa.Game
 
         private void TickThreatSweep()
         {
-            if (PredatorObject == null || _threatSweepState.RescueObjectiveActive || _threatSweepState.RescueComplete) return;
+            if (PredatorObject == null) return;
+            // Rescue phase: the eagle has snatched Cheddar - drive the wiggle/pull timing instead of sweeping.
+            if (_threatSweepState.RescueObjectiveActive && !_threatSweepState.RescueComplete) { TickEagleRescue(); return; }
+            if (_threatSweepState.RescueComplete) return; // freed; united-front phase, dogs roam
 
             var pos = PredatorObject.transform.position;
             float limit = _bounds.xMax - 1.5f;
@@ -3256,6 +3281,93 @@ namespace CheddarAndCocoa.Game
             if (pos.x >= limit) { pos.x = limit; _eagleSweepDir = -1; PredatorObject.transform.position = pos; EvaluateEagleShadowSweep(); return; }
             if (pos.x <= -limit) { pos.x = -limit; _eagleSweepDir = 1; PredatorObject.transform.position = pos; EvaluateEagleShadowSweep(); return; }
             PredatorObject.transform.position = pos;
+        }
+
+        private void StartEagleSnatchRescue()
+        {
+            _threatSweepState.StartRescue();
+            _eagleRescue.Configure(EagleRescuePulls, EagleRescueWindow);
+            _eagleRescuePullsSeen = 0;
+            _eagleRescueMissesSeen = 0;
+            // The eagle swoops to the snatch point with Cheddar in its talons.
+            if (PredatorObject != null) PlaceObject(PredatorObject, _eagleSnatchPosition + Vector2.up * 1.2f);
+            if (SquirrelObject != null)
+            {
+                SquirrelObject.SetActive(true);
+                PlaceObject(SquirrelObject, _eagleSnatchPosition);
+            }
+            AddScore(150, "SHADOW DISTRACTED");
+            LastFeedback = FeedbackKind.PartnerRescue;
+            LastCue = "The eagle SNATCHED Cheddar! Cheddar: wiggle (Tug/Rescue) to crack the grip. Cocoa: get close and pull him free in the window!";
+            UpdateEagleRescueVisuals();
+            LogPlaytestEvent("EagleSnatch", LastCue);
+        }
+
+        private void TickEagleRescue()
+        {
+            int held = IndexOfDog(DogId.Cheddar);
+            // Pin the snatched dog in the talons; the eagle hovers just above.
+            if (held >= 0)
+            {
+                _dogs[held].transform.position = _eagleSnatchPosition;
+                var body = _dogs[held].GetComponent<Rigidbody2D>();
+                if (body != null) body.linearVelocity = Vector2.zero;
+            }
+            if (PredatorObject != null) PlaceObject(PredatorObject, _eagleSnatchPosition + Vector2.up * 1.2f);
+
+            _eagleRescue.Advance(Time.deltaTime); // the cracked grip re-tightens as the window closes
+            UpdateEagleRescueVisuals();
+        }
+
+        private void UpdateEagleRescueVisuals()
+        {
+            if (SquirrelObject != null)
+                SetActorState(SquirrelObject,
+                    _eagleRescue.WindowOpen ? "GRIP CRACKED - COCOA PULL NOW!" : "TALON GRIP - CHEDDAR WIGGLE!",
+                    _eagleRescue.WindowOpen ? new Color(0.45f, 1f, 0.55f) : new Color(0.85f, 0.5f, 0.5f), 0.16f);
+        }
+
+        private void HandleEagleRescueProgress()
+        {
+            if (_eagleRescue.Pulls > _eagleRescuePullsSeen)
+            {
+                _eagleRescuePullsSeen = _eagleRescue.Pulls;
+                AddScore(ScoreEventCatalog.SafeHide.Points, "GOOD PULL");
+                LastFeedback = FeedbackKind.PartnerRescue;
+                LastCue = $"Heave! Cocoa cracked him loose a bit more. ({_eagleRescue.Pulls}/{_eagleRescue.PullsNeeded})";
+                SetJuice(JuiceFeedbackKind.SuccessPop, "HEAVE!");
+                SpawnWorldPop(_eagleSnatchPosition, "HEAVE!", new Color(0.5f, 0.95f, 0.55f));
+                LogPlaytestEvent("EagleRescuePull", $"{_eagleRescue.Pulls}/{_eagleRescue.PullsNeeded}");
+            }
+
+            if (_eagleRescue.MissedPulls > _eagleRescueMissesSeen)
+            {
+                _eagleRescueMissesSeen = _eagleRescue.MissedPulls;
+                LastFeedback = FeedbackKind.SquirrelStoleFood;
+                LastCue = "Mistimed pull - wait for Cheddar's wiggle to crack the grip first!";
+                SetJuice(JuiceFeedbackKind.WarningMiss, "MISTIMED!");
+                LogPlaytestEvent("EagleRescueMiss", $"{_eagleRescue.MissedPulls}");
+            }
+
+            if (_eagleRescue.Freed && !_threatSweepState.RescueComplete) CompleteEagleSnatchRescue();
+        }
+
+        private void CompleteEagleSnatchRescue()
+        {
+            _threatSweepState.CompleteRescue();
+            int held = IndexOfDog(DogId.Cheddar);
+            if (held >= 0) CreditDog(held);
+            AddScore(ScoreEventCatalog.ToyRescued.Points, "PARTNER RESCUED");
+            LastFeedback = FeedbackKind.PartnerRescue;
+            LastCue = "Cocoa yanked Cheddar free of the talons! Now form the united-front bark circle.";
+            if (PredatorObject != null) PlaceObject(PredatorObject, new Vector2(0f, _bounds.yMax + 2f));
+            if (SquirrelObject != null) { SetActorState(SquirrelObject, "CHEDDAR'S FREE! HUDDLE FOR THE UNITED FRONT!", new Color(0.45f, 1f, 0.65f), 0.12f); }
+            SetJuice(JuiceFeedbackKind.SuccessPop, "RESCUED!");
+            SpawnWorldPop(_eagleSnatchPosition, "RESCUED!", new Color(0.5f, 1f, 0.45f));
+            RequestAudioCue(ArenaFeedbackCatalog.TugRescueSuccess);
+            RequestRumble("eagle_partner_rescue", 0.32f, 0.6f, 0.2f);
+            LogPlaytestEvent("EaglePartnerRescued", LastCue);
+            LogObjectiveIfChanged();
         }
 
         private void RegisterEagleShadowSafeHide()
@@ -3276,11 +3388,7 @@ namespace CheddarAndCocoa.Game
 
             if (_threatSweepState.ReadyForRescue(EagleRequiredHides))
             {
-                _threatSweepState.StartRescue();
-                AddScore(150, "SHADOW DISTRACTED");
-                SetActorState(SquirrelObject, "TOY IN THE OPEN - ONE DISTRACTS, ONE RESCUES!", new Color(0.55f, 0.78f, 1f), 0.32f);
-                LastCue = "Shadow distracted! One dog holds the bark while the other rescues the toy.";
-                LogPlaytestEvent("EagleRescueObjective", LastCue);
+                StartEagleSnatchRescue();
             }
 
             LogObjectiveIfChanged();
@@ -3303,6 +3411,8 @@ namespace CheddarAndCocoa.Game
             else LogObjectiveIfChanged();
         }
 
+        // Rescue interact: the held dog (Cheddar) wiggles to crack the talon grip; the free dog (Cocoa)
+        // pulls in that window. Both come through the Tug/Rescue button via the shared interact path.
         private void TryCompleteEagleShadowRescue(DogId dogId, bool force = false)
         {
             int dogIndex = IndexOfDog(dogId);
@@ -3314,27 +3424,54 @@ namespace CheddarAndCocoa.Game
             }
             if (_threatSweepState.RescueComplete)
             {
-                MarkFailedInteraction(dogId, "toy already rescued");
-                return;
-            }
-            if (!force && Vector2.Distance(_dogs[dogIndex].transform.position, _toyRescuePosition) > 2f)
-            {
-                MarkFailedInteraction(dogId, "too far from the stranded toy");
+                MarkFailedInteraction(dogId, "Cheddar's already free");
                 return;
             }
 
-            _threatSweepState.CompleteRescue();
-            CreditDog(dogIndex);
-            AddScore(ScoreEventCatalog.ToyRescued.Points, ScoreEventCatalog.ToyRescued.Label);
-            LastFeedback = FeedbackKind.PartnerRescue;
-            LastCue = $"{DogName(_dogs[dogIndex])} rescued the toy! Now form the united-front bark circle.";
-            SetActorState(SquirrelObject, "TOY SAFE! NOW HUDDLE FOR THE UNITED FRONT!", new Color(0.45f, 1f, 0.65f), 0.12f);
-            SetJuice(JuiceFeedbackKind.SuccessPop, ScoreEventCatalog.ToyRescued.Label);
-            SpawnWorldPop(_toyRescuePosition, "TOY RESCUED!", new Color(0.5f, 1f, 0.45f));
-            RequestAudioCue(ArenaFeedbackCatalog.TugRescueSuccess);
-            RequestRumble("eagle_toy_rescue", 0.3f, 0.55f, 0.18f);
-            LogPlaytestEvent("EagleToyRescued", LastCue);
-            LogObjectiveIfChanged();
+            if (dogId == DogId.Cheddar)
+            {
+                // The snatched dog struggles, cracking the grip open for a moment.
+                _eagleRescue.Wiggle();
+                LastFeedback = FeedbackKind.SoloBark;
+                LastCue = "Cheddar wiggles - the grip cracks open! Cocoa, pull NOW!";
+                SetJuice(JuiceFeedbackKind.BarkBurst, "WIGGLE!");
+                UpdateEagleRescueVisuals();
+                return;
+            }
+
+            // Cocoa (the free dog) pulls - only lands while she's close enough to the talons.
+            if (!force && Vector2.Distance(_dogs[dogIndex].transform.position, _eagleSnatchPosition) > EagleRescueRange)
+            {
+                MarkFailedInteraction(dogId, "get closer to the talons to pull Cheddar free");
+                return;
+            }
+            _eagleRescue.Pull();
+            HandleEagleRescueProgress();
+        }
+
+        /// <summary>Test hook: the snatched dog wiggles to crack the grip open.</summary>
+        public void ForceEagleShadowWiggle()
+        {
+            if (!MissionActive() || _mission == null || _mission.Variant != MissionVariant.EagleShadowPanic) return;
+            _eagleRescue.Wiggle();
+            UpdateEagleRescueVisuals();
+        }
+
+        /// <summary>Test hook: the free dog pulls; only counts while the wiggle window is open.</summary>
+        public void ForceEagleShadowPull()
+        {
+            if (!MissionActive() || _mission == null || _mission.Variant != MissionVariant.EagleShadowPanic) return;
+            _eagleRescue.Pull();
+            HandleEagleRescueProgress();
+            if (Phase != State.GameOver) CheckClear();
+        }
+
+        /// <summary>Test hook: let the cracked grip re-tighten (the wiggle window closes).</summary>
+        public void ForceEagleRescueAdvance(float seconds)
+        {
+            if (!MissionActive() || _mission == null || _mission.Variant != MissionVariant.EagleShadowPanic) return;
+            _eagleRescue.Advance(seconds);
+            UpdateEagleRescueVisuals();
         }
 
         private void CompleteEagleShadowUnitedFront()
@@ -4208,7 +4345,7 @@ namespace CheddarAndCocoa.Game
             if (_mission.Variant == MissionVariant.EagleShadowPanic)
             {
                 if (_threatSweepState.RescueComplete) return "United-front bark circle: huddle close and bark together";
-                if (_threatSweepState.RescueObjectiveActive) return "Shadow distracted - rescue the toy in the open";
+                if (_threatSweepState.RescueObjectiveActive) return $"Eagle snatched Cheddar! Cheddar wiggle (Tug/Rescue), Cocoa pull in the window (pulls {_eagleRescue.Pulls}/{_eagleRescue.PullsNeeded})";
                 return $"Hide from the eagle shadow: safe hides {_threatSweepState.SafeHides}/{EagleRequiredHides}, exposures {_threatSweepState.Exposures}/{EagleMaxExposures}";
             }
             if (_mission.Variant == MissionVariant.CoyotesFence)
@@ -4846,7 +4983,7 @@ namespace CheddarAndCocoa.Game
                     {
                         Variant = MissionVariant.EagleShadowPanic,
                         Name = "Eagle Shadow Panic",
-                        IntroPrompt = "Cheddar + Cocoa must hide from the sweeping eagle shadow, rescue the stranded toy, and form a united-front bark circle.",
+                        IntroPrompt = "Cheddar + Cocoa must hide from the sweeping eagle shadow. Hide twice and the eagle swoops and SNATCHES Cheddar - he wiggles (Tug/Rescue) to crack the talon grip while Cocoa pulls him free in the window. Then form a united-front bark circle to drive the eagle off.",
                         ReadyScoreLabel = "READY TO DODGE THE SHADOW",
                         ItemRootName = "Shadow Cover",
                         ItemObjectName = "Cover Spot",
@@ -6020,8 +6157,18 @@ namespace CheddarAndCocoa.Game
                 case MissionVariant.EagleShadowPanic:
                     if (_threatSweepState.RescueObjectiveActive && !_threatSweepState.RescueComplete)
                     {
-                        target = SquirrelObject != null ? SquirrelObject.transform : null;
-                        copy = "RESCUE TOY";
+                        // Cheddar is the one snatched (wiggle in place); Cocoa is pointed at the talons to pull.
+                        if (IndexOfDog(DogId.Cheddar) == dogIndex)
+                        {
+                            target = null;
+                            copy = "WIGGLE!";
+                        }
+                        else
+                        {
+                            target = SquirrelObject != null ? SquirrelObject.transform : null;
+                            copy = "PULL HIM FREE";
+                            hideDistance = EagleRescueRange;
+                        }
                     }
                     else if (_threatSweepState.RescueComplete)
                     {
