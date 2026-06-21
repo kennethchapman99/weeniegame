@@ -1,5 +1,8 @@
 # NPC and Human Framework
 
+> **Status: DEFERRED REFERENCE.** Operation Pee Break may use only the human behavior required by
+> its accepted spec and controller; broader NPC framework work waits for the deep-slice gate.
+
 Humans should feel like readable systems, not random obstacles.
 
 ## Human Types

@@ -3,7 +3,7 @@
 > Reviewer brief: a senior co-op designer/engineer reviewed the repo for whether it can become a
 > production-level couch co-op experience with the **soul and whimsy** of *It Takes Two* /
 > *Split Fiction* — explicitly **not** chasing their 3D production scale. This doc is the honest
-> verdict and the pivot. It supersedes the "20-mission breadth" direction implied by the current
+> verdict and the pivot. It supersedes the broad-mission direction implied by the current
 > `GameManager` and several planning docs.
 
 ## The one-paragraph verdict
@@ -11,8 +11,9 @@
 The engineering hygiene is genuinely good (87 passing PlayMode tests, clean reusable co-op puzzle
 primitives that are actually wired to live dog positions). The co-op *design thinking* — forced
 interdependence, role-lock, asymmetry, funny recoverable failure — is the hard part, and it's
-already here. **The problem is not the medium and not 3D. The problem is breadth.** Twenty
-60–90-second score-attack rounds crammed into one 7,238-line `GameManager.cs` is the single biggest
+already here. **The problem is not the medium and not 3D. The problem is breadth.** Many
+60–90-second score-attack rounds crammed into one `GameManager.cs` that is nearly 8,000 lines as of
+2026-06-20 is the single biggest
 enemy of soul this project has. Whimsy does not live in a mission *count*; it lives in **depth,
 specificity, surprise, personal jokes, animation/sound charm, and failure that's funny instead of
 punishing.** The pivot is: stop adding missions, pick ONE, and make it deep and alive.
@@ -33,11 +34,12 @@ unbuilt while the repo accumulated 20 thin rounds.** That's the pivot in one sen
 
 ## What to STOP
 
-1. **Stop adding missions.** Twenty shallow missions is breadth theater. It feels like progress
+1. **Stop adding missions.** Twenty-one mission variants is breadth theater. It feels like progress
    (commits! tests!) but it dilutes the game. Freeze the mission roster.
 2. **Stop measuring against Hazelight's *production*.** You correctly don't care about 3D. Drop the
    comparison to their scale and keep only the comparison to their *craft of a single beat*.
-3. **Stop expanding `GameManager.cs`.** It is a 7,238-line god class holding 20 missions of state.
+3. **Stop expanding `GameManager.cs`.** As of 2026-06-20 it is 7,954 lines and holds state and
+   branches for 21 mission variants.
    Every new mission there raises the "brace/scope drift" risk CLAUDE.md already warns about.
 
 ## What to DO — go deep on ONE slice
@@ -52,9 +54,8 @@ be proud to put in front of Sue cold. Recommendation: **Operation Pee Break** (f
 - "Humans are puzzle systems" is whimsy-dense and *cannot* exist in a generic platformer — it's
   uniquely yours.
 
-(If you'd rather lead with food chaos, **Kitchen Falling Food Frenzy** is the strong alternate; it
-leans on Cheddar/Cocoa asymmetry — barf vs. steady — instead of social manipulation. Pick one. Not
-both. Not yet.)
+Kitchen Falling Food Frenzy is already implemented. It now serves as the first behavior-preserving
+controller extraction before Pee Break, not as an alternate new-slice choice.
 
 ### The depth bar (acceptance for "deep enough")
 
@@ -71,16 +72,17 @@ If a slice can't fill all five, it's a round, not a chapter.
 
 ## The architecture fix that protects the soul
 
-Soul dies in a god class because nobody dares add the weird, specific, hand-tuned beat to a
-7,000-line file. Decomposition isn't bureaucracy here — it's what makes whimsy *cheap to add*.
+Soul dies in a god class because nobody dares add the weird, specific, hand-tuned beat to a file
+that was nearly 8,000 lines on 2026-06-20. Decomposition isn't bureaucracy here — it's what makes
+whimsy *cheap to add*.
 
 ### `GameManager.cs` decomposition plan (incremental, test-green at every step)
 
 The half-built data-driven framework already points the way. Target shape:
 
 ```
-GameManager (thin)                  ~400 lines — flow state, mission select, shared score/HUD wiring
-  └─ IMissionController (interface) Start(), Tick(dt), ForceAdvance(seconds) [test hook], Outcome
+GameManager                         orchestration, mission select, session flow, shared-service wiring
+  └─ IMissionController (interface) setup, state, Tick(dt), input, cleanup, Outcome, snapshots
        ├─ BackyardRescueMission
        ├─ KitchenFrenzyMission
        ├─ PeeBreakMission           ← the deep slice lives in its OWN file, ~300-600 lines
@@ -89,22 +91,22 @@ GameManager (thin)                  ~400 lines — flow state, mission select, s
        ├─ Co-op puzzle primitives (CoopHoldRelease/BaitSwitch/ScentRelay/… — keep as-is, they're good)
        ├─ DogController / DogReadabilityFeedback (keep)
        ├─ ArenaHud / juice / camera (keep)
-       └─ MissionDefinition data (keep, but per-mission code owns the *behavior*)
+       └─ MissionDefinition data (outside GameManager; per-mission code owns the *behavior*)
+  └─ controller registry (outside GameManager)
 ```
 
 **Migration recipe (one mission at a time, never a big-bang rewrite):**
 
-1. Define `IMissionController` with the test hooks the PlayMode suite already calls
-   (`ForceAdvance(seconds)`, exposed puzzle state, `Outcome`).
-2. Move **one** mission's state + `Update` branch + helpers out of `GameManager` into its own
-   `*Mission.cs`. Point `GameManager` at it via the interface.
-3. Run the PlayMode suite. It must stay 87/87 green — the tests already pin this behavior, so they
-   are your safety net for the extraction.
-4. Repeat per mission. `GameManager` shrinks ~300–600 lines each pass.
-5. Stop when `GameManager` is just flow + shared wiring. Now adding a weird new beat touches ~one
-   small file, and the whimsy gets cheap again.
-
-Do step 1–3 for the **Pee Break** slice first, so the deep slice is *born* in the clean structure.
+1. After the baseline couch playtest and its critical fixes, define `IMissionController` and a
+   narrow `MissionContext`. Include only the shared services and test hooks a controller needs.
+2. Extract the **existing Kitchen mission first**: its setup, state, ticking, input handling,
+   cleanup, outcome, and snapshot. Put its definition and registration outside `GameManager`.
+3. Run the full PlayMode suite. Do not continue until it is green.
+4. Build Pee Break entirely through that proven controller structure.
+5. Continue extracting existing missions one at a time only when the active sequence calls for it,
+   and keep tests green after every extraction.
+6. Stop when ownership is correct: `GameManager` orchestrates and wires shared services; controllers
+   own mission behavior. No arbitrary line count defines completion.
 
 ## The thing you keep deferring (do it this week)
 
@@ -125,6 +127,6 @@ re-rank everything below.
 ## Bottom line
 
 You don't need 3D and you don't need Hazelight's budget to get their *soul*. You need **one deep,
-specific, funny, role-flipping, fully-juiced mission** instead of twenty thin ones — and a code
+specific, funny, role-flipping, fully-juiced mission** instead of many thin ones — and a code
 structure where adding the next weird joke costs an afternoon, not a god-class surgery. The
 foundation is real. Point it at depth.

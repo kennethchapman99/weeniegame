@@ -1,34 +1,40 @@
 # Next Production Slice
 
+> **Status: ACTIVE.** This document is aligned with the depth-first pivot and is not superseded.
+
 ## Current status
 
-**Kitchen Falling Food Frenzy is implemented and playtest-ready.** It is selectable in the Unity
-ArenaScene and includes Cheddar's explicit counter bark, readable pre-drop and landing telegraphs,
-Cocoa catch/dodge feedback, compact shared-camera staging, recoverable failures, and the coordinated
-GOOD → BAD → GOOD dinner-rush finale.
+Kitchen Falling Food Frenzy is implemented and playtest-ready. It is an existing slice and the
+first extraction candidate, not new gameplay scope. Operation Pee Break is the next authored deep
+slice, but it does not start until the baseline playtest, critical fixes, and controller boundary
+are complete.
 
-The production catalog exposes it as `kitchen_food_frenzy` through
-`ProductionMissionCatalog.KitchenFoodFrenzy`. Deterministic state and PlayMode coverage live in
-`KitchenFoodFrenzyMissionStateTests` and `KitchenFoodFrenzyPlayModeTests`; manual acceptance is in
-`docs/ARENA-PLAYABLE.md`.
+As of 2026-06-20, `GameManager.cs` is nearly 8,000 lines and declares 21 mission variants. Treat
+that as a date-stamped warning, not a permanent metric or a line-count target.
 
-## Immediate next gate
+## Canonical work sequence
 
-Run the deferred two-human couch playtest before adding another mission: two controllers, Ken and
-Sue, and at least 20 minutes across Backyard Rescue, Blanket Catch, and Kitchen Falling Food Frenzy.
-Record where role ownership, telegraphs, camera framing, and recovery are unclear or stop being fun.
-Use those observations to tune the existing slices.
+1. Run a baseline two-player couch playtest of the existing slices. Use two physical controllers
+   and include Backyard Rescue, Blanket Catch, and Kitchen Falling Food Frenzy.
+2. Address critical playtest findings before architecture or content work.
+3. Define `IMissionController` and a narrow `MissionContext` using the ownership boundary in
+   `ARCHITECTURE.md`.
+4. Extract the existing Kitchen mission first. Preserve behavior and keep the full PlayMode suite
+   green before proceeding.
+5. Build Operation Pee Break entirely through the new controller structure described in
+   `DEEP-SLICE-OPERATION-PEE-BREAK.md`.
+6. Run a second two-player couch playtest. This is the deep-slice acceptance gate; automated tests
+   cannot substitute for it.
+7. Keep the mission roster frozen until that gate passes.
 
-## Next authored deep slice
+## Architecture guardrails
 
-After the couch-playtest fixes, build **Operation Pee Break: The Teenager Phone Rescue** from
-`docs/DEEP-SLICE-OPERATION-PEE-BREAK.md`. Follow `docs/DESIGN-REVIEW-2026-06.md`: introduce the small
-mission-controller boundary with this slice instead of adding another large behavior branch to
-`GameManager`.
+- `GameManager` owns orchestration, mission selection, session flow, and shared-service wiring.
+- Controllers own mission-specific setup, state, ticking, input handling, cleanup, outcome, and
+  snapshots.
+- Mission definitions and controller registration live outside `GameManager`.
+- Migration is one mission at a time and test-green after every extraction.
+- Completion is defined by ownership and behavior, not an arbitrary line-count target.
 
-## Guardrails
-
-- The Unity project remains the only active codebase.
-- Keep placeholder art until the playtest proves where deliberate art work matters.
-- Preserve deterministic mission coverage and recoverable failure states.
-- Do not begin broad mission expansion before the couch-playtest findings are addressed.
+Broad roadmaps, backlog items, progression work, and additional mission ideas are deferred until
+the second couch-playtest gate passes.

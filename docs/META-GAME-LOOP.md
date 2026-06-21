@@ -1,5 +1,8 @@
 # Meta Game Loop
 
+> **Status: DEFERRED.** Meta-game expansion is frozen until Operation Pee Break passes its second
+> two-player couch-playtest gate. This document remains future design reference only.
+
 The game should reward replay without becoming a progression treadmill.
 
 ## Core Loop

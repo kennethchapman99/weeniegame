@@ -1,73 +1,55 @@
 # GameManager Wiring Guide
 
-This guide tells local agents exactly how to wire the production helpers into gameplay.
+> **Status: ACTIVE MIGRATION GUIDE.** Do not add mission-specific fields, switches, update branches,
+> input branches, helpers, outcomes, or snapshot construction directly to `GameManager`.
 
-## 1. Rank Calculation
+## Ownership boundary
 
-Current target:
-- Find duplicated rank/star logic in `GameManager`.
-- Replace it with `MissionRankCalculator.Calculate(...)`.
+`GameManager` wires shared services, selects a mission definition/controller pair, starts the
+controller, forwards lifecycle events, and manages session flow. It may wrap a controller snapshot
+with session-level information but does not inspect mission-specific state to build one.
 
-Acceptance:
-- Existing rank labels remain unchanged.
-- Existing star behavior remains unchanged.
-- Arena tests still pass.
+Controllers receive a narrow `MissionContext` and own their complete mission lifecycle.
+Definitions and registration live outside `GameManager`.
 
-## 2. Score Labels
+## Shared service wiring
 
-Current target:
-- Keep existing Backyard Rescue, Snack Heist, Sock Panic labels stable.
-- For new missions, use `ScoreEventCatalog` rather than raw strings.
+The context may expose narrow interfaces for:
 
-Example:
-- `ScoreEventCatalog.GoodHerd.Label`
-- `ScoreEventCatalog.Cutoff.Label`
-- `ScoreEventCatalog.FakeOut.Label`
+- dog state/input access;
+- scoring via the existing single mutation path;
+- HUD, objective, cue, event-log, and world-pop presentation;
+- audio and rumble requests;
+- deterministic seed/random access;
+- arena actor creation/cleanup;
+- shared session-safe clear/fail callbacks.
 
-Acceptance:
-- Score pop text remains readable.
-- Event log records the same label.
+Add only dependencies required by the extracted controller. Do not mirror every `GameManager`
+method or field into `MissionContext`.
 
-## 3. Runtime Snapshot
+## Existing production helpers
 
-Current target:
-- Add a method such as `BuildRuntimeSnapshot()` on `GameManager`.
-- Return `MissionRuntimeSnapshot` using current mission id, score, timer, objective progress, goal, mistake count, clear/fail flags.
+- Rank calculation and session-best bookkeeping remain shared orchestration concerns unless a
+  controller-specific rule proves otherwise.
+- Controllers emit score events using `ScoreEventCatalog` rather than raw duplicated labels.
+- Controllers produce `MissionRuntimeSnapshot` data from their own state.
+- Challenge evaluation consumes controller snapshots at the boundary; it does not read private
+  controller fields from `GameManager`.
+- Stable mission seeds are supplied through context and preserved on replay.
 
-Acceptance:
-- Tests can query mission state without scraping UI.
-- Challenge objectives can evaluate from snapshot.
+## Kitchen-first extraction
 
-## 4. Challenge Objectives
+1. Preserve the existing Kitchen definition, behavior, public test hooks, and seed/replay semantics.
+2. Move Kitchen setup, state, tick/input logic, cleanup, outcome, and snapshot into its controller.
+3. Register its definition and controller outside `GameManager`.
+4. Route existing selection/session flow to the controller without changing other missions.
+5. Run `./unity/run-playmode-tests.sh`; do not begin Pee Break until the full suite is green.
 
-Current target:
-- Add per-mission challenge objective specs.
-- Evaluate at end of round using `ChallengeObjectiveEvaluator`.
-- Add end-summary text for completed challenges later.
+## Acceptance
 
-First pass:
-- Squirrel Conspiracy: score 1500 and no fake-outs.
-- Eagle: no dog grabbed.
-- Coyote: no breaches.
-
-## 5. Mission Seeds
-
-Current target:
-- Use `MissionSeedGenerator.StableSeed(...)` when selecting layout/comedy variants.
-- Seed should include mission id, session mission count, and selected variant index.
-
-Acceptance:
-- PlayMode tests can force deterministic variants.
-- Replay with same seed resets the same layout.
-
-## 6. Production Tests
-
-Add or update tests whenever wiring changes.
-
-Required command:
-
-```sh
-./unity/run-playmode-tests.sh
-```
-
-Do not merge if existing missions regress.
+- Kitchen plays identically through the controller.
+- No new Kitchen-specific `GameManager` branch or state is introduced.
+- Replay and cleanup reset all controller-owned state.
+- Existing score, HUD, audio/rumble, session, and snapshot behavior remains stable.
+- Full PlayMode suite passes after the extraction and after every later mission migration.
+- Architecture completion is based on correct ownership, not a line-count target.

@@ -1,5 +1,8 @@
 # Launch Vertical Slice
 
+> **Status: DEFERRED ROADMAP.** This scope does not authorize new production work before Operation
+> Pee Break passes its second two-player couch-playtest gate. Follow `NEXT-PRODUCTION-SLICE.md`.
+
 Goal: define what is good enough for a public-quality demo.
 
 ## Required Missions

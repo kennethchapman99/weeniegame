@@ -1,5 +1,8 @@
 # Agent Sprint 01
 
+> **Status: COMPLETED / HISTORICAL.** This sprint landed in 2026-06. Do not execute its tasks or
+> follow-up recommendation. The active sequence is in `NEXT-PRODUCTION-SLICE.md`.
+
 Objective: land the first production mission.
 
 Duration:

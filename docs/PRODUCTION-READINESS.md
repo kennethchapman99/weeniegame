@@ -1,50 +1,47 @@
 # Production Readiness
 
-Status as of 2026-06-18: **local macOS release candidate ready; public release approval blocked on
-human validation and distribution credentials.**
+> **Status as of 2026-06-20: TECHNICAL READINESS EVIDENCE, NOT FUN READINESS.** Automated checks and
+> packaging can establish that the build runs consistently. They cannot establish that the game is
+> clear, funny, or worth replaying on the couch.
 
-## Verified automatically
+## Technical readiness already demonstrated
 
-- Unity 6 project compiles outside Safe Mode.
-- `87/87` PlayMode tests pass with no failures or skips.
-- All 12 missions start from mission select and have deterministic smoke/replay coverage.
-- P1/P2 controller ownership is isolated; one controller cannot drive both dogs.
-- Both dogs have complete keyboard move, bark, and interact paths.
-- Mission select, replay, next mission, session summary, New Session, and pause flows are covered.
-- Eight authored pose-atlas states are wired for both Cheddar and Cocoa, with generated fallback art.
-- Event SFX slots, rumble requests, and a looped backyard music bed follow the audio toggle.
-- Release build uses `com.kennethchapman.cheddarandcocoa`, version `0.1.0`, and a release player
-  rather than Unity development/debug options.
-- `./unity/validate-release.sh` runs tests, creates the release app, validates metadata, and boots the
-  packaged player for a startup smoke test.
-- Current release app is a universal `x86_64`/`arm64` macOS bundle, approximately `116 MB` on disk.
+- The Unity 6 project has compiled outside Safe Mode.
+- A date-stamped prior run reported 87/87 PlayMode tests passing with no failures or skips.
+- Mission select, input ownership, replay/next/session flow, pause, and deterministic mission smoke
+  coverage have automated checks.
+- A macOS release build, metadata validation, and packaged startup smoke path exist through
+  `./unity/validate-release.sh`.
+- Art/audio fallbacks and release identifiers are wired sufficiently for internal technical tests.
 
-## Required before a public demo
+These claims are snapshots, not promises that the current checkout is green. Re-run the commands
+before relying on them.
 
-These gates cannot be truthfully replaced by more headless automation:
+## Fun readiness gate
 
-1. Two new players complete a 20-minute blind couch session with two physical controllers.
-2. Record observations against the protocol in `docs/ARENA-PLAYABLE.md`, especially objective
-   comprehension, dog identity, bark usefulness, tug communication, and end-flow navigation.
-3. Visually approve every cropped dog pose in the packaged build at gameplay zoom; replace any
-   keyed-background halo with a native-alpha export.
-4. Replace or explicitly approve the generated event tones with recorded bark/UI/warning/success/
-   fail audio, then perform a speaker/headphone mix pass.
-5. Sign with the intended Developer ID/Steam identity and notarize as required. The local candidate
-   is structurally valid but ad-hoc signed (`TeamIdentifier` is absent).
-6. Upload through the intended distribution account and run the platform-specific install/launch/
-   controller test. Steam app/depot credentials are not stored in this repository.
+Fun readiness is blocked on human couch playtesting:
 
-## Commands
+1. Run a baseline two-player session with two physical controllers across the existing slices.
+2. Record confusion, role ownership, camera/readability failures, recovery friction, laughter, and
+   dead time using `ARENA-PLAYABLE.md`.
+3. Address critical findings.
+4. Complete the Kitchen-first controller extraction and build Operation Pee Break through it.
+5. Run a second two-player couch session focused on the deep slice.
+
+Operation Pee Break is not accepted because tests pass. The deep-slice gate passes only when the
+human session validates its teach/explore/twist/climax flow, funny failures, role reversal, and
+cathartic payoff. Keep the mission roster frozen until then.
+
+## Public distribution readiness
+
+Public distribution remains a separate later gate. It may require final visual/audio approval,
+the intended signing/notarization identity, distribution credentials, and platform install/launch/
+controller testing. None of those tasks should displace the active depth-first sequence.
+
+## Verification commands
 
 ```sh
 ./unity/run-playmode-tests.sh
 ./unity/validate-demo.sh
 ./unity/validate-release.sh
-```
-
-Release output:
-
-```text
-unity/builds/release/CheddarAndCocoa-Demo.app
 ```

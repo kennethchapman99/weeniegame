@@ -1,5 +1,8 @@
 # Level Ideas (queued — not yet built)
 
+> **Status: DEFERRED IDEA BANK.** The queue language below is historical. Do not promote or build a
+> level until Operation Pee Break passes its second couch-playtest gate.
+
 Future round/level concepts captured for later. These are **post-M8** unless promoted into
 the build plan. The data-driven scene + (M7) room-schema seams are designed so a new level is
 mostly a `SceneDef` + painter + a few systems, not engine surgery.

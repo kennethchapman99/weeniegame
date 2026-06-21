@@ -1,5 +1,8 @@
 # Difficulty Framework
 
+> **Status: DEFERRED.** Difficulty expansion waits for human couch-playtest evidence and the
+> Operation Pee Break acceptance gate.
+
 Goal: increase mastery without increasing frustration.
 
 ## Difficulty Axes

@@ -1,5 +1,9 @@
 # Campaign Progression
 
+> **Status: DEFERRED.** Preserve this as future campaign inventory. Do not expand progression or
+> mission unlock scope until Operation Pee Break passes the second couch-playtest gate. See
+> `NEXT-PRODUCTION-SLICE.md` for active work.
+
 Goal: create replayability without grinding.
 
 ## Structure

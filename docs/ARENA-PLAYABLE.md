@@ -1,6 +1,13 @@
 # Arena Playable — Mission Variety Spike
 
-`unity/CheddarAndCocoa/Assets/Scenes/ArenaScene.unity` is now a small co-op vertical slice instead of a flat treat loop. The scene still builds itself from `ArenaBootstrap`, but the arena can run 20 mission variants through one lightweight mission definition path. A cold start opens a generated in-scene mission select; the newest arrow-select mission is **Kitchen Falling Food Frenzy**.
+> **Status: ACTIVE OPERATIONAL REFERENCE.** Use this for controls, current slice behavior, and the
+> baseline couch-playtest protocol. It does not authorize mission expansion or direct
+> `GameManager` branches.
+
+`unity/CheddarAndCocoa/Assets/Scenes/ArenaScene.unity` is now a co-op proving ground instead of a
+flat treat loop. As of 2026-06-20, the arena exposes 21 mission variants. A cold start opens a
+generated in-scene mission select; Kitchen Falling Food Frenzy is the first controller-extraction
+candidate.
 
 For current global character art direction, read `docs/ART-DIRECTION.md`. Backyard Mission is the
 playable proof of that direction, not the only place the direction applies. For future external
@@ -124,7 +131,7 @@ small world text.
 
 1. Open `unity/CheddarAndCocoa` in Unity 6 LTS, open `Assets/Scenes/ArenaScene.unity`, and press Play. `ArenaScene` is also the scripted local build entry point.
 2. The mission picker appears immediately. Use **Up/Down** or gamepad **D-pad** to highlight a mission, then press **Enter**, **Space**, gamepad **Start**, or gamepad **South** to start. Keyboard **1-9 and 0** directly starts the original first ten missions; use arrow/D-pad selection for later missions including Kitchen Falling Food Frenzy.
-   - All 20 missions use the adaptive two-column picker.
+   - All 21 mission variants use the adaptive two-column picker as of 2026-06-20.
    - Each tile shows `NEW`, `RETRY`, `CLEARED`, or `FLAWLESS` plus its session-best score; the selected detail line shows round time and objective size.
    - The header keeps missions played/tried, total score, and flawless clears visible before the next choice.
 3. Read the one-line mission briefing at the start of the round. The HUD keeps the current mission name, objective, score, timer, controls, modifier, and latest score event visible during play.
@@ -397,7 +404,7 @@ Mission flow controls:
 - During a run: **Escape** or gamepad **Start** pauses. The pause card can resume, return safely to
   mission select, or quit the packaged player; pausing freezes mission time and dog input.
 - End screen: **R / Enter / Start / South** replays; **N / Right Arrow / Right Shoulder / D-pad Right** advances; **M / Escape / East / D-pad Left** returns to mission select.
-- Session Summary: **Enter**, **Space**, **Start**, **South**, or **Right Shoulder** continues to the next unfinished mission; **M**, **Escape**, or gamepad **East** returns to mission select. Finishing all 12 changes Continue to an explicit **Victory Lap** that wraps to mission one; **New Session** clears all local results.
+- Session Summary: **Enter**, **Space**, **Start**, **South**, or **Right Shoulder** continues to the next unfinished mission; **M**, **Escape**, or gamepad **East** returns to mission select. Finishing the current roster changes Continue to an explicit **Victory Lap** that wraps to mission one; **New Session** clears all local results.
 - Playtest Mode: click the bottom-left **Playtest Mode: On/Off** button or press **F1** / **`**. It toggles a compact top-right diagnostics overlay and does not pause or block normal play.
 - Placeholder feedback toggles: **F2** toggles generated audio cues; **F3** toggles gamepad rumble requests. Both default to on.
 

@@ -1,5 +1,8 @@
 # Unity First Playable — Controller Test Scene
 
+> **Status: HISTORICAL / COMPLETED PROOF.** Preserve this setup and runtime history, but do not use
+> it as the active production queue. See `NEXT-PRODUCTION-SLICE.md`.
+
 The smallest solid foundation for the Unity rebuild: **the project compiles cleanly and two local
 controllers drive two dogs around a test scene.** No level design, no art, no AI, no audio — just
 proof the couch-co-op plumbing works. See `docs/UNITY-PIVOT-PLAN.md` for the bigger plan.

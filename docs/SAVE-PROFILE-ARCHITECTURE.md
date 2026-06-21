@@ -1,5 +1,9 @@
 # Save and Profile Architecture
 
+> **Status: DEFERRED.** Do not expand save/profile scope until Operation Pee Break passes the
+> second couch-playtest gate. Existing runtime behavior may be maintained, but this is not an
+> active implementation plan.
+
 Goal: save progress simply and locally.
 
 ## Save Data

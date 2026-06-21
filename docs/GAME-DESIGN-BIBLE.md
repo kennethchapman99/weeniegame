@@ -2,6 +2,24 @@
 
 This document is the durable creative source of truth for the Cheddar & Cocoa couch co-op game. Claude, Codex, and any future implementation agent should read this before proposing or implementing new gameplay.
 
+> **Status: ACTIVE CREATIVE NORTH STAR.** The level and mechanic libraries below are idea banks,
+> not an active production queue. The mission roster is frozen until Operation Pee Break passes its
+> second two-player couch playtest. Current execution order lives in `NEXT-PRODUCTION-SLICE.md`.
+
+## Active depth-first sequence
+
+1. Run a baseline two-player couch playtest of the existing slices.
+2. Address critical playtest findings.
+3. Define `IMissionController` and a narrow `MissionContext`.
+4. Extract the existing Kitchen mission first, keeping all PlayMode tests green.
+5. Build Operation Pee Break entirely through the new controller structure.
+6. Run a second couch playtest as the deep-slice acceptance gate.
+7. Keep the mission roster frozen until that gate passes.
+
+Architecture work is deliberately narrow and incremental. `GameManager` retains orchestration,
+mission selection, session flow, and shared-service wiring; controllers own mission-specific
+lifecycle and snapshots. Do not use a target line count as the definition of done.
+
 ## North star
 
 Build a joyful, personal, replayable couch co-op game where Sue and Ken play as Cheddar and Cocoa through exaggerated dog-life adventures inspired by the best parts of premium co-op games: clear teamwork, funny asymmetry, constant novelty, readable chaos, and mechanics that change before they get stale.
@@ -166,7 +184,10 @@ Connected movement creates comedy:
 
 Because dachshunds. One dog stretches across a small gap/object while the other crosses. The bridge dog has patience/stamina and can collapse comedically.
 
-## Level and chapter ideas
+## Level and chapter ideas (deferred idea bank)
+
+> **DEFERRED:** These concepts remain creative inventory. Do not interpret their numbering or
+> detail as permission to build them before the active deep-slice gate passes.
 
 ### 1. The Great Backyard Squirrel Conspiracy
 
@@ -484,40 +505,16 @@ Use 1v1 minigames to break up co-op without changing the heart of the game.
 - Every walk is an intelligence-gathering mission.
 - A phone-absorbed teenager is an NPC with broken AI.
 
-## Near-term build priorities
+## Current production priority
 
-Do not jump straight to full art production. The next best work is to make the existing vertical slice feel great, readable, and funny while preserving test coverage.
+The active order is the seven-step depth-first sequence at the top of this document. Kitchen Falling
+Food Frenzy is already implemented; it is the first behavior-preserving controller extraction, not
+the next mission to build. Operation Pee Break is the only authorized new deep slice after that
+extraction is green.
 
-Recommended order:
-
-1. **Juice and readability pass on current Backyard Mission**
-   - better placeholder dog animation;
-   - bark timing feedback;
-   - clear objective arrows/callouts;
-   - more satisfying squirrel/predator feedback;
-   - better round-end feedback.
-
-2. **Dog identity pass**
-   - distinct Cheddar/Cocoa silhouettes, colors, idle poses, movement feel;
-   - visible personality states: zoomies, wet, stunned, barking, tugging, proud, sad.
-
-3. **Co-op puzzle beat pass on the current mission set**
-   - upgrade at least three existing ArenaScene missions from objective loops into authored co-op puzzle beats;
-   - start with Backyard Rescue, Snack Heist, and Sock Panic because they are the most straightforward today;
-   - each upgraded mission needs a named Co-op Puzzle Beat, role split, funny fail, and deterministic PlayMode tests.
-
-4. **Kitchen Falling Food Frenzy vertical slice**
-   - compact, high-replay, funny, easy to test;
-   - introduces catch/dodge and good-food/bad-food filtering;
-   - must include at least one counter/floor role dependency rather than pure parallel catching.
-
-5. **Cleaning Day stealth/chaos prototype**
-   - moving hazards, toy rescue, hide/distract roles;
-   - should prove distract-and-sneak as a reusable puzzle family.
-
-6. **Operation Pee Break puzzle prototype**
-   - uniquely personal co-op puzzle; strong identity differentiator;
-   - should prove social manipulation as a durable mission system.
+Juice, identity, readability, and co-op-puzzle improvements are driven by critical findings from
+the baseline couch playtest. Cleaning Day, other level ideas, broad content passes, and mission
+roster expansion remain deferred until the second couch-playtest gate passes.
 
 ## Implementation guardrails for agents
 

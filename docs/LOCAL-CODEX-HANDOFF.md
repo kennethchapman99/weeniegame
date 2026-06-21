@@ -1,63 +1,67 @@
 # Local Codex Handoff
 
-Use this when running Codex locally against the repo.
+> **Status: ACTIVE.** Use this handoff for local agent work. `README.md`, `AGENTS.md`, `CLAUDE.md`,
+> and this file must prescribe the same sequence.
 
-## Always Read First
+## Always read first
 
 1. `README.md`
 2. `AGENTS.md`
 3. `CLAUDE.md`
-4. `docs/GAME-DESIGN-BIBLE.md`
-5. `docs/ARENA-PLAYABLE.md`
-6. `docs/MISSION-SYSTEM.md`
-7. The active goal file under `docs/CODEX-GOAL-*.md`
+4. `docs/README.md`
+5. `docs/NEXT-PRODUCTION-SLICE.md`
+6. `docs/GAME-DESIGN-BIBLE.md`
+7. `docs/DEEP-SLICE-OPERATION-PEE-BREAK.md`
+8. `docs/ARCHITECTURE.md`
+9. `docs/ARENA-PLAYABLE.md`
 
-## Hard Rules
+Do not select a `CODEX-GOAL-*.md` file as active work; those files record completed historical
+missions.
+
+## Canonical work sequence
+
+1. Run a baseline two-player couch playtest of the existing slices.
+2. Address critical playtest findings.
+3. Define `IMissionController` and a narrow `MissionContext`.
+4. Extract the existing Kitchen mission first, keeping all PlayMode tests green.
+5. Build Operation Pee Break entirely through the new controller structure.
+6. Run a second couch playtest as the deep-slice acceptance gate.
+7. Keep the mission roster frozen until that gate passes.
+
+## Hard rules
 
 - Build only in Unity: `unity/CheddarAndCocoa/`.
-- Do not edit frozen TS/Canvas code under `src/` or `tests/`.
-- Keep compact mission variants inside `ArenaScene` until a real authored level pipeline exists.
-- Do not introduce save/progression/campaign systems until the mission mechanics are proven.
-- Every new mission needs deterministic PlayMode tests.
-- Keep placeholder art/audio replaceable and clearly named.
+- Do not edit frozen TS/Canvas code under `src/`, `tests/`, or `prototype/`.
+- Do not add mission-specific state or behavior branches directly to `GameManager`.
+- Keep each controller extraction behavior-preserving and PlayMode-test-green before continuing.
+- Keep mission definitions and controller registration outside `GameManager`.
+- Do not use an arbitrary `GameManager` line count as the definition of done.
+- Do not add missions or resume deferred roadmap work before the deep-slice couch gate passes.
 
-## Prompt Shape
+## Prompt shape
 
-Use one goal per Codex run.
-
-Template:
+Use one gate-sized goal per run. Example for the first coding step after playtest fixes:
 
 ```text
-Read the repo guardrails and implement docs/CODEX-GOAL-SQUIRREL-CONSPIRACY.md.
+Read the active depth-pivot docs. Define IMissionController and a narrow MissionContext, then
+extract the existing Kitchen mission without changing behavior.
 
 Constraints:
 - Unity only.
-- Keep first pass inside ArenaScene/GameManager mission flow.
-- Add deterministic PlayMode tests.
-- Do not touch frozen TS/Canvas code.
-- Run ./unity/run-playmode-tests.sh and report results.
+- No new gameplay scope or mission variants.
+- Mission-specific setup, state, ticking, input, cleanup, outcome, and snapshots belong to the
+  Kitchen controller.
+- Keep GameManager limited to orchestration, selection, session flow, and shared-service wiring.
+- Run ./unity/run-playmode-tests.sh and stop if the extraction is not green.
 
 Commit when green.
 ```
 
-## Recommended Order
+## Review checklist
 
-1. `docs/CODEX-GOAL-SQUIRREL-CONSPIRACY.md`
-2. `docs/CODEX-GOAL-EAGLE-SHADOW.md`
-3. `docs/CODEX-GOAL-COYOTES-FENCE.md`
-
-These three form the Backyard Expansion Pack and should land before pool, house, car, vet, or walkies systems.
-
-## Review Checklist
-
-Before accepting a Codex commit:
-
-- Mission starts from mission select.
-- Objective copy is readable.
-- Both dogs have useful jobs.
-- Bark/interact cannot be solved by spam.
-- Clear/fail/replay work.
-- Score events explain cause and effect.
-- Session summary still works.
-- Existing three missions still pass tests.
-- New tests cover new state and reset paths.
+- The current sequence gate was respected.
+- No mission variant or gameplay scope was added prematurely.
+- Mission behavior is owned by a controller rather than new `GameManager` branches.
+- Replay/reset, clear/fail, objective copy, score events, and snapshots remain covered.
+- Existing PlayMode tests pass after the extraction.
+- Manual couch-playtest findings and acceptance evidence are recorded where required.

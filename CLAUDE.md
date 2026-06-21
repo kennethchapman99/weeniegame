@@ -14,11 +14,14 @@ This file governs how you (Claude Code) work in this repo. Read it fully before 
 
 Before modifying gameplay, read these in order:
 
-1. `docs/GAME-DESIGN-BIBLE.md` — creative source of truth, level ideas, mechanics, running gags, and build priorities.
-2. `AGENTS.md` — coding-agent guardrails and current recommended next move.
-3. `docs/ARENA-PLAYABLE.md` — current Unity Backyard Mission vertical slice and acceptance checks.
-4. `docs/UNITY-FIRST-PLAYABLE.md` — Unity setup, test, and runtime proof history.
-5. `prototype/cheddar-and-cocoa.prototype.html` and the `src/` TypeScript build **as read-only reference only** — consult them to learn how a mechanic should behave/be tuned when porting it into Unity. Never edit them.
+1. `docs/README.md` — status index separating active instructions from reference/history.
+2. `docs/NEXT-PRODUCTION-SLICE.md` — current depth-first sequence and acceptance gate.
+3. `AGENTS.md` — coding-agent guardrails.
+4. `docs/GAME-DESIGN-BIBLE.md` — creative source of truth and level idea bank.
+5. `docs/DEEP-SLICE-OPERATION-PEE-BREAK.md` — active deep-slice specification.
+6. `docs/ARCHITECTURE.md` — active Unity mission-controller boundary.
+7. `docs/ARENA-PLAYABLE.md` — current Unity slices and manual acceptance checks.
+8. The prototype and TypeScript build **as read-only reference only** when porting older behavior.
 
 ## Prime directive
 
@@ -35,7 +38,10 @@ The prototype remains important as a validated reference for original mechanics 
 5. **Co-op first.** New ideas should force communication, rescue, role split, synchronized timing, or shared-object interaction.
 6. **Bark stays gameplay-relevant.** It should affect squirrel, predator, rescue, human distraction, rhythm, panic/calm, or puzzle state — not merely play a cosmetic effect.
 7. **Readable chaos.** Add clear labels, pings, animation, camera/audio cues, HUD copy, and manual acceptance notes until final art can carry clarity.
-8. **Small playable vertical slices beat broad architecture.** Do not build a large framework before the current level is fun.
+8. **Small playable vertical slices beat broad architecture.** Implement only the narrow controller
+   boundary needed to extract Kitchen and build the accepted deep slice.
+9. **Do not grow the god class.** Mission-specific setup, state, ticking, input, cleanup, outcomes,
+   and snapshots belong to `IMissionController` implementations, not new `GameManager` branches.
 
 ## Owner preferences
 
@@ -56,16 +62,21 @@ Every meaningful mechanic should answer:
 
 Core dog verbs to prefer: chase, rescue, steal, distract, defend, comfort, carry, tug, hide, sniff, bark.
 
-## Current recommended priority
+## Canonical work sequence
 
-The current Backyard Mission has the right gameplay structure: breakfast/weenie recovery, squirrel pressure, predator warning/rescue, rope/tug, united bark, scoring, stars, modifiers, and test coverage.
+Do not skip or reorder these gates:
 
-Next best work:
+1. Run a baseline two-player couch playtest of the existing slices.
+2. Address critical playtest findings.
+3. Define `IMissionController` and a narrow `MissionContext`.
+4. Extract the existing Kitchen mission first, keeping all PlayMode tests green.
+5. Build Operation Pee Break entirely through the new controller structure.
+6. Run a second couch playtest as the deep-slice acceptance gate.
+7. Keep the mission roster frozen until that gate passes.
 
-1. dog identity/art/animation readability pass;
-2. bark/tug/squirrel/predator feedback and game feel;
-3. manual two-player playtest/tuning;
-4. then build Kitchen Falling Food Frenzy as the next compact level prototype.
+The mission-controller migration is incremental and test-green after every extracted mission.
+`GameManager` ultimately owns orchestration, mission selection, session flow, and shared-service
+wiring. Do not use a target line count as the definition of done.
 
 ## What "done" looks like per task
 
