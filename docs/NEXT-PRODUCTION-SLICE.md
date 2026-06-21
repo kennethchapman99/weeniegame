@@ -1,40 +1,34 @@
 # Next Production Slice
 
-Build next: Great Backyard Squirrel Conspiracy.
+## Current status
 
-Purpose: expand the current ArenaScene from three prototype missions into a real chase/herding mission while reusing existing squirrel, bark, score, replay, objective, and PlayMode test systems.
+**Kitchen Falling Food Frenzy is implemented and playtest-ready.** It is selectable in the Unity
+ArenaScene and includes Cheddar's explicit counter bark, readable pre-drop and landing telegraphs,
+Cocoa catch/dodge feedback, compact shared-camera staging, recoverable failures, and the coordinated
+GOOD → BAD → GOOD dinner-rush finale.
 
-First pass:
+The production catalog exposes it as `kitchen_food_frenzy` through
+`ProductionMissionCatalog.KitchenFoodFrenzy`. Deterministic state and PlayMode coverage live in
+`KitchenFoodFrenzyMissionStateTests` and `KitchenFoodFrenzyPlayModeTests`; manual acceptance is in
+`docs/ARENA-PLAYABLE.md`.
 
-- Add `SquirrelConspiracy` as a selectable mission variant.
-- Add deterministic squirrel route nodes.
-- Add cutoff zones for the second dog.
-- Add bark timing so early bark causes a fake-out and correct bark applies pressure.
-- Reveal a hidden stash after enough successful herds.
-- End the mission on stash found, timer expiry, or repeated squirrel taunts.
+## Immediate next gate
 
-Score events:
+Run the deferred two-human couch playtest before adding another mission: two controllers, Ken and
+Sue, and at least 20 minutes across Backyard Rescue, Blanket Catch, and Kitchen Falling Food Frenzy.
+Record where role ownership, telegraphs, camera framing, and recovery are unclear or stop being fun.
+Use those observations to tune the existing slices.
 
-- `+75 GOOD HERD`
-- `+125 CUTOFF`
-- `+150 DOUBLE BARK BLOCK`
-- `-75 FAKE OUT`
-- `+300 STASH FOUND`
-- `+500 CONSPIRACY CRACKED`
+## Next authored deep slice
 
-Tests required:
+After the couch-playtest fixes, build **Operation Pee Break: The Teenager Phone Rescue** from
+`docs/DEEP-SLICE-OPERATION-PEE-BREAK.md`. Follow `docs/DESIGN-REVIEW-2026-06.md`: introduce the small
+mission-controller boundary with this slice instead of adding another large behavior branch to
+`GameManager`.
 
-- Mission select includes the new mission.
-- Starting the mission sets the right objective copy.
-- Cutoff success awards score.
-- Early bark applies fake-out penalty.
-- Stash reveal updates objective copy.
-- Replay resets score, route state, stash state, and outcome.
+## Guardrails
 
-Guardrails:
-
-- Keep this inside ArenaScene.
-- Do not add campaign persistence yet.
-- Do not require final art.
-- Keep score mutations on the existing score path.
-- Keep the round short, readable, and replayable.
+- The Unity project remains the only active codebase.
+- Keep placeholder art until the playtest proves where deliberate art work matters.
+- Preserve deterministic mission coverage and recoverable failure states.
+- Do not begin broad mission expansion before the couch-playtest findings are addressed.

@@ -12,7 +12,8 @@ namespace CheddarAndCocoa.Game
         ScentSearch,
         RhythmPanic,
         VehicleBalance,
-        LeashPhysics
+        LeashPhysics,
+        FallingFood
     }
 
     public enum ProductionDifficultyAxis
@@ -160,6 +161,15 @@ namespace CheddarAndCocoa.Game
             "Repair enough weak spots and block the final coyote pressure.",
             "The coyote breaches the fence or isolates a dog too many times.");
 
+        public static readonly ProductionMissionSpec KitchenFoodFrenzy = new(
+            "kitchen_food_frenzy",
+            "Kitchen Falling Food Frenzy",
+            ProductionMissionPack.HouseChaos,
+            ProductionMechanicModule.FallingFood,
+            "Cheddar bark-knocks food from the counter while Cocoa reads the landing telegraph, catches gold food, and dodges purple onions.",
+            "Complete three warm-up catches, then coordinate the GOOD-BAD-GOOD dinner rush.",
+            "The dinner timer expires before the bowl and finale are complete.");
+
         /// <summary>
         /// Every production mission spec, in catalog order. This is the single source of truth the
         /// factory and consistency tests build from so a newly authored mission can't silently fall
@@ -176,6 +186,7 @@ namespace CheddarAndCocoa.Game
             LeashWalk,
             CarRide,
             CoyotesFence,
+            KitchenFoodFrenzy,
         };
     }
 }
