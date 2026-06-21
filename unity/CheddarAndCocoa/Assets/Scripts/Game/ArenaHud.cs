@@ -12,7 +12,7 @@ namespace CheddarAndCocoa.Game
     public sealed class ArenaHud : MonoBehaviour
     {
         private GameManager _game;
-        private GUIStyle _hud, _big, _mid, _small, _overlay;
+        private GUIStyle _hud, _big, _mid, _small, _overlay, _briefing;
         private Texture2D _uiKitTexture;
 
         public void Init(GameManager game) => _game = game;
@@ -67,10 +67,27 @@ namespace CheddarAndCocoa.Game
             GUI.Label(new Rect(0, 180, Screen.width, 24), $"Objective: {_game.ObjectiveLabel}", _mid);
             GUI.Label(new Rect(0, 204, Screen.width, 24), _game.TeamGuidanceLabel, _small);
             GUI.Label(new Rect(0, 228, Screen.width, 24), _game.LastCue, _mid);
-            if (!string.IsNullOrEmpty(_game.MissionBanner) && !_game.IsGameOver && !_game.IsLevelClear)
+            if (!string.IsNullOrEmpty(_game.MissionBanner) && !_game.IsGameOver && !_game.IsLevelClear && !_game.MissionBriefingVisible)
                 GUI.Label(new Rect(0, 260, Screen.width, 34), _game.MissionBanner, _big);
 
+            if (_game.MissionBriefingVisible) DrawMissionBriefing();
+
             if (_game.IsGameOver || _game.IsLevelClear) DrawEndCard();
+        }
+
+        private void DrawMissionBriefing()
+        {
+            var box = FitPanel(Screen.width, Screen.height, 760f, 184f);
+            box.y = Mathf.Min(box.y, 304f);
+            GUI.Box(box, GUIContent.none);
+            GUI.Label(new Rect(box.x + 24f, box.y + 12f, box.width - 48f, 34f), _game.ActiveMissionName, _big);
+            GUI.Label(new Rect(box.x + 32f, box.y + 48f, box.width - 64f, 68f),
+                $"GOAL: {_game.MissionIntroPrompt}", _briefing);
+            GUI.Label(new Rect(box.x + 32f, box.y + 120f, box.width - 64f, 26f),
+                $"FIRST: {_game.ObjectiveLabel}", _hud);
+            GUI.Label(new Rect(box.x + 32f, box.y + 150f, box.width - 64f, 22f),
+                "Follow each dog's arrow  •  X / West barks  •  Y / North interacts  •  Left stick moves",
+                _small);
         }
 
         private void DrawPauseMenu()
@@ -157,7 +174,7 @@ namespace CheddarAndCocoa.Game
             int count = _game.MissionSelectOptionCount;
             const int columns = 2;
             int rows = Mathf.CeilToInt(count / (float)columns);
-            var box = FitPanel(Screen.width, Screen.height, 900f, 458f);
+            var box = FitPanel(Screen.width, Screen.height, 900f, MissionSelectPanelHeight(count));
             float w = box.width;
             GUI.Box(box, GUIContent.none);
             DrawUiKitAccent(new Rect(box.x + w - 116, box.y + 16, 76, 50));
@@ -182,9 +199,15 @@ namespace CheddarAndCocoa.Game
             float footY = box.y + 110f + rows * 42f + 4f;
             GUI.Label(new Rect(box.x + 30, footY, w - 60, 24),
                 $"{_game.SelectedMissionName} • {_game.MissionSelectDetailsFor(_game.SelectedMissionVariant)} • {_game.MissionSelectStatusFor(_game.SelectedMissionVariant)}", _mid);
-            GUI.Label(new Rect(box.x + 40, footY + 24f, w - 80, 34), _game.SelectedMissionBriefing, _small);
-            if (GUI.Button(new Rect(box.x + w * 0.5f - 110, footY + 58f, 220, 30), $"Start {_game.SelectedMissionName}"))
+            GUI.Label(new Rect(box.x + 40, footY + 24f, w - 80, 70), $"GOAL: {_game.SelectedMissionBriefing}", _briefing);
+            if (GUI.Button(new Rect(box.x + w * 0.5f - 110, footY + 96f, 220, 30), $"Start {_game.SelectedMissionName}"))
                 _game.StartSelectedMission();
+        }
+
+        public static float MissionSelectPanelHeight(int missionCount)
+        {
+            int rows = Mathf.CeilToInt(Mathf.Max(1, missionCount) / 2f);
+            return 110f + rows * 42f + 142f;
         }
 
         private void DrawMissionRow(Rect row, int index, GameManager.MissionVariant variant)
@@ -248,6 +271,8 @@ namespace CheddarAndCocoa.Game
             _small.normal.textColor = new Color(0.9f, 0.95f, 1f);
             _small.wordWrap = true;
             _overlay = new GUIStyle(_small) { alignment = TextAnchor.MiddleLeft };
+            _briefing = new GUIStyle(_mid) { fontSize = 18, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
+            _briefing.normal.textColor = Color.white;
             _big = new GUIStyle(GUI.skin.label) { fontSize = 34, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
             _big.normal.textColor = new Color(1f, 0.95f, 0.4f);
         }

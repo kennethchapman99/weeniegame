@@ -22,6 +22,16 @@ namespace CheddarAndCocoa.Tests
             Assert.LessOrEqual(panel.yMax, screenHeight - 8f);
         }
 
+        [Test]
+        public void MissionSelectPanel_FitsAllMissionRowsAndReadableGoal()
+        {
+            float height = ArenaHud.MissionSelectPanelHeight(21);
+            Assert.GreaterOrEqual(height, 110f + 11f * 42f + 142f);
+
+            Rect panel = ArenaHud.FitPanel(1920f, 1080f, 900f, height);
+            Assert.GreaterOrEqual(panel.height, height);
+        }
+
         [UnityTest]
         public IEnumerator BackyardEnvironment_BuildsDecorativePropsInsideLargeYard()
         {

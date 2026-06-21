@@ -267,6 +267,7 @@ namespace CheddarAndCocoa.Game
         public string ActiveMissionName => _mission != null ? _mission.Name : "Backyard Rescue";
         public string MissionItemPlural => _mission != null ? _mission.ItemRootName : "Breakfast/Weenies";
         public string MissionIntroPrompt => _mission != null ? _mission.IntroPrompt : "Cheddar + Cocoa must protect the weenies together.";
+        public bool MissionBriefingVisible => MissionActive() && Time.time < _introPromptUntil;
         public string MissionBanner { get; private set; } = string.Empty;
         public string EndRank { get; private set; } = "Needs More Bark";
         public string EndSummaryLabel { get; private set; } = string.Empty;

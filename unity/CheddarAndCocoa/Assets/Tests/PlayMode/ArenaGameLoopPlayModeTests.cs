@@ -249,6 +249,7 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotEmpty(game.LastCue);
             Assert.That(game.MissionIntroPrompt, Is.EqualTo("Cheddar + Cocoa must protect the weenies together."));
             Assert.That(game.MissionBanner, Does.Contain("protect the weenies"));
+            Assert.IsTrue(game.MissionBriefingVisible, "The opening goal card must remain visible long enough to orient first-time players.");
             Assert.That(game.ObjectiveLabel, Does.Contain("Save weenies"));
             Assert.AreEqual(GameManager.FeedbackKind.Intro, game.LastFeedback);
             Assert.AreEqual(GameManager.JuiceFeedbackKind.None, game.LastJuiceFeedback);

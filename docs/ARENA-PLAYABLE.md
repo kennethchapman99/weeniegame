@@ -87,6 +87,22 @@ spinning props are unreadable; the dog's name text covers the dog"):
 
 Covered by `ArenaGameLoopPlayModeTests.ThreatActors_AreOnScreenAndReadable_NotOffscreenSpinningBlobs`.
 
+### First-minute objective readability pass (2026-06-21)
+
+The first playtest also reported that it was not clear what to do even when some mechanics were
+visible. Two presentation defects made the existing mission copy easy to miss:
+
+- The 21-mission picker was only 458 pixels tall even though its 11 rows plus selected-mission
+  details require 714 pixels at the authored spacing. The picker now sizes from its row count, and
+  the selected mission gets a wrapped 70-pixel `GOAL` block instead of a clipped 34-pixel line.
+- The in-round intro reused a single 34-pixel banner for mission prompts that can span several
+  sentences. The first seconds of every mission now show a dedicated goal card with the mission
+  premise, the current first objective, and the controller verbs: follow the dog arrows, move,
+  bark, and interact. Mission timing and rules are unchanged.
+
+Covered by `MissionSelectPanel_FitsAllMissionRowsAndReadableGoal` and the opening-briefing assertion
+in `BackyardMission_Objectives_Hazards_Tug_Clear_AndRestart`.
+
 ## Cold-start flow
 
 The expanded yard stages both dogs within a short run of each mission's first meaningful action
@@ -134,7 +150,9 @@ small world text.
    - All 21 mission variants use the adaptive two-column picker as of 2026-06-20.
    - Each tile shows `NEW`, `RETRY`, `CLEARED`, or `FLAWLESS` plus its session-best score; the selected detail line shows round time and objective size.
    - The header keeps missions played/tried, total score, and flawless clears visible before the next choice.
-3. Read the one-line mission briefing at the start of the round. The HUD keeps the current mission name, objective, score, timer, controls, modifier, and latest score event visible during play.
+3. Read the selected mission's wrapped `GOAL` block, then start it. The opening goal card repeats the
+   premise, names the first current objective, and shows the core controller verbs while the HUD
+   keeps the mission name, objective, score, timer, controls, modifier, and latest event visible.
 4. When a mission ends, choose **Replay**, **Next Mission**, or **Mission Select** with the on-screen buttons, keyboard, or gamepad:
    - **R / Enter / Start / South** replays the current mission.
    - **N / Right Arrow / Right Shoulder / D-pad Right** starts the next unfinished mission.

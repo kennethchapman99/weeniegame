@@ -1,7 +1,8 @@
 # Baseline Couch Playtest — 2026-06-20
 
-> **Gate status: BLOCKED — awaiting the actual two-human couch session.** Technical validation and
-> the local build are complete. No human observations or findings are claimed below.
+> **Gate status: FIX VERIFICATION PENDING.** Initial human playtest feedback was received on
+> 2026-06-20. PR #15 addressed the concrete threat/label visibility failures, and the subsequent
+> first-minute objective readability pass addresses the clipped/missed onboarding presentation.
 
 ## Scope
 
@@ -12,19 +13,20 @@
 
 ## Technical validation
 
-Validated locally on 2026-06-20 EDT from a clean worktree before this report was added.
+Validated locally on 2026-06-20 EDT before this report was added, then revalidated on 2026-06-21
+after merging PR #15.
 
 | Check | Result | Evidence |
 | --- | --- | --- |
 | Unity project/scene/bootstrap wiring | Pass | `./unity/validate-demo.sh` completed successfully. |
 | Unity editor | Pass | Project-pinned Unity `6000.0.65f1` on macOS arm64. |
 | Script compilation | Pass | Unity batch import reported `Tundra build success`; no compile failure. |
-| Full PlayMode suite | Pass | 330 total, 330 passed, 0 failed, 0 skipped; 16.835 s. Results: `unity/playmode-results.xml`. |
+| Full PlayMode suite | Pass | 332 total, 332 passed, 0 failed, 0 skipped after the readability passes; 18.398 s. Results: `unity/playmode-results.xml`. |
 | Development build | Pass | `unity/builds/dev/CheddarAndCocoa-Arena.app`; Unity reported 341,678,998 bytes. |
 | Packaged-player startup | Pass | `./unity/smoke-player.sh unity/builds/dev/CheddarAndCocoa-Arena.app`. |
 
 Build executable SHA-256:
-`adef9446a086cfb9a3fc3a0f3bbe6e8671017f75ca21d9da7d11efbe64af418d`.
+`07be4c72244759319f4a785c86cfc0fa61bdd830ba6e94a5b5f8863a26f7bcb2`.
 
 Automated validation proves build health, deterministic mission coverage, and startup only. It does
 not satisfy the human fun/readability gate.
@@ -67,20 +69,25 @@ Neutral debrief prompts:
 
 ## Observation record
 
-Complete this from behavior and short verbatim player comments. Distinguish observed behavior from
-player interpretation. Use timestamps when possible.
+This record contains the player's reported interpretation. Observer timestamps and behavioral notes
+were not captured, so they are explicitly left unknown rather than reconstructed.
 
 Session metadata:
 
-- Actual session date/time: **Not yet run**
-- Players: **Not yet recorded**
+- Actual session date/time: **2026-06-20; exact time not recorded**
+- Players: **One reporting player confirmed; whether a second player participated was not recorded**
 - Controller models/connection: **Not yet recorded**
 - Display and approximate couch distance: **Not yet recorded**
 - Observer: **Not yet recorded**
 
 | Mission/time | Observed behavior or short player quote | Category | Impact |
 | --- | --- | --- | --- |
-| — | **Awaiting actual session observations.** | — | — |
+| Multiple levels | "It is not at all clear what to do." | Objective and telegraph readability | Critical: the player could not form a useful goal or connect visible mechanics to progress. |
+| Multiple levels | Referenced shadows and squirrels were not visible on screen. | Camera and couch-distance visibility | Critical: threat/objective language referred to actors the player could not see. Fixed by PR #15. |
+| General play | Words followed the character, were hard to read, and obscured the dog. | Camera and couch-distance visibility | Critical: identity/status labels competed with the playable character. Fixed by PR #15. |
+| General play | Rotating labeled objects were skewed enough to be unidentifiable. | Objective and telegraph readability | Critical: continuous prop rotation destroyed silhouettes and text readability. Fixed by PR #15. |
+| General play | Dog running animation and camera separation behavior worked well enough for now. | Camera and couch-distance visibility | Acceptable for this gate; retain current behavior. |
+| Multiple levels | Mechanics were partly visible, but the low-fidelity presentation made their intended use hard to assess. | Objective and telegraph readability | Important: placeholder presentation is limiting mechanic comprehension. |
 
 Required category coverage:
 
@@ -95,11 +102,17 @@ Required category coverage:
 
 ### Critical — must fix before `IMissionController`
 
-No findings yet. Do not interpret this as “none found”; the human session has not occurred.
+1. Threats and objective actors were off-screen. **Addressed by merged PR #15.**
+2. Dog-following labels obscured the character. **Addressed by merged PR #15.**
+3. Continuously rotating labeled props were unreadable. **Addressed by merged PR #15.**
+4. The player could not tell what to do or how visible mechanics produced progress. **Implemented,
+   awaiting player verification:** the mission picker now exposes a readable wrapped goal and the
+   opening seconds show the premise, first objective, and controller verbs in a dedicated card.
 
 ### Important — after the controller boundary unless promoted by the session
 
-No findings yet.
+- Replace the most comprehension-limiting placeholder art as each deep slice is authored; do not
+  broaden this into an arena-wide art rewrite before the architecture gate.
 
 ### Later polish
 
@@ -107,9 +120,12 @@ No findings yet.
 
 ## Recommendation and gate decision
 
-No fix recommendation is valid until actual observations are captured and prioritized. Do not define
-`IMissionController` or begin architecture work.
+PR #15 correctly fixes the concrete visibility defects without changing mission rules. The narrow
+onboarding/readability pass for the remaining "not clear what to do" finding is implemented and
+available in the rebuilt development player. The next action is a human verification of the revised
+first-minute experience.
 
-**Baseline gate: BLOCKED.** Unblock only after the actual two-human/two-controller session is recorded
-above and any critical pre-architecture fixes are clearly identified (or the evidence supports that
-there are none).
+**Baseline gate: FIX VERIFICATION PENDING.** Do not define `IMissionController` until a player checks
+the revised objective/threat presentation. The formal two-human/two-controller coverage is still
+unconfirmed because the session metadata did not record a second player; capture that explicitly
+during the verification run.
