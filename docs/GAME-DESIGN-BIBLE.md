@@ -184,6 +184,13 @@ Connected movement creates comedy:
 
 Because dachshunds. One dog stretches across a small gap/object while the other crosses. The bridge dog has patience/stamina and can collapse comedically.
 
+### Mutual grooming
+
+Dogs stand close and groom each other to remove a status (ticks, mud, burrs). The groom action
+reduces the target's status but slightly transfers it to the groomer — players must coordinate
+so neither gets overwhelmed. Bark from the clean dog holds the dirty dog still for a wider/faster
+groom pass. First used in Tick Invasion (#21).
+
 ## Level and chapter ideas (deferred idea bank)
 
 > **DEFERRED:** These concepts remain creative inventory. Do not interpret their numbering or
@@ -475,6 +482,52 @@ Fantasy expansion.
 
 Core verbs: adventure, chase, rescue, defend.
 
+### 21. Tick Invasion: The Backyard Is Lost
+
+The backyard has exploded with ticks. They crawl onto both dogs continuously and the infestation
+level climbs fast — the only way to fight back is for each dog to groom the other one, picking
+ticks off before they overwhelm.
+
+**Dog fantasy:** Every dog owner's nightmare made ridiculous. The dogs are their own first
+responders, and the intimacy of mutual grooming becomes an actual survival mechanic.
+
+**What Cheddar does differently:** Chaos puppy energy — Cheddar charges around attracting more
+ticks per second than Cocoa but also grooms faster. High risk, high output.
+
+**What Cocoa does differently:** Veteran queen composure — Cocoa accumulates ticks more slowly,
+spots the worst infestations first, and her groom action clears a wider area (long-dog advantage).
+
+**Co-op puzzle beat:** Players must position close enough to groom each other. If one dog is
+overloaded and panics, they run erratically and become harder to lock down — the other dog must
+catch up, bark to calm them, and hold still long enough to groom. Pure communication pressure.
+
+**Pool as a risk/reward option:** Either dog can dive into the pool to knock off ticks instantly
+— but they emerge slow and soggy, their wet coat collects ticks at double the rate for ten seconds,
+and dragging a soaked Cheddar to safety while Cocoa is also being swarmed is exactly the kind of
+disaster that makes couch co-op legendary.
+
+**Mechanics sketch:**
+- Tick count per dog is a visible meter (like panic meter). Zero is safe; full is game over for
+  that dog.
+- Standing close to partner triggers the groom interaction (same cuddle radius pattern as
+  ThunderstormComfort) — reduces their tick count, slightly increases your own.
+- Pool jump: instant tick reset but wet-slow penalty + doubled tick accumulation rate for ~10s.
+  Cocoa gets out faster (she's done this before). Cheddar belly-flops and is useless for longer.
+- Bark while grooming extends the reach — Cocoa's call holds Cheddar still so the groom connects.
+- Fail: either dog hits max ticks. Cheddar fails messily. Cocoa fails with dignified
+  disappointment.
+
+**Twist / complication:** Mid-round, a Super Tick (boss tick?) targets one dog exclusively and
+can't be groomed off — the affected dog must pool-dip while the other holds the line solo.
+
+**Funny fail state:** Cheddar, completely covered, doing zoomies with ticks flying everywhere.
+Cocoa sitting perfectly still, absolutely furious, while the meter maxes.
+
+**Running gag tie-in:** "The pool is both terrifying and fascinating." Cheddar voluntarily cannonballs
+in to get clean, immediately regrets it.
+
+Core verbs: groom, comfort, rescue, carry, position.
+
 ## 1v1 minigames
 
 Use 1v1 minigames to break up co-op without changing the heart of the game.
@@ -513,8 +566,8 @@ the next mission to build. Operation Pee Break is the only authorized new deep s
 extraction is green.
 
 Juice, identity, readability, and co-op-puzzle improvements are driven by critical findings from
-the baseline couch playtest. Cleaning Day, other level ideas, broad content passes, and mission
-roster expansion remain deferred until the second couch-playtest gate passes.
+the baseline couch playtest. Cleaning Day, Tick Invasion, other level ideas, broad content passes,
+and mission roster expansion remain deferred until the second couch-playtest gate passes.
 
 ## Implementation guardrails for agents
 
