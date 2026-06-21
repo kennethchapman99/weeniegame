@@ -71,7 +71,10 @@ namespace CheddarAndCocoa.Game
                     MissionCatalog.BuildSockPanicDefinition),
                 [GameManager.MissionVariant.CarRide] = new Registration(
                     () => new CarRideMissionController(),
-                    MissionCatalog.BuildCarRideDefinition)
+                    MissionCatalog.BuildCarRideDefinition),
+                [GameManager.MissionVariant.ScentSearch] = new Registration(
+                    () => new ScentSearchMissionController(),
+                    MissionCatalog.BuildScentSearchDefinition)
             };
 
         public static IEnumerable<GameManager.MissionVariant> RegisteredVariants => Registrations.Keys;

@@ -47,6 +47,8 @@ namespace CheddarAndCocoa.Tests
             game.StartMission(GameManager.MissionVariant.ScentSearch);
             yield return null;
 
+            Assert.IsInstanceOf<ScentSearchMissionController>(game.ActiveMissionController,
+                "Scent Search must run entirely through its own IMissionController.");
             Assert.AreEqual("scent_search", game.RuntimeSnapshot.MissionId);
             Assert.That(game.ObjectiveLabel, Does.Contain("Sniff"));
             int required = game.RuntimeSnapshot.ObjectiveGoal;

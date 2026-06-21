@@ -157,6 +157,10 @@ not an architecture acceptance criterion.
   ticking, timed lurches, spill-cap failure, readable dog/vehicle feedback, entry staging, cleanup,
   snapshot, and deterministic lurch/spill hooks. The shared predator actor is no longer repurposed as
   mission-specific car state.
+- `ScentSearchMissionController` owns dig-spot geometry and markers, seeded buried-spot selection,
+  bark-to-sniff heat cues, interact-to-dig handling, cold-dig failure, scoring/credit/feedback,
+  objective targeting, entry staging, cleanup, snapshot, and deterministic sniff/correct-dig/
+  wrong-dig hooks. `GameManager` retains only compatibility accessors and force-hook forwarding.
 - Full PlayMode result after the latest controller increment: 352 passed, 0 failed, 0 skipped.
 
 ## Test and reset contract

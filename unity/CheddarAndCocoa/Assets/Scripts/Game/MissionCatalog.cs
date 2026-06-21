@@ -876,6 +876,68 @@ namespace CheddarAndCocoa.Game
             };
         }
 
+        internal static GameManager.MissionDefinition BuildScentSearchDefinition(ArenaMissionTuning tuning)
+        {
+            const GameManager.MissionVariant variant = GameManager.MissionVariant.ScentSearch;
+            var balance = tuning.BalanceFor(variant);
+            return new GameManager.MissionDefinition
+            {
+                Variant = variant,
+                Name = "Scent Search",
+                IntroPrompt = "Cheddar + Cocoa must sniff out the buried bones (bark to sniff HOT/COLD) and dig them up (interact) before the yard is a mess.",
+                ReadyScoreLabel = "READY TO SNIFF",
+                ItemRootName = "Dig Spots",
+                ItemObjectName = "Dig Spot",
+                ItemWorldLabel = "Dig?",
+                ItemArrowLabel = "DIG",
+                ItemCollectCueNoun = "a buried bone",
+                CollectObjectiveFormat = "Dig up bones {0}/{1}",
+                CollectedScoreLabel = "BONE DUG UP",
+                ItemScore = balance.ItemScore,
+                SpawnedItemCount = balance.SpawnedItemCount,
+                ItemGoal = balance.ItemGoal,
+                RoundSeconds = balance.RoundSeconds,
+                PawfectScore = balance.PawfectScore,
+                HeroScore = balance.HeroScore,
+                SurvivorScore = balance.SurvivorScore,
+                UsesSquirrel = false,
+                RequiresPredator = false,
+                RequiresTug = false,
+                MaxStolenFood = balance.MaxStolenFood,
+                SquirrelPenalty = balance.SquirrelPenalty,
+                SquirrelScareScore = balance.SquirrelScareScore,
+                SquirrelObjectiveText = "Sniff out the buried bones",
+                SquirrelStealingCue = "No squirrel here - follow the bone scent.",
+                SquirrelStoleCue = "No squirrel here - keep sniffing.",
+                SquirrelStealScoreLabel = "COLD DIG",
+                SquirrelScareScoreLabel = "HOT SNIFF",
+                SquirrelStealingActorLabel = "SCENT TRAIL",
+                SquirrelDroppedActorLabel = "BONE DUG UP",
+                SquirrelStoleActorLabel = "COLD HOLE",
+                SquirrelMissPopLabel = "COLD!",
+                SquirrelStealJuiceLabel = "COLD DIG!",
+                SquirrelScareJuiceLabel = "HOT SNIFF!",
+                TugObjectiveText = "Dig up the bones",
+                WaitingObjectiveText = "Sniff out the last bone together",
+                ClearObjectiveText = "All bones found - replay Scent Search",
+                ClearBannerPrefix = "BONES UNEARTHED!",
+                ClearScoreLabel = "SEARCH COMPLETE",
+                ReplayPrompt = "Press R / Enter / Start to replay Scent Search",
+                FailObjectiveText = "Mission failed - replay Scent Search",
+                GenericFailReason = "Needs sharper sniffing before digging next time.",
+                TimeFailReason = "The bones stayed buried until the clock ran out.",
+                StolenFailReason = "The dogs dug too many cold holes chasing bad scents.",
+                PredatorFailReason = "No predator here, just a lot of dirt.",
+                PawfectClearReason = "Tiny truffle-hounds nosed out every bone with barely a wasted dig.",
+                HeroClearReason = "Every bone got unearthed with respectable sniffing discipline.",
+                BasicClearReason = "The bones came up, even if the lawn will need reseeding.",
+                ItemColor = new Color(0.42f, 0.3f, 0.16f),
+                ItemAccentColor = new Color(0.7f, 0.55f, 0.3f),
+                ItemSecondaryColor = new Color(0.2f, 0.14f, 0.07f),
+                ItemPopColor = new Color(0.95f, 0.9f, 0.7f)
+            };
+        }
+
         internal static GameManager.MissionDefinition BuildThunderstormComfortDefinition(ArenaMissionTuning tuning)
         {
             const GameManager.MissionVariant variant = GameManager.MissionVariant.ThunderstormComfort;
