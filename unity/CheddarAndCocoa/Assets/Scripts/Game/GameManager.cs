@@ -18,7 +18,7 @@ namespace CheddarAndCocoa.Game
         public enum FlowState { MissionSelect, Playing, EndScreen, SessionSummary }
         public enum RoundModifier { SquirrelTrouble, ZoomiesSurge, PancakePanic }
         public enum MissionOutcome { InProgress, Clear, Failed }
-        public enum MissionVariant { BackyardRescue, SnackHeist, SockPanic, SquirrelConspiracy, EagleShadowPanic, CoyotesFence, WeenieRoundup, ScentSearch, ThunderstormComfort, MarkTheYard, LeashWalk, CarRide, GateCrash, TableStealth, SquirrelSwitcheroo, WalkCampaign, BoneRelay, GreatEscape, ChaosMachine, BlanketCatch }
+        public enum MissionVariant { BackyardRescue, SnackHeist, SockPanic, SquirrelConspiracy, EagleShadowPanic, CoyotesFence, WeenieRoundup, ScentSearch, ThunderstormComfort, MarkTheYard, LeashWalk, CarRide, GateCrash, TableStealth, SquirrelSwitcheroo, WalkCampaign, BoneRelay, GreatEscape, ChaosMachine, BlanketCatch, KitchenFoodFrenzy }
         public enum FeedbackKind
         {
             Intro,
@@ -124,7 +124,8 @@ namespace CheddarAndCocoa.Game
             MissionVariant.BoneRelay,
             MissionVariant.GreatEscape,
             MissionVariant.ChaosMachine,
-            MissionVariant.BlanketCatch
+            MissionVariant.BlanketCatch,
+            MissionVariant.KitchenFoodFrenzy
         };
 
         [Header("Mission selection")]
@@ -169,6 +170,15 @@ namespace CheddarAndCocoa.Game
         public CarBalanceMissionState CarRideState => _carState;
         public float CarBalance => _carBalance;
         public SockBasketMissionState SockPanicState => _sockBasketState;
+        public BackyardSquirrelTrapState BackyardTrapState => _backyardTrapState;
+        public Vector2 BackyardTrapGapPosition => _backyardTrapGapPosition;
+        public Treat BackyardDroppedWeenie => _backyardDroppedWeenie;
+        public KitchenFoodFrenzyMissionState KitchenState => _kitchenState;
+        public Vector2 KitchenCounterPosition => _kitchenCounterPos;
+        public Vector2 KitchenSafeZonePosition => _kitchenSafeZonePos;
+        public GameObject KitchenFoodObject => _kitchenFoodObject;
+        public GameObject KitchenTelegraphObject => _kitchenTelegraphMarker;
+        public GameObject KitchenLandingWarningObject => _kitchenLandingWarning;
         public GameObject LaundryBasketObject => _laundryBasketObject;
         public Treat ExposedSock => _exposedSock;
         public CoopHoldReleasePuzzle GateCrashPuzzle => _gatePuzzle;
@@ -341,6 +351,31 @@ namespace CheddarAndCocoa.Game
         private MissionDefinition _mission;
         private GameObject _bunnyCameoObject;
         private readonly HerdingMissionState _herdingState = new HerdingMissionState();
+        private readonly BackyardSquirrelTrapState _backyardTrapState = new BackyardSquirrelTrapState();
+        private Vector2 _backyardTrapGapPosition;
+        private GameObject _backyardTrapGapMarker;
+        private Treat _backyardDroppedWeenie;
+        private const float BackyardTrapGapRadius = 3.2f;
+        private readonly KitchenFoodFrenzyMissionState _kitchenState = new KitchenFoodFrenzyMissionState();
+        private GameObject _kitchenCounterMarker;
+        private GameObject _kitchenSafeZoneMarker;
+        private GameObject _kitchenFoodObject;
+        private GameObject _kitchenTelegraphMarker;
+        private GameObject _kitchenLandingWarning;
+        private Vector2 _kitchenCounterPos;
+        private Vector2 _kitchenSafeZonePos;
+        private float _kitchenFloorY;
+        private float _kitchenDropX;
+        private float _kitchenTelegraphUntil;
+        private const float KitchenCounterRadius = 3.6f;
+        private const float KitchenSafeZoneRadius = 3.0f;
+        private const float KitchenCatchRadius = 1.5f;
+        private const float KitchenFallSpeed = 4.8f;
+        private const float KitchenFinaleFallSpeed = 6.2f;
+        private const float KitchenTelegraphSeconds = 1.25f;
+        private const float KitchenFinaleTelegraphSeconds = 0.65f;
+        private static readonly Color KitchenGoodColor = new Color(1f, 0.85f, 0.4f);
+        private static readonly Color KitchenBadColor = new Color(0.7f, 0.4f, 0.85f);
         private readonly ThreatSweepMissionState _threatSweepState = new ThreatSweepMissionState();
         private readonly PatrolDefenseMissionState _patrolState = new PatrolDefenseMissionState();
         private readonly Vector2[] _squirrelRoute = { new(-15f, 9f), new(0f, -9f), new(15f, 9f), new(12f, -8f) };
@@ -643,6 +678,7 @@ namespace CheddarAndCocoa.Game
             Vector2[] digs = { P(-0.78f, 0.58f), P(0.68f, 0.64f), P(-0.74f, -0.58f), P(0.32f, -0.68f), P(0.82f, 0.08f), P(-0.18f, 0.36f) };
             Vector2[] leash = { P(-0.72f, -0.62f), P(0.72f, -0.62f), P(0.72f, 0.62f), P(-0.72f, 0.62f) };
             Vector2[] territory = { P(-0.72f, 0.6f), P(0.72f, 0.6f), P(-0.72f, -0.6f), P(0.72f, -0.6f), P(0f, 0f) };
+            _backyardTrapGapPosition = P(0.72f, 0.08f);
 
             squirrel.CopyTo(_squirrelRoute, 0);
             cutoffs.CopyTo(_squirrelCutoffZones, 0);
@@ -657,6 +693,29 @@ namespace CheddarAndCocoa.Game
         public void OnTreatCollected(Treat treat, DogController dog)
         {
             if (!MissionActive() || treat == null) return;
+
+            bool trapRecovery = false;
+            if (_mission.Variant == MissionVariant.BackyardRescue && treat == _backyardDroppedWeenie)
+            {
+                DogId dogId = dog != null && dog.TryGetComponent<DogIdentity>(out var identity)
+                    ? identity.Id
+                    : DogId.Cheddar;
+                var recovery = _backyardTrapState.TryRecover(dogId);
+                if (recovery != BackyardSquirrelTrapState.RecoveryResult.Success)
+                {
+                    RegisterBackyardTrapRecoveryFumble(dogId);
+                    return;
+                }
+
+                trapRecovery = true;
+                _backyardDroppedWeenie = null;
+                LastCue = $"{dogId} recovered the trap weenie - roles reverse!";
+                SpawnWorldPop(treat.transform.position,
+                    _backyardTrapState.Complete ? "TRAP COMPLETE!" : "SWAP ROLES!",
+                    new Color(0.45f, 1f, 0.65f));
+                LogPlaytestEvent("SquirrelTrapRecovery", $"{dogId} recovered {_backyardTrapState.Recoveries}/{BackyardSquirrelTrapState.RequiredRecoveries}");
+                UpdateBackyardTrapGapMarker();
+            }
 
             bool partnerSockDive = false;
             if (_mission.Variant == MissionVariant.SockPanic)
@@ -680,9 +739,11 @@ namespace CheddarAndCocoa.Game
 
             AddScore(
                 partnerSockDive ? ScoreEventCatalog.SockDive.Points : _mission.ItemScore,
-                partnerSockDive ? ScoreEventCatalog.SockDive.Label : _mission.CollectedScoreLabel);
+                partnerSockDive ? ScoreEventCatalog.SockDive.Label : trapRecovery ? "TRAP WEENIE RECOVERED" : _mission.CollectedScoreLabel);
             BreakfastRecovered++;
-            LastCue = $"{DogName(dog)} recovered {_mission.ItemCollectCueNoun}!";
+            LastCue = trapRecovery
+                ? $"{DogName(dog)} recovered the dropped weenie" + (_backyardTrapState.Complete ? " - squirrel trap complete!" : " - swap roles!")
+                : $"{DogName(dog)} recovered {_mission.ItemCollectCueNoun}!";
             Pulse(dog != null ? dog.gameObject : null, 1.2f);
             SetJuice(JuiceFeedbackKind.ScoreDelta, LastScoreEventLabel);
             SpawnWorldPop(dog != null ? dog.transform.position : treat.transform.position, LastScoreEventLabel, _mission.ItemPopColor);
@@ -988,6 +1049,23 @@ namespace CheddarAndCocoa.Game
             UpdateInteractionRanges();
         }
 
+        public void ForceBackyardTrapRedirect(DogId pressureDog, bool gapHeld = true)
+        {
+            if (!MissionActive() || _mission.Variant != MissionVariant.BackyardRescue || _backyardTrapState.Complete) return;
+            if (_squirrelTarget == null && !_backyardTrapState.WeenieDropped && _treats.Count > 0)
+                StartSquirrelSteal(_treats[0]);
+            ResolveBackyardTrapPressure(pressureDog, gapHeld);
+            UpdateObjectiveArrows();
+            UpdateInteractionRanges();
+        }
+
+        public void ForceBackyardTrapRecovery(DogId dogId)
+        {
+            if (!MissionActive() || _mission.Variant != MissionVariant.BackyardRescue || _backyardDroppedWeenie == null) return;
+            int dogIndex = IndexOfDog(dogId);
+            if (dogIndex >= 0) _backyardDroppedWeenie.CollectBy(_dogs[dogIndex]);
+        }
+
         public void ForceGameOver() => EndRound(false);
 
 
@@ -1140,6 +1218,10 @@ namespace CheddarAndCocoa.Game
             _rng = new System.Random(_missionSeed);
             ActiveModifier = (RoundModifier)_rng.Next(0, 3);
             _herdingState.Reset();
+            _backyardTrapState.Reset();
+            _backyardDroppedWeenie = null;
+            _kitchenState.Reset();
+            _kitchenTelegraphUntil = 0f;
             _threatSweepState.Reset();
             _patrolState.Reset();
             _coyotePressureHeld = false;
@@ -1204,6 +1286,7 @@ namespace CheddarAndCocoa.Game
             RopeObject.SetActive(_mission.RequiresTug);
             if (_bunnyCameoObject != null) _bunnyCameoObject.SetActive(true);
             if (_mission.UsesSquirrel) SetActorState(SquirrelObject, _mission.Variant == MissionVariant.SquirrelConspiracy ? "SQUIRREL CONSPIRACY ROUTE 1" : "Squirrel: WAITING", new Color(0.55f, 0.32f, 0.12f), 0.06f);
+            UpdateBackyardTrapGapMarker();
             if (_mission.Variant == MissionVariant.SquirrelConspiracy) UpdateSquirrelCutoffMarkers();
             else SetSquirrelCutoffMarkersActive(false);
             if (_mission.RequiresPredator) SetActorState(PredatorObject, "Predator: OFFSCREEN", Color.gray, 0.04f);
@@ -1324,6 +1407,25 @@ namespace CheddarAndCocoa.Game
                     PlaceObject(PredatorObject, new Vector2(0f, _bounds.yMax - 1.5f));
                     SetActorState(PredatorObject, "CAR - LEAN TO KEEP IT LEVEL!", new Color(0.5f, 0.4f, 0.3f), 0.12f);
                 }
+            }
+            if (_mission.Variant == MissionVariant.KitchenFoodFrenzy)
+            {
+                // Kitchen is a compact authored stage inside the large arena. Keeping the stations
+                // fourteen units apart holds both dogs at a readable couch-co-op camera scale.
+                _kitchenCounterPos = new Vector2(_bounds.center.x, _bounds.center.y + 8f);
+                _kitchenSafeZonePos = new Vector2(_bounds.center.x, _bounds.center.y - 5f);
+                _kitchenFloorY = _bounds.center.y - 7f;
+                // Cheddar (scout) works the counter up top; Cocoa (sweeper) holds the floor bowl.
+                int scout = IndexOfDog(_kitchenState.ScoutDog);
+                int sweeper = IndexOfDog(_kitchenState.SweeperDog);
+                // Start each dog off their station so the objective arrows read as guidance, not "ON TARGET".
+                if (scout >= 0) _dogs[scout].transform.position = ClampInsideBounds(new Vector2(_bounds.center.x - 5f, _bounds.yMax - 5f), 1.2f);
+                if (sweeper >= 0) _dogs[sweeper].transform.position = ClampInsideBounds(new Vector2(_bounds.center.x + 5f, _bounds.yMin + 2.4f), 1.2f);
+                SetKitchenSceneActive(true);
+            }
+            else
+            {
+                SetKitchenSceneActive(false);
             }
             if (_laundryBasketObject != null)
             {
@@ -1535,10 +1637,12 @@ namespace CheddarAndCocoa.Game
             else if (_mission.Variant == MissionVariant.GreatEscape) TickGreatEscape();
             else if (_mission.Variant == MissionVariant.ChaosMachine) TickChaosMachine();
             else if (_mission.Variant == MissionVariant.BlanketCatch) TickBlanketCatch();
+            else if (_mission.Variant == MissionVariant.KitchenFoodFrenzy) TickKitchen();
             else TickSquirrel();
             TickPredator();
             TickTugProximity();
             CheckClear();
+            UpdateBackyardTrapGapMarker();
             UpdateObjectiveArrows();
             UpdateTravelAssists();
             UpdateInteractionRanges();
@@ -1559,6 +1663,7 @@ namespace CheddarAndCocoa.Game
         private void TickSquirrel()
         {
             if (!_mission.UsesSquirrel) return;
+            if (_mission.Variant == MissionVariant.BackyardRescue && _backyardTrapState.WeenieDropped) return;
             if (Time.time < _squirrelScaredUntil) return;
 
             var nearbySnack = FindTreatNear(SquirrelObject.transform.position, 0.3f);
@@ -1765,6 +1870,33 @@ namespace CheddarAndCocoa.Game
                 go.SetActive(false);
                 _eagleCoverMarkers[i] = go;
             }
+        }
+
+        private void BuildBackyardTrapGapMarker()
+        {
+            _backyardTrapGapMarker = new GameObject("BackyardSquirrelTrapEscapeGap");
+            _backyardTrapGapMarker.transform.position = _backyardTrapGapPosition;
+            _backyardTrapGapMarker.transform.localScale = Vector3.one * (BackyardTrapGapRadius * 1.25f);
+            var sr = _backyardTrapGapMarker.AddComponent<SpriteRenderer>();
+            sr.sprite = _rangeSprite != null ? _rangeSprite : _sprite;
+            sr.color = new Color(0.35f, 0.8f, 1f, 0.34f);
+            sr.sortingOrder = 1;
+            AddWorldLabel(_backyardTrapGapMarker, "ESCAPE GAP - HOLD HERE", Vector3.up * 0.38f, 14, Color.white);
+            _backyardTrapGapMarker.SetActive(false);
+        }
+
+        private void UpdateBackyardTrapGapMarker()
+        {
+            if (_backyardTrapGapMarker == null) return;
+            bool active = _mission != null && _mission.Variant == MissionVariant.BackyardRescue &&
+                          MissionActive() && !_backyardTrapState.Complete;
+            _backyardTrapGapMarker.transform.position = _backyardTrapGapPosition;
+            _backyardTrapGapMarker.SetActive(active);
+            var sr = _backyardTrapGapMarker.GetComponent<SpriteRenderer>();
+            if (sr != null)
+                sr.color = IsBackyardGapHeld()
+                    ? new Color(0.35f, 1f, 0.5f, 0.48f)
+                    : new Color(0.35f, 0.8f, 1f, 0.34f);
         }
 
         private void BuildSquirrelCutoffMarkers()
@@ -3807,7 +3939,14 @@ namespace CheddarAndCocoa.Game
             int progress;
             int goal;
             int mistakes;
-            if (_mission != null && _mission.Variant == MissionVariant.SquirrelConspiracy)
+            if (_mission != null && _mission.Variant == MissionVariant.BackyardRescue)
+            {
+                missionId = "backyard_rescue";
+                progress = BreakfastRecovered + _backyardTrapState.Recoveries;
+                goal = BreakfastGoal + BackyardSquirrelTrapState.RequiredRecoveries;
+                mistakes = StolenFood + _backyardTrapState.Fumbles;
+            }
+            else if (_mission != null && _mission.Variant == MissionVariant.SquirrelConspiracy)
             {
                 missionId = "squirrel_conspiracy";
                 progress = _herdingState.ControlCount + (_herdingState.StashFound ? 1 : 0);
@@ -3925,6 +4064,13 @@ namespace CheddarAndCocoa.Game
                 progress = _blanket.Caught;
                 goal = BlanketCatchesNeeded;
                 mistakes = _blanket.Rips + _blanket.Missed;
+            }
+            else if (_mission != null && _mission.Variant == MissionVariant.KitchenFoodFrenzy)
+            {
+                missionId = "kitchen_food_frenzy";
+                progress = _kitchenState.GoodCatches;
+                goal = KitchenFoodFrenzyMissionState.RequiredCatches;
+                mistakes = _kitchenState.TotalFumbles;
             }
             else
             {
@@ -4205,6 +4351,12 @@ namespace CheddarAndCocoa.Game
             {
                 barkDidSomething = TryProgressSquirrelConspiracyBark(dogIndex);
             }
+            else if (_mission.Variant == MissionVariant.BackyardRescue &&
+                     !_backyardTrapState.Complete && _squirrelTarget != null &&
+                     Vector2.Distance(dog.transform.position, SquirrelObject.transform.position) < _tuning.SingleBarkSquirrelRange)
+            {
+                barkDidSomething = ResolveBackyardTrapPressure(dogId, IsBackyardGapHeld());
+            }
             else if (_mission.Variant == MissionVariant.CoyotesFence)
             {
                 RegisterCoyoteBarkPressure(dogIndex);
@@ -4213,6 +4365,11 @@ namespace CheddarAndCocoa.Game
             else if (_mission.Variant == MissionVariant.ScentSearch)
             {
                 DoScentSniff(dogIndex);
+                barkDidSomething = true;
+            }
+            else if (_mission.Variant == MissionVariant.KitchenFoodFrenzy)
+            {
+                TryKitchenBark(dogIndex);
                 barkDidSomething = true;
             }
             else if (_mission.UsesSquirrel && Vector2.Distance(dog.transform.position, SquirrelObject.transform.position) < _tuning.SingleBarkSquirrelRange)
@@ -4244,7 +4401,9 @@ namespace CheddarAndCocoa.Game
             _nextUnitedBarkAt = Time.time + _tuning.UnitedBarkCooldown;
             _teamBarkFeedbackUntil = Time.time + 0.35f;
             LastFeedback = FeedbackKind.UnitedBark;
-            ScareSquirrel(_tuning.UnitedBarkScareSeconds, "United bark shook the whole yard!", false);
+            if (_mission.Variant != MissionVariant.BackyardRescue || _backyardTrapState.Complete ||
+                (_squirrelTarget == null && !_backyardTrapState.WeenieDropped))
+                ScareSquirrel(_tuning.UnitedBarkScareSeconds, "United bark shook the whole yard!", false);
             LogPlaytestEvent("UnitedBark", $"{UnitedBarks} total");
 
             if (Phase == State.PredatorWarning || Phase == State.PredatorAttack) ResolvePredator();
@@ -4273,6 +4432,413 @@ namespace CheddarAndCocoa.Game
             LogObjectiveIfChanged();
         }
 
+        private bool IsBackyardGapHeld()
+        {
+            int gapDog = IndexOfDog(_backyardTrapState.GapDog);
+            return gapDog >= 0 && Vector2.Distance(_dogs[gapDog].transform.position, _backyardTrapGapPosition) <= BackyardTrapGapRadius;
+        }
+
+        private bool ResolveBackyardTrapPressure(DogId dogId, bool gapHeld)
+        {
+            if (_squirrelTarget == null) return false;
+
+            var result = _backyardTrapState.TryRedirect(dogId, gapHeld);
+            if (result == BackyardSquirrelTrapState.RedirectResult.Success)
+            {
+                _backyardDroppedWeenie = _squirrelTarget;
+                _squirrelTarget = null;
+                _backyardDroppedWeenie.transform.position = _backyardTrapGapPosition + Vector2.left * 3f;
+                PlaceObject(SquirrelObject, _backyardTrapGapPosition + Vector2.right * 4f);
+                _squirrelTimer = SquirrelDelay();
+                AddScore(_mission.SquirrelScareScore, "SQUIRREL REDIRECTED");
+                LastFeedback = FeedbackKind.SquirrelScared;
+                LastCue = $"{dogId} pressured the squirrel into the blocked route - {_backyardTrapState.RecoveryDog} recover the dropped weenie!";
+                SetActorState(SquirrelObject, "TRAPPED! PARTNER RECOVER THE DROP", new Color(0.85f, 0.85f, 0.85f), 0.12f);
+                SetJuice(JuiceFeedbackKind.SuccessPop, "SQUIRREL REDIRECT! PARTNER RECOVER");
+                SpawnWorldPop(_backyardDroppedWeenie.transform.position, "DROP! PARTNER ONLY!", new Color(0.9f, 0.95f, 1f));
+                RequestAudioCue(ArenaFeedbackCatalog.TugRescueSuccess);
+                LogPlaytestEvent("SquirrelTrapRedirect", LastCue);
+                UpdateBackyardTrapGapMarker();
+                LogObjectiveIfChanged();
+                return true;
+            }
+
+            if (result == BackyardSquirrelTrapState.RedirectResult.WrongPressureDog)
+                RegisterBackyardTrapFumble($"WRONG WOOF! {_backyardTrapState.PressureDog} must pressure this pass.");
+            else if (result == BackyardSquirrelTrapState.RedirectResult.GapOpen)
+                RegisterBackyardTrapFumble($"FAKE ROUTE! {_backyardTrapState.GapDog} must hold the escape gap first.");
+            return result != BackyardSquirrelTrapState.RedirectResult.Complete;
+        }
+
+        private void RegisterBackyardTrapFumble(string cue)
+        {
+            LastCue = cue + " The squirrel loops back for another try.";
+            SetJuice(JuiceFeedbackKind.WarningMiss, "SQUIRREL JUKE!");
+            SpawnWorldPop(SquirrelObject.transform.position, "NYEH-HEH! WRONG WAY!", new Color(1f, 0.45f, 0.25f));
+            RequestAudioCue(ArenaFeedbackCatalog.ScorePenalty);
+            RequestRumble("squirrel_penalty", 0.12f, 0.25f, 0.12f);
+            LogPlaytestEvent("SquirrelTrapFumble", LastCue);
+            LogObjectiveIfChanged();
+        }
+
+        private void RegisterBackyardTrapRecoveryFumble(DogId dogId)
+        {
+            MarkFailedInteraction(dogId, $"only {_backyardTrapState.RecoveryDog} can recover the trap weenie");
+            LastCue = $"HOT-POTATO FUMBLE! {dogId} caused the drop, so {_backyardTrapState.RecoveryDog} must recover it.";
+            if (_backyardDroppedWeenie != null)
+            {
+                Vector2 bounce = dogId == DogId.Cheddar ? new Vector2(-2.5f, 1.5f) : new Vector2(2.5f, -1.5f);
+                _backyardDroppedWeenie.transform.position = ClampInsideBounds((Vector2)_backyardDroppedWeenie.transform.position + bounce, 1.2f);
+                SpawnWorldPop(_backyardDroppedWeenie.transform.position, "HOT POTATO! PARTNER ONLY!", new Color(1f, 0.45f, 0.25f));
+            }
+            SetJuice(JuiceFeedbackKind.WarningMiss, "PARTNER RECOVERY FUMBLE");
+            RequestAudioCue(ArenaFeedbackCatalog.ScorePenalty);
+            LogPlaytestEvent("SquirrelTrapFumble", LastCue);
+            LogObjectiveIfChanged();
+        }
+
+        // ---- Kitchen Falling Food Frenzy ------------------------------------------------------
+
+        private void BuildKitchenScene()
+        {
+            _kitchenCounterMarker = new GameObject("KitchenCounterRoute");
+            var counterSr = _kitchenCounterMarker.AddComponent<SpriteRenderer>();
+            counterSr.sprite = _rangeSprite != null ? _rangeSprite : _sprite;
+            counterSr.color = new Color(0.82f, 0.6f, 0.35f, 0.4f);
+            counterSr.sortingOrder = 1;
+            _kitchenCounterMarker.transform.localScale = new Vector3(KitchenCounterRadius * 2.4f, 1.1f, 1f);
+            AddWorldLabel(_kitchenCounterMarker, "COUNTER - CHEDDAR KNOCKS FOOD LOOSE", Vector3.up * 0.42f, 13, Color.white);
+            _kitchenCounterMarker.SetActive(false);
+
+            _kitchenSafeZoneMarker = new GameObject("KitchenSafeBowl");
+            var bowlSr = _kitchenSafeZoneMarker.AddComponent<SpriteRenderer>();
+            bowlSr.sprite = _rangeSprite != null ? _rangeSprite : _sprite;
+            bowlSr.color = new Color(0.35f, 1f, 0.55f, 0.3f);
+            bowlSr.sortingOrder = 1;
+            _kitchenSafeZoneMarker.transform.localScale = Vector3.one * (KitchenSafeZoneRadius * 2.2f);
+            AddWorldLabel(_kitchenSafeZoneMarker, "SAFE BOWL - COCOA CATCHES HERE", Vector3.up * 0.42f, 13, Color.white);
+            _kitchenSafeZoneMarker.SetActive(false);
+
+            _kitchenFoodObject = new GameObject("KitchenFallingFood");
+            var foodSr = _kitchenFoodObject.AddComponent<SpriteRenderer>();
+            foodSr.sprite = _sprite;
+            foodSr.color = KitchenGoodColor;
+            foodSr.sortingOrder = 4;
+            _kitchenFoodObject.transform.localScale = Vector3.one * 0.7f;
+            AddWorldLabel(_kitchenFoodObject, "FALLING FOOD", Vector3.up * 0.34f, 12, Color.white);
+            _kitchenFoodObject.SetActive(false);
+
+            _kitchenTelegraphMarker = new GameObject("KitchenPreDropTelegraph");
+            var telegraphSr = _kitchenTelegraphMarker.AddComponent<SpriteRenderer>();
+            telegraphSr.sprite = _rangeSprite != null ? _rangeSprite : _sprite;
+            telegraphSr.color = KitchenGoodColor;
+            telegraphSr.sortingOrder = 3;
+            _kitchenTelegraphMarker.transform.localScale = Vector3.one * 1.5f;
+            AddWorldLabel(_kitchenTelegraphMarker, "BARK KNOCK - WATCH THE LANE", Vector3.up * 0.55f, 13, Color.white);
+            _kitchenTelegraphMarker.SetActive(false);
+
+            _kitchenLandingWarning = new GameObject("KitchenLandingWarning");
+            var warningSr = _kitchenLandingWarning.AddComponent<SpriteRenderer>();
+            warningSr.sprite = _rangeSprite != null ? _rangeSprite : _sprite;
+            warningSr.color = new Color(1f, 0.85f, 0.35f, 0.45f);
+            warningSr.sortingOrder = 2;
+            _kitchenLandingWarning.transform.localScale = Vector3.one * (KitchenCatchRadius * 2.4f);
+            AddWorldLabel(_kitchenLandingWarning, "LANDING HERE", Vector3.up * 0.45f, 12, Color.white);
+            _kitchenLandingWarning.SetActive(false);
+        }
+
+        private void SetKitchenSceneActive(bool active)
+        {
+            if (_kitchenCounterMarker != null)
+            {
+                _kitchenCounterMarker.transform.position = _kitchenCounterPos;
+                _kitchenCounterMarker.SetActive(active);
+            }
+            if (_kitchenSafeZoneMarker != null)
+            {
+                _kitchenSafeZoneMarker.transform.position = _kitchenSafeZonePos;
+                _kitchenSafeZoneMarker.SetActive(active);
+            }
+            if (_kitchenFoodObject != null && !active) _kitchenFoodObject.SetActive(false);
+            if (_kitchenTelegraphMarker != null && !active) _kitchenTelegraphMarker.SetActive(false);
+            if (_kitchenLandingWarning != null && !active) _kitchenLandingWarning.SetActive(false);
+        }
+
+        private void UpdateKitchenMarkers()
+        {
+            if (_kitchenSafeZoneMarker == null) return;
+            var sr = _kitchenSafeZoneMarker.GetComponent<SpriteRenderer>();
+            if (sr == null) return;
+            int sweeper = IndexOfDog(_kitchenState.SweeperDog);
+            bool held = sweeper >= 0 && Vector2.Distance(_dogs[sweeper].transform.position, _kitchenSafeZonePos) <= KitchenSafeZoneRadius;
+            sr.color = held ? new Color(0.35f, 1f, 0.55f, 0.5f) : new Color(0.35f, 1f, 0.55f, 0.3f);
+
+            if (_kitchenTelegraphMarker != null && _kitchenTelegraphMarker.activeSelf)
+            {
+                float pulse = 1.35f + Mathf.PingPong(Time.time * (_kitchenState.FinaleActive ? 3.8f : 2.4f), 0.45f);
+                _kitchenTelegraphMarker.transform.localScale = Vector3.one * pulse;
+            }
+            if (_kitchenLandingWarning != null && _kitchenLandingWarning.activeSelf)
+            {
+                float pulse = 2.5f + Mathf.PingPong(Time.time * 2.8f, 0.8f);
+                _kitchenLandingWarning.transform.localScale = Vector3.one * pulse;
+            }
+        }
+
+        private void TickKitchen()
+        {
+            if (_kitchenState.Complete) { UpdateKitchenMarkers(); return; }
+
+            if (_kitchenState.TelegraphActive)
+            {
+                if (Time.time >= _kitchenTelegraphUntil) ReleaseKitchenTelegraph();
+            }
+            else if (_kitchenState.DropActive && _kitchenFoodObject != null)
+            {
+                Vector3 p = _kitchenFoodObject.transform.position;
+                float speed = _kitchenState.FinaleActive ? KitchenFinaleFallSpeed : KitchenFallSpeed;
+                p.y -= speed * Time.deltaTime;
+                _kitchenFoodObject.transform.position = p;
+
+                int sweeper = IndexOfDog(_kitchenState.SweeperDog);
+                if (sweeper >= 0 && Vector2.Distance(_dogs[sweeper].transform.position, p) <= KitchenCatchRadius)
+                {
+                    bool safe = Vector2.Distance(_dogs[sweeper].transform.position, _kitchenSafeZonePos) <= KitchenSafeZoneRadius;
+                    ResolveKitchenCatch(_kitchenState.SweeperDog, safe);
+                }
+                else if (p.y <= _kitchenFloorY)
+                {
+                    ResolveKitchenLetFall();
+                }
+            }
+
+            UpdateKitchenMarkers();
+        }
+
+        private bool TryKitchenBark(int dogIndex)
+        {
+            if (dogIndex < 0) return false;
+            DogId dogId = _dogs[dogIndex].GetComponent<DogIdentity>().Id;
+            if (Vector2.Distance(_dogs[dogIndex].transform.position, _kitchenCounterPos) > KitchenCounterRadius)
+            {
+                LastCue = dogId == _kitchenState.ScoutDog
+                    ? "Cheddar must reach the COUNTER route before barking food loose."
+                    : "Cocoa guards the bowl; Cheddar owns the counter bark.";
+                SetJuice(JuiceFeedbackKind.WarningMiss, dogId == _kitchenState.ScoutDog ? "GET TO THE COUNTER" : "CHEDDAR BARKS IT LOOSE");
+                return false;
+            }
+
+            var kind = _kitchenState.FinaleActive
+                ? _kitchenState.ExpectedFinaleKind
+                : (_rng.NextDouble() < 0.7 ? KitchenFoodFrenzyMissionState.FoodKind.Good : KitchenFoodFrenzyMissionState.FoodKind.Bad);
+            return ArmKitchenTelegraph(dogId, kind);
+        }
+
+        private bool ArmKitchenTelegraph(DogId dog, KitchenFoodFrenzyMissionState.FoodKind kind)
+        {
+            var result = _kitchenState.ArmTelegraph(dog, kind);
+            if (result == KitchenFoodFrenzyMissionState.TelegraphResult.WrongScout)
+            {
+                MarkFailedInteraction(dog, "only Cheddar can bark food loose from the counter");
+                LastCue = "Cocoa called it out, but Cheddar must make the counter knock.";
+                SetJuice(JuiceFeedbackKind.WarningMiss, "CHEDDAR BARKS THE COUNTER");
+                LogPlaytestEvent("KitchenWrongScout", "Cocoa tried counter bark");
+                return false;
+            }
+            if (result != KitchenFoodFrenzyMissionState.TelegraphResult.Armed) return false;
+
+            float spanX = KitchenCounterRadius * 1.7f;
+            _kitchenDropX = Mathf.Clamp(_kitchenCounterPos.x + (float)(_rng.NextDouble() * 2.0 - 1.0) * spanX,
+                _bounds.xMin + 1.2f, _bounds.xMax - 1.2f);
+            _kitchenTelegraphUntil = Time.time + (_kitchenState.FinaleActive ? KitchenFinaleTelegraphSeconds : KitchenTelegraphSeconds);
+            Color color = kind == KitchenFoodFrenzyMissionState.FoodKind.Bad ? KitchenBadColor : KitchenGoodColor;
+            if (_kitchenTelegraphMarker != null)
+            {
+                _kitchenTelegraphMarker.transform.position = new Vector2(_kitchenDropX, _kitchenCounterPos.y);
+                var sr = _kitchenTelegraphMarker.GetComponent<SpriteRenderer>();
+                if (sr != null) sr.color = color;
+                _kitchenTelegraphMarker.SetActive(true);
+            }
+            if (_kitchenLandingWarning != null)
+            {
+                _kitchenLandingWarning.transform.position = KitchenFloorPos();
+                var sr = _kitchenLandingWarning.GetComponent<SpriteRenderer>();
+                if (sr != null) sr.color = new Color(color.r, color.g, color.b, 0.48f);
+                _kitchenLandingWarning.SetActive(true);
+            }
+
+            bool bad = kind == KitchenFoodFrenzyMissionState.FoodKind.Bad;
+            LastCue = bad ? "Cheddar bark-knocked an ONION loose - Cocoa, clear the landing circle!" : "Cheddar bark-knocked dinner loose - Cocoa, line up the gold landing circle!";
+            SetJuice(JuiceFeedbackKind.BarkBurst, bad ? "PURPLE WARNING - DODGE!" : "GOLD WARNING - CATCH!");
+            SpawnWorldPop(new Vector2(_kitchenDropX, _kitchenCounterPos.y), bad ? "ONION INCOMING!" : "FOOD INCOMING!", color);
+            RequestRumble("kitchen_telegraph", 0.08f, 0.16f, 0.1f);
+            LogPlaytestEvent("KitchenTelegraph", bad ? "bad" : "good");
+            LogObjectiveIfChanged();
+            return true;
+        }
+
+        private void ReleaseKitchenTelegraph()
+        {
+            if (_kitchenState.ReleaseTelegraph() != KitchenFoodFrenzyMissionState.ReleaseResult.Dropped) return;
+            KitchenFoodFrenzyMissionState.FoodKind kind = _kitchenState.ActiveKind;
+            if (_kitchenFoodObject != null)
+            {
+                _kitchenFoodObject.transform.position = new Vector2(_kitchenDropX, _kitchenCounterPos.y);
+                var sr = _kitchenFoodObject.GetComponent<SpriteRenderer>();
+                if (sr != null) sr.color = kind == KitchenFoodFrenzyMissionState.FoodKind.Bad ? KitchenBadColor : KitchenGoodColor;
+                _kitchenFoodObject.SetActive(true);
+            }
+            if (_kitchenTelegraphMarker != null) _kitchenTelegraphMarker.SetActive(false);
+            LogPlaytestEvent("KitchenDrop", kind == KitchenFoodFrenzyMissionState.FoodKind.Bad ? "bad" : "good");
+            LogObjectiveIfChanged();
+        }
+
+        private void StartKitchenDrop(KitchenFoodFrenzyMissionState.FoodKind kind)
+        {
+            if (ArmKitchenTelegraph(_kitchenState.ScoutDog, kind)) ReleaseKitchenTelegraph();
+        }
+
+        private void ResolveKitchenCatch(DogId dog, bool intoSafeZone)
+        {
+            bool wasFinale = _kitchenState.FinaleActive;
+            var result = _kitchenState.Catch(dog, intoSafeZone);
+            int dogIndex = IndexOfDog(dog);
+            switch (result)
+            {
+                case KitchenFoodFrenzyMissionState.CatchResult.Caught:
+                    int combo = _kitchenState.Combo;
+                    AddScore(70 + 25 * Mathf.Max(0, combo - 1), combo > 1 ? $"FOOD COMBO x{combo}" : "FOOD CAUGHT");
+                    LastFeedback = FeedbackKind.SquirrelScared;
+                    LastCue = $"Cocoa floored it into the bowl! Combo x{combo}.";
+                    SetJuice(JuiceFeedbackKind.SuccessPop, combo > 1 ? $"YUM! COMBO x{combo}" : "YUM! SAFE BOWL");
+                    SpawnWorldPop(_kitchenSafeZonePos, combo > 1 ? $"YUM! x{combo}" : "YUM!", new Color(0.5f, 1f, 0.65f));
+                    RequestAudioCue(ArenaFeedbackCatalog.SnackSockCollect);
+                    RequestRumble("kitchen_catch", 0.18f, 0.32f, 0.12f);
+                    if (dogIndex >= 0 && DogFeedback[dogIndex] != null) DogFeedback[dogIndex].ShowProudBrief();
+                    HideKitchenFood();
+                    LogPlaytestEvent("KitchenCatch", $"{_kitchenState.GoodCatches}/{KitchenFoodFrenzyMissionState.RequiredCatches}");
+                    if (!wasFinale && _kitchenState.FinaleActive)
+                    {
+                        AddScore(100, "DINNER RUSH STARTED");
+                        LastCue = "DINNER RUSH! Three fast calls: catch gold, dodge purple, catch gold.";
+                        SetJuice(JuiceFeedbackKind.SuccessPop, "DINNER RUSH - 3 CALLS!");
+                        SpawnWorldPop(_bounds.center, "DINNER RUSH!", new Color(1f, 0.72f, 0.25f));
+                        RequestRumble("dinner_rush", 0.28f, 0.5f, 0.2f);
+                        LogPlaytestEvent("KitchenFinaleStarted", "GOOD / BAD / GOOD");
+                    }
+                    break;
+                case KitchenFoodFrenzyMissionState.CatchResult.GrossOut:
+                    MarkFailedInteraction(dog, "ate the onion");
+                    LastCue = "BLECH! Cocoa ate the onion - that one was a DODGE.";
+                    SetJuice(JuiceFeedbackKind.WarningMiss, "BLECH! ONION");
+                    SpawnWorldPop(_kitchenSafeZonePos, "BLECH! ONION!", KitchenBadColor);
+                    RequestAudioCue(ArenaFeedbackCatalog.ScorePenalty);
+                    RequestRumble("kitchen_gross", 0.3f, 0.58f, 0.18f);
+                    if (dogIndex >= 0 && DogFeedback[dogIndex] != null) DogFeedback[dogIndex].ShowPanic();
+                    HideKitchenFood();
+                    LogPlaytestEvent("KitchenGrossOut", "onion eaten");
+                    break;
+                case KitchenFoodFrenzyMissionState.CatchResult.UnsafeLanding:
+                    LastCue = "SPLAT! Caught it off the bowl - steer good food into the SAFE BOWL.";
+                    SetJuice(JuiceFeedbackKind.WarningMiss, "SPLAT! MISSED BOWL");
+                    SpawnWorldPop(_kitchenFoodObject != null ? _kitchenFoodObject.transform.position : (Vector3)_kitchenSafeZonePos,
+                        "SPLAT! NOT IN BOWL", new Color(1f, 0.7f, 0.3f));
+                    RequestAudioCue(ArenaFeedbackCatalog.ScorePenalty);
+                    RequestRumble("kitchen_splat", 0.2f, 0.42f, 0.14f);
+                    if (dogIndex >= 0 && DogFeedback[dogIndex] != null) DogFeedback[dogIndex].ShowPanic();
+                    HideKitchenFood();
+                    LogPlaytestEvent("KitchenUnsafe", "off bowl");
+                    break;
+                case KitchenFoodFrenzyMissionState.CatchResult.WrongCatcher:
+                    MarkFailedInteraction(dog, "Cheddar can't floor the catch - that is Cocoa's job");
+                    LastCue = "Cheddar, you knock it loose - let COCOA floor the catch!";
+                    SetJuice(JuiceFeedbackKind.WarningMiss, "WRONG DOG - COCOA FLOORS IT");
+                    SpawnWorldPop(_kitchenFoodObject != null ? _kitchenFoodObject.transform.position : (Vector3)_kitchenCounterPos,
+                        "COCOA CATCHES!", new Color(1f, 0.6f, 0.3f));
+                    RequestAudioCue(ArenaFeedbackCatalog.ScorePenalty);
+                    LogPlaytestEvent("KitchenWrongCatcher", "scout tried floor catch");
+                    break;
+                default:
+                    return;
+            }
+            UpdateKitchenMarkers();
+            LogObjectiveIfChanged();
+        }
+
+        private void ResolveKitchenLetFall()
+        {
+            var result = _kitchenState.LetFall();
+            int sweeper = IndexOfDog(_kitchenState.SweeperDog);
+            if (result == KitchenFoodFrenzyMissionState.FallResult.DodgedBad)
+            {
+                AddScore(20, "ONION DODGED");
+                LastCue = "Good dodge! The onion splatted harmlessly.";
+                SetJuice(JuiceFeedbackKind.ScoreDelta, "DODGED THE ONION");
+                SpawnWorldPop(KitchenFloorPos(), "DODGED!", new Color(0.5f, 1f, 0.65f));
+                RequestAudioCue(ArenaFeedbackCatalog.SnackSockCollect);
+                RequestRumble("kitchen_dodge", 0.12f, 0.24f, 0.1f);
+                if (sweeper >= 0 && DogFeedback[sweeper] != null) DogFeedback[sweeper].ShowProudBrief();
+                LogPlaytestEvent("KitchenDodge", "bad food avoided");
+            }
+            else if (result == KitchenFoodFrenzyMissionState.FallResult.MissedGood)
+            {
+                LastCue = "Missed! Good food hit the floor - combo reset.";
+                SetJuice(JuiceFeedbackKind.WarningMiss, "MISS! FOOD SPLAT");
+                SpawnWorldPop(KitchenFloorPos(), "MISS! SPLAT", new Color(1f, 0.6f, 0.3f));
+                RequestAudioCue(ArenaFeedbackCatalog.ScorePenalty);
+                RequestRumble("kitchen_miss", 0.25f, 0.48f, 0.16f);
+                if (sweeper >= 0 && DogFeedback[sweeper] != null) DogFeedback[sweeper].ShowPanic();
+                LogPlaytestEvent("KitchenMiss", "good food dropped");
+            }
+            HideKitchenFood();
+            UpdateKitchenMarkers();
+            LogObjectiveIfChanged();
+        }
+
+        private Vector2 KitchenFloorPos() => new Vector2(_kitchenDropX, _kitchenFloorY);
+
+        private void HideKitchenFood()
+        {
+            if (_kitchenFoodObject != null) _kitchenFoodObject.SetActive(false);
+            if (_kitchenTelegraphMarker != null) _kitchenTelegraphMarker.SetActive(false);
+            if (_kitchenLandingWarning != null) _kitchenLandingWarning.SetActive(false);
+        }
+
+        /// <summary>Deterministic test hook: the scout knocks a piece of food of the given kind loose.</summary>
+        public void ForceKitchenDrop(KitchenFoodFrenzyMissionState.FoodKind kind)
+        {
+            if (!MissionActive() || _mission.Variant != MissionVariant.KitchenFoodFrenzy) return;
+            StartKitchenDrop(kind);
+        }
+
+        /// <summary>Deterministic test hook: arm the readable warning without releasing the food.</summary>
+        public void ForceKitchenTelegraph(DogId dog, KitchenFoodFrenzyMissionState.FoodKind kind)
+        {
+            if (!MissionActive() || _mission.Variant != MissionVariant.KitchenFoodFrenzy) return;
+            ArmKitchenTelegraph(dog, kind);
+        }
+
+        /// <summary>Deterministic test hook: release an armed warning into its falling phase.</summary>
+        public void ForceKitchenReleaseTelegraph()
+        {
+            if (!MissionActive() || _mission.Variant != MissionVariant.KitchenFoodFrenzy) return;
+            ReleaseKitchenTelegraph();
+        }
+
+        /// <summary>Deterministic test hook: a dog catches the live drop, optionally into the safe bowl.</summary>
+        public void ForceKitchenCatch(DogId dog, bool intoSafeZone)
+        {
+            if (!MissionActive() || _mission.Variant != MissionVariant.KitchenFoodFrenzy) return;
+            ResolveKitchenCatch(dog, intoSafeZone);
+        }
+
+        /// <summary>Deterministic test hook: the live drop reaches the floor uncaught.</summary>
+        public void ForceKitchenLetFall()
+        {
+            if (!MissionActive() || _mission.Variant != MissionVariant.KitchenFoodFrenzy) return;
+            ResolveKitchenLetFall();
+        }
+
         private void RescueGrabbedDog(DogController rescuer)
         {
             if (_grabbedDog < 0) return;
@@ -4298,6 +4864,11 @@ namespace CheddarAndCocoa.Game
         private void CheckClear()
         {
             if (Phase == State.LevelClear || Phase == State.GameOver) return;
+            if (_mission.Variant == MissionVariant.KitchenFoodFrenzy)
+            {
+                if (_kitchenState.Complete) EndRound(true);
+                return;
+            }
             if (_mission.Variant == MissionVariant.SquirrelConspiracy)
             {
                 if (_herdingState.StashFound) EndRound(true);
@@ -4391,7 +4962,8 @@ namespace CheddarAndCocoa.Game
             bool hasItems = BreakfastRecovered >= _mission.ItemGoal;
             bool hasPredator = !_mission.RequiresPredator || PredatorResolved;
             bool hasTug = !_mission.RequiresTug || TugComplete;
-            if (hasItems && hasPredator && hasTug) EndRound(true);
+            bool hasBackyardTrap = _mission.Variant != MissionVariant.BackyardRescue || _backyardTrapState.Complete;
+            if (hasItems && hasPredator && hasTug && hasBackyardTrap) EndRound(true);
         }
 
         private void EndRound(bool clear)
@@ -4451,6 +5023,8 @@ namespace CheddarAndCocoa.Game
 
             HideObjectiveArrows();
             HideInteractionRanges();
+            if (_backyardTrapGapMarker != null) _backyardTrapGapMarker.SetActive(false);
+            SetKitchenSceneActive(false);
             SetSquirrelCutoffMarkersActive(false);
             RecordSessionResult();
             LogPlaytestEvent(clear ? "MissionClear" : "MissionFail", EndSummaryLabel);
@@ -4527,6 +5101,30 @@ namespace CheddarAndCocoa.Game
                 return $"Rescue {DogName(_dogs[_grabbedDog])}";
             if (Phase == State.PredatorWarning)
                 return "Huddle + bark at the shadow";
+            if (_mission.Variant == MissionVariant.KitchenFoodFrenzy)
+            {
+                if (_kitchenState.Complete)
+                    return "Kitchen cleared - replay Kitchen Falling Food Frenzy";
+                string kitchenStep = _kitchenState.DropActive
+                    ? "Cocoa: catch GOLD in the SAFE BOWL; clear PURPLE and let it splat"
+                    : _kitchenState.TelegraphActive
+                        ? "DROP TELEGRAPHED: Cocoa read the landing circle; Cheddar reset at counter"
+                        : "Cheddar: bark at the COUNTER to knock the next food loose";
+                string finale = _kitchenState.FinaleActive
+                    ? $" - DINNER RUSH {_kitchenState.FinaleSuccesses}/{KitchenFoodFrenzyMissionState.FinaleSuccessesRequired}"
+                    : string.Empty;
+                return $"{kitchenStep} - caught {_kitchenState.GoodCatches}/{KitchenFoodFrenzyMissionState.RequiredCatches}, combo x{_kitchenState.Combo}{finale}";
+            }
+            if (_mission.Variant == MissionVariant.BackyardRescue && !_backyardTrapState.Complete)
+            {
+                if (_backyardTrapState.WeenieDropped)
+                    return $"{_backyardTrapState.RecoveryDog}: recover the dropped weenie (partner only) - trap {_backyardTrapState.Recoveries}/{BackyardSquirrelTrapState.RequiredRecoveries}";
+                if (_squirrelTarget != null)
+                    return $"Bark to scare squirrel: {_backyardTrapState.PressureDog} pressure / {_backyardTrapState.GapDog} HOLD ESCAPE GAP - trap {_backyardTrapState.Recoveries}/{BackyardSquirrelTrapState.RequiredRecoveries}";
+                if (_mission.RequiresTug && !TugComplete && BreakfastRecovered >= Mathf.Max(2, recoveryGoal / 2))
+                    return _mission.TugObjectiveText;
+                return $"Save weenies; next trap: {_backyardTrapState.PressureDog} pressures, {_backyardTrapState.GapDog} holds gap ({_backyardTrapState.Recoveries}/{BackyardSquirrelTrapState.RequiredRecoveries})";
+            }
             if (_mission.Variant == MissionVariant.SockPanic)
             {
                 if (_sockBasketState.BasketOpen)
@@ -5049,6 +5647,8 @@ namespace CheddarAndCocoa.Game
             if (PredatorObject != null) PredatorObject.SetActive(active && _mission != null && _mission.RequiresPredator);
             if (RopeObject != null) RopeObject.SetActive(active && _mission != null && _mission.RequiresTug);
             if (_bunnyCameoObject != null) _bunnyCameoObject.SetActive(active);
+            if (!active && _backyardTrapGapMarker != null) _backyardTrapGapMarker.SetActive(false);
+            if (!active) SetKitchenSceneActive(false);
             if (!active || _mission == null || _mission.Variant != MissionVariant.EagleShadowPanic) SetEagleCoverMarkersActive(false);
             if (!active || _mission == null || _mission.Variant != MissionVariant.SquirrelConspiracy) SetSquirrelCutoffMarkersActive(false);
             if (!active || _mission == null || _mission.Variant != MissionVariant.CoyotesFence) SetCoyoteGapMarkersActive(false);
@@ -6149,6 +6749,63 @@ namespace CheddarAndCocoa.Game
                         ItemSecondaryColor = new Color(0.12f, 0.42f, 0.72f),
                         ItemPopColor = new Color(0.62f, 0.9f, 1f)
                     };
+                case MissionVariant.KitchenFoodFrenzy:
+                    return new MissionDefinition
+                    {
+                        Variant = MissionVariant.KitchenFoodFrenzy,
+                        Name = "Kitchen Falling Food Frenzy",
+                        IntroPrompt = "Cheddar barks at the counter to knock food loose; Cocoa reads the warning circle, catches gold in the bowl, and dodges purple. Finish the three-call dinner rush!",
+                        ReadyScoreLabel = "READY FOR FALLING FOOD",
+                        ItemRootName = "Kitchen Scraps",
+                        ItemObjectName = "Falling Food",
+                        ItemWorldLabel = "Food!",
+                        ItemArrowLabel = "FOOD",
+                        ItemCollectCueNoun = "a falling snack",
+                        CollectObjectiveFormat = "Catch food {0}/{1}",
+                        CollectedScoreLabel = "FOOD CAUGHT",
+                        ItemScore = balance.ItemScore,
+                        SpawnedItemCount = 0,
+                        ItemGoal = 0,
+                        RoundSeconds = balance.RoundSeconds,
+                        PawfectScore = balance.PawfectScore,
+                        HeroScore = balance.HeroScore,
+                        SurvivorScore = balance.SurvivorScore,
+                        UsesSquirrel = false,
+                        RequiresPredator = false,
+                        RequiresTug = false,
+                        MaxStolenFood = balance.MaxStolenFood,
+                        SquirrelPenalty = balance.SquirrelPenalty,
+                        SquirrelScareScore = balance.SquirrelScareScore,
+                        SquirrelObjectiveText = "No squirrel - catch the falling food",
+                        SquirrelStealingCue = "No squirrel in the Kitchen.",
+                        SquirrelStoleCue = "No squirrel in the Kitchen.",
+                        SquirrelStealScoreLabel = "KITCHEN MESS",
+                        SquirrelScareScoreLabel = "COUNTER BARK",
+                        SquirrelStealingActorLabel = "SQUIRREL OFF DUTY",
+                        SquirrelDroppedActorLabel = "SQUIRREL OFF DUTY",
+                        SquirrelStoleActorLabel = "SQUIRREL OFF DUTY",
+                        SquirrelMissPopLabel = "MISS! -FOOD",
+                        SquirrelStealJuiceLabel = "MISS! FOOD SPLAT",
+                        SquirrelScareJuiceLabel = "COUNTER POP!",
+                        TugObjectiveText = "Catch the falling food",
+                        WaitingObjectiveText = "Cheddar, bark at the counter to knock the next food loose",
+                        ClearObjectiveText = "Kitchen cleared - replay Kitchen Falling Food Frenzy",
+                        ClearBannerPrefix = "KITCHEN CLEARED!",
+                        ClearScoreLabel = "KITCHEN FRENZY CLEAR",
+                        ReplayPrompt = "Press R / Enter / Start to replay the Kitchen",
+                        FailObjectiveText = "Mission failed - replay Kitchen Falling Food Frenzy",
+                        GenericFailReason = "The good food kept hitting the floor.",
+                        TimeFailReason = "Dinner ended before enough food was floored into the bowl.",
+                        StolenFailReason = "No squirrel here, just a sticky kitchen floor.",
+                        PredatorFailReason = "No predator here, just a busy stove.",
+                        PawfectClearReason = "A flawless counter-and-floor relay - chef's kiss.",
+                        HeroClearReason = "Most of the good food made it into the bowl.",
+                        BasicClearReason = "The bowl got filled, even if the floor took a few casualties.",
+                        ItemColor = new Color(1f, 0.85f, 0.4f),
+                        ItemAccentColor = new Color(1f, 0.7f, 0.3f),
+                        ItemSecondaryColor = new Color(0.7f, 0.4f, 0.85f),
+                        ItemPopColor = new Color(0.5f, 1f, 0.65f)
+                    };
                 default:
                     return new MissionDefinition
                     {
@@ -6366,6 +7023,50 @@ namespace CheddarAndCocoa.Game
 
             switch (_mission.Variant)
             {
+                case MissionVariant.KitchenFoodFrenzy:
+                    if (_kitchenState.Complete) return false;
+                    if (_kitchenState.DropActive || _kitchenState.TelegraphActive)
+                    {
+                        bool sweeperDog = IndexOfDog(_kitchenState.SweeperDog) == dogIndex;
+                        target = sweeperDog
+                            ? (_kitchenState.DropActive
+                                ? (_kitchenFoodObject != null ? _kitchenFoodObject.transform : null)
+                                : (_kitchenLandingWarning != null ? _kitchenLandingWarning.transform : null))
+                            : (_kitchenCounterMarker != null ? _kitchenCounterMarker.transform : null);
+                        copy = sweeperDog
+                            ? (_kitchenState.PendingKind == KitchenFoodFrenzyMissionState.FoodKind.Bad ? "DODGE PURPLE" : "CATCH GOLD IN BOWL")
+                            : "RESET AT COUNTER";
+                        hideDistance = sweeperDog ? KitchenCatchRadius : KitchenCounterRadius;
+                    }
+                    else
+                    {
+                        bool scoutDog = IndexOfDog(_kitchenState.ScoutDog) == dogIndex;
+                        target = scoutDog
+                            ? (_kitchenCounterMarker != null ? _kitchenCounterMarker.transform : null)
+                            : (_kitchenSafeZoneMarker != null ? _kitchenSafeZoneMarker.transform : null);
+                        copy = scoutDog ? "BARK-KNOCK FOOD" : "GUARD THE BOWL";
+                        hideDistance = scoutDog ? KitchenCounterRadius : KitchenSafeZoneRadius;
+                    }
+                    break;
+                case MissionVariant.BackyardRescue:
+                    if (_backyardTrapState.Complete) return false;
+                    if (_backyardTrapState.WeenieDropped)
+                    {
+                        target = _backyardDroppedWeenie != null ? _backyardDroppedWeenie.transform : null;
+                        copy = IndexOfDog(_backyardTrapState.RecoveryDog) == dogIndex ? "RECOVER DROP" : "PARTNER ONLY";
+                        hideDistance = 1.2f;
+                    }
+                    else if (_squirrelTarget != null)
+                    {
+                        bool pressureDog = IndexOfDog(_backyardTrapState.PressureDog) == dogIndex;
+                        target = pressureDog
+                            ? (SquirrelObject != null ? SquirrelObject.transform : null)
+                            : (_backyardTrapGapMarker != null ? _backyardTrapGapMarker.transform : null);
+                        copy = pressureDog ? "BARK PRESSURE" : "HOLD ESCAPE GAP";
+                        hideDistance = pressureDog ? 2.2f : BackyardTrapGapRadius;
+                    }
+                    else return false;
+                    break;
                 case MissionVariant.SockPanic:
                     if (_sockBasketState.BasketOpen)
                     {
@@ -6647,6 +7348,18 @@ namespace CheddarAndCocoa.Game
 
         private void StageDogsForMissionEntry()
         {
+            if (_mission.Variant == MissionVariant.KitchenFoodFrenzy)
+            {
+                _missionEntryTarget = (_kitchenCounterPos + _kitchenSafeZonePos) * 0.5f;
+                int scout = IndexOfDog(_kitchenState.ScoutDog);
+                int sweeper = IndexOfDog(_kitchenState.SweeperDog);
+                if (scout >= 0) _dogs[scout].transform.position = _kitchenCounterPos + new Vector2(-5f, -3f);
+                if (sweeper >= 0) _dogs[sweeper].transform.position = _kitchenSafeZonePos + new Vector2(5f, 0f);
+                foreach (var dog in _dogs)
+                    if (dog.TryGetComponent<Rigidbody2D>(out var rb)) rb.linearVelocity = Vector2.zero;
+                return;
+            }
+
             _missionEntryTarget = ResolveMissionEntryTarget();
             Vector2 inward = (_bounds.center - _missionEntryTarget).normalized;
             if (inward.sqrMagnitude < 0.01f) inward = Vector2.down;
@@ -6666,6 +7379,7 @@ namespace CheddarAndCocoa.Game
         {
             switch (_mission.Variant)
             {
+                case MissionVariant.KitchenFoodFrenzy: return _kitchenSafeZonePos;
                 case MissionVariant.SquirrelConspiracy: return _squirrelRoute[0];
                 case MissionVariant.SockPanic: return _laundryBasketObject != null ? (Vector2)_laundryBasketObject.transform.position : _bounds.center;
                 case MissionVariant.EagleShadowPanic: return _eagleCoverZones[0];
@@ -6795,6 +7509,8 @@ namespace CheddarAndCocoa.Game
             _laundryBasketObject = MakeActor(ArenaArtCatalog.Actor(ArenaArtCatalog.ActorKind.LaundryBasket));
             _laundryBasketObject.SetActive(false);
             _bunnyCameoObject = MakeDraftBunnyCameo();
+            BuildBackyardTrapGapMarker();
+            BuildKitchenScene();
             BuildEagleCoverMarkers();
             BuildSquirrelCutoffMarkers();
             BuildCoyoteGapMarkers();

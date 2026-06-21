@@ -226,9 +226,10 @@ Avoid these unless intentionally used as a warm-up:
 ### Backyard Rescue
 
 Upgrade from collect/protect/tug into a squirrel trap sequence:
-- Cheddar barks too close and scares the squirrel into a fake route.
-- Cocoa can hold a garden gate/cover gap to redirect it.
-- Once redirected, Cheddar steals back the dropped weenie while Cocoa blocks the escape.
+- Cheddar bark-pressures the squirrel while Cocoa holds the marked escape gap.
+- The redirect drops the targeted weenie; only Cocoa, the non-pressure partner, can recover it.
+- The second pass reverses roles: Cocoa pressures while Cheddar holds and recovers.
+- Wrong pressure, an open gap, or the pressure dog grabbing its own drop creates a funny squirrel juke/hot-potato bounce, then returns to a recoverable state.
 
 ### Snack Heist
 

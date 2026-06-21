@@ -230,7 +230,7 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(game);
             Assert.IsTrue(game.MissionSelectVisible);
             Assert.AreEqual(GameManager.FlowState.MissionSelect, game.CurrentFlow);
-            Assert.AreEqual(20, game.MissionSelectOptionCount);
+            Assert.AreEqual(21, game.MissionSelectOptionCount);
             Assert.AreEqual(GameManager.MissionVariant.BackyardRescue, game.SelectedMissionVariant);
             Assert.AreEqual("Backyard Rescue", game.SelectedMissionName);
             Assert.That(game.ObjectiveLabel, Does.Contain("Choose a mission"));
@@ -389,21 +389,24 @@ namespace CheddarAndCocoa.Tests
             Assert.That(game.SquirrelObject.GetComponent<MissionActorFeedback>().Label, Does.Contain("GOT A WEENIE"));
             Assert.IsTrue(FindWorldPopContaining("MISS"));
 
-            // Bark near the squirrel should scare it and reward a small score bump.
+            // Backyard bark pressure only redirects when Cocoa is holding the escape gap.
             target = Object.FindObjectsByType<Treat>(FindObjectsSortMode.None)[0];
             game.ForceSquirrelStealAttempt();
             game.SquirrelObject.transform.position = target.transform.position;
             cheddar.transform.position = game.SquirrelObject.transform.position;
+            cocoa.transform.position = game.BackyardTrapGapPosition;
             scoreBefore = game.Score;
             cheddar.Bark();
             Assert.Greater(game.Score, scoreBefore, "Barking near squirrel should affect game state.");
             Assert.AreEqual(25, game.LastScoreDelta);
-            Assert.AreEqual("+25 SQUIRREL SCARED", game.LastScoreEventLabel);
+            Assert.AreEqual("+25 SQUIRREL REDIRECTED", game.LastScoreEventLabel);
             Assert.That(game.LastCue, Does.Contain("squirrel").IgnoreCase);
             Assert.AreEqual(GameManager.FeedbackKind.SquirrelScared, game.LastFeedback);
             Assert.AreEqual(GameManager.JuiceFeedbackKind.SuccessPop, game.LastJuiceFeedback);
-            Assert.That(game.LastJuiceLabel, Does.Contain("SQUIRREL DROP"));
-            Assert.That(game.SquirrelObject.GetComponent<MissionActorFeedback>().Label, Does.Contain("DROPPED"));
+            Assert.That(game.LastJuiceLabel, Does.Contain("SQUIRREL REDIRECT"));
+            Assert.That(game.SquirrelObject.GetComponent<MissionActorFeedback>().Label, Does.Contain("PARTNER RECOVER"));
+            Assert.IsTrue(game.BackyardTrapState.WeenieDropped);
+            game.ForceBackyardTrapRecovery(DogId.Cocoa);
 
             // Predator warning/attack can be resolved by united bark.
             cheddar.transform.position = new Vector3(-4f, 4f, 0f);
@@ -507,9 +510,14 @@ namespace CheddarAndCocoa.Tests
             Assert.That(tugFeedback.AuthoredPoseSpriteName, Does.Contain("_tug_e_"));
             Assert.AreEqual("Tug", tugFeedback.MotionClipLabel);
 
-            // Level clear requires food, tug, and predator resolution.
+            // Level clear requires food, the two-pass squirrel trap, tug, and predator resolution.
             game.ForcePredatorWarning();
             cheddar.Bark(); cocoa.Bark();
+            game.ForceBackyardTrapRedirect(DogId.Cheddar, true);
+            game.ForceBackyardTrapRecovery(DogId.Cocoa);
+            game.ForceBackyardTrapRedirect(DogId.Cocoa, true);
+            game.ForceBackyardTrapRecovery(DogId.Cheddar);
+            Assert.IsTrue(game.BackyardTrapState.Complete);
             guard = 0f;
             while (game.BreakfastRecovered < game.BreakfastGoal && guard < 5f)
             {
@@ -783,20 +791,20 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(game);
             Assert.IsTrue(game.MissionSelectVisible);
 
-            // The selector is rendered as two columns (20 missions, rows = ceil(20/2) = 10: column 0 holds
-            // indices 0-9, column 1 holds 10-19). Directional navigation must match that visible grid
+            // The selector is rendered as two columns (21 missions, rows = ceil(21/2) = 11: column 0 holds
+            // indices 0-10, column 1 holds 11-20). Directional navigation must match that visible grid
             // instead of walking one linear list in every direction.
             game.SelectMission(GameManager.MissionVariant.BackyardRescue); // top-left (index 0)
             game.SelectMissionRight();
-            Assert.AreEqual(GameManager.MissionVariant.LeashWalk, game.SelectedMissionVariant); // index 10
-            game.SelectMissionBelow();
             Assert.AreEqual(GameManager.MissionVariant.CarRide, game.SelectedMissionVariant); // index 11
+            game.SelectMissionBelow();
+            Assert.AreEqual(GameManager.MissionVariant.GateCrash, game.SelectedMissionVariant); // index 12
             game.SelectMissionLeft();
             Assert.AreEqual(GameManager.MissionVariant.SnackHeist, game.SelectedMissionVariant); // index 1
             game.SelectMissionAbove();
             Assert.AreEqual(GameManager.MissionVariant.BackyardRescue, game.SelectedMissionVariant); // index 0
             game.SelectMissionAbove();
-            Assert.AreEqual(GameManager.MissionVariant.MarkTheYard, game.SelectedMissionVariant, // wraps to index 9
+            Assert.AreEqual(GameManager.MissionVariant.LeashWalk, game.SelectedMissionVariant, // wraps to index 10
                 "Vertical navigation should wrap within the visible column.");
 
             game.SelectMission(GameManager.MissionVariant.BackyardRescue);
@@ -850,7 +858,7 @@ namespace CheddarAndCocoa.Tests
 
             Assert.AreEqual(GameManager.FlowState.MissionSelect, game.CurrentFlow);
             Assert.IsTrue(game.MissionSelectVisible);
-            Assert.AreEqual(20, game.MissionSelectOptionCount);
+            Assert.AreEqual(21, game.MissionSelectOptionCount);
             Assert.That(game.ObjectiveLabel, Does.Contain("Choose a mission"));
             Assert.IsTrue(LogContains(game, "MissionSelect: Backyard Rescue"));
 

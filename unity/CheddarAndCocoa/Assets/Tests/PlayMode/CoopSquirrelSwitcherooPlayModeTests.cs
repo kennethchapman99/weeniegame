@@ -23,7 +23,7 @@ namespace CheddarAndCocoa.Tests
         public IEnumerator Switcheroo_AppearsInMissionSelectRotation()
         {
             yield return LoadArena();
-            Assert.AreEqual(20, _game.MissionSelectOptionCount);
+            Assert.AreEqual(21, _game.MissionSelectOptionCount);
 
             bool found = false;
             for (int i = 0; i < _game.MissionSelectOptionCount; i++)

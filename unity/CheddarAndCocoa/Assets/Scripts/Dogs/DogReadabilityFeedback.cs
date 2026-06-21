@@ -50,9 +50,9 @@ namespace CheddarAndCocoa.Dogs
         private float _forcedPoseUntil;
         private float _barkUntil;
         private float _barkStartedAt;
-        private float _nextPawTrailAt;
-        private Sprite _sprite;
         private DogVisualSlot _art;
+        private DogActionFeedback _actionFeedback;
+        private DogProceduralAudio _proceduralAudio;
 
         public Pose CurrentPose { get; private set; } = Pose.Idle;
         public string CurrentPoseLabel => CurrentPose.ToString();
@@ -67,6 +67,8 @@ namespace CheddarAndCocoa.Dogs
         public string MotionClipLabel { get; private set; } = string.Empty;
         public bool IsCarrying { get; private set; }
         public string MotionPersonalityLabel { get; private set; } = string.Empty;
+        public DogActionFeedback ActionFeedback => _actionFeedback;
+        public DogProceduralAudio ProceduralAudio => _proceduralAudio;
         public string ArtDirectionSignature => _identity == null
             ? string.Empty
             : ArenaArtCatalog.Dog(_identity.Id).ArtDirectionSignature;
@@ -77,11 +79,16 @@ namespace CheddarAndCocoa.Dogs
             _identity = GetComponent<DogIdentity>();
             _body = GetComponent<SpriteRenderer>();
             _baseScale = transform.localScale;
-            _sprite = sprite;
             _art = ArenaArtCatalog.Dog(_identity.Id);
 
             BuildIdentityArt(sprite);
             BuildAuthoredPoseArt();
+            _actionFeedback = GetComponent<DogActionFeedback>();
+            if (_actionFeedback == null) _actionFeedback = gameObject.AddComponent<DogActionFeedback>();
+            _actionFeedback.Initialize(_authoredPose != null ? _authoredPose.transform : transform, sprite);
+            _proceduralAudio = GetComponent<DogProceduralAudio>();
+            if (_proceduralAudio == null) _proceduralAudio = gameObject.AddComponent<DogProceduralAudio>();
+            _proceduralAudio.Initialize(_actionFeedback);
             _dog.OnBark += OnBark;
             ApplyPose(Pose.Idle);
         }
@@ -96,7 +103,11 @@ namespace CheddarAndCocoa.Dogs
             if (faceDir.sqrMagnitude > 0.0001f) _lastIntentDir = faceDir.normalized;
             ForcePose(Pose.Tug, 0.25f);
         }
-        public void ShowRescued() => ForcePose(Pose.Rescued, 1.1f);
+        public void ShowRescued()
+        {
+            _actionFeedback?.Trigger(DogFeedbackAction.Rescue);
+            ForcePose(Pose.Rescued, 1.1f);
+        }
         public void ShowProudBrief() => ForcePose(Pose.Proud, 1.1f);
         public void ShowProud() => ForcePose(Pose.Proud, 999f);
         public void ShowSad() => ForcePose(Pose.Sad, 999f);
@@ -122,6 +133,7 @@ namespace CheddarAndCocoa.Dogs
         {
             _barkStartedAt = Time.time;
             _barkUntil = Time.time + 0.35f;
+            _actionFeedback?.Trigger(DogFeedbackAction.Bark);
         }
 
         private void ForcePose(Pose pose, float seconds)
@@ -133,6 +145,13 @@ namespace CheddarAndCocoa.Dogs
 
         private void Update()
         {
+            if (_actionFeedback != null)
+            {
+                _actionFeedback.SetSustained(DogFeedbackAction.Tug, _dog.Mode == MovementMode.Tug);
+                _actionFeedback.SetSustained(DogFeedbackAction.Carry, IsCarrying);
+                _actionFeedback.SetSustained(DogFeedbackAction.Zoomies, _dog.Zoomies);
+                _actionFeedback.Tick(Time.deltaTime);
+            }
             var next = ChoosePose();
             ApplyPose(next);
             AnimatePose(next);
@@ -278,7 +297,7 @@ namespace CheddarAndCocoa.Dogs
                     : 1f;
                 _label.transform.localScale = _labelBaseScale * StrategicLabelScale;
             }
-            TickMovementJuice(pose, velocity, runFeedbackSpeed);
+            TickMovementJuice(velocity, runFeedbackSpeed);
         }
 
         private void AnimateAuthoredMotion(Pose pose)
@@ -322,42 +341,26 @@ namespace CheddarAndCocoa.Dogs
 
             Vector3 authoredBase = MotionFrameIndex >= 0 ? AuthoredMotionScale : AuthoredFallbackScale;
             float barkPulse = _dog != null ? _dog.BarkVisualPulse : 1f;
+            Vector2 actionScale = _actionFeedback != null ? _actionFeedback.VisualScale : Vector2.one;
+            Vector2 actionOffset = _actionFeedback != null ? _actionFeedback.VisualOffset : Vector2.zero;
+            float actionRotation = _actionFeedback != null ? _actionFeedback.VisualRotationDegrees : 0f;
             _authoredPose.transform.localScale = new Vector3(
-                authoredBase.x * personality.Scale.x * barkPulse,
-                authoredBase.y * personality.Scale.y * barkPulse,
+                authoredBase.x * personality.Scale.x * barkPulse * actionScale.x,
+                authoredBase.y * personality.Scale.y * barkPulse * actionScale.y,
                 authoredBase.z);
-            _authoredPose.transform.localRotation = Quaternion.Euler(0f, 0f, personality.RotationDegrees);
-            _authoredPose.transform.localPosition = new Vector3(0f, -0.12f + personality.VerticalOffset, -0.2f);
+            _authoredPose.transform.localRotation = Quaternion.Euler(0f, 0f,
+                personality.RotationDegrees + actionRotation);
+            _authoredPose.transform.localPosition = new Vector3(actionOffset.x,
+                -0.12f + personality.VerticalOffset + actionOffset.y, -0.2f);
         }
 
-        private void TickMovementJuice(Pose pose, Vector2 velocity, float runFeedbackSpeed)
+        private void TickMovementJuice(Vector2 velocity, float runFeedbackSpeed)
         {
-            if (pose != Pose.Run || velocity.magnitude <= runFeedbackSpeed || Time.time < _nextPawTrailAt)
-                return;
-
-            float interval = _identity.Id == DogId.Cheddar ? 0.14f : 0.18f;
-            _nextPawTrailAt = Time.time + interval;
-            LastMovementJuiceLabel = _identity.Id == DogId.Cheddar ? "CHEDDAR PAW TRAIL" : "COCOA PAW TRAIL";
-            SpawnPawTrail(velocity.normalized);
-        }
-
-        private void SpawnPawTrail(Vector2 runDir)
-        {
-            if (_sprite == null) return;
-
-            var go = new GameObject($"PawTrail_{_identity.Id}");
-            Vector2 side = new Vector2(-runDir.y, runDir.x) * 0.12f;
-            go.transform.position = transform.position - (Vector3)(runDir * 0.55f) + (Vector3)side + Vector3.back * 0.04f;
-            go.transform.localScale = new Vector3(0.14f, 0.07f, 1f);
-
-            var sr = go.AddComponent<SpriteRenderer>();
-            sr.sprite = _sprite;
-            sr.sortingOrder = 4;
-            var tint = _art.ObjectiveArrowColor;
-            tint.a = 0.32f;
-            sr.color = tint;
-
-            go.AddComponent<PawTrailPlaceholder>().Begin(sr);
+            if (_actionFeedback == null || velocity.magnitude <= runFeedbackSpeed) return;
+            int before = _actionFeedback.TotalTrailsEmitted;
+            _actionFeedback.TrackMotion(velocity, Time.deltaTime);
+            if (_actionFeedback.TotalTrailsEmitted > before)
+                LastMovementJuiceLabel = _actionFeedback.CurrentSignature;
         }
 
         private void BuildIdentityArt(Sprite sprite)
@@ -463,26 +466,5 @@ namespace CheddarAndCocoa.Dogs
             _ => pose.ToString()
         };
 
-        private sealed class PawTrailPlaceholder : MonoBehaviour
-        {
-            private SpriteRenderer _renderer;
-            private float _t;
-
-            public void Begin(SpriteRenderer renderer) => _renderer = renderer;
-
-            private void Update()
-            {
-                _t += Time.deltaTime;
-                transform.localScale *= 1f + Time.deltaTime * 0.9f;
-                if (_renderer != null)
-                {
-                    var c = _renderer.color;
-                    c.a = Mathf.Lerp(0.32f, 0f, _t / 0.35f);
-                    _renderer.color = c;
-                }
-
-                if (_t >= 0.35f) Destroy(gameObject);
-            }
-        }
     }
 }

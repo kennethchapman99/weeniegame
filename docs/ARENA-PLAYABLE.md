@@ -1,6 +1,6 @@
 # Arena Playable — Mission Variety Spike
 
-`unity/CheddarAndCocoa/Assets/Scenes/ArenaScene.unity` is now a small co-op vertical slice instead of a flat treat loop. The scene still builds itself from `ArenaBootstrap`, but the arena can run multiple small mission variants through one lightweight mission definition path. A cold start now opens a generated in-scene mission select so a new player can choose Backyard Rescue, Snack Heist, Sock Panic, Squirrel Conspiracy, Eagle Shadow Panic, Coyotes at the Fence, Weenie Roundup, Scent Search, Thunderstorm Comfort, Mark the Yard, Walkies on the Leash, or Car Ride Balance (arrow-select) without a developer explaining debug keys.
+`unity/CheddarAndCocoa/Assets/Scenes/ArenaScene.unity` is now a small co-op vertical slice instead of a flat treat loop. The scene still builds itself from `ArenaBootstrap`, but the arena can run 20 mission variants through one lightweight mission definition path. A cold start opens a generated in-scene mission select; the newest arrow-select mission is **Kitchen Falling Food Frenzy**.
 
 For current global character art direction, read `docs/ART-DIRECTION.md`. Backyard Mission is the
 playable proof of that direction, not the only place the direction applies. For future external
@@ -100,8 +100,8 @@ and reports `ON TARGET` inside interaction range, so split players can coordinat
 small world text.
 
 1. Open `unity/CheddarAndCocoa` in Unity 6 LTS, open `Assets/Scenes/ArenaScene.unity`, and press Play. `ArenaScene` is also the scripted local build entry point.
-2. The mission picker appears immediately. Use **Up/Down** or gamepad **D-pad** to highlight a mission, then press **Enter**, **Space**, gamepad **Start**, or gamepad **South** to start. Keyboard **1-9 and 0** also starts Backyard Rescue, Snack Heist, Sock Panic, Squirrel Conspiracy, Eagle Shadow Panic, Coyotes at the Fence, Weenie Roundup, Scent Search, Thunderstorm Comfort, Mark the Yard, Walkies on the Leash, or Car Ride Balance (arrow-select) directly.
-   - All 12 missions fit in an adaptive two-column picker down to a 480-pixel-tall window.
+2. The mission picker appears immediately. Use **Up/Down** or gamepad **D-pad** to highlight a mission, then press **Enter**, **Space**, gamepad **Start**, or gamepad **South** to start. Keyboard **1-9 and 0** directly starts the original first ten missions; use arrow/D-pad selection for later missions including Kitchen Falling Food Frenzy.
+   - All 20 missions use the adaptive two-column picker.
    - Each tile shows `NEW`, `RETRY`, `CLEARED`, or `FLAWLESS` plus its session-best score; the selected detail line shows round time and objective size.
    - The header keeps missions played/tried, total score, and flawless clears visible before the next choice.
 3. Read the one-line mission briefing at the start of the round. The HUD keeps the current mission name, objective, score, timer, controls, modifier, and latest score event visible during play.
@@ -124,8 +124,15 @@ This is the existing mission loop and remains the default when `ArenaScene` star
 2. Keep the **Squirrel** from stealing too many items (`3` stolen food ends the run).
 3. Resolve the **Predator Warning / Predator Attack** with a united-front bark or a rescue.
 4. Complete the **Rope/Tug** shared-object objective.
+5. Complete the authored **Squirrel Trap** twice. Pass one assigns Cheddar to bark-pressure the squirrel while Cocoa holds the marked escape gap; the redirect drops the targeted weenie, and only Cocoa can recover it. Pass two reverses the roles: Cocoa pressures while Cheddar holds the gap and recovers the drop.
+
+The HUD objective and dog-local arrows name the current pressure dog, route the partner to the visible **ESCAPE GAP - HOLD HERE** marker, and switch to **RECOVER DROP / PARTNER ONLY** after a redirect. Barking with the wrong dog or before the gap is held makes the squirrel take a comic fake route and loop back. If the pressure dog touches its own dropped weenie, the weenie bounces away with a **HOT POTATO! PARTNER ONLY!** cue; the drop remains live, so no trap mistake hard-fails the mission.
 
 Unique scoring/events include **+50 WEENIE SAVED**, **+25 SQUIRREL SCARED**, **+300 PREDATOR YEETED**, **+250 PARTNER RESCUE**, **+200 TUG COMPLETE**, and **+500 LEVEL CLEAR** plus time bonus.
+
+Deterministic hooks are `ForceBackyardTrapRedirect(pressureDog, gapHeld)` and `ForceBackyardTrapRecovery(dog)`. `BackyardSquirrelTrapPlayModeTests` covers wrong-role/open-gap recovery, partner-only pickup, role reversal, completion, event logging, and replay reset. Backyard clear now additionally requires both trap recoveries; the existing collect, squirrel-steal limit, predator, and tug requirements are unchanged.
+
+Manual acceptance check: start Backyard Rescue with **1**. Confirm the blue escape-gap marker and the initial Cheddar/Cocoa role copy are readable. Let the squirrel target a weenie, park Cocoa in the gap, and bark near the squirrel as Cheddar. Confirm the squirrel redirects and drops the weenie. Touch it first as Cheddar and confirm the comic bounce is recoverable; collect it as Cocoa and confirm the guidance swaps. Repeat with Cocoa pressuring and Cheddar holding/recovering. Then finish the original food, predator, and tug objectives and confirm the mission clears. Also verify barking before the holder reaches the gap produces a fake route without losing the run.
 
 ### Snack Heist
 
@@ -322,6 +329,21 @@ cause of lost balance reads before the next lurch.
 
 > **Mechanic-module coverage:** with Car Ride Balance, all nine `ProductionMechanicModule` values (Herding, ThreatSweep, PatrolDefense, SharedObject, TerritoryControl, ScentSearch, RhythmPanic, VehicleBalance, LeashPhysics) now have at least one playable, tested mission.
 
+### Kitchen Falling Food Frenzy
+
+Kitchen Falling Food Frenzy is a compact counter-to-floor relay. Cheddar is the counter scout: he must reach the marked **COUNTER** route and **bark** to knock the next item loose. The bark first reveals a colored counter flash and pulsing floor landing circle, then releases the item after a readable delay. Cocoa is the floor sweeper: she tracks gold food into the marked **SAFE BOWL** to score, while purple onions should be dodged and allowed to splat.
+
+- Dog-local arrows and the team route line always name the current jobs: **BARK-KNOCK FOOD / GUARD THE BOWL**, then **RESET AT COUNTER / CATCH GOLD IN BOWL** or **DODGE PURPLE** during the telegraph and fall.
+- Good catches build a score combo. Missing good food, catching outside the bowl, eating an onion, or attempting the partner's role breaks momentum but remains recoverable.
+- Gold placeholder food means catch; purple placeholder onion means dodge. Cocoa gets distinct proud/flinch poses, audio, pop text, and controller rumble for catch, dodge, splat, and gross-out outcomes.
+- After three warm-up catches, a short **DINNER RUSH** finale calls a fixed **GOOD → BAD → GOOD** sequence with shorter telegraphs and faster falls. Each call still requires Cheddar's bark and Cocoa's correct catch/dodge response. A mistake retries the current call, so the finale adds pressure without an unrecoverable fail state. Five good catches plus the finale onion dodge clear the mission.
+- The Kitchen stations now occupy a compact 13-unit vertical stage inside the arena. At the 16:9 couch target the shared camera needs at most `12` orthographic units to frame both stations, keeping both dogs and the landing lane readable without split-screen.
+- No squirrel, predator, tug, or generic collectible loop runs during this mission.
+
+Deterministic hooks are `ForceKitchenTelegraph(dog, kind)`, `ForceKitchenReleaseTelegraph()`, `ForceKitchenDrop(kind)`, `ForceKitchenCatch(dog, intoSafeZone)`, and `ForceKitchenLetFall()`. `KitchenFoodFrenzyMissionStateTests` covers bark/telegraph ownership, busy-state rejection, recoverable outcomes, finale sequencing, completion, and reset. `KitchenFoodFrenzyPlayModeTests` covers mission wiring, warning objects, compact camera framing, good/bad feedback paths, the dinner-rush clear, and replay reset.
+
+Manual acceptance check: arrow-select **Kitchen Falling Food Frenzy** with two local players. Confirm the initial shared camera keeps both dogs, the counter, and bowl readable. Move Cheddar into the counter route and bark; verify no item falls merely from standing there. Confirm the colored counter flash and landing circle appear before the item releases. For gold food, intercept it with Cocoa while she is inside the bowl and confirm **YUM**, proud pose, score, audio, and light rumble. For a purple onion, move Cocoa clear and let it splat; confirm **DODGED**, proud feedback, and no lost progress. Let one good item splat and deliberately eat one onion; confirm the warning/flinch feedback is distinct and both calls can be retried. After three warm-up catches, confirm **DINNER RUSH** announces **GOOD → BAD → GOOD**, uses visibly tighter timing, and still waits for a Cheddar bark before every call. Complete the three calls and confirm **KITCHEN CLEARED!**. Replay and confirm food, telegraphs, finale progress, combo, and feedback reset.
+
 ## Level scale and camera
 
 The backyard is built at **120 x 68 world units**. A runtime dachshund is roughly 2 units long, so a dog occupies about **1.7% of the property width** instead of reading as a giant character in a single-screen demo box. The dogs spawn near the center (`±10, 0`) and mission routes, hide zones, fence gaps, dig sites, loose weenies, territory zones, and leash checkpoints are distributed using normalized coordinates across 70–94% of the yard width.
@@ -465,6 +487,37 @@ Manual audio check:
 - Complete rescue/tug or clear a mission. Confirm the success/win cue is brighter than the penalty cue.
 - Use Replay, Next Mission, and Mission Select. Confirm a small UI blip plays.
 - Press **F2** and repeat bark/collect. Confirm normal gameplay continues while generated audio is muted.
+
+### Dog-local action audio tuning (2026-06-20)
+
+The Backyard dog-local procedural layer was checked separately from the arena-wide placeholder cues.
+The repeatable two-player check drives Cheddar and Cocoa at the same time, verifies their action
+signatures, and exercises bark over an active carry bed. It is an in-engine mix/concurrency check;
+the final authored-SFX pass still needs a physical two-person television listening session.
+
+Concrete findings and resulting profile changes:
+
+- Cheddar and Cocoa were already separated reliably by pitch and harmonic content. Their impact
+  fundamentals remain distinct across bark (`237.6 / 147.6 Hz`), tug (`508.95 / 318.6 Hz`), carry
+  (`572.4 / 360.45 Hz`), rescue (`635.85 / 402.3 Hz`), and zoomies (`699.3 / 444.15 Hz`).
+- Rescue, tug, carry, and zoomies previously shared the same `0.50` impact volume, so the critical
+  rescue read had no priority. Impact volumes are now rescue `0.66`, bark `0.58`, tug `0.40`, carry
+  `0.30`, and zoomies `0.27`.
+- All sustained actions previously looped at `0.30`, which let two dogs' continuous beds mask bark
+  and rescue. Tug/carry/zoomies sustain volumes are now `0.15 / 0.09 / 0.12`, with longer loop
+  grains to reduce repetition.
+- Sustained cue restart cooldown is now `1.2s`. A bark or rescue can override the visible action
+  without stacking a second tug/carry/zoomies loop when the dog returns to that action.
+- The dog-local limit is now two voices per dog instead of three. Simultaneous Cheddar/Cocoa carry
+  plus bark peaks at four local voices while preserving both dogs' bark impacts; a six-voice local
+  pile-up is no longer possible.
+- One-shot cooldowns now match importance and expected cadence: bark `0.30s`, tug `0.40s`, carry
+  `0.50s`, rescue `0.70s`, and zoomies `0.80s`.
+
+Automated acceptance is in `DogProceduralAudioPlayModeTests`: both identities cover all five action
+profiles, action-volume priority is explicit, sustained restart throttling is checked for both dogs,
+and the combined two-dog voice ceiling is asserted. No mission state, scoring, objective, input, or
+movement tuning changed in this pass.
 
 Manual rumble check with a gamepad:
 
