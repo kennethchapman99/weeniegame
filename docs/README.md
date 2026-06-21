@@ -9,6 +9,8 @@ two-player couch playtest.
 These documents govern current decisions and work:
 
 - [Next Production Slice](NEXT-PRODUCTION-SLICE.md) — canonical seven-step sequence.
+- [Baseline Couch Playtest — 2026-06-20](BASELINE-COUCH-PLAYTEST-2026-06-20.md) — technical evidence,
+  cold-session protocol, findings, and current gate decision.
 - [Game Design Bible](GAME-DESIGN-BIBLE.md) — creative north star; level list is an idea bank.
 - [Deep Slice: Operation Pee Break](DEEP-SLICE-OPERATION-PEE-BREAK.md) — only authorized new slice.
 - [Design Review 2026-06](DESIGN-REVIEW-2026-06.md) — rationale for the depth pivot.
