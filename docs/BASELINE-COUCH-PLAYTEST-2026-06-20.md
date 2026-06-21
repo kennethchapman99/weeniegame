@@ -1,8 +1,10 @@
 # Baseline Couch Playtest — 2026-06-20
 
-> **Gate status: FIX VERIFICATION PENDING.** Initial human playtest feedback was received on
-> 2026-06-20. PR #15 addressed the concrete threat/label visibility failures, and the subsequent
-> first-minute objective readability pass addresses the clipped/missed onboarding presentation.
+> **Gate status: FIX VERIFICATION DEFERRED BY OWNER.** Initial human playtest feedback was received
+> on 2026-06-20. PR #15 and the subsequent first-minute objective pass addressed the recorded
+> failures. On 2026-06-21 the owner explicitly authorized the documented controller migration to
+> proceed while the two-player verification session remains unavailable. This is not a claim that
+> the human readability gate passed.
 
 ## Scope
 
@@ -21,12 +23,12 @@ after merging PR #15.
 | Unity project/scene/bootstrap wiring | Pass | `./unity/validate-demo.sh` completed successfully. |
 | Unity editor | Pass | Project-pinned Unity `6000.0.65f1` on macOS arm64. |
 | Script compilation | Pass | Unity batch import reported `Tundra build success`; no compile failure. |
-| Full PlayMode suite | Pass | 332 total, 332 passed, 0 failed, 0 skipped after the readability passes; 18.398 s. Results: `unity/playmode-results.xml`. |
-| Development build | Pass | `unity/builds/dev/CheddarAndCocoa-Arena.app`; Unity reported 341,678,998 bytes. |
+| Full PlayMode suite | Pass | 333 total, 333 passed, 0 failed, 0 skipped after the Kitchen controller extraction; 18.405 s. Results: `unity/playmode-results.xml`. |
+| Development build | Pass | `unity/builds/dev/CheddarAndCocoa-Arena.app`; Unity reported 341,691,494 bytes. |
 | Packaged-player startup | Pass | `./unity/smoke-player.sh unity/builds/dev/CheddarAndCocoa-Arena.app`. |
 
 Build executable SHA-256:
-`07be4c72244759319f4a785c86cfc0fa61bdd830ba6e94a5b5f8863a26f7bcb2`.
+`af14aa7404c5e1527d9286925d5b10574b4ba60f87db83ee9815d537dc2b0710`.
 
 Automated validation proves build health, deterministic mission coverage, and startup only. It does
 not satisfy the human fun/readability gate.
@@ -125,7 +127,7 @@ onboarding/readability pass for the remaining "not clear what to do" finding is 
 available in the rebuilt development player. The next action is a human verification of the revised
 first-minute experience.
 
-**Baseline gate: FIX VERIFICATION PENDING.** Do not define `IMissionController` until a player checks
-the revised objective/threat presentation. The formal two-human/two-controller coverage is still
-unconfirmed because the session metadata did not record a second player; capture that explicitly
-during the verification run.
+**Baseline gate: FIX VERIFICATION DEFERRED BY OWNER.** The owner explicitly authorized architecture
+work to proceed on 2026-06-21 because a couch session was not currently possible. The formal
+two-human/two-controller coverage remains unconfirmed; capture it explicitly when verification can
+resume. Do not reinterpret the authorization as human acceptance evidence.

@@ -20,9 +20,9 @@ branch, input branch, or snapshot switch directly to `GameManager`.
 
 ## Active migration
 
-1. Define the narrow controller/context contract after baseline playtest fixes.
-2. Extract the existing Kitchen mission first without behavior changes.
-3. Keep the full PlayMode suite green.
+1. ~~Define the narrow controller/context contract after baseline playtest fixes.~~ Complete.
+2. ~~Extract the existing Kitchen mission first without behavior changes.~~ Complete.
+3. ~~Keep the full PlayMode suite green.~~ 333/333 green after extraction.
 4. Build Operation Pee Break entirely as a registered controller.
 5. Keep the roster frozen through the second couch-playtest gate.
 

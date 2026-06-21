@@ -82,6 +82,21 @@ The migration is not a big-bang rewrite:
 Done means the ownership boundary is true and behavior remains verified. A specific line count is
 not an architecture acceptance criterion.
 
+## Implemented boundary — 2026-06-21
+
+- `IMissionController` now defines lifecycle, tick/input forwarding, cleanup, objective targeting,
+  entry staging, outcome state, and controller-produced snapshots.
+- `MissionContext` supplies only the dogs, arena bounds/sprites, scoring, feedback, event logging,
+  deterministic randomness, and world-label helpers required by the first controller.
+- `MissionControllerRegistry` owns controller factories and `MissionCatalog` owns the extracted
+  Kitchen definition outside `GameManager`.
+- `KitchenFoodFrenzyMissionController` owns Kitchen setup/reset, mutable state, generated actors,
+  ticking, bark role rules, feedback, objective copy, arrow targets, cleanup, deterministic hooks,
+  and runtime snapshot construction.
+- `GameManager` retains thin compatibility accessors/hooks for existing PlayMode tests while
+  forwarding runtime work through the active controller.
+- Full PlayMode result after extraction: 333 passed, 0 failed, 0 skipped.
+
 ## Test and reset contract
 
 - Preserve existing public test entry points while moving their implementation behind controllers.

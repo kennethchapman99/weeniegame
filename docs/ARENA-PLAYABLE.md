@@ -103,6 +103,14 @@ visible. Two presentation defects made the existing mission copy easy to miss:
 Covered by `MissionSelectPanel_FitsAllMissionRowsAndReadableGoal` and the opening-briefing assertion
 in `BackyardMission_Objectives_Hazards_Tug_Clear_AndRestart`.
 
+### Kitchen controller extraction (2026-06-21)
+
+Kitchen Falling Food Frenzy now runs through the registered `IMissionController` boundary. Its
+definition, setup/reset, actors, tick/input behavior, outcome state, objective guidance, cleanup,
+deterministic hooks, and runtime snapshot are no longer owned by `GameManager`. Existing public test
+hooks remain as compatibility forwarders. The behavior-preserving extraction passed the full 333
+test PlayMode suite.
+
 ## Cold-start flow
 
 The expanded yard stages both dogs within a short run of each mission's first meaningful action

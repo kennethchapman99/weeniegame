@@ -4,10 +4,11 @@
 
 ## Current status
 
-Kitchen Falling Food Frenzy is implemented and playtest-ready. It is an existing slice and the
-first extraction candidate, not new gameplay scope. Operation Pee Break is the next authored deep
-slice, but it does not start until the baseline playtest, critical fixes, and controller boundary
-are complete.
+Kitchen Falling Food Frenzy is implemented and playtest-ready. Its behavior was extracted behind
+`IMissionController` on 2026-06-21 with the full 333-test PlayMode suite green. The baseline
+readability fix verification remains deferred—not passed—because the owner was unavailable for a
+couch session and explicitly authorized architecture work to continue. Operation Pee Break remains
+the next authored deep slice and must use the controller boundary.
 
 As of 2026-06-20, `GameManager.cs` is nearly 8,000 lines and declares 21 mission variants. Treat
 that as a date-stamped warning, not a permanent metric or a line-count target.

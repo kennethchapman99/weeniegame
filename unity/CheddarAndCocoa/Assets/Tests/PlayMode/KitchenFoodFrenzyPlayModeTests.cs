@@ -20,6 +20,7 @@ namespace CheddarAndCocoa.Tests
 
             Assert.AreEqual(GameManager.MissionVariant.KitchenFoodFrenzy, _game.ActiveMissionVariant);
             Assert.AreEqual("Kitchen Falling Food Frenzy", _game.ActiveMissionName);
+            Assert.IsInstanceOf<KitchenFoodFrenzyMissionController>(_game.ActiveMissionController);
             Assert.AreEqual("kitchen_food_frenzy", _game.RuntimeSnapshot.MissionId);
             Assert.IsNotNull(GameObject.Find("KitchenCounterRoute"));
             Assert.IsNotNull(GameObject.Find("KitchenSafeBowl"));
@@ -126,6 +127,28 @@ namespace CheddarAndCocoa.Tests
             Assert.IsFalse(_game.KitchenState.TelegraphActive);
             Assert.IsFalse(_game.KitchenState.DropActive);
             Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
+        }
+
+        [UnityTest]
+        public IEnumerator KitchenFrenzy_SwitchingMissionCleansOwnedActorsAndController()
+        {
+            yield return LoadKitchen();
+            _game.ForceKitchenDrop(KitchenFoodFrenzyMissionState.FoodKind.Good);
+            Assert.IsTrue(_game.KitchenFoodObject.activeSelf);
+
+            GameObject counter = GameObject.Find("KitchenCounterRoute");
+            GameObject bowl = GameObject.Find("KitchenSafeBowl");
+            GameObject food = _game.KitchenFoodObject;
+            Assert.IsNotNull(counter);
+            Assert.IsNotNull(bowl);
+
+            _game.StartMission(GameManager.MissionVariant.BackyardRescue);
+            yield return null;
+
+            Assert.IsNull(_game.ActiveMissionController);
+            Assert.IsFalse(counter.activeSelf);
+            Assert.IsFalse(bowl.activeSelf);
+            Assert.IsFalse(food.activeSelf);
         }
 
         private IEnumerator LoadKitchen()
