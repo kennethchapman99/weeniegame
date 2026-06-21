@@ -37,6 +37,20 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator Switcheroo_RunsThroughDedicatedController()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.SquirrelSwitcheroo);
+            yield return null;
+
+            Assert.IsInstanceOf<SquirrelSwitcherooMissionController>(
+                _game.ActiveMissionController,
+                "The Ol' Switcheroo must run entirely through its own IMissionController.");
+            Assert.AreEqual(GameManager.MissionVariant.SquirrelSwitcheroo, _game.ActiveMissionController.Variant);
+            Assert.AreSame(_game.SquirrelSwitcherooController.Puzzle, _game.SwitcherooPuzzle);
+        }
+
+        [UnityTest]
         public IEnumerator Switcheroo_ClearPath_BaitThenRaidThreeTimes()
         {
             yield return LoadArena();

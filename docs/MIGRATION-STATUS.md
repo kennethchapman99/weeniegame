@@ -4,7 +4,7 @@
 
 ## Current state
 
-- PlayMode suite: **345 passed / 0 failed / 0 skipped** (2026-06-21).
+- PlayMode suite: **346 passed / 0 failed / 0 skipped** (2026-06-21).
 - Tree is compile-clean and out of Safe Mode.
 
 ## Extracted (controller-owned)
@@ -16,12 +16,13 @@
 | Mark the Yard | `MarkTheYardMissionController` | First previously-in-`GameManager` mission extracted. Added `IMissionController.OutcomeSummary` and `MissionContext.CreditDog`. |
 | Gate Crash | `GateCrashMissionController` | First extracted mission with a non-timeout fail. Added `IMissionController.IsFailed`/`FailReason`. |
 | Table Stealth | `TableStealthMissionController` | Human-distraction hold/sneak puzzle; exposure-cap fail via `IsFailed`/`FailReason`. |
+| The Ol' Switcheroo | `SquirrelSwitcherooMissionController` | Bait/raid puzzle; backfire-cap fail. |
 
 ## Remaining in `GameManager` (not yet extracted)
 
 BackyardRescue, SnackHeist, SockPanic, SquirrelConspiracy, EagleShadowPanic, CoyotesFence,
 WeenieRoundup, ScentSearch, ThunderstormComfort, LeashWalk, CarRide,
-SquirrelSwitcheroo, WalkCampaign, BoneRelay, GreatEscape, ChaosMachine, BlanketCatch.
+WalkCampaign, BoneRelay, GreatEscape, ChaosMachine, BlanketCatch.
 
 ## Contract additions so far
 
@@ -43,8 +44,9 @@ SquirrelSwitcheroo, WalkCampaign, BoneRelay, GreatEscape, ChaosMachine, BlanketC
 
 ## Next step
 
-Pick the next un-migrated mission. Good near-term candidates that fit the current contract (position
-ticking + fail signal, own actors): **SquirrelSwitcheroo** (`CoopBaitSwitchPuzzle`, backfire fail) and
-**WalkCampaign** (`CoopSocialManipulationPuzzle`, misread fail) — both puzzle-driven like Gate Crash
-and Table Stealth. ThunderstormComfort remains valuable but needs a decision on hosting/`game.Panic`
-fallback for the shared `PanicMeter` first.
+Pick the next un-migrated mission. The remaining puzzle-driven siblings fit the current contract
+(position ticking + fail signal, own actors): **WalkCampaign** (`CoopSocialManipulationPuzzle`,
+misread fail), **BoneRelay** (`CoopScentRelayPuzzle`), **GreatEscape** (`CoopSequenceChainPuzzle`),
+**ChaosMachine** (`CoopChaosMachinePuzzle`), **BlanketCatch** (`CoopStretchSpanPuzzle`). Note these
+may use treat/interact input beyond bark+position — check each for an `OnDogInteracted` path before
+extracting. ThunderstormComfort still needs a `game.Panic`/`PanicMeter` hosting decision first.

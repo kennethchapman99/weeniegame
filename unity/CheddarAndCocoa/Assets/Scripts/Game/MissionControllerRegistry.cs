@@ -41,7 +41,10 @@ namespace CheddarAndCocoa.Game
                     MissionCatalog.BuildGateCrashDefinition),
                 [GameManager.MissionVariant.TableStealth] = new Registration(
                     () => new TableStealthMissionController(),
-                    MissionCatalog.BuildTableStealthDefinition)
+                    MissionCatalog.BuildTableStealthDefinition),
+                [GameManager.MissionVariant.SquirrelSwitcheroo] = new Registration(
+                    () => new SquirrelSwitcherooMissionController(),
+                    MissionCatalog.BuildSquirrelSwitcherooDefinition)
             };
 
         public static IEnumerable<GameManager.MissionVariant> RegisteredVariants => Registrations.Keys;

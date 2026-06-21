@@ -260,6 +260,68 @@ namespace CheddarAndCocoa.Game
             };
         }
 
+        internal static GameManager.MissionDefinition BuildSquirrelSwitcherooDefinition(ArenaMissionTuning tuning)
+        {
+            const GameManager.MissionVariant variant = GameManager.MissionVariant.SquirrelSwitcheroo;
+            var balance = tuning.BalanceFor(variant);
+            return new GameManager.MissionDefinition
+            {
+                Variant = variant,
+                Name = "The Ol' Switcheroo",
+                IntroPrompt = "The squirrel is guarding its buried stash and won't leave. Cheddar feints at a decoy nut pile to bait it into a chase - and only while the squirrel is committed to the decoy can Cocoa raid the real stash. Over-feint and the squirrel wises up (or Cheddar bolts after his own decoy) and the window snaps shut.",
+                ReadyScoreLabel = "READY TO PULL THE SWITCHEROO",
+                ItemRootName = "Stash",
+                ItemObjectName = "Stash",
+                ItemWorldLabel = "Raid!",
+                ItemArrowLabel = "STASH",
+                ItemCollectCueNoun = "a stash raid",
+                CollectObjectiveFormat = "Raid the stash {0}/{1}",
+                CollectedScoreLabel = "STASH RAIDED",
+                ItemScore = balance.ItemScore,
+                SpawnedItemCount = balance.SpawnedItemCount,
+                ItemGoal = balance.ItemGoal,
+                RoundSeconds = balance.RoundSeconds,
+                PawfectScore = balance.PawfectScore,
+                HeroScore = balance.HeroScore,
+                SurvivorScore = balance.SurvivorScore,
+                UsesSquirrel = false,
+                RequiresPredator = false,
+                RequiresTug = false,
+                MaxStolenFood = balance.MaxStolenFood,
+                SquirrelPenalty = balance.SquirrelPenalty,
+                SquirrelScareScore = balance.SquirrelScareScore,
+                SquirrelObjectiveText = "Bait the squirrel / raid the stash",
+                SquirrelStealingCue = "The squirrel is guarding the stash - bait it off.",
+                SquirrelStoleCue = "The squirrel bolted back - feint the decoy again.",
+                SquirrelStealScoreLabel = "BAIT BACKFIRE",
+                SquirrelScareScoreLabel = "STASH RAIDED",
+                SquirrelStealingActorLabel = "SQUIRREL",
+                SquirrelDroppedActorLabel = "CHASING DECOY",
+                SquirrelStoleActorLabel = "WISED UP",
+                SquirrelMissPopLabel = "WISED UP!",
+                SquirrelStealJuiceLabel = "BACKFIRE!",
+                SquirrelScareJuiceLabel = "SWITCHEROO!",
+                TugObjectiveText = "Bait and raid together",
+                WaitingObjectiveText = "Raid the stash while the squirrel chases the decoy",
+                ClearObjectiveText = "Stash raided - replay The Ol' Switcheroo",
+                ClearBannerPrefix = "SWITCHEROO!",
+                ClearScoreLabel = "SWITCHEROO CLEAR",
+                ReplayPrompt = "Press R / Enter / Start to replay The Ol' Switcheroo",
+                FailObjectiveText = "Mission failed - replay The Ol' Switcheroo",
+                GenericFailReason = "Needs a cleaner feint before the next raid.",
+                TimeFailReason = "The squirrel never fully committed and the stash stayed buried.",
+                StolenFailReason = "The squirrel wised up to the bait too many times.",
+                PredatorFailReason = "No predator here, just a cagey squirrel.",
+                PawfectClearReason = "Cheddar sold the feint and Cocoa cleaned out the stash without a single backfire.",
+                HeroClearReason = "The stash came home with only a wised-up glance or two.",
+                BasicClearReason = "They got the stash, even if the squirrel caught on a few times.",
+                ItemColor = new Color(0.5f, 0.38f, 0.24f),
+                ItemAccentColor = new Color(0.8f, 0.62f, 0.34f),
+                ItemSecondaryColor = new Color(0.28f, 0.2f, 0.1f),
+                ItemPopColor = new Color(0.45f, 0.9f, 0.55f)
+            };
+        }
+
         internal static GameManager.MissionDefinition BuildPeeBreakDefinition(ArenaMissionTuning tuning) =>
             new GameManager.MissionDefinition
             {

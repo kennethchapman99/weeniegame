@@ -193,9 +193,10 @@ namespace CheddarAndCocoa.Game
         public CoopHumanDistractionPuzzle TableStealthPuzzle => TableStealthController?.Puzzle ?? _emptyTablePuzzle;
         public Vector2 TableHumanZone => TableStealthController?.HumanZone ?? _bounds.center;
         public Vector2 TableStealZone => TableStealthController?.StealZone ?? _bounds.center;
-        public CoopBaitSwitchPuzzle SwitcherooPuzzle => _switcherooPuzzle;
-        public Vector2 SwitcherooDecoyZone => _switcherooDecoyZone;
-        public Vector2 SwitcherooStashZone => _switcherooStashZone;
+        public SquirrelSwitcherooMissionController SquirrelSwitcherooController => _activeMissionController as SquirrelSwitcherooMissionController;
+        public CoopBaitSwitchPuzzle SwitcherooPuzzle => SquirrelSwitcherooController?.Puzzle ?? _emptySwitcherooPuzzle;
+        public Vector2 SwitcherooDecoyZone => SquirrelSwitcherooController?.DecoyZone ?? _bounds.center;
+        public Vector2 SwitcherooStashZone => SquirrelSwitcherooController?.StashZone ?? _bounds.center;
         public CoopSocialManipulationPuzzle WalkCampaignPuzzle => _walkPuzzle;
         public Vector2 WalkDoorZone => _walkDoorZone;
         public Vector2 WalkLeashZone => _walkLeashZone;
@@ -454,20 +455,9 @@ namespace CheddarAndCocoa.Game
         // the squirrel off the buried stash; only while the squirrel is COMMITTED to chasing the decoy
         // can Cocoa raid the real stash. Over-feint and the squirrel wises up (or Cheddar chases his own
         // decoy) - the window snaps shut (a recoverable backfire, not a silent punish).
-        private readonly CoopBaitSwitchPuzzle _switcherooPuzzle = new CoopBaitSwitchPuzzle();
-        private Vector2 _switcherooDecoyZone;
-        private Vector2 _switcherooStashZone;
-        private int _switcherooBackfiresSeen;
-        private int _switcherooHitsSeen;
-        private bool _switcherooStruckThisWindow;
-        private const float SwitcherooBaitRange = 4f;
-        private const float SwitcherooStashRange = 4f;
-        private const float SwitcherooCommitThreshold = 0.6f;
-        private const float SwitcherooCommitRate = 1f;   // baiter in range commits the squirrel in ~0.6s
-        private const float SwitcherooDecayRate = 0.5f;  // easing off keeps the window open briefly
-        private const float SwitcherooOverbaitTolerance = 0.6f; // holding the pin this long wises the squirrel up
-        private const int SwitcherooHitsNeeded = 3;
-        private const int SwitcherooMaxBackfires = 4;
+        // The Ol' Switcheroo now lives in SquirrelSwitcherooMissionController; this empty puzzle backs
+        // the compatibility accessor when the mission is not the active controller.
+        private readonly CoopBaitSwitchPuzzle _emptySwitcherooPuzzle = new CoopBaitSwitchPuzzle();
         // Walk Campaign (Social-Manipulation co-op puzzle): the dogs con the human into a walk by sending
         // ONE clear message built from BOTH dogs at once - Cocoa's dignified door-stare AND Cheddar
         // presenting the leash. Cover only one station (or neither) and the human gets confused and
@@ -1413,30 +1403,6 @@ namespace CheddarAndCocoa.Game
                     SetActorState(_laundryBasketObject, "LAUNDRY BASKET - ONE DOG TIP, PARTNER DIVE!", new Color(0.78f, 0.56f, 0.3f), 0.08f);
                 }
             }
-            if (_mission.Variant == MissionVariant.SquirrelSwitcheroo)
-            {
-                _switcherooPuzzle.Configure(SwitcherooCommitThreshold, SwitcherooCommitRate, SwitcherooDecayRate,
-                    SwitcherooOverbaitTolerance, SwitcherooHitsNeeded, SwitcherooMaxBackfires);
-                _switcherooBackfiresSeen = 0;
-                _switcherooHitsSeen = 0;
-                _switcherooStruckThisWindow = false;
-                _switcherooDecoyZone = new Vector2(_bounds.center.x - 10f, _bounds.center.y);
-                _switcherooStashZone = new Vector2(_bounds.center.x + 10f, _bounds.center.y);
-                // Reuse the predator actor as the squirrel guarding the stash (it sits by the decoy that
-                // Cheddar feints at) and the squirrel actor as the buried stash Cocoa raids.
-                if (PredatorObject != null)
-                {
-                    PredatorObject.SetActive(true);
-                    PlaceObject(PredatorObject, _switcherooDecoyZone);
-                    SetActorState(PredatorObject, "SQUIRREL - CHEDDAR FEINT THE DECOY!", new Color(0.7f, 0.5f, 0.2f), 0.12f);
-                }
-                if (SquirrelObject != null)
-                {
-                    SquirrelObject.SetActive(true);
-                    PlaceObject(SquirrelObject, _switcherooStashZone);
-                    SetActorState(SquirrelObject, "STASH - COCOA RAID IT WHEN HE BITES!", new Color(0.6f, 0.8f, 1f), 0.1f);
-                }
-            }
             if (_mission.Variant == MissionVariant.WalkCampaign)
             {
                 _walkPuzzle.Configure(WalkRequiredMessage, WalkComprehendNeeded, WalkConfusionMax);
@@ -1563,7 +1529,6 @@ namespace CheddarAndCocoa.Game
             else if (_mission.Variant == MissionVariant.ThunderstormComfort) TickThunderstorm();
             else if (_mission.Variant == MissionVariant.LeashWalk) TickLeashWalk();
             else if (_mission.Variant == MissionVariant.CarRide) TickCarRide();
-            else if (_mission.Variant == MissionVariant.SquirrelSwitcheroo) TickSwitcheroo();
             else if (_mission.Variant == MissionVariant.WalkCampaign) TickWalkCampaign();
             else if (_mission.Variant == MissionVariant.BoneRelay) TickBoneRelay();
             else if (_mission.Variant == MissionVariant.GreatEscape) TickGreatEscape();
@@ -2688,78 +2653,18 @@ namespace CheddarAndCocoa.Game
             CheckClear();
         }
 
-        private void TickSwitcheroo()
-        {
-            if (_switcherooPuzzle.Solved) return;
-
-            int baiter = IndexOfDog(DogId.Cheddar);
-            int striker = IndexOfDog(DogId.Cocoa);
-            if (baiter < 0 || striker < 0) return;
-
-            // Cheddar feints at the decoy to commit the squirrel; commitment decays when he eases off.
-            bool baiting = Vector2.Distance(_dogs[baiter].transform.position, _switcherooDecoyZone) <= SwitcherooBaitRange;
-            _switcherooPuzzle.Advance(Time.deltaTime, baiting);
-
-            // Cocoa raids the stash: exactly one grab per committed window (she must re-bait for the next).
-            if (!_switcherooPuzzle.Committed) _switcherooStruckThisWindow = false;
-            bool atStash = Vector2.Distance(_dogs[striker].transform.position, _switcherooStashZone) <= SwitcherooStashRange;
-            if (atStash && _switcherooPuzzle.Committed && !_switcherooStruckThisWindow)
-            {
-                _switcherooPuzzle.Strike();
-                _switcherooStruckThisWindow = true;
-            }
-
-            HandleSwitcherooProgress();
-            if (Phase == State.GameOver) return;
-
-            if (PredatorObject != null)
-                SetActorState(PredatorObject, _switcherooPuzzle.Committed ? "SQUIRREL CHASING THE DECOY - RAID NOW!" : "SQUIRREL GUARDING THE STASH - FEINT IT!",
-                    _switcherooPuzzle.Committed ? new Color(0.4f, 0.8f, 0.5f) : new Color(0.7f, 0.5f, 0.2f), 0.12f);
-            if (SquirrelObject != null)
-                SetActorState(SquirrelObject, $"STASH - RAIDS {_switcherooPuzzle.Hits}/{SwitcherooHitsNeeded}", new Color(0.6f, 0.8f, 1f), 0.1f);
-        }
-
-        private void HandleSwitcherooProgress()
-        {
-            if (_switcherooPuzzle.Hits > _switcherooHitsSeen)
-            {
-                _switcherooHitsSeen = _switcherooPuzzle.Hits;
-                AddScore(ScoreEventCatalog.StashFound.Points, "STASH RAIDED");
-                LastFeedback = FeedbackKind.SquirrelScared;
-                LastCue = $"Cocoa snatched from the stash while the squirrel chased the decoy! ({_switcherooPuzzle.Hits}/{SwitcherooHitsNeeded})";
-                SetJuice(JuiceFeedbackKind.SuccessPop, "SWITCHEROO!");
-                if (SquirrelObject != null) SpawnWorldPop(_switcherooStashZone, "SWITCHEROO!", new Color(0.45f, 0.9f, 0.55f));
-                LogPlaytestEvent("SwitcherooRaid", $"{_switcherooPuzzle.Hits}/{SwitcherooHitsNeeded}");
-            }
-
-            if (_switcherooPuzzle.Backfires > _switcherooBackfiresSeen)
-            {
-                _switcherooBackfiresSeen = _switcherooPuzzle.Backfires;
-                AddScore(ScoreEventCatalog.FakeOut.Points, "BAIT BACKFIRE");
-                LastFeedback = FeedbackKind.SquirrelStoleFood;
-                LastCue = $"Over-baited! The squirrel wised up and bolted back to the stash. ({_switcherooPuzzle.Backfires}/{SwitcherooMaxBackfires})";
-                SetJuice(JuiceFeedbackKind.WarningMiss, "BACKFIRE!");
-                if (PredatorObject != null) SpawnWorldPop(_switcherooDecoyZone, "WISED UP!", new Color(1f, 0.35f, 0.2f));
-                LogPlaytestEvent("SwitcherooBackfire", $"{_switcherooPuzzle.Backfires}/{SwitcherooMaxBackfires}");
-                if (_switcherooPuzzle.Backfires >= SwitcherooMaxBackfires) EndRound(false);
-            }
-        }
-
-        /// <summary>Test hook: Cheddar feints at the decoy for <paramref name="seconds"/> (or eases off when baiting=false).</summary>
+        /// <summary>Compatibility hook forwarded to the active Switcheroo controller.</summary>
         public void ForceSwitcherooBait(float seconds, bool baiting = true)
         {
-            if (!MissionActive() || _mission == null || _mission.Variant != MissionVariant.SquirrelSwitcheroo) return;
-            _switcherooPuzzle.Advance(seconds, baiting);
-            HandleSwitcherooProgress();
+            if (MissionActive()) SquirrelSwitcherooController?.ForceSwitcherooBait(seconds, baiting);
+            CheckClear();
         }
 
-        /// <summary>Test hook: Cocoa raids the stash; lands only while the squirrel is committed to the decoy.</summary>
+        /// <summary>Compatibility hook forwarded to the active Switcheroo controller.</summary>
         public void ForceSwitcherooStrike()
         {
-            if (!MissionActive() || _mission == null || _mission.Variant != MissionVariant.SquirrelSwitcheroo) return;
-            _switcherooPuzzle.Strike();
-            HandleSwitcherooProgress();
-            if (Phase != State.GameOver) CheckClear();
+            if (MissionActive()) SquirrelSwitcherooController?.ForceSwitcherooStrike();
+            CheckClear();
         }
 
         private void TickWalkCampaign()
@@ -3729,13 +3634,6 @@ namespace CheddarAndCocoa.Game
                 goal = _carState.RequiredLurches;
                 mistakes = _carState.Spills;
             }
-            else if (_mission != null && _mission.Variant == MissionVariant.SquirrelSwitcheroo)
-            {
-                missionId = "squirrel_switcheroo";
-                progress = _switcherooPuzzle.Hits;
-                goal = SwitcherooHitsNeeded;
-                mistakes = _switcherooPuzzle.Backfires + _switcherooPuzzle.Whiffs;
-            }
             else if (_mission != null && _mission.Variant == MissionVariant.WalkCampaign)
             {
                 missionId = "walk_campaign";
@@ -4271,11 +4169,6 @@ namespace CheddarAndCocoa.Game
                 if (_carState.ReadyToClear()) EndRound(true);
                 return;
             }
-            if (_mission.Variant == MissionVariant.SquirrelSwitcheroo)
-            {
-                if (_switcherooPuzzle.Solved) EndRound(true);
-                return;
-            }
             if (_mission.Variant == MissionVariant.WalkCampaign)
             {
                 if (_walkPuzzle.Solved) EndRound(true);
@@ -4433,8 +4326,6 @@ namespace CheddarAndCocoa.Game
                 funny = MissionOutcomeSummaryBuilder.BuildLeashSummary(_leashState);
             else if (_mission != null && _mission.Variant == MissionVariant.CarRide)
                 funny = MissionOutcomeSummaryBuilder.BuildCarBalanceSummary(_carState);
-            else if (_mission != null && _mission.Variant == MissionVariant.SquirrelSwitcheroo)
-                funny = MissionOutcomeSummaryBuilder.BuildSwitcherooSummary(_switcherooPuzzle);
             else if (_mission != null && _mission.Variant == MissionVariant.WalkCampaign)
                 funny = MissionOutcomeSummaryBuilder.BuildWalkCampaignSummary(_walkPuzzle);
             else if (_mission != null && _mission.Variant == MissionVariant.BoneRelay)
@@ -4536,11 +4427,6 @@ namespace CheddarAndCocoa.Game
                 string tilt = Mathf.Abs(_carBalance) < 0.15f ? "LEVEL" : (_carBalance > 0 ? "tipping RIGHT" : "tipping LEFT");
                 return $"Lean to keep the car level ({tilt}): steadied {_carState.LurchesSurvived}/{_carState.RequiredLurches}, spills {_carState.Spills}/{CarMaxSpills}";
             }
-            if (_mission.Variant == MissionVariant.SquirrelSwitcheroo)
-            {
-                if (!_switcherooPuzzle.Committed) return $"Cheddar: feint at the decoy to bait the squirrel off the stash (raids {_switcherooPuzzle.Hits}/{SwitcherooHitsNeeded}, backfires {_switcherooPuzzle.Backfires}/{SwitcherooMaxBackfires})";
-                return $"Cocoa: raid the stash now - the squirrel's chasing the decoy! (raids {_switcherooPuzzle.Hits}/{SwitcherooHitsNeeded}, backfires {_switcherooPuzzle.Backfires}/{SwitcherooMaxBackfires})";
-            }
             if (_mission.Variant == MissionVariant.WalkCampaign)
             {
                 if (_walkPuzzle.ExactMatch) return $"Hold it together! Cocoa stares the door, Cheddar holds the leash - the human's {Mathf.RoundToInt(_walkPuzzle.Comprehension / WalkComprehendNeeded * 100)}% sold (confused {_walkPuzzle.Misreads}/{WalkMaxMisreads})";
@@ -4603,7 +4489,6 @@ namespace CheddarAndCocoa.Game
             if (_mission.Variant == MissionVariant.ScentSearch && _scentState.TooManyWastedDigs(ScentMaxWastedDigs)) return "The dogs dug up half the yard chasing cold scents and ran out of patience.";
             if (_mission.Variant == MissionVariant.LeashWalk && _leashState.TooManySnaps(MaxLeashSnaps)) return "The leash snapped taut too many times - the walk fell apart.";
             if (_mission.Variant == MissionVariant.CarRide && _carState.TooManySpills(CarMaxSpills)) return "The car tipped over too many times on the way home.";
-            if (_mission.Variant == MissionVariant.SquirrelSwitcheroo && _switcherooPuzzle.Backfires >= SwitcherooMaxBackfires) return "Cheddar over-baited and the squirrel wised up too many times - it never left the stash.";
             if (_mission.Variant == MissionVariant.WalkCampaign && _walkPuzzle.Misreads >= WalkMaxMisreads) return "Too many mixed signals - the human gave up and brought the wrong thing one time too many.";
             if (_mission.Variant == MissionVariant.BoneRelay && _boneRelay.BlindActs + _boneRelay.WrongDigs >= BoneMaxWasted) return "The dogs dug up half the yard guessing instead of waiting for Cocoa's call.";
             if (_mission.Variant == MissionVariant.GreatEscape && _escape.Fumbles + _escape.Settles >= EscapeMaxWasted) return "They botched the contraption too many times - the gate never opened and the breakout fizzled.";
@@ -5531,63 +5416,6 @@ namespace CheddarAndCocoa.Game
                         ItemSecondaryColor = new Color(0.24f, 0.2f, 0.14f),
                         ItemPopColor = new Color(0.85f, 0.75f, 0.55f)
                     };
-                case MissionVariant.SquirrelSwitcheroo:
-                    return new MissionDefinition
-                    {
-                        Variant = MissionVariant.SquirrelSwitcheroo,
-                        Name = "The Ol' Switcheroo",
-                        IntroPrompt = "The squirrel is guarding its buried stash and won't leave. Cheddar feints at a decoy nut pile to bait it into a chase - and only while the squirrel is committed to the decoy can Cocoa raid the real stash. Over-feint and the squirrel wises up (or Cheddar bolts after his own decoy) and the window snaps shut.",
-                        ReadyScoreLabel = "READY TO PULL THE SWITCHEROO",
-                        ItemRootName = "Stash",
-                        ItemObjectName = "Stash",
-                        ItemWorldLabel = "Raid!",
-                        ItemArrowLabel = "STASH",
-                        ItemCollectCueNoun = "a stash raid",
-                        CollectObjectiveFormat = "Raid the stash {0}/{1}",
-                        CollectedScoreLabel = "STASH RAIDED",
-                        ItemScore = balance.ItemScore,
-                        SpawnedItemCount = balance.SpawnedItemCount,
-                        ItemGoal = balance.ItemGoal,
-                        RoundSeconds = balance.RoundSeconds,
-                        PawfectScore = balance.PawfectScore,
-                        HeroScore = balance.HeroScore,
-                        SurvivorScore = balance.SurvivorScore,
-                        UsesSquirrel = false,
-                        RequiresPredator = false,
-                        RequiresTug = false,
-                        MaxStolenFood = balance.MaxStolenFood,
-                        SquirrelPenalty = balance.SquirrelPenalty,
-                        SquirrelScareScore = balance.SquirrelScareScore,
-                        SquirrelObjectiveText = "Bait the squirrel / raid the stash",
-                        SquirrelStealingCue = "The squirrel is guarding the stash - bait it off.",
-                        SquirrelStoleCue = "The squirrel bolted back - feint the decoy again.",
-                        SquirrelStealScoreLabel = "BAIT BACKFIRE",
-                        SquirrelScareScoreLabel = "STASH RAIDED",
-                        SquirrelStealingActorLabel = "SQUIRREL",
-                        SquirrelDroppedActorLabel = "CHASING DECOY",
-                        SquirrelStoleActorLabel = "WISED UP",
-                        SquirrelMissPopLabel = "WISED UP!",
-                        SquirrelStealJuiceLabel = "BACKFIRE!",
-                        SquirrelScareJuiceLabel = "SWITCHEROO!",
-                        TugObjectiveText = "Bait and raid together",
-                        WaitingObjectiveText = "Raid the stash while the squirrel chases the decoy",
-                        ClearObjectiveText = "Stash raided - replay The Ol' Switcheroo",
-                        ClearBannerPrefix = "SWITCHEROO!",
-                        ClearScoreLabel = "SWITCHEROO CLEAR",
-                        ReplayPrompt = "Press R / Enter / Start to replay The Ol' Switcheroo",
-                        FailObjectiveText = "Mission failed - replay The Ol' Switcheroo",
-                        GenericFailReason = "Needs a cleaner feint before the next raid.",
-                        TimeFailReason = "The squirrel never fully committed and the stash stayed buried.",
-                        StolenFailReason = "The squirrel wised up to the bait too many times.",
-                        PredatorFailReason = "No predator here, just a cagey squirrel.",
-                        PawfectClearReason = "Cheddar sold the feint and Cocoa cleaned out the stash without a single backfire.",
-                        HeroClearReason = "The stash came home with only a wised-up glance or two.",
-                        BasicClearReason = "They got the stash, even if the squirrel caught on a few times.",
-                        ItemColor = new Color(0.5f, 0.38f, 0.24f),
-                        ItemAccentColor = new Color(0.8f, 0.62f, 0.34f),
-                        ItemSecondaryColor = new Color(0.28f, 0.2f, 0.1f),
-                        ItemPopColor = new Color(0.45f, 0.9f, 0.55f)
-                    };
                 case MissionVariant.WalkCampaign:
                     return new MissionDefinition
                     {
@@ -6284,19 +6112,6 @@ namespace CheddarAndCocoa.Game
                         target = _leashCheckpointMarkers[checkpoint].transform;
                     copy = "WALK TOGETHER";
                     hideDistance = CheckpointRange;
-                    break;
-                case MissionVariant.SquirrelSwitcheroo:
-                    if (IndexOfDog(DogId.Cheddar) == dogIndex)
-                    {
-                        target = PredatorObject != null ? PredatorObject.transform : null; // the squirrel / decoy to feint at
-                        copy = "FEINT THE DECOY";
-                    }
-                    else
-                    {
-                        target = SquirrelObject != null ? SquirrelObject.transform : null; // the buried stash to raid
-                        copy = "RAID THE STASH";
-                    }
-                    hideDistance = SwitcherooBaitRange;
                     break;
                 case MissionVariant.WalkCampaign:
                     if (IndexOfDog(DogId.Cocoa) == dogIndex)

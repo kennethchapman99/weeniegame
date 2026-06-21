@@ -27,8 +27,10 @@ Gate Crash followed as the first extracted mission with a non-timeout failure: t
 controller-supplied fail reason. `GateCrashMissionController` owns its gate/toy markers, hold/squeeze
 proximity ticking, snap handling, snapshot, objective copy, and the `ForceGateHold`/`ForceGateCross`
 hooks. Table Stealth followed the same hold/sneak puzzle shape behind `TableStealthMissionController`
-(exposure-cap failure via `IsFailed`/`FailReason`). The full PlayMode suite is green at 345 tests.
-Placeholder presentation still needs the second two-player couch acceptance pass.
+(exposure-cap failure via `IsFailed`/`FailReason`), then The Ol' Switcheroo behind
+`SquirrelSwitcherooMissionController` (bait/raid with backfire-cap failure). The full PlayMode suite
+is green at 346 tests. Placeholder presentation still needs the second two-player couch acceptance
+pass.
 
 As of 2026-06-20, `GameManager.cs` is nearly 8,000 lines and declares 21 mission variants. Treat
 that as a date-stamped warning, not a permanent metric or a line-count target.

@@ -130,7 +130,11 @@ not an architecture acceptance criterion.
   the human/steak markers, flop+sneak proximity ticking, exposure handling (its `IsFailed`/
   `FailReason` fire at the exposure cap), objective copy, snapshot, and the `ForceTableFlop`/
   `ForceTableBurp`/`ForceTableSneak` hooks.
-- Full PlayMode result after the latest controller increment: 345 passed, 0 failed, 0 skipped.
+- `SquirrelSwitcherooMissionController` owns the bait/raid puzzle: decoy/stash markers, the
+  feint-commitment + one-strike-per-window ticking, raid/backfire handling (backfire-cap fail via
+  `IsFailed`/`FailReason`), objective copy, snapshot, and the `ForceSwitcherooBait`/
+  `ForceSwitcherooStrike` hooks.
+- Full PlayMode result after the latest controller increment: 346 passed, 0 failed, 0 skipped.
 
 ## Test and reset contract
 
