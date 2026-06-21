@@ -15,6 +15,20 @@ namespace CheddarAndCocoa.Tests
         private DogController _cocoa;
 
         [UnityTest]
+        public IEnumerator Thunderstorm_RunsThroughDedicatedController()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.ThunderstormComfort);
+            yield return null;
+
+            Assert.IsInstanceOf<ThunderstormComfortMissionController>(
+                _game.ActiveMissionController,
+                "Thunderstorm Comfort must run entirely through its own IMissionController.");
+            Assert.AreEqual(GameManager.MissionVariant.ThunderstormComfort, _game.ActiveMissionController.Variant);
+            Assert.AreSame(_game.ThunderstormController.StormState, _game.ThunderstormState);
+        }
+
+        [UnityTest]
         public IEnumerator ThunderstormComfort_AppearsInMissionSelectRotation()
         {
             yield return LoadArena();

@@ -689,5 +689,67 @@ namespace CheddarAndCocoa.Game
                 ItemPopColor = new Color(0.5f, 0.95f, 0.55f)
             };
         }
+
+        internal static GameManager.MissionDefinition BuildThunderstormComfortDefinition(ArenaMissionTuning tuning)
+        {
+            const GameManager.MissionVariant variant = GameManager.MissionVariant.ThunderstormComfort;
+            var balance = tuning.BalanceFor(variant);
+            return new GameManager.MissionDefinition
+            {
+                Variant = variant,
+                Name = "Thunderstorm Comfort",
+                IntroPrompt = "A storm is rolling in. Cheddar + Cocoa must huddle close to keep each other calm and ride out every thunderclap together.",
+                ReadyScoreLabel = "READY TO RIDE OUT THE STORM",
+                ItemRootName = "Storm",
+                ItemObjectName = "Thunderclap",
+                ItemWorldLabel = "Boom!",
+                ItemArrowLabel = "HUDDLE",
+                ItemCollectCueNoun = "a weathered clap",
+                CollectObjectiveFormat = "Weather claps {0}/{1}",
+                CollectedScoreLabel = "CLAP WEATHERED",
+                ItemScore = balance.ItemScore,
+                SpawnedItemCount = balance.SpawnedItemCount,
+                ItemGoal = balance.ItemGoal,
+                RoundSeconds = balance.RoundSeconds,
+                PawfectScore = balance.PawfectScore,
+                HeroScore = balance.HeroScore,
+                SurvivorScore = balance.SurvivorScore,
+                UsesSquirrel = false,
+                RequiresPredator = false,
+                RequiresTug = false,
+                MaxStolenFood = balance.MaxStolenFood,
+                SquirrelPenalty = balance.SquirrelPenalty,
+                SquirrelScareScore = balance.SquirrelScareScore,
+                SquirrelObjectiveText = "Huddle to stay calm",
+                SquirrelStealingCue = "No squirrel here - just thunder.",
+                SquirrelStoleCue = "No squirrel here - mind the panic.",
+                SquirrelStealScoreLabel = "PANIC SPIKE",
+                SquirrelScareScoreLabel = "COMFORT HUDDLE",
+                SquirrelStealingActorLabel = "STORM CLOUD",
+                SquirrelDroppedActorLabel = "CLAP WEATHERED",
+                SquirrelStoleActorLabel = "PANIC!",
+                SquirrelMissPopLabel = "BOOM!",
+                SquirrelStealJuiceLabel = "PANIC SPIKE!",
+                SquirrelScareJuiceLabel = "COMFORT HUDDLE!",
+                TugObjectiveText = "Huddle through the storm",
+                WaitingObjectiveText = "Stay close until the storm passes",
+                ClearObjectiveText = "Storm passed - replay Thunderstorm Comfort",
+                ClearBannerPrefix = "STORM WEATHERED!",
+                ClearScoreLabel = "STORM PASSED",
+                ReplayPrompt = "Press R / Enter / Start to replay Thunderstorm Comfort",
+                FailObjectiveText = "Mission failed - replay Thunderstorm Comfort",
+                GenericFailReason = "Needs tighter huddling before the next storm front.",
+                TimeFailReason = "The storm dragged on and the dogs lost their nerve.",
+                StolenFailReason = "The panic spiked past the breaking point.",
+                PredatorFailReason = "A dog bolted from the thunder.",
+                PawfectClearReason = "Two brave pups out-cuddled the whole storm without a single bolt.",
+                HeroClearReason = "The storm passed with the dogs keeping each other steady.",
+                BasicClearReason = "They rode it out, even if a few claps got hairy.",
+                ItemColor = new Color(0.32f, 0.34f, 0.45f),
+                ItemAccentColor = new Color(0.6f, 0.65f, 0.85f),
+                ItemSecondaryColor = new Color(0.16f, 0.17f, 0.24f),
+                ItemPopColor = new Color(0.8f, 0.85f, 1f)
+            };
+        }
     }
 }

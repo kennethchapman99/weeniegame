@@ -59,7 +59,10 @@ namespace CheddarAndCocoa.Game
                     MissionCatalog.BuildBlanketCatchDefinition),
                 [GameManager.MissionVariant.BoneRelay] = new Registration(
                     () => new BoneRelayMissionController(),
-                    MissionCatalog.BuildBoneRelayDefinition)
+                    MissionCatalog.BuildBoneRelayDefinition),
+                [GameManager.MissionVariant.ThunderstormComfort] = new Registration(
+                    () => new ThunderstormComfortMissionController(),
+                    MissionCatalog.BuildThunderstormComfortDefinition)
             };
 
         public static IEnumerable<GameManager.MissionVariant> RegisteredVariants => Registrations.Keys;

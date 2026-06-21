@@ -42,6 +42,8 @@ namespace CheddarAndCocoa.Game
         public Rect Bounds { get; }
         public Sprite ActorSprite { get; }
         public Sprite RangeSprite { get; }
+        /// <summary>Shared panic/co-regulation state owned by GameManager; null on non-panic missions.</summary>
+        public PanicMeter PanicMeter { get; }
         public Func<System.Random> Random { get; }
         public Func<float> Now { get; }
 
@@ -64,6 +66,7 @@ namespace CheddarAndCocoa.Game
             Rect bounds,
             Sprite actorSprite,
             Sprite rangeSprite,
+            PanicMeter panicMeter,
             Func<System.Random> random,
             Func<float> now,
             Action<int, string> addScore,
@@ -87,6 +90,7 @@ namespace CheddarAndCocoa.Game
             Bounds = bounds;
             ActorSprite = actorSprite;
             RangeSprite = rangeSprite;
+            PanicMeter = panicMeter; // nullable — only thunderstorm/comfort missions use it
             Random = random ?? throw new ArgumentNullException(nameof(random));
             Now = now ?? throw new ArgumentNullException(nameof(now));
             AddScore = addScore ?? throw new ArgumentNullException(nameof(addScore));
