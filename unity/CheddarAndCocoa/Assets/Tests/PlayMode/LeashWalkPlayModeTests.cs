@@ -41,6 +41,8 @@ namespace CheddarAndCocoa.Tests
             game.StartMission(GameManager.MissionVariant.LeashWalk);
             yield return null;
 
+            Assert.IsInstanceOf<LeashWalkMissionController>(game.ActiveMissionController,
+                "Walkies on the Leash must run entirely through its own IMissionController.");
             Assert.AreEqual("leash_walk", game.RuntimeSnapshot.MissionId);
             Assert.That(game.ObjectiveLabel, Does.Contain("Walk the leash"));
             int required = game.RuntimeSnapshot.ObjectiveGoal;

@@ -36,7 +36,8 @@ namespace CheddarAndCocoa.Game.Tests
                     GameManager.MissionVariant.ChaosMachine,
                     GameManager.MissionVariant.BlanketCatch,
                     GameManager.MissionVariant.BoneRelay,
-                    GameManager.MissionVariant.ThunderstormComfort
+                    GameManager.MissionVariant.ThunderstormComfort,
+                    GameManager.MissionVariant.LeashWalk
                 },
                 seen,
                 "Only explicitly migrated missions belong in the controller registry.");

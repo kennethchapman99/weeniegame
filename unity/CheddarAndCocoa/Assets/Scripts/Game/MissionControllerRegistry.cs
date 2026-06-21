@@ -62,7 +62,10 @@ namespace CheddarAndCocoa.Game
                     MissionCatalog.BuildBoneRelayDefinition),
                 [GameManager.MissionVariant.ThunderstormComfort] = new Registration(
                     () => new ThunderstormComfortMissionController(),
-                    MissionCatalog.BuildThunderstormComfortDefinition)
+                    MissionCatalog.BuildThunderstormComfortDefinition),
+                [GameManager.MissionVariant.LeashWalk] = new Registration(
+                    () => new LeashWalkMissionController(),
+                    MissionCatalog.BuildLeashWalkDefinition)
             };
 
         public static IEnumerable<GameManager.MissionVariant> RegisteredVariants => Registrations.Keys;

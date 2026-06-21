@@ -31,8 +31,9 @@ hooks. Table Stealth followed the same hold/sneak puzzle shape behind `TableStea
 `SquirrelSwitcherooMissionController` (bait/raid with backfire-cap failure), then The Walk Campaign
 behind `WalkCampaignMissionController` (two-station message with misread-cap failure), then The Great
 Escape behind `GreatEscapeMissionController` (alternating-owner contraption chain with botch-cap
-failure). The full PlayMode suite is green at 348 tests. Placeholder presentation still needs the
-second two-player couch acceptance pass.
+failure), then Walkies on the Leash behind `LeashWalkMissionController` (controller-owned checkpoint
+route, tether snaps, and snap-cap failure). The full PlayMode suite is green at 352 tests.
+Placeholder presentation still needs the second two-player couch acceptance pass.
 
 As of 2026-06-20, `GameManager.cs` is nearly 8,000 lines and declares 21 mission variants. Treat
 that as a date-stamped warning, not a permanent metric or a line-count target.

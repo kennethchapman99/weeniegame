@@ -690,6 +690,68 @@ namespace CheddarAndCocoa.Game
             };
         }
 
+        internal static GameManager.MissionDefinition BuildLeashWalkDefinition(ArenaMissionTuning tuning)
+        {
+            const GameManager.MissionVariant variant = GameManager.MissionVariant.LeashWalk;
+            var balance = tuning.BalanceFor(variant);
+            return new GameManager.MissionDefinition
+            {
+                Variant = variant,
+                Name = "Walkies on the Leash",
+                IntroPrompt = "Cheddar + Cocoa are clipped to one leash. Walk through every checkpoint together without drifting so far apart the leash snaps.",
+                ReadyScoreLabel = "READY FOR WALKIES",
+                ItemRootName = "Checkpoints",
+                ItemObjectName = "Checkpoint",
+                ItemWorldLabel = "Walk!",
+                ItemArrowLabel = "WALK",
+                ItemCollectCueNoun = "a checkpoint",
+                CollectObjectiveFormat = "Reach checkpoints {0}/{1}",
+                CollectedScoreLabel = "CHECKPOINT",
+                ItemScore = balance.ItemScore,
+                SpawnedItemCount = balance.SpawnedItemCount,
+                ItemGoal = balance.ItemGoal,
+                RoundSeconds = balance.RoundSeconds,
+                PawfectScore = balance.PawfectScore,
+                HeroScore = balance.HeroScore,
+                SurvivorScore = balance.SurvivorScore,
+                UsesSquirrel = false,
+                RequiresPredator = false,
+                RequiresTug = false,
+                MaxStolenFood = balance.MaxStolenFood,
+                SquirrelPenalty = balance.SquirrelPenalty,
+                SquirrelScareScore = balance.SquirrelScareScore,
+                SquirrelObjectiveText = "Walk the leash together",
+                SquirrelStealingCue = "No squirrel here - mind the leash.",
+                SquirrelStoleCue = "No squirrel here - stay close.",
+                SquirrelStealScoreLabel = "LEASH SNAP",
+                SquirrelScareScoreLabel = "CHECKPOINT",
+                SquirrelStealingActorLabel = "LEASH",
+                SquirrelDroppedActorLabel = "CHECKPOINT",
+                SquirrelStoleActorLabel = "LEASH SNAP",
+                SquirrelMissPopLabel = "SNAP!",
+                SquirrelStealJuiceLabel = "LEASH SNAP!",
+                SquirrelScareJuiceLabel = "CHECKPOINT!",
+                TugObjectiveText = "Walk to the checkpoint together",
+                WaitingObjectiveText = "Walk to the last checkpoint together",
+                ClearObjectiveText = "Great walk - replay Walkies on the Leash",
+                ClearBannerPrefix = "WALK COMPLETE!",
+                ClearScoreLabel = "WALK COMPLETE",
+                ReplayPrompt = "Press R / Enter / Start to replay Walkies on the Leash",
+                FailObjectiveText = "Mission failed - replay Walkies on the Leash",
+                GenericFailReason = "Needs the dogs to walk more in sync next time.",
+                TimeFailReason = "The walk dragged on and the checkpoints never lined up.",
+                StolenFailReason = "The leash snapped taut too many times.",
+                PredatorFailReason = "No predator here, just a tangled leash.",
+                PawfectClearReason = "Two pups walked the whole route in perfect lockstep - dream walkies.",
+                HeroClearReason = "Every checkpoint reached with the leash mostly slack.",
+                BasicClearReason = "They finished the walk, even if the leash got dramatic.",
+                ItemColor = new Color(0.45f, 0.6f, 0.85f),
+                ItemAccentColor = new Color(0.7f, 0.82f, 1f),
+                ItemSecondaryColor = new Color(0.18f, 0.24f, 0.36f),
+                ItemPopColor = new Color(0.6f, 0.8f, 1f)
+            };
+        }
+
         internal static GameManager.MissionDefinition BuildThunderstormComfortDefinition(ArenaMissionTuning tuning)
         {
             const GameManager.MissionVariant variant = GameManager.MissionVariant.ThunderstormComfort;

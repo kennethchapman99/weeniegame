@@ -144,7 +144,11 @@ not an architecture acceptance criterion.
   logic in its static arrays; `GameManager.EscapeStationSpot`/`EscapeStationOwner` compat accessors
   delegate to the controller. The `ForceEscapeStep`/`ForceEscapeIdle` hooks follow the same
   `MissionActive` + `CheckClear` pattern as the other migrated missions.
-- Full PlayMode result after the latest controller increment: 348 passed, 0 failed, 0 skipped.
+- `LeashWalkMissionController` owns checkpoint geometry and markers, tether-distance ticking,
+  checkpoint progression, snap-cap failure, objective targeting, leash-safe entry staging, cleanup,
+  snapshot, and the deterministic `ForceReachCheckpoint`/`ForceLeashSnap` hooks. `GameManager`
+  retains thin compatibility accessors and forwards those hooks through the active controller.
+- Full PlayMode result after the latest controller increment: 352 passed, 0 failed, 0 skipped.
 
 ## Test and reset contract
 
