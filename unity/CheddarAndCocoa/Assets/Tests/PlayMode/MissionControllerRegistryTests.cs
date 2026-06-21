@@ -26,7 +26,8 @@ namespace CheddarAndCocoa.Game.Tests
                 new[]
                 {
                     GameManager.MissionVariant.KitchenFoodFrenzy,
-                    GameManager.MissionVariant.OperationPeeBreak
+                    GameManager.MissionVariant.OperationPeeBreak,
+                    GameManager.MissionVariant.MarkTheYard
                 },
                 seen,
                 "Only explicitly migrated missions belong in the controller registry.");

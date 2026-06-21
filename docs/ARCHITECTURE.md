@@ -110,7 +110,17 @@ not an architecture acceptance criterion.
   powers the phone down when the charger gambit succeeds.
 - Pee Break lifecycle coverage verifies mission switches deactivate every owned actor, reuse the
   cached controller without duplicate world objects, and reset mission state on re-entry.
-- Full PlayMode result after the latest controller increment: 342 passed, 0 failed, 0 skipped.
+- `MarkTheYardMissionController` is the first extraction of a previously-in-`GameManager` mission. It
+  owns zone geometry (the single `ComputeZones` source the `GameManager.TerritoryZones` compat
+  accessor delegates to), claim-by-proximity ticking, a controller-owned squirrel reclaimer with the
+  legacy speed/interval timing, scoring/credit/feedback, objective copy, arrow targets, entry
+  staging, cleanup, snapshot, and the deterministic `ForceClaimZone`/`ForceSquirrelReclaim` hooks.
+  `GameManager` keeps only thin forwarding hooks and an empty-state fallback accessor for the period
+  when Mark the Yard is not the active controller.
+- `IMissionController` gained `OutcomeSummary` (controller-owned end-of-round phrase, null to defer
+  to the shared default) and `MissionContext` gained `CreditDog` so controllers can drive the MVP
+  tally without reaching into `GameManager`.
+- Full PlayMode result after the latest controller increment: 343 passed, 0 failed, 0 skipped.
 
 ## Test and reset contract
 

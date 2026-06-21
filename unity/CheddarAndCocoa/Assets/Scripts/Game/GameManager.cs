@@ -164,8 +164,9 @@ namespace CheddarAndCocoa.Game
         public Vector2[] DigSpots => (Vector2[])_digSpots.Clone();
         public ThunderstormMissionState ThunderstormState => _stormState;
         public PanicMeter Panic => _panic;
-        public TerritoryMissionState MarkTheYardState => _territoryState;
-        public Vector2[] TerritoryZones => (Vector2[])_territoryZones.Clone();
+        public MarkTheYardMissionController MarkTheYardController => _activeMissionController as MarkTheYardMissionController;
+        public TerritoryMissionState MarkTheYardState => MarkTheYardController?.State ?? _emptyTerritoryState;
+        public Vector2[] TerritoryZones => MarkTheYardMissionController.ComputeZones(_bounds);
         public LeashWalkMissionState LeashWalkState => _leashState;
         public Vector2[] LeashCheckpoints => (Vector2[])_leashCheckpoints.Clone();
         public CarBalanceMissionState CarRideState => _carState;
@@ -574,13 +575,9 @@ namespace CheddarAndCocoa.Game
         private const float BlanketCatchLineY = -6f;  // the height the dogs hold the blanket at
         private const float BlanketSpawnY = 11f;      // food falls from up here
         private const float BlanketFallSpeed = 7f;
-        private readonly TerritoryMissionState _territoryState = new TerritoryMissionState();
-        private readonly Vector2[] _territoryZones = { new(-18f, 9f), new(18f, 9f), new(-18f, -9f), new(18f, -9f), new(0f, 0f) };
-        private GameObject[] _zoneMarkers;
-        private bool[] _zoneClaimed;
-        private float _nextReclaimAt;
-        private const float ZoneClaimRange = 2.4f;
-        private const float ZoneReclaimInterval = 4f;
+        // Mark the Yard now lives in MarkTheYardMissionController; this empty state backs the
+        // compatibility accessor when the mission is not the active controller.
+        private readonly TerritoryMissionState _emptyTerritoryState = new TerritoryMissionState();
         private readonly SockBasketMissionState _sockBasketState = new SockBasketMissionState();
         private GameObject _laundryBasketObject;
         private Treat _exposedSock;
@@ -680,6 +677,7 @@ namespace CheddarAndCocoa.Game
             random: () => _rng,
             now: () => Time.time,
             addScore: AddScore,
+            creditDog: CreditDog,
             setCue: cue => LastCue = cue,
             setFeedback: feedback => LastFeedback = feedback,
             setJuice: SetJuice,
@@ -704,7 +702,6 @@ namespace CheddarAndCocoa.Game
             Vector2[] weenies = { P(-0.72f, 0.62f), P(0.7f, 0.68f), P(-0.82f, -0.6f), P(0.22f, -0.7f), P(0.82f, -0.18f) };
             Vector2[] digs = { P(-0.78f, 0.58f), P(0.68f, 0.64f), P(-0.74f, -0.58f), P(0.32f, -0.68f), P(0.82f, 0.08f), P(-0.18f, 0.36f) };
             Vector2[] leash = { P(-0.72f, -0.62f), P(0.72f, -0.62f), P(0.72f, 0.62f), P(-0.72f, 0.62f) };
-            Vector2[] territory = { P(-0.72f, 0.6f), P(0.72f, 0.6f), P(-0.72f, -0.6f), P(0.72f, -0.6f), P(0f, 0f) };
             _backyardTrapGapPosition = P(0.72f, 0.08f);
 
             squirrel.CopyTo(_squirrelRoute, 0);
@@ -714,7 +711,6 @@ namespace CheddarAndCocoa.Game
             weenies.CopyTo(_weenieSpots, 0);
             digs.CopyTo(_digSpots, 0);
             leash.CopyTo(_leashCheckpoints, 0);
-            territory.CopyTo(_territoryZones, 0);
         }
 
         public void OnTreatCollected(Treat treat, DogController dog)
@@ -1256,7 +1252,6 @@ namespace CheddarAndCocoa.Game
             _carryState.Reset();
             _scentState.Reset();
             _stormState.Reset();
-            _territoryState.Reset();
             _leashState.Reset();
             _carState.Reset();
             _sockBasketState.Reset();
@@ -1394,19 +1389,6 @@ namespace CheddarAndCocoa.Game
                     PlaceObject(PredatorObject, new Vector2(0f, _bounds.yMax - 1.5f));
                     SetActorState(PredatorObject, "STORM CLOUD - HUDDLE TO STAY CALM!", new Color(0.32f, 0.34f, 0.45f), 0.18f);
                 }
-            }
-            if (_mission.Variant == MissionVariant.MarkTheYard)
-            {
-                _territoryState.Configure(_territoryZones.Length);
-                for (int i = 0; i < _territoryZones.Length; i++) { if (_zoneMarkers[i] != null) { _zoneMarkers[i].transform.position = _territoryZones[i]; _zoneMarkers[i].SetActive(true); } SetZoneClaimed(i, false); }
-                _nextReclaimAt = Time.time + ZoneReclaimInterval;
-                SquirrelObject.SetActive(true);
-                PlaceObject(SquirrelObject, new Vector2(0f, _bounds.yMax - 2f));
-                SetActorState(SquirrelObject, "SQUIRREL - WILL RE-MARK YOUR ZONES!", new Color(0.55f, 0.32f, 0.12f), 0.2f);
-            }
-            else
-            {
-                SetTerritoryMarkersActive(false);
             }
             if (_mission.Variant == MissionVariant.LeashWalk)
             {
@@ -1639,7 +1621,6 @@ namespace CheddarAndCocoa.Game
             else if (_mission.Variant == MissionVariant.WeenieRoundup) TickCarryRoundup();
             else if (_mission.Variant == MissionVariant.ScentSearch) { }
             else if (_mission.Variant == MissionVariant.ThunderstormComfort) TickThunderstorm();
-            else if (_mission.Variant == MissionVariant.MarkTheYard) TickTerritory();
             else if (_mission.Variant == MissionVariant.LeashWalk) TickLeashWalk();
             else if (_mission.Variant == MissionVariant.CarRide) TickCarRide();
             else if (_mission.Variant == MissionVariant.GateCrash) TickGateCrash();
@@ -2531,145 +2512,19 @@ namespace CheddarAndCocoa.Game
             if (_panic.Maxed != null) EndRound(false);
         }
 
-        // --- Mark the Yard (territory control) ---
+        // --- Mark the Yard now lives in MarkTheYardMissionController; the hooks below forward to it. ---
 
-        private void BuildTerritoryMarkers()
-        {
-            _zoneMarkers = new GameObject[_territoryZones.Length];
-            _zoneClaimed = new bool[_territoryZones.Length];
-            for (int i = 0; i < _territoryZones.Length; i++)
-            {
-                var go = new GameObject($"TerritoryZone_{i}");
-                go.transform.position = _territoryZones[i];
-                go.transform.localScale = Vector3.one * (ZoneClaimRange * 1.5f);
-                var sr = go.AddComponent<SpriteRenderer>();
-                sr.sprite = _sprite;
-                sr.color = new Color(0.5f, 0.5f, 0.55f, 0.4f);
-                sr.sortingOrder = 1;
-                AddWorldLabel(go, "CLAIM", Vector3.up * 0.9f, 13, Color.white);
-                go.SetActive(false);
-                _zoneMarkers[i] = go;
-            }
-        }
-
-        private void SetTerritoryMarkersActive(bool active)
-        {
-            if (_zoneMarkers == null) return;
-            foreach (var marker in _zoneMarkers)
-                if (marker != null) marker.SetActive(active);
-        }
-
-        private void SetZoneClaimed(int i, bool claimed)
-        {
-            _zoneClaimed[i] = claimed;
-            if (_zoneMarkers[i] != null)
-            {
-                var sr = _zoneMarkers[i].GetComponent<SpriteRenderer>();
-                if (sr != null) sr.color = claimed ? new Color(0.3f, 0.8f, 0.4f, 0.55f) : new Color(0.5f, 0.5f, 0.55f, 0.4f);
-            }
-        }
-
-        private void ClaimZone(int dogIndex, int zoneIndex)
-        {
-            if (zoneIndex < 0 || zoneIndex >= _zoneClaimed.Length || _zoneClaimed[zoneIndex]) return;
-
-            SetZoneClaimed(zoneIndex, true);
-            _territoryState.Claim();
-            CreditDog(dogIndex);
-            if (dogIndex < DogFeedback.Length && DogFeedback[dogIndex] != null) DogFeedback[dogIndex].ShowProudBrief();
-            AddScore(ScoreEventCatalog.ZoneClaimed.Points, ScoreEventCatalog.ZoneClaimed.Label);
-            LastFeedback = FeedbackKind.SquirrelScared;
-            LastCue = $"{DogName(_dogs[dogIndex])} marked a zone! ({_territoryState.Claimed}/{_territoryState.ZoneCount})";
-            SetActorState(_zoneMarkers[zoneIndex], "MARKED!", new Color(0.3f, 0.85f, 0.45f), 0.2f);
-            SetJuice(JuiceFeedbackKind.SuccessPop, ScoreEventCatalog.ZoneClaimed.Label);
-            RequestAudioCue(ArenaFeedbackCatalog.SnackSockCollect);
-            LogPlaytestEvent("ZoneClaimed", $"{_territoryState.Claimed}/{_territoryState.ZoneCount}");
-            if (_territoryState.AllClaimed) { AddScore(ScoreEventCatalog.YardMarked.Points, ScoreEventCatalog.YardMarked.Label); CheckClear(); }
-            else LogObjectiveIfChanged();
-        }
-
-        private void SquirrelReclaimZone()
-        {
-            // The squirrel steals back the claimed zone nearest to it (or any claimed zone).
-            int target = -1;
-            float bestDist = float.PositiveInfinity;
-            Vector2 from = SquirrelObject != null ? (Vector2)SquirrelObject.transform.position : Vector2.zero;
-            for (int i = 0; i < _zoneClaimed.Length; i++)
-            {
-                if (!_zoneClaimed[i]) continue;
-                float d = Vector2.Distance(from, _territoryZones[i]);
-                if (d < bestDist) { bestDist = d; target = i; }
-            }
-            if (target < 0) return;
-
-            SetZoneClaimed(target, false);
-            _territoryState.Unclaim();
-            AddScore(ScoreEventCatalog.ZoneStolen.Points, ScoreEventCatalog.ZoneStolen.Label);
-            LastFeedback = FeedbackKind.SquirrelStealing;
-            LastCue = $"The squirrel re-marked a zone! ({_territoryState.Claimed}/{_territoryState.ZoneCount}) Go reclaim it.";
-            SetActorState(_zoneMarkers[target], "SQUIRREL STOLE IT!", new Color(0.7f, 0.4f, 0.15f), 0.3f);
-            if (SquirrelObject != null) PlaceObject(SquirrelObject, _territoryZones[target]);
-            SetJuice(JuiceFeedbackKind.WarningMiss, ScoreEventCatalog.ZoneStolen.Label);
-            LogPlaytestEvent("ZoneStolen", $"{_territoryState.Claimed}/{_territoryState.ZoneCount}");
-            LogObjectiveIfChanged();
-        }
-
-        private void TickTerritory()
-        {
-            if (_dogs == null || _zoneClaimed == null) return;
-
-            for (int d = 0; d < _dogs.Length; d++)
-            {
-                for (int z = 0; z < _territoryZones.Length; z++)
-                {
-                    if (_zoneClaimed[z]) continue;
-                    if (Vector2.Distance(_dogs[d].transform.position, _territoryZones[z]) <= ZoneClaimRange)
-                        ClaimZone(d, z);
-                }
-            }
-
-            // The squirrel prowls toward the nearest claimed zone and re-marks it on arrival, so
-            // players can see the threat coming and race to defend rather than getting teleport-sniped.
-            if (SquirrelObject != null && _territoryState.Claimed > 0 && !_territoryState.AllClaimed)
-            {
-                int target = NearestClaimedZone(SquirrelObject.transform.position);
-                if (target >= 0)
-                {
-                    SquirrelObject.transform.position = Vector3.MoveTowards(
-                        SquirrelObject.transform.position, _territoryZones[target], Time.deltaTime * (_tuning.SquirrelMoveSpeed * 0.8f));
-                    if (Vector2.Distance(SquirrelObject.transform.position, _territoryZones[target]) < 1f && Time.time >= _nextReclaimAt)
-                    {
-                        _nextReclaimAt = Time.time + 1.5f;
-                        SquirrelReclaimZone();
-                    }
-                }
-            }
-        }
-
-        private int NearestClaimedZone(Vector2 from)
-        {
-            int best = -1;
-            float bestDist = float.PositiveInfinity;
-            for (int i = 0; i < _zoneClaimed.Length; i++)
-            {
-                if (!_zoneClaimed[i]) continue;
-                float d = Vector2.Distance(from, _territoryZones[i]);
-                if (d < bestDist) { bestDist = d; best = i; }
-            }
-            return best;
-        }
-
+        /// <summary>Compatibility hook forwarded to the active Mark the Yard controller.</summary>
         public void ForceClaimZone(DogId dogId = DogId.Cheddar)
         {
-            if (!MissionActive() || _mission == null || _mission.Variant != MissionVariant.MarkTheYard) return;
-            for (int z = 0; z < _zoneClaimed.Length; z++)
-                if (!_zoneClaimed[z]) { ClaimZone(IndexOfDog(dogId), z); return; }
+            if (MissionActive()) MarkTheYardController?.ForceClaimZone(dogId);
+            CheckClear();
         }
 
+        /// <summary>Compatibility hook forwarded to the active Mark the Yard controller.</summary>
         public void ForceSquirrelReclaim()
         {
-            if (MissionActive() && _mission != null && _mission.Variant == MissionVariant.MarkTheYard)
-                SquirrelReclaimZone();
+            if (MissionActive()) MarkTheYardController?.ForceSquirrelReclaim();
         }
 
         // --- Walkies on the Leash (tethered checkpoint walk) ---
@@ -4004,13 +3859,6 @@ namespace CheddarAndCocoa.Game
                 goal = _stormState.RequiredClaps;
                 mistakes = 0;
             }
-            else if (_mission != null && _mission.Variant == MissionVariant.MarkTheYard)
-            {
-                missionId = "mark_the_yard";
-                progress = _territoryState.Claimed;
-                goal = _territoryState.ZoneCount;
-                mistakes = _territoryState.Reclaims;
-            }
             else if (_mission != null && _mission.Variant == MissionVariant.LeashWalk)
             {
                 missionId = "leash_walk";
@@ -4570,11 +4418,6 @@ namespace CheddarAndCocoa.Game
                 }
                 return;
             }
-            if (_mission.Variant == MissionVariant.MarkTheYard)
-            {
-                if (_territoryState.AllClaimed) EndRound(true);
-                return;
-            }
             if (_mission.Variant == MissionVariant.LeashWalk)
             {
                 if (_leashState.ReadyToClear()) EndRound(true);
@@ -4739,7 +4582,9 @@ namespace CheddarAndCocoa.Game
         private string BuildOutcomeSummaryLabel()
         {
             string funny;
-            if (_mission != null && _mission.Variant == MissionVariant.SquirrelConspiracy)
+            if (_activeMissionController != null)
+                funny = _activeMissionController.OutcomeSummary ?? Outcome.ToString();
+            else if (_mission != null && _mission.Variant == MissionVariant.SquirrelConspiracy)
                 funny = MissionOutcomeSummaryBuilder.BuildSquirrelSummary(_herdingState);
             else if (_mission != null && _mission.Variant == MissionVariant.EagleShadowPanic)
                 funny = MissionOutcomeSummaryBuilder.BuildThreatSweepSummary(_threatSweepState);
@@ -4751,8 +4596,6 @@ namespace CheddarAndCocoa.Game
                 funny = MissionOutcomeSummaryBuilder.BuildScentSummary(_scentState, ScentRequiredFinds);
             else if (_mission != null && _mission.Variant == MissionVariant.ThunderstormComfort)
                 funny = MissionOutcomeSummaryBuilder.BuildThunderstormSummary(_stormState);
-            else if (_mission != null && _mission.Variant == MissionVariant.MarkTheYard)
-                funny = MissionOutcomeSummaryBuilder.BuildTerritorySummary(_territoryState);
             else if (_mission != null && _mission.Variant == MissionVariant.LeashWalk)
                 funny = MissionOutcomeSummaryBuilder.BuildLeashSummary(_leashState);
             else if (_mission != null && _mission.Variant == MissionVariant.CarRide)
@@ -4908,10 +4751,6 @@ namespace CheddarAndCocoa.Game
             {
                 string span = _blanket.Taut ? "taut - slide the middle under the snack" : _blanket.Overstretched ? "too far apart - close up before it rips!" : "too close - spread out to pull it taut";
                 return $"Hold the blanket {span} (caught {_blanket.Caught}/{BlanketCatchesNeeded}, rips {_blanket.Rips}/{BlanketMaxRips})";
-            }
-            if (_mission.Variant == MissionVariant.MarkTheYard)
-            {
-                return $"Claim and hold every zone at once: {_territoryState.Claimed}/{_territoryState.ZoneCount} marked (squirrel steals back {_territoryState.Reclaims})";
             }
             if (_squirrelTarget != null)
                 return _mission.SquirrelObjectiveText;
@@ -5345,7 +5184,6 @@ namespace CheddarAndCocoa.Game
             if (!active || _mission == null || _mission.Variant != MissionVariant.CoyotesFence) SetCoyoteGapMarkersActive(false);
             if (!active || _mission == null || _mission.Variant != MissionVariant.WeenieRoundup) SetWeenieRoundupActive(false);
             if (!active || _mission == null || _mission.Variant != MissionVariant.ScentSearch) SetScentSearchActive(false);
-            if (!active || _mission == null || _mission.Variant != MissionVariant.MarkTheYard) SetTerritoryMarkersActive(false);
             if (!active || _mission == null || _mission.Variant != MissionVariant.LeashWalk) SetLeashCheckpointMarkersActive(false);
         }
 
@@ -5758,63 +5596,6 @@ namespace CheddarAndCocoa.Game
                         ItemAccentColor = new Color(0.6f, 0.65f, 0.85f),
                         ItemSecondaryColor = new Color(0.16f, 0.17f, 0.24f),
                         ItemPopColor = new Color(0.8f, 0.85f, 1f)
-                    };
-                case MissionVariant.MarkTheYard:
-                    return new MissionDefinition
-                    {
-                        Variant = MissionVariant.MarkTheYard,
-                        Name = "Mark the Yard",
-                        IntroPrompt = "Cheddar + Cocoa must claim every territory zone and hold them all at once - but the squirrel keeps re-marking them, so split up and cover the yard.",
-                        ReadyScoreLabel = "READY TO MARK TERRITORY",
-                        ItemRootName = "Territory Zones",
-                        ItemObjectName = "Zone",
-                        ItemWorldLabel = "Claim!",
-                        ItemArrowLabel = "ZONE",
-                        ItemCollectCueNoun = "a zone",
-                        CollectObjectiveFormat = "Mark zones {0}/{1}",
-                        CollectedScoreLabel = "ZONE MARKED",
-                        ItemScore = balance.ItemScore,
-                        SpawnedItemCount = balance.SpawnedItemCount,
-                        ItemGoal = balance.ItemGoal,
-                        RoundSeconds = balance.RoundSeconds,
-                        PawfectScore = balance.PawfectScore,
-                        HeroScore = balance.HeroScore,
-                        SurvivorScore = balance.SurvivorScore,
-                        UsesSquirrel = false,
-                        RequiresPredator = false,
-                        RequiresTug = false,
-                        MaxStolenFood = balance.MaxStolenFood,
-                        SquirrelPenalty = balance.SquirrelPenalty,
-                        SquirrelScareScore = balance.SquirrelScareScore,
-                        SquirrelObjectiveText = "Claim the territory zones",
-                        SquirrelStealingCue = "The squirrel is re-marking your zones!",
-                        SquirrelStoleCue = "The squirrel stole a zone back!",
-                        SquirrelStealScoreLabel = "ZONE STOLEN",
-                        SquirrelScareScoreLabel = "ZONE MARKED",
-                        SquirrelStealingActorLabel = "SQUIRREL RE-MARKING",
-                        SquirrelDroppedActorLabel = "ZONE HELD",
-                        SquirrelStoleActorLabel = "SQUIRREL STOLE A ZONE",
-                        SquirrelMissPopLabel = "STOLEN!",
-                        SquirrelStealJuiceLabel = "ZONE STOLEN!",
-                        SquirrelScareJuiceLabel = "ZONE MARKED!",
-                        TugObjectiveText = "Hold the zones together",
-                        WaitingObjectiveText = "Cover the last zone together",
-                        ClearObjectiveText = "Yard claimed - replay Mark the Yard",
-                        ClearBannerPrefix = "YARD CLAIMED!",
-                        ClearScoreLabel = "YARD MARKED",
-                        ReplayPrompt = "Press R / Enter / Start to replay Mark the Yard",
-                        FailObjectiveText = "Mission failed - replay Mark the Yard",
-                        GenericFailReason = "Needs better yard coverage before the squirrel re-marks everything.",
-                        TimeFailReason = "The squirrel kept stealing zones until the clock ran out.",
-                        StolenFailReason = "The squirrel out-marked the dogs across the whole yard.",
-                        PredatorFailReason = "No predator here, just a territorial squirrel.",
-                        PawfectClearReason = "Tiny landlords held every corner of the yard at once - total domination.",
-                        HeroClearReason = "The whole yard got claimed before the squirrel could recover.",
-                        BasicClearReason = "The yard is theirs, even if the squirrel made them work for it.",
-                        ItemColor = new Color(0.5f, 0.5f, 0.55f),
-                        ItemAccentColor = new Color(0.3f, 0.8f, 0.45f),
-                        ItemSecondaryColor = new Color(0.2f, 0.2f, 0.24f),
-                        ItemPopColor = new Color(0.45f, 0.9f, 0.55f)
                     };
                 case MissionVariant.LeashWalk:
                     return new MissionDefinition
@@ -6791,10 +6572,6 @@ namespace CheddarAndCocoa.Game
                     copy = "COMFORT PARTNER";
                     hideDistance = 1.8f;
                     break;
-                case MissionVariant.MarkTheYard:
-                    target = FindNearestUnclaimedZone(_dogs[dogIndex].transform.position);
-                    copy = "MARK ZONE";
-                    break;
                 case MissionVariant.LeashWalk:
                     int checkpoint = _leashState.CheckpointIndex;
                     if (_leashCheckpointMarkers != null && checkpoint >= 0 && checkpoint < _leashCheckpointMarkers.Length && _leashCheckpointMarkers[checkpoint] != null)
@@ -6945,22 +6722,6 @@ namespace CheddarAndCocoa.Game
             return best;
         }
 
-        private Transform FindNearestUnclaimedZone(Vector2 position)
-        {
-            Transform nearest = null;
-            float nearestDistance = float.PositiveInfinity;
-            if (_zoneMarkers == null || _zoneClaimed == null) return null;
-            for (int i = 0; i < _zoneMarkers.Length && i < _zoneClaimed.Length; i++)
-            {
-                if (_zoneClaimed[i] || _zoneMarkers[i] == null || !_zoneMarkers[i].activeSelf) continue;
-                float distance = Vector2.Distance(position, _zoneMarkers[i].transform.position);
-                if (distance >= nearestDistance) continue;
-                nearest = _zoneMarkers[i].transform;
-                nearestDistance = distance;
-            }
-            return nearest;
-        }
-
         private void StageDogsForMissionEntry()
         {
             if (_activeMissionController != null)
@@ -6997,7 +6758,6 @@ namespace CheddarAndCocoa.Game
                 case MissionVariant.ScentSearch: return _digSpots[0];
                 case MissionVariant.ThunderstormComfort:
                 case MissionVariant.CarRide: return _bounds.center;
-                case MissionVariant.MarkTheYard: return _territoryZones[_territoryZones.Length - 1];
                 case MissionVariant.LeashWalk: return _leashCheckpoints[0];
                 case MissionVariant.BlanketCatch: return new Vector2(0f, BlanketCatchLineY);
                 default:
@@ -7128,7 +6888,6 @@ namespace CheddarAndCocoa.Game
             BuildEscapeStations();
             BuildChaosJunctions();
             BuildBlanketObjects();
-            BuildTerritoryMarkers();
             BuildLeashCheckpointMarkers();
             if (InteractionRangeIndicators != null)
             {

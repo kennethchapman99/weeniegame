@@ -74,6 +74,68 @@ namespace CheddarAndCocoa.Game
             return definition;
         }
 
+        internal static GameManager.MissionDefinition BuildMarkTheYardDefinition(ArenaMissionTuning tuning)
+        {
+            const GameManager.MissionVariant variant = GameManager.MissionVariant.MarkTheYard;
+            var balance = tuning.BalanceFor(variant);
+            return new GameManager.MissionDefinition
+            {
+                Variant = variant,
+                Name = "Mark the Yard",
+                IntroPrompt = "Cheddar + Cocoa must claim every territory zone and hold them all at once - but the squirrel keeps re-marking them, so split up and cover the yard.",
+                ReadyScoreLabel = "READY TO MARK TERRITORY",
+                ItemRootName = "Territory Zones",
+                ItemObjectName = "Zone",
+                ItemWorldLabel = "Claim!",
+                ItemArrowLabel = "ZONE",
+                ItemCollectCueNoun = "a zone",
+                CollectObjectiveFormat = "Mark zones {0}/{1}",
+                CollectedScoreLabel = "ZONE MARKED",
+                ItemScore = balance.ItemScore,
+                SpawnedItemCount = balance.SpawnedItemCount,
+                ItemGoal = balance.ItemGoal,
+                RoundSeconds = balance.RoundSeconds,
+                PawfectScore = balance.PawfectScore,
+                HeroScore = balance.HeroScore,
+                SurvivorScore = balance.SurvivorScore,
+                UsesSquirrel = false,
+                RequiresPredator = false,
+                RequiresTug = false,
+                MaxStolenFood = balance.MaxStolenFood,
+                SquirrelPenalty = balance.SquirrelPenalty,
+                SquirrelScareScore = balance.SquirrelScareScore,
+                SquirrelObjectiveText = "Claim the territory zones",
+                SquirrelStealingCue = "The squirrel is re-marking your zones!",
+                SquirrelStoleCue = "The squirrel stole a zone back!",
+                SquirrelStealScoreLabel = "ZONE STOLEN",
+                SquirrelScareScoreLabel = "ZONE MARKED",
+                SquirrelStealingActorLabel = "SQUIRREL RE-MARKING",
+                SquirrelDroppedActorLabel = "ZONE HELD",
+                SquirrelStoleActorLabel = "SQUIRREL STOLE A ZONE",
+                SquirrelMissPopLabel = "STOLEN!",
+                SquirrelStealJuiceLabel = "ZONE STOLEN!",
+                SquirrelScareJuiceLabel = "ZONE MARKED!",
+                TugObjectiveText = "Hold the zones together",
+                WaitingObjectiveText = "Cover the last zone together",
+                ClearObjectiveText = "Yard claimed - replay Mark the Yard",
+                ClearBannerPrefix = "YARD CLAIMED!",
+                ClearScoreLabel = "YARD MARKED",
+                ReplayPrompt = "Press R / Enter / Start to replay Mark the Yard",
+                FailObjectiveText = "Mission failed - replay Mark the Yard",
+                GenericFailReason = "Needs better yard coverage before the squirrel re-marks everything.",
+                TimeFailReason = "The squirrel kept stealing zones until the clock ran out.",
+                StolenFailReason = "The squirrel out-marked the dogs across the whole yard.",
+                PredatorFailReason = "No predator here, just a territorial squirrel.",
+                PawfectClearReason = "Tiny landlords held every corner of the yard at once - total domination.",
+                HeroClearReason = "The whole yard got claimed before the squirrel could recover.",
+                BasicClearReason = "The yard is theirs, even if the squirrel made them work for it.",
+                ItemColor = new Color(0.5f, 0.5f, 0.55f),
+                ItemAccentColor = new Color(0.3f, 0.8f, 0.45f),
+                ItemSecondaryColor = new Color(0.2f, 0.2f, 0.24f),
+                ItemPopColor = new Color(0.45f, 0.9f, 0.55f)
+            };
+        }
+
         internal static GameManager.MissionDefinition BuildPeeBreakDefinition(ArenaMissionTuning tuning) =>
             new GameManager.MissionDefinition
             {

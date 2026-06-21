@@ -68,6 +68,7 @@ namespace CheddarAndCocoa.Game
         public Vector2 HallwayPosition => _hallwayPosition;
         public Vector2 ChargerPosition => _chargerPosition;
         public Vector2 EntryTarget => _doorPosition;
+        public string OutcomeSummary => null;
 
         public string ObjectiveLabel
         {

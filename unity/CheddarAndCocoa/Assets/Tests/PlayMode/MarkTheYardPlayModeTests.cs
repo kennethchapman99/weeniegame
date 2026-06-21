@@ -39,6 +39,22 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator MarkTheYard_RunsThroughDedicatedController()
+        {
+            yield return LoadArena();
+            var game = _game;
+
+            game.StartMission(GameManager.MissionVariant.MarkTheYard);
+            yield return null;
+
+            Assert.IsInstanceOf<MarkTheYardMissionController>(
+                game.ActiveMissionController,
+                "Mark the Yard must run entirely through its own IMissionController.");
+            Assert.AreEqual(GameManager.MissionVariant.MarkTheYard, game.ActiveMissionController.Variant);
+            Assert.AreSame(game.MarkTheYardController.State, game.MarkTheYardState);
+        }
+
+        [UnityTest]
         public IEnumerator MarkTheYard_ClearPath_ClaimEveryZone()
         {
             yield return LoadArena();

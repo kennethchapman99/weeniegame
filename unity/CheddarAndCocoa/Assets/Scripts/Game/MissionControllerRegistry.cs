@@ -32,7 +32,10 @@ namespace CheddarAndCocoa.Game
                     MissionCatalog.BuildKitchenDefinition),
                 [GameManager.MissionVariant.OperationPeeBreak] = new Registration(
                     () => new PeeBreakMissionController(),
-                    MissionCatalog.BuildPeeBreakDefinition)
+                    MissionCatalog.BuildPeeBreakDefinition),
+                [GameManager.MissionVariant.MarkTheYard] = new Registration(
+                    () => new MarkTheYardMissionController(),
+                    MissionCatalog.BuildMarkTheYardDefinition)
             };
 
         public static IEnumerable<GameManager.MissionVariant> RegisteredVariants => Registrations.Keys;

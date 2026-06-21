@@ -12,6 +12,9 @@ namespace CheddarAndCocoa.Game
         string ObjectiveLabel { get; }
         Vector2 EntryTarget { get; }
 
+        /// <summary>Controller-owned end-of-round summary phrase, or null to use the shared default.</summary>
+        string OutcomeSummary { get; }
+
         void Initialize(MissionContext context);
         void StartMission();
         void Tick(float deltaTime, float now);
@@ -37,6 +40,7 @@ namespace CheddarAndCocoa.Game
         public Func<float> Now { get; }
 
         public Action<int, string> AddScore { get; }
+        public Action<int> CreditDog { get; }
         public Action<string> SetCue { get; }
         public Action<GameManager.FeedbackKind> SetFeedback { get; }
         public Action<GameManager.JuiceFeedbackKind, string> SetJuice { get; }
@@ -57,6 +61,7 @@ namespace CheddarAndCocoa.Game
             Func<System.Random> random,
             Func<float> now,
             Action<int, string> addScore,
+            Action<int> creditDog,
             Action<string> setCue,
             Action<GameManager.FeedbackKind> setFeedback,
             Action<GameManager.JuiceFeedbackKind, string> setJuice,
@@ -79,6 +84,7 @@ namespace CheddarAndCocoa.Game
             Random = random ?? throw new ArgumentNullException(nameof(random));
             Now = now ?? throw new ArgumentNullException(nameof(now));
             AddScore = addScore ?? throw new ArgumentNullException(nameof(addScore));
+            CreditDog = creditDog ?? throw new ArgumentNullException(nameof(creditDog));
             SetCue = setCue ?? throw new ArgumentNullException(nameof(setCue));
             SetFeedback = setFeedback ?? throw new ArgumentNullException(nameof(setFeedback));
             SetJuice = setJuice ?? throw new ArgumentNullException(nameof(setJuice));

@@ -39,6 +39,7 @@ namespace CheddarAndCocoa.Game
         public GameObject TelegraphObject => _telegraphMarker;
         public GameObject LandingWarningObject => _landingWarning;
         public Vector2 EntryTarget => (_counterPosition + _safeZonePosition) * 0.5f;
+        public string OutcomeSummary => null;
 
         public string ObjectiveLabel
         {
