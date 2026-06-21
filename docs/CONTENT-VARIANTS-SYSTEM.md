@@ -1,5 +1,8 @@
 # Content Variants System
 
+> **Status: DEFERRED.** Do not add content variants or mission breadth until Operation Pee Break
+> passes its second couch-playtest gate.
+
 Goal: make missions replayable without changing core rules every time.
 
 ## Variant Types

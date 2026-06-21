@@ -1,5 +1,9 @@
 # Build Plan
 
+> **Status: HISTORICAL ROADMAP.** Both the TypeScript milestones and the Unity rebuild phases below
+> record prior planning. Do not resume them as an active queue. Current work is governed by
+> `NEXT-PRODUCTION-SLICE.md`, and broad roadmap work is deferred until the deep-slice gate passes.
+
 > 🛑 **THE TYPESCRIPT MILESTONES BELOW (M0–M14) ARE A FROZEN HISTORICAL RECORD — DO NOT CONTINUE
 > THEM.** They built and tuned the game on the TS/Canvas stack and proved it's fun; that job is
 > **done**. The product is now built **only in Unity** (`unity/CheddarAndCocoa/`; C#, local couch

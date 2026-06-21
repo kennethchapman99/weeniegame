@@ -1,6 +1,11 @@
 # Co-op Vision — Cheddar & Cocoa, the couch game
 
-> Status: north-star direction (owner decision, 2026-06-15). Turns the M0–M8 arcade game
+> **Status: HISTORICAL (2026-06-15).** This captures the pre-Unity TypeScript/Tauri/Capacitor
+> direction. Its co-op design pillars remain useful, but its stack, platform plan, roadmap, and
+> statements about active contracts are superseded by `README.md`, `GAME-DESIGN-BIBLE.md`, and
+> `NEXT-PRODUCTION-SLICE.md`. Do not implement from this document.
+>
+> Original context: north-star direction (owner decision, 2026-06-15). Turns the M0–M8 arcade game
 > into a **local two-player cooperative** game the owner and his wife play on the couch,
 > starring Cheddar & Cocoa on missions around their house, yard, car, and beyond.
 > The M0–M8 contract in `CLAUDE.md` still governs *how* we build; this doc governs *what
@@ -15,6 +20,9 @@ dog can finish a mission alone. Settings are the real places the dogs go: the ho
 backyard, the pool, the car, and trips beyond.
 
 ## Platform target (committed)
+
+> **Historical platform plan:** the active product is now Unity. The commitments below no longer
+> direct implementation.
 
 **TV + iOS, on the existing TypeScript / Canvas 2D stack.** No engine port, no console
 dev-program gate. Reality check, kept here so it stays honest:

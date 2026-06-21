@@ -1,10 +1,16 @@
 # Adventure Progression System
 
+> **Status: DEFERRED / OPERATIONAL REFERENCE.** Existing implementation notes remain useful, but
+> no new progression work should displace the depth-first sequence. Resume only after Operation Pee
+> Break passes the second couch-playtest gate.
+
 Status: foundation, generated map UI, generated AdventureMap scene, build-settings entry, ArenaScene launch bridge, and progression tests are committed to `main`. Unity still needs to be opened locally to import the new scripts/scene and run the full PlayMode suite before this should be treated as green.
 
 ## Why This Exists
 
-The project now has enough proven missions to stop growing as a single-scene sandbox. The progression layer turns the existing 12 mission variants into a durable game shell with locations, unlocks, and saved best results.
+At the time this deferred system was authored, the progression layer mapped 12 mission variants
+into locations, unlocks, and saved best results. The active roster later grew; do not treat this
+historical count or mapping as current production direction.
 
 The implementation is intentionally boring:
 

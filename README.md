@@ -1,43 +1,47 @@
 # Cheddar & Cocoa 🐶🐶
 
-A 2D arcade game starring two long-haired mini dachshunds — **Cheddar** (golden, chaos puppy) and **Cocoa** (chocolate, reigning spot queen) — competing and cooperating across the backyard, pool, and a three-room model of their actual house. They fight over toys, cuddle spots, sunbeams, and the sacred dog couch; wrestle and flip each other; play tug-of-war; chase food and squirrels; and have to **work together** to survive coyotes, eagles, humans, cleaning day, vet betrayal, and other dog-life emergencies.
+A personal 2D couch co-op game starring two long-haired mini dachshunds: Cheddar, the golden chaos
+puppy, and Cocoa, the chocolate reigning spot queen. Ken and Sue play exaggerated dog-life
+adventures built around communication, asymmetric roles, readable chaos, and funny recovery.
 
-This repository contains a **working single-file prototype** (`prototype/cheddar-and-cocoa.prototype.html`), a **frozen, reference-only TypeScript/Canvas port** (`src/`, M0–M14 — see the freeze notice below), and the **active Unity build** (`unity/CheddarAndCocoa/`), which is where all current work happens.
+> **Active codebase:** Unity only (`unity/CheddarAndCocoa/`). The TypeScript/Canvas build (`src/`,
+> `tests/`) and `prototype/` are frozen, read-only behavior and balance references. Do not add or
+> edit gameplay there. See `docs/README.md` for the document status index.
 
-> 🛑 **THE TYPESCRIPT / CANVAS BUILD (`src/`, `tests/`) IS FROZEN — DO NOT ADD OR EDIT IT.**
-> The product is built **only in Unity** (`unity/CheddarAndCocoa/`). The TS/Canvas build and the
-> `prototype/` are kept **read-only**, purely as a behavior/balance **reference** for porting —
-> not as a thing to extend. **All new gameplay, levels, mechanics, and tests go in the Unity
-> project.** Any work added to `src/` or `tests/` is wasted effort and will be reverted. If you are
-> an agent: the answer to "where do I build this?" is always Unity. See
-> **`docs/UNITY-PIVOT-PLAN.md`** and **`docs/UNITY-FIRST-PLAYABLE.md`**.
+## Current depth-first pivot
 
-> 🎮 **Creative source of truth:** `docs/GAME-DESIGN-BIBLE.md` captures the current game vision,
-> mechanic library, level idea bank, running gags, and near-term build priorities. Claude/Codex
-> agents should read it before proposing or implementing gameplay.
+The existing Unity build has broad mechanic coverage but has not passed its human fun gate. As of
+2026-06-20, `GameManager.cs` is nearly 8,000 lines and declares 21 mission variants. The roster is
+frozen while the project proves one deep, personal slice and introduces an incremental controller
+boundary for mission behavior.
 
-## Why this exists
+Canonical work sequence:
 
-The prototype was built iteratively in a chat session and grew to ~2,300 lines of vanilla JS in one HTML file. Every mechanic works and is validated, but the single-file structure has hit its ceiling: no module boundaries, no tests in the repo, hand-rolled state, and rendering/logic interleaved. This package is the bridge from "impressive prototype" to "buildable codebase."
+1. Run a baseline two-player couch playtest of the existing slices.
+2. Address critical playtest findings.
+3. Define `IMissionController` and a narrow `MissionContext`.
+4. Extract the existing Kitchen mission first, keeping all PlayMode tests green.
+5. Build Operation Pee Break entirely through the new controller structure.
+6. Run a second couch playtest as the deep-slice acceptance gate.
+7. Keep the mission roster frozen until that gate passes.
 
-The Unity rebuild is now the active playable direction. The goal is not a generic co-op platformer with dog sprites; it is a personal, funny, replayable couch co-op game where Ken and Sue play as Cheddar and Cocoa through exaggerated dog-life adventures.
+Do not substitute roadmap work, more mission variants, or direct `GameManager` branches for this
+sequence. The migration succeeds when ownership is clear and behavior stays green after every
+extraction; no arbitrary line count defines completion.
 
 ## Start here
 
-1. Read `docs/GAME-DESIGN-BIBLE.md` — the creative north star, mechanics library, level idea bank, running gags, and recommended next build priorities.
-2. Read `AGENTS.md` and `CLAUDE.md` — coding-agent guardrails for Claude/Codex and future assistant sessions.
-3. Read **`docs/UNITY-PIVOT-PLAN.md`** — the current direction: why Unity, what's preserved, platforms, packages, systems, vertical slice, phases, risks, non-goals.
-4. Read `docs/ARENA-PLAYABLE.md` — the current Backyard Mission vertical slice: objective, controls, squirrel pressure, predator rescue, rope/tug, scoring, modifiers, and tests.
-5. Read `docs/BUILD-PLAN.md` — the TS milestones (M0–M14, the spec) **plus** the Unity rebuild roadmap at the bottom.
-6. Read `docs/MECHANICS.md` — the **balance bible** (every tuning constant + rationale). The Unity build ports these; it does not re-derive them.
-7. Open `prototype/cheddar-and-cocoa.prototype.html` in a browser to see the original target behavior. When in doubt about how an older mechanic should feel, run the prototype.
-8. To work in the rebuild: `unity/CheddarAndCocoa/README.md` (how to open in Unity).
+1. Read `AGENTS.md` and `CLAUDE.md` for the operating contract.
+2. Read `docs/NEXT-PRODUCTION-SLICE.md` for the active gate and sequence.
+3. Read `docs/GAME-DESIGN-BIBLE.md` for the creative north star.
+4. Read `docs/DEEP-SLICE-OPERATION-PEE-BREAK.md` for the deep-slice design.
+5. Read `docs/ARCHITECTURE.md` and `docs/MISSION-SYSTEM.md` before touching mission code.
+6. Use `docs/ARENA-PLAYABLE.md` for current controls and manual playtest acceptance.
+7. Open `unity/CheddarAndCocoa/README.md` for Unity setup.
 
-## Quick facts
+## Product facts
 
-- **Engine:** **Unity 6 LTS (C#)** going forward — local couch co-op, URP 2D, Unity Input System, two controllers. The original build is dependency-light vanilla Canvas 2D + Web Audio (Vite + TypeScript), kept as the spec/oracle.
-- **Target platforms (Unity):** macOS/Windows desktop → big TV via HDMI with two controllers first; tvOS / Apple TV later; iOS optional. No public store/distribution assumed.
-- **Current playable slice:** a real 48×28 backyard arena (dynamic clamped follow-cam, decorative dressing) with an in-scene mission select for **ten** couch-co-op missions selectable with keys 1–9/0 — Backyard Rescue, Snack Heist, Sock Panic, Squirrel Conspiracy, Eagle Shadow Panic, Coyotes at the Fence, Weenie Roundup, Scent Search, Thunderstorm Comfort, and Mark the Yard. Together they exercise the core dog verbs (chase, rescue, steal, distract, defend, comfort, carry, tug, hide, sniff, dig, bark, mark), with scoring, stars, per-mission session-best tracking, modifiers, and a replay/next/session-summary flow. ~69 deterministic PlayMode tests, all green. See `docs/ARENA-PLAYABLE.md`.
-- **Next likely work:** continue the dog identity/art/animation and game-feel pass (emotional poses are now wired for several missions), a two-player on-TV framing/readability playtest, then richer per-mission hazard visuals.
-- **Players:** local **two-player couch co-op** is the headline (two humans, two controllers, one shared-camera TV). The TS build's AI sibling becomes a post-slice solo fallback.
-- **Hard rule carried over:** the original webview build is **zero runtime network requests**; that constraint no longer binds the native Unity build, but the *no-dependencies-on-the-cloud* spirit stays.
+- Unity 6 LTS, C#, URP 2D, Unity Input System, two local controllers.
+- Desktop-to-TV on macOS/Windows is first; other platforms are later decisions.
+- Two-human couch co-op is the headline. Automated tests prove technical behavior, not fun.
+- Bark must remain gameplay-relevant, and substantial missions require authored co-op role locks.

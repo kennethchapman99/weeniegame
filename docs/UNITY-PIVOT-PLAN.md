@@ -1,6 +1,10 @@
 # Unity Pivot Plan — Cheddar & Cocoa
 
-> Status: **proposed direction** (owner decision pending sign-off, 2026-06-15). This is the
+> **Status: HISTORICAL / COMPLETED PIVOT PLAN (2026-06-15).** Unity is now the active codebase.
+> Do not execute the phases or "next commands" below as the current roadmap. Follow
+> `NEXT-PRODUCTION-SLICE.md` and `ARCHITECTURE.md`.
+>
+> Original context: proposed direction. This is the
 > bridge from the validated TypeScript/Canvas build to a serious Unity couch co-op game. It does
 > **not** delete or stop the web build — that becomes the spec. Read `CLAUDE.md` (operating
 > contract), `docs/COOP-VISION.md` (what we're building toward), and `docs/MECHANICS.md`
@@ -10,7 +14,7 @@
 
 ## 1. Why Unity is now the target
 
-The web/Canvas build (M0–M14) did exactly what it was for: it **proved the game is fun** and
+The web/Canvas build (M0–M14) did exactly what it was for: it proved mechanics and balance and
 **locked the balance** through a deterministic, sim-tested core. It is an excellent *spec*. It is
 the wrong *long-term product shell* for where the game wants to go:
 
@@ -23,8 +27,8 @@ the wrong *long-term product shell* for where the game wants to go:
 | **Future native platforms (tvOS/Apple TV, maybe consoles)** | Webview wrappers cap out at desktop + iOS; Apple TV via webview is shaky; consoles impossible | Unity ships native tvOS today and is a *real* console path later (separate dev programs) |
 | **Audio** | Web Audio synth, no files | Audio mixer, spatial audio, real clips + the synth feel if wanted |
 
-The expensive, risky work — *is it fun? are the numbers right?* — is **already done and won't be
-thrown away**. The pivot is about giving that proven design a production-grade body.
+The web work reduced mechanical risk but did not replace two-human couch validation. The pivot was
+about giving that design a production-grade body.
 
 **This is not an admission the TS build was wrong.** It was the correct, cheap way to de-risk the
 design. We're cashing in that de-risking.

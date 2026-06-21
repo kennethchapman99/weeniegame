@@ -1,5 +1,9 @@
 # Unity Missions — Port Status & Wiring
 
+> **Status: HISTORICAL PORT NOTES.** The described missions and direct wiring recipes are not an
+> active queue. Do not create new `GameManager` variants or resume this backlog. Follow
+> `NEXT-PRODUCTION-SLICE.md` and the controller boundary in `ARCHITECTURE.md`.
+
 This is the working doc for porting co-op missions into the Unity project (`unity/CheddarAndCocoa/`).
 The TypeScript/Canvas build is **frozen reference only** — read it to learn how a mechanic behaves,
 then build it here. See the freeze banners in `README.md`, `CLAUDE.md`, `AGENTS.md`, `BUILD-PLAN.md`.
@@ -25,7 +29,8 @@ New files:
 - `Assets/Scripts/Hazards/ThunderstormHazard.cs` (`: Hazard`) — telegraph flash → boom → recover;
   the clap spikes each pup's panic scaled by distance to the strike, blunted while sheltered.
 
-Wiring (in a `StormBootstrap` modeled on `ArenaBootstrap`, or as a GameManager mission variant):
+Historical wiring sketch (preserved for behavior context; do not use it to add a `GameManager`
+mission branch):
 1. Spawn the two dogs + shared camera (reuse `ArenaBootstrap` helpers).
 2. Add a `PanicMeter`; call `ResetMeter()` on entry; each `FixedUpdate`/`Update` call
    `panic.Step(cheddar.position, cocoa.position, dt)`.
@@ -51,7 +56,7 @@ New files:
   the carrier; reaching the safe zone within `deliverR` completes the Escort objective; `PutAway`
   knocks it loose.
 
-Wiring (a `CleaningBootstrap` or GameManager variant):
+Historical wiring sketch (preserved for behavior context; deferred):
 1. Spawn dogs + camera. Place a safe-zone transform (the dog couch) and the toy (`CarriedItem`).
 2. `carriedItem.Configure(dogs, safeZoneTf, escortObjective)` where `dogs` is the two `DogIdentity`.
 3. `vacuum.Configure(dogs, carriedItem)`.

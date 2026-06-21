@@ -1,6 +1,10 @@
 # Production Backlog
 
-This backlog organizes the game into reusable mechanic slices. Do not build isolated one-off levels unless they create reusable systems.
+> **Status: DEFERRED INVENTORY.** Do not execute this backlog or add missions until Operation Pee
+> Break passes its second two-player couch playtest. The active sequence is
+> `NEXT-PRODUCTION-SLICE.md`; entries below are preserved planning material.
+
+This backlog organizes possible work into reusable mechanic slices. It is not the active queue.
 
 ## Current Foundation
 

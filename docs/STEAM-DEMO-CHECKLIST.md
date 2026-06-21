@@ -1,5 +1,9 @@
 # Steam Demo Checklist
 
+> **Status: DEFERRED.** Public-demo scope and distribution work do not resume until Operation Pee
+> Break passes its human couch-playtest acceptance gate. Test-count claims below are historical
+> snapshots and must be re-run before use.
+
 ## Gameplay
 
 Required:

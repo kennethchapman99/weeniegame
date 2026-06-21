@@ -1,5 +1,7 @@
 # Minigame Framework
 
+> **Status: DEFERRED.** Do not add minigame scope before the deep-slice couch-playtest gate passes.
+
 Do not build minigames as unique systems.
 
 Every minigame should plug into a common framework.

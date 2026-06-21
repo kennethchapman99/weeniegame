@@ -1,5 +1,9 @@
 # Backyard Rescue Art Integration Slice
 
+> **Status: OPERATIONAL REFERENCE.** This records the current asset integration. Further art work
+> is selected from critical couch-playtest findings; it does not supersede the active sequence in
+> `NEXT-PRODUCTION-SLICE.md`.
+
 ## Live runtime art
 
 `ArenaFinal` now contains 40 transparent, individually trimmed PNG sprites extracted from the existing draft sheets. The Backyard Rescue runtime prefers these assets while retaining every generated silhouette, collider, and safe fallback.
@@ -25,7 +29,8 @@ Use `--inventory-only` to refresh only the source inventory, or `--contact-sheet
 
 ## Deliberate skips and source limits
 
-- UI sheets were inventoried but not exported; current priority is in-game Backyard Rescue readability.
+- UI sheets were inventoried but not exported; the integration pass prioritized Backyard Rescue
+  readability. Further priorities come from the baseline couch playtest.
 - Expression sheets remain reference-only because full-body pose sheets produce more readable gameplay silhouettes.
 - `proud` and `rescued` currently use the same best available win pose for each dog.
 - `rope_tug` and `rope_complete` currently use the same source drawing; the separate runtime paths preserve a clean future replacement point.

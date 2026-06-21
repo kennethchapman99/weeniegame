@@ -1,5 +1,8 @@
 # Boss Design Framework
 
+> **Status: DEFERRED DESIGN REFERENCE.** Do not build boss or mission scope until Operation Pee
+> Break passes its second couch-playtest gate.
+
 Bosses should feel funny, memorable, and readable.
 
 ## Boss Rules

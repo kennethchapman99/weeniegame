@@ -1,6 +1,10 @@
 # Agent Implementation Queue
 
-This is the execution queue for local Codex/Claude agents.
+> **Status: DEFERRED / HISTORICAL QUEUE.** Do not execute remaining queue items until Operation Pee
+> Break passes the second two-player couch-playtest gate. Completed entries remain as history. The
+> active sequence is `NEXT-PRODUCTION-SLICE.md`.
+
+This was the execution queue for local Codex/Claude agents.
 
 ## Rule
 

@@ -94,20 +94,27 @@ stimulus.**
   lifts from the screen — the world reacts.
 - **Role flip:** Beats 2→3 swap who's patient vs. who's precise, so it never settles into routine.
 
-## Implementation plan (born in the clean structure)
+## Sequence gate
 
-Do this **as the first `IMissionController` extraction** from the `GameManager` decomposition in
-`docs/DESIGN-REVIEW-2026-06.md` — so the deep slice is the proof the new structure works.
+Do not start this implementation until the baseline two-player couch playtest, its critical fixes,
+the `IMissionController`/`MissionContext` boundary, and the behavior-preserving **Kitchen-first
+extraction** are complete with the full PlayMode suite green. Pee Break is the first new deep slice
+through the proven structure, not the first extraction.
 
-1. Add `IMissionController` (`Start`, `Tick(dt)`, `ForceAdvance(seconds)` test hook, `Outcome`,
-   exposed puzzle state) and route `GameManager` through it for this mission.
-2. `PeeBreakMission.cs` owns: bladder meter, the four beat configs (each a
+## Implementation plan (born in the proven controller structure)
+
+1. Register `PeeBreakMissionController` and its mission definition outside `GameManager`; do not add
+   a `MissionVariant` behavior branch or mission-specific fields to `GameManager`.
+2. The controller owns setup, input handling, cleanup, outcome, snapshots, bladder meter, and the
+   four beat configs (each a
    `CoopSocialManipulationPuzzle.Configure(required, comprehendNeeded, confusionMax)` + role/stimulus
    wiring), Teenager emote state machine, checkpoint-per-beat reset.
 3. Drive stimuli from real dog positions/inputs each `Tick` via `SetActiveSet(...)` (mirror the
    existing WalkCampaign position-driver beat — `CoopSocialManipulationBeat.cs`).
 4. Juice: Teenager emote sprites, phone/battery/bladder HUD bars, door-open set-piece, united-bark
    camera+rumble. Placeholder-but-cohesive is fine; readability over realism.
+5. Keep the full PlayMode suite green at each migration step, then run the second human couch
+   playtest as the deep-slice acceptance gate. Keep the mission roster frozen until it passes.
 
 ## Test hooks (matches `MISSION-AUTHORING-FRAMEWORK.md` + existing suite style)
 

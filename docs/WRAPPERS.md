@@ -1,5 +1,8 @@
 # Wrappers — desktop (TV) + iOS (M11)
 
+> **Status: HISTORICAL TYPESCRIPT DISTRIBUTION NOTES.** The TypeScript wrappers are frozen and do
+> not direct current Unity work.
+
 How to build Cheddar & Cocoa as an installable **desktop app** (Mac/PC at the TV) and an
 **iOS app** (iPad/iPhone), from the same web build, with **zero runtime network requests**.
 

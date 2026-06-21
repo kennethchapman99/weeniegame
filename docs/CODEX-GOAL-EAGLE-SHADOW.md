@@ -1,5 +1,8 @@
 # Codex Goal: Eagle Shadow Panic
 
+> **Status: COMPLETED / HISTORICAL.** The mission is implemented. Do not execute these instructions
+> or add their branches to `GameManager`; see `NEXT-PRODUCTION-SLICE.md` for active work.
+
 Implement after `SquirrelConspiracy` lands.
 
 Repo guardrails:

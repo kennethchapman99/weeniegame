@@ -1,5 +1,8 @@
 # Scoring Economy
 
+> **Status: DEFERRED DESIGN REFERENCE.** Maintain existing behavior as needed, but do not expand the
+> scoring economy before the deep-slice couch-playtest gate passes.
+
 Goal: score should teach players how to play well.
 
 ## Principles

@@ -1,6 +1,8 @@
 # Puzzle Beats: Barf Pressure Sensor and Dishwasher Catapult
 
-Status: design capture. Not implemented yet.
+> **Status: DEFERRED DESIGN CAPTURE.** Do not implement these beats or expand Kitchen scope before
+> Operation Pee Break passes its second couch-playtest gate. The existing Kitchen mission is used
+> only as the first behavior-preserving controller extraction.
 
 This document intentionally captures **two separate Kitchen / House Chaos puzzle beats** that can be built independently or later combined into a larger kitchen mission.
 

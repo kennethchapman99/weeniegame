@@ -1,5 +1,8 @@
 # Co-op Puzzle Design Doctrine
 
+> **Status: ACTIVE DESIGN DOCTRINE.** Apply this to the authorized deep slice and controller
+> migration. It does not authorize additional missions before the deep-slice couch gate passes.
+
 This document defines the co-op magic standard for Cheddar & Cocoa. It exists because a mission can be playable, tested, and readable while still feeling too straightforward. Future levels should feel closer to premium co-op adventure design: the players laugh because they need each other in a specific, surprising, dog-authentic way.
 
 ## Definition
@@ -310,7 +313,8 @@ Make car balance a communication puzzle:
 
 ## Implementation rule
 
-For future Codex goals, each new mission prompt should include a **Co-op Puzzle Beat** section with:
+For authorized mission work, the specification and controller tests should include a **Co-op
+Puzzle Beat** section with:
 
 - beat name;
 - player roles;

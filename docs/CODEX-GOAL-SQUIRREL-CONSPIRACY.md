@@ -1,5 +1,8 @@
 # Codex Goal: Squirrel Conspiracy
 
+> **Status: COMPLETED / HISTORICAL.** The mission is implemented. Do not execute these instructions
+> or add their branches to `GameManager`; see `NEXT-PRODUCTION-SLICE.md` for active work.
+
 Implement the first production-style expansion mission in Unity only.
 
 Repo guardrails:

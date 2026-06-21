@@ -1,10 +1,16 @@
 # Co-op Puzzle Primitives — Implementation Reference
 
+> **Status: OPERATIONAL REFERENCE.** The primitives remain reusable. The old integration pattern of
+> storing primitive fields and mission branches in `GameManager` is historical; all new use belongs
+> inside an `IMissionController` through a narrow `MissionContext`.
+
 Companion to `COOP-PUZZLE-DESIGN.md` (the doctrine). That doc says *what* a co-op beat must feel like; this one is the *reusable, tested code* to build them, and how to drop each into a mission.
 
 All primitives are **pure logic** (no `MonoBehaviour`), in `CheddarAndCocoa.Game`, so a mission drives them from real dog positions/inputs while PlayMode tests drive them deterministically. Each has scene-free unit tests under `Assets/Tests/PlayMode/`. Roles are soft — either dog can take either side; defaults below are for comedy/clarity, not hard locks.
 
-> Status: all primitives **and** a position/input driver each landed, full PlayMode suite green. **Every one** of the co-op-puzzle beats is now **wired into real missions** (eight fresh missions plus a rescue-timing upgrade of an existing one), proving the end-to-end integration pattern: a primitive field on `GameManager`, a `BeginRound` setup block, a `Tick*` driving it from dog positions, `Force*` test hooks, per-dog guidance, and a `MissionDefinition`. The whole doctrine taxonomy (#1–#10) is now playable.
+> Historical landing status: all primitives and a position/input driver each landed and were wired
+> into real missions. They originally proved an integration pattern inside `GameManager`; do not
+> repeat that ownership. Preserve the behavior while moving mission use behind controllers.
 > - **Gate Crash** (Hold-and-Release): Cocoa anchors the gate, Cheddar squeezes through; let go mid-squeeze and it snaps.
 > - **Table Stealth** (Human-Distraction): Cocoa flops belly-up to hold the human's gaze while Cheddar sneaks the dropped steak; sneak while the human is watching and you get spotted.
 > - **The Ol' Switcheroo** (Bait-and-Switch): Cheddar feints at a decoy nut pile to commit the squirrel off its buried stash; Cocoa raids the stash only while the squirrel is committed. Hold the feint too long and the squirrel wises up (backfire).
@@ -57,7 +63,10 @@ Artwork the beats need (poses, VFX, human states, markers) is catalogued in `COO
 - **RescueTiming**: `Configure(pullsNeeded, windowDuration)`; `Wiggle()` (held dog); `Pull()` (free dog); `Advance(dt)`; read `Freed/Pulls/MissedPulls/WindowOpen`.
 - **BaitSwitch**: `Configure(commitThreshold, commitRate, decayRate, overbaitTolerance, hitsNeeded, maxBackfires)`; `Advance(dt, baiting)` (baiter feints); `Strike()` (striker snatches); read `Committed/Overbaited/Hits/Whiffs/Backfires/Solved/TooManyBackfires`. The strike window is the whole `Committed` band; only *holding* commitment pinned at full past `overbaitTolerance` backfires, so the baiter commits then eases off.
 
-## Recommended mission wiring (from the doctrine's example upgrades)
+## Historical/example controller mappings
+
+These mappings document prior or possible uses; they are not an active mission queue. When an
+authorized controller uses one, keep the primitive and its state inside that controller.
 
 - **Backyard Rescue → squirrel trap** (`CoopHoldReleasePuzzle`): Cocoa holds the garden gate/cover gap (anchor) while Cheddar squeezes through to steal back the dropped weenie (crosser). Snap = gate flaps shut, weenie skitters away.
 - **Snack Heist → table stealth** (`CoopDistractSneakPuzzle`): Cheddar distracts the table-watcher; Cocoa sneaks the snack along a safe lane in segments. Over-bark and the human turns; go quiet and they look back.
@@ -65,10 +74,17 @@ Artwork the beats need (poses, VFX, human states, markers) is catalogued in `COO
 - **Eagle Shadow Panic → real rescue** (`CoopRescueTimingPuzzle`): the snatched dog wiggles to crack the talon grip; the free dog pulls in the window. Replaces proximity-only bark rescue.
 - **Squirrel Conspiracy → the ol' switcheroo** (`CoopBaitSwitchPuzzle`): Cheddar feints a chase to lure the squirrel onto a decoy nut pile while Cocoa raids the real buried stash — but only while the squirrel is committed. Over-feint and the squirrel bolts (or Cheddar chases his own decoy) and the window snaps shut.
 
-## Integration checklist (per mission)
+## Integration checklist (per controller)
 
-1. Hold a primitive instance on `GameManager` (like the existing mission states).
-2. In `BeginRound`'s mission block: `Configure(...)`, place the readable zone/marker actors, reset.
-3. In `Update`'s mission tick: feed it from dog positions/distances (see `CoopHoldReleaseBeat` for the pattern) and call the relevant `Advance/Try*`.
-4. Add `Force*` hooks mirroring the primitive's verbs for deterministic PlayMode tests (clear / fail / replay-reset).
-5. Map the verbs to score events + readable objective copy; surface the funny fail as a world pop, not a silent subtraction.
+1. Hold the primitive instance inside the mission's `IMissionController`.
+2. During controller setup, call `Configure(...)`, place readable actors through `MissionContext`,
+   and reset all owned state.
+3. During controller tick/input handling, feed real dog positions and inputs to `Advance/Try*`.
+4. Expose controller-level deterministic hooks mirroring the primitive's verbs for clear, failure,
+   and replay-reset tests.
+5. Emit score events and readable feedback through narrow context services; surface funny failure
+   as visible recovery, not silent subtraction.
+6. Produce primitive-derived state in the controller snapshot and remove owned actors on cleanup.
+
+Do not add a primitive field, setup block, `Tick*` branch, test hook, or definition branch directly
+to `GameManager`.

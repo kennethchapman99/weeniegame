@@ -1,5 +1,8 @@
 # Codex Goal: Coyotes at the Fence
 
+> **Status: COMPLETED / HISTORICAL.** The mission is implemented. Do not execute these instructions
+> or add their branches to `GameManager`; see `NEXT-PRODUCTION-SLICE.md` for active work.
+
 Implement after `SquirrelConspiracy` and `EagleShadowPanic` are stable.
 
 Repo guardrails:
