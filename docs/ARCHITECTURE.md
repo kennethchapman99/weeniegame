@@ -134,7 +134,10 @@ not an architecture acceptance criterion.
   feint-commitment + one-strike-per-window ticking, raid/backfire handling (backfire-cap fail via
   `IsFailed`/`FailReason`), objective copy, snapshot, and the `ForceSwitcherooBait`/
   `ForceSwitcherooStrike` hooks.
-- Full PlayMode result after the latest controller increment: 346 passed, 0 failed, 0 skipped.
+- `WalkCampaignMissionController` owns the social-manipulation puzzle: human/leash markers, the
+  both-stations comprehension ticking, getting-it/misread handling (misread-cap fail), objective
+  copy, snapshot, and the `ForceWalkCampaign` hook.
+- Full PlayMode result after the latest controller increment: 347 passed, 0 failed, 0 skipped.
 
 ## Test and reset contract
 

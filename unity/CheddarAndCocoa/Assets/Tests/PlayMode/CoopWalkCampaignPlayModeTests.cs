@@ -38,6 +38,20 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator Walk_RunsThroughDedicatedController()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.WalkCampaign);
+            yield return null;
+
+            Assert.IsInstanceOf<WalkCampaignMissionController>(
+                _game.ActiveMissionController,
+                "The Walk Campaign must run entirely through its own IMissionController.");
+            Assert.AreEqual(GameManager.MissionVariant.WalkCampaign, _game.ActiveMissionController.Variant);
+            Assert.AreSame(_game.WalkCampaignController.Puzzle, _game.WalkCampaignPuzzle);
+        }
+
+        [UnityTest]
         public IEnumerator Walk_ClearPath_BothDogsHoldTheCombo()
         {
             yield return LoadArena();

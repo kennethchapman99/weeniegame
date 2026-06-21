@@ -322,6 +322,68 @@ namespace CheddarAndCocoa.Game
             };
         }
 
+        internal static GameManager.MissionDefinition BuildWalkCampaignDefinition(ArenaMissionTuning tuning)
+        {
+            const GameManager.MissionVariant variant = GameManager.MissionVariant.WalkCampaign;
+            var balance = tuning.BalanceFor(variant);
+            return new GameManager.MissionDefinition
+            {
+                Variant = variant,
+                Name = "The Walk Campaign",
+                IntroPrompt = "The human won't take the hint. Send ONE clear message together - Cocoa fixes the door with a dignified stare while Cheddar presents the leash - and hold it until the human gets it. Cover only one (or wander off) and they get confused and bring the wrong thing.",
+                ReadyScoreLabel = "READY TO DEMAND A WALK",
+                ItemRootName = "Walk",
+                ItemObjectName = "Walk",
+                ItemWorldLabel = "Walkies!",
+                ItemArrowLabel = "HUMAN",
+                ItemCollectCueNoun = "the human's attention",
+                CollectObjectiveFormat = "Convince the human {0}/{1}",
+                CollectedScoreLabel = "WALK CONNED",
+                ItemScore = balance.ItemScore,
+                SpawnedItemCount = balance.SpawnedItemCount,
+                ItemGoal = balance.ItemGoal,
+                RoundSeconds = balance.RoundSeconds,
+                PawfectScore = balance.PawfectScore,
+                HeroScore = balance.HeroScore,
+                SurvivorScore = balance.SurvivorScore,
+                UsesSquirrel = false,
+                RequiresPredator = false,
+                RequiresTug = false,
+                MaxStolenFood = balance.MaxStolenFood,
+                SquirrelPenalty = balance.SquirrelPenalty,
+                SquirrelScareScore = balance.SquirrelScareScore,
+                SquirrelObjectiveText = "Send the human one clear message",
+                SquirrelStealingCue = "The human's not getting it - send one message.",
+                SquirrelStoleCue = "Mixed signals - the human brought the wrong thing.",
+                SquirrelStealScoreLabel = "HUMAN CONFUSED",
+                SquirrelScareScoreLabel = "THEY'RE GETTING IT",
+                SquirrelStealingActorLabel = "HUMAN",
+                SquirrelDroppedActorLabel = "GETTING IT",
+                SquirrelStoleActorLabel = "CONFUSED",
+                SquirrelMissPopLabel = "WRONG THING!",
+                SquirrelStealJuiceLabel = "CONFUSED!",
+                SquirrelScareJuiceLabel = "GETTING IT!",
+                TugObjectiveText = "Door-stare and leash together",
+                WaitingObjectiveText = "Hold the door-stare and the leash at the same time",
+                ClearObjectiveText = "Walk secured - replay The Walk Campaign",
+                ClearBannerPrefix = "WALKIES!",
+                ClearScoreLabel = "WALK CONNED",
+                ReplayPrompt = "Press R / Enter / Start to replay The Walk Campaign",
+                FailObjectiveText = "Mission failed - replay The Walk Campaign",
+                GenericFailReason = "The human needs a clearer, steadier message.",
+                TimeFailReason = "The human never quite got the message in time.",
+                StolenFailReason = "Too many mixed signals confused the human.",
+                PredatorFailReason = "No predator here, just a clueless human.",
+                PawfectClearReason = "Cocoa and Cheddar sent one flawless message and the leash came out on the first ask.",
+                HeroClearReason = "The human got it after only a confused glance or two.",
+                BasicClearReason = "They got their walk, even if the human fetched the wrong thing a few times first.",
+                ItemColor = new Color(0.55f, 0.7f, 0.95f),
+                ItemAccentColor = new Color(0.8f, 0.85f, 0.5f),
+                ItemSecondaryColor = new Color(0.3f, 0.35f, 0.5f),
+                ItemPopColor = new Color(0.5f, 0.9f, 0.55f)
+            };
+        }
+
         internal static GameManager.MissionDefinition BuildPeeBreakDefinition(ArenaMissionTuning tuning) =>
             new GameManager.MissionDefinition
             {

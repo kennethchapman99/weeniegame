@@ -197,9 +197,10 @@ namespace CheddarAndCocoa.Game
         public CoopBaitSwitchPuzzle SwitcherooPuzzle => SquirrelSwitcherooController?.Puzzle ?? _emptySwitcherooPuzzle;
         public Vector2 SwitcherooDecoyZone => SquirrelSwitcherooController?.DecoyZone ?? _bounds.center;
         public Vector2 SwitcherooStashZone => SquirrelSwitcherooController?.StashZone ?? _bounds.center;
-        public CoopSocialManipulationPuzzle WalkCampaignPuzzle => _walkPuzzle;
-        public Vector2 WalkDoorZone => _walkDoorZone;
-        public Vector2 WalkLeashZone => _walkLeashZone;
+        public WalkCampaignMissionController WalkCampaignController => _activeMissionController as WalkCampaignMissionController;
+        public CoopSocialManipulationPuzzle WalkCampaignPuzzle => WalkCampaignController?.Puzzle ?? _emptyWalkPuzzle;
+        public Vector2 WalkDoorZone => WalkCampaignController?.DoorZone ?? _bounds.center;
+        public Vector2 WalkLeashZone => WalkCampaignController?.LeashZone ?? _bounds.center;
         public CoopScentRelayPuzzle BoneRelayPuzzle => _boneRelay;
         public int BoneMoundCount => _boneMoundSpots.Length;
         public Vector2 BoneScentZone => _boneScentZone;
@@ -462,17 +463,9 @@ namespace CheddarAndCocoa.Game
         // ONE clear message built from BOTH dogs at once - Cocoa's dignified door-stare AND Cheddar
         // presenting the leash. Cover only one station (or neither) and the human gets confused and
         // brings the wrong thing (a recoverable misread); confuse them too many times and the walk is off.
-        private readonly CoopSocialManipulationPuzzle _walkPuzzle = new CoopSocialManipulationPuzzle();
-        private Vector2 _walkDoorZone;
-        private Vector2 _walkLeashZone;
-        private int _walkMisreadsSeen;
-        private bool _walkGettingItScored;
-        private const float WalkStationRange = 3.5f;
-        private const float WalkComprehendNeeded = 2.5f; // both dogs hold the combo this long -> walk earned
-        private const float WalkConfusionMax = 3f;       // incomplete combo this long -> the human misreads
-        private const int WalkMaxMisreads = 3;
-        // The required message: Cocoa stares at the door, Cheddar presents the leash. Neither alone reads.
-        private const SocialStimulus WalkRequiredMessage = SocialStimulus.DoorStare | SocialStimulus.PresentLeash;
+        // The Walk Campaign now lives in WalkCampaignMissionController; this empty puzzle backs the
+        // compatibility accessor when the mission is not the active controller.
+        private readonly CoopSocialManipulationPuzzle _emptyWalkPuzzle = new CoopSocialManipulationPuzzle();
         // The Bone Detail (Scent-Relay split-information co-op puzzle): several look-alike dirt mounds, only
         // one hiding the real bone. Cocoa (the reader) noses the scent post to call which mound is real;
         // Cheddar (the digger) is the only one who can dig, but can't tell them apart on his own - so he
@@ -1403,29 +1396,6 @@ namespace CheddarAndCocoa.Game
                     SetActorState(_laundryBasketObject, "LAUNDRY BASKET - ONE DOG TIP, PARTNER DIVE!", new Color(0.78f, 0.56f, 0.3f), 0.08f);
                 }
             }
-            if (_mission.Variant == MissionVariant.WalkCampaign)
-            {
-                _walkPuzzle.Configure(WalkRequiredMessage, WalkComprehendNeeded, WalkConfusionMax);
-                _walkMisreadsSeen = 0;
-                _walkGettingItScored = false;
-                // Cocoa's "door-stare" station IS the human (the classic dignified begging stare right at
-                // them by the door); Cheddar's leash station sits off to the side. Both dogs get a real
-                // arrow target this way, no extra props needed.
-                _walkDoorZone = new Vector2(_bounds.center.x - 6f, _bounds.center.y - 6f);
-                _walkLeashZone = new Vector2(_bounds.center.x + 11f, _bounds.center.y + 3f);
-                if (PredatorObject != null)
-                {
-                    PredatorObject.SetActive(true);
-                    PlaceObject(PredatorObject, _walkDoorZone);
-                    SetActorState(PredatorObject, "HUMAN - CONVINCE THEM TO WALK YOU!", new Color(0.9f, 0.8f, 0.5f), 0.13f);
-                }
-                if (SquirrelObject != null)
-                {
-                    SquirrelObject.SetActive(true);
-                    PlaceObject(SquirrelObject, _walkLeashZone);
-                    SetActorState(SquirrelObject, "LEASH - CHEDDAR PRESENT IT!", new Color(0.6f, 0.8f, 1f), 0.1f);
-                }
-            }
             if (_mission.Variant == MissionVariant.BoneRelay)
             {
                 _boneRelay.Configure(_boneMoundSpots.Length, BoneFindsNeeded, _missionSeed);
@@ -1529,7 +1499,6 @@ namespace CheddarAndCocoa.Game
             else if (_mission.Variant == MissionVariant.ThunderstormComfort) TickThunderstorm();
             else if (_mission.Variant == MissionVariant.LeashWalk) TickLeashWalk();
             else if (_mission.Variant == MissionVariant.CarRide) TickCarRide();
-            else if (_mission.Variant == MissionVariant.WalkCampaign) TickWalkCampaign();
             else if (_mission.Variant == MissionVariant.BoneRelay) TickBoneRelay();
             else if (_mission.Variant == MissionVariant.GreatEscape) TickGreatEscape();
             else if (_mission.Variant == MissionVariant.ChaosMachine) TickChaosMachine();
@@ -2667,84 +2636,11 @@ namespace CheddarAndCocoa.Game
             CheckClear();
         }
 
-        private void TickWalkCampaign()
-        {
-            if (_walkPuzzle.Solved) return;
-
-            int cheddar = IndexOfDog(DogId.Cheddar);
-            int cocoa = IndexOfDog(DogId.Cocoa);
-            if (cheddar < 0 || cocoa < 0) return;
-
-            // The message is built from positions: Cocoa stares down the door, Cheddar presents the leash.
-            // Neither stimulus alone reads, so both dogs must hold their stations at the same time.
-            SocialStimulus active = SocialStimulus.None;
-            if (Vector2.Distance(_dogs[cocoa].transform.position, _walkDoorZone) <= WalkStationRange)
-                active |= SocialStimulus.DoorStare;
-            if (Vector2.Distance(_dogs[cheddar].transform.position, _walkLeashZone) <= WalkStationRange)
-                active |= SocialStimulus.PresentLeash;
-            _walkPuzzle.SetActiveSet(active);
-            _walkPuzzle.Advance(Time.deltaTime);
-
-            HandleWalkCampaignProgress();
-            if (Phase == State.GameOver) return;
-
-            if (PredatorObject != null)
-            {
-                string human = _walkPuzzle.ExactMatch
-                    ? $"HUMAN GETTING IT - HOLD IT! ({Mathf.RoundToInt(_walkPuzzle.Comprehension / WalkComprehendNeeded * 100f)}%)"
-                    : $"HUMAN CONFUSED - SEND ONE MESSAGE! (misreads {_walkPuzzle.Misreads}/{WalkMaxMisreads})";
-                SetActorState(PredatorObject, human, _walkPuzzle.ExactMatch ? new Color(0.5f, 0.85f, 0.55f) : new Color(0.95f, 0.7f, 0.35f), 0.13f);
-            }
-            if (SquirrelObject != null)
-                SetActorState(SquirrelObject, (active & SocialStimulus.PresentLeash) != 0 ? "LEASH PRESENTED!" : "LEASH - CHEDDAR PRESENT IT!", new Color(0.6f, 0.8f, 1f), 0.1f);
-        }
-
-        private void HandleWalkCampaignProgress()
-        {
-            // First moment the combo clicks: reward reading the room together.
-            if (_walkPuzzle.ExactMatch && !_walkGettingItScored && !_walkPuzzle.Solved)
-            {
-                _walkGettingItScored = true;
-                AddScore(ScoreEventCatalog.HumanGettingIt.Points, ScoreEventCatalog.HumanGettingIt.Label);
-                LastFeedback = FeedbackKind.Intro;
-                LastCue = "The human's getting it - hold the door-stare and the leash together!";
-                SetJuice(JuiceFeedbackKind.SuccessPop, "GETTING IT!");
-                LogPlaytestEvent("WalkGettingIt", "combo");
-            }
-
-            if (_walkPuzzle.Misreads > _walkMisreadsSeen)
-            {
-                _walkMisreadsSeen = _walkPuzzle.Misreads;
-                _walkGettingItScored = false; // earn the "getting it" pop again on the next clean combo
-                AddScore(ScoreEventCatalog.HumanMisread.Points, ScoreEventCatalog.HumanMisread.Label);
-                LastFeedback = FeedbackKind.SquirrelStoleFood;
-                LastCue = $"Mixed signals! The human brought the wrong thing. ({_walkPuzzle.Misreads}/{WalkMaxMisreads})";
-                SetJuice(JuiceFeedbackKind.WarningMiss, "CONFUSED!");
-                if (PredatorObject != null) SpawnWorldPop(PredatorObject.transform.position, "WRONG THING!", new Color(0.95f, 0.6f, 0.25f));
-                LogPlaytestEvent("WalkMisread", $"{_walkPuzzle.Misreads}/{WalkMaxMisreads}");
-                if (_walkPuzzle.Misreads >= WalkMaxMisreads) EndRound(false);
-            }
-
-            if (_walkPuzzle.Solved)
-            {
-                AddScore(ScoreEventCatalog.WalkConned.Points, ScoreEventCatalog.WalkConned.Label);
-                SetJuice(JuiceFeedbackKind.SuccessPop, "WALKIES!");
-                if (PredatorObject != null) SpawnWorldPop(PredatorObject.transform.position, "WALKIES!", new Color(0.5f, 0.9f, 0.55f));
-                LogPlaytestEvent("WalkConned", "solved");
-            }
-        }
-
-        /// <summary>Test hook: hold a stimulus combo (door-stare / present-leash) for <paramref name="seconds"/>.</summary>
+        /// <summary>Compatibility hook forwarded to the active Walk Campaign controller.</summary>
         public void ForceWalkCampaign(float seconds, bool doorStare, bool presentLeash)
         {
-            if (!MissionActive() || _mission == null || _mission.Variant != MissionVariant.WalkCampaign) return;
-            SocialStimulus active = SocialStimulus.None;
-            if (doorStare) active |= SocialStimulus.DoorStare;
-            if (presentLeash) active |= SocialStimulus.PresentLeash;
-            _walkPuzzle.SetActiveSet(active);
-            _walkPuzzle.Advance(seconds);
-            HandleWalkCampaignProgress();
-            if (Phase != State.GameOver) CheckClear();
+            if (MissionActive()) WalkCampaignController?.ForceWalkCampaign(seconds, doorStare, presentLeash);
+            CheckClear();
         }
 
         private void TickBoneRelay()
@@ -3634,13 +3530,6 @@ namespace CheddarAndCocoa.Game
                 goal = _carState.RequiredLurches;
                 mistakes = _carState.Spills;
             }
-            else if (_mission != null && _mission.Variant == MissionVariant.WalkCampaign)
-            {
-                missionId = "walk_campaign";
-                progress = _walkPuzzle.Solved ? 1 : 0;
-                goal = 1;
-                mistakes = _walkPuzzle.Misreads;
-            }
             else if (_mission != null && _mission.Variant == MissionVariant.BoneRelay)
             {
                 missionId = "bone_relay";
@@ -4169,11 +4058,6 @@ namespace CheddarAndCocoa.Game
                 if (_carState.ReadyToClear()) EndRound(true);
                 return;
             }
-            if (_mission.Variant == MissionVariant.WalkCampaign)
-            {
-                if (_walkPuzzle.Solved) EndRound(true);
-                return;
-            }
             if (_mission.Variant == MissionVariant.BoneRelay)
             {
                 if (_boneRelay.Solved) EndRound(true);
@@ -4326,8 +4210,6 @@ namespace CheddarAndCocoa.Game
                 funny = MissionOutcomeSummaryBuilder.BuildLeashSummary(_leashState);
             else if (_mission != null && _mission.Variant == MissionVariant.CarRide)
                 funny = MissionOutcomeSummaryBuilder.BuildCarBalanceSummary(_carState);
-            else if (_mission != null && _mission.Variant == MissionVariant.WalkCampaign)
-                funny = MissionOutcomeSummaryBuilder.BuildWalkCampaignSummary(_walkPuzzle);
             else if (_mission != null && _mission.Variant == MissionVariant.BoneRelay)
                 funny = MissionOutcomeSummaryBuilder.BuildBoneRelaySummary(_boneRelay);
             else if (_mission != null && _mission.Variant == MissionVariant.GreatEscape)
@@ -4427,11 +4309,6 @@ namespace CheddarAndCocoa.Game
                 string tilt = Mathf.Abs(_carBalance) < 0.15f ? "LEVEL" : (_carBalance > 0 ? "tipping RIGHT" : "tipping LEFT");
                 return $"Lean to keep the car level ({tilt}): steadied {_carState.LurchesSurvived}/{_carState.RequiredLurches}, spills {_carState.Spills}/{CarMaxSpills}";
             }
-            if (_mission.Variant == MissionVariant.WalkCampaign)
-            {
-                if (_walkPuzzle.ExactMatch) return $"Hold it together! Cocoa stares the door, Cheddar holds the leash - the human's {Mathf.RoundToInt(_walkPuzzle.Comprehension / WalkComprehendNeeded * 100)}% sold (confused {_walkPuzzle.Misreads}/{WalkMaxMisreads})";
-                return $"Send ONE message: Cocoa stare at the door AND Cheddar present the leash at once (confused {_walkPuzzle.Misreads}/{WalkMaxMisreads})";
-            }
             if (_mission.Variant == MissionVariant.BoneRelay)
             {
                 int wasted = _boneRelay.BlindActs + _boneRelay.WrongDigs;
@@ -4489,7 +4366,6 @@ namespace CheddarAndCocoa.Game
             if (_mission.Variant == MissionVariant.ScentSearch && _scentState.TooManyWastedDigs(ScentMaxWastedDigs)) return "The dogs dug up half the yard chasing cold scents and ran out of patience.";
             if (_mission.Variant == MissionVariant.LeashWalk && _leashState.TooManySnaps(MaxLeashSnaps)) return "The leash snapped taut too many times - the walk fell apart.";
             if (_mission.Variant == MissionVariant.CarRide && _carState.TooManySpills(CarMaxSpills)) return "The car tipped over too many times on the way home.";
-            if (_mission.Variant == MissionVariant.WalkCampaign && _walkPuzzle.Misreads >= WalkMaxMisreads) return "Too many mixed signals - the human gave up and brought the wrong thing one time too many.";
             if (_mission.Variant == MissionVariant.BoneRelay && _boneRelay.BlindActs + _boneRelay.WrongDigs >= BoneMaxWasted) return "The dogs dug up half the yard guessing instead of waiting for Cocoa's call.";
             if (_mission.Variant == MissionVariant.GreatEscape && _escape.Fumbles + _escape.Settles >= EscapeMaxWasted) return "They botched the contraption too many times - the gate never opened and the breakout fizzled.";
             if (_mission.Variant == MissionVariant.ChaosMachine && _chaos.Stalls >= ChaosMaxStalls) return "The machine misfired too many times - the cascade never made it to the end.";
@@ -5416,63 +5292,6 @@ namespace CheddarAndCocoa.Game
                         ItemSecondaryColor = new Color(0.24f, 0.2f, 0.14f),
                         ItemPopColor = new Color(0.85f, 0.75f, 0.55f)
                     };
-                case MissionVariant.WalkCampaign:
-                    return new MissionDefinition
-                    {
-                        Variant = MissionVariant.WalkCampaign,
-                        Name = "The Walk Campaign",
-                        IntroPrompt = "The human won't take the hint. Send ONE clear message together - Cocoa fixes the door with a dignified stare while Cheddar presents the leash - and hold it until the human gets it. Cover only one (or wander off) and they get confused and bring the wrong thing.",
-                        ReadyScoreLabel = "READY TO DEMAND A WALK",
-                        ItemRootName = "Walk",
-                        ItemObjectName = "Walk",
-                        ItemWorldLabel = "Walkies!",
-                        ItemArrowLabel = "HUMAN",
-                        ItemCollectCueNoun = "the human's attention",
-                        CollectObjectiveFormat = "Convince the human {0}/{1}",
-                        CollectedScoreLabel = "WALK CONNED",
-                        ItemScore = balance.ItemScore,
-                        SpawnedItemCount = balance.SpawnedItemCount,
-                        ItemGoal = balance.ItemGoal,
-                        RoundSeconds = balance.RoundSeconds,
-                        PawfectScore = balance.PawfectScore,
-                        HeroScore = balance.HeroScore,
-                        SurvivorScore = balance.SurvivorScore,
-                        UsesSquirrel = false,
-                        RequiresPredator = false,
-                        RequiresTug = false,
-                        MaxStolenFood = balance.MaxStolenFood,
-                        SquirrelPenalty = balance.SquirrelPenalty,
-                        SquirrelScareScore = balance.SquirrelScareScore,
-                        SquirrelObjectiveText = "Send the human one clear message",
-                        SquirrelStealingCue = "The human's not getting it - send one message.",
-                        SquirrelStoleCue = "Mixed signals - the human brought the wrong thing.",
-                        SquirrelStealScoreLabel = "HUMAN CONFUSED",
-                        SquirrelScareScoreLabel = "THEY'RE GETTING IT",
-                        SquirrelStealingActorLabel = "HUMAN",
-                        SquirrelDroppedActorLabel = "GETTING IT",
-                        SquirrelStoleActorLabel = "CONFUSED",
-                        SquirrelMissPopLabel = "WRONG THING!",
-                        SquirrelStealJuiceLabel = "CONFUSED!",
-                        SquirrelScareJuiceLabel = "GETTING IT!",
-                        TugObjectiveText = "Door-stare and leash together",
-                        WaitingObjectiveText = "Hold the door-stare and the leash at the same time",
-                        ClearObjectiveText = "Walk secured - replay The Walk Campaign",
-                        ClearBannerPrefix = "WALKIES!",
-                        ClearScoreLabel = "WALK CONNED",
-                        ReplayPrompt = "Press R / Enter / Start to replay The Walk Campaign",
-                        FailObjectiveText = "Mission failed - replay The Walk Campaign",
-                        GenericFailReason = "The human needs a clearer, steadier message.",
-                        TimeFailReason = "The human never quite got the message in time.",
-                        StolenFailReason = "Too many mixed signals confused the human.",
-                        PredatorFailReason = "No predator here, just a clueless human.",
-                        PawfectClearReason = "Cocoa and Cheddar sent one flawless message and the leash came out on the first ask.",
-                        HeroClearReason = "The human got it after only a confused glance or two.",
-                        BasicClearReason = "They got their walk, even if the human fetched the wrong thing a few times first.",
-                        ItemColor = new Color(0.55f, 0.7f, 0.95f),
-                        ItemAccentColor = new Color(0.8f, 0.85f, 0.5f),
-                        ItemSecondaryColor = new Color(0.3f, 0.35f, 0.5f),
-                        ItemPopColor = new Color(0.5f, 0.9f, 0.55f)
-                    };
                 case MissionVariant.BoneRelay:
                     return new MissionDefinition
                     {
@@ -6112,19 +5931,6 @@ namespace CheddarAndCocoa.Game
                         target = _leashCheckpointMarkers[checkpoint].transform;
                     copy = "WALK TOGETHER";
                     hideDistance = CheckpointRange;
-                    break;
-                case MissionVariant.WalkCampaign:
-                    if (IndexOfDog(DogId.Cocoa) == dogIndex)
-                    {
-                        target = PredatorObject != null ? PredatorObject.transform : null; // stare down the human at the door
-                        copy = "STARE AT THE DOOR";
-                    }
-                    else
-                    {
-                        target = SquirrelObject != null ? SquirrelObject.transform : null; // the leash Cheddar presents
-                        copy = "PRESENT THE LEASH";
-                    }
-                    hideDistance = WalkStationRange;
                     break;
                 case MissionVariant.BoneRelay:
                     if (IndexOfDog(DogId.Cocoa) == dogIndex)

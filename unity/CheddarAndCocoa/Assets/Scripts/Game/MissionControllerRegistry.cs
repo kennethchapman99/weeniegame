@@ -44,7 +44,10 @@ namespace CheddarAndCocoa.Game
                     MissionCatalog.BuildTableStealthDefinition),
                 [GameManager.MissionVariant.SquirrelSwitcheroo] = new Registration(
                     () => new SquirrelSwitcherooMissionController(),
-                    MissionCatalog.BuildSquirrelSwitcherooDefinition)
+                    MissionCatalog.BuildSquirrelSwitcherooDefinition),
+                [GameManager.MissionVariant.WalkCampaign] = new Registration(
+                    () => new WalkCampaignMissionController(),
+                    MissionCatalog.BuildWalkCampaignDefinition)
             };
 
         public static IEnumerable<GameManager.MissionVariant> RegisteredVariants => Registrations.Keys;

@@ -30,7 +30,8 @@ namespace CheddarAndCocoa.Game.Tests
                     GameManager.MissionVariant.MarkTheYard,
                     GameManager.MissionVariant.GateCrash,
                     GameManager.MissionVariant.TableStealth,
-                    GameManager.MissionVariant.SquirrelSwitcheroo
+                    GameManager.MissionVariant.SquirrelSwitcheroo,
+                    GameManager.MissionVariant.WalkCampaign
                 },
                 seen,
                 "Only explicitly migrated missions belong in the controller registry.");
