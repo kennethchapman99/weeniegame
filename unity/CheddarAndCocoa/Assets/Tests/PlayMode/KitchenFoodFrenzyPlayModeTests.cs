@@ -1,6 +1,7 @@
 using System.Collections;
 using CheddarAndCocoa.Dogs;
 using CheddarAndCocoa.Game;
+using CheddarAndCocoa.CameraRig;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -22,13 +23,42 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual("kitchen_food_frenzy", _game.RuntimeSnapshot.MissionId);
             Assert.IsNotNull(GameObject.Find("KitchenCounterRoute"));
             Assert.IsNotNull(GameObject.Find("KitchenSafeBowl"));
+            Assert.IsNotNull(_game.KitchenTelegraphObject);
+            Assert.IsNotNull(_game.KitchenLandingWarningObject);
             Assert.IsFalse(_game.SquirrelObject.activeSelf);
             Assert.IsFalse(_game.PredatorObject.activeSelf);
             Assert.IsFalse(_game.RopeObject.activeSelf);
             Assert.That(_game.ObjectiveLabel, Does.Contain("Cheddar"));
             Assert.That(_game.ObjectiveLabel, Does.Contain("COUNTER"));
-            Assert.That(_game.TeamGuidanceLabel, Does.Contain("KNOCK FOOD LOOSE"));
+            Assert.That(_game.TeamGuidanceLabel, Does.Contain("BARK-KNOCK FOOD"));
             Assert.That(_game.TeamGuidanceLabel, Does.Contain("GUARD THE BOWL"));
+
+            var cameraRig = Object.FindFirstObjectByType<SharedCameraController>();
+            Assert.IsNotNull(cameraRig);
+            float kitchenFrame = cameraRig.RequiredOrthoSizeForTargets(
+                _game.KitchenCounterPosition, _game.KitchenSafeZonePosition, 16f / 9f);
+            Assert.LessOrEqual(kitchenFrame, 12f, "Kitchen stations should stay readable in one couch-co-op frame.");
+        }
+
+        [UnityTest]
+        public IEnumerator KitchenFrenzy_BarkKnockHasReadablePreDropTelegraph()
+        {
+            yield return LoadKitchen();
+
+            _game.ForceKitchenTelegraph(DogId.Cheddar, KitchenFoodFrenzyMissionState.FoodKind.Bad);
+            Assert.IsTrue(_game.KitchenState.TelegraphActive);
+            Assert.IsFalse(_game.KitchenState.DropActive);
+            Assert.IsTrue(_game.KitchenTelegraphObject.activeSelf);
+            Assert.IsTrue(_game.KitchenLandingWarningObject.activeSelf);
+            Assert.IsFalse(_game.KitchenFoodObject.activeSelf);
+            Assert.That(_game.ObjectiveLabel, Does.Contain("DROP TELEGRAPHED"));
+            Assert.IsTrue(LogContains("KitchenTelegraph"));
+
+            _game.ForceKitchenReleaseTelegraph();
+            Assert.IsFalse(_game.KitchenState.TelegraphActive);
+            Assert.IsTrue(_game.KitchenState.DropActive);
+            Assert.IsTrue(_game.KitchenFoodObject.activeSelf);
+            Assert.IsFalse(_game.KitchenTelegraphObject.activeSelf);
         }
 
         [UnityTest]
@@ -60,16 +90,22 @@ namespace CheddarAndCocoa.Tests
 
             while (!_game.KitchenState.Complete)
             {
-                _game.ForceKitchenDrop(KitchenFoodFrenzyMissionState.FoodKind.Good);
-                _game.ForceKitchenCatch(DogId.Cocoa, true);
+                var kind = _game.KitchenState.FinaleActive
+                    ? _game.KitchenState.ExpectedFinaleKind
+                    : KitchenFoodFrenzyMissionState.FoodKind.Good;
+                _game.ForceKitchenDrop(kind);
+                if (kind == KitchenFoodFrenzyMissionState.FoodKind.Bad) _game.ForceKitchenLetFall();
+                else _game.ForceKitchenCatch(DogId.Cocoa, true);
             }
             yield return null;
 
             Assert.AreEqual(KitchenFoodFrenzyMissionState.RequiredCatches, _game.KitchenState.GoodCatches);
+            Assert.AreEqual(KitchenFoodFrenzyMissionState.FinaleSuccessesRequired, _game.KitchenState.FinaleSuccesses);
             Assert.AreEqual(GameManager.MissionOutcome.Clear, _game.Outcome);
             Assert.AreEqual(GameManager.FlowState.EndScreen, _game.CurrentFlow);
             Assert.That(_game.MissionBanner, Does.Contain("KITCHEN CLEARED"));
             Assert.IsTrue(LogContains("KitchenCatch"));
+            Assert.IsTrue(LogContains("KitchenFinaleStarted"));
         }
 
         [UnityTest]
@@ -86,6 +122,8 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(0, _game.KitchenState.GoodCatches);
             Assert.AreEqual(0, _game.KitchenState.TotalFumbles);
             Assert.AreEqual(0, _game.KitchenState.Combo);
+            Assert.AreEqual(0, _game.KitchenState.FinaleSuccesses);
+            Assert.IsFalse(_game.KitchenState.TelegraphActive);
             Assert.IsFalse(_game.KitchenState.DropActive);
             Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
         }

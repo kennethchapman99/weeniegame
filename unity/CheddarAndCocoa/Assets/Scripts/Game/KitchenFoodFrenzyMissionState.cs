@@ -15,11 +15,16 @@ namespace CheddarAndCocoa.Game
     {
         public enum FoodKind { Good, Bad }
 
+        public enum TelegraphResult { Armed, WrongScout, Busy, Complete }
+        public enum ReleaseResult { Dropped, NothingArmed, AlreadyFalling, Complete }
         public enum DropResult { Dropped, WrongScout, AlreadyFalling, Complete }
         public enum CatchResult { Caught, GrossOut, UnsafeLanding, WrongCatcher, NothingFalling, Complete }
         public enum FallResult { DodgedBad, MissedGood, NothingFalling }
 
-        public const int RequiredCatches = 4;
+        public const int WarmupCatches = 3;
+        public const int FinaleSuccessesRequired = 3;
+        // The three-beat finale is GOOD / BAD / GOOD, so a clean clear contains five catches.
+        public const int RequiredCatches = WarmupCatches + 2;
 
         public DogId ScoutDog => DogId.Cheddar;
         public DogId SweeperDog => DogId.Cocoa;
@@ -30,26 +35,57 @@ namespace CheddarAndCocoa.Game
         public int RoleFumbles { get; private set; }
         public int Combo { get; private set; }
         public int BestCombo { get; private set; }
+        public int FinaleSuccesses { get; private set; }
 
+        public bool TelegraphActive { get; private set; }
+        public FoodKind PendingKind { get; private set; }
         public bool DropActive { get; private set; }
         public FoodKind ActiveKind { get; private set; }
 
-        public bool Complete => GoodCatches >= RequiredCatches;
+        public bool FinaleActive => GoodCatches >= WarmupCatches && !Complete;
+        public FoodKind ExpectedFinaleKind => FinaleSuccesses == 1 ? FoodKind.Bad : FoodKind.Good;
+        public bool Complete => GoodCatches >= WarmupCatches && FinaleSuccesses >= FinaleSuccessesRequired;
         public int TotalFumbles => GrossFumbles + Misses + RoleFumbles;
+
+        /// <summary>Cheddar's bark warns Cocoa which lane and food type will drop next.</summary>
+        public TelegraphResult ArmTelegraph(DogId dog, FoodKind kind)
+        {
+            if (Complete) return TelegraphResult.Complete;
+            if (TelegraphActive || DropActive) return TelegraphResult.Busy;
+            if (dog != ScoutDog)
+            {
+                RoleFumbles++;
+                return TelegraphResult.WrongScout;
+            }
+
+            TelegraphActive = true;
+            PendingKind = FinaleActive ? ExpectedFinaleKind : kind;
+            return TelegraphResult.Armed;
+        }
+
+        public ReleaseResult ReleaseTelegraph()
+        {
+            if (Complete) return ReleaseResult.Complete;
+            if (DropActive) return ReleaseResult.AlreadyFalling;
+            if (!TelegraphActive) return ReleaseResult.NothingArmed;
+
+            TelegraphActive = false;
+            DropActive = true;
+            ActiveKind = PendingKind;
+            return ReleaseResult.Dropped;
+        }
 
         /// <summary>The scout (Cheddar) knocks a piece of food loose from the counter route.</summary>
         public DropResult Trigger(DogId dog, FoodKind kind)
         {
-            if (Complete) return DropResult.Complete;
-            if (DropActive) return DropResult.AlreadyFalling;
-            if (dog != ScoutDog)
+            TelegraphResult armed = ArmTelegraph(dog, kind);
+            if (armed == TelegraphResult.Complete) return DropResult.Complete;
+            if (armed == TelegraphResult.Busy) return DropResult.AlreadyFalling;
+            if (armed == TelegraphResult.WrongScout)
             {
-                RoleFumbles++;
                 return DropResult.WrongScout;
             }
-
-            DropActive = true;
-            ActiveKind = kind;
+            ReleaseTelegraph();
             return DropResult.Dropped;
         }
 
@@ -86,9 +122,11 @@ namespace CheddarAndCocoa.Game
                 return CatchResult.UnsafeLanding;
             }
 
+            bool wasFinale = FinaleActive;
             GoodCatches++;
             Combo++;
             if (Combo > BestCombo) BestCombo = Combo;
+            if (wasFinale) FinaleSuccesses++;
             ConsumeDrop();
             return CatchResult.Caught;
         }
@@ -101,6 +139,7 @@ namespace CheddarAndCocoa.Game
 
             if (ActiveKind == FoodKind.Bad)
             {
+                if (FinaleActive) FinaleSuccesses++;
                 ConsumeDrop();
                 return FallResult.DodgedBad;
             }
@@ -119,6 +158,9 @@ namespace CheddarAndCocoa.Game
             RoleFumbles = 0;
             Combo = 0;
             BestCombo = 0;
+            FinaleSuccesses = 0;
+            TelegraphActive = false;
+            PendingKind = FoodKind.Good;
             DropActive = false;
             ActiveKind = FoodKind.Good;
         }

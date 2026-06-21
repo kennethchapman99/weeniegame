@@ -43,6 +43,30 @@ namespace CheddarAndCocoa.Tests.PlayMode
         }
 
         [Test]
+        public void BarkTelegraph_ArmsBeforeDropAndRejectsWrongRoleOrOverlap()
+        {
+            var state = NewState();
+
+            Assert.AreEqual(KitchenFoodFrenzyMissionState.TelegraphResult.WrongScout,
+                state.ArmTelegraph(state.SweeperDog, KitchenFoodFrenzyMissionState.FoodKind.Bad));
+            Assert.AreEqual(1, state.RoleFumbles);
+            Assert.IsFalse(state.TelegraphActive);
+
+            Assert.AreEqual(KitchenFoodFrenzyMissionState.TelegraphResult.Armed,
+                state.ArmTelegraph(state.ScoutDog, KitchenFoodFrenzyMissionState.FoodKind.Bad));
+            Assert.IsTrue(state.TelegraphActive);
+            Assert.IsFalse(state.DropActive);
+            Assert.AreEqual(KitchenFoodFrenzyMissionState.FoodKind.Bad, state.PendingKind);
+            Assert.AreEqual(KitchenFoodFrenzyMissionState.TelegraphResult.Busy,
+                state.ArmTelegraph(state.ScoutDog, KitchenFoodFrenzyMissionState.FoodKind.Good));
+
+            Assert.AreEqual(KitchenFoodFrenzyMissionState.ReleaseResult.Dropped, state.ReleaseTelegraph());
+            Assert.IsFalse(state.TelegraphActive);
+            Assert.IsTrue(state.DropActive);
+            Assert.AreEqual(KitchenFoodFrenzyMissionState.FoodKind.Bad, state.ActiveKind);
+        }
+
+        [Test]
         public void GoodCatchOutsideSafeZone_IsRecoverableSplatNotAScore()
         {
             var state = NewState();
@@ -91,20 +115,35 @@ namespace CheddarAndCocoa.Tests.PlayMode
         }
 
         [Test]
-        public void CleanCatches_BuildComboAndCompleteTheCourse()
+        public void WarmupThenDinnerRush_GoodBadGoodCompletesTheCourse()
         {
             var state = NewState();
 
-            for (int i = 0; i < KitchenFoodFrenzyMissionState.RequiredCatches; i++)
+            for (int i = 0; i < KitchenFoodFrenzyMissionState.WarmupCatches; i++)
             {
                 Assert.IsFalse(state.Complete);
                 state.Trigger(state.ScoutDog, KitchenFoodFrenzyMissionState.FoodKind.Good);
                 Assert.AreEqual(KitchenFoodFrenzyMissionState.CatchResult.Caught, state.Catch(state.SweeperDog, true));
             }
 
+            Assert.IsTrue(state.FinaleActive);
+            Assert.AreEqual(0, state.FinaleSuccesses);
+
+            state.Trigger(state.ScoutDog, KitchenFoodFrenzyMissionState.FoodKind.Good);
+            state.Catch(state.SweeperDog, true);
+            Assert.AreEqual(1, state.FinaleSuccesses);
+            Assert.AreEqual(KitchenFoodFrenzyMissionState.FoodKind.Bad, state.ExpectedFinaleKind);
+
+            state.Trigger(state.ScoutDog, KitchenFoodFrenzyMissionState.FoodKind.Bad);
+            Assert.AreEqual(KitchenFoodFrenzyMissionState.FallResult.DodgedBad, state.LetFall());
+            Assert.AreEqual(2, state.FinaleSuccesses);
+
+            state.Trigger(state.ScoutDog, KitchenFoodFrenzyMissionState.FoodKind.Good);
+            state.Catch(state.SweeperDog, true);
+
             Assert.IsTrue(state.Complete);
             Assert.AreEqual(KitchenFoodFrenzyMissionState.RequiredCatches, state.GoodCatches);
-            Assert.AreEqual(KitchenFoodFrenzyMissionState.RequiredCatches, state.BestCombo);
+            Assert.AreEqual(KitchenFoodFrenzyMissionState.FinaleSuccessesRequired, state.FinaleSuccesses);
 
             // Completed course rejects further triggers/catches.
             Assert.AreEqual(KitchenFoodFrenzyMissionState.DropResult.Complete,
@@ -128,6 +167,8 @@ namespace CheddarAndCocoa.Tests.PlayMode
             Assert.AreEqual(0, state.RoleFumbles);
             Assert.AreEqual(0, state.Combo);
             Assert.AreEqual(0, state.BestCombo);
+            Assert.AreEqual(0, state.FinaleSuccesses);
+            Assert.IsFalse(state.TelegraphActive);
             Assert.IsFalse(state.DropActive);
             Assert.IsFalse(state.Complete);
         }
