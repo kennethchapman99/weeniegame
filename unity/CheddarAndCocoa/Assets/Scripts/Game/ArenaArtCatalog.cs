@@ -27,7 +27,9 @@ namespace CheddarAndCocoa.Game
         public static readonly Vector3 ArenaDogBodyScale = new Vector3(1.6f, 0.62f, 1f);
 
         public static readonly LabelSlot DogLabel = new LabelSlot(
-            DogReadabilityLabelName, new Vector3(0f, 0.95f, -0.1f), Vector3.one * 0.085f, 22, Color.white);
+            // Sit clearly above the dog (authored body is ~1.65 tall) so the name/pose text no longer
+            // overlaps and obscures the character it is labeling.
+            DogReadabilityLabelName, new Vector3(0f, 1.5f, -0.1f), Vector3.one * 0.07f, 22, Color.white);
 
         public static readonly LabelSlot ObjectiveArrowLabel = new LabelSlot(
             ObjectiveArrowLabelName, Vector3.zero, Vector3.one * 0.085f, 22, Color.white);
