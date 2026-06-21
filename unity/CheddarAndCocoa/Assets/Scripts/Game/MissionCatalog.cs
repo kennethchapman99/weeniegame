@@ -136,6 +136,68 @@ namespace CheddarAndCocoa.Game
             };
         }
 
+        internal static GameManager.MissionDefinition BuildGateCrashDefinition(ArenaMissionTuning tuning)
+        {
+            const GameManager.MissionVariant variant = GameManager.MissionVariant.GateCrash;
+            var balance = tuning.BalanceFor(variant);
+            return new GameManager.MissionDefinition
+            {
+                Variant = variant,
+                Name = "Gate Crash",
+                IntroPrompt = "The toy rolled under the heavy gate. Cocoa has to brace the gate open while Cheddar squeezes through to grab it - if she lets go mid-squeeze, the gate snaps shut.",
+                ReadyScoreLabel = "READY TO CRASH THE GATE",
+                ItemRootName = "Gate",
+                ItemObjectName = "Gate",
+                ItemWorldLabel = "Hold!",
+                ItemArrowLabel = "GATE",
+                ItemCollectCueNoun = "a squeeze-through",
+                CollectObjectiveFormat = "Squeeze through {0}/{1}",
+                CollectedScoreLabel = "SQUEEZED THROUGH",
+                ItemScore = balance.ItemScore,
+                SpawnedItemCount = balance.SpawnedItemCount,
+                ItemGoal = balance.ItemGoal,
+                RoundSeconds = balance.RoundSeconds,
+                PawfectScore = balance.PawfectScore,
+                HeroScore = balance.HeroScore,
+                SurvivorScore = balance.SurvivorScore,
+                UsesSquirrel = false,
+                RequiresPredator = false,
+                RequiresTug = false,
+                MaxStolenFood = balance.MaxStolenFood,
+                SquirrelPenalty = balance.SquirrelPenalty,
+                SquirrelScareScore = balance.SquirrelScareScore,
+                SquirrelObjectiveText = "Hold the gate / squeeze through",
+                SquirrelStealingCue = "No squirrel here - mind the gate.",
+                SquirrelStoleCue = "No squirrel here - hold it open.",
+                SquirrelStealScoreLabel = "GATE SNAP",
+                SquirrelScareScoreLabel = "SQUEEZED THROUGH",
+                SquirrelStealingActorLabel = "GATE",
+                SquirrelDroppedActorLabel = "GATE HELD",
+                SquirrelStoleActorLabel = "GATE SNAP",
+                SquirrelMissPopLabel = "SNAP!",
+                SquirrelStealJuiceLabel = "GATE SNAP!",
+                SquirrelScareJuiceLabel = "SQUEEZED THROUGH!",
+                TugObjectiveText = "Hold the gate together",
+                WaitingObjectiveText = "Squeeze through while the gate is held",
+                ClearObjectiveText = "Toy rescued - replay Gate Crash",
+                ClearBannerPrefix = "GATE CRASHED!",
+                ClearScoreLabel = "GATE CRASH CLEAR",
+                ReplayPrompt = "Press R / Enter / Start to replay Gate Crash",
+                FailObjectiveText = "Mission failed - replay Gate Crash",
+                GenericFailReason = "Needs steadier holding before the next squeeze.",
+                TimeFailReason = "The squeeze took too long and the toy stayed stuck.",
+                StolenFailReason = "The gate snapped shut too many times.",
+                PredatorFailReason = "No predator here, just a heavy gate.",
+                PawfectClearReason = "Cocoa braced like a champ and Cheddar slipped through in one clean go.",
+                HeroClearReason = "The toy came home with only a wobble of the gate.",
+                BasicClearReason = "They got the toy, even if the gate slammed a couple of times.",
+                ItemColor = new Color(0.55f, 0.45f, 0.3f),
+                ItemAccentColor = new Color(0.8f, 0.65f, 0.4f),
+                ItemSecondaryColor = new Color(0.26f, 0.2f, 0.12f),
+                ItemPopColor = new Color(0.6f, 0.8f, 1f)
+            };
+        }
+
         internal static GameManager.MissionDefinition BuildPeeBreakDefinition(ArenaMissionTuning tuning) =>
             new GameManager.MissionDefinition
             {

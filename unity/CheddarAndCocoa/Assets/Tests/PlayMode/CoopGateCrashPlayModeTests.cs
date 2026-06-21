@@ -36,6 +36,20 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator GateCrash_RunsThroughDedicatedController()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.GateCrash);
+            yield return null;
+
+            Assert.IsInstanceOf<GateCrashMissionController>(
+                _game.ActiveMissionController,
+                "Gate Crash must run entirely through its own IMissionController.");
+            Assert.AreEqual(GameManager.MissionVariant.GateCrash, _game.ActiveMissionController.Variant);
+            Assert.AreSame(_game.GateCrashController.Puzzle, _game.GateCrashPuzzle);
+        }
+
+        [UnityTest]
         public IEnumerator GateCrash_ClearPath_HoldThenSqueezeThrough()
         {
             yield return LoadArena();

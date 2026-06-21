@@ -31,6 +31,8 @@ namespace CheddarAndCocoa.Game
         public TerritoryMissionState State => _state;
         public Vector2 EntryTarget => _zones != null && _zones.Length > 0 ? _zones[_zones.Length - 1] : _context.Bounds.center;
         public string OutcomeSummary => MissionOutcomeSummaryBuilder.BuildTerritorySummary(_state);
+        public bool IsFailed => false;
+        public string FailReason => null;
 
         public string ObjectiveLabel =>
             $"Claim and hold every zone at once: {_state.Claimed}/{_state.ZoneCount} marked (squirrel steals back {_state.Reclaims})";

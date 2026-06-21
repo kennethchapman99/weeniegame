@@ -120,7 +120,13 @@ not an architecture acceptance criterion.
 - `IMissionController` gained `OutcomeSummary` (controller-owned end-of-round phrase, null to defer
   to the shared default) and `MissionContext` gained `CreditDog` so controllers can drive the MVP
   tally without reaching into `GameManager`.
-- Full PlayMode result after the latest controller increment: 343 passed, 0 failed, 0 skipped.
+- `GateCrashMissionController` is the first extracted mission with a non-timeout failure. The
+  contract gained `IsFailed` and `FailReason`: `CheckClear` now ends the round on either
+  `IsComplete` or `IsFailed`, and `EndReasonFor` prefers a non-empty controller `FailReason` (with
+  `FailReason` returning null on a plain timeout so the shared `TimeFailReason` still applies). The
+  controller owns its gate/toy markers, hold/squeeze proximity ticking, snap handling, objective
+  copy, arrow targets, snapshot, and the `ForceGateHold`/`ForceGateCross` hooks.
+- Full PlayMode result after the latest controller increment: 344 passed, 0 failed, 0 skipped.
 
 ## Test and reset contract
 

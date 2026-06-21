@@ -9,6 +9,12 @@ namespace CheddarAndCocoa.Game
     {
         GameManager.MissionVariant Variant { get; }
         bool IsComplete { get; }
+
+        /// <summary>True once the controller's own (non-timeout) fail condition has tripped.</summary>
+        bool IsFailed { get; }
+
+        /// <summary>Controller-owned fail-reason text, or null to defer to the shared/default reasons.</summary>
+        string FailReason { get; }
         string ObjectiveLabel { get; }
         Vector2 EntryTarget { get; }
 

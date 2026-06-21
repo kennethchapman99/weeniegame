@@ -20,9 +20,14 @@ Mark the Yard is the first previously-in-`GameManager` mission extracted behind 
 boundary. `MarkTheYardMissionController` owns zone geometry, claim-by-proximity ticking, the
 squirrel reclaimer, scoring/credit/feedback, objective copy, entry staging, cleanup, snapshot, and
 the deterministic `ForceClaimZone`/`ForceSquirrelReclaim` hooks. The contract grew by `OutcomeSummary`
-(controller-owned end-of-round phrase) and `MissionContext.CreditDog` (MVP tally). The full PlayMode
-suite is green at 343 tests. Placeholder presentation still needs the second two-player couch
-acceptance pass.
+(controller-owned end-of-round phrase) and `MissionContext.CreditDog` (MVP tally).
+
+Gate Crash followed as the first extracted mission with a non-timeout failure: the contract added
+`IsFailed`/`FailReason`, `CheckClear` now ends on clear or fail, and `EndReasonFor` prefers a
+controller-supplied fail reason. `GateCrashMissionController` owns its gate/toy markers, hold/squeeze
+proximity ticking, snap handling, snapshot, objective copy, and the `ForceGateHold`/`ForceGateCross`
+hooks. The full PlayMode suite is green at 344 tests. Placeholder presentation still needs the
+second two-player couch acceptance pass.
 
 As of 2026-06-20, `GameManager.cs` is nearly 8,000 lines and declares 21 mission variants. Treat
 that as a date-stamped warning, not a permanent metric or a line-count target.
