@@ -38,6 +38,20 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator Chaos_RunsThroughDedicatedController()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.ChaosMachine);
+            yield return null;
+
+            Assert.IsInstanceOf<ChaosMachineMissionController>(
+                _game.ActiveMissionController,
+                "The Rube Goldberg must run entirely through its own IMissionController.");
+            Assert.AreEqual(GameManager.MissionVariant.ChaosMachine, _game.ActiveMissionController.Variant);
+            Assert.AreSame(_game.ChaosMachineController.Puzzle, _game.ChaosMachinePuzzle);
+        }
+
+        [UnityTest]
         public IEnumerator Chaos_ClearPath_LeverThenAssistEveryJunction()
         {
             yield return LoadArena();

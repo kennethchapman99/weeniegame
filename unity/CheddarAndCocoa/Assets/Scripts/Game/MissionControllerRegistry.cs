@@ -50,7 +50,10 @@ namespace CheddarAndCocoa.Game
                     MissionCatalog.BuildWalkCampaignDefinition),
                 [GameManager.MissionVariant.GreatEscape] = new Registration(
                     () => new GreatEscapeMissionController(),
-                    MissionCatalog.BuildGreatEscapeDefinition)
+                    MissionCatalog.BuildGreatEscapeDefinition),
+                [GameManager.MissionVariant.ChaosMachine] = new Registration(
+                    () => new ChaosMachineMissionController(),
+                    MissionCatalog.BuildChaosMachineDefinition)
             };
 
         public static IEnumerable<GameManager.MissionVariant> RegisteredVariants => Registrations.Keys;

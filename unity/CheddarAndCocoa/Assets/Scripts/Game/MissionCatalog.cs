@@ -384,6 +384,68 @@ namespace CheddarAndCocoa.Game
             };
         }
 
+        internal static GameManager.MissionDefinition BuildChaosMachineDefinition(ArenaMissionTuning tuning)
+        {
+            const GameManager.MissionVariant variant = GameManager.MissionVariant.ChaosMachine;
+            var balance = tuning.BalanceFor(variant);
+            return new GameManager.MissionDefinition
+            {
+                Variant = variant,
+                Name = "The Rube Goldberg",
+                IntroPrompt = "The dogs rigged a backyard contraption: towel drop, basket tip, toy launch. Pre-position at your junctions, then pull the lever - the cascade runs ITSELF, but each junction has a split-second window where its owner dog must be in place or the machine misfires and jams there. A re-pull resumes from the jam. Trust the timing and cover your junctions.",
+                ReadyScoreLabel = "READY TO RIG THE MACHINE",
+                ItemRootName = "Junction",
+                ItemObjectName = "Junction",
+                ItemWorldLabel = "Whirr!",
+                ItemArrowLabel = "JUNCTION",
+                ItemCollectCueNoun = "a cascade junction",
+                CollectObjectiveFormat = "Run the cascade {0}/{1}",
+                CollectedScoreLabel = "CASCADE ROLLED",
+                ItemScore = balance.ItemScore,
+                SpawnedItemCount = balance.SpawnedItemCount,
+                ItemGoal = balance.ItemGoal,
+                RoundSeconds = balance.RoundSeconds,
+                PawfectScore = balance.PawfectScore,
+                HeroScore = balance.HeroScore,
+                SurvivorScore = balance.SurvivorScore,
+                UsesSquirrel = false,
+                RequiresPredator = false,
+                RequiresTug = false,
+                MaxStolenFood = balance.MaxStolenFood,
+                SquirrelPenalty = balance.SquirrelPenalty,
+                SquirrelScareScore = balance.SquirrelScareScore,
+                SquirrelObjectiveText = "Cover your junctions, pull the lever",
+                SquirrelStealingCue = "Pull the lever to start the cascade.",
+                SquirrelStoleCue = "Misfire - re-pull from the jam.",
+                SquirrelStealScoreLabel = "MISFIRE",
+                SquirrelScareScoreLabel = "CASCADE ROLLED",
+                SquirrelStealingActorLabel = "MACHINE",
+                SquirrelDroppedActorLabel = "WHIRR",
+                SquirrelStoleActorLabel = "JAMMED",
+                SquirrelMissPopLabel = "STUCK!",
+                SquirrelStealJuiceLabel = "MISFIRE!",
+                SquirrelScareJuiceLabel = "WHIRR!",
+                TugObjectiveText = "Run the machine together",
+                WaitingObjectiveText = "Be at your junction when the cascade arrives",
+                ClearObjectiveText = "Cascade complete - replay The Rube Goldberg",
+                ClearBannerPrefix = "KA-CHUNK!",
+                ClearScoreLabel = "RUBE GOLDBERG CLEAR",
+                ReplayPrompt = "Press R / Enter / Start to replay The Rube Goldberg",
+                FailObjectiveText = "Mission failed - replay The Rube Goldberg",
+                GenericFailReason = "The cascade needs cleaner timing at the junctions.",
+                TimeFailReason = "The cascade never reached the end in time.",
+                StolenFailReason = "Too many misfires jammed the machine for good.",
+                PredatorFailReason = "No predator here, just a temperamental contraption.",
+                PawfectClearReason = "Cheddar and Cocoa nailed every junction window - the cascade ran end to end without a single misfire.",
+                HeroClearReason = "The cascade finished after only a misfire or two.",
+                BasicClearReason = "They got the cascade through, even after a few jams.",
+                ItemColor = new Color(0.62f, 0.64f, 0.7f),
+                ItemAccentColor = new Color(0.85f, 0.6f, 0.35f),
+                ItemSecondaryColor = new Color(0.32f, 0.34f, 0.4f),
+                ItemPopColor = new Color(0.6f, 0.85f, 0.95f)
+            };
+        }
+
         internal static GameManager.MissionDefinition BuildGreatEscapeDefinition(ArenaMissionTuning tuning)
         {
             const GameManager.MissionVariant variant = GameManager.MissionVariant.GreatEscape;

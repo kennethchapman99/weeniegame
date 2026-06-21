@@ -210,11 +210,12 @@ namespace CheddarAndCocoa.Game
         public int EscapeStationCount => GreatEscapeController?.StationCount ?? 0;
         public Vector2 EscapeStationSpot(int index) => GreatEscapeController?.StationSpot(index) ?? Vector2.zero;
         public ChainActor EscapeStationOwner(int index) => GreatEscapeController?.StationOwner(index) ?? ChainActor.Either;
-        public CoopChaosMachinePuzzle ChaosMachinePuzzle => _chaos;
-        public int ChaosJunctionCount => _chaosJunctionSpots.Length;
-        public Vector2 ChaosLeverZone => _chaosLeverZone;
-        public Vector2 ChaosJunctionSpot(int index) => index >= 0 && index < _chaosJunctionSpots.Length ? _chaosJunctionSpots[index] : Vector2.zero;
-        public ChainActor ChaosJunctionOwner(int index) => index >= 0 && index < _chaosOwners.Length ? _chaosOwners[index] : ChainActor.Either;
+        public ChaosMachineMissionController ChaosMachineController => _activeMissionController as ChaosMachineMissionController;
+        public CoopChaosMachinePuzzle ChaosMachinePuzzle => ChaosMachineController?.Puzzle ?? _emptyChaosJunctionPuzzle;
+        public int ChaosJunctionCount => ChaosMachineController?.JunctionCount ?? 0;
+        public Vector2 ChaosLeverZone => ChaosMachineController?.LeverZone ?? Vector2.zero;
+        public Vector2 ChaosJunctionSpot(int index) => ChaosMachineController?.JunctionSpot(index) ?? Vector2.zero;
+        public ChainActor ChaosJunctionOwner(int index) => ChaosMachineController?.JunctionOwner(index) ?? ChainActor.Either;
         public CoopStretchSpanPuzzle BlanketPuzzle => _blanket;
         public Vector2 BlanketItemPosition => new(_blanketItemX, _blanketItemY);
         public float BlanketCatchY => BlanketCatchLineY;
@@ -488,23 +489,7 @@ namespace CheddarAndCocoa.Game
         private const int BoneFindsNeeded = 3;
         private const int BoneMaxWasted = 5; // blind digs + wrong-mound digs before the team gives up
         private readonly CoopSequenceChainPuzzle _emptyEscapePuzzle = new CoopSequenceChainPuzzle();
-        // The Rube Goldberg (Chaos-Machine co-op puzzle): pre-position, pull the lever, and the cascade
-        // runs ITSELF through junctions - but each junction has a brief assist window where its owner dog
-        // must be in position or the machine misfires and stalls visibly at that exact junction. A
-        // re-pull resumes from the stall. Both dogs must trust the timing and cover their junctions.
-        private readonly CoopChaosMachinePuzzle _chaos = new CoopChaosMachinePuzzle();
-        private readonly ChainActor[] _chaosOwners = { ChainActor.Cocoa, ChainActor.Cheddar, ChainActor.Cocoa };
-        private readonly Vector2[] _chaosJunctionSpots = { new(-4f, 7f), new(6f, -7f), new(14f, 7f) };
-        private readonly string[] _chaosJunctionActions = { "TOWEL DROP", "BASKET TIP", "TOY LAUNCH" };
-        private Vector2 _chaosLeverZone = new(-14f, -7f);
-        private GameObject[] _chaosJunctions;
-        private TextMesh[] _chaosJunctionLabels;
-        private int _chaosStageSeen;
-        private int _chaosStallsSeen;
-        private const float ChaosLeverRange = 3f;
-        private const float ChaosJunctionRange = 3f;
-        private const float ChaosWindowPerStage = 3f; // assist window at each junction
-        private const int ChaosMaxStalls = 4;
+        private readonly CoopChaosMachinePuzzle _emptyChaosJunctionPuzzle = new CoopChaosMachinePuzzle();
         // The Blanket Catch (Stretch-Span co-op puzzle): both dogs grip a blanket stretched between them
         // to catch food falling from the counter. The span is only usable in a taut SEPARATION band -
         // too close and it sags (slack), too far and it rips - and its MIDPOINT must be under the falling
@@ -1401,25 +1386,6 @@ namespace CheddarAndCocoa.Game
             {
                 SetBoneRelayActive(false);
             }
-            if (_mission.Variant == MissionVariant.ChaosMachine)
-            {
-                _chaos.Configure(_chaosJunctionSpots.Length, ChaosWindowPerStage);
-                _chaosStageSeen = 0;
-                _chaosStallsSeen = 0;
-                SetChaosJunctionsActive(true);
-                // Reuse the predator actor as the lever the dogs pull to start the cascade.
-                if (PredatorObject != null)
-                {
-                    PredatorObject.SetActive(true);
-                    PlaceObject(PredatorObject, _chaosLeverZone);
-                    SetActorState(PredatorObject, "LEVER - PULL TO START THE CASCADE", new Color(0.85f, 0.55f, 0.3f), 0.14f);
-                }
-                UpdateChaosVisuals();
-            }
-            else
-            {
-                SetChaosJunctionsActive(false);
-            }
             if (_mission.Variant == MissionVariant.BlanketCatch)
             {
                 _blanket.Configure(BlanketMinSeparation, BlanketMaxSeparation, BlanketCatchTolerance, BlanketCatchesNeeded, BlanketMaxRips);
@@ -1470,7 +1436,6 @@ namespace CheddarAndCocoa.Game
             else if (_mission.Variant == MissionVariant.LeashWalk) TickLeashWalk();
             else if (_mission.Variant == MissionVariant.CarRide) TickCarRide();
             else if (_mission.Variant == MissionVariant.BoneRelay) TickBoneRelay();
-            else if (_mission.Variant == MissionVariant.ChaosMachine) TickChaosMachine();
             else if (_mission.Variant == MissionVariant.BlanketCatch) TickBlanketCatch();
             else if (_activeMissionController != null) _activeMissionController.Tick(Time.deltaTime, Time.time);
             else TickSquirrel();
@@ -2102,31 +2067,6 @@ namespace CheddarAndCocoa.Game
         }
 
 
-        private void BuildChaosJunctions()
-        {
-            _chaosJunctions = new GameObject[_chaosJunctionSpots.Length];
-            _chaosJunctionLabels = new TextMesh[_chaosJunctionSpots.Length];
-            for (int i = 0; i < _chaosJunctionSpots.Length; i++)
-            {
-                var go = new GameObject($"ChaosJunction_{i}");
-                go.transform.position = _chaosJunctionSpots[i];
-                go.transform.localScale = new Vector3(1.7f, 1.3f, 1f);
-                var sr = go.AddComponent<SpriteRenderer>();
-                sr.sprite = _sprite;
-                sr.color = new Color(0.3f, 0.3f, 0.34f);
-                sr.sortingOrder = 3;
-                _chaosJunctionLabels[i] = AddWorldLabel(go, $"{i + 1}.", Vector3.up * 1.3f, 12, Color.white);
-                go.SetActive(false);
-                _chaosJunctions[i] = go;
-            }
-        }
-
-        private void SetChaosJunctionsActive(bool active)
-        {
-            if (_chaosJunctions == null) return;
-            foreach (var marker in _chaosJunctions)
-                if (marker != null) marker.SetActive(active);
-        }
 
         private void BuildBlanketObjects()
         {
@@ -2703,107 +2643,15 @@ namespace CheddarAndCocoa.Game
             CheckClear();
         }
 
-        private void TickChaosMachine()
-        {
-            if (_chaos.Solved || _chaosJunctions == null) return;
-
-            int cheddar = IndexOfDog(DogId.Cheddar);
-            int cocoa = IndexOfDog(DogId.Cocoa);
-            if (cheddar < 0 || cocoa < 0) return;
-
-            if (!_chaos.Running)
-            {
-                // Either dog at the lever (re)pulls it - starting fresh or resuming from a stall.
-                bool atLever = Vector2.Distance(_dogs[cheddar].transform.position, _chaosLeverZone) <= ChaosLeverRange
-                    || Vector2.Distance(_dogs[cocoa].transform.position, _chaosLeverZone) <= ChaosLeverRange;
-                if (atLever) _chaos.Trigger();
-            }
-
-            if (_chaos.Running)
-            {
-                int stage = Mathf.Clamp(_chaos.Stage, 0, _chaosJunctionSpots.Length - 1);
-                ChainActor owner = _chaosOwners[stage];
-                int ownerIdx = owner == ChainActor.Cheddar ? cheddar : cocoa;
-                bool assisting = Vector2.Distance(_dogs[ownerIdx].transform.position, _chaosJunctionSpots[stage]) <= ChaosJunctionRange;
-                _chaos.Advance(Time.deltaTime, assisting);
-            }
-
-            HandleChaosProgress();
-            if (Phase == State.GameOver) return;
-            UpdateChaosVisuals();
-        }
-
-        private void HandleChaosProgress()
-        {
-            if (_chaos.Stage > _chaosStageSeen)
-            {
-                _chaosStageSeen = _chaos.Stage;
-                AddScore(ScoreEventCatalog.ContraptionStep.Points, "CASCADE ROLLED");
-                LastFeedback = FeedbackKind.SquirrelScared;
-                LastCue = $"Whirr-clunk! The cascade rolled through a junction. ({_chaos.Stage}/{_chaos.StageCount})";
-                SetJuice(JuiceFeedbackKind.SuccessPop, "WHIRR!");
-                int doneStage = Mathf.Clamp(_chaos.Stage - 1, 0, _chaosJunctionSpots.Length - 1);
-                SpawnWorldPop(_chaosJunctionSpots[doneStage], "WHIRR!", new Color(0.6f, 0.85f, 0.95f));
-                LogPlaytestEvent("ChaosStage", $"{_chaos.Stage}/{_chaos.StageCount}");
-            }
-
-            if (_chaos.Stalls > _chaosStallsSeen)
-            {
-                _chaosStallsSeen = _chaos.Stalls;
-                AddScore(ScoreEventCatalog.ContraptionFumble.Points, "MISFIRE");
-                LastFeedback = FeedbackKind.SquirrelStoleFood;
-                int jam = Mathf.Clamp(_chaos.StalledStage, 0, _chaosJunctionSpots.Length - 1);
-                LastCue = $"Misfire! The machine jammed at the {_chaosJunctionActions[jam].ToLowerInvariant()} - re-pull the lever. ({_chaos.Stalls}/{ChaosMaxStalls})";
-                SetJuice(JuiceFeedbackKind.WarningMiss, "MISFIRE!");
-                SpawnWorldPop(_chaosJunctionSpots[jam], "STUCK!", new Color(1f, 0.4f, 0.25f));
-                LogPlaytestEvent("ChaosStall", $"{_chaos.Stalls}/{ChaosMaxStalls}");
-                if (_chaos.Stalls >= ChaosMaxStalls) EndRound(false);
-            }
-        }
-
-        private void UpdateChaosVisuals()
-        {
-            if (_chaosJunctions == null) return;
-            int stage = Mathf.Clamp(_chaos.Stage, 0, _chaosJunctions.Length - 1);
-            for (int i = 0; i < _chaosJunctions.Length; i++)
-            {
-                if (_chaosJunctions[i] == null) continue;
-                bool fired = i < _chaos.Stage;
-                bool active = i == stage && !_chaos.Solved;
-                bool stalledHere = _chaos.StalledStage == i;
-                ChainActor owner = _chaosOwners[i];
-                Color ownerTint = owner == ChainActor.Cheddar ? new Color(0.95f, 0.72f, 0.3f) : new Color(0.55f, 0.78f, 1f);
-                Color shown = fired ? new Color(0.3f, 0.55f, 0.32f)
-                    : stalledHere ? new Color(1f, 0.4f, 0.25f)
-                    : active && _chaos.Running ? ownerTint
-                    : new Color(0.3f, 0.3f, 0.34f);
-                if (_chaosJunctions[i].TryGetComponent<SpriteRenderer>(out var sr)) sr.color = shown;
-                if (_chaosJunctionLabels != null && _chaosJunctionLabels[i] != null)
-                {
-                    string who = owner == ChainActor.Cheddar ? "CHEDDAR" : "COCOA";
-                    _chaosJunctionLabels[i].text = fired ? "FIRED" : $"{who}: {_chaosJunctionActions[i]}";
-                }
-            }
-            if (PredatorObject != null)
-                SetActorState(PredatorObject, _chaos.Running ? "CASCADE RUNNING - COVER YOUR JUNCTIONS!" : "LEVER - PULL TO START THE CASCADE",
-                    _chaos.Running ? new Color(0.5f, 0.85f, 0.55f) : new Color(0.85f, 0.55f, 0.3f), 0.14f);
-        }
-
-        /// <summary>Test hook: a dog pulls the lever to start (or resume) the cascade.</summary>
         public void ForceChaosTrigger()
         {
-            if (!MissionActive() || _mission == null || _mission.Variant != MissionVariant.ChaosMachine) return;
-            _chaos.Trigger();
-            UpdateChaosVisuals();
+            if (MissionActive()) ChaosMachineController?.ForceChaosTrigger();
         }
 
-        /// <summary>Test hook: advance the live cascade, with the current junction's helper in position or not.</summary>
         public void ForceChaosAdvance(float seconds, bool assisting)
         {
-            if (!MissionActive() || _mission == null || _mission.Variant != MissionVariant.ChaosMachine) return;
-            _chaos.Advance(seconds, assisting);
-            HandleChaosProgress();
-            if (Phase != State.GameOver) { UpdateChaosVisuals(); CheckClear(); }
+            if (MissionActive()) ChaosMachineController?.ForceChaosAdvance(seconds, assisting);
+            CheckClear();
         }
 
         private void TickBlanketCatch()
@@ -3383,13 +3231,6 @@ namespace CheddarAndCocoa.Game
                 goal = BoneFindsNeeded;
                 mistakes = _boneRelay.BlindActs + _boneRelay.WrongDigs;
             }
-            else if (_mission != null && _mission.Variant == MissionVariant.ChaosMachine)
-            {
-                missionId = "chaos_machine";
-                progress = _chaos.Stage;
-                goal = _chaos.StageCount;
-                mistakes = _chaos.Stalls;
-            }
             else if (_mission != null && _mission.Variant == MissionVariant.BlanketCatch)
             {
                 missionId = "blanket_catch";
@@ -3902,11 +3743,6 @@ namespace CheddarAndCocoa.Game
                 if (_boneRelay.Solved) EndRound(true);
                 return;
             }
-            if (_mission.Variant == MissionVariant.ChaosMachine)
-            {
-                if (_chaos.Solved) EndRound(true);
-                return;
-            }
             if (_mission.Variant == MissionVariant.BlanketCatch)
             {
                 if (_blanket.Solved) EndRound(true);
@@ -4046,8 +3882,6 @@ namespace CheddarAndCocoa.Game
                 funny = MissionOutcomeSummaryBuilder.BuildCarBalanceSummary(_carState);
             else if (_mission != null && _mission.Variant == MissionVariant.BoneRelay)
                 funny = MissionOutcomeSummaryBuilder.BuildBoneRelaySummary(_boneRelay);
-            else if (_mission != null && _mission.Variant == MissionVariant.ChaosMachine)
-                funny = MissionOutcomeSummaryBuilder.BuildChaosMachineSummary(_chaos);
             else if (_mission != null && _mission.Variant == MissionVariant.BlanketCatch)
                 funny = MissionOutcomeSummaryBuilder.BuildBlanketCatchSummary(_blanket);
             else
@@ -4147,13 +3981,6 @@ namespace CheddarAndCocoa.Game
                 if (!_boneRelay.Known) return $"Cocoa: sniff the scent post to call the real mound - Cheddar, wait for it! (bones {_boneRelay.Finds}/{BoneFindsNeeded}, wasted {wasted}/{BoneMaxWasted})";
                 return $"Cheddar: dig the glowing mound Cocoa called! (bones {_boneRelay.Finds}/{BoneFindsNeeded}, wasted {wasted}/{BoneMaxWasted})";
             }
-            if (_mission.Variant == MissionVariant.ChaosMachine)
-            {
-                if (!_chaos.Running) return $"Pre-position at your junctions, then pull the lever to start the cascade (junctions {_chaos.Stage}/{_chaos.StageCount}, misfires {_chaos.Stalls}/{ChaosMaxStalls})";
-                int stage = Mathf.Clamp(_chaos.Stage, 0, _chaosJunctionActions.Length - 1);
-                string who = _chaosOwners[stage] == ChainActor.Cheddar ? "Cheddar" : "Cocoa";
-                return $"{who}: be at the {_chaosJunctionActions[stage].ToLowerInvariant()} junction NOW - the cascade's rolling! (junctions {_chaos.Stage}/{_chaos.StageCount}, misfires {_chaos.Stalls}/{ChaosMaxStalls})";
-            }
             if (_mission.Variant == MissionVariant.BlanketCatch)
             {
                 string span = _blanket.Taut ? "taut - slide the middle under the snack" : _blanket.Overstretched ? "too far apart - close up before it rips!" : "too close - spread out to pull it taut";
@@ -4192,7 +4019,6 @@ namespace CheddarAndCocoa.Game
             if (_mission.Variant == MissionVariant.LeashWalk && _leashState.TooManySnaps(MaxLeashSnaps)) return "The leash snapped taut too many times - the walk fell apart.";
             if (_mission.Variant == MissionVariant.CarRide && _carState.TooManySpills(CarMaxSpills)) return "The car tipped over too many times on the way home.";
             if (_mission.Variant == MissionVariant.BoneRelay && _boneRelay.BlindActs + _boneRelay.WrongDigs >= BoneMaxWasted) return "The dogs dug up half the yard guessing instead of waiting for Cocoa's call.";
-            if (_mission.Variant == MissionVariant.ChaosMachine && _chaos.Stalls >= ChaosMaxStalls) return "The machine misfired too many times - the cascade never made it to the end.";
             if (_mission.Variant == MissionVariant.BlanketCatch && _blanket.TooManyRips) return "The blanket tore to shreds - too many over-stretches and there was nothing left to catch with.";
             if (_mission.Variant == MissionVariant.ThunderstormComfort && _panic != null && _panic.Maxed != null) return $"{_panic.Maxed} panicked at the thunder and bolted before the storm passed.";
             if (_mission.UsesSquirrel && StolenFood >= maxStolenFood) return _mission.StolenFailReason;
@@ -5173,63 +4999,6 @@ namespace CheddarAndCocoa.Game
                         ItemSecondaryColor = new Color(0.3f, 0.22f, 0.12f),
                         ItemPopColor = new Color(0.5f, 0.9f, 0.55f)
                     };
-                case MissionVariant.ChaosMachine:
-                    return new MissionDefinition
-                    {
-                        Variant = MissionVariant.ChaosMachine,
-                        Name = "The Rube Goldberg",
-                        IntroPrompt = "The dogs rigged a backyard contraption: towel drop, basket tip, toy launch. Pre-position at your junctions, then pull the lever - the cascade runs ITSELF, but each junction has a split-second window where its owner dog must be in place or the machine misfires and jams there. A re-pull resumes from the jam. Trust the timing and cover your junctions.",
-                        ReadyScoreLabel = "READY TO RIG THE MACHINE",
-                        ItemRootName = "Junction",
-                        ItemObjectName = "Junction",
-                        ItemWorldLabel = "Whirr!",
-                        ItemArrowLabel = "JUNCTION",
-                        ItemCollectCueNoun = "a cascade junction",
-                        CollectObjectiveFormat = "Run the cascade {0}/{1}",
-                        CollectedScoreLabel = "CASCADE ROLLED",
-                        ItemScore = balance.ItemScore,
-                        SpawnedItemCount = balance.SpawnedItemCount,
-                        ItemGoal = balance.ItemGoal,
-                        RoundSeconds = balance.RoundSeconds,
-                        PawfectScore = balance.PawfectScore,
-                        HeroScore = balance.HeroScore,
-                        SurvivorScore = balance.SurvivorScore,
-                        UsesSquirrel = false,
-                        RequiresPredator = false,
-                        RequiresTug = false,
-                        MaxStolenFood = balance.MaxStolenFood,
-                        SquirrelPenalty = balance.SquirrelPenalty,
-                        SquirrelScareScore = balance.SquirrelScareScore,
-                        SquirrelObjectiveText = "Cover your junctions, pull the lever",
-                        SquirrelStealingCue = "Pull the lever to start the cascade.",
-                        SquirrelStoleCue = "Misfire - re-pull from the jam.",
-                        SquirrelStealScoreLabel = "MISFIRE",
-                        SquirrelScareScoreLabel = "CASCADE ROLLED",
-                        SquirrelStealingActorLabel = "MACHINE",
-                        SquirrelDroppedActorLabel = "WHIRR",
-                        SquirrelStoleActorLabel = "JAMMED",
-                        SquirrelMissPopLabel = "STUCK!",
-                        SquirrelStealJuiceLabel = "MISFIRE!",
-                        SquirrelScareJuiceLabel = "WHIRR!",
-                        TugObjectiveText = "Run the machine together",
-                        WaitingObjectiveText = "Be at your junction when the cascade arrives",
-                        ClearObjectiveText = "Cascade complete - replay The Rube Goldberg",
-                        ClearBannerPrefix = "KA-CHUNK!",
-                        ClearScoreLabel = "RUBE GOLDBERG CLEAR",
-                        ReplayPrompt = "Press R / Enter / Start to replay The Rube Goldberg",
-                        FailObjectiveText = "Mission failed - replay The Rube Goldberg",
-                        GenericFailReason = "The cascade needs cleaner timing at the junctions.",
-                        TimeFailReason = "The cascade never reached the end in time.",
-                        StolenFailReason = "Too many misfires jammed the machine for good.",
-                        PredatorFailReason = "No predator here, just a temperamental contraption.",
-                        PawfectClearReason = "Cheddar and Cocoa nailed every junction window - the cascade ran end to end without a single misfire.",
-                        HeroClearReason = "The cascade finished after only a misfire or two.",
-                        BasicClearReason = "They got the cascade through, even after a few jams.",
-                        ItemColor = new Color(0.62f, 0.64f, 0.7f),
-                        ItemAccentColor = new Color(0.85f, 0.6f, 0.35f),
-                        ItemSecondaryColor = new Color(0.32f, 0.34f, 0.4f),
-                        ItemPopColor = new Color(0.6f, 0.85f, 0.95f)
-                    };
                 case MissionVariant.BlanketCatch:
                     return new MissionDefinition
                     {
@@ -5717,24 +5486,6 @@ namespace CheddarAndCocoa.Game
                         hideDistance = BoneDigRange;
                     }
                     break;
-                case MissionVariant.ChaosMachine:
-                    if (!_chaos.Running)
-                    {
-                        target = PredatorObject != null ? PredatorObject.transform : null; // the lever
-                        copy = "PULL LEVER";
-                        hideDistance = ChaosLeverRange;
-                    }
-                    else
-                    {
-                        int stage = Mathf.Clamp(_chaos.Stage, 0, _chaosJunctionSpots.Length - 1);
-                        target = _chaosJunctions != null && _chaosJunctions[stage] != null ? _chaosJunctions[stage].transform : null;
-                        ChainActor owner = _chaosOwners[stage];
-                        bool isOwner = (owner == ChainActor.Cheddar && IndexOfDog(DogId.Cheddar) == dogIndex)
-                            || (owner == ChainActor.Cocoa && IndexOfDog(DogId.Cocoa) == dogIndex);
-                        copy = isOwner ? "COVER JUNCTION" : "NEXT JUNCTION";
-                        hideDistance = ChaosJunctionRange;
-                    }
-                    break;
                 case MissionVariant.BlanketCatch:
                     target = _blanketFallingItem != null && _blanketFallingItem.activeSelf ? _blanketFallingItem.transform : null;
                     copy = "GET UNDER SNACK";
@@ -5942,7 +5693,6 @@ namespace CheddarAndCocoa.Game
             BuildWeenieRoundupObjects();
             BuildScentSearchMarkers();
             BuildBoneRelayMarkers();
-            BuildChaosJunctions();
             BuildBlanketObjects();
             BuildLeashCheckpointMarkers();
             if (InteractionRangeIndicators != null)
