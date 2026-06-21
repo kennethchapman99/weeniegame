@@ -77,7 +77,10 @@ namespace CheddarAndCocoa.Game
                     MissionCatalog.BuildScentSearchDefinition),
                 [GameManager.MissionVariant.WeenieRoundup] = new Registration(
                     () => new WeenieRoundupMissionController(),
-                    MissionCatalog.BuildWeenieRoundupDefinition)
+                    MissionCatalog.BuildWeenieRoundupDefinition),
+                [GameManager.MissionVariant.SquirrelConspiracy] = new Registration(
+                    () => new SquirrelConspiracyMissionController(),
+                    MissionCatalog.BuildSquirrelConspiracyDefinition)
             };
 
         public static IEnumerable<GameManager.MissionVariant> RegisteredVariants => Registrations.Keys;

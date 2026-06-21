@@ -38,6 +38,9 @@ route, tether snaps, and snap-cap failure), then Sock Panic behind `SockPanicMis
 failure), then Scent Search behind `ScentSearchMissionController` (controller-owned sniff/dig input,
 buried-spot selection, and cold-dig failure), then Weenie Roundup behind
 `WeenieRoundupMissionController` (controller-owned carry state, bowl delivery, and fumble recovery).
+Squirrel Conspiracy now follows behind `SquirrelConspiracyMissionController` (controller-owned
+route/cutoff geometry, herding and taunt state, stash interaction, and failure outcome while using
+the shared squirrel actor through the narrow context).
 The full PlayMode suite is green at 353 tests. Placeholder presentation still needs the second
 two-player couch acceptance pass.
 

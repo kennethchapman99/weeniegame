@@ -55,6 +55,9 @@ namespace CheddarAndCocoa.Game
         public Rect Bounds { get; }
         public Sprite ActorSprite { get; }
         public Sprite RangeSprite { get; }
+        public GameObject SquirrelObject { get; }
+        public float SquirrelMoveSpeed { get; }
+        public float SingleBarkSquirrelRange { get; }
         /// <summary>Shared panic/co-regulation state owned by GameManager; null on non-panic missions.</summary>
         public PanicMeter PanicMeter { get; }
         public Func<System.Random> Random { get; }
@@ -85,6 +88,9 @@ namespace CheddarAndCocoa.Game
             Rect bounds,
             Sprite actorSprite,
             Sprite rangeSprite,
+            GameObject squirrelObject,
+            float squirrelMoveSpeed,
+            float singleBarkSquirrelRange,
             PanicMeter panicMeter,
             Func<System.Random> random,
             Func<float> now,
@@ -115,6 +121,9 @@ namespace CheddarAndCocoa.Game
             Bounds = bounds;
             ActorSprite = actorSprite;
             RangeSprite = rangeSprite;
+            SquirrelObject = squirrelObject ?? throw new ArgumentNullException(nameof(squirrelObject));
+            SquirrelMoveSpeed = squirrelMoveSpeed;
+            SingleBarkSquirrelRange = singleBarkSquirrelRange;
             PanicMeter = panicMeter; // nullable — only thunderstorm/comfort missions use it
             Random = random ?? throw new ArgumentNullException(nameof(random));
             Now = now ?? throw new ArgumentNullException(nameof(now));

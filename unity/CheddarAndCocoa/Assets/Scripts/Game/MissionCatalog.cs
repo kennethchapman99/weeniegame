@@ -1061,5 +1061,67 @@ namespace CheddarAndCocoa.Game
                 ItemPopColor = new Color(0.8f, 0.85f, 1f)
             };
         }
+
+        internal static GameManager.MissionDefinition BuildSquirrelConspiracyDefinition(ArenaMissionTuning tuning)
+        {
+            const GameManager.MissionVariant variant = GameManager.MissionVariant.SquirrelConspiracy;
+            var balance = tuning.BalanceFor(variant);
+            return new GameManager.MissionDefinition
+            {
+                Variant = variant,
+                Name = "The Great Backyard Squirrel Conspiracy",
+                IntroPrompt = "Cheddar + Cocoa must herd the suspicious squirrel, reveal the hidden stash, and crack the backyard conspiracy.",
+                ReadyScoreLabel = "READY TO INVESTIGATE SQUIRRELS",
+                ItemRootName = "Conspiracy Clues",
+                ItemObjectName = "Conspiracy Clue",
+                ItemWorldLabel = "Clue!",
+                ItemArrowLabel = "CLUE",
+                ItemCollectCueNoun = "a clue",
+                CollectObjectiveFormat = "Crack squirrel route {0}/{1}",
+                CollectedScoreLabel = "CLUE FOUND",
+                ItemScore = balance.ItemScore,
+                SpawnedItemCount = balance.SpawnedItemCount,
+                ItemGoal = balance.ItemGoal,
+                RoundSeconds = balance.RoundSeconds,
+                PawfectScore = balance.PawfectScore,
+                HeroScore = balance.HeroScore,
+                SurvivorScore = balance.SurvivorScore,
+                UsesSquirrel = true,
+                RequiresPredator = false,
+                RequiresTug = false,
+                MaxStolenFood = balance.MaxStolenFood,
+                SquirrelPenalty = balance.SquirrelPenalty,
+                SquirrelScareScore = balance.SquirrelScareScore,
+                SquirrelObjectiveText = "Herd and cutoff the suspicious squirrel",
+                SquirrelStealingCue = "The squirrel is running its conspiracy route - cut it off!",
+                SquirrelStoleCue = "The squirrel taunted the yard and moved the stash gossip forward!",
+                SquirrelStealScoreLabel = "SQUIRREL TAUNT",
+                SquirrelScareScoreLabel = "GOOD HERD",
+                SquirrelStealingActorLabel = "SQUIRREL ROUTE - HERD!",
+                SquirrelDroppedActorLabel = "SQUIRREL ROUTE BLOCKED!",
+                SquirrelStoleActorLabel = "SQUIRREL TAUNTED!",
+                SquirrelMissPopLabel = "TAUNT!",
+                SquirrelStealJuiceLabel = "MISS! SQUIRREL TAUNT",
+                SquirrelScareJuiceLabel = "HERD POP!",
+                TugObjectiveText = "Reveal the squirrel stash",
+                WaitingObjectiveText = "Track the squirrel route together",
+                ClearObjectiveText = "Conspiracy cracked - replay Squirrel Conspiracy",
+                ClearBannerPrefix = "CONSPIRACY CRACKED!",
+                ClearScoreLabel = "SQUIRREL CASE CLOSED",
+                ReplayPrompt = "Press R / Enter / Start to replay Squirrel Conspiracy",
+                FailObjectiveText = "Mission failed - replay Squirrel Conspiracy",
+                GenericFailReason = "Needs more coordinated backyard detective barking.",
+                TimeFailReason = "The squirrel moved the stash before the dogs solved the case.",
+                StolenFailReason = "The squirrel taunted the yard into believing fake snack news.",
+                PredatorFailReason = "No predator here, just squirrel propaganda.",
+                PawfectClearReason = "Tiny detectives cracked the squirrel conspiracy with elite cutoffs.",
+                HeroClearReason = "The stash was found before squirrel gossip took over.",
+                BasicClearReason = "The conspiracy collapsed under respectable dog pressure.",
+                ItemColor = new Color(0.7f, 0.42f, 0.12f),
+                ItemAccentColor = new Color(1f, 0.88f, 0.22f),
+                ItemSecondaryColor = new Color(0.24f, 0.12f, 0.04f),
+                ItemPopColor = new Color(1f, 0.78f, 0.25f)
+            };
+        }
     }
 }

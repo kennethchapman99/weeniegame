@@ -38,6 +38,7 @@ namespace CheddarAndCocoa.Tests
             _game.StartMission(GameManager.MissionVariant.SquirrelConspiracy);
             yield return null;
 
+            Assert.IsInstanceOf<SquirrelConspiracyMissionController>(_game.ActiveMissionController);
             Assert.That(_game.TeamGuidanceLabel, Does.Contain("BARK HERD"));
             Assert.That(_game.TeamGuidanceLabel, Does.Contain("HOLD CUTOFF"));
 

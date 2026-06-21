@@ -165,6 +165,11 @@ not an architecture acceptance criterion.
   delivery ticking, per-dog cargo state and carry poses, fumble/drop recovery, scoring/credit/
   feedback, objective targeting, entry staging, cleanup, snapshot, and deterministic pickup/
   delivery/drop hooks.
+- `SquirrelConspiracyMissionController` owns route and cutoff geometry, herding/taunt/stash state,
+  cutoff-marker lifecycle, bark and interact handling, clear/fail outcome, objective targeting,
+  entry staging, snapshot, and deterministic hooks. `MissionContext` exposes the existing shared
+  squirrel actor plus only its movement speed and bark range so scene/test compatibility can remain
+  intact without exposing `GameManager`; the mission definition moved into `MissionCatalog`.
 - Cross-mission lifecycle coverage now switches through Sock Panic, Car Ride, Scent Search, Weenie
   Roundup, and Leash Walk, asserting that prior controller actors deactivate and cached actors do not
   duplicate on replay.

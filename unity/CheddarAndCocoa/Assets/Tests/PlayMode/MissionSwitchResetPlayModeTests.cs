@@ -88,6 +88,19 @@ namespace CheddarAndCocoa.Tests
             _game.Restart();
             yield return null;
             AssertPrefixActive("LeashCheckpoint_", expectedCount: 4, active: true);
+
+            _game.StartMission(GameManager.MissionVariant.SquirrelConspiracy);
+            yield return null;
+            AssertPrefixActive("LeashCheckpoint_", expectedCount: 4, active: false);
+            AssertPrefixActiveCount("SquirrelCutoff_", expectedCount: 4, activeCount: 1);
+
+            _game.Restart();
+            yield return null;
+            AssertPrefixActiveCount("SquirrelCutoff_", expectedCount: 4, activeCount: 1);
+
+            _game.StartMission(GameManager.MissionVariant.CarRide);
+            yield return null;
+            AssertPrefixActive("SquirrelCutoff_", expectedCount: 4, active: false);
         }
 
         private static void AssertActive(string objectName, bool expected)
@@ -103,6 +116,15 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(expectedCount, matches.Length, $"Unexpected cached actor count for {prefix}.");
             foreach (var match in matches)
                 Assert.AreEqual(active, match.activeSelf, $"Unexpected active state for {match.name}.");
+        }
+
+        private static void AssertPrefixActiveCount(string prefix, int expectedCount, int activeCount)
+        {
+            var matches = FindSceneObjects(prefix, exact: false);
+            Assert.AreEqual(expectedCount, matches.Length, $"Unexpected cached actor count for {prefix}.");
+            int actualActive = 0;
+            foreach (var match in matches) if (match.activeSelf) actualActive++;
+            Assert.AreEqual(activeCount, actualActive, $"Unexpected active actor count for {prefix}.");
         }
 
         private static GameObject[] FindSceneObjects(string name, bool exact)
