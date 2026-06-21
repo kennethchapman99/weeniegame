@@ -47,7 +47,10 @@ namespace CheddarAndCocoa.Game
                     MissionCatalog.BuildSquirrelSwitcherooDefinition),
                 [GameManager.MissionVariant.WalkCampaign] = new Registration(
                     () => new WalkCampaignMissionController(),
-                    MissionCatalog.BuildWalkCampaignDefinition)
+                    MissionCatalog.BuildWalkCampaignDefinition),
+                [GameManager.MissionVariant.GreatEscape] = new Registration(
+                    () => new GreatEscapeMissionController(),
+                    MissionCatalog.BuildGreatEscapeDefinition)
             };
 
         public static IEnumerable<GameManager.MissionVariant> RegisteredVariants => Registrations.Keys;

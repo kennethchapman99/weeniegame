@@ -38,6 +38,20 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator Escape_RunsThroughDedicatedController()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.GreatEscape);
+            yield return null;
+
+            Assert.IsInstanceOf<GreatEscapeMissionController>(
+                _game.ActiveMissionController,
+                "The Great Escape must run entirely through its own IMissionController.");
+            Assert.AreEqual(GameManager.MissionVariant.GreatEscape, _game.ActiveMissionController.Variant);
+            Assert.AreSame(_game.GreatEscapeController.Puzzle, _game.GreatEscapePuzzle);
+        }
+
+        [UnityTest]
         public IEnumerator Escape_ClearPath_RunTheChainInOrder()
         {
             yield return LoadArena();

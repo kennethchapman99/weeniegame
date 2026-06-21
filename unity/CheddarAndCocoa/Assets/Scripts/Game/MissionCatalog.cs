@@ -384,6 +384,68 @@ namespace CheddarAndCocoa.Game
             };
         }
 
+        internal static GameManager.MissionDefinition BuildGreatEscapeDefinition(ArenaMissionTuning tuning)
+        {
+            const GameManager.MissionVariant variant = GameManager.MissionVariant.GreatEscape;
+            var balance = tuning.BalanceFor(variant);
+            return new GameManager.MissionDefinition
+            {
+                Variant = variant,
+                Name = "The Great Escape",
+                IntroPrompt = "Zoomies time - but the gate's latched. Run the contraption chain in order, taking turns: Cocoa paws the latch, Cheddar shoulders the gate, Cocoa drags the cooler to prop it, Cheddar squeezes through. The active station glows for whoever's turn it is. Wrong dog or wrong order does nothing; dawdle and the contraption eases back a step.",
+                ReadyScoreLabel = "READY TO BUST OUT",
+                ItemRootName = "Step",
+                ItemObjectName = "Step",
+                ItemWorldLabel = "Clunk!",
+                ItemArrowLabel = "STEP",
+                ItemCollectCueNoun = "a contraption step",
+                CollectObjectiveFormat = "Work the contraption {0}/{1}",
+                CollectedScoreLabel = "CONTRAPTION STEP",
+                ItemScore = balance.ItemScore,
+                SpawnedItemCount = balance.SpawnedItemCount,
+                ItemGoal = balance.ItemGoal,
+                RoundSeconds = balance.RoundSeconds,
+                PawfectScore = balance.PawfectScore,
+                HeroScore = balance.HeroScore,
+                SurvivorScore = balance.SurvivorScore,
+                UsesSquirrel = false,
+                RequiresPredator = false,
+                RequiresTug = false,
+                MaxStolenFood = balance.MaxStolenFood,
+                SquirrelPenalty = balance.SquirrelPenalty,
+                SquirrelScareScore = balance.SquirrelScareScore,
+                SquirrelObjectiveText = "Take turns down the chain",
+                SquirrelStealingCue = "Whose turn is it? Read the glowing station.",
+                SquirrelStoleCue = "Botched it - reset to the glowing step.",
+                SquirrelStealScoreLabel = "CONTRAPTION FUMBLE",
+                SquirrelScareScoreLabel = "CONTRAPTION STEP",
+                SquirrelStealingActorLabel = "CONTRAPTION",
+                SquirrelDroppedActorLabel = "CLUNK",
+                SquirrelStoleActorLabel = "JAMMED",
+                SquirrelMissPopLabel = "CLANK!",
+                SquirrelStealJuiceLabel = "CLANK!",
+                SquirrelScareJuiceLabel = "CLUNK!",
+                TugObjectiveText = "Run the chain together",
+                WaitingObjectiveText = "Do your step when the station glows for you",
+                ClearObjectiveText = "Busted out - replay The Great Escape",
+                ClearBannerPrefix = "JAILBREAK!",
+                ClearScoreLabel = "GREAT ESCAPE CLEAR",
+                ReplayPrompt = "Press R / Enter / Start to replay The Great Escape",
+                FailObjectiveText = "Mission failed - replay The Great Escape",
+                GenericFailReason = "The chain needs cleaner hand-offs before the gate gives.",
+                TimeFailReason = "The contraption never made it down the chain in time.",
+                StolenFailReason = "Too many botched hand-offs jammed the contraption.",
+                PredatorFailReason = "No predator here, just a stubborn latch.",
+                PawfectClearReason = "Cheddar and Cocoa ran the whole chain clean, hand-off after hand-off, straight out the gate.",
+                HeroClearReason = "They busted out with only a clank or two along the way.",
+                BasicClearReason = "They got out, even after the contraption jammed a few times.",
+                ItemColor = new Color(0.6f, 0.62f, 0.68f),
+                ItemAccentColor = new Color(0.8f, 0.7f, 0.4f),
+                ItemSecondaryColor = new Color(0.32f, 0.34f, 0.4f),
+                ItemPopColor = new Color(0.6f, 0.85f, 0.95f)
+            };
+        }
+
         internal static GameManager.MissionDefinition BuildPeeBreakDefinition(ArenaMissionTuning tuning) =>
             new GameManager.MissionDefinition
             {

@@ -137,7 +137,14 @@ not an architecture acceptance criterion.
 - `WalkCampaignMissionController` owns the social-manipulation puzzle: human/leash markers, the
   both-stations comprehension ticking, getting-it/misread handling (misread-cap fail), objective
   copy, snapshot, and the `ForceWalkCampaign` hook.
-- Full PlayMode result after the latest controller increment: 347 passed, 0 failed, 0 skipped.
+- `GreatEscapeMissionController` owns the sequence-chain contraption puzzle: four controller-owned
+  station GameObjects with alternating ownership (Cocoa → Cheddar → Cocoa → Cheddar), proximity
+  ticking that assigns the correct actor per approach, settle-back on dawdle, and a botch-cap fail
+  when fumbles + settles reaches 6 (`IsFailed`/`FailReason`). The controller owns `ComputeZones`
+  logic in its static arrays; `GameManager.EscapeStationSpot`/`EscapeStationOwner` compat accessors
+  delegate to the controller. The `ForceEscapeStep`/`ForceEscapeIdle` hooks follow the same
+  `MissionActive` + `CheckClear` pattern as the other migrated missions.
+- Full PlayMode result after the latest controller increment: 348 passed, 0 failed, 0 skipped.
 
 ## Test and reset contract
 
