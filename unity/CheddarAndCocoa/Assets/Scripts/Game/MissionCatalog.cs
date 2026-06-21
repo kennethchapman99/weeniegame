@@ -198,6 +198,68 @@ namespace CheddarAndCocoa.Game
             };
         }
 
+        internal static GameManager.MissionDefinition BuildTableStealthDefinition(ArenaMissionTuning tuning)
+        {
+            const GameManager.MissionVariant variant = GameManager.MissionVariant.TableStealth;
+            var balance = tuning.BalanceFor(variant);
+            return new GameManager.MissionDefinition
+            {
+                Variant = variant,
+                Name = "Table Stealth",
+                IntroPrompt = "A steak dropped under the dinner table. One dog has to hold the human's attention - Cocoa flops belly-up for a rub, Cheddar burps a cloud - while the other sneaks the steak. Sneak while the human is watching and you get spotted.",
+                ReadyScoreLabel = "READY TO RAID THE TABLE",
+                ItemRootName = "Steak",
+                ItemObjectName = "Steak",
+                ItemWorldLabel = "Sneak!",
+                ItemArrowLabel = "STEAK",
+                ItemCollectCueNoun = "a clean sneak",
+                CollectObjectiveFormat = "Sneak the steak {0}/{1}",
+                CollectedScoreLabel = "STEAK SNEAKED",
+                ItemScore = balance.ItemScore,
+                SpawnedItemCount = balance.SpawnedItemCount,
+                ItemGoal = balance.ItemGoal,
+                RoundSeconds = balance.RoundSeconds,
+                PawfectScore = balance.PawfectScore,
+                HeroScore = balance.HeroScore,
+                SurvivorScore = balance.SurvivorScore,
+                UsesSquirrel = false,
+                RequiresPredator = false,
+                RequiresTug = false,
+                MaxStolenFood = balance.MaxStolenFood,
+                SquirrelPenalty = balance.SquirrelPenalty,
+                SquirrelScareScore = balance.SquirrelScareScore,
+                SquirrelObjectiveText = "Distract the human / sneak the steak",
+                SquirrelStealingCue = "No squirrel here - mind the human.",
+                SquirrelStoleCue = "No squirrel here - keep them distracted.",
+                SquirrelStealScoreLabel = "SPOTTED",
+                SquirrelScareScoreLabel = "STEAK SNEAKED",
+                SquirrelStealingActorLabel = "HUMAN",
+                SquirrelDroppedActorLabel = "DISTRACTED",
+                SquirrelStoleActorLabel = "SPOTTED",
+                SquirrelMissPopLabel = "SPOTTED!",
+                SquirrelStealJuiceLabel = "SPOTTED!",
+                SquirrelScareJuiceLabel = "STEAK SNEAKED!",
+                TugObjectiveText = "Distract and sneak together",
+                WaitingObjectiveText = "Sneak the steak while the human is distracted",
+                ClearObjectiveText = "Steak rescued - replay Table Stealth",
+                ClearBannerPrefix = "STEAK SNEAKED!",
+                ClearScoreLabel = "TABLE STEALTH CLEAR",
+                ReplayPrompt = "Press R / Enter / Start to replay Table Stealth",
+                FailObjectiveText = "Mission failed - replay Table Stealth",
+                GenericFailReason = "Needs a steadier distraction before the next sneak.",
+                TimeFailReason = "The sneak took too long and the steak stayed under the table.",
+                StolenFailReason = "The human caught the sneaky pup too many times.",
+                PredatorFailReason = "No predator here, just a hungry human.",
+                PawfectClearReason = "Cocoa held the human spellbound and Cheddar lifted the steak without a sound.",
+                HeroClearReason = "The steak came home with only a nervous glance or two.",
+                BasicClearReason = "They got the steak, even if the human nearly caught them.",
+                ItemColor = new Color(0.6f, 0.3f, 0.28f),
+                ItemAccentColor = new Color(0.85f, 0.5f, 0.4f),
+                ItemSecondaryColor = new Color(0.3f, 0.14f, 0.12f),
+                ItemPopColor = new Color(0.6f, 0.8f, 1f)
+            };
+        }
+
         internal static GameManager.MissionDefinition BuildPeeBreakDefinition(ArenaMissionTuning tuning) =>
             new GameManager.MissionDefinition
             {

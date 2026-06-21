@@ -37,6 +37,20 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator TableStealth_RunsThroughDedicatedController()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.TableStealth);
+            yield return null;
+
+            Assert.IsInstanceOf<TableStealthMissionController>(
+                _game.ActiveMissionController,
+                "Table Stealth must run entirely through its own IMissionController.");
+            Assert.AreEqual(GameManager.MissionVariant.TableStealth, _game.ActiveMissionController.Variant);
+            Assert.AreSame(_game.TableStealthController.Puzzle, _game.TableStealthPuzzle);
+        }
+
+        [UnityTest]
         public IEnumerator TableStealth_ClearPath_DistractThenSneakTheSteak()
         {
             yield return LoadArena();

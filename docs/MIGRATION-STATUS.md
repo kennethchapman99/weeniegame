@@ -4,7 +4,7 @@
 
 ## Current state
 
-- PlayMode suite: **344 passed / 0 failed / 0 skipped** (2026-06-21).
+- PlayMode suite: **345 passed / 0 failed / 0 skipped** (2026-06-21).
 - Tree is compile-clean and out of Safe Mode.
 
 ## Extracted (controller-owned)
@@ -15,11 +15,12 @@
 | Operation Pee Break | `PeeBreakMissionController` | First controller-native deep slice. |
 | Mark the Yard | `MarkTheYardMissionController` | First previously-in-`GameManager` mission extracted. Added `IMissionController.OutcomeSummary` and `MissionContext.CreditDog`. |
 | Gate Crash | `GateCrashMissionController` | First extracted mission with a non-timeout fail. Added `IMissionController.IsFailed`/`FailReason`. |
+| Table Stealth | `TableStealthMissionController` | Human-distraction hold/sneak puzzle; exposure-cap fail via `IsFailed`/`FailReason`. |
 
 ## Remaining in `GameManager` (not yet extracted)
 
 BackyardRescue, SnackHeist, SockPanic, SquirrelConspiracy, EagleShadowPanic, CoyotesFence,
-WeenieRoundup, ScentSearch, ThunderstormComfort, LeashWalk, CarRide, TableStealth,
+WeenieRoundup, ScentSearch, ThunderstormComfort, LeashWalk, CarRide,
 SquirrelSwitcheroo, WalkCampaign, BoneRelay, GreatEscape, ChaosMachine, BlanketCatch.
 
 ## Contract additions so far
@@ -43,6 +44,7 @@ SquirrelSwitcheroo, WalkCampaign, BoneRelay, GreatEscape, ChaosMachine, BlanketC
 ## Next step
 
 Pick the next un-migrated mission. Good near-term candidates that fit the current contract (position
-ticking + fail signal, own actors): **TableStealth** (`CoopHumanDistractionPuzzle`, exposures fail)
-and **WalkCampaign**/**SquirrelSwitcheroo** (puzzle-driven). ThunderstormComfort remains valuable but
-needs a decision on hosting/`game.Panic` fallback for the shared `PanicMeter` first.
+ticking + fail signal, own actors): **SquirrelSwitcheroo** (`CoopBaitSwitchPuzzle`, backfire fail) and
+**WalkCampaign** (`CoopSocialManipulationPuzzle`, misread fail) — both puzzle-driven like Gate Crash
+and Table Stealth. ThunderstormComfort remains valuable but needs a decision on hosting/`game.Panic`
+fallback for the shared `PanicMeter` first.

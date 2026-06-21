@@ -126,7 +126,11 @@ not an architecture acceptance criterion.
   `FailReason` returning null on a plain timeout so the shared `TimeFailReason` still applies). The
   controller owns its gate/toy markers, hold/squeeze proximity ticking, snap handling, objective
   copy, arrow targets, snapshot, and the `ForceGateHold`/`ForceGateCross` hooks.
-- Full PlayMode result after the latest controller increment: 344 passed, 0 failed, 0 skipped.
+- `TableStealthMissionController` reuses the same pattern for the human-distraction puzzle: it owns
+  the human/steak markers, flop+sneak proximity ticking, exposure handling (its `IsFailed`/
+  `FailReason` fire at the exposure cap), objective copy, snapshot, and the `ForceTableFlop`/
+  `ForceTableBurp`/`ForceTableSneak` hooks.
+- Full PlayMode result after the latest controller increment: 345 passed, 0 failed, 0 skipped.
 
 ## Test and reset contract
 

@@ -38,7 +38,10 @@ namespace CheddarAndCocoa.Game
                     MissionCatalog.BuildMarkTheYardDefinition),
                 [GameManager.MissionVariant.GateCrash] = new Registration(
                     () => new GateCrashMissionController(),
-                    MissionCatalog.BuildGateCrashDefinition)
+                    MissionCatalog.BuildGateCrashDefinition),
+                [GameManager.MissionVariant.TableStealth] = new Registration(
+                    () => new TableStealthMissionController(),
+                    MissionCatalog.BuildTableStealthDefinition)
             };
 
         public static IEnumerable<GameManager.MissionVariant> RegisteredVariants => Registrations.Keys;
