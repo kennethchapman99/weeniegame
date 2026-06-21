@@ -74,7 +74,10 @@ namespace CheddarAndCocoa.Game
                     MissionCatalog.BuildCarRideDefinition),
                 [GameManager.MissionVariant.ScentSearch] = new Registration(
                     () => new ScentSearchMissionController(),
-                    MissionCatalog.BuildScentSearchDefinition)
+                    MissionCatalog.BuildScentSearchDefinition),
+                [GameManager.MissionVariant.WeenieRoundup] = new Registration(
+                    () => new WeenieRoundupMissionController(),
+                    MissionCatalog.BuildWeenieRoundupDefinition)
             };
 
         public static IEnumerable<GameManager.MissionVariant> RegisteredVariants => Registrations.Keys;

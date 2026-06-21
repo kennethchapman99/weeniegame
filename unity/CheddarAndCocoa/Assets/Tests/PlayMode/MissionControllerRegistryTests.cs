@@ -40,7 +40,8 @@ namespace CheddarAndCocoa.Game.Tests
                     GameManager.MissionVariant.LeashWalk,
                     GameManager.MissionVariant.SockPanic,
                     GameManager.MissionVariant.CarRide,
-                    GameManager.MissionVariant.ScentSearch
+                    GameManager.MissionVariant.ScentSearch,
+                    GameManager.MissionVariant.WeenieRoundup
                 },
                 seen,
                 "Only explicitly migrated missions belong in the controller registry.");

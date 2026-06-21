@@ -161,6 +161,10 @@ not an architecture acceptance criterion.
   bark-to-sniff heat cues, interact-to-dig handling, cold-dig failure, scoring/credit/feedback,
   objective targeting, entry staging, cleanup, snapshot, and deterministic sniff/correct-dig/
   wrong-dig hooks. `GameManager` retains only compatibility accessors and force-hook forwarding.
+- `WeenieRoundupMissionController` owns loose/carry marker and bowl lifecycles, proximity pickup and
+  delivery ticking, per-dog cargo state and carry poses, fumble/drop recovery, scoring/credit/
+  feedback, objective targeting, entry staging, cleanup, snapshot, and deterministic pickup/
+  delivery/drop hooks.
 - Full PlayMode result after the latest controller increment: 352 passed, 0 failed, 0 skipped.
 
 ## Test and reset contract

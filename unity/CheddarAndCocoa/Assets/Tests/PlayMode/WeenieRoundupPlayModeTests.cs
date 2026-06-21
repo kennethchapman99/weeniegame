@@ -47,6 +47,8 @@ namespace CheddarAndCocoa.Tests
             game.StartMission(GameManager.MissionVariant.WeenieRoundup);
             yield return null;
 
+            Assert.IsInstanceOf<WeenieRoundupMissionController>(game.ActiveMissionController,
+                "Weenie Roundup must run entirely through its own IMissionController.");
             Assert.AreEqual("weenie_roundup", game.RuntimeSnapshot.MissionId);
             Assert.That(game.ObjectiveLabel, Does.Contain("Round up"));
             int required = game.RuntimeSnapshot.ObjectiveGoal;

@@ -938,6 +938,68 @@ namespace CheddarAndCocoa.Game
             };
         }
 
+        internal static GameManager.MissionDefinition BuildWeenieRoundupDefinition(ArenaMissionTuning tuning)
+        {
+            const GameManager.MissionVariant variant = GameManager.MissionVariant.WeenieRoundup;
+            var balance = tuning.BalanceFor(variant);
+            return new GameManager.MissionDefinition
+            {
+                Variant = variant,
+                Name = "Weenie Roundup",
+                IntroPrompt = "Cheddar + Cocoa must round up every scattered weenie and carry them back to the home bowl together.",
+                ReadyScoreLabel = "READY TO ROUND UP WEENIES",
+                ItemRootName = "Scattered Weenies",
+                ItemObjectName = "Loose Weenie",
+                ItemWorldLabel = "Weenie!",
+                ItemArrowLabel = "WEENIE",
+                ItemCollectCueNoun = "a weenie",
+                CollectObjectiveFormat = "Deliver weenies {0}/{1}",
+                CollectedScoreLabel = "WEENIE DELIVERED",
+                ItemScore = balance.ItemScore,
+                SpawnedItemCount = balance.SpawnedItemCount,
+                ItemGoal = balance.ItemGoal,
+                RoundSeconds = balance.RoundSeconds,
+                PawfectScore = balance.PawfectScore,
+                HeroScore = balance.HeroScore,
+                SurvivorScore = balance.SurvivorScore,
+                UsesSquirrel = false,
+                RequiresPredator = false,
+                RequiresTug = false,
+                MaxStolenFood = balance.MaxStolenFood,
+                SquirrelPenalty = balance.SquirrelPenalty,
+                SquirrelScareScore = balance.SquirrelScareScore,
+                SquirrelObjectiveText = "Carry the weenies home",
+                SquirrelStealingCue = "No squirrel here - just a lot of weenies to carry.",
+                SquirrelStoleCue = "No squirrel here - mind the bowl.",
+                SquirrelStealScoreLabel = "FUMBLED WEENIE",
+                SquirrelScareScoreLabel = "WEENIE DELIVERED",
+                SquirrelStealingActorLabel = "WEENIE LOOSE",
+                SquirrelDroppedActorLabel = "WEENIE DELIVERED",
+                SquirrelStoleActorLabel = "WEENIE FUMBLED",
+                SquirrelMissPopLabel = "FUMBLE!",
+                SquirrelStealJuiceLabel = "FUMBLED WEENIE!",
+                SquirrelScareJuiceLabel = "WEENIE DELIVERED!",
+                TugObjectiveText = "Carry weenies to the bowl",
+                WaitingObjectiveText = "Round up the last weenies together",
+                ClearObjectiveText = "Bowl is full - replay Weenie Roundup",
+                ClearBannerPrefix = "BOWL FILLED!",
+                ClearScoreLabel = "ROUNDUP COMPLETE",
+                ReplayPrompt = "Press R / Enter / Start to replay Weenie Roundup",
+                FailObjectiveText = "Mission failed - replay Weenie Roundup",
+                GenericFailReason = "Needs faster weenie hauling before the next mealtime.",
+                TimeFailReason = "The clock ran out before every weenie made it to the bowl.",
+                StolenFailReason = "Too many weenies got fumbled in the long carry.",
+                PredatorFailReason = "No predator here, just a lot of running.",
+                PawfectClearReason = "Tiny haulers filled the bowl with zero fumbles - elite weenie logistics.",
+                HeroClearReason = "Every weenie made it home with respectable carrying discipline.",
+                BasicClearReason = "The bowl got filled, even if a few weenies hit the dirt first.",
+                ItemColor = new Color(0.78f, 0.34f, 0.24f),
+                ItemAccentColor = new Color(0.95f, 0.6f, 0.4f),
+                ItemSecondaryColor = new Color(0.3f, 0.12f, 0.08f),
+                ItemPopColor = new Color(1f, 0.6f, 0.4f)
+            };
+        }
+
         internal static GameManager.MissionDefinition BuildThunderstormComfortDefinition(ArenaMissionTuning tuning)
         {
             const GameManager.MissionVariant variant = GameManager.MissionVariant.ThunderstormComfort;
