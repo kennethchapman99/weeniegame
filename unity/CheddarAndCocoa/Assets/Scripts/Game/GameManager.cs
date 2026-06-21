@@ -671,27 +671,25 @@ namespace CheddarAndCocoa.Game
             _activeMissionController.StartMission();
         }
 
-        private MissionContext CreateMissionContext() => new MissionContext
-        {
-            Dogs = _dogs,
-            DogFeedback = DogFeedback,
-            Bounds = _bounds,
-            ActorSprite = _sprite,
-            RangeSprite = _rangeSprite,
-            Random = () => _rng,
-            Now = () => Time.time,
-            AddScore = AddScore,
-            SetCue = cue => LastCue = cue,
-            SetFeedback = feedback => LastFeedback = feedback,
-            SetJuice = SetJuice,
-            SpawnWorldPop = (position, text, color) => SpawnWorldPop(position, text, color),
-            RequestAudioCue = RequestAudioCue,
-            RequestRumble = RequestRumble,
-            LogEvent = LogPlaytestEvent,
-            LogObjectiveChanged = LogObjectiveIfChanged,
-            MarkFailedInteraction = MarkFailedInteraction,
-            AddWorldLabel = AddWorldLabel
-        };
+        private MissionContext CreateMissionContext() => new MissionContext(
+            dogs: _dogs,
+            dogFeedback: DogFeedback,
+            bounds: _bounds,
+            actorSprite: _sprite,
+            rangeSprite: _rangeSprite,
+            random: () => _rng,
+            now: () => Time.time,
+            addScore: AddScore,
+            setCue: cue => LastCue = cue,
+            setFeedback: feedback => LastFeedback = feedback,
+            setJuice: SetJuice,
+            spawnWorldPop: (position, text, color) => SpawnWorldPop(position, text, color),
+            requestAudioCue: RequestAudioCue,
+            requestRumble: RequestRumble,
+            logEvent: LogPlaytestEvent,
+            logObjectiveChanged: LogObjectiveIfChanged,
+            markFailedInteraction: MarkFailedInteraction,
+            addWorldLabel: AddWorldLabel);
 
         private void ConfigureSpatialLayout()
         {

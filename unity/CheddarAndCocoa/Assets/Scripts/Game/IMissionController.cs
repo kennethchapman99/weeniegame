@@ -28,25 +28,68 @@ namespace CheddarAndCocoa.Game
     /// </summary>
     public sealed class MissionContext
     {
-        public DogController[] Dogs { get; set; }
-        public DogReadabilityFeedback[] DogFeedback { get; set; }
-        public Rect Bounds { get; set; }
-        public Sprite ActorSprite { get; set; }
-        public Sprite RangeSprite { get; set; }
-        public Func<System.Random> Random { get; set; }
-        public Func<float> Now { get; set; }
+        public DogController[] Dogs { get; }
+        public DogReadabilityFeedback[] DogFeedback { get; }
+        public Rect Bounds { get; }
+        public Sprite ActorSprite { get; }
+        public Sprite RangeSprite { get; }
+        public Func<System.Random> Random { get; }
+        public Func<float> Now { get; }
 
-        public Action<int, string> AddScore { get; set; }
-        public Action<string> SetCue { get; set; }
-        public Action<GameManager.FeedbackKind> SetFeedback { get; set; }
-        public Action<GameManager.JuiceFeedbackKind, string> SetJuice { get; set; }
-        public Action<Vector2, string, Color> SpawnWorldPop { get; set; }
-        public Action<string> RequestAudioCue { get; set; }
-        public Action<string, float, float, float> RequestRumble { get; set; }
-        public Action<string, string> LogEvent { get; set; }
-        public Action LogObjectiveChanged { get; set; }
-        public Action<DogId, string> MarkFailedInteraction { get; set; }
-        public Func<GameObject, string, Vector3, int, Color, TextMesh> AddWorldLabel { get; set; }
+        public Action<int, string> AddScore { get; }
+        public Action<string> SetCue { get; }
+        public Action<GameManager.FeedbackKind> SetFeedback { get; }
+        public Action<GameManager.JuiceFeedbackKind, string> SetJuice { get; }
+        public Action<Vector2, string, Color> SpawnWorldPop { get; }
+        public Action<string> RequestAudioCue { get; }
+        public Action<string, float, float, float> RequestRumble { get; }
+        public Action<string, string> LogEvent { get; }
+        public Action LogObjectiveChanged { get; }
+        public Action<DogId, string> MarkFailedInteraction { get; }
+        public Func<GameObject, string, Vector3, int, Color, TextMesh> AddWorldLabel { get; }
+
+        public MissionContext(
+            DogController[] dogs,
+            DogReadabilityFeedback[] dogFeedback,
+            Rect bounds,
+            Sprite actorSprite,
+            Sprite rangeSprite,
+            Func<System.Random> random,
+            Func<float> now,
+            Action<int, string> addScore,
+            Action<string> setCue,
+            Action<GameManager.FeedbackKind> setFeedback,
+            Action<GameManager.JuiceFeedbackKind, string> setJuice,
+            Action<Vector2, string, Color> spawnWorldPop,
+            Action<string> requestAudioCue,
+            Action<string, float, float, float> requestRumble,
+            Action<string, string> logEvent,
+            Action logObjectiveChanged,
+            Action<DogId, string> markFailedInteraction,
+            Func<GameObject, string, Vector3, int, Color, TextMesh> addWorldLabel)
+        {
+            Dogs = dogs ?? throw new ArgumentNullException(nameof(dogs));
+            DogFeedback = dogFeedback ?? throw new ArgumentNullException(nameof(dogFeedback));
+            if (dogs.Length != dogFeedback.Length)
+                throw new ArgumentException("Dog feedback must have one entry per dog.", nameof(dogFeedback));
+
+            Bounds = bounds;
+            ActorSprite = actorSprite;
+            RangeSprite = rangeSprite;
+            Random = random ?? throw new ArgumentNullException(nameof(random));
+            Now = now ?? throw new ArgumentNullException(nameof(now));
+            AddScore = addScore ?? throw new ArgumentNullException(nameof(addScore));
+            SetCue = setCue ?? throw new ArgumentNullException(nameof(setCue));
+            SetFeedback = setFeedback ?? throw new ArgumentNullException(nameof(setFeedback));
+            SetJuice = setJuice ?? throw new ArgumentNullException(nameof(setJuice));
+            SpawnWorldPop = spawnWorldPop ?? throw new ArgumentNullException(nameof(spawnWorldPop));
+            RequestAudioCue = requestAudioCue ?? throw new ArgumentNullException(nameof(requestAudioCue));
+            RequestRumble = requestRumble ?? throw new ArgumentNullException(nameof(requestRumble));
+            LogEvent = logEvent ?? throw new ArgumentNullException(nameof(logEvent));
+            LogObjectiveChanged = logObjectiveChanged ?? throw new ArgumentNullException(nameof(logObjectiveChanged));
+            MarkFailedInteraction = markFailedInteraction ?? throw new ArgumentNullException(nameof(markFailedInteraction));
+            AddWorldLabel = addWorldLabel ?? throw new ArgumentNullException(nameof(addWorldLabel));
+        }
 
         public int IndexOfDog(DogId dogId)
         {

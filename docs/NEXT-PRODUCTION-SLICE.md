@@ -11,7 +11,10 @@ couch session and explicitly authorized architecture work to continue. Operation
 the active authored deep slice and uses the controller boundary. Its first controller-owned
 implementation now includes the four exact-combo beats, split-role position stations, recoverable
 Teenager misreads, bladder/phone pressure, united-bark door climax, replay reset, and deterministic
-PlayMode coverage. Placeholder presentation still needs the second two-player couch acceptance pass.
+PlayMode coverage. The controller boundary now also uses immutable validated context wiring and
+atomic controller/definition registrations, with registry consistency coverage. The full PlayMode
+suite is green at 340 tests. Placeholder presentation still needs the second two-player couch
+acceptance pass.
 
 As of 2026-06-20, `GameManager.cs` is nearly 8,000 lines and declares 21 mission variants. Treat
 that as a date-stamped warning, not a permanent metric or a line-count target.

@@ -1,0 +1,48 @@
+using System.Collections.Generic;
+using NUnit.Framework;
+
+namespace CheddarAndCocoa.Game.Tests
+{
+    public sealed class MissionControllerRegistryTests
+    {
+        [Test]
+        public void RegisteredMissions_HaveMatchingControllerAndDefinition()
+        {
+            var seen = new HashSet<GameManager.MissionVariant>();
+            var tuning = ArenaMissionTuning.CreateDefault();
+
+            foreach (var variant in MissionControllerRegistry.RegisteredVariants)
+            {
+                Assert.IsTrue(seen.Add(variant), $"Duplicate controller registration for {variant}.");
+                Assert.IsTrue(MissionControllerRegistry.TryCreate(variant, out var controller));
+                Assert.AreEqual(variant, controller.Variant);
+                Assert.IsTrue(MissionControllerRegistry.TryBuildDefinition(variant, tuning, out var definition));
+                Assert.AreEqual(variant, definition.Variant);
+                Assert.IsNotEmpty(definition.Name);
+                Assert.IsNotEmpty(definition.IntroPrompt);
+            }
+
+            CollectionAssert.AreEquivalent(
+                new[]
+                {
+                    GameManager.MissionVariant.KitchenFoodFrenzy,
+                    GameManager.MissionVariant.OperationPeeBreak
+                },
+                seen,
+                "Only explicitly migrated missions belong in the controller registry.");
+        }
+
+        [Test]
+        public void UnmigratedMission_HasNoControllerRegistration()
+        {
+            var tuning = ArenaMissionTuning.CreateDefault();
+
+            Assert.IsFalse(MissionControllerRegistry.TryCreate(
+                GameManager.MissionVariant.BackyardRescue, out var controller));
+            Assert.IsNull(controller);
+            Assert.IsFalse(MissionControllerRegistry.TryBuildDefinition(
+                GameManager.MissionVariant.BackyardRescue, tuning, out var definition));
+            Assert.IsNull(definition);
+        }
+    }
+}

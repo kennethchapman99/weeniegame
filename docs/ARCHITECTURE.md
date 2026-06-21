@@ -90,6 +90,11 @@ not an architecture acceptance criterion.
   deterministic randomness, and world-label helpers required by the first controller.
 - `MissionControllerRegistry` owns controller factories and `MissionCatalog` owns the extracted
   Kitchen definition outside `GameManager`.
+- Controller registration is atomic: each migrated mission registers its controller factory and
+  presentation-definition factory together. Runtime guards reject a controller or definition whose
+  declared variant does not match its registration.
+- `MissionContext` dependencies are constructor-supplied, immutable, and validated before a
+  controller can initialize; controllers cannot replace shared services after wiring.
 - `KitchenFoodFrenzyMissionController` owns Kitchen setup/reset, mutable state, generated actors,
   ticking, bark role rules, feedback, objective copy, arrow targets, cleanup, deterministic hooks,
   and runtime snapshot construction.
@@ -107,6 +112,8 @@ not an architecture acceptance criterion.
 - Every controller must reset all owned state on replay and cleanup all owned actors/resources.
 - Snapshots must be controller-produced; `GameManager` may wrap them with shared session data.
 - Deterministic test hooks must advance the same state machine used by live play.
+- Registry contract tests must keep controller factories, definitions, and variant identities in
+  sync, and must explicitly preserve the set of migrated missions while the roster is frozen.
 - Never move to a second extraction while the first leaves the PlayMode suite red.
 
 ---

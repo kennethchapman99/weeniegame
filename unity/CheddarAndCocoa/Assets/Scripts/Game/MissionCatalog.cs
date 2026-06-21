@@ -8,22 +8,14 @@ namespace CheddarAndCocoa.Game
         public static bool TryBuild(
             GameManager.MissionVariant variant,
             ArenaMissionTuning tuning,
-            out GameManager.MissionDefinition definition)
+            out GameManager.MissionDefinition definition) =>
+            MissionControllerRegistry.TryBuildDefinition(variant, tuning, out definition);
+
+        internal static GameManager.MissionDefinition BuildKitchenDefinition(ArenaMissionTuning tuning)
         {
-            if (variant == GameManager.MissionVariant.OperationPeeBreak)
-            {
-                definition = BuildPeeBreakDefinition(variant);
-                return true;
-            }
-
-            if (variant != GameManager.MissionVariant.KitchenFoodFrenzy)
-            {
-                definition = null;
-                return false;
-            }
-
+            const GameManager.MissionVariant variant = GameManager.MissionVariant.KitchenFoodFrenzy;
             var balance = tuning.BalanceFor(variant);
-            definition = new GameManager.MissionDefinition
+            var definition = new GameManager.MissionDefinition
             {
                 Variant = variant,
                 Name = "Kitchen Falling Food Frenzy",
@@ -79,13 +71,13 @@ namespace CheddarAndCocoa.Game
                 ItemSecondaryColor = new Color(0.7f, 0.4f, 0.85f),
                 ItemPopColor = new Color(0.5f, 1f, 0.65f)
             };
-            return true;
+            return definition;
         }
 
-        private static GameManager.MissionDefinition BuildPeeBreakDefinition(GameManager.MissionVariant variant) =>
+        internal static GameManager.MissionDefinition BuildPeeBreakDefinition(ArenaMissionTuning tuning) =>
             new GameManager.MissionDefinition
             {
-                Variant = variant,
+                Variant = GameManager.MissionVariant.OperationPeeBreak,
                 Name = "Operation Pee Break",
                 IntroPrompt = "The Teenager is lost in the phone. Cocoa stares, Cheddar presents the leash, then swap roles for the charger gambit and finish with a united bark!",
                 ReadyScoreLabel = "READY TO ASK OUT",
