@@ -21,6 +21,20 @@ namespace CheddarAndCocoa.Tests
         private DogController _cocoa;
 
         [UnityTest]
+        public IEnumerator Bone_RunsThroughDedicatedController()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.BoneRelay);
+            yield return null;
+
+            Assert.IsInstanceOf<BoneRelayMissionController>(
+                _game.ActiveMissionController,
+                "The Bone Relay must run entirely through its own IMissionController.");
+            Assert.AreEqual(GameManager.MissionVariant.BoneRelay, _game.ActiveMissionController.Variant);
+            Assert.AreSame(_game.BoneRelayController.Puzzle, _game.BoneRelayPuzzle);
+        }
+
+        [UnityTest]
         public IEnumerator Bone_AppearsInMissionSelectRotation()
         {
             yield return LoadArena();

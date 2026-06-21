@@ -56,7 +56,10 @@ namespace CheddarAndCocoa.Game
                     MissionCatalog.BuildChaosMachineDefinition),
                 [GameManager.MissionVariant.BlanketCatch] = new Registration(
                     () => new BlanketCatchMissionController(),
-                    MissionCatalog.BuildBlanketCatchDefinition)
+                    MissionCatalog.BuildBlanketCatchDefinition),
+                [GameManager.MissionVariant.BoneRelay] = new Registration(
+                    () => new BoneRelayMissionController(),
+                    MissionCatalog.BuildBoneRelayDefinition)
             };
 
         public static IEnumerable<GameManager.MissionVariant> RegisteredVariants => Registrations.Keys;

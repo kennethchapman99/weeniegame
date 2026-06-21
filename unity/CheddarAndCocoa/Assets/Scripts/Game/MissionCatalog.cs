@@ -566,6 +566,68 @@ namespace CheddarAndCocoa.Game
                 ItemPopColor = new Color(1f, 0.95f, 0.55f)
             };
 
+        internal static GameManager.MissionDefinition BuildBoneRelayDefinition(ArenaMissionTuning tuning)
+        {
+            const GameManager.MissionVariant variant = GameManager.MissionVariant.BoneRelay;
+            var balance = tuning.BalanceFor(variant);
+            return new GameManager.MissionDefinition
+            {
+                Variant = variant,
+                Name = "The Bone Detail",
+                IntroPrompt = "Four look-alike dirt mounds, only one hiding the real bone. Cocoa's the nose: she sniffs the scent post to call which mound is real. Cheddar's the only one who can dig - but he can't tell them apart, so he has to wait for her call. Dig blind or dig a decoy and it's a wasted dig; waste too many and the team gives up. Each bone re-buries the next somewhere new.",
+                ReadyScoreLabel = "READY TO WORK THE SCENT",
+                ItemRootName = "Bone",
+                ItemObjectName = "Bone",
+                ItemWorldLabel = "Bone!",
+                ItemArrowLabel = "MOUND",
+                ItemCollectCueNoun = "a buried bone",
+                CollectObjectiveFormat = "Dig up the bones {0}/{1}",
+                CollectedScoreLabel = "BONE DUG UP",
+                ItemScore = balance.ItemScore,
+                SpawnedItemCount = balance.SpawnedItemCount,
+                ItemGoal = balance.ItemGoal,
+                RoundSeconds = balance.RoundSeconds,
+                PawfectScore = balance.PawfectScore,
+                HeroScore = balance.HeroScore,
+                SurvivorScore = balance.SurvivorScore,
+                UsesSquirrel = false,
+                RequiresPredator = false,
+                RequiresTug = false,
+                MaxStolenFood = balance.MaxStolenFood,
+                SquirrelPenalty = balance.SquirrelPenalty,
+                SquirrelScareScore = balance.SquirrelScareScore,
+                SquirrelObjectiveText = "Read the scent / dig the call",
+                SquirrelStealingCue = "Wait for Cocoa to call the mound.",
+                SquirrelStoleCue = "Wasted dig - read the call first.",
+                SquirrelStealScoreLabel = "COLD DIG",
+                SquirrelScareScoreLabel = "BONE DUG UP",
+                SquirrelStealingActorLabel = "SCENT POST",
+                SquirrelDroppedActorLabel = "CALLING IT",
+                SquirrelStoleActorLabel = "COLD",
+                SquirrelMissPopLabel = "NOPE!",
+                SquirrelStealJuiceLabel = "NOPE!",
+                SquirrelScareJuiceLabel = "BONE!",
+                TugObjectiveText = "Sniff and dig together",
+                WaitingObjectiveText = "Dig the mound Cocoa calls",
+                ClearObjectiveText = "Bones recovered - replay The Bone Detail",
+                ClearBannerPrefix = "BONES!",
+                ClearScoreLabel = "BONE DETAIL CLEAR",
+                ReplayPrompt = "Press R / Enter / Start to replay The Bone Detail",
+                FailObjectiveText = "Mission failed - replay The Bone Detail",
+                GenericFailReason = "Too much guessing - read the scent before digging.",
+                TimeFailReason = "The bones stayed buried - the relay never clicked in time.",
+                StolenFailReason = "Too many blind digs wasted the whole yard.",
+                PredatorFailReason = "No predator here, just a lot of dirt.",
+                PawfectClearReason = "Cocoa called every mound and Cheddar dug them clean - not a single wasted scoop.",
+                HeroClearReason = "The bones came up with only a stray dig or two.",
+                BasicClearReason = "They got the bones, even after digging up a good chunk of the yard.",
+                ItemColor = new Color(0.5f, 0.38f, 0.22f),
+                ItemAccentColor = new Color(0.78f, 0.7f, 0.5f),
+                ItemSecondaryColor = new Color(0.3f, 0.22f, 0.12f),
+                ItemPopColor = new Color(0.5f, 0.9f, 0.55f)
+            };
+        }
+
         internal static GameManager.MissionDefinition BuildBlanketCatchDefinition(ArenaMissionTuning tuning)
         {
             const GameManager.MissionVariant variant = GameManager.MissionVariant.BlanketCatch;
