@@ -176,9 +176,10 @@ namespace CheddarAndCocoa.Game
         public float CarBalance => CarRideController?.Balance ?? 0f;
         public SockPanicMissionController SockPanicController => _activeMissionController as SockPanicMissionController;
         public SockBasketMissionState SockPanicState => SockPanicController?.State ?? _emptySockBasketState;
-        public BackyardSquirrelTrapState BackyardTrapState => _backyardTrapState;
-        public Vector2 BackyardTrapGapPosition => _backyardTrapGapPosition;
-        public Treat BackyardDroppedWeenie => _backyardDroppedWeenie;
+        public BackyardRescueMissionController BackyardRescueController => _activeMissionController as BackyardRescueMissionController;
+        public BackyardSquirrelTrapState BackyardTrapState => BackyardRescueController?.TrapState;
+        public Vector2 BackyardTrapGapPosition => BackyardRescueController?.GapPosition ?? Vector2.zero;
+        public Treat BackyardDroppedWeenie => BackyardRescueController?.DroppedWeenie;
         public KitchenFoodFrenzyMissionState KitchenState => KitchenController?.State;
         public Vector2 KitchenCounterPosition => KitchenController?.CounterPosition ?? Vector2.zero;
         public Vector2 KitchenSafeZonePosition => KitchenController?.SafeZonePosition ?? Vector2.zero;
@@ -240,10 +241,10 @@ namespace CheddarAndCocoa.Game
         public bool IsLevelClear => Phase == State.LevelClear;
         public int UnitedBarks { get; private set; }
         private int _breakfastRecovered;
-        public int BreakfastRecovered => SnackHeistController?.Recovered ?? _breakfastRecovered;
+        public int BreakfastRecovered => SnackHeistController?.Recovered ?? BackyardRescueController?.Collected ?? _breakfastRecovered;
         public int BreakfastGoal => _mission != null ? _mission.ItemGoal : recoveryGoal;
         private int _stolenFood;
-        public int StolenFood => SnackHeistController?.Stolen ?? _stolenFood;
+        public int StolenFood => SnackHeistController?.Stolen ?? BackyardRescueController?.Stolen ?? _stolenFood;
         public int MaxStolenFood => _mission != null ? _mission.MaxStolenFood : maxStolenFood;
         public bool PredatorResolved { get; private set; }
         public bool PredatorFailed { get; private set; }
@@ -369,11 +370,6 @@ namespace CheddarAndCocoa.Game
         private MissionDefinition _mission;
         private GameObject _bunnyCameoObject;
         private readonly HerdingMissionState _emptyHerdingState = new HerdingMissionState();
-        private readonly BackyardSquirrelTrapState _backyardTrapState = new BackyardSquirrelTrapState();
-        private Vector2 _backyardTrapGapPosition;
-        private GameObject _backyardTrapGapMarker;
-        private Treat _backyardDroppedWeenie;
-        private const float BackyardTrapGapRadius = 3.2f;
         private readonly Dictionary<MissionVariant, IMissionController> _missionControllers = new();
         private IMissionController _activeMissionController;
         private KitchenFoodFrenzyMissionController KitchenController =>
@@ -554,6 +550,8 @@ namespace CheddarAndCocoa.Game
             now: () => Time.time,
             activeModifier: () => ActiveModifier,
             activeTreats: () => _treats,
+            isPredatorResolved: () => PredatorResolved,
+            isTugComplete: () => TugComplete,
             addScore: AddScore,
             creditDog: CreditDog,
             setCue: cue => LastCue = cue,
@@ -582,7 +580,6 @@ namespace CheddarAndCocoa.Game
 
             Vector2[] cover = { P(-0.7f, -0.64f), P(0.7f, -0.64f), P(0f, 0.68f) };
             Vector2[] gaps = { P(-0.94f, 0.38f), P(-0.94f, -0.38f), P(0.94f, 0.38f), P(0.94f, -0.38f) };
-            _backyardTrapGapPosition = P(0.72f, 0.08f);
 
             cover.CopyTo(_eagleCoverZones, 0);
             gaps.CopyTo(_fenceGaps, 0);
@@ -602,36 +599,9 @@ namespace CheddarAndCocoa.Game
                 return;
             }
 
-            bool trapRecovery = false;
-            if (_mission.Variant == MissionVariant.BackyardRescue && treat == _backyardDroppedWeenie)
-            {
-                DogId dogId = dog != null && dog.TryGetComponent<DogIdentity>(out var identity)
-                    ? identity.Id
-                    : DogId.Cheddar;
-                var recovery = _backyardTrapState.TryRecover(dogId);
-                if (recovery != BackyardSquirrelTrapState.RecoveryResult.Success)
-                {
-                    RegisterBackyardTrapRecoveryFumble(dogId);
-                    return;
-                }
-
-                trapRecovery = true;
-                _backyardDroppedWeenie = null;
-                LastCue = $"{dogId} recovered the trap weenie - roles reverse!";
-                SpawnWorldPop(treat.transform.position,
-                    _backyardTrapState.Complete ? "TRAP COMPLETE!" : "SWAP ROLES!",
-                    new Color(0.45f, 1f, 0.65f));
-                LogPlaytestEvent("SquirrelTrapRecovery", $"{dogId} recovered {_backyardTrapState.Recoveries}/{BackyardSquirrelTrapState.RequiredRecoveries}");
-                UpdateBackyardTrapGapMarker();
-            }
-
-            AddScore(
-                _mission.ItemScore,
-                trapRecovery ? "TRAP WEENIE RECOVERED" : _mission.CollectedScoreLabel);
+            AddScore(_mission.ItemScore, _mission.CollectedScoreLabel);
             _breakfastRecovered++;
-            LastCue = trapRecovery
-                ? $"{DogName(dog)} recovered the dropped weenie" + (_backyardTrapState.Complete ? " - squirrel trap complete!" : " - swap roles!")
-                : $"{DogName(dog)} recovered {_mission.ItemCollectCueNoun}!";
+            LastCue = $"{DogName(dog)} recovered {_mission.ItemCollectCueNoun}!";
             Pulse(dog != null ? dog.gameObject : null, 1.2f);
             SetJuice(JuiceFeedbackKind.ScoreDelta, LastScoreEventLabel);
             SpawnWorldPop(dog != null ? dog.transform.position : treat.transform.position, LastScoreEventLabel, _mission.ItemPopColor);
@@ -927,6 +897,13 @@ namespace CheddarAndCocoa.Game
                 CheckClear();
                 return;
             }
+            if (MissionActive() && BackyardRescueController != null)
+            {
+                BackyardRescueController.ForceStealAttempt();
+                CheckClear();
+                UpdateInteractionRanges();
+                return;
+            }
             if (!_mission.UsesSquirrel || !MissionActive() || _treats.Count == 0) return;
 
             var nearby = FindTreatNear(SquirrelObject.transform.position, 0.05f);
@@ -959,19 +936,20 @@ namespace CheddarAndCocoa.Game
 
         public void ForceBackyardTrapRedirect(DogId pressureDog, bool gapHeld = true)
         {
-            if (!MissionActive() || _mission.Variant != MissionVariant.BackyardRescue || _backyardTrapState.Complete) return;
-            if (_squirrelTarget == null && !_backyardTrapState.WeenieDropped && _treats.Count > 0)
-                StartSquirrelSteal(_treats[0]);
-            ResolveBackyardTrapPressure(pressureDog, gapHeld);
+            if (!MissionActive() || BackyardRescueController == null) return;
+            BackyardRescueController.ForceRedirect(pressureDog, gapHeld);
+            CheckClear();
             UpdateObjectiveArrows();
             UpdateInteractionRanges();
         }
 
         public void ForceBackyardTrapRecovery(DogId dogId)
         {
-            if (!MissionActive() || _mission.Variant != MissionVariant.BackyardRescue || _backyardDroppedWeenie == null) return;
-            int dogIndex = IndexOfDog(dogId);
-            if (dogIndex >= 0) _backyardDroppedWeenie.CollectBy(_dogs[dogIndex]);
+            if (!MissionActive() || BackyardRescueController == null) return;
+            BackyardRescueController.ForceWeenieRecovery(dogId);
+            CheckClear();
+            UpdateObjectiveArrows();
+            UpdateInteractionRanges();
         }
 
         public void ForceGameOver() => EndRound(false);
@@ -1123,8 +1101,6 @@ namespace CheddarAndCocoa.Game
             _rng = new System.Random(_missionSeed);
             ActiveModifier = (RoundModifier)_rng.Next(0, 3);
             ActivateMissionController(_mission.Variant);
-            _backyardTrapState.Reset();
-            _backyardDroppedWeenie = null;
             _threatSweepState.Reset();
             _patrolState.Reset();
             _coyotePressureHeld = false;
@@ -1175,7 +1151,6 @@ namespace CheddarAndCocoa.Game
             RopeObject.SetActive(_mission.RequiresTug);
             if (_bunnyCameoObject != null) _bunnyCameoObject.SetActive(true);
             if (_mission.UsesSquirrel) SetActorState(SquirrelObject, _activeMissionController is SquirrelConspiracyMissionController ? "SQUIRREL CONSPIRACY ROUTE 1" : "Squirrel: WAITING", new Color(0.55f, 0.32f, 0.12f), 0.06f);
-            UpdateBackyardTrapGapMarker();
             if (_mission.RequiresPredator) SetActorState(PredatorObject, "Predator: OFFSCREEN", Color.gray, 0.04f);
             if (_mission.RequiresTug) SetActorState(RopeObject, "Rope/Tug - BOTH DOGS", new Color(0.95f, 0.7f, 0.15f), 0.08f);
             if (_mission.Variant == MissionVariant.EagleShadowPanic)
@@ -1247,7 +1222,6 @@ namespace CheddarAndCocoa.Game
             TickPredator();
             TickTugProximity();
             CheckClear();
-            UpdateBackyardTrapGapMarker();
             UpdateObjectiveArrows();
             UpdateTravelAssists();
             UpdateInteractionRanges();
@@ -1268,7 +1242,6 @@ namespace CheddarAndCocoa.Game
         private void TickSquirrel()
         {
             if (!_mission.UsesSquirrel) return;
-            if (_mission.Variant == MissionVariant.BackyardRescue && _backyardTrapState.WeenieDropped) return;
             if (Time.time < _squirrelScaredUntil) return;
 
             var nearbySnack = FindTreatNear(SquirrelObject.transform.position, 0.3f);
@@ -1356,33 +1329,6 @@ namespace CheddarAndCocoa.Game
                 go.SetActive(false);
                 _eagleCoverMarkers[i] = go;
             }
-        }
-
-        private void BuildBackyardTrapGapMarker()
-        {
-            _backyardTrapGapMarker = new GameObject("BackyardSquirrelTrapEscapeGap");
-            _backyardTrapGapMarker.transform.position = _backyardTrapGapPosition;
-            _backyardTrapGapMarker.transform.localScale = Vector3.one * (BackyardTrapGapRadius * 1.25f);
-            var sr = _backyardTrapGapMarker.AddComponent<SpriteRenderer>();
-            sr.sprite = _rangeSprite != null ? _rangeSprite : _sprite;
-            sr.color = new Color(0.35f, 0.8f, 1f, 0.34f);
-            sr.sortingOrder = 1;
-            AddWorldLabel(_backyardTrapGapMarker, "ESCAPE GAP - HOLD HERE", Vector3.up * 0.38f, 14, Color.white);
-            _backyardTrapGapMarker.SetActive(false);
-        }
-
-        private void UpdateBackyardTrapGapMarker()
-        {
-            if (_backyardTrapGapMarker == null) return;
-            bool active = _mission != null && _mission.Variant == MissionVariant.BackyardRescue &&
-                          MissionActive() && !_backyardTrapState.Complete;
-            _backyardTrapGapMarker.transform.position = _backyardTrapGapPosition;
-            _backyardTrapGapMarker.SetActive(active);
-            var sr = _backyardTrapGapMarker.GetComponent<SpriteRenderer>();
-            if (sr != null)
-                sr.color = IsBackyardGapHeld()
-                    ? new Color(0.35f, 1f, 0.5f, 0.48f)
-                    : new Color(0.35f, 0.8f, 1f, 0.34f);
         }
 
         private void SetEagleCoverMarkersActive(bool active)
@@ -2053,14 +1999,7 @@ namespace CheddarAndCocoa.Game
             int progress;
             int goal;
             int mistakes;
-            if (_mission != null && _mission.Variant == MissionVariant.BackyardRescue)
-            {
-                missionId = "backyard_rescue";
-                progress = BreakfastRecovered + _backyardTrapState.Recoveries;
-                goal = BreakfastGoal + BackyardSquirrelTrapState.RequiredRecoveries;
-                mistakes = StolenFood + _backyardTrapState.Fumbles;
-            }
-            else if (_mission != null && _mission.Variant == MissionVariant.EagleShadowPanic)
+            if (_mission != null && _mission.Variant == MissionVariant.EagleShadowPanic)
             {
                 missionId = "eagle_shadow_panic";
                 progress = _threatSweepState.SafeHides + (_threatSweepState.RescueComplete ? 1 : 0) + (_threatSweepState.UnitedFrontComplete ? 1 : 0);
@@ -2292,21 +2231,14 @@ namespace CheddarAndCocoa.Game
             RequestRumble("bark", 0.08f, 0.18f, 0.08f);
             LogPlaytestEvent("Bark", DogName(dog));
 
-            if (_mission.Variant == MissionVariant.BackyardRescue &&
-                     !_backyardTrapState.Complete && _squirrelTarget != null &&
-                     Vector2.Distance(dog.transform.position, SquirrelObject.transform.position) < _tuning.SingleBarkSquirrelRange)
-            {
-                barkDidSomething = ResolveBackyardTrapPressure(dogId, IsBackyardGapHeld());
-            }
-            else if (_mission.Variant == MissionVariant.CoyotesFence)
+            if (_mission.Variant == MissionVariant.CoyotesFence)
             {
                 RegisterCoyoteBarkPressure(dogIndex);
                 barkDidSomething = true;
             }
             else if (_activeMissionController != null)
             {
-                _activeMissionController.HandleBark(dogIndex);
-                barkDidSomething = true;
+                barkDidSomething = _activeMissionController.HandleBark(dogIndex);
             }
             else if (_mission.UsesSquirrel && Vector2.Distance(dog.transform.position, SquirrelObject.transform.position) < _tuning.SingleBarkSquirrelRange)
             {
@@ -2337,9 +2269,7 @@ namespace CheddarAndCocoa.Game
             _nextUnitedBarkAt = Time.time + _tuning.UnitedBarkCooldown;
             _teamBarkFeedbackUntil = Time.time + 0.35f;
             LastFeedback = FeedbackKind.UnitedBark;
-            if (_mission.Variant != MissionVariant.BackyardRescue || _backyardTrapState.Complete ||
-                (_squirrelTarget == null && !_backyardTrapState.WeenieDropped))
-                ScareSquirrel(_tuning.UnitedBarkScareSeconds, "United bark shook the whole yard!", false);
+            ScareSquirrel(_tuning.UnitedBarkScareSeconds, "United bark shook the whole yard!", false);
             LogPlaytestEvent("UnitedBark", $"{UnitedBarks} total");
 
             if (Phase == State.PredatorWarning || Phase == State.PredatorAttack) ResolvePredator();
@@ -2365,71 +2295,6 @@ namespace CheddarAndCocoa.Game
             SpawnWorldPop(SquirrelObject.transform.position, awardScore ? "DROP!" : "DOUBLE WOOF!", new Color(0.9f, 0.95f, 1f));
             if (awardScore) RequestAudioCue(ArenaFeedbackCatalog.TugRescueSuccess);
             LogPlaytestEvent(awardScore ? "SquirrelScared" : "SquirrelUnitedScare", LastCue);
-            LogObjectiveIfChanged();
-        }
-
-        private bool IsBackyardGapHeld()
-        {
-            int gapDog = IndexOfDog(_backyardTrapState.GapDog);
-            return gapDog >= 0 && Vector2.Distance(_dogs[gapDog].transform.position, _backyardTrapGapPosition) <= BackyardTrapGapRadius;
-        }
-
-        private bool ResolveBackyardTrapPressure(DogId dogId, bool gapHeld)
-        {
-            if (_squirrelTarget == null) return false;
-
-            var result = _backyardTrapState.TryRedirect(dogId, gapHeld);
-            if (result == BackyardSquirrelTrapState.RedirectResult.Success)
-            {
-                _backyardDroppedWeenie = _squirrelTarget;
-                _squirrelTarget = null;
-                _backyardDroppedWeenie.transform.position = _backyardTrapGapPosition + Vector2.left * 3f;
-                PlaceObject(SquirrelObject, _backyardTrapGapPosition + Vector2.right * 4f);
-                _squirrelTimer = SquirrelDelay();
-                AddScore(_mission.SquirrelScareScore, "SQUIRREL REDIRECTED");
-                LastFeedback = FeedbackKind.SquirrelScared;
-                LastCue = $"{dogId} pressured the squirrel into the blocked route - {_backyardTrapState.RecoveryDog} recover the dropped weenie!";
-                SetActorState(SquirrelObject, "TRAPPED! PARTNER RECOVER THE DROP", new Color(0.85f, 0.85f, 0.85f), 0.12f);
-                SetJuice(JuiceFeedbackKind.SuccessPop, "SQUIRREL REDIRECT! PARTNER RECOVER");
-                SpawnWorldPop(_backyardDroppedWeenie.transform.position, "DROP! PARTNER ONLY!", new Color(0.9f, 0.95f, 1f));
-                RequestAudioCue(ArenaFeedbackCatalog.TugRescueSuccess);
-                LogPlaytestEvent("SquirrelTrapRedirect", LastCue);
-                UpdateBackyardTrapGapMarker();
-                LogObjectiveIfChanged();
-                return true;
-            }
-
-            if (result == BackyardSquirrelTrapState.RedirectResult.WrongPressureDog)
-                RegisterBackyardTrapFumble($"WRONG WOOF! {_backyardTrapState.PressureDog} must pressure this pass.");
-            else if (result == BackyardSquirrelTrapState.RedirectResult.GapOpen)
-                RegisterBackyardTrapFumble($"FAKE ROUTE! {_backyardTrapState.GapDog} must hold the escape gap first.");
-            return result != BackyardSquirrelTrapState.RedirectResult.Complete;
-        }
-
-        private void RegisterBackyardTrapFumble(string cue)
-        {
-            LastCue = cue + " The squirrel loops back for another try.";
-            SetJuice(JuiceFeedbackKind.WarningMiss, "SQUIRREL JUKE!");
-            SpawnWorldPop(SquirrelObject.transform.position, "NYEH-HEH! WRONG WAY!", new Color(1f, 0.45f, 0.25f));
-            RequestAudioCue(ArenaFeedbackCatalog.ScorePenalty);
-            RequestRumble("squirrel_penalty", 0.12f, 0.25f, 0.12f);
-            LogPlaytestEvent("SquirrelTrapFumble", LastCue);
-            LogObjectiveIfChanged();
-        }
-
-        private void RegisterBackyardTrapRecoveryFumble(DogId dogId)
-        {
-            MarkFailedInteraction(dogId, $"only {_backyardTrapState.RecoveryDog} can recover the trap weenie");
-            LastCue = $"HOT-POTATO FUMBLE! {dogId} caused the drop, so {_backyardTrapState.RecoveryDog} must recover it.";
-            if (_backyardDroppedWeenie != null)
-            {
-                Vector2 bounce = dogId == DogId.Cheddar ? new Vector2(-2.5f, 1.5f) : new Vector2(2.5f, -1.5f);
-                _backyardDroppedWeenie.transform.position = ClampInsideBounds((Vector2)_backyardDroppedWeenie.transform.position + bounce, 1.2f);
-                SpawnWorldPop(_backyardDroppedWeenie.transform.position, "HOT POTATO! PARTNER ONLY!", new Color(1f, 0.45f, 0.25f));
-            }
-            SetJuice(JuiceFeedbackKind.WarningMiss, "PARTNER RECOVERY FUMBLE");
-            RequestAudioCue(ArenaFeedbackCatalog.ScorePenalty);
-            LogPlaytestEvent("SquirrelTrapFumble", LastCue);
             LogObjectiveIfChanged();
         }
 
@@ -2477,8 +2342,7 @@ namespace CheddarAndCocoa.Game
             bool hasItems = BreakfastRecovered >= _mission.ItemGoal;
             bool hasPredator = !_mission.RequiresPredator || PredatorResolved;
             bool hasTug = !_mission.RequiresTug || TugComplete;
-            bool hasBackyardTrap = _mission.Variant != MissionVariant.BackyardRescue || _backyardTrapState.Complete;
-            if (hasItems && hasPredator && hasTug && hasBackyardTrap) EndRound(true);
+            if (hasItems && hasPredator && hasTug) EndRound(true);
         }
 
         private void EndRound(bool clear)
@@ -2538,7 +2402,6 @@ namespace CheddarAndCocoa.Game
 
             HideObjectiveArrows();
             HideInteractionRanges();
-            if (_backyardTrapGapMarker != null) _backyardTrapGapMarker.SetActive(false);
             _activeMissionController?.Cleanup();
             RecordSessionResult();
             LogPlaytestEvent(clear ? "MissionClear" : "MissionFail", EndSummaryLabel);
@@ -2625,16 +2488,6 @@ namespace CheddarAndCocoa.Game
             if (Phase == State.PredatorWarning)
                 return "Huddle + bark at the shadow";
             if (_activeMissionController != null) return _activeMissionController.ObjectiveLabel;
-            if (_mission.Variant == MissionVariant.BackyardRescue && !_backyardTrapState.Complete)
-            {
-                if (_backyardTrapState.WeenieDropped)
-                    return $"{_backyardTrapState.RecoveryDog}: recover the dropped weenie (partner only) - trap {_backyardTrapState.Recoveries}/{BackyardSquirrelTrapState.RequiredRecoveries}";
-                if (_squirrelTarget != null)
-                    return $"Bark to scare squirrel: {_backyardTrapState.PressureDog} pressure / {_backyardTrapState.GapDog} HOLD ESCAPE GAP - trap {_backyardTrapState.Recoveries}/{BackyardSquirrelTrapState.RequiredRecoveries}";
-                if (_mission.RequiresTug && !TugComplete && BreakfastRecovered >= Mathf.Max(2, recoveryGoal / 2))
-                    return _mission.TugObjectiveText;
-                return $"Save weenies; next trap: {_backyardTrapState.PressureDog} pressures, {_backyardTrapState.GapDog} holds gap ({_backyardTrapState.Recoveries}/{BackyardSquirrelTrapState.RequiredRecoveries})";
-            }
             if (_mission.Variant == MissionVariant.EagleShadowPanic)
             {
                 if (_threatSweepState.RescueComplete) return "United-front bark circle: huddle close and bark together";
@@ -3063,7 +2916,6 @@ namespace CheddarAndCocoa.Game
             if (PredatorObject != null) PredatorObject.SetActive(active && _mission != null && _mission.RequiresPredator);
             if (RopeObject != null) RopeObject.SetActive(active && _mission != null && _mission.RequiresTug);
             if (_bunnyCameoObject != null) _bunnyCameoObject.SetActive(active);
-            if (!active && _backyardTrapGapMarker != null) _backyardTrapGapMarker.SetActive(false);
             if (!active) _activeMissionController?.Cleanup();
             if (!active || _mission == null || _mission.Variant != MissionVariant.EagleShadowPanic) SetEagleCoverMarkersActive(false);
             if (!active || _mission == null || _mission.Variant != MissionVariant.CoyotesFence) SetCoyoteGapMarkersActive(false);
@@ -3195,62 +3047,7 @@ namespace CheddarAndCocoa.Game
                         ItemPopColor = new Color(0.95f, 0.8f, 0.35f)
                     };
                 default:
-                    return new MissionDefinition
-                    {
-                        Variant = MissionVariant.BackyardRescue,
-                        Name = "Backyard Rescue",
-                        IntroPrompt = "Cheddar + Cocoa must protect the weenies together.",
-                        ReadyScoreLabel = "READY TO PROTECT WEENIES",
-                        ItemRootName = "Breakfast/Weenies",
-                        ItemObjectName = "Breakfast/Weenie",
-                        ItemWorldLabel = "Weenie",
-                        ItemArrowLabel = "WEENIE",
-                        ItemCollectCueNoun = "breakfast",
-                        CollectObjectiveFormat = "Save weenies {0}/{1}",
-                        CollectedScoreLabel = "WEENIE SAVED",
-                        ItemScore = balance.ItemScore,
-                        SpawnedItemCount = balance.SpawnedItemCount,
-                        ItemGoal = balance.ItemGoal,
-                        RoundSeconds = balance.RoundSeconds,
-                        PawfectScore = balance.PawfectScore,
-                        HeroScore = balance.HeroScore,
-                        SurvivorScore = balance.SurvivorScore,
-                        UsesSquirrel = true,
-                        RequiresPredator = true,
-                        RequiresTug = true,
-                        MaxStolenFood = balance.MaxStolenFood,
-                        SquirrelPenalty = balance.SquirrelPenalty,
-                        SquirrelScareScore = balance.SquirrelScareScore,
-                        SquirrelObjectiveText = "Bark to scare squirrel",
-                        SquirrelStealingCue = "Squirrel is tiptoeing off with a weenie - bark now!",
-                        SquirrelStoleCue = "Squirrel got a weenie and is being rude about it!",
-                        SquirrelStealScoreLabel = "SQUIRREL GOT ONE",
-                        SquirrelScareScoreLabel = "SQUIRREL SCARED",
-                        SquirrelStealingActorLabel = "SQUIRREL STEALING - BARK!",
-                        SquirrelDroppedActorLabel = "SQUIRREL DROPPED IT!",
-                        SquirrelStoleActorLabel = "SQUIRREL GOT A WEENIE!",
-                        SquirrelMissPopLabel = "MISS! -WEENIE",
-                        SquirrelStealJuiceLabel = "MISS! SQUIRREL STOLE A WEENIE",
-                        SquirrelScareJuiceLabel = "SQUIRREL DROP POP!",
-                        TugObjectiveText = "Both dogs tug the rope",
-                        WaitingObjectiveText = "Clear the yard together",
-                        ClearObjectiveText = "Backyard saved - replay the weenie rescue",
-                        ClearBannerPrefix = "BACKYARD SAVED!",
-                        ClearScoreLabel = "LEVEL CLEAR",
-                        ReplayPrompt = "Press R / Enter / Start to replay the weenie rescue",
-                        FailObjectiveText = "Mission failed - replay the weenie rescue",
-                        GenericFailReason = "Needs more bark before the next weenie rescue.",
-                        TimeFailReason = "The clock won while the dogs had opinions.",
-                        StolenFailReason = "The squirrel union escaped with too many weenies.",
-                        PredatorFailReason = "The shadow caused a dramatic rescue backlog.",
-                        PawfectClearReason = "Tiny legends protected every snack with style.",
-                        HeroClearReason = "The yard survived with respectable barking.",
-                        BasicClearReason = "The weenies made it, even if dignity did not.",
-                        ItemColor = new Color(0.9f, 0.28f, 0.18f),
-                        ItemAccentColor = new Color(1f, 0.9f, 0.12f),
-                        ItemSecondaryColor = new Color(0.98f, 0.76f, 0.4f),
-                        ItemPopColor = new Color(1f, 0.9f, 0.25f)
-                    };
+                    throw new System.InvalidOperationException($"No MissionDefinition registered for {variant}. Add it to MissionCatalog.");
             }
         }
 
@@ -3414,25 +3211,6 @@ namespace CheddarAndCocoa.Game
 
             switch (_mission.Variant)
             {
-                case MissionVariant.BackyardRescue:
-                    if (_backyardTrapState.Complete) return false;
-                    if (_backyardTrapState.WeenieDropped)
-                    {
-                        target = _backyardDroppedWeenie != null ? _backyardDroppedWeenie.transform : null;
-                        copy = IndexOfDog(_backyardTrapState.RecoveryDog) == dogIndex ? "RECOVER DROP" : "PARTNER ONLY";
-                        hideDistance = 1.2f;
-                    }
-                    else if (_squirrelTarget != null)
-                    {
-                        bool pressureDog = IndexOfDog(_backyardTrapState.PressureDog) == dogIndex;
-                        target = pressureDog
-                            ? (SquirrelObject != null ? SquirrelObject.transform : null)
-                            : (_backyardTrapGapMarker != null ? _backyardTrapGapMarker.transform : null);
-                        copy = pressureDog ? "BARK PRESSURE" : "HOLD ESCAPE GAP";
-                        hideDistance = pressureDog ? 2.2f : BackyardTrapGapRadius;
-                    }
-                    else return false;
-                    break;
                 case MissionVariant.EagleShadowPanic:
                     if (_threatSweepState.RescueObjectiveActive && !_threatSweepState.RescueComplete)
                     {
@@ -3557,7 +3335,8 @@ namespace CheddarAndCocoa.Game
 
             if (!MissionActive()) return;
 
-            if (_mission.UsesSquirrel && _squirrelTarget != null && SquirrelObject != null)
+            bool squirrelStealing = BackyardRescueController?.IsSquirrelStealing == true || _squirrelTarget != null;
+            if (_mission.UsesSquirrel && squirrelStealing && SquirrelObject != null)
             {
                 var squirrelRange = SquirrelObject.GetComponent<InteractionRangeIndicator>();
                 if (squirrelRange != null)
@@ -3643,7 +3422,6 @@ namespace CheddarAndCocoa.Game
             PredatorObject = MakeActor(ArenaArtCatalog.Actor(ArenaArtCatalog.ActorKind.Predator));
             RopeObject = MakeActor(ArenaArtCatalog.Actor(ArenaArtCatalog.ActorKind.Rope));
             _bunnyCameoObject = MakeDraftBunnyCameo();
-            BuildBackyardTrapGapMarker();
             BuildEagleCoverMarkers();
             BuildCoyoteGapMarkers();
             if (InteractionRangeIndicators != null)

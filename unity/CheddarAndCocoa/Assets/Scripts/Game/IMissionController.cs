@@ -75,6 +75,10 @@ namespace CheddarAndCocoa.Game
         public Func<float> Now { get; }
         public Func<GameManager.RoundModifier> ActiveModifier { get; }
         public Func<IReadOnlyList<Treat>> ActiveTreats { get; }
+        /// <summary>True once the shared predator sequence has been resolved for this round.</summary>
+        public Func<bool> IsPredatorResolved { get; }
+        /// <summary>True once the shared tug-of-war sequence has been completed for this round.</summary>
+        public Func<bool> IsTugComplete { get; }
 
         public Action<int, string> AddScore { get; }
         public Action<int> CreditDog { get; }
@@ -120,6 +124,8 @@ namespace CheddarAndCocoa.Game
             Func<float> now,
             Func<GameManager.RoundModifier> activeModifier,
             Func<IReadOnlyList<Treat>> activeTreats,
+            Func<bool> isPredatorResolved,
+            Func<bool> isTugComplete,
             Action<int, string> addScore,
             Action<int> creditDog,
             Action<string> setCue,
@@ -166,6 +172,8 @@ namespace CheddarAndCocoa.Game
             Now = now ?? throw new ArgumentNullException(nameof(now));
             ActiveModifier = activeModifier ?? throw new ArgumentNullException(nameof(activeModifier));
             ActiveTreats = activeTreats ?? throw new ArgumentNullException(nameof(activeTreats));
+            IsPredatorResolved = isPredatorResolved ?? throw new ArgumentNullException(nameof(isPredatorResolved));
+            IsTugComplete = isTugComplete ?? throw new ArgumentNullException(nameof(isTugComplete));
             AddScore = addScore ?? throw new ArgumentNullException(nameof(addScore));
             CreditDog = creditDog ?? throw new ArgumentNullException(nameof(creditDog));
             SetCue = setCue ?? throw new ArgumentNullException(nameof(setCue));

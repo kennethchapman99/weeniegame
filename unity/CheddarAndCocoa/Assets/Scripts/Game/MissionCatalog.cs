@@ -1062,6 +1062,68 @@ namespace CheddarAndCocoa.Game
             };
         }
 
+        internal static GameManager.MissionDefinition BuildBackyardRescueDefinition(ArenaMissionTuning tuning)
+        {
+            const GameManager.MissionVariant variant = GameManager.MissionVariant.BackyardRescue;
+            var balance = tuning.BalanceFor(variant);
+            return new GameManager.MissionDefinition
+            {
+                Variant = variant,
+                Name = "Backyard Rescue",
+                IntroPrompt = "Cheddar + Cocoa must protect the weenies together.",
+                ReadyScoreLabel = "READY TO PROTECT WEENIES",
+                ItemRootName = "Breakfast/Weenies",
+                ItemObjectName = "Breakfast/Weenie",
+                ItemWorldLabel = "Weenie",
+                ItemArrowLabel = "WEENIE",
+                ItemCollectCueNoun = "breakfast",
+                CollectObjectiveFormat = "Save weenies {0}/{1}",
+                CollectedScoreLabel = "WEENIE SAVED",
+                ItemScore = balance.ItemScore,
+                SpawnedItemCount = balance.SpawnedItemCount,
+                ItemGoal = balance.ItemGoal,
+                RoundSeconds = balance.RoundSeconds,
+                PawfectScore = balance.PawfectScore,
+                HeroScore = balance.HeroScore,
+                SurvivorScore = balance.SurvivorScore,
+                UsesSquirrel = true,
+                RequiresPredator = true,
+                RequiresTug = true,
+                MaxStolenFood = balance.MaxStolenFood,
+                SquirrelPenalty = balance.SquirrelPenalty,
+                SquirrelScareScore = balance.SquirrelScareScore,
+                SquirrelObjectiveText = "Bark to scare squirrel",
+                SquirrelStealingCue = "Squirrel is tiptoeing off with a weenie - bark now!",
+                SquirrelStoleCue = "Squirrel got a weenie and is being rude about it!",
+                SquirrelStealScoreLabel = "SQUIRREL GOT ONE",
+                SquirrelScareScoreLabel = "SQUIRREL SCARED",
+                SquirrelStealingActorLabel = "SQUIRREL STEALING - BARK!",
+                SquirrelDroppedActorLabel = "SQUIRREL DROPPED IT!",
+                SquirrelStoleActorLabel = "SQUIRREL GOT A WEENIE!",
+                SquirrelMissPopLabel = "MISS! -WEENIE",
+                SquirrelStealJuiceLabel = "MISS! SQUIRREL STOLE A WEENIE",
+                SquirrelScareJuiceLabel = "SQUIRREL DROP POP!",
+                TugObjectiveText = "Both dogs tug the rope",
+                WaitingObjectiveText = "Clear the yard together",
+                ClearObjectiveText = "Backyard saved - replay the weenie rescue",
+                ClearBannerPrefix = "BACKYARD SAVED!",
+                ClearScoreLabel = "LEVEL CLEAR",
+                ReplayPrompt = "Press R / Enter / Start to replay the weenie rescue",
+                FailObjectiveText = "Mission failed - replay the weenie rescue",
+                GenericFailReason = "Needs more bark before the next weenie rescue.",
+                TimeFailReason = "The clock won while the dogs had opinions.",
+                StolenFailReason = "The squirrel union escaped with too many weenies.",
+                PredatorFailReason = "The shadow caused a dramatic rescue backlog.",
+                PawfectClearReason = "Tiny legends protected every snack with style.",
+                HeroClearReason = "The yard survived with respectable barking.",
+                BasicClearReason = "The weenies made it, even if dignity did not.",
+                ItemColor = new Color(0.9f, 0.28f, 0.18f),
+                ItemAccentColor = new Color(1f, 0.9f, 0.12f),
+                ItemSecondaryColor = new Color(0.98f, 0.76f, 0.4f),
+                ItemPopColor = new Color(1f, 0.9f, 0.25f)
+            };
+        }
+
         internal static GameManager.MissionDefinition BuildSnackHeistDefinition(ArenaMissionTuning tuning)
         {
             const GameManager.MissionVariant variant = GameManager.MissionVariant.SnackHeist;

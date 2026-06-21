@@ -145,7 +145,8 @@ namespace CheddarAndCocoa.Tests
             _game.StartMission(GameManager.MissionVariant.BackyardRescue);
             yield return null;
 
-            Assert.IsNull(_game.ActiveMissionController);
+            Assert.IsNotNull(_game.ActiveMissionController);
+            Assert.IsInstanceOf<BackyardRescueMissionController>(_game.ActiveMissionController);
             Assert.IsFalse(counter.activeSelf);
             Assert.IsFalse(bowl.activeSelf);
             Assert.IsFalse(food.activeSelf);

@@ -4,7 +4,7 @@
 
 ## Current state
 
-- PlayMode suite: **357 passed / 0 failed / 0 skipped** (2026-06-21).
+- PlayMode suite: **357 passed / 0 failed / 0 skipped** (pre-BackyardRescue); suite target ~360+ after BackyardRescuePlayModeTests pass (2026-06-21).
 - Tree is compile-clean and out of Safe Mode.
 
 ## Extracted (controller-owned)
@@ -30,10 +30,11 @@
 | Weenie Roundup | `WeenieRoundupMissionController` | Owns loose/carry actors, pickup/delivery ticking, cargo state, and fumble recovery. |
 | Squirrel Conspiracy | `SquirrelConspiracyMissionController` | Owns route/cutoff geometry, herding state, taunts, stash interaction, markers, failure, and snapshots; temporarily consumes the shared squirrel actor through `MissionContext`. |
 | Snack Heist | `SnackHeistMissionController` | Owns recovery/steal state, squirrel targeting/timing, bark defense, collectible interpretation, failure, and snapshots; consumes the shared squirrel and treat pool through narrow context services. |
+| Backyard Rescue | `BackyardRescueMissionController` | Owns two-pass squirrel trap state (`BackyardSquirrelTrapState`), role-reversal redirect/recovery logic, escape-gap marker, squirrel stealing loop, collectible interpretation, and snapshots. Added `IsPredatorResolved`/`IsTugComplete` to `MissionContext`; added `Collected`/`Stolen`/`IsSquirrelStealing` forwarding to `GameManager`. Bark return value now meaningful (SoloBark fires when controller returns false). |
 
 ## Remaining in `GameManager` (not yet extracted)
 
-BackyardRescue, EagleShadowPanic, CoyotesFence.
+EagleShadowPanic, CoyotesFence.
 
 ## Contract additions so far
 
@@ -53,6 +54,5 @@ BackyardRescue, EagleShadowPanic, CoyotesFence.
 
 ## Next step
 
-Snack Heist extracted. Remaining missions are the squirrel/predator/legacy-actor cluster.
-**Backyard Rescue** can now reuse the controller-owned squirrel/treat path while adding its trap-role
-state. Eagle Shadow Panic and Coyotes at the Fence remain larger two-actor extractions.
+Backyard Rescue extracted. Remaining missions are the two-actor predator cluster.
+**Eagle Shadow Panic** owns the threat-sweep state machine, cover zone positioning, eagle snatch/rescue sequence, and united-front bark completion. **Coyotes at the Fence** owns patrol state, fence-gap markers, gap-repair interaction, and final-pressure completion. Both use the shared predator actor and require `IsPredatorResolved`/`IsTugComplete` (now in `MissionContext`).
