@@ -159,9 +159,12 @@ namespace CheddarAndCocoa.Game
                     copy = cheddar ? "WATCH COCOA" : "HOLD DOOR STARE";
                     break;
                 case Beat.LeashMessage:
-                case Beat.UnitedBark:
                     target = cheddar ? _leash.transform : _door.transform;
                     copy = cheddar ? "PRESENT LEASH" : "HOLD DOOR STARE";
+                    break;
+                case Beat.UnitedBark:
+                    target = cheddar ? _leash.transform : _door.transform;
+                    copy = cheddar ? "LEASH + BARK!" : "STARE + BARK!";
                     break;
                 case Beat.ChargerGambit:
                     target = cheddar ? _hallway.transform : _charger.transform;
