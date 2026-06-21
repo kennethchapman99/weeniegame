@@ -1,6 +1,6 @@
 # Arena Playable — Mission Variety Spike
 
-`unity/CheddarAndCocoa/Assets/Scenes/ArenaScene.unity` is now a small co-op vertical slice instead of a flat treat loop. The scene still builds itself from `ArenaBootstrap`, but the arena can run multiple small mission variants through one lightweight mission definition path. A cold start now opens a generated in-scene mission select so a new player can choose Backyard Rescue, Snack Heist, Sock Panic, Squirrel Conspiracy, Eagle Shadow Panic, Coyotes at the Fence, Weenie Roundup, Scent Search, Thunderstorm Comfort, Mark the Yard, Walkies on the Leash, or Car Ride Balance (arrow-select) without a developer explaining debug keys.
+`unity/CheddarAndCocoa/Assets/Scenes/ArenaScene.unity` is now a small co-op vertical slice instead of a flat treat loop. The scene still builds itself from `ArenaBootstrap`, but the arena can run 20 mission variants through one lightweight mission definition path. A cold start opens a generated in-scene mission select; the newest arrow-select mission is **Kitchen Falling Food Frenzy**.
 
 For current global character art direction, read `docs/ART-DIRECTION.md`. Backyard Mission is the
 playable proof of that direction, not the only place the direction applies. For future external
@@ -100,8 +100,8 @@ and reports `ON TARGET` inside interaction range, so split players can coordinat
 small world text.
 
 1. Open `unity/CheddarAndCocoa` in Unity 6 LTS, open `Assets/Scenes/ArenaScene.unity`, and press Play. `ArenaScene` is also the scripted local build entry point.
-2. The mission picker appears immediately. Use **Up/Down** or gamepad **D-pad** to highlight a mission, then press **Enter**, **Space**, gamepad **Start**, or gamepad **South** to start. Keyboard **1-9 and 0** also starts Backyard Rescue, Snack Heist, Sock Panic, Squirrel Conspiracy, Eagle Shadow Panic, Coyotes at the Fence, Weenie Roundup, Scent Search, Thunderstorm Comfort, Mark the Yard, Walkies on the Leash, or Car Ride Balance (arrow-select) directly.
-   - All 12 missions fit in an adaptive two-column picker down to a 480-pixel-tall window.
+2. The mission picker appears immediately. Use **Up/Down** or gamepad **D-pad** to highlight a mission, then press **Enter**, **Space**, gamepad **Start**, or gamepad **South** to start. Keyboard **1-9 and 0** directly starts the original first ten missions; use arrow/D-pad selection for later missions including Kitchen Falling Food Frenzy.
+   - All 20 missions use the adaptive two-column picker.
    - Each tile shows `NEW`, `RETRY`, `CLEARED`, or `FLAWLESS` plus its session-best score; the selected detail line shows round time and objective size.
    - The header keeps missions played/tried, total score, and flawless clears visible before the next choice.
 3. Read the one-line mission briefing at the start of the round. The HUD keeps the current mission name, objective, score, timer, controls, modifier, and latest score event visible during play.
@@ -328,6 +328,19 @@ A spill produces `CAR SPILL!`, a threat cue, stronger rumble, and synchronized w
 cause of lost balance reads before the next lurch.
 
 > **Mechanic-module coverage:** with Car Ride Balance, all nine `ProductionMechanicModule` values (Herding, ThreatSweep, PatrolDefense, SharedObject, TerritoryControl, ScentSearch, RhythmPanic, VehicleBalance, LeashPhysics) now have at least one playable, tested mission.
+
+### Kitchen Falling Food Frenzy
+
+Kitchen Falling Food Frenzy is a compact counter-to-floor relay. Cheddar is the counter scout: standing in the marked **COUNTER** route knocks a deterministic good-food or onion drop loose. Cocoa is the floor sweeper: she tracks good food into the marked **SAFE BOWL** to score, while onions should be dodged and allowed to splat. Four safe catches clear the mission.
+
+- Dog-local arrows and the team route line always name the current jobs: **KNOCK FOOD LOOSE / GUARD THE BOWL**, then **BACK TO COUNTER / FLOOR IT IN BOWL** while food is falling.
+- Good catches build a score combo. Missing good food, catching outside the bowl, eating an onion, or attempting the partner's role breaks momentum but remains recoverable.
+- Gold placeholder food means catch; purple placeholder onion means dodge. Existing generated sprites and placeholder audio provide the drop, catch, splat, gross-out, and clear feedback.
+- No squirrel, predator, tug, or generic collectible loop runs during this mission.
+
+Deterministic hooks are `ForceKitchenDrop(kind)`, `ForceKitchenCatch(dog, intoSafeZone)`, and `ForceKitchenLetFall()`. `KitchenFoodFrenzyMissionStateTests` covers the pure rules; `KitchenFoodFrenzyPlayModeTests` covers mission wiring, readable stations, good/bad outcomes, role failure, clear, and replay reset.
+
+Manual acceptance check: arrow-select **Kitchen Falling Food Frenzy**. Move Cheddar onto the counter marker and keep Cocoa near the safe bowl. For gold food, intercept it with Cocoa while she is inside the bowl; confirm **YUM**, score, and combo feedback. For a purple onion, move Cocoa clear and let it splat; confirm the dodge scores without breaking the run. Let one good item splat and deliberately eat one onion, then verify both failures are funny, readable, and recoverable. Catch four good drops and confirm **KITCHEN CLEARED!**.
 
 ## Level scale and camera
 
