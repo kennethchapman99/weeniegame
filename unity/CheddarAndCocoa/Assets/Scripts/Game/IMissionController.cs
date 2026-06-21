@@ -31,6 +31,19 @@ namespace CheddarAndCocoa.Game
         MissionRuntimeSnapshot CreateSnapshot(int score, float timeRemaining, GameManager.MissionOutcome outcome);
     }
 
+    /// <summary>Optional input surface for missions whose primary verb is the shared interact action.</summary>
+    public interface IMissionInteractionController
+    {
+        bool HandleInteract(int dogIndex);
+    }
+
+    /// <summary>Optional collection surface for controllers that interpret shared Treat actors.</summary>
+    public interface IMissionTreatCollector
+    {
+        bool SpawnTreatsHidden { get; }
+        bool HandleTreatCollected(Treat treat, int dogIndex);
+    }
+
     /// <summary>
     /// Narrow shared-services bundle for mission controllers. It intentionally exposes dogs,
     /// arena presentation services, scoring, and session-safe callbacks—not GameManager itself.
@@ -59,6 +72,12 @@ namespace CheddarAndCocoa.Game
         public Action LogObjectiveChanged { get; }
         public Action<DogId, string> MarkFailedInteraction { get; }
         public Func<GameObject, string, Vector3, int, Color, TextMesh> AddWorldLabel { get; }
+        public int ObjectiveGoal { get; }
+        public Func<ArenaArtCatalog.ActorKind, GameObject> CreateActor { get; }
+        public Func<Treat> AcquireHiddenTreat { get; }
+        public Action<Treat> RecoverCollectible { get; }
+        public Action<GameObject, string, Color, float> SetActorState { get; }
+        public Action<GameObject, float> Pulse { get; }
 
         public MissionContext(
             DogController[] dogs,
@@ -80,7 +99,13 @@ namespace CheddarAndCocoa.Game
             Action<string, string> logEvent,
             Action logObjectiveChanged,
             Action<DogId, string> markFailedInteraction,
-            Func<GameObject, string, Vector3, int, Color, TextMesh> addWorldLabel)
+            Func<GameObject, string, Vector3, int, Color, TextMesh> addWorldLabel,
+            int objectiveGoal,
+            Func<ArenaArtCatalog.ActorKind, GameObject> createActor,
+            Func<Treat> acquireHiddenTreat,
+            Action<Treat> recoverCollectible,
+            Action<GameObject, string, Color, float> setActorState,
+            Action<GameObject, float> pulse)
         {
             Dogs = dogs ?? throw new ArgumentNullException(nameof(dogs));
             DogFeedback = dogFeedback ?? throw new ArgumentNullException(nameof(dogFeedback));
@@ -105,6 +130,12 @@ namespace CheddarAndCocoa.Game
             LogObjectiveChanged = logObjectiveChanged ?? throw new ArgumentNullException(nameof(logObjectiveChanged));
             MarkFailedInteraction = markFailedInteraction ?? throw new ArgumentNullException(nameof(markFailedInteraction));
             AddWorldLabel = addWorldLabel ?? throw new ArgumentNullException(nameof(addWorldLabel));
+            ObjectiveGoal = objectiveGoal;
+            CreateActor = createActor ?? throw new ArgumentNullException(nameof(createActor));
+            AcquireHiddenTreat = acquireHiddenTreat ?? throw new ArgumentNullException(nameof(acquireHiddenTreat));
+            RecoverCollectible = recoverCollectible ?? throw new ArgumentNullException(nameof(recoverCollectible));
+            SetActorState = setActorState ?? throw new ArgumentNullException(nameof(setActorState));
+            Pulse = pulse ?? throw new ArgumentNullException(nameof(pulse));
         }
 
         public int IndexOfDog(DogId dogId)

@@ -65,7 +65,10 @@ namespace CheddarAndCocoa.Game
                     MissionCatalog.BuildThunderstormComfortDefinition),
                 [GameManager.MissionVariant.LeashWalk] = new Registration(
                     () => new LeashWalkMissionController(),
-                    MissionCatalog.BuildLeashWalkDefinition)
+                    MissionCatalog.BuildLeashWalkDefinition),
+                [GameManager.MissionVariant.SockPanic] = new Registration(
+                    () => new SockPanicMissionController(),
+                    MissionCatalog.BuildSockPanicDefinition)
             };
 
         public static IEnumerable<GameManager.MissionVariant> RegisteredVariants => Registrations.Keys;

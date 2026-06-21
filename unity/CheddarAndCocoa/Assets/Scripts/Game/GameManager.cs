@@ -169,7 +169,8 @@ namespace CheddarAndCocoa.Game
         public Vector2[] LeashCheckpoints => LeashWalkMissionController.ComputeCheckpoints(_bounds);
         public CarBalanceMissionState CarRideState => _carState;
         public float CarBalance => _carBalance;
-        public SockBasketMissionState SockPanicState => _sockBasketState;
+        public SockPanicMissionController SockPanicController => _activeMissionController as SockPanicMissionController;
+        public SockBasketMissionState SockPanicState => SockPanicController?.State ?? _emptySockBasketState;
         public BackyardSquirrelTrapState BackyardTrapState => _backyardTrapState;
         public Vector2 BackyardTrapGapPosition => _backyardTrapGapPosition;
         public Treat BackyardDroppedWeenie => _backyardDroppedWeenie;
@@ -181,8 +182,8 @@ namespace CheddarAndCocoa.Game
         public GameObject KitchenLandingWarningObject => KitchenController?.LandingWarningObject;
         public PeeBreakMissionController PeeBreakController => _activeMissionController as PeeBreakMissionController;
         public IMissionController ActiveMissionController => _activeMissionController;
-        public GameObject LaundryBasketObject => _laundryBasketObject;
-        public Treat ExposedSock => _exposedSock;
+        public GameObject LaundryBasketObject => SockPanicController?.BasketObject;
+        public Treat ExposedSock => SockPanicController?.ExposedSock;
         public GateCrashMissionController GateCrashController => _activeMissionController as GateCrashMissionController;
         public CoopHoldReleasePuzzle GateCrashPuzzle => GateCrashController?.Puzzle ?? _emptyGatePuzzle;
         public Vector2 GateHoldZone => GateCrashController?.HoldZone ?? _bounds.center;
@@ -463,12 +464,7 @@ namespace CheddarAndCocoa.Game
         // Mark the Yard now lives in MarkTheYardMissionController; this empty state backs the
         // compatibility accessor when the mission is not the active controller.
         private readonly TerritoryMissionState _emptyTerritoryState = new TerritoryMissionState();
-        private readonly SockBasketMissionState _sockBasketState = new SockBasketMissionState();
-        private GameObject _laundryBasketObject;
-        private Treat _exposedSock;
-        private float _sockOpeningUntil;
-        private const float SockBasketInteractRange = 2.6f;
-        private const float SockOpeningSeconds = 6f;
+        private readonly SockBasketMissionState _emptySockBasketState = new SockBasketMissionState();
 
         private readonly List<Treat> _treats = new();
         private readonly List<string> _sessionRanks = new();
@@ -573,7 +569,13 @@ namespace CheddarAndCocoa.Game
             logEvent: LogPlaytestEvent,
             logObjectiveChanged: LogObjectiveIfChanged,
             markFailedInteraction: MarkFailedInteraction,
-            addWorldLabel: AddWorldLabel);
+            addWorldLabel: AddWorldLabel,
+            objectiveGoal: _mission.ItemGoal,
+            createActor: kind => MakeActor(ArenaArtCatalog.Actor(kind)),
+            acquireHiddenTreat: FindFirstHiddenTreat,
+            recoverCollectible: RecoverControllerCollectible,
+            setActorState: SetActorState,
+            pulse: Pulse);
 
         private void ConfigureSpatialLayout()
         {
@@ -601,6 +603,16 @@ namespace CheddarAndCocoa.Game
         {
             if (!MissionActive() || treat == null) return;
 
+            int collectorIndex = dog != null && dog.TryGetComponent<DogIdentity>(out var collectorIdentity)
+                ? IndexOfDog(collectorIdentity.Id)
+                : -1;
+            if (_activeMissionController is IMissionTreatCollector controllerCollector &&
+                controllerCollector.HandleTreatCollected(treat, collectorIndex))
+            {
+                CheckClear();
+                return;
+            }
+
             bool trapRecovery = false;
             if (_mission.Variant == MissionVariant.BackyardRescue && treat == _backyardDroppedWeenie)
             {
@@ -624,29 +636,9 @@ namespace CheddarAndCocoa.Game
                 UpdateBackyardTrapGapMarker();
             }
 
-            bool partnerSockDive = false;
-            if (_mission.Variant == MissionVariant.SockPanic)
-            {
-                int dogIndex = dog != null ? IndexOfDog(dog.GetComponent<DogIdentity>().Id) : -1;
-                var result = _sockBasketState.TryCollect(dogIndex);
-                if (result == SockBasketMissionState.CollectResult.BasketClosed)
-                {
-                    MarkFailedInteraction(dog != null ? dog.GetComponent<DogIdentity>().Id : DogId.Cheddar, "tip the laundry basket first");
-                    return;
-                }
-                if (result == SockBasketMissionState.CollectResult.SameDogDecoy)
-                {
-                    RegisterSockFumble("DECOY! The basket-tipper needs their partner to dive.");
-                    return;
-                }
-                partnerSockDive = true;
-                _exposedSock = null;
-                CloseSockBasketVisuals();
-            }
-
             AddScore(
-                partnerSockDive ? ScoreEventCatalog.SockDive.Points : _mission.ItemScore,
-                partnerSockDive ? ScoreEventCatalog.SockDive.Label : trapRecovery ? "TRAP WEENIE RECOVERED" : _mission.CollectedScoreLabel);
+                _mission.ItemScore,
+                trapRecovery ? "TRAP WEENIE RECOVERED" : _mission.CollectedScoreLabel);
             BreakfastRecovered++;
             LastCue = trapRecovery
                 ? $"{DogName(dog)} recovered the dropped weenie" + (_backyardTrapState.Complete ? " - squirrel trap complete!" : " - swap roles!")
@@ -1070,15 +1062,12 @@ namespace CheddarAndCocoa.Game
 
         public void ForceSockBasketTip(DogId dogId = DogId.Cocoa)
         {
-            if (MissionActive() && _mission != null && _mission.Variant == MissionVariant.SockPanic)
-                TryTipSockBasket(dogId, true);
+            if (MissionActive()) SockPanicController?.ForceTip(dogId);
         }
 
         public void ForceSockBasketTimeout()
         {
-            if (MissionActive() && _mission != null && _mission.Variant == MissionVariant.SockPanic &&
-                _sockBasketState.ExpireOpening())
-                RegisterSockFumble("FUMBLE! The basket flopped shut on the runaway sock.");
+            if (MissionActive()) SockPanicController?.ForceTimeout();
         }
 
         private void BeginRound()
@@ -1136,9 +1125,6 @@ namespace CheddarAndCocoa.Game
             _carryState.Reset();
             _scentState.Reset();
             _carState.Reset();
-            _sockBasketState.Reset();
-            _exposedSock = null;
-            _sockOpeningUntil = 0f;
             _carBalance = 0f;
             _carLurchDir = 1;
             if (_dogContribution != null) System.Array.Clear(_dogContribution, 0, _dogContribution.Length);
@@ -1269,16 +1255,6 @@ namespace CheddarAndCocoa.Game
                     SetActorState(PredatorObject, "CAR - LEAN TO KEEP IT LEVEL!", new Color(0.5f, 0.4f, 0.3f), 0.12f);
                 }
             }
-            if (_laundryBasketObject != null)
-            {
-                bool sockPanic = _mission.Variant == MissionVariant.SockPanic;
-                _laundryBasketObject.SetActive(sockPanic);
-                if (sockPanic)
-                {
-                    PlaceObject(_laundryBasketObject, _bounds.center);
-                    SetActorState(_laundryBasketObject, "LAUNDRY BASKET - ONE DOG TIP, PARTNER DIVE!", new Color(0.78f, 0.56f, 0.3f), 0.08f);
-                }
-            }
             StageDogsForMissionEntry();
             UpdateObjectiveArrows();
             _lastLoggedObjective = string.Empty;
@@ -1304,8 +1280,7 @@ namespace CheddarAndCocoa.Game
             }
 
             TickModifier();
-            if (_mission.Variant == MissionVariant.SockPanic) TickSockBasket();
-            else if (_mission.Variant == MissionVariant.SquirrelConspiracy) TickSquirrelConspiracy();
+            if (_mission.Variant == MissionVariant.SquirrelConspiracy) TickSquirrelConspiracy();
             else if (_mission.Variant == MissionVariant.EagleShadowPanic) TickThreatSweep();
             else if (_mission.Variant == MissionVariant.CoyotesFence) TickPatrolDefense();
             else if (_mission.Variant == MissionVariant.WeenieRoundup) TickCarryRoundup();
@@ -2825,81 +2800,29 @@ namespace CheddarAndCocoa.Game
             if (TugProgress >= 1f) CompleteTug();
         }
 
-        private void TickSockBasket()
-        {
-            if (!_sockBasketState.BasketOpen || Time.time < _sockOpeningUntil) return;
-            _sockBasketState.ExpireOpening();
-            RegisterSockFumble("FUMBLE! The basket flopped shut on the runaway sock.");
-        }
-
-        private void TryTipSockBasket(DogId dogId, bool force = false)
-        {
-            int dogIndex = IndexOfDog(dogId);
-            if (dogIndex < 0 || _laundryBasketObject == null) return;
-            if (!force && Vector2.Distance(_dogs[dogIndex].transform.position, _laundryBasketObject.transform.position) > SockBasketInteractRange)
-            {
-                MarkFailedInteraction(dogId, "too far from laundry basket");
-                return;
-            }
-            if (!_sockBasketState.TryOpen(dogIndex))
-            {
-                MarkFailedInteraction(dogId, "basket already held open");
-                return;
-            }
-
-            _exposedSock = FindFirstHiddenSock();
-            if (_exposedSock == null)
-            {
-                _sockBasketState.ExpireOpening();
-                return;
-            }
-
-            _exposedSock.transform.position = _laundryBasketObject.transform.position + new Vector3(2f, 0f, 0f);
-            _exposedSock.gameObject.SetActive(true);
-            _sockOpeningUntil = Time.time + SockOpeningSeconds;
-            AddScore(ScoreEventCatalog.BasketTipped.Points, ScoreEventCatalog.BasketTipped.Label);
-            LastCue = $"{DogName(_dogs[dogIndex])} tipped the basket - partner dive for the sock!";
-            SetActorState(_laundryBasketObject, "BASKET HELD OPEN - PARTNER DIVE NOW!", new Color(0.96f, 0.72f, 0.32f), 0.22f);
-            SpawnWorldPop(_laundryBasketObject.transform.position, "TIP! PARTNER DIVE!", new Color(0.62f, 0.9f, 1f));
-            RequestAudioCue(ArenaFeedbackCatalog.Bark);
-            LogPlaytestEvent("SockBasket", LastCue);
-            LogObjectiveIfChanged();
-        }
-
-        private Treat FindFirstHiddenSock()
+        private Treat FindFirstHiddenTreat()
         {
             foreach (var treat in _treats)
                 if (treat != null && !treat.gameObject.activeSelf) return treat;
             return null;
         }
 
-        private void RegisterSockFumble(string cue)
+        private void RecoverControllerCollectible(Treat treat)
         {
-            if (_exposedSock != null) _exposedSock.gameObject.SetActive(false);
-            _exposedSock = null;
-            AddScore(ScoreEventCatalog.SockDecoy.Points, ScoreEventCatalog.SockDecoy.Label);
-            LastCue = cue;
-            CloseSockBasketVisuals();
-            SpawnWorldPop(_laundryBasketObject != null ? _laundryBasketObject.transform.position : Vector3.zero, "DECOY FUMBLE!", new Color(1f, 0.45f, 0.25f));
-            RequestAudioCue(ArenaFeedbackCatalog.ScorePenalty);
-            LogPlaytestEvent("SockFumble", cue);
-            LogObjectiveIfChanged();
-        }
-
-        private void CloseSockBasketVisuals()
-        {
-            _sockOpeningUntil = 0f;
-            if (_laundryBasketObject != null)
-                SetActorState(_laundryBasketObject, "LAUNDRY BASKET - TIP AGAIN!", new Color(0.78f, 0.56f, 0.3f), 0.08f);
+            if (treat == null) return;
+            BreakfastRecovered++;
+            _treats.Remove(treat);
+            Destroy(treat.gameObject);
+            SpawnTreat();
         }
 
         private void OnDogInteracted(DogId dogId)
         {
             if (!MissionActive()) return;
 
-            if (_mission != null && _mission.Variant == MissionVariant.SockPanic)
+            if (_activeMissionController is IMissionInteractionController interactionController &&
+                interactionController.HandleInteract(IndexOfDog(dogId)))
             {
-                TryTipSockBasket(dogId);
                 return;
             }
 
@@ -3370,12 +3293,6 @@ namespace CheddarAndCocoa.Game
                 if (_mission.RequiresTug && !TugComplete && BreakfastRecovered >= Mathf.Max(2, recoveryGoal / 2))
                     return _mission.TugObjectiveText;
                 return $"Save weenies; next trap: {_backyardTrapState.PressureDog} pressures, {_backyardTrapState.GapDog} holds gap ({_backyardTrapState.Recoveries}/{BackyardSquirrelTrapState.RequiredRecoveries})";
-            }
-            if (_mission.Variant == MissionVariant.SockPanic)
-            {
-                if (_sockBasketState.BasketOpen)
-                    return $"Basket open! Partner dive for the sock ({BreakfastRecovered}/{recoveryGoal} returned)";
-                return $"Tip the laundry basket, then partner-dive: socks {BreakfastRecovered}/{recoveryGoal}, fumbles {_sockBasketState.Fumbles}";
             }
             if (_mission.Variant == MissionVariant.SquirrelConspiracy)
             {
@@ -4247,63 +4164,6 @@ namespace CheddarAndCocoa.Game
                         ItemSecondaryColor = new Color(0.24f, 0.2f, 0.14f),
                         ItemPopColor = new Color(0.85f, 0.75f, 0.55f)
                     };
-                case MissionVariant.SockPanic:
-                    return new MissionDefinition
-                    {
-                        Variant = MissionVariant.SockPanic,
-                        Name = "Sock Panic",
-                        IntroPrompt = "Tip the laundry basket, then have the partner dive for each exposed sock before laundry order returns.",
-                        ReadyScoreLabel = "READY TO PANIC ABOUT SOCKS",
-                        ItemRootName = "Scattered Socks",
-                        ItemObjectName = "Panic Sock",
-                        ItemWorldLabel = "Sock!",
-                        ItemArrowLabel = "SOCK",
-                        ItemCollectCueNoun = "a dramatic sock",
-                        CollectObjectiveFormat = "Return socks {0}/{1}",
-                        CollectedScoreLabel = "PARTNER SOCK DIVE",
-                        ItemScore = balance.ItemScore,
-                        SpawnedItemCount = balance.SpawnedItemCount,
-                        ItemGoal = balance.ItemGoal,
-                        RoundSeconds = balance.RoundSeconds,
-                        PawfectScore = balance.PawfectScore,
-                        HeroScore = balance.HeroScore,
-                        SurvivorScore = balance.SurvivorScore,
-                        UsesSquirrel = false,
-                        RequiresPredator = false,
-                        RequiresTug = false,
-                        MaxStolenFood = balance.MaxStolenFood,
-                        SquirrelPenalty = balance.SquirrelPenalty,
-                        SquirrelScareScore = balance.SquirrelScareScore,
-                        SquirrelObjectiveText = "No squirrel - find socks",
-                        SquirrelStealingCue = "No squirrel in Sock Panic.",
-                        SquirrelStoleCue = "No squirrel in Sock Panic.",
-                        SquirrelStealScoreLabel = "SOCK CONFUSION",
-                        SquirrelScareScoreLabel = "SOCK BARK",
-                        SquirrelStealingActorLabel = "SQUIRREL OFF DUTY",
-                        SquirrelDroppedActorLabel = "SQUIRREL OFF DUTY",
-                        SquirrelStoleActorLabel = "SQUIRREL OFF DUTY",
-                        SquirrelMissPopLabel = "MISS! -SOCK",
-                        SquirrelStealJuiceLabel = "MISS! SOCK PANIC",
-                        SquirrelScareJuiceLabel = "SOCK BARK POP!",
-                        TugObjectiveText = "Return the socks",
-                        WaitingObjectiveText = "Find the last runaway sock",
-                        ClearObjectiveText = "Sock panic solved - replay Sock Panic",
-                        ClearBannerPrefix = "SOCKS SORTED!",
-                        ClearScoreLabel = "SOCK PANIC CLEAR",
-                        ReplayPrompt = "Press R / Enter / Start to replay Sock Panic",
-                        FailObjectiveText = "Mission failed - replay Sock Panic",
-                        GenericFailReason = "Needs more sock urgency before laundry patrol.",
-                        TimeFailReason = "Laundry order returned before the final sock was rescued.",
-                        StolenFailReason = "No squirrel stole socks; the dogs simply lost the plot.",
-                        PredatorFailReason = "No predator here, just laundry pressure.",
-                        PawfectClearReason = "Tiny legends restored sock civilization.",
-                        HeroClearReason = "The laundry pile survived with only mild drama.",
-                        BasicClearReason = "The socks came home looking emotionally handled.",
-                        ItemColor = new Color(0.42f, 0.72f, 1f),
-                        ItemAccentColor = new Color(1f, 0.88f, 0.28f),
-                        ItemSecondaryColor = new Color(0.12f, 0.42f, 0.72f),
-                        ItemPopColor = new Color(0.62f, 0.9f, 1f)
-                    };
                 default:
                     return new MissionDefinition
                     {
@@ -4543,29 +4403,6 @@ namespace CheddarAndCocoa.Game
                     }
                     else return false;
                     break;
-                case MissionVariant.SockPanic:
-                    if (_sockBasketState.BasketOpen)
-                    {
-                        if (dogIndex == _sockBasketState.OpenerDogIndex)
-                        {
-                            target = _laundryBasketObject != null ? _laundryBasketObject.transform : null;
-                            copy = "HOLD BASKET";
-                            hideDistance = SockBasketInteractRange;
-                        }
-                        else
-                        {
-                            target = _exposedSock != null ? _exposedSock.transform : null;
-                            copy = "DIVE FOR SOCK";
-                            hideDistance = 1.2f;
-                        }
-                    }
-                    else
-                    {
-                        target = _laundryBasketObject != null ? _laundryBasketObject.transform : null;
-                        copy = "TIP BASKET";
-                        hideDistance = SockBasketInteractRange;
-                    }
-                    break;
                 case MissionVariant.SquirrelConspiracy:
                     if (_herdingState.StashRevealed)
                     {
@@ -4715,7 +4552,6 @@ namespace CheddarAndCocoa.Game
             switch (_mission.Variant)
             {
                 case MissionVariant.SquirrelConspiracy: return _squirrelRoute[0];
-                case MissionVariant.SockPanic: return _laundryBasketObject != null ? (Vector2)_laundryBasketObject.transform.position : _bounds.center;
                 case MissionVariant.EagleShadowPanic: return _eagleCoverZones[0];
                 case MissionVariant.CoyotesFence: return _fenceGapPosition;
                 case MissionVariant.WeenieRoundup: return _weenieSpots[0];
@@ -4810,7 +4646,7 @@ namespace CheddarAndCocoa.Game
             _treats.Add(treat);
 
             AddWorldLabel(go, _mission.ItemWorldLabel, Vector3.up * 2.2f, 16, Color.white);
-            if (_mission.Variant == MissionVariant.SockPanic) go.SetActive(false);
+            if (_activeMissionController is IMissionTreatCollector { SpawnTreatsHidden: true }) go.SetActive(false);
         }
 
         private void BuildCollectibleArt(GameObject go, CollectibleVisualSlot art)
@@ -4836,8 +4672,6 @@ namespace CheddarAndCocoa.Game
             SquirrelObject = MakeActor(ArenaArtCatalog.Actor(ArenaArtCatalog.ActorKind.Squirrel));
             PredatorObject = MakeActor(ArenaArtCatalog.Actor(ArenaArtCatalog.ActorKind.Predator));
             RopeObject = MakeActor(ArenaArtCatalog.Actor(ArenaArtCatalog.ActorKind.Rope));
-            _laundryBasketObject = MakeActor(ArenaArtCatalog.Actor(ArenaArtCatalog.ActorKind.LaundryBasket));
-            _laundryBasketObject.SetActive(false);
             _bunnyCameoObject = MakeDraftBunnyCameo();
             BuildBackyardTrapGapMarker();
             BuildEagleCoverMarkers();

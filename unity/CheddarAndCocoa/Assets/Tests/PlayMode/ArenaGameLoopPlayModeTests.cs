@@ -1069,6 +1069,8 @@ namespace CheddarAndCocoa.Tests
             yield return null;
 
             Assert.AreEqual(GameManager.MissionVariant.SockPanic, game.ActiveMissionVariant);
+            Assert.IsInstanceOf<SockPanicMissionController>(game.ActiveMissionController,
+                "Sock Panic must run entirely through its own IMissionController.");
             Assert.AreEqual("Sock Panic", game.ActiveMissionName);
             Assert.That(game.MissionIntroPrompt, Does.Contain("laundry basket"));
             Assert.That(game.ObjectiveLabel, Does.Contain("Tip the laundry basket"));

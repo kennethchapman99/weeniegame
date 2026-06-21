@@ -752,6 +752,68 @@ namespace CheddarAndCocoa.Game
             };
         }
 
+        internal static GameManager.MissionDefinition BuildSockPanicDefinition(ArenaMissionTuning tuning)
+        {
+            const GameManager.MissionVariant variant = GameManager.MissionVariant.SockPanic;
+            var balance = tuning.BalanceFor(variant);
+            return new GameManager.MissionDefinition
+            {
+                Variant = variant,
+                Name = "Sock Panic",
+                IntroPrompt = "Tip the laundry basket, then have the partner dive for each exposed sock before laundry order returns.",
+                ReadyScoreLabel = "READY TO PANIC ABOUT SOCKS",
+                ItemRootName = "Scattered Socks",
+                ItemObjectName = "Panic Sock",
+                ItemWorldLabel = "Sock!",
+                ItemArrowLabel = "SOCK",
+                ItemCollectCueNoun = "a dramatic sock",
+                CollectObjectiveFormat = "Return socks {0}/{1}",
+                CollectedScoreLabel = "PARTNER SOCK DIVE",
+                ItemScore = balance.ItemScore,
+                SpawnedItemCount = balance.SpawnedItemCount,
+                ItemGoal = balance.ItemGoal,
+                RoundSeconds = balance.RoundSeconds,
+                PawfectScore = balance.PawfectScore,
+                HeroScore = balance.HeroScore,
+                SurvivorScore = balance.SurvivorScore,
+                UsesSquirrel = false,
+                RequiresPredator = false,
+                RequiresTug = false,
+                MaxStolenFood = balance.MaxStolenFood,
+                SquirrelPenalty = balance.SquirrelPenalty,
+                SquirrelScareScore = balance.SquirrelScareScore,
+                SquirrelObjectiveText = "No squirrel - find socks",
+                SquirrelStealingCue = "No squirrel in Sock Panic.",
+                SquirrelStoleCue = "No squirrel in Sock Panic.",
+                SquirrelStealScoreLabel = "SOCK CONFUSION",
+                SquirrelScareScoreLabel = "SOCK BARK",
+                SquirrelStealingActorLabel = "SQUIRREL OFF DUTY",
+                SquirrelDroppedActorLabel = "SQUIRREL OFF DUTY",
+                SquirrelStoleActorLabel = "SQUIRREL OFF DUTY",
+                SquirrelMissPopLabel = "MISS! -SOCK",
+                SquirrelStealJuiceLabel = "MISS! SOCK PANIC",
+                SquirrelScareJuiceLabel = "SOCK BARK POP!",
+                TugObjectiveText = "Return the socks",
+                WaitingObjectiveText = "Find the last runaway sock",
+                ClearObjectiveText = "Sock panic solved - replay Sock Panic",
+                ClearBannerPrefix = "SOCKS SORTED!",
+                ClearScoreLabel = "SOCK PANIC CLEAR",
+                ReplayPrompt = "Press R / Enter / Start to replay Sock Panic",
+                FailObjectiveText = "Mission failed - replay Sock Panic",
+                GenericFailReason = "Needs more sock urgency before laundry patrol.",
+                TimeFailReason = "Laundry order returned before the final sock was rescued.",
+                StolenFailReason = "No squirrel stole socks; the dogs simply lost the plot.",
+                PredatorFailReason = "No predator here, just laundry pressure.",
+                PawfectClearReason = "Tiny legends restored sock civilization.",
+                HeroClearReason = "The laundry pile survived with only mild drama.",
+                BasicClearReason = "The socks came home looking emotionally handled.",
+                ItemColor = new Color(0.42f, 0.72f, 1f),
+                ItemAccentColor = new Color(1f, 0.88f, 0.28f),
+                ItemSecondaryColor = new Color(0.12f, 0.42f, 0.72f),
+                ItemPopColor = new Color(0.62f, 0.9f, 1f)
+            };
+        }
+
         internal static GameManager.MissionDefinition BuildThunderstormComfortDefinition(ArenaMissionTuning tuning)
         {
             const GameManager.MissionVariant variant = GameManager.MissionVariant.ThunderstormComfort;

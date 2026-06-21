@@ -148,6 +148,11 @@ not an architecture acceptance criterion.
   checkpoint progression, snap-cap failure, objective targeting, leash-safe entry staging, cleanup,
   snapshot, and the deterministic `ForceReachCheckpoint`/`ForceLeashSnap` hooks. `GameManager`
   retains thin compatibility accessors and forwards those hooks through the active controller.
+- `SockPanicMissionController` owns the laundry-basket actor lifecycle, tip/open timing, partner-only
+  sock-dive interpretation, fumbles, interact and collectible input handling, objective targeting,
+  entry staging, cleanup, snapshot, and deterministic tip/timeout hooks. Optional controller input
+  interfaces let `GameManager` forward shared interact and `Treat` events without SockPanic branches;
+  the context supplies generic actor creation and collectible-pool services.
 - Full PlayMode result after the latest controller increment: 352 passed, 0 failed, 0 skipped.
 
 ## Test and reset contract
