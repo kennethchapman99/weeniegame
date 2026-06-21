@@ -57,6 +57,29 @@ Final polish still needed:
 - Run a two-player television readability pass; the automated 1920x1080 local/full-yard/action
   capture gate verifies composition but cannot judge player attention.
 
+### Threat/label readability pass (2026-06-21)
+
+Direct fixes for first-playtest confusion ("can't tell what to do; squirrel/shadow never seen;
+spinning props are unreadable; the dog's name text covers the dog"):
+
+- **Props no longer spin.** `MissionActorFeedback` previously rotated actors continuously (squirrel
+  `80`deg/s, rope `45`deg/s), so they read as unidentifiable rotating blobs. The authored spin intent
+  is now a small, bounded life-wobble (≤`7`deg) around the resting pose; silhouettes stay recognizable
+  and labels stay upright.
+- **The waiting squirrel is on-screen.** Backyard Rescue parked the idle squirrel in the far `120x68`
+  yard corner, outside the close camera, so players never saw the threat the HUD/arrows referenced.
+  It now perches at a visible spot (`11, 7`) just inside the close view, still out of instant bark
+  range of the `±10,0` dog spawns.
+- **The eagle shadow sweeps overhead.** Eagle Shadow Panic swept the shadow along the far top fence
+  (`y≈32`), far above the dogs' play band, so the "shadow" was never seen. It now sweeps at
+  `EagleSweepHeight` (`y=0.5`) across the dogs and cover zones; the snatch/rescue beat also resolves
+  inside the play band (`0, 6`) instead of off-screen. Exposure remains x-column based, so the hide
+  mechanic is unchanged.
+- **The dog identity label clears the dog.** `DogLabel` moved from `y=0.95` (on the body) to `y=1.5`
+  and shrank slightly so the name/pose text floats above the character instead of obscuring it.
+
+Covered by `ArenaGameLoopPlayModeTests.ThreatActors_AreOnScreenAndReadable_NotOffscreenSpinningBlobs`.
+
 ## Cold-start flow
 
 The expanded yard stages both dogs within a short run of each mission's first meaningful action

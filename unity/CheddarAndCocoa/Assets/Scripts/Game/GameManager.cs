@@ -401,6 +401,9 @@ namespace CheddarAndCocoa.Game
         private const int CoyoteMaxBreaches = 3;
         private const float EagleCoverRadius = 3f;
         private const float EagleShadowWidth = 3.5f;
+        // Y the eagle shadow sweeps along: inside the dogs' play band (cover zones sit at y -8..+9)
+        // so the sweep visibly crosses over the dogs instead of flying along the far top fence.
+        private const float EagleSweepHeight = 0.5f;
         private Vector2 _stashPosition;
         private Vector2 _fenceGapPosition;
         private bool _coyotePressureHeld;
@@ -1277,7 +1280,10 @@ namespace CheddarAndCocoa.Game
             ClearTreats();
             for (int i = 0; i < treatCount; i++) SpawnTreat();
 
-            PlaceObject(SquirrelObject, _mission.Variant == MissionVariant.SquirrelConspiracy ? _squirrelRoute[0] : new Vector2(_bounds.xMax - 2f, _bounds.yMax - 2f));
+            // Park the waiting squirrel on a visible perch just inside the close camera instead of the
+            // far yard corner, so players actually see the threat the HUD/arrows reference. It is still
+            // far enough from the dog spawns (+/-10,0) to not be in instant bark range.
+            PlaceObject(SquirrelObject, _mission.Variant == MissionVariant.SquirrelConspiracy ? _squirrelRoute[0] : new Vector2(11f, 7f));
             PlaceObject(PredatorObject, new Vector2(0f, _bounds.yMax + 2f));
             PlaceObject(RopeObject, Vector2.zero);
             PlaceObject(_bunnyCameoObject, new Vector2(_bounds.xMin + 1.4f, _bounds.yMin + 1.0f));
@@ -1294,10 +1300,13 @@ namespace CheddarAndCocoa.Game
             if (_mission.Variant == MissionVariant.EagleShadowPanic)
             {
                 PredatorObject.SetActive(true);
-                PlaceObject(PredatorObject, new Vector2(-(_bounds.xMax - 1.5f), _bounds.yMax - 2f));
+                // Sweep across the dogs' play band (around the cover zones) instead of along the far top
+                // fence, so the shadow is actually seen passing overhead. Exposure stays x-column based.
+                PlaceObject(PredatorObject, new Vector2(-(_bounds.xMax - 1.5f), EagleSweepHeight));
                 SetActorState(PredatorObject, "EAGLE SHADOW SWEEP - HIDE IN COVER!", new Color(0.16f, 0.16f, 0.2f), 0.3f);
                 // The talon-grip indicator (reuses the squirrel actor) only appears once a dog is snatched.
-                _eagleSnatchPosition = new Vector2(0f, _bounds.yMax - 2f);
+                // Keep the snatch/rescue point inside the play band so the rescue beat is on-screen.
+                _eagleSnatchPosition = new Vector2(0f, 6f);
                 if (SquirrelObject != null) SquirrelObject.SetActive(false);
                 _eagleRescue.Reset();
                 _eagleRescuePullsSeen = 0;
@@ -7803,7 +7812,10 @@ namespace CheddarAndCocoa.Game
         private TextMesh _label;
         private Vector3 _baseScale;
         private float _pulseAmount;
-        private Vector3 _rotationPerSecond;
+        private Quaternion _baseRotation;
+        private float _swaySpeed;
+        private float _swayAmplitudeDegrees;
+        private float _swayPhase;
 
         public string Label => _label != null ? _label.text : string.Empty;
 
@@ -7813,7 +7825,20 @@ namespace CheddarAndCocoa.Game
             _label = GetComponentInChildren<TextMesh>();
             _baseScale = transform.localScale;
             _pulseAmount = pulseAmount;
-            _rotationPerSecond = rotationPerSecond;
+            _baseRotation = transform.localRotation;
+
+            // The old behavior spun props continuously (squirrel 80deg/s, rope 45deg/s), which made
+            // them read as unidentifiable rotating blobs. Reinterpret that authored "spin" intent as a
+            // small, bounded life-wobble around the resting pose so the silhouette stays recognizable.
+            float spin = rotationPerSecond.magnitude;
+            if (spin > 0.01f)
+            {
+                _swaySpeed = Mathf.Clamp(spin * 0.03f, 1.2f, 3f);
+                _swayAmplitudeDegrees = Mathf.Min(7f, spin * 0.12f);
+                // Deterministic per-object phase so wobbles desync without runtime RNG.
+                _swayPhase = (GetInstanceID() & 1023) / 1023f * Mathf.PI * 2f;
+            }
+
             SetState(label, renderer != null ? renderer.color : Color.white, pulseAmount);
         }
 
@@ -7833,7 +7858,11 @@ namespace CheddarAndCocoa.Game
         {
             float pulse = 1f + Mathf.Sin(Time.time * 5f) * _pulseAmount;
             transform.localScale = _baseScale * pulse;
-            if (_rotationPerSecond != Vector3.zero) transform.Rotate(_rotationPerSecond * Time.deltaTime);
+            if (_swayAmplitudeDegrees > 0f)
+            {
+                float angle = Mathf.Sin(Time.time * _swaySpeed + _swayPhase) * _swayAmplitudeDegrees;
+                transform.localRotation = _baseRotation * Quaternion.Euler(0f, 0f, angle);
+            }
             if (_label != null) _label.transform.rotation = Quaternion.identity;
         }
     }

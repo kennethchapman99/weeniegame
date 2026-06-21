@@ -1130,6 +1130,52 @@ namespace CheddarAndCocoa.Tests
             return null;
         }
 
+        [UnityTest]
+        public IEnumerator ThreatActors_AreOnScreenAndReadable_NotOffscreenSpinningBlobs()
+        {
+            yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
+            yield return null;
+            yield return null;
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            Assert.IsNotNull(game);
+
+            // The dog identity label must sit clearly above the dog (authored body ~1.65 tall) instead
+            // of overlapping and obscuring the character it labels.
+            Assert.GreaterOrEqual(ArenaArtCatalog.DogLabel.LocalPosition.y, 1.3f,
+                "Dog identity label should float above the dog, not on top of it.");
+
+            game.StartMission(GameManager.MissionVariant.BackyardRescue);
+            yield return null;
+
+            // The waiting squirrel must spawn inside the close camera footprint, not parked in the far
+            // 120x68 corner where players never see the threat the HUD/arrows reference.
+            Vector3 squirrelStart = game.SquirrelObject.transform.position;
+            Assert.That(game.SquirrelObject.GetComponent<MissionActorFeedback>().Label, Does.Contain("WAITING"));
+            Assert.Less(Mathf.Abs(squirrelStart.x), 16f, "Waiting squirrel should be on-screen horizontally.");
+            Assert.Less(Mathf.Abs(squirrelStart.y), 11f, "Waiting squirrel should be on-screen vertically.");
+
+            // Let the placeholder life-wobble run; it must stay bounded and readable rather than spinning
+            // continuously (the old squirrel/rope spun 80/45 deg-per-second into unidentifiable blobs).
+            float guard = 0f;
+            float maxTilt = 0f;
+            while (guard < 1.5f)
+            {
+                guard += Time.deltaTime;
+                float tilt = Mathf.Abs(Mathf.DeltaAngle(0f, game.SquirrelObject.transform.localEulerAngles.z));
+                maxTilt = Mathf.Max(maxTilt, tilt);
+                yield return null;
+            }
+            Assert.LessOrEqual(maxTilt, 12f, "Actor wobble should stay bounded, not spin continuously.");
+
+            // The eagle shadow must sweep across the dogs' play band so it is actually seen overhead,
+            // instead of flying along the far top fence far above the camera.
+            game.StartMission(GameManager.MissionVariant.EagleShadowPanic);
+            yield return null;
+            Assert.Less(Mathf.Abs(game.PredatorObject.transform.position.y), 12f,
+                "Eagle shadow should sweep within the dogs' play band, not along the far top fence.");
+        }
+
         private static Treat FirstTreat()
         {
             var treats = Object.FindObjectsByType<Treat>(FindObjectsSortMode.None);
