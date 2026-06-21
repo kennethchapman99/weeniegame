@@ -21,6 +21,20 @@ namespace CheddarAndCocoa.Tests
         private DogController _cocoa;
 
         [UnityTest]
+        public IEnumerator Blanket_RunsThroughDedicatedController()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.BlanketCatch);
+            yield return null;
+
+            Assert.IsInstanceOf<BlanketCatchMissionController>(
+                _game.ActiveMissionController,
+                "The Blanket Catch must run entirely through its own IMissionController.");
+            Assert.AreEqual(GameManager.MissionVariant.BlanketCatch, _game.ActiveMissionController.Variant);
+            Assert.AreSame(_game.BlanketCatchController.Puzzle, _game.BlanketPuzzle);
+        }
+
+        [UnityTest]
         public IEnumerator Blanket_AppearsInMissionSelectRotation()
         {
             yield return LoadArena();

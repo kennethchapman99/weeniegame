@@ -53,7 +53,10 @@ namespace CheddarAndCocoa.Game
                     MissionCatalog.BuildGreatEscapeDefinition),
                 [GameManager.MissionVariant.ChaosMachine] = new Registration(
                     () => new ChaosMachineMissionController(),
-                    MissionCatalog.BuildChaosMachineDefinition)
+                    MissionCatalog.BuildChaosMachineDefinition),
+                [GameManager.MissionVariant.BlanketCatch] = new Registration(
+                    () => new BlanketCatchMissionController(),
+                    MissionCatalog.BuildBlanketCatchDefinition)
             };
 
         public static IEnumerable<GameManager.MissionVariant> RegisteredVariants => Registrations.Keys;

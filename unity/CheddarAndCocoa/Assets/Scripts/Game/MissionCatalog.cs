@@ -565,5 +565,67 @@ namespace CheddarAndCocoa.Game
                 ItemSecondaryColor = new Color(0.75f, 0.45f, 1f),
                 ItemPopColor = new Color(1f, 0.95f, 0.55f)
             };
+
+        internal static GameManager.MissionDefinition BuildBlanketCatchDefinition(ArenaMissionTuning tuning)
+        {
+            const GameManager.MissionVariant variant = GameManager.MissionVariant.BlanketCatch;
+            var balance = tuning.BalanceFor(variant);
+            return new GameManager.MissionDefinition
+            {
+                Variant = variant,
+                Name = "The Blanket Catch",
+                IntroPrompt = "Food's tumbling off the counter! Cheddar and Cocoa each grab a corner of a blanket and stretch it between them - too close and it sags, too far and it RIPS, so find the taut band. Then slide the middle of the blanket under each falling snack to catch it. Rip the blanket too many times and it's done.",
+                ReadyScoreLabel = "READY TO CATCH SOME SNACKS",
+                ItemRootName = "Snack",
+                ItemObjectName = "Snack",
+                ItemWorldLabel = "Catch!",
+                ItemArrowLabel = "SNACK",
+                ItemCollectCueNoun = "a caught snack",
+                CollectObjectiveFormat = "Catch the falling snacks {0}/{1}",
+                CollectedScoreLabel = "SNACK CAUGHT",
+                ItemScore = balance.ItemScore,
+                SpawnedItemCount = balance.SpawnedItemCount,
+                ItemGoal = balance.ItemGoal,
+                RoundSeconds = balance.RoundSeconds,
+                PawfectScore = balance.PawfectScore,
+                HeroScore = balance.HeroScore,
+                SurvivorScore = balance.SurvivorScore,
+                UsesSquirrel = false,
+                RequiresPredator = false,
+                RequiresTug = false,
+                MaxStolenFood = balance.MaxStolenFood,
+                SquirrelPenalty = balance.SquirrelPenalty,
+                SquirrelScareScore = balance.SquirrelScareScore,
+                SquirrelObjectiveText = "Stretch the blanket / catch the food",
+                SquirrelStealingCue = "Find the taut band and get under the snack.",
+                SquirrelStoleCue = "Missed - re-center the blanket.",
+                SquirrelStealScoreLabel = "BLANKET RIP",
+                SquirrelScareScoreLabel = "SNACK CAUGHT",
+                SquirrelStealingActorLabel = "BLANKET",
+                SquirrelDroppedActorLabel = "CAUGHT",
+                SquirrelStoleActorLabel = "RIPPED",
+                SquirrelMissPopLabel = "SPLAT!",
+                SquirrelStealJuiceLabel = "RIP!",
+                SquirrelScareJuiceLabel = "CAUGHT!",
+                TugObjectiveText = "Stretch the blanket together",
+                WaitingObjectiveText = "Slide the taut blanket under the next snack",
+                ClearObjectiveText = "Snacks caught - replay The Blanket Catch",
+                ClearBannerPrefix = "DINNER!",
+                ClearScoreLabel = "BLANKET CATCH CLEAR",
+                ReplayPrompt = "Press R / Enter / Start to replay The Blanket Catch",
+                FailObjectiveText = "Mission failed - replay The Blanket Catch",
+                GenericFailReason = "The blanket needs a steadier taut span before the next snack.",
+                TimeFailReason = "The snacks all hit the floor before the blanket caught enough.",
+                StolenFailReason = "The blanket ripped one too many times.",
+                PredatorFailReason = "No predator here, just gravity and snacks.",
+                PawfectClearReason = "Cheddar and Cocoa held a perfect taut blanket and caught every snack without a single tear.",
+                HeroClearReason = "They caught the haul with only a small tear or two.",
+                BasicClearReason = "They got dinner, even if the blanket took a beating.",
+                ItemColor = new Color(0.95f, 0.8f, 0.4f),
+                ItemAccentColor = new Color(0.5f, 0.85f, 0.55f),
+                ItemSecondaryColor = new Color(0.4f, 0.3f, 0.15f),
+                ItemPopColor = new Color(0.5f, 0.95f, 0.55f)
+            };
+        }
     }
 }
