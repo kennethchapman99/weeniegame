@@ -24,7 +24,7 @@ namespace CheddarAndCocoa.Tests
         public IEnumerator Chaos_AppearsInMissionSelectRotation()
         {
             yield return LoadArena();
-            Assert.AreEqual(21, _game.MissionSelectOptionCount);
+            Assert.AreEqual(22, _game.MissionSelectOptionCount);
 
             bool found = false;
             for (int i = 0; i < _game.MissionSelectOptionCount; i++)

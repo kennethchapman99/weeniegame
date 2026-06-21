@@ -18,7 +18,7 @@ namespace CheddarAndCocoa.Game
         public enum FlowState { MissionSelect, Playing, EndScreen, SessionSummary }
         public enum RoundModifier { SquirrelTrouble, ZoomiesSurge, PancakePanic }
         public enum MissionOutcome { InProgress, Clear, Failed }
-        public enum MissionVariant { BackyardRescue, SnackHeist, SockPanic, SquirrelConspiracy, EagleShadowPanic, CoyotesFence, WeenieRoundup, ScentSearch, ThunderstormComfort, MarkTheYard, LeashWalk, CarRide, GateCrash, TableStealth, SquirrelSwitcheroo, WalkCampaign, BoneRelay, GreatEscape, ChaosMachine, BlanketCatch, KitchenFoodFrenzy }
+        public enum MissionVariant { BackyardRescue, SnackHeist, SockPanic, SquirrelConspiracy, EagleShadowPanic, CoyotesFence, WeenieRoundup, ScentSearch, ThunderstormComfort, MarkTheYard, LeashWalk, CarRide, GateCrash, TableStealth, SquirrelSwitcheroo, WalkCampaign, BoneRelay, GreatEscape, ChaosMachine, BlanketCatch, KitchenFoodFrenzy, OperationPeeBreak }
         public enum FeedbackKind
         {
             Intro,
@@ -125,7 +125,8 @@ namespace CheddarAndCocoa.Game
             MissionVariant.GreatEscape,
             MissionVariant.ChaosMachine,
             MissionVariant.BlanketCatch,
-            MissionVariant.KitchenFoodFrenzy
+            MissionVariant.KitchenFoodFrenzy,
+            MissionVariant.OperationPeeBreak
         };
 
         [Header("Mission selection")]
@@ -179,6 +180,7 @@ namespace CheddarAndCocoa.Game
         public GameObject KitchenFoodObject => KitchenController?.FoodObject;
         public GameObject KitchenTelegraphObject => KitchenController?.TelegraphObject;
         public GameObject KitchenLandingWarningObject => KitchenController?.LandingWarningObject;
+        public PeeBreakMissionController PeeBreakController => _activeMissionController as PeeBreakMissionController;
         public IMissionController ActiveMissionController => _activeMissionController;
         public GameObject LaundryBasketObject => _laundryBasketObject;
         public Treat ExposedSock => _exposedSock;
@@ -4726,6 +4728,13 @@ namespace CheddarAndCocoa.Game
         public void ForceKitchenLetFall()
         {
             if (MissionActive()) KitchenController?.ForceLetFall();
+        }
+
+        /// <summary>Deterministic hook for the controller-owned Pee Break state machine.</summary>
+        public void ForcePeeBreakAdvance(SocialStimulus active, float deltaTime)
+        {
+            if (MissionActive()) PeeBreakController?.ForceAdvance(active, deltaTime);
+            CheckClear();
         }
 
 

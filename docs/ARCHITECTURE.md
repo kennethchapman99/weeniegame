@@ -96,6 +96,10 @@ not an architecture acceptance criterion.
 - `GameManager` retains thin compatibility accessors/hooks for existing PlayMode tests while
   forwarding runtime work through the active controller.
 - Full PlayMode result after extraction: 333 passed, 0 failed, 0 skipped.
+- `PeeBreakMissionController` is the first new controller-native mission. It owns four-beat exact
+  social-signal progression, role locks, bladder/phone pressure, misreads, generated world stations,
+  united-bark climax, cleanup, snapshots, and deterministic advancement. `GameManager` only
+  registers, forwards bark/tick work, and retains one compatibility test hook.
 
 ## Test and reset contract
 

@@ -10,6 +10,12 @@ namespace CheddarAndCocoa.Game
             ArenaMissionTuning tuning,
             out GameManager.MissionDefinition definition)
         {
+            if (variant == GameManager.MissionVariant.OperationPeeBreak)
+            {
+                definition = BuildPeeBreakDefinition(variant);
+                return true;
+            }
+
             if (variant != GameManager.MissionVariant.KitchenFoodFrenzy)
             {
                 definition = null;
@@ -75,5 +81,63 @@ namespace CheddarAndCocoa.Game
             };
             return true;
         }
+
+        private static GameManager.MissionDefinition BuildPeeBreakDefinition(GameManager.MissionVariant variant) =>
+            new GameManager.MissionDefinition
+            {
+                Variant = variant,
+                Name = "Operation Pee Break",
+                IntroPrompt = "The Teenager is lost in the phone. Cocoa stares, Cheddar presents the leash, then swap roles for the charger gambit and finish with a united bark!",
+                ReadyScoreLabel = "READY TO ASK OUT",
+                ItemRootName = "Pee Break Props",
+                ItemObjectName = "Pee Break Signal",
+                ItemWorldLabel = "Signal",
+                ItemArrowLabel = "SIGNAL",
+                ItemCollectCueNoun = "signal",
+                CollectObjectiveFormat = "Get through beat {0}/{1}",
+                CollectedScoreLabel = "TEENAGER COMPREHENSION",
+                ItemScore = 0,
+                SpawnedItemCount = 0,
+                ItemGoal = 4,
+                RoundSeconds = 480f,
+                PawfectScore = 1800,
+                HeroScore = 1250,
+                SurvivorScore = 400,
+                UsesSquirrel = false,
+                RequiresPredator = false,
+                RequiresTug = false,
+                MaxStolenFood = 0,
+                SquirrelPenalty = 0,
+                SquirrelScareScore = 0,
+                SquirrelObjectiveText = "Convince the Teenager",
+                SquirrelStealingCue = "The Teenager is the puzzle.",
+                SquirrelStoleCue = "The Teenager misread the dogs.",
+                SquirrelStealScoreLabel = "MISREAD",
+                SquirrelScareScoreLabel = "CLEAR SIGNAL",
+                SquirrelStealingActorLabel = "TEENAGER",
+                SquirrelDroppedActorLabel = "WRONG IDEA",
+                SquirrelStoleActorLabel = "MISREAD",
+                SquirrelMissPopLabel = "NOT NOW",
+                SquirrelStealJuiceLabel = "MISREAD!",
+                SquirrelScareJuiceLabel = "THEY GET IT!",
+                TugObjectiveText = "Send one clear message",
+                WaitingObjectiveText = "Cocoa: hold the door stare",
+                ClearObjectiveText = "Door open - outside!",
+                ClearBannerPrefix = "PEE BREAK!",
+                ClearScoreLabel = "DOOR OPEN",
+                ReplayPrompt = "Press R / Enter / Start to replay Operation Pee Break",
+                FailObjectiveText = "Too late - replay Operation Pee Break",
+                GenericFailReason = "The phone won this round.",
+                TimeFailReason = "The Teenager stayed glued to the phone too long.",
+                StolenFailReason = "The Teenager misunderstood the signal.",
+                PredatorFailReason = "The phone reclaimed the Teenager's attention.",
+                PawfectClearReason = "One crystal-clear dog message and a glorious open door.",
+                HeroClearReason = "A few wrong guesses, then the Teenager finally got it.",
+                BasicClearReason = "Outside at last. The carpet survives.",
+                ItemColor = new Color(1f, 0.82f, 0.3f),
+                ItemAccentColor = new Color(0.35f, 0.9f, 1f),
+                ItemSecondaryColor = new Color(0.75f, 0.45f, 1f),
+                ItemPopColor = new Color(1f, 0.95f, 0.55f)
+            };
     }
 }

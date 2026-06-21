@@ -9,7 +9,8 @@ namespace CheddarAndCocoa.Game
         private static readonly IReadOnlyDictionary<GameManager.MissionVariant, Func<IMissionController>> Factories =
             new Dictionary<GameManager.MissionVariant, Func<IMissionController>>
             {
-                [GameManager.MissionVariant.KitchenFoodFrenzy] = () => new KitchenFoodFrenzyMissionController()
+                [GameManager.MissionVariant.KitchenFoodFrenzy] = () => new KitchenFoodFrenzyMissionController(),
+                [GameManager.MissionVariant.OperationPeeBreak] = () => new PeeBreakMissionController()
             };
 
         public static bool TryCreate(GameManager.MissionVariant variant, out IMissionController controller)

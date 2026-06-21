@@ -8,7 +8,10 @@ Kitchen Falling Food Frenzy is implemented and playtest-ready. Its behavior was 
 `IMissionController` on 2026-06-21 with the full 333-test PlayMode suite green. The baseline
 readability fix verification remains deferred—not passed—because the owner was unavailable for a
 couch session and explicitly authorized architecture work to continue. Operation Pee Break remains
-the next authored deep slice and must use the controller boundary.
+the active authored deep slice and uses the controller boundary. Its first controller-owned
+implementation now includes the four exact-combo beats, split-role position stations, recoverable
+Teenager misreads, bladder/phone pressure, united-bark door climax, replay reset, and deterministic
+PlayMode coverage. Placeholder presentation still needs the second two-player couch acceptance pass.
 
 As of 2026-06-20, `GameManager.cs` is nearly 8,000 lines and declares 21 mission variants. Treat
 that as a date-stamped warning, not a permanent metric or a line-count target.

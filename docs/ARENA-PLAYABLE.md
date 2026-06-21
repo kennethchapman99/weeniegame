@@ -5,9 +5,9 @@
 > `GameManager` branches.
 
 `unity/CheddarAndCocoa/Assets/Scenes/ArenaScene.unity` is now a co-op proving ground instead of a
-flat treat loop. As of 2026-06-20, the arena exposes 21 mission variants. A cold start opens a
-generated in-scene mission select; Kitchen Falling Food Frenzy is the first controller-extraction
-candidate.
+flat treat loop. As of 2026-06-21, the arena exposes 22 mission variants. A cold start opens a
+generated in-scene mission select; Kitchen Falling Food Frenzy and Operation Pee Break run through
+the controller boundary.
 
 For current global character art direction, read `docs/ART-DIRECTION.md`. Backyard Mission is the
 playable proof of that direction, not the only place the direction applies. For future external
@@ -155,7 +155,7 @@ small world text.
 
 1. Open `unity/CheddarAndCocoa` in Unity 6 LTS, open `Assets/Scenes/ArenaScene.unity`, and press Play. `ArenaScene` is also the scripted local build entry point.
 2. The mission picker appears immediately. Use **Up/Down** or gamepad **D-pad** to highlight a mission, then press **Enter**, **Space**, gamepad **Start**, or gamepad **South** to start. Keyboard **1-9 and 0** directly starts the original first ten missions; use arrow/D-pad selection for later missions including Kitchen Falling Food Frenzy.
-   - All 21 mission variants use the adaptive two-column picker as of 2026-06-20.
+   - All 22 mission variants use the adaptive two-column picker as of 2026-06-21.
    - Each tile shows `NEW`, `RETRY`, `CLEARED`, or `FLAWLESS` plus its session-best score; the selected detail line shows round time and objective size.
    - The header keeps missions played/tried, total score, and flawless clears visible before the next choice.
 3. Read the selected mission's wrapped `GOAL` block, then start it. The opening goal card repeats the
@@ -399,6 +399,22 @@ Kitchen Falling Food Frenzy is a compact counter-to-floor relay. Cheddar is the 
 Deterministic hooks are `ForceKitchenTelegraph(dog, kind)`, `ForceKitchenReleaseTelegraph()`, `ForceKitchenDrop(kind)`, `ForceKitchenCatch(dog, intoSafeZone)`, and `ForceKitchenLetFall()`. `KitchenFoodFrenzyMissionStateTests` covers bark/telegraph ownership, busy-state rejection, recoverable outcomes, finale sequencing, completion, and reset. `KitchenFoodFrenzyPlayModeTests` covers mission wiring, warning objects, compact camera framing, good/bad feedback paths, the dinner-rush clear, and replay reset.
 
 Manual acceptance check: arrow-select **Kitchen Falling Food Frenzy** with two local players. Confirm the initial shared camera keeps both dogs, the counter, and bowl readable. Move Cheddar into the counter route and bark; verify no item falls merely from standing there. Confirm the colored counter flash and landing circle appear before the item releases. For gold food, intercept it with Cocoa while she is inside the bowl and confirm **YUM**, proud pose, score, audio, and light rumble. For a purple onion, move Cocoa clear and let it splat; confirm **DODGED**, proud feedback, and no lost progress. Let one good item splat and deliberately eat one onion; confirm the warning/flinch feedback is distinct and both calls can be retried. After three warm-up catches, confirm **DINNER RUSH** announces **GOOD → BAD → GOOD**, uses visibly tighter timing, and still waits for a Cheddar bark before every call. Complete the three calls and confirm **KITCHEN CLEARED!**. Replay and confirm food, telegraphs, finale progress, combo, and feedback reset.
+
+### Operation Pee Break
+
+Operation Pee Break is the first controller-native deep slice. It uses four escalating exact-message
+beats: Cocoa's door stare; Cocoa's stare plus Cheddar presenting the leash; the role-flipped charger
+gambit where Cheddar blocks the hallway while Cocoa unplugs the charger; and the final stare, leash,
+and near-door united bark. The HUD exposes bladder pressure, phone battery, and recoverable Teenager
+misreads. Wrong or incomplete signals reset comprehension without failing the mission.
+
+Manual acceptance check: arrow-select **Operation Pee Break** with two local players. Confirm Beat 1
+routes Cocoa to the door and advances from her stare alone. In Beat 2, verify neither the stare nor
+leash alone solves the message. Intentionally bark early until the Teenager misreads the request and
+confirm the wrong-item gag is readable and the run continues. In Beat 3, have Cheddar leave the
+hallway while Cocoa holds the charger and confirm comprehension falls; then hold both roles to
+advance. In Beat 4, hold the door/leash positions and bark both dogs within the timing window. Confirm
+the door opens, the mission clears, and replay resets beat, bladder, battery, misreads, and door state.
 
 ## Level scale and camera
 

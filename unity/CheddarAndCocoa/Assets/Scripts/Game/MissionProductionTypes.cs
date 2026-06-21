@@ -13,7 +13,8 @@ namespace CheddarAndCocoa.Game
         RhythmPanic,
         VehicleBalance,
         LeashPhysics,
-        FallingFood
+        FallingFood,
+        SocialManipulation
     }
 
     public enum ProductionDifficultyAxis
@@ -170,6 +171,15 @@ namespace CheddarAndCocoa.Game
             "Complete three warm-up catches, then coordinate the GOOD-BAD-GOOD dinner rush.",
             "The dinner timer expires before the bowl and finale are complete.");
 
+        public static readonly ProductionMissionSpec OperationPeeBreak = new(
+            "operation_pee_break",
+            "Operation Pee Break",
+            ProductionMissionPack.HouseChaos,
+            ProductionMechanicModule.SocialManipulation,
+            "Combine role-locked dog signals across four escalating attempts to get the Teenager to open the door.",
+            "Complete the united-bark message and open the door.",
+            "The mission timer expires; individual misreads remain recoverable.");
+
         /// <summary>
         /// Every production mission spec, in catalog order. This is the single source of truth the
         /// factory and consistency tests build from so a newly authored mission can't silently fall
@@ -187,6 +197,7 @@ namespace CheddarAndCocoa.Game
             CarRide,
             CoyotesFence,
             KitchenFoodFrenzy,
+            OperationPeeBreak,
         };
     }
 }
