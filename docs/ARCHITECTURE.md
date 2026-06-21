@@ -153,6 +153,10 @@ not an architecture acceptance criterion.
   entry staging, cleanup, snapshot, and deterministic tip/timeout hooks. Optional controller input
   interfaces let `GameManager` forward shared interact and `Treat` events without SockPanic branches;
   the context supplies generic actor creation and collectible-pool services.
+- `CarRideMissionController` owns the generated car actor lifecycle, live balance and counter-lean
+  ticking, timed lurches, spill-cap failure, readable dog/vehicle feedback, entry staging, cleanup,
+  snapshot, and deterministic lurch/spill hooks. The shared predator actor is no longer repurposed as
+  mission-specific car state.
 - Full PlayMode result after the latest controller increment: 352 passed, 0 failed, 0 skipped.
 
 ## Test and reset contract

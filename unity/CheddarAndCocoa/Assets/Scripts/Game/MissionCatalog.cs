@@ -814,6 +814,68 @@ namespace CheddarAndCocoa.Game
             };
         }
 
+        internal static GameManager.MissionDefinition BuildCarRideDefinition(ArenaMissionTuning tuning)
+        {
+            const GameManager.MissionVariant variant = GameManager.MissionVariant.CarRide;
+            var balance = tuning.BalanceFor(variant);
+            return new GameManager.MissionDefinition
+            {
+                Variant = variant,
+                Name = "Car Ride Balance",
+                IntroPrompt = "Cheddar + Cocoa are riding in the back of the car. As it lurches around corners, lean to opposite sides to keep it level all the way home.",
+                ReadyScoreLabel = "READY FOR THE CAR RIDE",
+                ItemRootName = "Lurches",
+                ItemObjectName = "Lurch",
+                ItemWorldLabel = "Lean!",
+                ItemArrowLabel = "LEAN",
+                ItemCollectCueNoun = "a steadied lurch",
+                CollectObjectiveFormat = "Steady lurches {0}/{1}",
+                CollectedScoreLabel = "STEADIED",
+                ItemScore = balance.ItemScore,
+                SpawnedItemCount = balance.SpawnedItemCount,
+                ItemGoal = balance.ItemGoal,
+                RoundSeconds = balance.RoundSeconds,
+                PawfectScore = balance.PawfectScore,
+                HeroScore = balance.HeroScore,
+                SurvivorScore = balance.SurvivorScore,
+                UsesSquirrel = false,
+                RequiresPredator = false,
+                RequiresTug = false,
+                MaxStolenFood = balance.MaxStolenFood,
+                SquirrelPenalty = balance.SquirrelPenalty,
+                SquirrelScareScore = balance.SquirrelScareScore,
+                SquirrelObjectiveText = "Lean to keep the car level",
+                SquirrelStealingCue = "No squirrel here - mind the tilt.",
+                SquirrelStoleCue = "No squirrel here - keep it level.",
+                SquirrelStealScoreLabel = "SPILL",
+                SquirrelScareScoreLabel = "STEADIED",
+                SquirrelStealingActorLabel = "CAR TILT",
+                SquirrelDroppedActorLabel = "STEADIED",
+                SquirrelStoleActorLabel = "SPILL",
+                SquirrelMissPopLabel = "SPILL!",
+                SquirrelStealJuiceLabel = "SPILL!",
+                SquirrelScareJuiceLabel = "STEADIED!",
+                TugObjectiveText = "Keep the car level together",
+                WaitingObjectiveText = "Hold it level until the ride ends",
+                ClearObjectiveText = "Made it home - replay Car Ride Balance",
+                ClearBannerPrefix = "MADE IT HOME!",
+                ClearScoreLabel = "RIDE COMPLETE",
+                ReplayPrompt = "Press R / Enter / Start to replay Car Ride Balance",
+                FailObjectiveText = "Mission failed - replay Car Ride Balance",
+                GenericFailReason = "Needs smoother counter-leaning before the next drive.",
+                TimeFailReason = "The drive dragged on and the car never settled.",
+                StolenFailReason = "The car tipped over one too many times.",
+                PredatorFailReason = "No predator here, just questionable driving.",
+                PawfectClearReason = "Two pups counter-balanced every corner - smoothest ride ever.",
+                HeroClearReason = "The car made it home level with only a wobble or two.",
+                BasicClearReason = "They got home, even if the snacks slid around a bit.",
+                ItemColor = new Color(0.5f, 0.42f, 0.32f),
+                ItemAccentColor = new Color(0.8f, 0.7f, 0.5f),
+                ItemSecondaryColor = new Color(0.24f, 0.2f, 0.14f),
+                ItemPopColor = new Color(0.85f, 0.75f, 0.55f)
+            };
+        }
+
         internal static GameManager.MissionDefinition BuildThunderstormComfortDefinition(ArenaMissionTuning tuning)
         {
             const GameManager.MissionVariant variant = GameManager.MissionVariant.ThunderstormComfort;

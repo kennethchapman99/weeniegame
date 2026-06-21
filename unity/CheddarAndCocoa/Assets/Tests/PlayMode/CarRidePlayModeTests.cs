@@ -41,6 +41,8 @@ namespace CheddarAndCocoa.Tests
             game.StartMission(GameManager.MissionVariant.CarRide);
             yield return null;
 
+            Assert.IsInstanceOf<CarRideMissionController>(game.ActiveMissionController,
+                "Car Ride Balance must run entirely through its own IMissionController.");
             Assert.AreEqual("car_ride", game.RuntimeSnapshot.MissionId);
             Assert.That(game.ObjectiveLabel, Does.Contain("Lean to keep the car level"));
             int required = game.RuntimeSnapshot.ObjectiveGoal;

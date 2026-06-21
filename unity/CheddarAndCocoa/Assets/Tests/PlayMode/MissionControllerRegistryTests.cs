@@ -38,7 +38,8 @@ namespace CheddarAndCocoa.Game.Tests
                     GameManager.MissionVariant.BoneRelay,
                     GameManager.MissionVariant.ThunderstormComfort,
                     GameManager.MissionVariant.LeashWalk,
-                    GameManager.MissionVariant.SockPanic
+                    GameManager.MissionVariant.SockPanic,
+                    GameManager.MissionVariant.CarRide
                 },
                 seen,
                 "Only explicitly migrated missions belong in the controller registry.");

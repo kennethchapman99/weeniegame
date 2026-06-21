@@ -33,8 +33,10 @@ behind `WalkCampaignMissionController` (two-station message with misread-cap fai
 Escape behind `GreatEscapeMissionController` (alternating-owner contraption chain with botch-cap
 failure), then Walkies on the Leash behind `LeashWalkMissionController` (controller-owned checkpoint
 route, tether snaps, and snap-cap failure), then Sock Panic behind `SockPanicMissionController`
-(controller-owned basket timing, partner-only sock dives, and fumbles). The full PlayMode suite is
-green at 352 tests. Placeholder presentation still needs the second two-player couch acceptance pass.
+(controller-owned basket timing, partner-only sock dives, and fumbles), then Car Ride Balance behind
+`CarRideMissionController` (controller-owned counter-lean ticking, timed lurches, and spill-cap
+failure). The full PlayMode suite is green at 352 tests. Placeholder presentation still needs the
+second two-player couch acceptance pass.
 
 As of 2026-06-20, `GameManager.cs` is nearly 8,000 lines and declares 21 mission variants. Treat
 that as a date-stamped warning, not a permanent metric or a line-count target.

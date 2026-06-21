@@ -68,7 +68,10 @@ namespace CheddarAndCocoa.Game
                     MissionCatalog.BuildLeashWalkDefinition),
                 [GameManager.MissionVariant.SockPanic] = new Registration(
                     () => new SockPanicMissionController(),
-                    MissionCatalog.BuildSockPanicDefinition)
+                    MissionCatalog.BuildSockPanicDefinition),
+                [GameManager.MissionVariant.CarRide] = new Registration(
+                    () => new CarRideMissionController(),
+                    MissionCatalog.BuildCarRideDefinition)
             };
 
         public static IEnumerable<GameManager.MissionVariant> RegisteredVariants => Registrations.Keys;
