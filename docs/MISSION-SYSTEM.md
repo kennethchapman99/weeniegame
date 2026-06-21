@@ -22,8 +22,9 @@ branch, input branch, or snapshot switch directly to `GameManager`.
 
 1. ~~Define the narrow controller/context contract after baseline playtest fixes.~~ Complete.
 2. ~~Extract the existing Kitchen mission first without behavior changes.~~ Complete.
-3. ~~Keep the full PlayMode suite green.~~ 333/333 green after extraction.
-4. Build Operation Pee Break entirely as a registered controller.
+3. ~~Keep the full PlayMode suite green.~~ 342/342 green after the latest controller increment.
+4. ~~Build Operation Pee Break entirely as a registered controller.~~ Controller-native slice complete;
+   human acceptance remains pending.
 5. Keep the roster frozen through the second couch-playtest gate.
 
 See `ARCHITECTURE.md` for ownership details and `NEXT-PRODUCTION-SLICE.md` for the full sequence.

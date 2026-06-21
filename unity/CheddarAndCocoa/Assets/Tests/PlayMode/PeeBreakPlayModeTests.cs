@@ -27,6 +27,8 @@ namespace CheddarAndCocoa.Tests
             Assert.That(_game.ObjectiveLabel, Does.Contain("Cocoa"));
             Assert.IsNotNull(GameObject.Find("PeeBreakTeenager"));
             Assert.IsNotNull(GameObject.Find("PeeBreakDoor"));
+            Assert.That(GameObject.Find("PeeBreakPhone").GetComponentInChildren<TextMesh>().text, Does.Contain("100%"));
+            Assert.That(GameObject.Find("PeeBreakBladderMeter").GetComponentInChildren<TextMesh>().text, Does.Contain("12%"));
         }
 
         [UnityTest]
@@ -70,6 +72,29 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator ChargerOnlyDrainsWhileCocoaUnplugsAndVisiblyPowersDown()
+        {
+            yield return LoadMission();
+            AdvanceToCharger();
+            var phone = GameObject.Find("PeeBreakPhone");
+            Color chargedColor = phone.GetComponent<SpriteRenderer>().color;
+
+            _game.ForcePeeBreakAdvance(SocialStimulus.BlockHallway, 0.5f);
+            Assert.AreEqual(1f, Controller.PhoneBattery, 0.001f,
+                "Cheddar blocking alone must not drain the phone.");
+
+            _game.ForcePeeBreakAdvance(Controller.Required, 0.5f);
+            Assert.Less(Controller.PhoneBattery, 1f);
+            Assert.AreNotEqual(chargedColor, phone.GetComponent<SpriteRenderer>().color);
+            Assert.That(phone.GetComponentInChildren<TextMesh>().text, Does.Not.Contain("100%"));
+
+            _game.ForcePeeBreakAdvance(Controller.Required, 2.1f);
+            Assert.AreEqual(PeeBreakMissionController.Beat.UnitedBark, Controller.CurrentBeat);
+            Assert.AreEqual(0f, Controller.PhoneBattery, 0.001f);
+            Assert.That(phone.GetComponentInChildren<TextMesh>().text, Does.Contain("0%"));
+        }
+
+        [UnityTest]
         public IEnumerator ClimaxOpensDoorClearsAndReplayResetsEverything()
         {
             yield return LoadMission();
@@ -90,6 +115,51 @@ namespace CheddarAndCocoa.Tests
             Assert.Less(Controller.Bladder, 0.2f);
             Assert.IsFalse(Controller.DoorOpen);
             Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
+        }
+
+        [UnityTest]
+        public IEnumerator MissionSwitchCleansOwnedActorsAndReusesResetController()
+        {
+            yield return LoadMission();
+            var originalController = Controller;
+            var ownedActors = new[]
+            {
+                FindLoadedObject("PeeBreakDoor"),
+                FindLoadedObject("PeeBreakLeash"),
+                FindLoadedObject("PeeBreakHallwayBlock"),
+                FindLoadedObject("PeeBreakCharger"),
+                FindLoadedObject("PeeBreakTeenager"),
+                FindLoadedObject("PeeBreakPhone"),
+                FindLoadedObject("PeeBreakBladderMeter")
+            };
+
+            _game.ForcePeeBreakAdvance(SocialStimulus.BarkRhythm, 4f);
+            Assert.AreEqual(1, Controller.Misreads);
+            _game.StartMission(GameManager.MissionVariant.KitchenFoodFrenzy);
+            yield return null;
+
+            foreach (var actor in ownedActors)
+            {
+                Assert.IsNotNull(actor);
+                Assert.IsFalse(actor.activeSelf, $"{actor.name} leaked into the Kitchen mission.");
+            }
+
+            _game.StartMission(GameManager.MissionVariant.OperationPeeBreak);
+            yield return null;
+            Assert.AreSame(originalController, Controller);
+            Assert.AreEqual(0, Controller.Misreads);
+            Assert.AreEqual(PeeBreakMissionController.Beat.DoorStare, Controller.CurrentBeat);
+            Assert.IsTrue(ownedActors[0].activeSelf);
+            Assert.IsTrue(ownedActors[4].activeSelf);
+            Assert.IsTrue(ownedActors[5].activeSelf);
+            Assert.IsTrue(ownedActors[6].activeSelf);
+            foreach (var actor in ownedActors)
+            {
+                int matchingActors = 0;
+                foreach (var candidate in Resources.FindObjectsOfTypeAll<GameObject>())
+                    if (candidate.name == actor.name) matchingActors++;
+                Assert.AreEqual(1, matchingActors, $"{actor.name} should be reused, not duplicated.");
+            }
         }
 
         private void AdvanceToCharger()
@@ -115,6 +185,13 @@ namespace CheddarAndCocoa.Tests
             foreach (string entry in _game.PlaytestEvents)
                 if (entry.Contains(text)) return true;
             return false;
+        }
+
+        private static GameObject FindLoadedObject(string name)
+        {
+            foreach (var candidate in Resources.FindObjectsOfTypeAll<GameObject>())
+                if (candidate.name == name && candidate.scene.IsValid()) return candidate;
+            return null;
         }
     }
 }

@@ -40,6 +40,10 @@ namespace CheddarAndCocoa.Game
         private GameObject _charger;
         private GameObject _teenager;
         private GameObject _phone;
+        private GameObject _bladderMeter;
+        private TextMesh _teenagerLabel;
+        private TextMesh _phoneLabel;
+        private TextMesh _bladderLabel;
         private Vector2 _doorPosition;
         private Vector2 _leashPosition;
         private Vector2 _hallwayPosition;
@@ -109,9 +113,7 @@ namespace CheddarAndCocoa.Game
         public void Tick(float deltaTime, float now)
         {
             if (DoorOpen || deltaTime <= 0f) return;
-            Bladder = Mathf.Clamp01(Bladder + deltaTime * (_beatIndex >= 3 ? 0.018f : 0.009f));
-            if (_beatIndex == 2) PhoneBattery = Mathf.Clamp01(PhoneBattery - deltaTime * 0.035f);
-            AdvancePuzzle(BuildActiveSet(now), deltaTime);
+            AdvanceSimulation(BuildActiveSet(now), deltaTime);
         }
 
         public bool HandleBark(int dogIndex)
@@ -177,6 +179,14 @@ namespace CheddarAndCocoa.Game
         public void ForceAdvance(SocialStimulus active, float deltaTime)
         {
             if (DoorOpen || deltaTime <= 0f) return;
+            AdvanceSimulation(active, deltaTime);
+        }
+
+        private void AdvanceSimulation(SocialStimulus active, float deltaTime)
+        {
+            Bladder = Mathf.Clamp01(Bladder + deltaTime * (_beatIndex >= 3 ? 0.018f : 0.009f));
+            if (_beatIndex == 2 && (active & SocialStimulus.UnplugCharger) != 0)
+                PhoneBattery = Mathf.Clamp01(PhoneBattery - deltaTime * 0.18f);
             AdvancePuzzle(active, deltaTime);
         }
 
@@ -223,6 +233,7 @@ namespace CheddarAndCocoa.Game
 
         private void AdvanceBeat()
         {
+            bool completedChargerGambit = _beatIndex == 2;
             _beatIndex++;
             _context.AddScore(150, "TEENAGER COMPREHENSION");
             _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, _beatIndex >= 4 ? "OH! YOU NEED TO GO GO!" : "TEENAGER LOOKS UP!");
@@ -243,6 +254,8 @@ namespace CheddarAndCocoa.Game
                 return;
             }
 
+            if (completedChargerGambit) PhoneBattery = 0f;
+
             ConfigureBeat();
         }
 
@@ -258,11 +271,17 @@ namespace CheddarAndCocoa.Game
             _leash = NewMarker("PeeBreakLeash", new Color(0.3f, 0.9f, 1f), "LEASH - CHEDDAR PRESENTS", Vector3.one * 1.4f);
             _hallway = NewMarker("PeeBreakHallwayBlock", new Color(1f, 0.58f, 0.25f), "HALLWAY - CHEDDAR BLOCKS", Vector3.one * 2.6f);
             _charger = NewMarker("PeeBreakCharger", new Color(0.75f, 0.45f, 1f), "CHARGER - COCOA UNPLUGS", Vector3.one * 1.5f);
-            _teenager = NewMarker("PeeBreakTeenager", new Color(0.65f, 0.72f, 0.9f), "TEENAGER ?", new Vector3(2f, 2.6f, 1f));
-            _phone = NewMarker("PeeBreakPhone", new Color(0.4f, 0.9f, 1f), "PHONE 100%", Vector3.one * 0.7f);
+            _teenager = NewMarker("PeeBreakTeenager", new Color(0.65f, 0.72f, 0.9f), "TEENAGER ?", new Vector3(2f, 2.6f, 1f), out _teenagerLabel);
+            _phone = NewMarker("PeeBreakPhone", new Color(0.4f, 0.9f, 1f), "PHONE 100%", Vector3.one * 0.7f, out _phoneLabel);
+            _bladderMeter = NewMarker("PeeBreakBladderMeter", new Color(0.4f, 0.8f, 1f), "BLADDER 12%", new Vector3(0.5f, 0.35f, 1f), out _bladderLabel);
         }
 
         private GameObject NewMarker(string name, Color color, string label, Vector3 scale)
+        {
+            return NewMarker(name, color, label, scale, out _);
+        }
+
+        private GameObject NewMarker(string name, Color color, string label, Vector3 scale, out TextMesh worldLabel)
         {
             var marker = new GameObject(name);
             var renderer = marker.AddComponent<SpriteRenderer>();
@@ -270,14 +289,14 @@ namespace CheddarAndCocoa.Game
             renderer.color = color;
             renderer.sortingOrder = 3;
             marker.transform.localScale = scale;
-            _context.AddWorldLabel(marker, label, Vector3.up * 0.55f, 12, Color.white);
+            worldLabel = _context.AddWorldLabel(marker, label, Vector3.up * 0.55f, 12, Color.white);
             marker.SetActive(false);
             return marker;
         }
 
         private void SetSceneActive(bool active)
         {
-            foreach (var marker in new[] { _door, _leash, _hallway, _charger, _teenager, _phone })
+            foreach (var marker in new[] { _door, _leash, _hallway, _charger, _teenager, _phone, _bladderMeter })
                 if (marker != null) marker.SetActive(active);
             if (active) UpdateScene();
         }
@@ -291,9 +310,23 @@ namespace CheddarAndCocoa.Game
             _charger.transform.position = _chargerPosition;
             _teenager.transform.position = _context.Bounds.center + new Vector2(2f, 5f);
             _phone.transform.position = (Vector2)_teenager.transform.position + new Vector2(0.8f, -0.2f);
+            _bladderMeter.transform.position = _doorPosition + new Vector2(0f, -3.2f);
 
             _door.transform.localScale = DoorOpen ? new Vector3(0.35f, 4f, 1f) : new Vector3(2.4f, 4f, 1f);
             _phone.GetComponent<SpriteRenderer>().color = Color.Lerp(new Color(0.2f, 0.15f, 0.25f), new Color(0.4f, 0.9f, 1f), PhoneBattery);
+            _bladderMeter.transform.localScale = new Vector3(Mathf.Lerp(0.5f, 4f, Bladder), 0.35f, 1f);
+            _bladderMeter.GetComponent<SpriteRenderer>().color = Color.Lerp(new Color(0.4f, 0.8f, 1f), new Color(1f, 0.35f, 0.2f), Bladder);
+            if (_phoneLabel != null) _phoneLabel.text = $"PHONE {PhoneBattery * 100f:0}%";
+            if (_bladderLabel != null) _bladderLabel.text = $"BLADDER {Bladder * 100f:0}%";
+            if (_teenagerLabel != null)
+                _teenagerLabel.text = CurrentBeat switch
+                {
+                    Beat.DoorStare => "TEENAGER: SCROLLING",
+                    Beat.LeashMessage => "TEENAGER: LOOKING UP?",
+                    Beat.ChargerGambit => "TEENAGER: PHONE FADING",
+                    Beat.UnitedBark => "TEENAGER: ALMOST GETS IT",
+                    _ => "TEENAGER: OH! OUTSIDE!"
+                };
             _hallway.SetActive(!DoorOpen && _beatIndex == 2);
             _charger.SetActive(!DoorOpen && _beatIndex == 2);
             _leash.SetActive(!DoorOpen && (_beatIndex == 1 || _beatIndex == 3));

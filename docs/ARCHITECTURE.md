@@ -105,6 +105,12 @@ not an architecture acceptance criterion.
   social-signal progression, role locks, bladder/phone pressure, misreads, generated world stations,
   united-bark climax, cleanup, snapshots, and deterministic advancement. `GameManager` only
   registers, forwards bark/tick work, and retains one compatibility test hook.
+- Pee Break pressure presentation is controller-owned: it updates world-space bladder, phone, and
+  Teenager-state labels, drains the phone only from Cocoa's active unplug stimulus, and visibly
+  powers the phone down when the charger gambit succeeds.
+- Pee Break lifecycle coverage verifies mission switches deactivate every owned actor, reuse the
+  cached controller without duplicate world objects, and reset mission state on re-entry.
+- Full PlayMode result after the latest controller increment: 342 passed, 0 failed, 0 skipped.
 
 ## Test and reset contract
 

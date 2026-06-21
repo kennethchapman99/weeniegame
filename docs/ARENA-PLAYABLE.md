@@ -405,15 +405,18 @@ Manual acceptance check: arrow-select **Kitchen Falling Food Frenzy** with two l
 Operation Pee Break is the first controller-native deep slice. It uses four escalating exact-message
 beats: Cocoa's door stare; Cocoa's stare plus Cheddar presenting the leash; the role-flipped charger
 gambit where Cheddar blocks the hallway while Cocoa unplugs the charger; and the final stare, leash,
-and near-door united bark. The HUD exposes bladder pressure, phone battery, and recoverable Teenager
-misreads. Wrong or incomplete signals reset comprehension without failing the mission.
+and near-door united bark. Controller-owned world meters expose bladder pressure and phone battery,
+while the Teenager label changes with each beat. The phone now drains only while Cocoa actively
+holds the unplug station and visibly powers down when the charger gambit succeeds. Wrong or
+incomplete signals reset comprehension without failing the mission.
 
 Manual acceptance check: arrow-select **Operation Pee Break** with two local players. Confirm Beat 1
 routes Cocoa to the door and advances from her stare alone. In Beat 2, verify neither the stare nor
 leash alone solves the message. Intentionally bark early until the Teenager misreads the request and
 confirm the wrong-item gag is readable and the run continues. In Beat 3, have Cheddar leave the
 hallway while Cocoa holds the charger and confirm comprehension falls; then hold both roles to
-advance. In Beat 4, hold the door/leash positions and bark both dogs within the timing window. Confirm
+advance. Confirm the phone stays charged while Cheddar blocks alone, drains while Cocoa unplugs it,
+and reaches 0% when the gambit succeeds. In Beat 4, hold the door/leash positions and bark both dogs within the timing window. Confirm
 the door opens, the mission clears, and replay resets beat, bladder, battery, misreads, and door state.
 
 ## Level scale and camera

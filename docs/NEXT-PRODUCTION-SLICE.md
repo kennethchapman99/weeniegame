@@ -12,9 +12,10 @@ the active authored deep slice and uses the controller boundary. Its first contr
 implementation now includes the four exact-combo beats, split-role position stations, recoverable
 Teenager misreads, bladder/phone pressure, united-bark door climax, replay reset, and deterministic
 PlayMode coverage. The controller boundary now also uses immutable validated context wiring and
-atomic controller/definition registrations, with registry consistency coverage. The full PlayMode
-suite is green at 340 tests. Placeholder presentation still needs the second two-player couch
-acceptance pass.
+atomic controller/definition registrations, with registry consistency coverage. Controller-owned
+phone/bladder world meters now expose Beat-3 pressure, and the phone drains only while Cocoa is
+actually unplugging it. Cross-mission cleanup/reuse is covered. The full PlayMode suite is green at
+342 tests. Placeholder presentation still needs the second two-player couch acceptance pass.
 
 As of 2026-06-20, `GameManager.cs` is nearly 8,000 lines and declares 21 mission variants. Treat
 that as a date-stamped warning, not a permanent metric or a line-count target.
