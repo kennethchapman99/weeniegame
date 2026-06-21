@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using CheddarAndCocoa.Dogs;
 using UnityEngine;
 
@@ -58,10 +59,22 @@ namespace CheddarAndCocoa.Game
         public GameObject SquirrelObject { get; }
         public float SquirrelMoveSpeed { get; }
         public float SingleBarkSquirrelRange { get; }
+        public float SingleBarkScareSeconds { get; }
+        public float FirstSquirrelBaseDelay { get; }
+        public float FirstSquirrelTroubleDelay { get; }
+        public float SquirrelBaseDelay { get; }
+        public float SquirrelTroubleDelay { get; }
+        public int ItemScore { get; }
+        public int MaxStolenFood { get; }
+        public int SquirrelPenalty { get; }
+        public int SquirrelScareScore { get; }
+        public int PancakeSquirrelPenalty { get; }
         /// <summary>Shared panic/co-regulation state owned by GameManager; null on non-panic missions.</summary>
         public PanicMeter PanicMeter { get; }
         public Func<System.Random> Random { get; }
         public Func<float> Now { get; }
+        public Func<GameManager.RoundModifier> ActiveModifier { get; }
+        public Func<IReadOnlyList<Treat>> ActiveTreats { get; }
 
         public Action<int, string> AddScore { get; }
         public Action<int> CreditDog { get; }
@@ -79,6 +92,7 @@ namespace CheddarAndCocoa.Game
         public Func<ArenaArtCatalog.ActorKind, GameObject> CreateActor { get; }
         public Func<Treat> AcquireHiddenTreat { get; }
         public Action<Treat> RecoverCollectible { get; }
+        public Action<Treat> ReplaceCollectible { get; }
         public Action<GameObject, string, Color, float> SetActorState { get; }
         public Action<GameObject, float> Pulse { get; }
 
@@ -91,9 +105,21 @@ namespace CheddarAndCocoa.Game
             GameObject squirrelObject,
             float squirrelMoveSpeed,
             float singleBarkSquirrelRange,
+            float singleBarkScareSeconds,
+            float firstSquirrelBaseDelay,
+            float firstSquirrelTroubleDelay,
+            float squirrelBaseDelay,
+            float squirrelTroubleDelay,
+            int itemScore,
+            int maxStolenFood,
+            int squirrelPenalty,
+            int squirrelScareScore,
+            int pancakeSquirrelPenalty,
             PanicMeter panicMeter,
             Func<System.Random> random,
             Func<float> now,
+            Func<GameManager.RoundModifier> activeModifier,
+            Func<IReadOnlyList<Treat>> activeTreats,
             Action<int, string> addScore,
             Action<int> creditDog,
             Action<string> setCue,
@@ -110,6 +136,7 @@ namespace CheddarAndCocoa.Game
             Func<ArenaArtCatalog.ActorKind, GameObject> createActor,
             Func<Treat> acquireHiddenTreat,
             Action<Treat> recoverCollectible,
+            Action<Treat> replaceCollectible,
             Action<GameObject, string, Color, float> setActorState,
             Action<GameObject, float> pulse)
         {
@@ -124,9 +151,21 @@ namespace CheddarAndCocoa.Game
             SquirrelObject = squirrelObject ?? throw new ArgumentNullException(nameof(squirrelObject));
             SquirrelMoveSpeed = squirrelMoveSpeed;
             SingleBarkSquirrelRange = singleBarkSquirrelRange;
+            SingleBarkScareSeconds = singleBarkScareSeconds;
+            FirstSquirrelBaseDelay = firstSquirrelBaseDelay;
+            FirstSquirrelTroubleDelay = firstSquirrelTroubleDelay;
+            SquirrelBaseDelay = squirrelBaseDelay;
+            SquirrelTroubleDelay = squirrelTroubleDelay;
+            ItemScore = itemScore;
+            MaxStolenFood = maxStolenFood;
+            SquirrelPenalty = squirrelPenalty;
+            SquirrelScareScore = squirrelScareScore;
+            PancakeSquirrelPenalty = pancakeSquirrelPenalty;
             PanicMeter = panicMeter; // nullable — only thunderstorm/comfort missions use it
             Random = random ?? throw new ArgumentNullException(nameof(random));
             Now = now ?? throw new ArgumentNullException(nameof(now));
+            ActiveModifier = activeModifier ?? throw new ArgumentNullException(nameof(activeModifier));
+            ActiveTreats = activeTreats ?? throw new ArgumentNullException(nameof(activeTreats));
             AddScore = addScore ?? throw new ArgumentNullException(nameof(addScore));
             CreditDog = creditDog ?? throw new ArgumentNullException(nameof(creditDog));
             SetCue = setCue ?? throw new ArgumentNullException(nameof(setCue));
@@ -143,6 +182,7 @@ namespace CheddarAndCocoa.Game
             CreateActor = createActor ?? throw new ArgumentNullException(nameof(createActor));
             AcquireHiddenTreat = acquireHiddenTreat ?? throw new ArgumentNullException(nameof(acquireHiddenTreat));
             RecoverCollectible = recoverCollectible ?? throw new ArgumentNullException(nameof(recoverCollectible));
+            ReplaceCollectible = replaceCollectible ?? throw new ArgumentNullException(nameof(replaceCollectible));
             SetActorState = setActorState ?? throw new ArgumentNullException(nameof(setActorState));
             Pulse = pulse ?? throw new ArgumentNullException(nameof(pulse));
         }

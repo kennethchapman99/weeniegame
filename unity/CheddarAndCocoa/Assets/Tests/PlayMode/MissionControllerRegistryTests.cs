@@ -42,7 +42,8 @@ namespace CheddarAndCocoa.Game.Tests
                     GameManager.MissionVariant.CarRide,
                     GameManager.MissionVariant.ScentSearch,
                     GameManager.MissionVariant.WeenieRoundup,
-                    GameManager.MissionVariant.SquirrelConspiracy
+                    GameManager.MissionVariant.SquirrelConspiracy,
+                    GameManager.MissionVariant.SnackHeist
                 },
                 seen,
                 "Only explicitly migrated missions belong in the controller registry.");

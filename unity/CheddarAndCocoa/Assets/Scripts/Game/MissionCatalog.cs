@@ -1062,6 +1062,68 @@ namespace CheddarAndCocoa.Game
             };
         }
 
+        internal static GameManager.MissionDefinition BuildSnackHeistDefinition(ArenaMissionTuning tuning)
+        {
+            const GameManager.MissionVariant variant = GameManager.MissionVariant.SnackHeist;
+            var balance = tuning.BalanceFor(variant);
+            return new GameManager.MissionDefinition
+            {
+                Variant = variant,
+                Name = "Snack Heist",
+                IntroPrompt = "Cheddar + Cocoa must secure the forbidden snack stash before the squirrel union notices.",
+                ReadyScoreLabel = "READY TO HEIST SNACKS",
+                ItemRootName = "Forbidden Snacks",
+                ItemObjectName = "Forbidden Snack",
+                ItemWorldLabel = "Snack!",
+                ItemArrowLabel = "SNACK",
+                ItemCollectCueNoun = "a forbidden snack",
+                CollectObjectiveFormat = "Stash snacks {0}/{1}",
+                CollectedScoreLabel = "SNACK STASHED",
+                ItemScore = balance.ItemScore,
+                SpawnedItemCount = balance.SpawnedItemCount,
+                ItemGoal = balance.ItemGoal,
+                RoundSeconds = balance.RoundSeconds,
+                PawfectScore = balance.PawfectScore,
+                HeroScore = balance.HeroScore,
+                SurvivorScore = balance.SurvivorScore,
+                UsesSquirrel = true,
+                RequiresPredator = false,
+                RequiresTug = false,
+                MaxStolenFood = balance.MaxStolenFood,
+                SquirrelPenalty = balance.SquirrelPenalty,
+                SquirrelScareScore = balance.SquirrelScareScore,
+                SquirrelObjectiveText = "Bark-guard the snack thief",
+                SquirrelStealingCue = "Squirrel is reaching for the forbidden snack stash - bark guard!",
+                SquirrelStoleCue = "Squirrel got a snack and looks professionally smug!",
+                SquirrelStealScoreLabel = "SNACK THIEF",
+                SquirrelScareScoreLabel = "SNACK GUARD BARK",
+                SquirrelStealingActorLabel = "SQUIRREL SNACK HEIST - BARK!",
+                SquirrelDroppedActorLabel = "SQUIRREL DROPPED THE SNACK!",
+                SquirrelStoleActorLabel = "SQUIRREL STOLE A SNACK!",
+                SquirrelMissPopLabel = "MISS! -SNACK",
+                SquirrelStealJuiceLabel = "MISS! SQUIRREL STOLE A SNACK",
+                SquirrelScareJuiceLabel = "SNACK DROP POP!",
+                TugObjectiveText = "Guard the snack stash",
+                WaitingObjectiveText = "Guard the stash together",
+                ClearObjectiveText = "Snack stash saved - replay Snack Heist",
+                ClearBannerPrefix = "SNACK STASH SAVED!",
+                ClearScoreLabel = "SNACK HEIST CLEAR",
+                ReplayPrompt = "Press R / Enter / Start to replay Snack Heist",
+                FailObjectiveText = "Mission failed - replay Snack Heist",
+                GenericFailReason = "Needs more bark before the next snack crime.",
+                TimeFailReason = "The snack window closed while everyone had opinions.",
+                StolenFailReason = "The squirrel union escaped with too many forbidden snacks.",
+                PredatorFailReason = "No predator here, just snack-related consequences.",
+                PawfectClearReason = "Tiny legends protected the snack stash with suspicious expertise.",
+                HeroClearReason = "The stash survived with respectable snack discipline.",
+                BasicClearReason = "The snacks made it home, even if crumb law was broken.",
+                ItemColor = new Color(0.95f, 0.58f, 0.18f),
+                ItemAccentColor = new Color(1f, 0.88f, 0.18f),
+                ItemSecondaryColor = new Color(0.38f, 0.18f, 0.08f),
+                ItemPopColor = new Color(1f, 0.78f, 0.25f)
+            };
+        }
+
         internal static GameManager.MissionDefinition BuildSquirrelConspiracyDefinition(ArenaMissionTuning tuning)
         {
             const GameManager.MissionVariant variant = GameManager.MissionVariant.SquirrelConspiracy;

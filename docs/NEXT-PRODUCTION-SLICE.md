@@ -41,7 +41,9 @@ buried-spot selection, and cold-dig failure), then Weenie Roundup behind
 Squirrel Conspiracy now follows behind `SquirrelConspiracyMissionController` (controller-owned
 route/cutoff geometry, herding and taunt state, stash interaction, and failure outcome while using
 the shared squirrel actor through the narrow context).
-The full PlayMode suite is green at 353 tests. Placeholder presentation still needs the second
+Snack Heist now follows behind `SnackHeistMissionController` (controller-owned collection/steal
+state, squirrel pressure, bark defense, and collectible interpretation through narrow pool services).
+The full PlayMode suite is green at 357 tests. Placeholder presentation still needs the second
 two-player couch acceptance pass.
 
 As of 2026-06-20, `GameManager.cs` is nearly 8,000 lines and declares 21 mission variants. Treat

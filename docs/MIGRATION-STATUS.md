@@ -4,7 +4,7 @@
 
 ## Current state
 
-- PlayMode suite: **353 passed / 0 failed / 0 skipped** (2026-06-21).
+- PlayMode suite: **357 passed / 0 failed / 0 skipped** (2026-06-21).
 - Tree is compile-clean and out of Safe Mode.
 
 ## Extracted (controller-owned)
@@ -29,10 +29,11 @@
 | Scent Search | `ScentSearchMissionController` | Owns seeded dig spots, sniff/dig input, objective targeting, and cold-dig failure. |
 | Weenie Roundup | `WeenieRoundupMissionController` | Owns loose/carry actors, pickup/delivery ticking, cargo state, and fumble recovery. |
 | Squirrel Conspiracy | `SquirrelConspiracyMissionController` | Owns route/cutoff geometry, herding state, taunts, stash interaction, markers, failure, and snapshots; temporarily consumes the shared squirrel actor through `MissionContext`. |
+| Snack Heist | `SnackHeistMissionController` | Owns recovery/steal state, squirrel targeting/timing, bark defense, collectible interpretation, failure, and snapshots; consumes the shared squirrel and treat pool through narrow context services. |
 
 ## Remaining in `GameManager` (not yet extracted)
 
-BackyardRescue, SnackHeist, EagleShadowPanic, CoyotesFence.
+BackyardRescue, EagleShadowPanic, CoyotesFence.
 
 ## Contract additions so far
 
@@ -45,14 +46,13 @@ BackyardRescue, SnackHeist, EagleShadowPanic, CoyotesFence.
 
 ## Known contract gaps for upcoming extractions
 
-- **Shared legacy actors.** BackyardRescue and SnackHeist still use the shared squirrel/treat loop;
+- **Shared legacy actors.** BackyardRescue still uses the shared squirrel/treat loop and trap state;
   EagleShadowPanic and CoyotesFence repurpose both squirrel and predator actors. Decide per mission
   whether to own controller-local actors or expose the minimum shared references through
   `MissionContext`.
 
 ## Next step
 
-Squirrel Conspiracy extracted. Remaining missions are the squirrel/predator/legacy-actor cluster.
-**Snack Heist** is the smallest next candidate because it can isolate the generic squirrel/treat
-loop before Backyard Rescue adds its trap-role state. Eagle Shadow Panic and Coyotes at the Fence
-remain larger two-actor extractions.
+Snack Heist extracted. Remaining missions are the squirrel/predator/legacy-actor cluster.
+**Backyard Rescue** can now reuse the controller-owned squirrel/treat path while adding its trap-role
+state. Eagle Shadow Panic and Coyotes at the Fence remain larger two-actor extractions.

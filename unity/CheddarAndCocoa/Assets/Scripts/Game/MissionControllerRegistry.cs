@@ -80,7 +80,10 @@ namespace CheddarAndCocoa.Game
                     MissionCatalog.BuildWeenieRoundupDefinition),
                 [GameManager.MissionVariant.SquirrelConspiracy] = new Registration(
                     () => new SquirrelConspiracyMissionController(),
-                    MissionCatalog.BuildSquirrelConspiracyDefinition)
+                    MissionCatalog.BuildSquirrelConspiracyDefinition),
+                [GameManager.MissionVariant.SnackHeist] = new Registration(
+                    () => new SnackHeistMissionController(),
+                    MissionCatalog.BuildSnackHeistDefinition)
             };
 
         public static IEnumerable<GameManager.MissionVariant> RegisteredVariants => Registrations.Keys;

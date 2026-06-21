@@ -148,6 +148,7 @@ namespace CheddarAndCocoa.Game
         public bool EndScreenVisible => CurrentFlow == FlowState.EndScreen;
         public bool SessionSummaryVisible => CurrentFlow == FlowState.SessionSummary;
         public int MissionSelectOptionCount => MissionOrder.Length;
+        public SnackHeistMissionController SnackHeistController => _activeMissionController as SnackHeistMissionController;
         public SquirrelConspiracyMissionController SquirrelConspiracyController => _activeMissionController as SquirrelConspiracyMissionController;
         public HerdingMissionState SquirrelConspiracyState => SquirrelConspiracyController?.State ?? _emptyHerdingState;
         public Vector2[] SquirrelRouteNodes => SquirrelConspiracyMissionController.ComputeRoute(_bounds);
@@ -238,9 +239,11 @@ namespace CheddarAndCocoa.Game
         public bool IsGameOver => Phase == State.GameOver;
         public bool IsLevelClear => Phase == State.LevelClear;
         public int UnitedBarks { get; private set; }
-        public int BreakfastRecovered { get; private set; }
+        private int _breakfastRecovered;
+        public int BreakfastRecovered => SnackHeistController?.Recovered ?? _breakfastRecovered;
         public int BreakfastGoal => _mission != null ? _mission.ItemGoal : recoveryGoal;
-        public int StolenFood { get; private set; }
+        private int _stolenFood;
+        public int StolenFood => SnackHeistController?.Stolen ?? _stolenFood;
         public int MaxStolenFood => _mission != null ? _mission.MaxStolenFood : maxStolenFood;
         public bool PredatorResolved { get; private set; }
         public bool PredatorFailed { get; private set; }
@@ -536,9 +539,21 @@ namespace CheddarAndCocoa.Game
             squirrelObject: SquirrelObject,
             squirrelMoveSpeed: _tuning.SquirrelMoveSpeed,
             singleBarkSquirrelRange: _tuning.SingleBarkSquirrelRange,
+            singleBarkScareSeconds: _tuning.SingleBarkScareSeconds,
+            firstSquirrelBaseDelay: _tuning.FirstSquirrelBaseDelay,
+            firstSquirrelTroubleDelay: _tuning.FirstSquirrelTroubleDelay,
+            squirrelBaseDelay: _tuning.SquirrelBaseDelay,
+            squirrelTroubleDelay: _tuning.SquirrelTroubleDelay,
+            itemScore: _mission.ItemScore,
+            maxStolenFood: _mission.MaxStolenFood,
+            squirrelPenalty: _mission.SquirrelPenalty,
+            squirrelScareScore: _mission.SquirrelScareScore,
+            pancakeSquirrelPenalty: _tuning.PancakeSquirrelPenalty,
             panicMeter: _panic,
             random: () => _rng,
             now: () => Time.time,
+            activeModifier: () => ActiveModifier,
+            activeTreats: () => _treats,
             addScore: AddScore,
             creditDog: CreditDog,
             setCue: cue => LastCue = cue,
@@ -555,6 +570,7 @@ namespace CheddarAndCocoa.Game
             createActor: kind => MakeActor(ArenaArtCatalog.Actor(kind)),
             acquireHiddenTreat: FindFirstHiddenTreat,
             recoverCollectible: RecoverControllerCollectible,
+            replaceCollectible: ReplaceControllerCollectible,
             setActorState: SetActorState,
             pulse: Pulse);
 
@@ -612,7 +628,7 @@ namespace CheddarAndCocoa.Game
             AddScore(
                 _mission.ItemScore,
                 trapRecovery ? "TRAP WEENIE RECOVERED" : _mission.CollectedScoreLabel);
-            BreakfastRecovered++;
+            _breakfastRecovered++;
             LastCue = trapRecovery
                 ? $"{DogName(dog)} recovered the dropped weenie" + (_backyardTrapState.Complete ? " - squirrel trap complete!" : " - swap roles!")
                 : $"{DogName(dog)} recovered {_mission.ItemCollectCueNoun}!";
@@ -905,6 +921,12 @@ namespace CheddarAndCocoa.Game
 
         public void ForceSquirrelStealAttempt()
         {
+            if (MissionActive() && SnackHeistController != null)
+            {
+                SnackHeistController.ForceStealAttempt();
+                CheckClear();
+                return;
+            }
             if (!_mission.UsesSquirrel || !MissionActive() || _treats.Count == 0) return;
 
             var nearby = FindTreatNear(SquirrelObject.transform.position, 0.05f);
@@ -919,6 +941,20 @@ namespace CheddarAndCocoa.Game
             var target = FindNearestTreat(SquirrelObject.transform.position) ?? _treats[0];
             StartSquirrelSteal(target);
             UpdateInteractionRanges();
+        }
+
+        public void ForceCollectTreat()
+        {
+            if (!MissionActive()) return;
+            SnackHeistController?.ForceCollectTreat();
+            CheckClear();
+        }
+
+        public void ForceStealAttempt()
+        {
+            if (!MissionActive()) return;
+            SnackHeistController?.ForceSteal();
+            CheckClear();
         }
 
         public void ForceBackyardTrapRedirect(DogId pressureDog, bool gapHeld = true)
@@ -1056,8 +1092,8 @@ namespace CheddarAndCocoa.Game
             Score = 0;
             LastScoreDelta = 0;
             UnitedBarks = 0;
-            BreakfastRecovered = 0;
-            StolenFood = 0;
+            _breakfastRecovered = 0;
+            _stolenFood = 0;
             PredatorResolved = false;
             PredatorFailed = false;
             TugProgress = 0f;
@@ -1287,7 +1323,7 @@ namespace CheddarAndCocoa.Game
                 SpawnTreat();
             }
 
-            StolenFood++;
+            _stolenFood++;
             AddScore(-(ActiveModifier == RoundModifier.PancakePanic ? _tuning.PancakeSquirrelPenalty : _mission.SquirrelPenalty), _mission.SquirrelStealScoreLabel);
             _squirrelTarget = null;
             _squirrelTimer = SquirrelDelay();
@@ -2158,7 +2194,15 @@ namespace CheddarAndCocoa.Game
         private void RecoverControllerCollectible(Treat treat)
         {
             if (treat == null) return;
-            BreakfastRecovered++;
+            _breakfastRecovered++;
+            _treats.Remove(treat);
+            Destroy(treat.gameObject);
+            SpawnTreat();
+        }
+
+        private void ReplaceControllerCollectible(Treat treat)
+        {
+            if (treat == null) return;
             _treats.Remove(treat);
             Destroy(treat.gameObject);
             SpawnTreat();
@@ -2822,8 +2866,8 @@ namespace CheddarAndCocoa.Game
             Score = 0;
             LastScoreDelta = 0;
             UnitedBarks = 0;
-            BreakfastRecovered = 0;
-            StolenFood = 0;
+            _breakfastRecovered = 0;
+            _stolenFood = 0;
             PredatorResolved = false;
             PredatorFailed = false;
             TugProgress = 0f;
@@ -3036,63 +3080,6 @@ namespace CheddarAndCocoa.Game
             var balance = tuning.BalanceFor(variant);
             switch (variant)
             {
-                case MissionVariant.SnackHeist:
-                    return new MissionDefinition
-                    {
-                        Variant = MissionVariant.SnackHeist,
-                        Name = "Snack Heist",
-                        IntroPrompt = "Cheddar + Cocoa must secure the forbidden snack stash before the squirrel union notices.",
-                        ReadyScoreLabel = "READY TO HEIST SNACKS",
-                        ItemRootName = "Forbidden Snacks",
-                        ItemObjectName = "Forbidden Snack",
-                        ItemWorldLabel = "Snack!",
-                        ItemArrowLabel = "SNACK",
-                        ItemCollectCueNoun = "a forbidden snack",
-                        CollectObjectiveFormat = "Stash snacks {0}/{1}",
-                        CollectedScoreLabel = "SNACK STASHED",
-                        ItemScore = balance.ItemScore,
-                        SpawnedItemCount = balance.SpawnedItemCount,
-                        ItemGoal = balance.ItemGoal,
-                        RoundSeconds = balance.RoundSeconds,
-                        PawfectScore = balance.PawfectScore,
-                        HeroScore = balance.HeroScore,
-                        SurvivorScore = balance.SurvivorScore,
-                        UsesSquirrel = true,
-                        RequiresPredator = false,
-                        RequiresTug = false,
-                        MaxStolenFood = balance.MaxStolenFood,
-                        SquirrelPenalty = balance.SquirrelPenalty,
-                        SquirrelScareScore = balance.SquirrelScareScore,
-                        SquirrelObjectiveText = "Bark-guard the snack thief",
-                        SquirrelStealingCue = "Squirrel is reaching for the forbidden snack stash - bark guard!",
-                        SquirrelStoleCue = "Squirrel got a snack and looks professionally smug!",
-                        SquirrelStealScoreLabel = "SNACK THIEF",
-                        SquirrelScareScoreLabel = "SNACK GUARD BARK",
-                        SquirrelStealingActorLabel = "SQUIRREL SNACK HEIST - BARK!",
-                        SquirrelDroppedActorLabel = "SQUIRREL DROPPED THE SNACK!",
-                        SquirrelStoleActorLabel = "SQUIRREL STOLE A SNACK!",
-                        SquirrelMissPopLabel = "MISS! -SNACK",
-                        SquirrelStealJuiceLabel = "MISS! SQUIRREL STOLE A SNACK",
-                        SquirrelScareJuiceLabel = "SNACK DROP POP!",
-                        TugObjectiveText = "Guard the snack stash",
-                        WaitingObjectiveText = "Guard the stash together",
-                        ClearObjectiveText = "Snack stash saved - replay Snack Heist",
-                        ClearBannerPrefix = "SNACK STASH SAVED!",
-                        ClearScoreLabel = "SNACK HEIST CLEAR",
-                        ReplayPrompt = "Press R / Enter / Start to replay Snack Heist",
-                        FailObjectiveText = "Mission failed - replay Snack Heist",
-                        GenericFailReason = "Needs more bark before the next snack crime.",
-                        TimeFailReason = "The snack window closed while everyone had opinions.",
-                        StolenFailReason = "The squirrel union escaped with too many forbidden snacks.",
-                        PredatorFailReason = "No predator here, just snack-related consequences.",
-                        PawfectClearReason = "Tiny legends protected the snack stash with suspicious expertise.",
-                        HeroClearReason = "The stash survived with respectable snack discipline.",
-                        BasicClearReason = "The snacks made it home, even if crumb law was broken.",
-                        ItemColor = new Color(0.95f, 0.58f, 0.18f),
-                        ItemAccentColor = new Color(1f, 0.88f, 0.18f),
-                        ItemSecondaryColor = new Color(0.38f, 0.18f, 0.08f),
-                        ItemPopColor = new Color(1f, 0.78f, 0.25f)
-                    };
                 case MissionVariant.EagleShadowPanic:
                     return new MissionDefinition
                     {

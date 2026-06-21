@@ -170,10 +170,15 @@ not an architecture acceptance criterion.
   entry staging, snapshot, and deterministic hooks. `MissionContext` exposes the existing shared
   squirrel actor plus only its movement speed and bark range so scene/test compatibility can remain
   intact without exposing `GameManager`; the mission definition moved into `MissionCatalog`.
+- `SnackHeistMissionController` owns collectible recovery/steal counters, squirrel target selection
+  and movement timing, bark defense, collectible input handling, clear/fail state, objective copy,
+  snapshot, and the deterministic steal hook. `MissionContext` exposes read-only access to the
+  active treat pool plus a replace-collectible callback; `GameManager.BreakfastRecovered` and
+  `StolenFood` remain thin compatibility accessors backed by the active controller.
 - Cross-mission lifecycle coverage now switches through Sock Panic, Car Ride, Scent Search, Weenie
   Roundup, and Leash Walk, asserting that prior controller actors deactivate and cached actors do not
   duplicate on replay.
-- Full PlayMode result after the latest controller increment: 353 passed, 0 failed, 0 skipped.
+- Full PlayMode result after the latest controller increment: 357 passed, 0 failed, 0 skipped.
 
 ## Test and reset contract
 

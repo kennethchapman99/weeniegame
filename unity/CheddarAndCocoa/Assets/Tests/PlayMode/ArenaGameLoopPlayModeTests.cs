@@ -1008,6 +1008,7 @@ namespace CheddarAndCocoa.Tests
             yield return null;
 
             Assert.AreEqual(GameManager.MissionVariant.SnackHeist, game.ActiveMissionVariant);
+            Assert.IsInstanceOf<SnackHeistMissionController>(game.ActiveMissionController);
             Assert.AreEqual("Snack Heist", game.ActiveMissionName);
             Assert.That(game.MissionIntroPrompt, Does.Contain("forbidden snack stash"));
             Assert.That(game.ObjectiveLabel, Does.Contain("Stash snacks"));
