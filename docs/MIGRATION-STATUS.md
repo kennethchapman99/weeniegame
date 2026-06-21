@@ -4,7 +4,7 @@
 
 ## Current state
 
-- PlayMode suite: **348 passed / 0 failed / 0 skipped** (2026-06-21).
+- PlayMode suite: **351 passed / 0 failed / 0 skipped** (2026-06-21).
 - Tree is compile-clean and out of Safe Mode.
 
 ## Extracted (controller-owned)
@@ -19,12 +19,14 @@
 | The Ol' Switcheroo | `SquirrelSwitcherooMissionController` | Bait/raid puzzle; backfire-cap fail. |
 | The Walk Campaign | `WalkCampaignMissionController` | Two-station social-manipulation puzzle; misread-cap fail. |
 | The Great Escape | `GreatEscapeMissionController` | Alternating-owner sequence-chain contraption puzzle; botch-cap fail. |
+| Chaos Machine | `ChaosMachineMissionController` | Time-pressure conveyor puzzle; own `CoopChaosMachinePuzzle` actor. |
+| The Blanket Catch | `BlanketCatchMissionController` | Stretch-span co-op puzzle; `CoopStretchSpanPuzzle`; rip-cap fail. |
+| The Bone Detail | `BoneRelayMissionController` | Split-information relay; `CoopScentRelayPuzzle`; own scent post + 4 mounds (no shared SquirrelObject). Stage Cocoa 5u from post (outside ScentRange=3.5f) so arrow shows and auto-reveal is suppressed on first tick. |
 
 ## Remaining in `GameManager` (not yet extracted)
 
 BackyardRescue, SnackHeist, SockPanic, SquirrelConspiracy, EagleShadowPanic, CoyotesFence,
-WeenieRoundup, ScentSearch, ThunderstormComfort, LeashWalk, CarRide,
-BoneRelay, ChaosMachine, BlanketCatch.
+WeenieRoundup, ScentSearch, ThunderstormComfort, LeashWalk, CarRide.
 
 ## Contract additions so far
 
@@ -46,8 +48,8 @@ BoneRelay, ChaosMachine, BlanketCatch.
 
 ## Next step
 
-Pick the next un-migrated mission. The remaining puzzle-driven siblings fit the current contract
-(position ticking + fail signal, own actors): **ChaosMachine** (`CoopChaosMachinePuzzle`),
-**BlanketCatch** (`CoopStretchSpanPuzzle`), **BoneRelay** (`CoopScentRelayPuzzle`). Check each for
-an `OnDogInteracted`/treat path before extracting — those need an input-forwarding hook on the
-controller. ThunderstormComfort still needs a `game.Panic`/`PanicMeter` hosting decision first.
+All three puzzle-driven siblings (ChaosMachine, BlanketCatch, BoneRelay) are extracted.
+Remaining missions are the squirrel/predator/legacy-actor cluster. ThunderstormComfort still needs
+a `game.Panic`/`PanicMeter` hosting decision. Good next candidate: **ThunderstormComfort**
+(resolve PanicMeter hosting, then extract) or **SockPanic** (position-tick + basket-tip state,
+no shared actors).
