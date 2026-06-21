@@ -54,6 +54,69 @@ namespace CheddarAndCocoa.Tests
             Assert.Greater(game.WeenieRoundupState.Loose, 0, "Weenie Roundup should be freshly configured.");
         }
 
+        [UnityTest]
+        public IEnumerator SwitchingControllerMissions_DeactivatesOwnedActorsWithoutDuplicates()
+        {
+            yield return LoadArena();
+
+            _game.StartMission(GameManager.MissionVariant.SockPanic);
+            yield return null;
+            AssertActive(ArenaArtCatalog.LaundryBasketObjectName, true);
+
+            _game.StartMission(GameManager.MissionVariant.CarRide);
+            yield return null;
+            AssertActive(ArenaArtCatalog.LaundryBasketObjectName, false);
+            AssertActive("Car Ride Balance Vehicle", true);
+
+            _game.StartMission(GameManager.MissionVariant.ScentSearch);
+            yield return null;
+            AssertActive("Car Ride Balance Vehicle", false);
+            AssertPrefixActive("DigSpot_", expectedCount: 6, active: true);
+
+            _game.StartMission(GameManager.MissionVariant.WeenieRoundup);
+            yield return null;
+            AssertPrefixActive("DigSpot_", expectedCount: 6, active: false);
+            AssertPrefixActive("LooseWeenie_", expectedCount: 5, active: true);
+            AssertActive("HomeBowl", true);
+
+            _game.StartMission(GameManager.MissionVariant.LeashWalk);
+            yield return null;
+            AssertPrefixActive("LooseWeenie_", expectedCount: 5, active: false);
+            AssertActive("HomeBowl", false);
+            AssertPrefixActive("LeashCheckpoint_", expectedCount: 4, active: true);
+
+            _game.Restart();
+            yield return null;
+            AssertPrefixActive("LeashCheckpoint_", expectedCount: 4, active: true);
+        }
+
+        private static void AssertActive(string objectName, bool expected)
+        {
+            var matches = FindSceneObjects(objectName, exact: true);
+            Assert.AreEqual(1, matches.Length, $"Expected exactly one cached {objectName} actor.");
+            Assert.AreEqual(expected, matches[0].activeSelf, $"Unexpected active state for {objectName}.");
+        }
+
+        private static void AssertPrefixActive(string prefix, int expectedCount, bool active)
+        {
+            var matches = FindSceneObjects(prefix, exact: false);
+            Assert.AreEqual(expectedCount, matches.Length, $"Unexpected cached actor count for {prefix}.");
+            foreach (var match in matches)
+                Assert.AreEqual(active, match.activeSelf, $"Unexpected active state for {match.name}.");
+        }
+
+        private static GameObject[] FindSceneObjects(string name, bool exact)
+        {
+            var all = Object.FindObjectsByType<GameObject>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            var matches = new System.Collections.Generic.List<GameObject>();
+            foreach (var go in all)
+            {
+                if (!go.scene.IsValid()) continue;
+                if (exact ? go.name == name : go.name.StartsWith(name)) matches.Add(go);
+            }
+            return matches.ToArray();
+        }
+
         private IEnumerator LoadArena()
         {
             _game = null;

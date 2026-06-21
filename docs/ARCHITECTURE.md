@@ -165,7 +165,10 @@ not an architecture acceptance criterion.
   delivery ticking, per-dog cargo state and carry poses, fumble/drop recovery, scoring/credit/
   feedback, objective targeting, entry staging, cleanup, snapshot, and deterministic pickup/
   delivery/drop hooks.
-- Full PlayMode result after the latest controller increment: 352 passed, 0 failed, 0 skipped.
+- Cross-mission lifecycle coverage now switches through Sock Panic, Car Ride, Scent Search, Weenie
+  Roundup, and Leash Walk, asserting that prior controller actors deactivate and cached actors do not
+  duplicate on replay.
+- Full PlayMode result after the latest controller increment: 353 passed, 0 failed, 0 skipped.
 
 ## Test and reset contract
 
