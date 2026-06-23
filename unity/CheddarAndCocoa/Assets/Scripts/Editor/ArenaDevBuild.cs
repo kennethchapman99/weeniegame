@@ -13,13 +13,13 @@ namespace CheddarAndCocoa.EditorTools
         private const string DefaultOutputRelativeToProject = "../builds/dev/CheddarAndCocoa-Arena.app";
         private const string ReleaseOutputRelativeToProject = "../builds/release/CheddarAndCocoa-Demo.app";
 
-        [MenuItem("Cheddar And Cocoa/Build Arena Dev Mac")]
+        [MenuItem("Cheddar & Cocoa/Build Arena Dev Mac")]
         public static void BuildDevMac()
         {
             BuildMac(DefaultOutputRelativeToProject, BuildOptions.Development | BuildOptions.AllowDebugging, "Arena dev");
         }
 
-        [MenuItem("Cheddar And Cocoa/Build Arena Release Mac")]
+        [MenuItem("Cheddar & Cocoa/Build Arena Release Mac")]
         public static void BuildReleaseMac()
         {
             BuildMac(ReleaseOutputRelativeToProject, BuildOptions.CompressWithLz4HC, "Arena release");

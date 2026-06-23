@@ -1,0 +1,967 @@
+{
+  "area": "backyard_main",
+  "generated_at": "2026-06-23T06:28:30",
+  "aerial_map_asset": "Assets/Reference/BackyardCapture/Map/Backyard_Aerial.png",
+  "annotated_map_asset": "Assets/Reference/BackyardCapture/Map/export_map.png",
+  "aerial_pixel_size": {
+    "width": 1122,
+    "height": 1366
+  },
+  "position_space": "normalized_0_1_origin_bottom_left",
+  "points": [
+    {
+      "id": "point_001",
+      "images": [
+        "1_dogview.jpg",
+        "1_high.jpg"
+      ],
+      "types": [
+        "dogview_route",
+        "overview_high"
+      ],
+      "directions": [],
+      "tags": [
+        "dogview",
+        "layout",
+        "overview"
+      ],
+      "gameplay_candidates": [],
+      "interactive": false,
+      "staging_index": 0,
+      "map_position": {
+        "x": 0.8576292335115865,
+        "y": 0.5271742313323573,
+        "placed": true
+      }
+    },
+    {
+      "id": "point_002",
+      "images": [
+        "2_dogview.jpg",
+        "2_high.jpg"
+      ],
+      "types": [
+        "dogview_route",
+        "overview_high"
+      ],
+      "directions": [],
+      "tags": [
+        "dogview",
+        "layout",
+        "overview"
+      ],
+      "gameplay_candidates": [],
+      "interactive": false,
+      "staging_index": 1,
+      "map_position": {
+        "x": 0.8320677361853833,
+        "y": 0.43117130307467055,
+        "placed": true
+      }
+    },
+    {
+      "id": "point_003",
+      "images": [
+        "3_dogview.jpg",
+        "3_high.jpg"
+      ],
+      "types": [
+        "dogview_route",
+        "overview_high"
+      ],
+      "directions": [],
+      "tags": [
+        "dogview",
+        "layout",
+        "overview"
+      ],
+      "gameplay_candidates": [],
+      "interactive": false,
+      "staging_index": 2,
+      "map_position": {
+        "x": 0.7964349376114083,
+        "y": 0.48502196193265,
+        "placed": true
+      }
+    },
+    {
+      "id": "point_004",
+      "images": [
+        "4_dogview_left.png",
+        "4_dogview_right.jpg",
+        "4_high_left.jpg",
+        "4_high_right.jpg"
+      ],
+      "types": [
+        "dogview_route",
+        "overview_high"
+      ],
+      "directions": [
+        "left",
+        "right"
+      ],
+      "tags": [
+        "dogview",
+        "layout",
+        "overview"
+      ],
+      "gameplay_candidates": [],
+      "interactive": false,
+      "staging_index": 3,
+      "map_position": {
+        "x": 0.5716934046345812,
+        "y": 0.5055344070278185,
+        "placed": true
+      }
+    },
+    {
+      "id": "point_005",
+      "images": [
+        "5_dogview_backwards.png",
+        "5_dogview_forward.jpg",
+        "5_high_backwards.jpg",
+        "5_high_forward.jpg"
+      ],
+      "types": [
+        "dogview_route",
+        "overview_high"
+      ],
+      "directions": [
+        "backward",
+        "forward"
+      ],
+      "tags": [
+        "dogview",
+        "layout",
+        "overview"
+      ],
+      "gameplay_candidates": [],
+      "interactive": false,
+      "staging_index": 4,
+      "map_position": {
+        "x": 0.6926916221033869,
+        "y": 0.3975109809663251,
+        "placed": true
+      }
+    },
+    {
+      "id": "point_006",
+      "images": [
+        "6_dogview_backwards.jpg",
+        "6_dogview_forward.jpg",
+        "6_dogview_forwards.png",
+        "6_high_backwards.jpg",
+        "6_high_forwards.jpg"
+      ],
+      "types": [
+        "dogview_route",
+        "overview_high"
+      ],
+      "directions": [
+        "backward",
+        "forward"
+      ],
+      "tags": [
+        "dogview",
+        "layout",
+        "overview"
+      ],
+      "gameplay_candidates": [],
+      "interactive": false,
+      "staging_index": 5,
+      "map_position": {
+        "x": 0.7632798573975045,
+        "y": 0.380190336749634,
+        "placed": true
+      }
+    },
+    {
+      "id": "point_007",
+      "images": [
+        "7_dogview.jpg",
+        "7_high.jpg"
+      ],
+      "types": [
+        "dogview_route",
+        "overview_high"
+      ],
+      "directions": [],
+      "tags": [
+        "dogview",
+        "layout",
+        "overview"
+      ],
+      "gameplay_candidates": [],
+      "interactive": false,
+      "staging_index": 6,
+      "map_position": {
+        "x": 0.8819786096256684,
+        "y": 0.3077745241581259,
+        "placed": true
+      }
+    },
+    {
+      "id": "point_008",
+      "images": [
+        "8_dogview.jpg",
+        "8_high.jpg"
+      ],
+      "types": [
+        "dogview_route",
+        "overview_high"
+      ],
+      "directions": [],
+      "tags": [
+        "dogview",
+        "layout",
+        "overview"
+      ],
+      "gameplay_candidates": [],
+      "interactive": false,
+      "staging_index": 7,
+      "map_position": {
+        "x": 0.8534581105169341,
+        "y": 0.038008784773060134,
+        "placed": true
+      }
+    },
+    {
+      "id": "point_009",
+      "images": [
+        "9_dogview_backwards_left.jpg",
+        "9_dogview_backwards_right.jpg",
+        "9_high_backwards_left.jpg",
+        "9_high_backwards_right.jpg"
+      ],
+      "types": [
+        "dogview_route",
+        "overview_high"
+      ],
+      "directions": [
+        "backward"
+      ],
+      "tags": [
+        "dogview",
+        "layout",
+        "overview"
+      ],
+      "gameplay_candidates": [],
+      "interactive": false,
+      "staging_index": 8,
+      "map_position": {
+        "x": 0.475632798573975,
+        "y": 0.0868081991215226,
+        "placed": true
+      }
+    },
+    {
+      "id": "point_010",
+      "images": [
+        "10_dogview_backwards.jpg",
+        "10_dogview_forwards.png",
+        "10_dogview_left.png",
+        "10_high_backwards.jpg",
+        "10_high_left.jpg"
+      ],
+      "types": [
+        "dogview_route",
+        "overview_high"
+      ],
+      "directions": [
+        "backward",
+        "forward",
+        "left"
+      ],
+      "tags": [
+        "dogview",
+        "layout",
+        "overview"
+      ],
+      "gameplay_candidates": [],
+      "interactive": false,
+      "staging_index": 9,
+      "map_position": {
+        "x": 0.5785204991087344,
+        "y": 0.34730600292825764,
+        "placed": true
+      }
+    },
+    {
+      "id": "point_011",
+      "images": [
+        "11_dogview_backwards.png",
+        "11_dogview_forwards.jpg",
+        "11_high_backwards.jpg",
+        "11_high_forwards.jpg"
+      ],
+      "types": [
+        "dogview_route",
+        "overview_high"
+      ],
+      "directions": [
+        "backward",
+        "forward"
+      ],
+      "tags": [
+        "dogview",
+        "layout",
+        "overview"
+      ],
+      "gameplay_candidates": [],
+      "interactive": false,
+      "staging_index": 10,
+      "map_position": {
+        "x": 0.6216934046345811,
+        "y": 0.45115666178623715,
+        "placed": true
+      }
+    },
+    {
+      "id": "point_012",
+      "images": [
+        "12_dogview_left.jpg",
+        "12_dogview_right.jpg",
+        "12_high_left.jpg",
+        "12_high_right.jpg"
+      ],
+      "types": [
+        "dogview_route",
+        "overview_high"
+      ],
+      "directions": [
+        "left",
+        "right"
+      ],
+      "tags": [
+        "dogview",
+        "layout",
+        "overview"
+      ],
+      "gameplay_candidates": [],
+      "interactive": false,
+      "staging_index": 11,
+      "map_position": {
+        "x": 0.54,
+        "y": 0.5299121522693997,
+        "placed": true
+      }
+    },
+    {
+      "id": "point_013",
+      "images": [
+        "13_dogview_backwards.png",
+        "13_dogview_forwards.jpg",
+        "13_dogview_left.jpg",
+        "13_dogview_right.jpg",
+        "13_high_backwards.jpg",
+        "13_high_forwards.jpg",
+        "13_high_left.jpg",
+        "13_high_right.jpg"
+      ],
+      "types": [
+        "dogview_route",
+        "overview_high"
+      ],
+      "directions": [
+        "backward",
+        "forward",
+        "left",
+        "right"
+      ],
+      "tags": [
+        "dogview",
+        "layout",
+        "overview"
+      ],
+      "gameplay_candidates": [],
+      "interactive": false,
+      "staging_index": 12,
+      "map_position": {
+        "x": 0.44673796791443854,
+        "y": 0.5316544655929722,
+        "placed": true
+      }
+    },
+    {
+      "id": "point_014",
+      "images": [
+        "14_dogview_backwards.jpg",
+        "14_dogview_forwards.jpg",
+        "14_dogview_left.jpg",
+        "14_dogview_right.png",
+        "14_high_backwards.jpg",
+        "14_high_forward.jpg",
+        "14_high_left.jpg",
+        "14_high_right.jpg"
+      ],
+      "types": [
+        "dogview_route",
+        "overview_high"
+      ],
+      "directions": [
+        "backward",
+        "forward",
+        "left",
+        "right"
+      ],
+      "tags": [
+        "dogview",
+        "layout",
+        "overview"
+      ],
+      "gameplay_candidates": [],
+      "interactive": false,
+      "staging_index": 13,
+      "map_position": {
+        "x": 0.39971479500891266,
+        "y": 0.5386969253294289,
+        "placed": true
+      }
+    },
+    {
+      "id": "point_015",
+      "images": [
+        "15_dogview_left.png",
+        "15_high_forward.jpg",
+        "15_high_left.jpg"
+      ],
+      "types": [
+        "dogview_route",
+        "overview_high"
+      ],
+      "directions": [
+        "forward",
+        "left"
+      ],
+      "tags": [
+        "dogview",
+        "layout",
+        "overview"
+      ],
+      "gameplay_candidates": [],
+      "interactive": false,
+      "staging_index": 14,
+      "map_position": {
+        "x": 0.31399286987522285,
+        "y": 0.5606588579795022,
+        "placed": true
+      }
+    },
+    {
+      "id": "point_016",
+      "images": [
+        "16_dogview_backwards.jpg",
+        "16_dogview_forwards.png",
+        "16_dogview_left.jpg",
+        "16_high_forwards.jpg",
+        "16_high_left.jpg"
+      ],
+      "types": [
+        "dogview_route",
+        "overview_high"
+      ],
+      "directions": [
+        "backward",
+        "forward",
+        "left"
+      ],
+      "tags": [
+        "dogview",
+        "layout",
+        "overview"
+      ],
+      "gameplay_candidates": [],
+      "interactive": false,
+      "staging_index": 15,
+      "map_position": {
+        "x": 0.3705525846702317,
+        "y": 0.6084333821376281,
+        "placed": true
+      }
+    },
+    {
+      "id": "point_017",
+      "images": [
+        "17_high_backwards.jpg",
+        "17_high_forwards.jpg"
+      ],
+      "types": [
+        "overview_high"
+      ],
+      "directions": [
+        "backward",
+        "forward"
+      ],
+      "tags": [
+        "layout",
+        "overview"
+      ],
+      "gameplay_candidates": [],
+      "interactive": false,
+      "staging_index": 16,
+      "map_position": {
+        "x": 0.4011408199643494,
+        "y": 0.6267057101024891,
+        "placed": true
+      }
+    },
+    {
+      "id": "point_018",
+      "images": [
+        "18_dogview_forwards.jpg",
+        "18_dogview_left.jpg"
+      ],
+      "types": [
+        "dogview_route"
+      ],
+      "directions": [
+        "forward",
+        "left"
+      ],
+      "tags": [
+        "dogview"
+      ],
+      "gameplay_candidates": [],
+      "interactive": false,
+      "staging_index": 17,
+      "map_position": {
+        "x": 0.4384491978609626,
+        "y": 0.598199121522694,
+        "placed": true
+      }
+    },
+    {
+      "id": "point_019",
+      "images": [
+        "19_dogview_backwards.jpg",
+        "19_dogview_forwards.jpg",
+        "19_dogview_left.jpg",
+        "19_high_backwards.jpg",
+        "19_high_forwards.jpg",
+        "19_high_left.jpg"
+      ],
+      "types": [
+        "dogview_route",
+        "overview_high"
+      ],
+      "directions": [
+        "backward",
+        "forward",
+        "left"
+      ],
+      "tags": [
+        "dogview",
+        "layout",
+        "overview"
+      ],
+      "gameplay_candidates": [],
+      "interactive": false,
+      "staging_index": 18,
+      "map_position": {
+        "x": 0.2729055258467023,
+        "y": 0.43307467057101023,
+        "placed": true
+      }
+    },
+    {
+      "id": "point_020",
+      "images": [
+        "20_dogview_backwards.jpg",
+        "20_dogview_forwards.jpg",
+        "20_dogview_left.jpg",
+        "20_high_backwards.jpg",
+        "20_high_forwards.jpg",
+        "20_high_left.jpg"
+      ],
+      "types": [
+        "dogview_route",
+        "overview_high"
+      ],
+      "directions": [
+        "backward",
+        "forward",
+        "left"
+      ],
+      "tags": [
+        "dogview",
+        "layout",
+        "overview"
+      ],
+      "gameplay_candidates": [],
+      "interactive": false,
+      "staging_index": 19,
+      "map_position": {
+        "x": 0.1948663101604278,
+        "y": 0.35259150805270867,
+        "placed": true
+      }
+    },
+    {
+      "id": "point_021",
+      "images": [
+        "21_dogview_backwards.jpg",
+        "21_dogview_forwards.jpg",
+        "21_dogview_forwards.png",
+        "21_dogview_left.jpg",
+        "21_high_backwards.jpg",
+        "21_high_forwards.jpg",
+        "21_high_left.jpg"
+      ],
+      "types": [
+        "dogview_route",
+        "overview_high"
+      ],
+      "directions": [
+        "backward",
+        "forward",
+        "left"
+      ],
+      "tags": [
+        "dogview",
+        "layout",
+        "overview"
+      ],
+      "gameplay_candidates": [],
+      "interactive": false,
+      "staging_index": 20,
+      "map_position": {
+        "x": 0.3884313725490196,
+        "y": 0.4387408491947292,
+        "placed": true
+      }
+    },
+    {
+      "id": "point_022",
+      "images": [
+        "22_dogview_backwards.jpg",
+        "22_dogview_backwards.png",
+        "22_dogview_forwards.jpg",
+        "22_dogview_left.jpg",
+        "22_dogview_right.jpg",
+        "22_high_backwards.jpg",
+        "22_high_forwards.jpg",
+        "22_high_left.jpg",
+        "22_high_right.jpg"
+      ],
+      "types": [
+        "dogview_route",
+        "overview_high"
+      ],
+      "directions": [
+        "backward",
+        "forward",
+        "left",
+        "right"
+      ],
+      "tags": [
+        "dogview",
+        "layout",
+        "overview"
+      ],
+      "gameplay_candidates": [],
+      "interactive": false,
+      "staging_index": 21,
+      "map_position": {
+        "x": 0.4377361853832442,
+        "y": 0.4165446559297218,
+        "placed": true
+      }
+    },
+    {
+      "id": "point_023",
+      "images": [
+        "23_dogview_backwards.jpg",
+        "23_dogview_forwards.jpg",
+        "23_high_backwards.jpg",
+        "23_high_forwards.jpg",
+        "23_high_left.jpg"
+      ],
+      "types": [
+        "dogview_route",
+        "overview_high"
+      ],
+      "directions": [
+        "backward",
+        "forward",
+        "left"
+      ],
+      "tags": [
+        "dogview",
+        "layout",
+        "overview"
+      ],
+      "gameplay_candidates": [],
+      "interactive": false,
+      "staging_index": 22,
+      "map_position": {
+        "x": 0.39349376114081996,
+        "y": 0.3209370424597364,
+        "placed": true
+      }
+    },
+    {
+      "id": "point_024",
+      "images": [
+        "24_dogview_backwards.jpg",
+        "24_dogview_forwards.jpg",
+        "24_dogview_left.jpg"
+      ],
+      "types": [
+        "dogview_route"
+      ],
+      "directions": [
+        "backward",
+        "forward",
+        "left"
+      ],
+      "tags": [
+        "dogview"
+      ],
+      "gameplay_candidates": [],
+      "interactive": false,
+      "staging_index": 23,
+      "map_position": {
+        "x": 0.4124777183600713,
+        "y": 0.20944363103953145,
+        "placed": true
+      }
+    },
+    {
+      "id": "point_025",
+      "images": [
+        "25_dogview_backwards.png",
+        "25_dogview_forwards.jpg",
+        "25_dogview_left.jpg",
+        "25_high_backwards.jpg",
+        "25_high_forwards.jpg",
+        "25_high_right.jpg"
+      ],
+      "types": [
+        "dogview_route",
+        "overview_high"
+      ],
+      "directions": [
+        "backward",
+        "forward",
+        "left",
+        "right"
+      ],
+      "tags": [
+        "dogview",
+        "layout",
+        "overview"
+      ],
+      "gameplay_candidates": [],
+      "interactive": false,
+      "staging_index": 24,
+      "map_position": {
+        "x": 0.3527985739750446,
+        "y": 0.21385065885797938,
+        "placed": true
+      }
+    },
+    {
+      "id": "point_026",
+      "images": [
+        "26_dogview_forwards.jpg",
+        "26_dogview_left.jpg"
+      ],
+      "types": [
+        "dogview_route"
+      ],
+      "directions": [
+        "forward",
+        "left"
+      ],
+      "tags": [
+        "dogview"
+      ],
+      "gameplay_candidates": [],
+      "interactive": false,
+      "staging_index": 25,
+      "map_position": {
+        "x": 0.38823529411764707,
+        "y": 0.12797950219619336,
+        "placed": true
+      }
+    },
+    {
+      "id": "point_027",
+      "images": [
+        "27_dogview_backwards.png",
+        "27_dogview_right.jpg",
+        "27_high_backwards.jpg",
+        "27_high_left.jpg",
+        "27_high_right.jpg"
+      ],
+      "types": [
+        "dogview_route",
+        "overview_high"
+      ],
+      "directions": [
+        "backward",
+        "left",
+        "right"
+      ],
+      "tags": [
+        "dogview",
+        "layout",
+        "overview"
+      ],
+      "gameplay_candidates": [],
+      "interactive": false,
+      "staging_index": 26,
+      "map_position": {
+        "x": 0.29754010695187166,
+        "y": 0.09311859443631043,
+        "placed": true
+      }
+    },
+    {
+      "id": "point_028",
+      "images": [
+        "28_dogview_backwards.jpg",
+        "28_dogview_left.png",
+        "28_high_backwards.jpg",
+        "28_high_forwards.jpg",
+        "28_high_left.jpg"
+      ],
+      "types": [
+        "dogview_route",
+        "overview_high"
+      ],
+      "directions": [
+        "backward",
+        "forward",
+        "left"
+      ],
+      "tags": [
+        "dogview",
+        "layout",
+        "overview"
+      ],
+      "gameplay_candidates": [],
+      "interactive": false,
+      "staging_index": 27,
+      "map_position": {
+        "x": 0.00919786096256684,
+        "y": 0.13288433382137632,
+        "placed": true
+      }
+    },
+    {
+      "id": "point_029",
+      "images": [
+        "29_dogview_backwards.jpg",
+        "29_dogview_forwards.jpg",
+        "29_dogview_left.png",
+        "29_high_backwards.jpg",
+        "29_high_left.jpg"
+      ],
+      "types": [
+        "dogview_route",
+        "overview_high"
+      ],
+      "directions": [
+        "backward",
+        "forward",
+        "left"
+      ],
+      "tags": [
+        "dogview",
+        "layout",
+        "overview"
+      ],
+      "gameplay_candidates": [],
+      "interactive": false,
+      "staging_index": 28,
+      "map_position": {
+        "x": 0.11119429590017826,
+        "y": 0.24991215226939978,
+        "placed": true
+      }
+    },
+    {
+      "id": "point_030",
+      "images": [
+        "30_dogview_backwards.jpg",
+        "30_dogview_backwards.png",
+        "30_dogview_forwards.jpg",
+        "30_high_backwards.jpg",
+        "30_high_forwards.jpg",
+        "30_high_left.jpg"
+      ],
+      "types": [
+        "dogview_route",
+        "overview_high"
+      ],
+      "directions": [
+        "backward",
+        "forward",
+        "left"
+      ],
+      "tags": [
+        "dogview",
+        "layout",
+        "overview"
+      ],
+      "gameplay_candidates": [],
+      "interactive": false,
+      "staging_index": 29,
+      "map_position": {
+        "x": 0.18645276292335114,
+        "y": 0.3267496339677892,
+        "placed": true
+      }
+    },
+    {
+      "id": "point_031",
+      "images": [
+        "31_dogview_backwards.jpg",
+        "31_dogview_forwards.jpg"
+      ],
+      "types": [
+        "dogview_route"
+      ],
+      "directions": [
+        "backward",
+        "forward"
+      ],
+      "tags": [
+        "dogview"
+      ],
+      "gameplay_candidates": [],
+      "interactive": false,
+      "staging_index": 30,
+      "map_position": {
+        "x": 0.20229946524064174,
+        "y": 0.3891654465592972,
+        "placed": true
+      }
+    },
+    {
+      "id": "point_032",
+      "images": [
+        "32_high_forwards.jpg"
+      ],
+      "types": [
+        "overview_high"
+      ],
+      "directions": [
+        "forward"
+      ],
+      "tags": [
+        "layout",
+        "overview"
+      ],
+      "gameplay_candidates": [],
+      "interactive": false,
+      "staging_index": 31,
+      "map_position": {
+        "x": 0.46677361853832444,
+        "y": 0.6567203513909224,
+        "placed": true
+      }
+    }
+  ]
+}
