@@ -1,0 +1,72 @@
+name: Unity Tests
+
+# Runs the Unity PlayMode test suite for the Cheddar & Cocoa project so refactors and
+# new mission logic are validated automatically. Uses GameCI (game-ci/unity-test-runner).
+#
+# REQUIRED SECRETS (add under Settings -> Secrets and variables -> Actions):
+#   UNITY_LICENSE  - contents of your Unity .ulf license file (Personal license).
+#                    Generate via the game-ci/unity-request-activation-file action or the
+#                    one-time manual activation flow: https://game.ci/docs/github/activation
+#   UNITY_EMAIL    - the email of the Unity account that owns the license.
+#   UNITY_PASSWORD - the password for that Unity account.
+# Without these the job cannot activate the editor and will fail at the test step.
+
+on:
+  push:
+    branches:
+      - main
+      - 'claude/**'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+# Avoid piling up redundant runs on rapid pushes to the same ref.
+concurrency:
+  group: unity-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  playmode-tests:
+    name: PlayMode Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Cache the generated Library folder to keep import/test times reasonable.
+      - name: Cache Unity Library
+        uses: actions/cache@v4
+        with:
+          path: unity/CheddarAndCocoa/Library
+          key: Library-CheddarAndCocoa-${{ hashFiles('unity/CheddarAndCocoa/Assets/**', 'unity/CheddarAndCocoa/Packages/**', 'unity/CheddarAndCocoa/ProjectSettings/**') }}
+          restore-keys: |
+            Library-CheddarAndCocoa-
+            Library-
+
+      - name: Run PlayMode tests
+        uses: game-ci/unity-test-runner@v4
+        id: tests
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: unity/CheddarAndCocoa
+          unityVersion: 6000.0.65f1
+          testMode: playmode
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: PlayMode Test Results
+          artifactsPath: unity-test-artifacts
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: PlayMode-Test-Results
+          path: unity-test-artifacts
+          if-no-files-found: warn
