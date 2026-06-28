@@ -25,7 +25,7 @@ namespace CheddarAndCocoa.Tests
         [Test]
         public void MissionSelectPanel_FitsAllMissionRowsAndReadableGoal()
         {
-            float height = ArenaHud.MissionSelectPanelHeight(21);
+            float height = ArenaHud.MissionSelectPanelHeight(22);
             Assert.GreaterOrEqual(height, 110f + 11f * 42f + 142f);
 
             Rect panel = ArenaHud.FitPanel(1920f, 1080f, 900f, height);
@@ -42,6 +42,20 @@ namespace CheddarAndCocoa.Tests
             var env = GameObject.Find(ArenaArtCatalog.BackyardEnvironmentObjectName);
             Assert.IsNotNull(env, "Backyard environment root should be built at runtime.");
             Assert.Greater(env.transform.childCount, 12, "Yard should be dressed with multiple props, not empty.");
+            AssertHasDecorativeProp(env.transform, "FenceRailTop", "Backyard should read as fenced, not only bounded by invisible walls.");
+            AssertHasDecorativeProp(env.transform, "FenceRailBottom", "Backyard should read as fenced, not only bounded by invisible walls.");
+            AssertHasDecorativeProp(env.transform, "FenceRailLeft", "Backyard should read as fenced, not only bounded by invisible walls.");
+            AssertHasDecorativeProp(env.transform, "FenceRailRight", "Backyard should read as fenced, not only bounded by invisible walls.");
+            AssertHasDecorativeProp(env.transform, "BackDoorExterior", "The patio should have a visible house/back-door cue.");
+            AssertHasDecorativeProp(env.transform, "BackDoorStep", "The patio should have a visible step from the house.");
+            AssertHasDecorativeProp(env.transform, "EagleShadowSweepLane", "Eagle Shadow needs a readable sweep band in the yard.");
+            AssertHasDecorativeProp(env.transform, "CoyoteFencePressureLane", "Coyote defense needs a readable fence pressure lane.");
+            AssertHasDecorativeProp(env.transform, "SnackHeistTableBackplate", "Snack Heist should have a table district before final art.");
+            AssertHasDecorativeProp(env.transform, "SockPanicLaundryCorner", "Sock Panic should have a laundry district before final art.");
+            Assert.GreaterOrEqual(CountChildrenStartingWith(env.transform, "ScentTrailPatch_"), 6,
+                "Scent Search should have visible background scent patches.");
+            Assert.GreaterOrEqual(CountChildrenStartingWith(env.transform, "LeashRouteStone_"), 5,
+                "Leash Walk should have a visible route path through the yard.");
 
             // The yard must actually be large, not a tiny demo box.
             var cameraRig = Camera.main.GetComponent<SharedCameraController>();
@@ -227,6 +241,22 @@ namespace CheddarAndCocoa.Tests
                 max = Mathf.Max(max, point.x);
             }
             Assert.GreaterOrEqual(max - min, minimumWidth, $"{label} should use the full yard, not cluster near spawn.");
+        }
+
+        private static void AssertHasDecorativeProp(Transform parent, string name, string message)
+        {
+            var child = parent.Find(name);
+            Assert.IsNotNull(child, message);
+            Assert.IsNotNull(child.GetComponent<SpriteRenderer>(), $"{name} should render as a background prop.");
+            Assert.IsNull(child.GetComponent<Collider2D>(), $"{name} must stay non-blocking.");
+        }
+
+        private static int CountChildrenStartingWith(Transform parent, string prefix)
+        {
+            int count = 0;
+            foreach (Transform child in parent)
+                if (child.name.StartsWith(prefix)) count++;
+            return count;
         }
     }
 }

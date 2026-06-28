@@ -205,6 +205,8 @@ namespace CheddarAndCocoa.Bootstrap
             // Stone patio off the back door (bottom-right), with a darker rug accent.
             Prop(root, "Patio", F(0.52f, -0.6f), new Vector2(fieldWidth * 0.26f, fieldHeight * 0.3f), Hex("#9b9384"), -9);
             Prop(root, "PatioRug", F(0.52f, -0.62f), new Vector2(fieldWidth * 0.16f, fieldHeight * 0.16f), Hex("#7d5a3a"), -8);
+            Prop(root, "BackDoorExterior", F(0.82f, -0.43f), new Vector2(3.4f, 5.2f), Hex("#6b4528"), -7);
+            Prop(root, "BackDoorStep", F(0.78f, -0.54f), new Vector2(5.8f, 1.2f), Hex("#c7bba2"), -7);
 
             // Koi pond (top-left) with a lighter shallow rim.
             Prop(root, "Pond", F(-0.55f, 0.58f), new Vector2(fieldWidth * 0.2f, fieldHeight * 0.24f), Hex("#2f6f9e"), -9);
@@ -234,6 +236,25 @@ namespace CheddarAndCocoa.Bootstrap
                     new Vector2(2.6f, 1.5f), Hex("#8c887e"), -8);
             }
 
+            // Playable readability layers for current missions. These are still background-only,
+            // but they make the level components look authored before final environment art exists.
+            Prop(root, "EagleShadowSweepLane", F(0f, 0.02f), new Vector2(fieldWidth * 0.9f, fieldHeight * 0.075f), Hex("#14182066"), -8);
+            Prop(root, "CoyoteFencePressureLane", F(0f, 0.89f), new Vector2(fieldWidth * 0.86f, fieldHeight * 0.045f), Hex("#7a4b2266"), -8);
+            for (int i = 0; i < 6; i++)
+            {
+                float t = i / 5f;
+                Prop(root, $"ScentTrailPatch_{i}", F(Mathf.Lerp(-0.72f, 0.72f, t), Mathf.Lerp(-0.18f, 0.42f, t)),
+                    new Vector2(1.7f + 0.25f * (i % 2), 0.95f), Hex("#6cd69a80"), -7);
+            }
+            for (int i = 0; i < 5; i++)
+            {
+                float t = i / 4f;
+                Prop(root, $"LeashRouteStone_{i}", F(Mathf.Lerp(-0.78f, 0.62f, t), Mathf.Lerp(-0.82f, -0.1f, t)),
+                    new Vector2(2.2f, 1.05f), Hex("#d1c08a"), -7);
+            }
+            Prop(root, "SnackHeistTableBackplate", F(-0.38f, 0.16f), new Vector2(fieldWidth * 0.12f, fieldHeight * 0.08f), Hex("#6b4324"), -8);
+            Prop(root, "SockPanicLaundryCorner", F(0.44f, -0.48f), new Vector2(fieldWidth * 0.1f, fieldHeight * 0.1f), Hex("#f4d08a"), -8);
+
             // Bush cover clumps. The first three sit on the Eagle Shadow "HIDE HERE" cover zones
             // (GameManager._eagleCoverZones) so the hiding spots read as real backyard cover; the
             // rest are scatter dressing. Decorative only — no colliders.
@@ -251,6 +272,10 @@ namespace CheddarAndCocoa.Bootstrap
             }
 
             // Decorative fence posts just inside the walls so the boundary reads as a backyard fence.
+            Prop(root, "FenceRailTop", new Vector2(0f, hh - 0.62f), new Vector2(fieldWidth - 1.2f, 0.24f), Hex("#a98758"), -7);
+            Prop(root, "FenceRailBottom", new Vector2(0f, -hh + 0.62f), new Vector2(fieldWidth - 1.2f, 0.24f), Hex("#a98758"), -7);
+            Prop(root, "FenceRailLeft", new Vector2(-hw + 0.62f, 0f), new Vector2(0.24f, fieldHeight - 1.2f), Hex("#a98758"), -7);
+            Prop(root, "FenceRailRight", new Vector2(hw - 0.62f, 0f), new Vector2(0.24f, fieldHeight - 1.2f), Hex("#a98758"), -7);
             BuildFenceLine(root, hw, hh);
         }
 

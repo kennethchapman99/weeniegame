@@ -13,6 +13,8 @@ These documents govern current decisions and work:
   cold-session protocol, findings, and current gate decision.
 - [Game Design Bible](GAME-DESIGN-BIBLE.md) — creative north star; level list is an idea bank.
 - [Deep Slice: Operation Pee Break](DEEP-SLICE-OPERATION-PEE-BREAK.md) — only authorized new slice.
+- [Gameplay-First Greybox Pivot](GAMEPLAY-FIRST-GREYBOX-PIVOT.md) — generated Unity primitives
+  first; realistic backgrounds/photos are deferred until the beat is fun.
 - [Design Review 2026-06](DESIGN-REVIEW-2026-06.md) — rationale for the depth pivot.
 - [Architecture](ARCHITECTURE.md) — active Unity ownership and Kitchen-first migration.
 - [Mission System](MISSION-SYSTEM.md), [Mission Authoring](MISSION-AUTHORING-FRAMEWORK.md), and

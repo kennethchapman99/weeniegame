@@ -141,7 +141,7 @@ namespace CheddarAndCocoa.Game
         private void DrawPlaytestOverlay()
         {
             float w = Mathf.Min(440f, Mathf.Max(1f, Screen.width - 24f));
-            float h = Mathf.Min(344f, Mathf.Max(1f, Screen.height - 24f));
+            float h = Mathf.Min(388f, Mathf.Max(1f, Screen.height - 24f));
             var box = new Rect(Mathf.Max(12f, Screen.width - w - 12f), 12f, w, h);
             GUI.Box(box, GUIContent.none);
 
@@ -150,16 +150,18 @@ namespace CheddarAndCocoa.Game
             GUI.Label(new Rect(box.x + 12f, box.y + 32f, w - 24f, 20f), $"Mission: {_game.ActiveMissionVariant} / {_game.CurrentFlow} / {_game.Phase}", _overlay);
             GUI.Label(new Rect(box.x + 12f, box.y + 54f, w - 24f, 20f), $"Timer: {secs}s   Score: {_game.Score}   Last score: {_game.LastScoreEventLabel}", _overlay);
             GUI.Label(new Rect(box.x + 12f, box.y + 76f, w - 24f, 34f), $"Objective: {_game.ObjectiveLabel}", _overlay);
-            GUI.Label(new Rect(box.x + 12f, box.y + 112f, w - 24f, 20f), _game.FailPressureLabel, _overlay);
-            GUI.Label(new Rect(box.x + 12f, box.y + 134f, w - 24f, 20f), _game.DogPositionsLabel, _overlay);
-            GUI.Label(new Rect(box.x + 12f, box.y + 156f, w - 24f, 20f), _game.PlaytestCountersLabel, _overlay);
-            GUI.Label(new Rect(box.x + 12f, box.y + 178f, w - 24f, 20f), _game.MissionFailureSummaryLabel, _overlay);
-            GUI.Label(new Rect(box.x + 12f, box.y + 200f, w - 24f, 20f), $"Session: {_game.SessionMissionsPlayed} played / {_game.SessionTotalScore} score / {_game.SessionStarsEarned} stars", _overlay);
-            GUI.Label(new Rect(box.x + 12f, box.y + 222f, w - 24f, 20f), $"Outcome: {_game.Outcome}   Rank: {_game.EndRank}   {(_game.LastRoundFlawless ? "FLAWLESS" : "")}", _overlay);
-            GUI.Label(new Rect(box.x + 12f, box.y + 244f, w - 24f, 20f), $"{_game.MvpLabel}   Flawless clears: {_game.SessionFlawlessClears}", _overlay);
-            GUI.Label(new Rect(box.x + 12f, box.y + 266f, w - 24f, 26f), $"Event: {_game.LastPlaytestEvent}", _overlay);
-            GUI.Label(new Rect(box.x + 12f, box.y + 290f, w - 24f, 20f), $"Audio: {(_game.AudioEnabled ? "on" : "off")} {_game.LastAudioCueRequested}   Rumble: {(_game.RumbleEnabled ? "on" : "off")} {_game.LastRumbleRequested}", _overlay);
-            GUI.Label(new Rect(box.x + 12f, box.y + 312f, w - 24f, 20f), _game.DemoReadinessLabel, _overlay);
+            GUI.Label(new Rect(box.x + 12f, box.y + 112f, w - 24f, 20f), $"Guidance: {_game.TeamGuidanceLabel}", _overlay);
+            GUI.Label(new Rect(box.x + 12f, box.y + 134f, w - 24f, 20f), _game.FailPressureLabel, _overlay);
+            GUI.Label(new Rect(box.x + 12f, box.y + 156f, w - 24f, 20f), _game.DogPositionsLabel, _overlay);
+            GUI.Label(new Rect(box.x + 12f, box.y + 178f, w - 24f, 20f), _game.PlaytestCountersLabel, _overlay);
+            GUI.Label(new Rect(box.x + 12f, box.y + 200f, w - 24f, 20f), _game.MissionFailureSummaryLabel, _overlay);
+            GUI.Label(new Rect(box.x + 12f, box.y + 222f, w - 24f, 20f), $"Session: {_game.SessionMissionsPlayed} played / {_game.SessionTotalScore} score / {_game.SessionStarsEarned} stars", _overlay);
+            GUI.Label(new Rect(box.x + 12f, box.y + 244f, w - 24f, 20f), $"Outcome: {_game.Outcome}   Rank: {_game.EndRank}   {(_game.LastRoundFlawless ? "FLAWLESS" : "")}", _overlay);
+            GUI.Label(new Rect(box.x + 12f, box.y + 266f, w - 24f, 20f), $"{_game.MvpLabel}   Flawless clears: {_game.SessionFlawlessClears}", _overlay);
+            GUI.Label(new Rect(box.x + 12f, box.y + 288f, w - 24f, 26f), $"Event: {_game.LastPlaytestEvent}", _overlay);
+            GUI.Label(new Rect(box.x + 12f, box.y + 312f, w - 24f, 20f), $"Audio: {(_game.AudioEnabled ? "on" : "off")} {_game.LastAudioCueRequested}   Rumble: {(_game.RumbleEnabled ? "on" : "off")} {_game.LastRumbleRequested}", _overlay);
+            GUI.Label(new Rect(box.x + 12f, box.y + 334f, w - 24f, 20f), _game.DemoReadinessLabel, _overlay);
+            GUI.Label(new Rect(box.x + 12f, box.y + 356f, w - 24f, 20f), _game.PlaytestHotkeysLabel, _overlay);
         }
 
         private void DrawPlaytestModeToggle()
@@ -177,8 +179,10 @@ namespace CheddarAndCocoa.Game
             var box = FitPanel(Screen.width, Screen.height, 900f, MissionSelectPanelHeight(count));
             float w = box.width;
             GUI.Box(box, GUIContent.none);
+            DrawTintedRect(new Rect(box.x + 12f, box.y + 10f, w - 24f, 92f), new Color(0.04f, 0.08f, 0.1f, 0.62f));
+            DrawTintedRect(new Rect(box.x + 20f, box.y + 108f, w - 40f, rows * 42f + 4f), new Color(0.02f, 0.04f, 0.05f, 0.42f));
             DrawUiKitAccent(new Rect(box.x + w - 116, box.y + 16, 76, 50));
-            GUI.Label(new Rect(box.x, box.y + 14, w, 42), "Cheddar + Cocoa Mission Select", _big);
+            GUI.Label(new Rect(box.x, box.y + 14, w, 42), "Cheddar + Cocoa Couch Missions", _big);
             GUI.Label(new Rect(box.x + 32, box.y + 56, w - 64, 26),
                 $"{_game.SessionMissionsPlayed} played • {_game.SessionUniqueMissionsCompleted}/{count} tried • {_game.SessionTotalScore} score • {_game.SessionFlawlessClears} flawless",
                 _mid);
@@ -197,10 +201,13 @@ namespace CheddarAndCocoa.Game
             }
 
             float footY = box.y + 110f + rows * 42f + 4f;
+            DrawTintedRect(new Rect(box.x + 20f, footY - 4f, w - 40f, 128f), new Color(0.08f, 0.13f, 0.14f, 0.7f));
             GUI.Label(new Rect(box.x + 30, footY, w - 60, 24),
                 $"{_game.SelectedMissionName} • {_game.MissionSelectDetailsFor(_game.SelectedMissionVariant)} • {_game.MissionSelectStatusFor(_game.SelectedMissionVariant)}", _mid);
             GUI.Label(new Rect(box.x + 40, footY + 24f, w - 80, 70), $"GOAL: {_game.SelectedMissionBriefing}", _briefing);
-            if (GUI.Button(new Rect(box.x + w * 0.5f - 110, footY + 96f, 220, 30), $"Start {_game.SelectedMissionName}"))
+            GUI.Label(new Rect(box.x + 42f, footY + 94f, w * 0.5f - 64f, 26f),
+                "Start / South button launches the highlighted slice", _small);
+            if (GUI.Button(new Rect(box.x + w - 282f, footY + 94f, 240, 32), $"Start {_game.SelectedMissionName}"))
                 _game.StartSelectedMission();
         }
 
@@ -218,8 +225,17 @@ namespace CheddarAndCocoa.Game
             var def = GameManager.BuildMissionDefinition(variant);
             string label = $"{prefix}{key}. {def.Name}\n{_game.MissionSelectStatusFor(variant)}";
             Color previous = GUI.color;
-            if (selected) GUI.color = new Color(1f, 0.9f, 0.35f);
+            DrawTintedRect(row, selected ? new Color(1f, 0.82f, 0.18f, 0.24f) : new Color(0.1f, 0.14f, 0.16f, 0.46f));
+            if (selected) GUI.color = new Color(1f, 0.92f, 0.42f);
             if (GUI.Button(row, label)) _game.SelectMission(variant);
+            GUI.color = previous;
+        }
+
+        private static void DrawTintedRect(Rect rect, Color color)
+        {
+            Color previous = GUI.color;
+            GUI.color = color;
+            GUI.DrawTexture(rect, Texture2D.whiteTexture);
             GUI.color = previous;
         }
 

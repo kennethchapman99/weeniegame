@@ -318,11 +318,13 @@ namespace CheddarAndCocoa.Game
         public int BarksUsed { get; private set; }
         public int FailedInteractions { get; private set; }
         public int ObjectiveChangeCount { get; private set; }
+        public int ColdReadQuestionCount { get; private set; }
         public int MissionReplayCount { get; private set; }
         public float MissionDurationSeconds => CurrentFlow == FlowState.MissionSelect ? 0f : Mathf.Clamp(roundDuration - TimeRemaining, 0f, roundDuration);
         public string FailPressureLabel => BuildFailPressureLabel();
         public string DogPositionsLabel => BuildDogPositionsLabel();
-        public string PlaytestCountersLabel => $"Barks {BarksUsed} / missed interacts {FailedInteractions} / objective shifts {ObjectiveChangeCount} / duration {MissionDurationSeconds:0.0}s / replays {MissionReplayCount}";
+        public string PlaytestCountersLabel => $"Barks {BarksUsed} / missed interacts {FailedInteractions} / objective shifts {ObjectiveChangeCount} / cold-read ? {ColdReadQuestionCount} / duration {MissionDurationSeconds:0.0}s / replays {MissionReplayCount}";
+        public string PlaytestHotkeysLabel => "F1 overlay / F2 audio / F3 rumble / F4 mark cold-read question";
         public string MissionFailureSummaryLabel => BuildMissionFailureSummaryLabel();
         public bool AudioEnabled { get; private set; } = true;
         public bool RumbleEnabled { get; private set; } = true;
@@ -799,6 +801,16 @@ namespace CheddarAndCocoa.Game
             LogPlaytestEvent("Rumble", enabled ? "enabled" : "disabled");
         }
 
+        public void RecordColdReadQuestion(string note = "what do I do?")
+        {
+            if (!MissionActive()) return;
+            if (!PlaytestOverlayVisible) SetPlaytestOverlayVisible(true);
+            ColdReadQuestionCount++;
+            string guidance = string.IsNullOrEmpty(TeamGuidanceLabel) ? "no team guidance" : TeamGuidanceLabel;
+            LogPlaytestEvent("ColdReadQuestion",
+                $"{ActiveMissionVariant} / {Phase} / {ObjectiveLabel} / {guidance} / {DogPositionsLabel} / {note}");
+        }
+
         public void ClearFeedbackRequests()
         {
             _audioCueRequests.Clear();
@@ -1193,6 +1205,7 @@ namespace CheddarAndCocoa.Game
             StageDogsForMissionEntry();
             UpdateObjectiveArrows();
             _lastLoggedObjective = string.Empty;
+            ColdReadQuestionCount = 0;
             LogPlaytestEvent("MissionStarted", $"{_mission.Name} / {ActiveModifierLabel} / {roundDuration:0}s");
             LogObjectiveIfChanged();
         }
@@ -2605,6 +2618,7 @@ namespace CheddarAndCocoa.Game
             }
             if (kb != null && kb.f2Key.wasPressedThisFrame) SetAudioEnabled(!AudioEnabled);
             if (kb != null && kb.f3Key.wasPressedThisFrame) SetRumbleEnabled(!RumbleEnabled);
+            if (kb != null && kb.f4Key.wasPressedThisFrame) RecordColdReadQuestion();
 
             if (MissionSelectVisible)
             {

@@ -43,8 +43,17 @@ route/cutoff geometry, herding and taunt state, stash interaction, and failure o
 the shared squirrel actor through the narrow context).
 Snack Heist now follows behind `SnackHeistMissionController` (controller-owned collection/steal
 state, squirrel pressure, bark defense, and collectible interpretation through narrow pool services).
-The full PlayMode suite is green at 357 tests. Placeholder presentation still needs the second
-two-player couch acceptance pass.
+The arena presentation pass now gives Operation Pee Break controller-owned room/couch/door/phone/
+leash set dressing plus smaller silhouette details, backyard mission-readability districts with
+continuous fence and back-door cues, and a more intentional TV mission-select surface. The full
+PlayMode suite is green at 367 tests as of 2026-06-27. Placeholder presentation still needs the
+second two-player couch acceptance pass.
+
+Gameplay-first presentation is now the active content approach: use generated Unity primitives,
+labels, role pads, and authored feedback to prove that Operation Pee Break is readable and fun before
+returning to realistic backyard/background replacement. The editor-only
+`GameplayFirstPlaytestLab` exists for this blockout and acceptance work; it does not add missions or
+change the frozen roster.
 
 As of 2026-06-20, `GameManager.cs` is nearly 8,000 lines and declares 21 mission variants. Treat
 that as a date-stamped warning, not a permanent metric or a line-count target.
