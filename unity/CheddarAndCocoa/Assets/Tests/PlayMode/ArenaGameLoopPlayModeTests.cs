@@ -233,6 +233,9 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(22, game.MissionSelectOptionCount);
             Assert.AreEqual(GameManager.MissionVariant.BackyardRescue, game.SelectedMissionVariant);
             Assert.AreEqual("Backyard Rescue", game.SelectedMissionName);
+            Assert.AreEqual(GameManager.MissionVariant.OperationPeeBreak, game.CouchTestFocusVariant);
+            Assert.That(game.CouchTestFocusLabel, Does.Contain("COUCH TEST FOCUS"));
+            Assert.That(game.CouchTestFocusLabel, Does.Contain("Operation Pee Break"));
             Assert.That(game.ObjectiveLabel, Does.Contain("Choose a mission"));
             Assert.AreEqual(0, game.SessionMissionsPlayed);
             Assert.AreEqual(0, game.SessionTotalScore);
@@ -792,8 +795,8 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(game);
             Assert.IsTrue(game.MissionSelectVisible);
 
-            // The selector is rendered as two columns (21 missions, rows = ceil(21/2) = 11: column 0 holds
-            // indices 0-10, column 1 holds 11-20). Directional navigation must match that visible grid
+            // The selector is rendered as two columns (22 missions, rows = ceil(22/2) = 11: column 0 holds
+            // indices 0-10, column 1 holds 11-21). Directional navigation must match that visible grid
             // instead of walking one linear list in every direction.
             game.SelectMission(GameManager.MissionVariant.BackyardRescue); // top-left (index 0)
             game.SelectMissionRight();
@@ -807,8 +810,14 @@ namespace CheddarAndCocoa.Tests
             game.SelectMissionAbove();
             Assert.AreEqual(GameManager.MissionVariant.LeashWalk, game.SelectedMissionVariant, // wraps to index 10
                 "Vertical navigation should wrap within the visible column.");
+            game.SelectCouchTestFocusMission();
+            Assert.AreEqual(GameManager.MissionVariant.OperationPeeBreak, game.SelectedMissionVariant,
+                "The couch-test focus shortcut should make the active deep slice one action away from cold start.");
+            Assert.That(game.SelectedMissionChallengeLabel, Does.Contain("Pawfect signal"));
+            Assert.That(GameManager.MissionChallengeLabelFor(GameManager.MissionVariant.OperationPeeBreak), Does.Contain("0 misreads"));
 
             game.SelectMission(GameManager.MissionVariant.BackyardRescue);
+            Assert.That(game.SelectedMissionChallengeLabel, Does.Contain("all weenies"));
             game.StartSelectedMission();
             yield return null;
             Assert.AreEqual(GameManager.MissionVariant.BackyardRescue, game.ActiveMissionVariant);
@@ -826,6 +835,7 @@ namespace CheddarAndCocoa.Tests
             game.ForceGameOver();
             Assert.IsTrue(game.EndScreenVisible);
             Assert.That(game.MissionSelectStatusFor(GameManager.MissionVariant.SnackHeist), Does.StartWith("RETRY • BEST"));
+            Assert.That(game.EndChallengeLabel, Does.Contain("Replay target"));
             Assert.AreEqual("Replay", game.EndReplayActionLabel);
             Assert.AreEqual("Next Mission", game.EndNextActionLabel);
             Assert.AreEqual("Mission Select", game.EndMissionSelectActionLabel);

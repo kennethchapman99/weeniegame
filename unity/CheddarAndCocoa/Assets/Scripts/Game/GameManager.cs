@@ -150,6 +150,10 @@ namespace CheddarAndCocoa.Game
         public MissionVariant MissionVariantAt(int index) => MissionOrder[Mathf.Clamp(index, 0, MissionOrder.Length - 1)];
         public string SelectedMissionName => BuildMissionDefinition(SelectedMissionVariant, _tuning).Name;
         public string SelectedMissionBriefing => BuildMissionDefinition(SelectedMissionVariant, _tuning).IntroPrompt;
+        public string SelectedMissionChallengeLabel => MissionChallengeLabelFor(SelectedMissionVariant);
+        public MissionVariant CouchTestFocusVariant => MissionVariant.OperationPeeBreak;
+        public string CouchTestFocusName => BuildMissionDefinition(CouchTestFocusVariant, _tuning).Name;
+        public string CouchTestFocusLabel => $"COUCH TEST FOCUS: {CouchTestFocusName} - press F5 / P / Y to highlight";
         public State Phase { get; private set; } = State.Intro;
         public bool IsGameOver => Phase == State.GameOver;
         public bool IsLevelClear => Phase == State.LevelClear;
@@ -204,6 +208,19 @@ namespace CheddarAndCocoa.Game
         public string EndRank { get; private set; } = "Needs More Bark";
         public string EndSummaryLabel { get; private set; } = string.Empty;
         public string EndReasonLabel { get; private set; } = string.Empty;
+        public string EndChallengeLabel
+        {
+            get
+            {
+                if (!EndScreenVisible) return string.Empty;
+                if (LastRoundFlawless)
+                {
+                    string rivalry = FlawlessRivalryLabel;
+                    return string.IsNullOrEmpty(rivalry) ? "Challenge beaten: FLAWLESS clear" : $"Challenge beaten: {rivalry}";
+                }
+                return $"Replay target: {MissionChallengeLabelFor(ActiveMissionVariant).Replace("Challenge: ", string.Empty)}";
+            }
+        }
         public bool ReplayPromptVisible => IsGameOver || IsLevelClear;
         public string ReplayPromptLabel => ReplayPromptVisible ? (_mission != null ? _mission.ReplayPrompt : "Press R / Enter / Start to replay the weenie rescue") : string.Empty;
         public bool EndReplayAvailable => EndScreenVisible;
@@ -603,6 +620,8 @@ namespace CheddarAndCocoa.Game
         public void SelectMissionLeft() => SelectMissionGridStep(-1, 0);
         public void SelectMissionRight() => SelectMissionGridStep(1, 0);
 
+        public void SelectCouchTestFocusMission() => SelectMission(CouchTestFocusVariant);
+
         private void SelectMissionGridStep(int columnDelta, int rowDelta)
         {
             const int columns = 2;
@@ -797,6 +816,20 @@ namespace CheddarAndCocoa.Game
             var mission = BuildMissionDefinition(variant, _tuning);
             string goal = mission.ItemGoal > 0 ? $"{mission.ItemGoal} {mission.ItemRootName}" : "team objective";
             return $"{mission.RoundSeconds:0}s • {goal}";
+        }
+
+        public static string MissionChallengeLabelFor(MissionVariant variant)
+        {
+            return variant switch
+            {
+                MissionVariant.OperationPeeBreak => "Challenge: Pawfect signal - 0 misreads",
+                MissionVariant.BackyardRescue => "Challenge: all weenies, no steals",
+                MissionVariant.KitchenFoodFrenzy => "Challenge: clean Dinner Rush",
+                MissionVariant.SquirrelConspiracy => "Challenge: crack the case with no fake-outs",
+                MissionVariant.EagleShadowPanic => "Challenge: no dog grabbed by the shadow",
+                MissionVariant.CoyotesFence => "Challenge: perfect fence defense",
+                _ => "Challenge: clear clean for FLAWLESS"
+            };
         }
 
         public int FailuresForMission(MissionVariant variant)
@@ -2438,6 +2471,7 @@ namespace CheddarAndCocoa.Game
                 bool left = false;
                 bool right = false;
                 bool next = false;
+                bool focus = false;
                 bool start = false;
                 if (kb != null)
                 {
@@ -2451,6 +2485,7 @@ namespace CheddarAndCocoa.Game
                     if (kb.digit8Key.wasPressedThisFrame) { StartMission(MissionVariant.ScentSearch); return; }
                     if (kb.digit9Key.wasPressedThisFrame) { StartMission(MissionVariant.ThunderstormComfort); return; }
                     if (kb.digit0Key.wasPressedThisFrame) { StartMission(MissionVariant.MarkTheYard); return; }
+                    focus |= kb.f5Key.wasPressedThisFrame || kb.pKey.wasPressedThisFrame;
                     up |= kb.upArrowKey.wasPressedThisFrame;
                     down |= kb.downArrowKey.wasPressedThisFrame;
                     left |= kb.leftArrowKey.wasPressedThisFrame;
@@ -2464,6 +2499,7 @@ namespace CheddarAndCocoa.Game
                     down |= pad.dpad.down.wasPressedThisFrame;
                     left |= pad.dpad.left.wasPressedThisFrame;
                     right |= pad.dpad.right.wasPressedThisFrame;
+                    focus |= pad.buttonNorth.wasPressedThisFrame;
                     start |= pad.startButton.wasPressedThisFrame || pad.buttonSouth.wasPressedThisFrame;
                 }
 
@@ -2472,6 +2508,7 @@ namespace CheddarAndCocoa.Game
                 else if (left) SelectMissionLeft();
                 else if (right) SelectMissionRight();
                 else if (next) SelectNextMission();
+                else if (focus) SelectCouchTestFocusMission();
                 else if (start) StartSelectedMission();
                 return;
             }
@@ -3269,11 +3306,27 @@ namespace CheddarAndCocoa.Game
             sr.sortingOrder = 6;
 
             BuildActorArt(go, art, sr);
+            var threatAnimator = AddThreatAnimator(go, art);
             AddWorldLabel(go, art.Label, art.LabelOffset, 24, Color.white);
             go.AddComponent<MissionActorFeedback>().Init(sr, art.Label, art.PulseAmount, art.RotationPerSecond);
+            threatAnimator?.SetLabelState(art.Label);
             var range = go.AddComponent<InteractionRangeIndicator>();
             range.Init(_rangeSprite, new Color(1f, 1f, 1f, 0.35f), "RANGE");
             return go;
+        }
+
+        private static ThreatReadabilityAnimator AddThreatAnimator(GameObject go, ActorVisualSlot art)
+        {
+            ThreatMotionArt.Actor defaultActor = art.ObjectName == "Squirrel"
+                ? ThreatMotionArt.Actor.Squirrel
+                : ThreatMotionArt.Actor.Unknown;
+            bool supportsThreatMotion = defaultActor != ThreatMotionArt.Actor.Unknown || art.ObjectName == "Predator Warning";
+            if (!supportsThreatMotion) return null;
+
+            var fallbackRenderers = go.GetComponentsInChildren<SpriteRenderer>(true);
+            var animator = go.AddComponent<ThreatReadabilityAnimator>();
+            animator.Init(defaultActor, fallbackRenderers);
+            return animator;
         }
 
         private void BuildActorArt(GameObject go, ActorVisualSlot art, SpriteRenderer root)
@@ -3367,6 +3420,7 @@ namespace CheddarAndCocoa.Game
         {
             if (go == null) return;
             if (go.TryGetComponent<MissionActorFeedback>(out var feedback)) feedback.SetState(label, color, pulse);
+            if (go.TryGetComponent<ThreatReadabilityAnimator>(out var animator)) animator.SetLabelState(label);
         }
 
         private static void Pulse(GameObject go, float amount)

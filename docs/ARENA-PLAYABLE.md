@@ -41,31 +41,52 @@ accents:
 - Bark feedback uses the transparent final ring and bark burst while retaining generated text.
 - Pickup, success, warning, rescue, and failure events use distinct short-lived ArenaFinal effects.
 - Final dog poses, squirrel/eagle/coyote states, rope, weenies, bushes, rocks, and selected ground
-  dressing are live. Generated gameplay objects and colliders remain authoritative.
+  dressing are live. Squirrel, eagle, and coyote now also have lightweight runtime motion strips
+  selected from the same actor-state labels that drive player guidance: squirrel idle/run/steal/
+  scared, eagle sweep/attack, and coyote patrol/threaten/retreat. Generated gameplay objects and
+  colliders remain authoritative.
 - Runtime backyard dressing now includes nonblocking mission-readability layers: an eagle sweep band,
-  coyote fence pressure lane, continuous fence rails, a back-door/step cue, scent trail patches,
-  leash route stones, and snack/laundry districts. These are background cues only;
+  coyote fence pressure lane, continuous fence rails, a house/patio/back-door cluster with an
+  Operation Pee Break outdoor payoff path, a central lawn district, scent trail patches, leash route
+  stones, route dashes, and clearer snack/laundry districts. These are background cues only;
   controller-owned markers, colliders, and objective arrows remain the source of gameplay truth.
 - Operation Pee Break now carries controller-owned, nonblocking interior set dressing: room floor,
   couch back/seat, side table, phone glow, charger cord, door frame, leash hook, hallway rug, misread
   prop, and a door-open sunbeam beat. A second silhouette pass adds couch arms/cushion lines, table
   legs, Teenager head/hair/legs/thumbs, phone screen/reflection, door panels/knob, outlet/plug
-  details, and always-visible hanging leash pieces. Labels remain as support, but the
+  details, and always-visible hanging leash pieces. Pass 2 adds pillows/cup/hoodie/AirPod,
+  phone-attention and door-attention beams, question/OH emote bubbles, in-world phone battery fill,
+  charged/dead phone states, plugged/unplugged charger pieces, presented-leash trail, visible
+  Teenager comprehension/confusion progress, four beat pips, open-door outdoor view/panel, and
+  bladder urgency accents. Pass 3 adds a climax-only grass patch, hydrant gag, and relief sparkles
+  behind the open door so the payoff reads as a dog-life joke rather than a generic state change.
+  Labels remain as support, but the
   couch/phone/leash/door situation should read before text is parsed.
 - Cheddar and Cocoa now play distinct four-frame idle, run, and bark strips. Run has complete eight-way
   coverage using authored east/southeast/south/northeast/north and mirrored west-side travel. Their cadence reinforces
   chaos-pup versus spot-queen identity. Idle, run, and bark preserve all eight facing directions, and tug uses distinct three-frame brace/pull/recover loops;
   stunned, rescued, proud, and sad now use distinct two-frame personality loops. Unsupported actions retain the safe single-pose fallback.
   Weenie Roundup carry now persists visually from pickup through delivery/drop while the separate carried-weenie marker remains authoritative.
+- Threat actors now follow the same Resources-based motion pattern at a smaller scope. `ThreatMotionArt`
+  provides stable frame paths and `ThreatReadabilityAnimator` swaps a child sprite renderer on the
+  squirrel/predator actors without changing gameplay transforms, range indicators, or labels. Marker
+  states that reuse the squirrel actor, such as coyote weak spots or eagle talon grips, intentionally
+  fall back to generated marker art instead of showing the wrong animal.
 - Mission select/end-card HUD keeps IMGUI text controls, but the mission picker now uses TV-safe
-  header/detail bands, highlighted mission rows, a clearer selected-slice launch area, and the subtle
-  imported UI-kit accent.
+  header/detail bands, highlighted mission rows, compact visual mission badges on every row, a larger
+  selected-slice badge/launch area, a couch-test focus callout that jumps straight to Operation Pee
+  Break, a visible per-mission replay challenge, and the subtle imported UI-kit accent. End cards now
+  echo the next replay target, or call out that the challenge was beaten on a flawless run.
 
 Still placeholder or deliberately deferred:
 
-- Dog sprites and gameplay effects are extracted draft art rather than final animation-ready assets.
+- Dog and threat sprites and gameplay effects are extracted draft art or promoted motion frames rather
+  than final animation-ready assets.
 - Snack/sock mission collectibles, range rings, objective arrows, buildings, pond/patio, and most
   large environment districts still rely on generated geometry/text for the primary gameplay read.
+- Operation Pee Break's room is now more readable from generated Unity composites, but the Teenager,
+  couch, leash, charger, and door are still code-side placeholder silhouettes rather than authored
+  final sprites or character animation.
 - The bunny is decorative only and has no mission logic.
 - Final menu/UI art remains deferred; the current couch menu is still generated IMGUI rather than a
   production UI system.
@@ -73,7 +94,8 @@ Still placeholder or deliberately deferred:
 Final polish still needed:
 
 - Replace duplicate rescued/proud and rope tug/complete source poses when distinct art exists.
-- Author animation-ready dog/threat sprites and replace remaining generated environment districts.
+- Replace generated motion-derived dog/threat frames with final animation-ready sprites and replace
+  remaining generated environment districts.
 - Run a two-player television readability pass; the automated 1920x1080 local/full-yard/action
   capture gate verifies composition but cannot judge player attention.
 
@@ -169,6 +191,8 @@ small world text.
 1. Open `unity/CheddarAndCocoa` in Unity 6 LTS, open `Assets/Scenes/ArenaScene.unity`, and press Play. `ArenaScene` is also the scripted local build entry point.
 2. The mission picker appears immediately. Use **Up/Down** or gamepad **D-pad** to highlight a mission, then press **Enter**, **Space**, gamepad **Start**, or gamepad **South** to start. Keyboard **1-9 and 0** directly starts the original first ten missions; use arrow/D-pad selection for later missions including Kitchen Falling Food Frenzy.
    - All 22 mission variants use the adaptive two-column picker as of 2026-06-21.
+   - For the current couch-test focus, press keyboard **F5**/**P** or gamepad **North/Y** on the
+     mission picker to highlight **Operation Pee Break**, then press **Start/South** to launch.
    - Each tile shows `NEW`, `RETRY`, `CLEARED`, or `FLAWLESS` plus its session-best score; the selected detail line shows round time and objective size.
    - The header keeps missions played/tried, total score, and flawless clears visible before the next choice.
 3. Read the selected mission's wrapped `GOAL` block, then start it. The opening goal card repeats the
@@ -426,7 +450,21 @@ controller-owned set dressing for the couch, side table, glowing phone, charger 
 leash hook, hallway rug, and door-open sunbeam so the scene reads as a dog-life emergency before
 labels carry the whole explanation. The couch, Teenager, phone, door, charger, and leash hook also
 carry small nonblocking child silhouettes so a cold player can identify the room/door/phone/leash
-situation before reading labels.
+situation before reading labels. Pass 2 adds generated lived-in and state-change details: couch
+pillows, side-table cup, Teenager hoodie/AirPod/thumb animation, phone-attention and door-attention
+beams, question/OH bubbles, a phone battery fill plus charged/dead states, plugged/unplugged charger
+ends, presented-leash trail, in-world comprehension/confusion progress bars, four beat pips, bladder
+urgency accents, an open-door outdoor-view panel, and a climax-only grass/hydrant/relief-sparkle
+payoff. Beat 3 and Beat 4 now mirror the Beat 2 missing-partner hints: if only one dog is doing the
+charger or final door/leash job, the station and Teenager labels name the absent partner action
+before players need to parse the HUD. The
+backyard shell now gives the door payoff context with a visible house/patio district, back-door
+window/knob, outdoor path, central lawn, route dashes, snack district plate/crumbs, and laundry
+line/sock cues. The end card now uses Pee Break-specific replay copy: clean runs earn **Pee Break
+Pawfect**, one-misread recoveries become **Outside, Eventually**, and role completions credit the
+dogs so the MVP line reinforces Cocoa/Cheddar contributions instead of generic score text. Recovered
+runs also surface **Replay target: Pawfect signal - 0 misreads** so the first couch test has an
+obvious rematch goal.
 
 Manual acceptance check: arrow-select **Operation Pee Break** with two local players. Confirm Beat 1
 routes Cocoa to the door and routes Cheddar to the visible **WATCH / NO BARK YET** pad, then advances
@@ -438,9 +476,14 @@ Confirm the Teenager and station labels name the missing partner job (**NEEDS LE
 Intentionally bark early until the Teenager misreads the request and confirm the striped tennis-ball
 **WRONG IDEA / TRY DOG JOBS** gag is readable and the run continues. In Beat 3, have Cheddar leave the
 hallway while Cocoa holds the charger and confirm comprehension falls; then hold both roles to
-advance. Confirm the phone stays charged while Cheddar blocks alone, drains while Cocoa unplugs it,
-and reaches 0% when the gambit succeeds. In Beat 4, hold the door/leash positions and bark both dogs within the timing window. Confirm
-the door opens, the mission clears, and replay resets beat, bladder, battery, misreads, and door state.
+advance. Confirm Cheddar-only blocking calls out **NEEDS COCOA CHARGER**, Cocoa-only unplugging calls
+out **NEEDS CHEDDAR BLOCK**, the phone stays charged while Cheddar blocks alone, drains while Cocoa
+unplugs it, and reaches 0% when the gambit succeeds; the dead-phone slash and unplugged plug should
+replace the charged/plugged read. In Beat 4, confirm door-only/leash-only setup calls out the missing
+partner, then hold the door/leash positions and bark both dogs within the timing window. Confirm the
+door opens with sunbeam, outdoor-view/panel silhouettes, the grass/hydrant relief gag, and
+celebratory sparkles; the mission clears, the end card shows Pee Break-specific result copy plus dog
+contribution credit, and replay resets beat, bladder, battery, misreads, and door state.
 
 Automated pre-couch gate: run both Pee Break PlayMode rehearsals before handing controllers to
 players:
@@ -451,8 +494,9 @@ players:
 Together they verify the couch-readiness surfaces from cold read through the live-input climax:
 
 - Start state includes nonblocking room/couch/side-table/phone-glow/door-frame/leash-hook/hallway
-  set dressing, visible couch/Teenager/phone/door/leash-hook silhouette details, and the sunbeam
-  hidden until the door payoff.
+  set dressing, visible couch/Teenager/phone/door/leash-hook silhouette details, pillows, phone
+  attention beam, question emote, in-world battery, comprehension meter, four beat pips, and the
+  sunbeam/outdoor grass/hydrant/sparkle door payoff hidden until the climax.
 - Beat 1 shows Cheddar's **WATCH COCOA / NO BARK** arrow, Cocoa's **HOLD DOOR STARE** arrow, the
   visible Cheddar watch pad, Teenager **SCROLLING** feedback, and F4 overlay guidance.
 - Beat 2 partial success shows Cocoa locked at the door, the Teenager/station **NEEDS LEASH TOO**
@@ -463,15 +507,21 @@ Together they verify the couch-readiness surfaces from cold read through the liv
   DOG JOBS** gag, keeps the mission in progress, and records the active charger-gambit guidance.
 - Beat 3 is rehearsed through dog positions: Cocoa alone on the charger drains the phone without
   solving, leaving the charger stops drain, charger outlet/plug details are present, Cheddar leaving
-  the hallway drops comprehension, and holding both roles advances to the final setup.
+  the hallway drops comprehension, holding both roles advances to the final setup, and the phone/plug
+  show dead/unplugged state changes. Cheddar-only and Cocoa-only partial states name the missing
+  partner job in world labels, while correct and wrong signals visibly change the Teenager
+  comprehension/confusion read before the HUD is needed.
 - Beat 4 is rehearsed through the real bark event path: Cocoa holds the door, Cheddar holds the
-  leash, both dogs bark near the door, the sustained united-bark read opens the door, the controller
-  shows the sunbeam payoff before end-screen cleanup, and replay resets the door, bladder, phone,
-  misreads, arrows, and world labels.
+  leash, door-only/leash-only setup names the missing partner, both dogs bark near the door, the
+  sustained united-bark read opens the door, the controller shows the sunbeam plus grass/hydrant/
+  sparkle payoff before end-screen cleanup, the end card names the Pawfect/0-misread replay target or
+  beaten challenge, and replay resets the door, bladder, phone, misreads, arrows, and world labels.
 
-Latest automated verification: `./unity/run-playmode-tests.sh` passed `367/367` PlayMode tests on
-2026-06-27. The targeted presentation run for `PeeBreakPlayModeTests` and
-`BackyardEnvironmentPlayModeTests` passed `20/20`.
+Latest automated verification: Unity 6000.0.65f1 batch PlayMode run passed `370/370` tests on
+2026-06-28. The targeted presentation coverage inside `PeeBreakPlayModeTests`,
+`BackyardEnvironmentPlayModeTests`, and `FinalArtIntegrationPlayModeTests` now asserts Pass-2 room
+state props, outdoor payoff context, backyard districts, route cues, mission badge metadata, and
+squirrel/eagle/coyote motion resources plus runtime actor switching.
 
 For gameplay-first iteration, generate the editor-only lab with
 **Cheddar & Cocoa > Gameplay First > Build Generated Playtest Lab**. Use it to adjust primitive room
@@ -482,7 +532,7 @@ backgrounds or photo-derived scene dressing.
 
 The backyard is built at **120 x 68 world units**. A runtime dachshund is roughly 2 units long, so a dog occupies about **1.7% of the property width** instead of reading as a giant character in a single-screen demo box. The dogs spawn near the center (`±10, 0`) and mission routes, hide zones, fence gaps, dig sites, loose weenies, territory zones, and leash checkpoints are distributed using normalized coordinates across 70–94% of the yard width.
 
-Because this is one-screen couch co-op, the shared camera is a **dynamic clamped follow-cam with two meaningful modes**. When the dogs regroup it uses a local scrolling view (`7.5` ortho, about 27 units wide at 16:9), revealing less than one quarter of the property width. When they split up it can pull back to a strategic full-yard view (`34` ortho), keeping both players visible. Patio, pond, garden, shade tree, picnic, sandbox, stepping-stone path, and fence dressing divide the property into recognizable districts so the extra traversal space is not an empty green plane.
+Because this is one-screen couch co-op, the shared camera is a **dynamic clamped follow-cam with two meaningful modes**. When the dogs regroup it uses a local scrolling view (`7.5` ortho, about 27 units wide at 16:9), revealing less than one quarter of the property width. When they split up it can pull back to a strategic full-yard view (`34` ortho), keeping both players visible. Patio/house, pond, garden, shade tree, central lawn, picnic, sandbox, stepping-stone path, snack/laundry districts, mission route dashes, and fence dressing divide the property into recognizable districts so the extra traversal space is not an empty green plane.
 
 Outdoor level scale is now a production contract: dogs should remain at or below 2% of a major level's width, close framing must require scrolling, and important mission geometry must span most of the playable bounds. Pool and other future outdoor levels should follow this contract rather than inherit the frozen Canvas prototype's oversized dog-to-feature ratio.
 
@@ -490,7 +540,7 @@ Outdoor level scale is now a production contract: dogs should remain at or below
 
 The round can end in **LevelClear** or **GameOver**, and either result can be restarted. Current pacing is hand-tuned for a first two-player playtest: `90 / 70 / 55` second mission timers, a 5-second mission intro banner, delayed first squirrel pressure, an ~25-second predator telegraph in Backyard Rescue, and a short but readable tug charge so both players have to stay committed for a moment.
 
-The opening HUD banner says: **Cheddar + Cocoa must protect the weenies together.** For the first few seconds, the squirrel is labeled **Squirrel: WAITING**, the predator is **Predator: OFFSCREEN**, and the rope is **Rope/Tug - BOTH DOGS**. This is intentional: players should first read their spawn, dog identity, first weenie arrows, and shared fantasy before the first threat competes for attention.
+The opening HUD banner says: **Cheddar + Cocoa must protect the weenies together.** The mission briefing and live HUD also state **P1 Cheddar: WASD + Space/E** and **P2 Cocoa: Arrows + Enter/Right Shift**, with the shared pad reminder **left stick / X-West bark / Y-North interact**. For the first few seconds, the squirrel is labeled **Squirrel: WAITING**, the predator is **Predator: OFFSCREEN**, and the rope is **Rope/Tug - BOTH DOGS**. This is intentional: players should first read their spawn, dog identity, first weenie arrows, and shared fantasy before the first threat competes for attention.
 
 The end loop is intentionally simple: players see current score, the latest score swing, a short reason line, session totals, and Replay / Next Mission / Mission Select actions. Score deltas now appear both as a brief HUD pop and as small world text near the action so cause/effect is easier to read during chaos. The exposed deterministic state includes `CurrentFlow`, `MissionSelectVisible`, `SelectedMissionVariant`, `Score`, `LastScoreDelta`, `LastScoreEventLabel`, `LastScorePopLabel`, `ScorePopVisible`, `ObjectiveLabel`, `Outcome`, `EndRank`, `EndSummaryLabel`, `EndReasonLabel`, `ReplayPromptVisible`, `EndReplayAvailable`, `EndNextMissionAvailable`, `EndMissionSelectAvailable`, `SessionMissionsPlayed`, `SessionTotalScore`, `SessionStarsEarned`, `SessionUniqueMissionsCompleted`, `SessionSummaryLabel`, `LastJuiceFeedback`, and `LastJuiceLabel`.
 
@@ -517,7 +567,7 @@ Mission flow controls:
 Use this protocol before changing tuning again:
 
 1. Open `unity/CheddarAndCocoa` in Unity 6 LTS, open `Assets/Scenes/ArenaScene.unity`, press Play, and turn **Playtest Mode** on.
-2. Start on mission select. Do not explain the game at first; let the two players try to identify their dogs, choose a mission, move, bark, and react.
+2. Start on mission select. Do not explain the game at first; let the two players try to identify their dogs, choose a mission, read the P1 Cheddar / P2 Cocoa briefing line, move, bark, and react.
 3. Watch silently for the first run unless they are fully blocked by hardware/input confusion.
 4. After the first end screen, ask short questions, then have them use **Replay** and **Next Mission** without a mouse.
 5. Run the core three missions at least once: **Backyard Rescue**, **Snack Heist**, and **Sock Panic**. Also run **Squirrel Conspiracy** when validating the production herding slice.

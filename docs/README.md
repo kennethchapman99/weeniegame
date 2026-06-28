@@ -21,6 +21,8 @@ These documents govern current decisions and work:
   [GameManager Wiring](GAMEMANAGER-WIRING-GUIDE.md) — controller boundary.
 - [Co-op Puzzle Design](COOP-PUZZLE-DESIGN.md) — authored co-op beat doctrine.
 - [Production Readiness](PRODUCTION-READINESS.md) — technical evidence versus human fun gate.
+- [Level Readiness Scores](LEVEL-READINESS-SCORES.md) — current level-design, scenery/assets, and
+  couch-readiness scorecard.
 - [Local Codex Handoff](LOCAL-CODEX-HANDOFF.md) — agent execution contract.
 
 ## OPERATIONAL REFERENCE

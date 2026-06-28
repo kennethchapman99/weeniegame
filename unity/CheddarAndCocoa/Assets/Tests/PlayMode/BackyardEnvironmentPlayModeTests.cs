@@ -30,6 +30,15 @@ namespace CheddarAndCocoa.Tests
 
             Rect panel = ArenaHud.FitPanel(1920f, 1080f, 900f, height);
             Assert.GreaterOrEqual(panel.height, height);
+
+            Assert.AreEqual("PEE", ArenaHud.MissionBadgeCodeFor(GameManager.MissionVariant.OperationPeeBreak));
+            Assert.AreNotEqual(ArenaHud.MissionBadgeColorFor(GameManager.MissionVariant.OperationPeeBreak),
+                ArenaHud.MissionBadgeColorFor(GameManager.MissionVariant.BackyardRescue),
+                "Mission select should have visual mission badges, not only text rows.");
+            Assert.That(ArenaHud.PlayerOwnershipLabel, Does.Contain("P1 Cheddar"));
+            Assert.That(ArenaHud.PlayerOwnershipLabel, Does.Contain("P2 Cocoa"));
+            Assert.That(ArenaHud.PadControlsLabel, Does.Contain("X / West barks"));
+            Assert.That(ArenaHud.PadControlsLabel, Does.Contain("Y / North interacts"));
         }
 
         [UnityTest]
@@ -47,11 +56,23 @@ namespace CheddarAndCocoa.Tests
             AssertHasDecorativeProp(env.transform, "FenceRailLeft", "Backyard should read as fenced, not only bounded by invisible walls.");
             AssertHasDecorativeProp(env.transform, "FenceRailRight", "Backyard should read as fenced, not only bounded by invisible walls.");
             AssertHasDecorativeProp(env.transform, "BackDoorExterior", "The patio should have a visible house/back-door cue.");
+            AssertHasDecorativeProp(env.transform, "HousePatioDistrict", "The house/patio district should read as a distinct yard zone.");
+            AssertHasDecorativeProp(env.transform, "BackDoorWindowGlow", "The back door should read as connected to the house.");
+            AssertHasDecorativeProp(env.transform, "BackDoorKnobExterior", "The back door should have a readable interaction silhouette.");
             AssertHasDecorativeProp(env.transform, "BackDoorStep", "The patio should have a visible step from the house.");
+            AssertHasDecorativeProp(env.transform, "PeeBreakOutdoorPayoffPath", "Operation Pee Break should have an outdoor route/payoff cue.");
+            AssertHasDecorativeProp(env.transform, "OpenLawnDistrict", "The yard should have an obvious central lawn district.");
             AssertHasDecorativeProp(env.transform, "EagleShadowSweepLane", "Eagle Shadow needs a readable sweep band in the yard.");
             AssertHasDecorativeProp(env.transform, "CoyoteFencePressureLane", "Coyote defense needs a readable fence pressure lane.");
+            AssertHasDecorativeProp(env.transform, "SnackDistrictZone", "Snack Heist should read as a district, not just a prop.");
             AssertHasDecorativeProp(env.transform, "SnackHeistTableBackplate", "Snack Heist should have a table district before final art.");
+            AssertHasDecorativeProp(env.transform, "SnackDistrictPlate", "Snack Heist should have food/table silhouette support.");
+            AssertHasDecorativeProp(env.transform, "LaundryDistrictZone", "Sock Panic should read as a district, not just a prop.");
             AssertHasDecorativeProp(env.transform, "SockPanicLaundryCorner", "Sock Panic should have a laundry district before final art.");
+            AssertHasDecorativeProp(env.transform, "LaundryLine", "Laundry district should have a readable clothesline cue.");
+            AssertHasDecorativeProp(env.transform, "LaundrySockCue", "Laundry district should show a sock/laundry payoff cue.");
+            AssertHasDecorativeProp(env.transform, "MissionRouteDash_HouseToLawn", "Mission routes should be staged visually through the yard.");
+            AssertHasDecorativeProp(env.transform, "MissionRouteDash_LawnToFence", "Mission routes should be staged visually through the yard.");
             Assert.GreaterOrEqual(CountChildrenStartingWith(env.transform, "ScentTrailPatch_"), 6,
                 "Scent Search should have visible background scent patches.");
             Assert.GreaterOrEqual(CountChildrenStartingWith(env.transform, "LeashRouteStone_"), 5,

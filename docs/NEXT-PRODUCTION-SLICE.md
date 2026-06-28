@@ -13,8 +13,9 @@ implementation now includes the four exact-combo beats, split-role position stat
 Teenager misreads, bladder/phone pressure, united-bark door climax, replay reset, and deterministic
 PlayMode coverage. The controller boundary now also uses immutable validated context wiring and
 atomic controller/definition registrations, with registry consistency coverage. Controller-owned
-phone/bladder world meters now expose Beat-3 pressure, and the phone drains only while Cocoa is
-actually unplugging it. Cross-mission cleanup/reuse is covered.
+phone/bladder world meters now expose Beat-3 pressure, the phone drains only while Cocoa is actually
+unplugging it, and the door-open climax now reveals a grass/hydrant/relief-sparkle gag instead of
+only a generic sunbeam. Cross-mission cleanup/reuse is covered.
 
 Mark the Yard is the first previously-in-`GameManager` mission extracted behind the controller
 boundary. `MarkTheYardMissionController` owns zone geometry, claim-by-proximity ticking, the
@@ -44,10 +45,17 @@ the shared squirrel actor through the narrow context).
 Snack Heist now follows behind `SnackHeistMissionController` (controller-owned collection/steal
 state, squirrel pressure, bark defense, and collectible interpretation through narrow pool services).
 The arena presentation pass now gives Operation Pee Break controller-owned room/couch/door/phone/
-leash set dressing plus smaller silhouette details, backyard mission-readability districts with
-continuous fence and back-door cues, and a more intentional TV mission-select surface. The full
-PlayMode suite is green at 367 tests as of 2026-06-27. Placeholder presentation still needs the
-second two-player couch acceptance pass.
+leash set dressing plus smaller silhouette details, Pass-2 phone-attention/battery/charger/door/
+leash state props, Teenager comprehension/confusion reads and beat pips, Pee Break-specific end-card
+replay copy with dog role credit, backyard
+mission-readability districts with continuous fence, house/patio, central lawn, snack, laundry,
+route, and back-door cues, and mission-select badges/thumbnails so the picker reads less like a debug
+list. The cold-start picker now calls out Operation Pee Break as the couch-test focus, supports
+F5/P/Y to highlight it without scrolling through the roster, and the mission briefing/live HUD expose
+the P1 Cheddar / P2 Cocoa ownership line for first-minute couch clarity. Mission select and end cards
+also surface small replay challenges, with Operation Pee Break explicitly chasing a Pawfect 0-misread
+signal. The full PlayMode suite is green at 369 tests as of 2026-06-28. Placeholder presentation
+still needs the second two-player couch acceptance pass.
 
 Gameplay-first presentation is now the active content approach: use generated Unity primitives,
 labels, role pads, and authored feedback to prove that Operation Pee Break is readable and fun before

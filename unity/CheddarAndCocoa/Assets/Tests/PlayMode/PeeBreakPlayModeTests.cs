@@ -47,12 +47,27 @@ namespace CheddarAndCocoa.Tests
             AssertPeeBreakDetail("PeeBreakCouchLeftArm", "Couch should have arms, not just a rectangle.");
             AssertPeeBreakDetail("PeeBreakCouchRightArm", "Couch should have arms, not just a rectangle.");
             AssertPeeBreakDetail("PeeBreakCouchCushionLine", "Couch should show cushion structure before labels.");
+            AssertPeeBreakDetail("PeeBreakCouchPillowA", "Couch should feel like a lived-in room, not a diagram block.");
+            AssertPeeBreakDetail("PeeBreakCouchPillowB", "Couch should feel like a lived-in room, not a diagram block.");
             AssertPeeBreakDetail("PeeBreakTeenagerHead", "Teenager should read as a person on the couch.");
             AssertPeeBreakDetail("PeeBreakTeenagerHair", "Teenager should read as a person on the couch.");
             AssertPeeBreakDetail("PeeBreakTeenagerLegs", "Teenager should read as sitting on the couch.");
             AssertPeeBreakDetail("PeeBreakTeenagerThumbs", "Teenager should read as phone-absorbed.");
+            AssertPeeBreakDetail("PeeBreakTeenagerPhoneAttentionBeam", "Beat 1 should visually show the Teenager's attention stuck on the phone.");
+            AssertPeeBreakDetail("PeeBreakTeenagerQuestionBubble", "The Teenager should emote visually before labels do all the work.");
+            AssertPeeBreakDetail("PeeBreakTeenagerComprehensionTrack", "Teenager understanding should have an in-world progress read.");
+            AssertPeeBreakDetail("PeeBreakTeenagerComprehensionFill", "Correct dog jobs should visibly build comprehension.");
+            AssertPeeBreakDetail("PeeBreakBeatPip1", "The four-beat mission shape should be visible in-world.");
+            AssertPeeBreakDetail("PeeBreakBeatPip2", "The four-beat mission shape should be visible in-world.");
+            AssertPeeBreakDetail("PeeBreakBeatPip3", "The four-beat mission shape should be visible in-world.");
+            AssertPeeBreakDetail("PeeBreakBeatPip4", "The four-beat mission shape should be visible in-world.");
+            Assert.IsFalse(FindLoadedObject("PeeBreakTeenagerConfusionFill").activeSelf,
+                "The confusion read should stay quiet until players send an incomplete or wrong signal.");
             AssertPeeBreakDetail("PeeBreakPhoneScreen", "Phone should read as a screen, not only a cyan square.");
             AssertPeeBreakDetail("PeeBreakPhoneReflection", "Phone should carry a screen highlight.");
+            AssertPeeBreakDetail("PeeBreakPhoneBatteryShell", "Phone battery should be visible in-world.");
+            AssertPeeBreakDetail("PeeBreakPhoneBatteryFill", "Phone drain should have a visual state, not only text.");
+            AssertPeeBreakDetail("PeeBreakPhoneChargeBolt", "The charged phone should visibly read as powered.");
             AssertPeeBreakDetail("PeeBreakDoorPanelTop", "Door should have panel structure.");
             AssertPeeBreakDetail("PeeBreakDoorPanelBottom", "Door should have panel structure.");
             AssertPeeBreakDetail("PeeBreakDoorKnob", "Door should have a knob before labels.");
@@ -61,6 +76,12 @@ namespace CheddarAndCocoa.Tests
             AssertPeeBreakDetail("PeeBreakHangingLeashTail", "Leash should hang from the hook before the gameplay station appears.");
             Assert.IsFalse(FindLoadedObject("PeeBreakOpenSunbeam").activeSelf,
                 "The open-door sunbeam should wait for the catharsis beat.");
+            Assert.IsFalse(FindLoadedObject("PeeBreakOutdoorGrassPatch").activeSelf,
+                "The outdoor payoff should wait until the door actually opens.");
+            Assert.IsFalse(FindLoadedObject("PeeBreakOutdoorFireHydrant").activeSelf,
+                "The hydrant gag should be a climax reward, not start-state clutter.");
+            Assert.IsFalse(FindLoadedObject("PeeBreakReliefSparkleA").activeSelf,
+                "Relief sparkles should be saved for the catharsis beat.");
             var coach = FindLoadedObject("PeeBreakCheddarCoach");
             Assert.IsNotNull(coach);
             Assert.That(coach.GetComponentInChildren<TextMesh>().text, Does.Contain("NO BARK"));
@@ -73,6 +94,16 @@ namespace CheddarAndCocoa.Tests
         public IEnumerator ExactCombosAdvanceAndChangeRoleLocks()
         {
             yield return LoadMission();
+            var comprehensionFill = FindLoadedObject("PeeBreakTeenagerComprehensionFill");
+            float emptyWidth = comprehensionFill.transform.localScale.x;
+
+            _game.ForcePeeBreakAdvance(SocialStimulus.DoorStare, 0.3f);
+            Assert.Greater(comprehensionFill.transform.localScale.x, emptyWidth,
+                "Holding the exact dog job should visibly fill the Teenager comprehension meter.");
+            _game.ForcePeeBreakAdvance(SocialStimulus.BarkRhythm, 0.1f);
+            Assert.IsTrue(FindLoadedObject("PeeBreakTeenagerConfusionFill").activeSelf,
+                "A wrong signal should visibly light the recoverable confusion read before labels carry it.");
+
             _game.ForcePeeBreakAdvance(SocialStimulus.DoorStare, 1f);
             Assert.AreEqual(PeeBreakMissionController.Beat.LeashMessage, Controller.CurrentBeat);
             Assert.AreEqual(SocialStimulus.DoorStare | SocialStimulus.PresentLeash, Controller.Required);
@@ -200,6 +231,8 @@ namespace CheddarAndCocoa.Tests
             AssertPeeBreakDetail("PeeBreakOutletPlate", "Beat 3 charger target should read as a wall outlet.");
             AssertPeeBreakDetail("PeeBreakOutletSlots", "Beat 3 charger target should show outlet slots.");
             AssertPeeBreakDetail("PeeBreakCordPlug", "Beat 3 cord should have a visible plug end.");
+            Assert.IsTrue(FindLoadedObject("PeeBreakChargerPluggedEnd").activeSelf,
+                "The charger should visibly start plugged into the wall outlet.");
 
             _game.ForcePeeBreakAdvance(SocialStimulus.BarkRhythm, 2f);
             yield return null;
@@ -312,6 +345,10 @@ namespace CheddarAndCocoa.Tests
                 Assert.AreEqual(PeeBreakMissionController.Beat.UnitedBark, Controller.CurrentBeat);
                 Assert.AreEqual(0f, Controller.PhoneBattery, 0.001f);
                 Assert.That(WorldLabel("PeeBreakPhone"), Does.Contain("0%"));
+                Assert.IsTrue(FindLoadedObject("PeeBreakPhoneDeadSlash").activeSelf,
+                    "The dead phone should have a visual state change beyond the 0% label.");
+                Assert.IsTrue(FindLoadedObject("PeeBreakChargerUnpluggedEnd").activeSelf,
+                    "After the charger gambit, the plug should visibly be out.");
 
                 yield return MoveDogTo(cocoa, Controller.DoorPosition);
                 Assert.That(WorldLabel("PeeBreakDoor"), Does.Contain("COCOA STARE LOCKED"));
@@ -332,6 +369,10 @@ namespace CheddarAndCocoa.Tests
                 Assert.IsTrue(Controller.DoorOpen);
                 Assert.AreEqual(GameManager.MissionOutcome.Clear, _game.Outcome);
                 Assert.AreEqual(GameManager.FlowState.EndScreen, _game.CurrentFlow);
+                Assert.That(_game.EndSummaryLabel, Does.Contain("Outside, Eventually"));
+                Assert.That(_game.EndChallengeLabel, Does.Contain("Replay target"));
+                Assert.That(_game.EndChallengeLabel, Does.Contain("0 misreads"));
+                Assert.That(_game.MvpLabel, Does.Not.Contain("awaiting dog heroics"));
                 Assert.IsTrue(LogContains("PeeBreakDoorOpen"));
 
                 _game.Restart();
@@ -388,6 +429,54 @@ namespace CheddarAndCocoa.Tests
             cocoa.transform.position = Controller.DoorPosition;
             _game.ForcePeeBreakAdvance(SocialStimulus.DoorStare | SocialStimulus.PresentLeash, 0.1f);
             Assert.That(teenager.GetComponentInChildren<TextMesh>().text, Does.Contain("GETTING IT"));
+        }
+
+        [UnityTest]
+        public IEnumerator LaterBeatPartialCombosNameMissingPartnerJobBeforePlayersReadHud()
+        {
+            yield return LoadMission();
+            var cheddar = GameObject.Find("Cheddar");
+            var cocoa = GameObject.Find("Cocoa");
+            Assert.IsNotNull(cheddar);
+            Assert.IsNotNull(cocoa);
+
+            AdvanceToCharger();
+            yield return null;
+
+            cheddar.transform.position = Controller.HallwayPosition;
+            cocoa.transform.position = Controller.ChargerPosition + Vector2.up * 7f;
+            _game.ForcePeeBreakAdvance(SocialStimulus.BlockHallway, 0.1f);
+            Assert.That(WorldLabel("PeeBreakHallwayBlock"), Does.Contain("NEEDS COCOA CHARGER"));
+            Assert.That(WorldLabel("PeeBreakTeenager"), Does.Contain("NEEDS CHARGER TOO"));
+
+            cheddar.transform.position = Controller.HallwayPosition + Vector2.left * 7f;
+            cocoa.transform.position = Controller.ChargerPosition;
+            _game.ForcePeeBreakAdvance(SocialStimulus.UnplugCharger, 0.1f);
+            Assert.That(WorldLabel("PeeBreakCharger"), Does.Contain("NEEDS CHEDDAR BLOCK"));
+            Assert.That(WorldLabel("PeeBreakTeenager"), Does.Contain("NEEDS HALLWAY BLOCK"));
+
+            cheddar.transform.position = Controller.HallwayPosition;
+            _game.ForcePeeBreakAdvance(Controller.Required, 2.6f);
+            yield return null;
+
+            Assert.AreEqual(PeeBreakMissionController.Beat.UnitedBark, Controller.CurrentBeat);
+            cocoa.transform.position = Controller.DoorPosition;
+            cheddar.transform.position = Controller.DoorPosition + Vector2.left * 7f;
+            _game.ForcePeeBreakAdvance(SocialStimulus.DoorStare, 0.1f);
+            Assert.That(WorldLabel("PeeBreakDoor"), Does.Contain("NEEDS CHEDDAR LEASH"));
+            Assert.That(WorldLabel("PeeBreakTeenager"), Does.Contain("NEEDS LEASH + BARK"));
+
+            cocoa.transform.position = Controller.DoorPosition + Vector2.left * 7f;
+            cheddar.transform.position = Controller.LeashPosition;
+            _game.ForcePeeBreakAdvance(SocialStimulus.PresentLeash, 0.1f);
+            Assert.That(WorldLabel("PeeBreakLeash"), Does.Contain("NEEDS COCOA STARE"));
+            Assert.That(WorldLabel("PeeBreakTeenager"), Does.Contain("NEEDS STARE + BARK"));
+
+            cocoa.transform.position = Controller.DoorPosition;
+            _game.ForcePeeBreakAdvance(SocialStimulus.DoorStare | SocialStimulus.PresentLeash, 0.1f);
+            Assert.That(WorldLabel("PeeBreakDoor"), Does.Contain("BARK TOGETHER"));
+            Assert.That(WorldLabel("PeeBreakLeash"), Does.Contain("BARK TOGETHER"));
+            Assert.That(WorldLabel("PeeBreakTeenager"), Does.Contain("BARK TOGETHER"));
         }
 
         [UnityTest]
@@ -484,10 +573,27 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(Controller.DoorOpen);
             Assert.IsTrue(FindLoadedObject("PeeBreakOpenSunbeam").activeSelf,
                 "The controller-owned climax should briefly open the door with a visible sunshine reward before GameManager cleanup.");
+            Assert.IsTrue(FindLoadedObject("PeeBreakDoorOutdoorView").activeSelf,
+                "The open door should expose an outdoor/backyard payoff, not only shrink the door marker.");
+            Assert.IsTrue(FindLoadedObject("PeeBreakDoorOpenPanel").activeSelf,
+                "The open door should show a changed door silhouette.");
+            AssertPeeBreakDetail("PeeBreakOutdoorGrassPatch", "The open door should reveal a readable outdoor grass payoff.");
+            AssertPeeBreakDetail("PeeBreakOutdoorFireHydrant", "The Pee Break climax should land as a dog-authentic hydrant gag.");
+            AssertPeeBreakDetail("PeeBreakOutdoorHydrantCap", "The hydrant should have enough silhouette detail to read before labels.");
+            AssertPeeBreakDetail("PeeBreakReliefSparkleA", "The door-open payoff should have celebratory motion-ready sparkles.");
+            AssertPeeBreakDetail("PeeBreakReliefSparkleB", "The door-open payoff should feel celebratory, not just like a state toggle.");
+            AssertPeeBreakDetail("PeeBreakReliefSparkleC", "The door-open payoff should feel celebratory, not just like a state toggle.");
+            Assert.That(_game.LastCue, Does.Contain("Relief zoomies"));
+            Assert.That(_game.LastJuiceLabel, Does.Contain("RELIEF ZOOMIES"));
             _game.ForcePeeBreakAdvance(Controller.Required, 0.1f);
             yield return null;
             Assert.AreEqual(GameManager.MissionOutcome.Clear, _game.Outcome);
             Assert.AreEqual(GameManager.FlowState.EndScreen, _game.CurrentFlow);
+            Assert.That(_game.EndSummaryLabel, Does.Contain("Pee Break Pawfect"));
+            Assert.That(_game.EndChallengeLabel, Does.Contain("Challenge beaten"));
+            Assert.That(_game.EndChallengeLabel, Does.Contain("FLAWLESS"));
+            Assert.That(_game.MvpLabel, Does.Not.Contain("awaiting dog heroics"));
+            Assert.IsTrue(_game.LastRoundFlawless, "A clean Pee Break run should invite replay as a flawless couch-test target.");
             Assert.IsTrue(LogContains("PeeBreakDoorOpen"));
             _game.Restart();
             yield return null;

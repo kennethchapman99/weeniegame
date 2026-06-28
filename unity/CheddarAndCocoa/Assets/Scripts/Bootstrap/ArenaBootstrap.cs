@@ -203,10 +203,14 @@ namespace CheddarAndCocoa.Bootstrap
             Vector2 F(float fx, float fy) => new Vector2(fx * hw, fy * hh);
 
             // Stone patio off the back door (bottom-right), with a darker rug accent.
+            Prop(root, "HousePatioDistrict", F(0.62f, -0.58f), new Vector2(fieldWidth * 0.32f, fieldHeight * 0.34f), Hex("#6f665a66"), -10);
             Prop(root, "Patio", F(0.52f, -0.6f), new Vector2(fieldWidth * 0.26f, fieldHeight * 0.3f), Hex("#9b9384"), -9);
             Prop(root, "PatioRug", F(0.52f, -0.62f), new Vector2(fieldWidth * 0.16f, fieldHeight * 0.16f), Hex("#7d5a3a"), -8);
             Prop(root, "BackDoorExterior", F(0.82f, -0.43f), new Vector2(3.4f, 5.2f), Hex("#6b4528"), -7);
+            Prop(root, "BackDoorWindowGlow", F(0.82f, -0.41f), new Vector2(1.8f, 2.1f), Hex("#ffe18a99"), -6);
+            Prop(root, "BackDoorKnobExterior", F(0.845f, -0.43f), new Vector2(0.45f, 0.45f), Hex("#f4da7a"), -6);
             Prop(root, "BackDoorStep", F(0.78f, -0.54f), new Vector2(5.8f, 1.2f), Hex("#c7bba2"), -7);
+            Prop(root, "PeeBreakOutdoorPayoffPath", F(0.62f, -0.43f), new Vector2(fieldWidth * 0.2f, fieldHeight * 0.05f), Hex("#ffd45a80"), -7);
 
             // Koi pond (top-left) with a lighter shallow rim.
             Prop(root, "Pond", F(-0.55f, 0.58f), new Vector2(fieldWidth * 0.2f, fieldHeight * 0.24f), Hex("#2f6f9e"), -9);
@@ -227,6 +231,7 @@ namespace CheddarAndCocoa.Bootstrap
 
             // Mid-yard landmarks divide the large property into readable districts instead of
             // presenting an undifferentiated green plane.
+            Prop(root, "OpenLawnDistrict", F(0f, -0.02f), new Vector2(fieldWidth * 0.48f, fieldHeight * 0.42f), Hex("#4b8a3d66"), -10);
             Prop(root, "PicnicBlanket", F(-0.18f, -0.48f), new Vector2(fieldWidth * 0.12f, fieldHeight * 0.13f), Hex("#c96b55"), -9);
             Prop(root, "Sandbox", F(0.18f, 0.34f), new Vector2(fieldWidth * 0.11f, fieldHeight * 0.12f), Hex("#c9a968"), -9);
             for (int i = 0; i < 9; i++)
@@ -252,8 +257,16 @@ namespace CheddarAndCocoa.Bootstrap
                 Prop(root, $"LeashRouteStone_{i}", F(Mathf.Lerp(-0.78f, 0.62f, t), Mathf.Lerp(-0.82f, -0.1f, t)),
                     new Vector2(2.2f, 1.05f), Hex("#d1c08a"), -7);
             }
+            Prop(root, "MissionRouteDash_HouseToLawn", F(0.38f, -0.35f), new Vector2(fieldWidth * 0.09f, 0.34f), Hex("#ffd45a88"), -6);
+            Prop(root, "MissionRouteDash_LawnToFence", F(0.05f, 0.46f), new Vector2(fieldWidth * 0.12f, 0.28f), Hex("#f0e38a88"), -6);
+            Prop(root, "SnackDistrictZone", F(-0.38f, 0.16f), new Vector2(fieldWidth * 0.16f, fieldHeight * 0.12f), Hex("#8b5a2f66"), -9);
             Prop(root, "SnackHeistTableBackplate", F(-0.38f, 0.16f), new Vector2(fieldWidth * 0.12f, fieldHeight * 0.08f), Hex("#6b4324"), -8);
+            Prop(root, "SnackDistrictPlate", F(-0.38f, 0.18f), new Vector2(3.2f, 1.1f), Hex("#efe2c6"), -7);
+            Prop(root, "SnackDistrictCrumbs", F(-0.42f, 0.22f), new Vector2(0.9f, 0.55f), Hex("#f7d75d"), -6);
+            Prop(root, "LaundryDistrictZone", F(0.44f, -0.48f), new Vector2(fieldWidth * 0.15f, fieldHeight * 0.13f), Hex("#efe0b066"), -9);
             Prop(root, "SockPanicLaundryCorner", F(0.44f, -0.48f), new Vector2(fieldWidth * 0.1f, fieldHeight * 0.1f), Hex("#f4d08a"), -8);
+            Prop(root, "LaundryLine", F(0.44f, -0.38f), new Vector2(fieldWidth * 0.11f, 0.24f), Hex("#f7f4df"), -6);
+            Prop(root, "LaundrySockCue", F(0.47f, -0.35f), new Vector2(1.1f, 1.7f), Hex("#6ea6ff"), -5);
 
             // Bush cover clumps. The first three sit on the Eagle Shadow "HIDE HERE" cover zones
             // (GameManager._eagleCoverZones) so the hiding spots read as real backyard cover; the

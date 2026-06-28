@@ -57,6 +57,10 @@ Cheddar and Cocoa both need:
 - taunt
 - escape
 
+Current Unity first-test coverage: Resources-backed runtime strips exist for idle, run, steal, and
+scared/fake-out reads under `ArenaFinal/Characters/Squirrel/Motion/`. Remaining named states can map
+to those strips until final animation boards exist.
+
 ## Coyote
 
 - patrol
@@ -64,6 +68,18 @@ Cheddar and Cocoa both need:
 - threaten
 - lure
 - retreat
+
+Current Unity first-test coverage: Resources-backed runtime strips exist for patrol, threaten, and
+retreat under `ArenaFinal/Characters/Coyote/Motion/`. Test-fence and lure reads currently reuse
+threaten.
+
+## Eagle
+
+- sweep / shadow pass
+- attack / snatch
+
+Current Unity first-test coverage: Resources-backed runtime strips exist for sweep and attack under
+`ArenaFinal/Characters/Eagle/Motion/`.
 
 ## Human/NPC
 

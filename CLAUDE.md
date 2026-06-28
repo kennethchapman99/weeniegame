@@ -87,6 +87,27 @@ wiring. Do not use a target line count as the definition of done.
 - Behavior aligns with `docs/GAME-DESIGN-BIBLE.md` and preserves Cheddar/Cocoa identity.
 - Docs are updated when adding mechanics, levels, controls, or acceptance criteria.
 
+## Agent self-check protocol
+
+Adapted from the June 28, 2026 TechTimes summary of Karpathy-style `CLAUDE.md` rules. The article
+reports unconfirmed provenance for the circulated file, so do not import unauthenticated third-party
+text wholesale; use this repo-local protocol instead:
+
+- Think before coding: state assumptions, ambiguity, and the smallest viable Unity-scoped path.
+- Simplicity first: prefer the smallest readable change that preserves the current playable slice.
+- Surgical changes: every changed line should tie directly to the task; avoid unrelated refactors.
+- Goal-driven execution: define verifiable done criteria before multi-step implementation work.
+- Verification loop: reproduce the issue or define a failing check where feasible, fix it, then run
+  the relevant PlayMode or documentation check and cite the evidence.
+- Debugging discipline: read the full error and stack trace, reproduce before fixing, and change one
+  variable at a time.
+- Dependencies: prefer existing Unity/C# APIs and local helpers; justify and document any new package.
+- Communication: surface uncertainty precisely and avoid vague guesses like "should work."
+- Failure modes: stop and re-scope if the work turns into a Kitchen Sink, Wrong Abstraction,
+  Optimistic Path, or Runaway Refactor.
+- Completion audit: do not call the task done until evidence covers the explicit request and project
+  guardrails.
+
 ## Things that will bite you
 
 - **Brace/scope drift in large edits.** Use small changes and run checks often.

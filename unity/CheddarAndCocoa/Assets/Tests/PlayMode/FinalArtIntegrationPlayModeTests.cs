@@ -64,11 +64,31 @@ namespace CheddarAndCocoa.Tests
                 Assert.IsNotNull(CharacterMotionArt.Load(dog, CharacterMotionArt.Clip.Carry,
                     CharacterMotionArt.Facing8.E, frame), $"Missing carry frame {dog}/{frame}.");
 
+            foreach (var clip in new[] { ThreatMotionArt.Clip.Idle, ThreatMotionArt.Clip.Run, ThreatMotionArt.Clip.Steal })
+            foreach (int frame in new[] { 0, 1, 2, 3 })
+                Assert.IsNotNull(ThreatMotionArt.Load(ThreatMotionArt.Actor.Squirrel, clip, frame),
+                    $"Missing squirrel motion frame {clip}/{frame}.");
+            foreach (int frame in new[] { 0, 1 })
+                Assert.IsNotNull(ThreatMotionArt.Load(ThreatMotionArt.Actor.Squirrel, ThreatMotionArt.Clip.Scared, frame),
+                    $"Missing squirrel scared frame {frame}.");
+            foreach (var clip in new[] { ThreatMotionArt.Clip.Sweep, ThreatMotionArt.Clip.Attack })
+            foreach (int frame in new[] { 0, 1, 2, 3 })
+                Assert.IsNotNull(ThreatMotionArt.Load(ThreatMotionArt.Actor.Eagle, clip, frame),
+                    $"Missing eagle motion frame {clip}/{frame}.");
+            foreach (var clip in new[] { ThreatMotionArt.Clip.Patrol, ThreatMotionArt.Clip.Threaten, ThreatMotionArt.Clip.Retreat })
+            foreach (int frame in new[] { 0, 1, 2, 3 })
+                Assert.IsNotNull(ThreatMotionArt.Load(ThreatMotionArt.Actor.Coyote, clip, frame),
+                    $"Missing coyote motion frame {clip}/{frame}.");
+
             Sprite motion = CharacterMotionArt.Load(DogId.Cheddar, CharacterMotionArt.Clip.Run,
                 CharacterMotionArt.Facing8.E, 0);
             Assert.AreEqual(512, motion.rect.width);
             Assert.AreEqual(384, motion.rect.height);
             Assert.AreEqual(24f, motion.pivot.y, 0.1f, "Motion sprites should pivot on the normalized paw baseline.");
+
+            Sprite threatMotion = ThreatMotionArt.Load(ThreatMotionArt.Actor.Eagle, ThreatMotionArt.Clip.Sweep, 0);
+            Assert.AreEqual(512, threatMotion.rect.width);
+            Assert.AreEqual(384, threatMotion.rect.height);
 
             Assert.IsNull(FinalGameplayArt.Load(FinalGameplayArt.Root + "missing_optional_sprite"));
         }
@@ -138,6 +158,39 @@ namespace CheddarAndCocoa.Tests
             Assert.IsFalse(mirror);
             Assert.AreEqual(CharacterMotionArt.Facing8.S,
                 CharacterMotionArt.FacingForDirection(Vector2.down, out mirror));
+        }
+
+        [Test]
+        public void ThreatMotionArt_BuildsStablePathsAndInfersReadableClips()
+        {
+            Assert.AreEqual(
+                "ArenaFinal/Characters/Squirrel/Motion/squirrel_steal_e_02",
+                ThreatMotionArt.ResourcePath(ThreatMotionArt.Actor.Squirrel, ThreatMotionArt.Clip.Steal, 2));
+            Assert.AreEqual(
+                "ArenaFinal/Characters/Eagle/Motion/eagle_attack_e_00",
+                ThreatMotionArt.ResourcePath(ThreatMotionArt.Actor.Eagle, ThreatMotionArt.Clip.Attack, -4));
+            Assert.AreEqual("squirrel_run_e_01",
+                ThreatMotionArt.Load(ThreatMotionArt.Actor.Squirrel, ThreatMotionArt.Clip.Run, 1).name);
+            Assert.AreEqual(2, ThreatMotionArt.FrameAtTime(ThreatMotionArt.Actor.Coyote,
+                ThreatMotionArt.Clip.Threaten, 0.25f));
+
+            Assert.IsTrue(ThreatMotionArt.TryInfer("SQUIRREL SNACK HEIST - BARK!",
+                ThreatMotionArt.Actor.Squirrel, out var actor, out var clip));
+            Assert.AreEqual(ThreatMotionArt.Actor.Squirrel, actor);
+            Assert.AreEqual(ThreatMotionArt.Clip.Steal, clip);
+
+            Assert.IsTrue(ThreatMotionArt.TryInfer("EAGLE SHADOW SWEEP - HIDE IN COVER!",
+                ThreatMotionArt.Actor.Unknown, out actor, out clip));
+            Assert.AreEqual(ThreatMotionArt.Actor.Eagle, actor);
+            Assert.AreEqual(ThreatMotionArt.Clip.Sweep, clip);
+
+            Assert.IsTrue(ThreatMotionArt.TryInfer("COYOTE DRIVEN BACK!",
+                ThreatMotionArt.Actor.Unknown, out actor, out clip));
+            Assert.AreEqual(ThreatMotionArt.Actor.Coyote, actor);
+            Assert.AreEqual(ThreatMotionArt.Clip.Retreat, clip);
+
+            Assert.IsFalse(ThreatMotionArt.TryInfer("WEAK SPOT - FILL DIRT",
+                ThreatMotionArt.Actor.Squirrel, out _, out _));
         }
 
         [UnityTest]
@@ -223,6 +276,48 @@ namespace CheddarAndCocoa.Tests
             var ring = GameObject.Find(ArenaArtCatalog.BarkFeedback.RingName);
             Assert.IsNotNull(ring);
             Assert.AreEqual("bark_ring", ring.GetComponent<SpriteRenderer>().sprite.name);
+        }
+
+        [UnityTest]
+        public IEnumerator MissionThreatActors_UseAuthoredMotionAndMarkerFallbacks()
+        {
+            yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
+            yield return null;
+            yield return null;
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            Assert.IsNotNull(game);
+
+            game.StartMission(GameManager.MissionVariant.SnackHeist);
+            yield return new WaitForSeconds(0.2f);
+            var squirrelMotion = game.SquirrelObject.GetComponent<ThreatReadabilityAnimator>();
+            Assert.IsNotNull(squirrelMotion);
+            Assert.IsTrue(squirrelMotion.UsesAuthoredMotion);
+            Assert.AreEqual("Squirrel", squirrelMotion.CurrentActorLabel);
+            Assert.AreEqual("Idle", squirrelMotion.CurrentClipLabel);
+            Assert.That(squirrelMotion.RuntimeSpriteName, Does.StartWith("squirrel_idle_e_"));
+
+            game.StartMission(GameManager.MissionVariant.EagleShadowPanic);
+            yield return new WaitForSeconds(0.2f);
+            var eagleMotion = game.PredatorObject.GetComponent<ThreatReadabilityAnimator>();
+            Assert.IsNotNull(eagleMotion);
+            Assert.IsTrue(eagleMotion.UsesAuthoredMotion);
+            Assert.AreEqual("Eagle", eagleMotion.CurrentActorLabel);
+            Assert.AreEqual("Sweep", eagleMotion.CurrentClipLabel);
+            Assert.That(eagleMotion.RuntimeSpriteName, Does.StartWith("eagle_sweep_e_"));
+
+            game.StartMission(GameManager.MissionVariant.CoyotesFence);
+            yield return new WaitForSeconds(0.2f);
+            var coyoteMotion = game.PredatorObject.GetComponent<ThreatReadabilityAnimator>();
+            Assert.IsTrue(coyoteMotion.UsesAuthoredMotion);
+            Assert.AreEqual("Coyote", coyoteMotion.CurrentActorLabel);
+            Assert.AreEqual("Threaten", coyoteMotion.CurrentClipLabel);
+            Assert.That(coyoteMotion.RuntimeSpriteName, Does.StartWith("coyote_threaten_e_"));
+
+            var weakSpotMotion = game.SquirrelObject.GetComponent<ThreatReadabilityAnimator>();
+            Assert.IsNotNull(weakSpotMotion);
+            Assert.IsFalse(weakSpotMotion.UsesAuthoredMotion,
+                "Coyotes uses the shared squirrel actor as a dirt/weak-spot marker, so squirrel art should fall back there.");
         }
     }
 }

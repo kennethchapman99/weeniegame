@@ -32,23 +32,23 @@ Required:
 
 ### Squirrel
 Required:
-- idle
-- run
-- fake-out
-- taunt
-- stash reveal
+- idle - first-test motion strip live
+- run - first-test motion strip live
+- fake-out - first-test scared/fake-out strip live
+- taunt - first-test scared/fake-out strip live
+- stash reveal - first-test run/idle mapping live
 
 ### Eagle Shadow
 Required:
-- shadow pass
-- threat marker
+- shadow pass - first-test sweep strip live
+- threat marker - first-test attack/sweep strips live
 
 ### Coyote
 Required:
-- patrol
-- threaten
-- retreat
-- lure
+- patrol - first-test motion strip live
+- threaten - first-test motion strip live
+- retreat - first-test motion strip live
+- lure - first-test threaten mapping live
 
 ## Props
 

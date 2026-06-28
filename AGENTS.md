@@ -41,6 +41,27 @@ Build a joyful, personal, replayable couch co-op game for Ken and Sue to play as
 - Update docs when adding mechanics, levels, controls, or acceptance criteria.
 - Use small commits with clear messages.
 
+## Agent self-check protocol
+
+Adapted from the June 28, 2026 TechTimes summary of Karpathy-style `CLAUDE.md` rules. The article
+notes the circulated source is unconfirmed, so do not copy third-party text wholesale; use these
+source-aware operating rules inside this repo:
+
+- Think before coding: state assumptions, ambiguity, and the smallest viable Unity-scoped path.
+- Simplicity first: prefer the smallest readable change that preserves the current playable slice.
+- Surgical changes: every changed line should tie directly to the task; avoid unrelated refactors.
+- Goal-driven execution: define verifiable done criteria before multi-step implementation work.
+- Verification loop: reproduce the issue or define a failing check where feasible, fix it, then run
+  the relevant PlayMode or documentation check and cite the evidence.
+- Debugging discipline: read the full error and stack trace, reproduce before fixing, and change one
+  variable at a time.
+- Dependencies: prefer existing Unity/C# APIs and local helpers; justify and document any new package.
+- Communication: surface uncertainty precisely and avoid vague guesses like "should work."
+- Failure modes: stop and re-scope if the work turns into a Kitchen Sink, Wrong Abstraction,
+  Optimistic Path, or Runaway Refactor.
+- Completion audit: do not call the task done until evidence covers the explicit request and project
+  guardrails.
+
 ## Canonical work sequence
 
 Do not skip or reorder these gates:

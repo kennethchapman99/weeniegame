@@ -14,6 +14,8 @@ namespace CheddarAndCocoa.Game
         private GameManager _game;
         private GUIStyle _hud, _big, _mid, _small, _overlay, _briefing;
         private Texture2D _uiKitTexture;
+        public const string PlayerOwnershipLabel = "P1 Cheddar: WASD + Space/E  |  P2 Cocoa: Arrows + Enter/Right Shift";
+        public const string PadControlsLabel = "Pads: left stick moves  |  X / West barks  |  Y / North interacts";
 
         public void Init(GameManager game) => _game = game;
 
@@ -59,7 +61,7 @@ namespace CheddarAndCocoa.Game
             GUI.Label(new Rect(0, 34, Screen.width, 26), $"Timer  {secs}s", _mid);
             string squirrelState = _game.MaxStolenFood > 0 ? $"Stolen {_game.StolenFood}/{_game.MaxStolenFood}" : "No squirrel pressure";
             GUI.Label(new Rect(0, 58, Screen.width, 24), $"MISSION: {_game.ActiveMissionName} / {_game.Phase} | {_game.BreakfastRecovered}/{_game.BreakfastGoal} {_game.MissionItemPlural} | {squirrelState}", _mid);
-            GUI.Label(new Rect(0, 82, Screen.width, 24), "Move: WASD / Arrows / Sticks | Bark: Space / Enter / X | Interact: E / Right Shift / Y | F1 Overlay | F2 Audio | F3 Rumble", _small);
+            GUI.Label(new Rect(0, 82, Screen.width, 24), $"{PlayerOwnershipLabel}  |  {PadControlsLabel}  |  F1 Overlay | F2 Audio | F3 Rumble", _small);
             GUI.Label(new Rect(0, 106, Screen.width, 24), $"Switch mission: keys 1-9, 0 ({_game.MissionSelectOptionCount} missions) | United barks: {_game.UnitedBarks} | Tug {Mathf.RoundToInt(_game.TugProgress * 100f)}% | Modifier: {_game.ActiveModifierLabel}", _mid);
             GUI.Label(new Rect(0, 130, Screen.width, 24), _game.LastScoreEventLabel, _mid);
             if (_game.ScorePopVisible)
@@ -77,16 +79,19 @@ namespace CheddarAndCocoa.Game
 
         private void DrawMissionBriefing()
         {
-            var box = FitPanel(Screen.width, Screen.height, 760f, 184f);
+            var box = FitPanel(Screen.width, Screen.height, 760f, 210f);
             box.y = Mathf.Min(box.y, 304f);
             GUI.Box(box, GUIContent.none);
             GUI.Label(new Rect(box.x + 24f, box.y + 12f, box.width - 48f, 34f), _game.ActiveMissionName, _big);
             GUI.Label(new Rect(box.x + 32f, box.y + 48f, box.width - 64f, 68f),
                 $"GOAL: {_game.MissionIntroPrompt}", _briefing);
-            GUI.Label(new Rect(box.x + 32f, box.y + 120f, box.width - 64f, 26f),
+            GUI.Label(new Rect(box.x + 32f, box.y + 118f, box.width - 64f, 26f),
                 $"FIRST: {_game.ObjectiveLabel}", _hud);
-            GUI.Label(new Rect(box.x + 32f, box.y + 150f, box.width - 64f, 22f),
-                "Follow each dog's arrow  •  X / West barks  •  Y / North interacts  •  Left stick moves",
+            GUI.Label(new Rect(box.x + 32f, box.y + 148f, box.width - 64f, 22f),
+                PlayerOwnershipLabel,
+                _small);
+            GUI.Label(new Rect(box.x + 32f, box.y + 174f, box.width - 64f, 22f),
+                $"Follow each dog's arrow  |  {PadControlsLabel}",
                 _small);
         }
 
@@ -111,7 +116,7 @@ namespace CheddarAndCocoa.Game
 
         private void DrawEndCard()
         {
-            var box = FitPanel(Screen.width, Screen.height, 640f, 296f);
+            var box = FitPanel(Screen.width, Screen.height, 640f, 318f);
             float w = box.width, h = box.height;
             GUI.Box(box, GUIContent.none);
             DrawUiKitAccent(new Rect(box.x + w - 96, box.y + 14, 56, 38));
@@ -124,7 +129,8 @@ namespace CheddarAndCocoa.Game
             GUI.Label(new Rect(box.x, box.y + 114, w, 28), $"Last swing: {_game.LastScoreEventLabel}   Stars: {_game.StarRating}/3", _mid);
             GUI.Label(new Rect(box.x, box.y + 140, w, 24), best, _game.LastRoundWasBest ? _hud : _small);
             GUI.Label(new Rect(box.x, box.y + 166, w, 24), $"{_game.MvpLabel}   |   {_game.SessionSummaryLabel}", _small);
-            GUI.Label(new Rect(box.x, box.y + 190, w, 26), "R/Enter Replay | N/Right Shoulder Next | M/Esc Mission Select", _mid);
+            GUI.Label(new Rect(box.x, box.y + 190, w, 24), _game.EndChallengeLabel, _small);
+            GUI.Label(new Rect(box.x, box.y + 214, w, 26), "R/Enter Replay | N/Right Shoulder Next | M/Esc Mission Select", _mid);
 
             float y = box.y + h - 42f;
             float gap = 12f;
@@ -187,7 +193,7 @@ namespace CheddarAndCocoa.Game
                 $"{_game.SessionMissionsPlayed} played • {_game.SessionUniqueMissionsCompleted}/{count} tried • {_game.SessionTotalScore} score • {_game.SessionFlawlessClears} flawless",
                 _mid);
             GUI.Label(new Rect(box.x + 32, box.y + 82, w - 64, 22),
-                "D-pad / arrows move through the grid • Enter/Start begins • number keys 1-0 launch missions 1-10",
+                $"{_game.CouchTestFocusLabel} • arrows/D-pad move • Enter/Start begins",
                 _small);
 
             for (int i = 0; i < count; i++)
@@ -202,12 +208,20 @@ namespace CheddarAndCocoa.Game
 
             float footY = box.y + 110f + rows * 42f + 4f;
             DrawTintedRect(new Rect(box.x + 20f, footY - 4f, w - 40f, 128f), new Color(0.08f, 0.13f, 0.14f, 0.7f));
-            GUI.Label(new Rect(box.x + 30, footY, w - 60, 24),
+            DrawMissionBadge(new Rect(box.x + 34f, footY + 12f, 58f, 58f), _game.SelectedMissionVariant, true);
+            GUI.Label(new Rect(box.x + 100, footY, w - 130, 24),
                 $"{_game.SelectedMissionName} • {_game.MissionSelectDetailsFor(_game.SelectedMissionVariant)} • {_game.MissionSelectStatusFor(_game.SelectedMissionVariant)}", _mid);
-            GUI.Label(new Rect(box.x + 40, footY + 24f, w - 80, 70), $"GOAL: {_game.SelectedMissionBriefing}", _briefing);
-            GUI.Label(new Rect(box.x + 42f, footY + 94f, w * 0.5f - 64f, 26f),
-                "Start / South button launches the highlighted slice", _small);
-            if (GUI.Button(new Rect(box.x + w - 282f, footY + 94f, 240, 32), $"Start {_game.SelectedMissionName}"))
+            GUI.Label(new Rect(box.x + 104, footY + 24f, w - 144, 70), $"GOAL: {_game.SelectedMissionBriefing}", _briefing);
+            GUI.Label(new Rect(box.x + 104f, footY + 94f, w * 0.5f - 126f, 26f),
+                _game.SelectedMissionChallengeLabel, _small);
+            float startWidth = Mathf.Min(240f, Mathf.Max(120f, (w - 52f) * 0.5f));
+            float focusWidth = Mathf.Min(238f, Mathf.Max(120f, (w - 52f) * 0.5f));
+            float startX = box.x + w - 20f - startWidth;
+            float focusX = startX - 12f - focusWidth;
+            if (_game.SelectedMissionVariant != _game.CouchTestFocusVariant
+                && GUI.Button(new Rect(focusX, footY + 94f, focusWidth, 32f), "Highlight Couch Test"))
+                _game.SelectCouchTestFocusMission();
+            if (GUI.Button(new Rect(startX, footY + 94f, startWidth, 32), $"Start {_game.SelectedMissionName}"))
                 _game.StartSelectedMission();
         }
 
@@ -226,9 +240,65 @@ namespace CheddarAndCocoa.Game
             string label = $"{prefix}{key}. {def.Name}\n{_game.MissionSelectStatusFor(variant)}";
             Color previous = GUI.color;
             DrawTintedRect(row, selected ? new Color(1f, 0.82f, 0.18f, 0.24f) : new Color(0.1f, 0.14f, 0.16f, 0.46f));
+            if (GUI.Button(row, GUIContent.none)) _game.SelectMission(variant);
+            DrawMissionBadge(new Rect(row.x + 6f, row.y + 5f, 30f, 28f), variant, selected);
             if (selected) GUI.color = new Color(1f, 0.92f, 0.42f);
-            if (GUI.Button(row, label)) _game.SelectMission(variant);
+            GUI.Label(new Rect(row.x + 42f, row.y + 2f, row.width - 46f, row.height - 2f), label, _small);
             GUI.color = previous;
+        }
+
+        public static string MissionBadgeCodeFor(GameManager.MissionVariant variant)
+        {
+            return variant switch
+            {
+                GameManager.MissionVariant.BackyardRescue => "YRD",
+                GameManager.MissionVariant.SnackHeist => "SNK",
+                GameManager.MissionVariant.SockPanic => "SOX",
+                GameManager.MissionVariant.SquirrelConspiracy => "SQL",
+                GameManager.MissionVariant.EagleShadowPanic => "EGL",
+                GameManager.MissionVariant.CoyotesFence => "FNC",
+                GameManager.MissionVariant.WeenieRoundup => "BWL",
+                GameManager.MissionVariant.ScentSearch => "SNT",
+                GameManager.MissionVariant.ThunderstormComfort => "HUG",
+                GameManager.MissionVariant.MarkTheYard => "MRK",
+                GameManager.MissionVariant.LeashWalk => "LSH",
+                GameManager.MissionVariant.CarRide => "CAR",
+                GameManager.MissionVariant.GateCrash => "GTE",
+                GameManager.MissionVariant.TableStealth => "TBL",
+                GameManager.MissionVariant.SquirrelSwitcheroo => "SWP",
+                GameManager.MissionVariant.WalkCampaign => "WLK",
+                GameManager.MissionVariant.BoneRelay => "BNE",
+                GameManager.MissionVariant.GreatEscape => "ESC",
+                GameManager.MissionVariant.ChaosMachine => "MCH",
+                GameManager.MissionVariant.BlanketCatch => "BLK",
+                GameManager.MissionVariant.KitchenFoodFrenzy => "KIT",
+                GameManager.MissionVariant.OperationPeeBreak => "PEE",
+                _ => "DOG"
+            };
+        }
+
+        public static Color MissionBadgeColorFor(GameManager.MissionVariant variant)
+        {
+            return variant switch
+            {
+                GameManager.MissionVariant.OperationPeeBreak => new Color(0.18f, 0.75f, 0.95f, 0.92f),
+                GameManager.MissionVariant.KitchenFoodFrenzy => new Color(1f, 0.68f, 0.25f, 0.92f),
+                GameManager.MissionVariant.SnackHeist => new Color(0.95f, 0.48f, 0.18f, 0.92f),
+                GameManager.MissionVariant.SockPanic => new Color(0.48f, 0.68f, 1f, 0.92f),
+                GameManager.MissionVariant.CoyotesFence => new Color(0.72f, 0.48f, 0.22f, 0.92f),
+                GameManager.MissionVariant.EagleShadowPanic => new Color(0.28f, 0.32f, 0.42f, 0.92f),
+                GameManager.MissionVariant.LeashWalk => new Color(0.25f, 0.82f, 0.78f, 0.92f),
+                _ => new Color(0.28f, 0.55f, 0.32f, 0.92f)
+            };
+        }
+
+        private void DrawMissionBadge(Rect rect, GameManager.MissionVariant variant, bool selected)
+        {
+            DrawTintedRect(rect, MissionBadgeColorFor(variant));
+            float inset = selected ? 4f : 5f;
+            DrawTintedRect(new Rect(rect.x + inset, rect.y + inset, rect.width - inset * 2f, rect.height - inset * 2f),
+                selected ? new Color(0.02f, 0.04f, 0.05f, 0.84f) : new Color(0.02f, 0.04f, 0.05f, 0.62f));
+            GUI.Label(rect, MissionBadgeCodeFor(variant), selected ? _hud : _small);
         }
 
         private static void DrawTintedRect(Rect rect, Color color)

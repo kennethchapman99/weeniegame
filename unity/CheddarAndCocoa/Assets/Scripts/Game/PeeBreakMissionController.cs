@@ -54,6 +54,30 @@ namespace CheddarAndCocoa.Game
         private GameObject _openSunbeam;
         private GameObject _leashHook;
         private GameObject _hallwayRug;
+        private GameObject _teenagerThumbs;
+        private GameObject _teenagerPhoneBeam;
+        private GameObject _teenagerDoorBeam;
+        private GameObject _teenagerQuestionBubble;
+        private GameObject _teenagerOhBubble;
+        private GameObject _phoneBatteryFill;
+        private GameObject _phoneChargeBolt;
+        private GameObject _phoneDeadSlash;
+        private GameObject _chargerPluggedEnd;
+        private GameObject _chargerUnpluggedEnd;
+        private GameObject _doorOutdoorView;
+        private GameObject _doorOpenPanel;
+        private GameObject _outdoorGrassPatch;
+        private GameObject _outdoorFireHydrant;
+        private GameObject _reliefSparkleA;
+        private GameObject _reliefSparkleB;
+        private GameObject _reliefSparkleC;
+        private GameObject _leashPresentedTrail;
+        private GameObject _bladderWarningFill;
+        private GameObject _bladderUrgencyTick;
+        private GameObject _comprehensionTrack;
+        private GameObject _comprehensionFill;
+        private GameObject _confusionFill;
+        private readonly GameObject[] _beatPips = new GameObject[4];
         private TextMesh _doorLabel;
         private TextMesh _leashLabel;
         private TextMesh _hallwayLabel;
@@ -90,7 +114,11 @@ namespace CheddarAndCocoa.Game
         public Vector2 HallwayPosition => _hallwayPosition;
         public Vector2 ChargerPosition => _chargerPosition;
         public Vector2 EntryTarget => _doorPosition;
-        public string OutcomeSummary => null;
+        public string OutcomeSummary => DoorOpen
+            ? Misreads == 0 ? "Pee Break Pawfect"
+            : Misreads == 1 ? "Outside, Eventually"
+            : "Many Wrong Ideas Later"
+            : Misreads > 0 ? "Still Misunderstood" : "Still Holding It";
         public bool IsFailed => false;
         public string FailReason => null;
 
@@ -267,6 +295,7 @@ namespace CheddarAndCocoa.Game
         private void AdvanceBeat()
         {
             bool completedChargerGambit = _beatIndex == 2;
+            CreditBeatRoles(_beatIndex);
             _beatIndex++;
             _context.AddScore(150, "TEENAGER COMPREHENSION");
             _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, _beatIndex >= 4 ? "OH! YOU NEED TO GO GO!" : "TEENAGER LOOKS UP!");
@@ -278,10 +307,10 @@ namespace CheddarAndCocoa.Game
             {
                 DoorOpen = true;
                 Bladder = 0f;
-                _context.SetCue("The Teenager finally gets it. Door open. OUTSIDE!");
+                _context.SetCue("The Teenager finally gets it. Door open. OUTSIDE! Relief zoomies!");
                 _context.SetFeedback(GameManager.FeedbackKind.LevelClear);
-                _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "DOOR OPEN - SUNSHINE!");
-                _context.SpawnWorldPop(_doorPosition, "OUTSIDE!", new Color(1f, 0.95f, 0.55f));
+                _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "DOOR OPEN - RELIEF ZOOMIES!");
+                _context.SpawnWorldPop(_doorPosition, "RELIEF ZOOMIES!", new Color(1f, 0.95f, 0.55f));
                 _context.RequestRumble("pee_break_door_open", 0.45f, 0.75f, 0.3f);
                 _context.LogEvent("PeeBreakDoorOpen", "united bark climax complete");
                 return;
@@ -290,6 +319,24 @@ namespace CheddarAndCocoa.Game
             if (completedChargerGambit) PhoneBattery = 0f;
 
             ConfigureBeat();
+        }
+
+        private void CreditBeatRoles(int completedBeatIndex)
+        {
+            int cheddar = _context.IndexOfDog(DogId.Cheddar);
+            int cocoa = _context.IndexOfDog(DogId.Cocoa);
+            switch ((Beat)completedBeatIndex)
+            {
+                case Beat.DoorStare:
+                    if (cocoa >= 0) _context.CreditDog(cocoa);
+                    break;
+                case Beat.LeashMessage:
+                case Beat.ChargerGambit:
+                case Beat.UnitedBark:
+                    if (cheddar >= 0) _context.CreditDog(cheddar);
+                    if (cocoa >= 0) _context.CreditDog(cocoa);
+                    break;
+            }
         }
 
         private void ConfigureBeat()
@@ -333,22 +380,57 @@ namespace CheddarAndCocoa.Game
             NewChildScenery(_couchSeat, "PeeBreakCouchLeftArm", new Color(0.16f, 0.27f, 0.42f), new Vector3(0.16f, 1.28f, 1f), new Vector3(-0.56f, 0f, 0f), 1);
             NewChildScenery(_couchSeat, "PeeBreakCouchRightArm", new Color(0.16f, 0.27f, 0.42f), new Vector3(0.16f, 1.28f, 1f), new Vector3(0.56f, 0f, 0f), 1);
             NewChildScenery(_couchSeat, "PeeBreakCouchCushionLine", new Color(0.12f, 0.2f, 0.32f, 0.86f), new Vector3(0.06f, 0.92f, 1f), Vector3.zero, 1);
+            NewChildScenery(_couchSeat, "PeeBreakCouchSeatFrontLip", new Color(0.12f, 0.21f, 0.34f, 0.82f), new Vector3(1.04f, 0.08f, 1f), new Vector3(0f, -0.46f, -0.01f), 2);
+            NewChildScenery(_couchSeat, "PeeBreakCouchPillowA", new Color(0.88f, 0.72f, 0.42f), new Vector3(0.18f, 0.32f, 1f), new Vector3(-0.25f, 0.22f, -0.02f), 3);
+            NewChildScenery(_couchSeat, "PeeBreakCouchPillowB", new Color(0.63f, 0.22f, 0.32f), new Vector3(0.2f, 0.3f, 1f), new Vector3(0.25f, 0.18f, -0.02f), 3);
             NewChildScenery(_sideTable, "PeeBreakTableLeg", new Color(0.2f, 0.1f, 0.05f), new Vector3(0.18f, 1.55f, 1f), new Vector3(0f, -0.58f, 0f), 1);
+            NewChildScenery(_sideTable, "PeeBreakTableTopLip", new Color(0.55f, 0.32f, 0.16f), new Vector3(1.1f, 0.16f, 1f), new Vector3(0f, 0.48f, -0.01f), 2);
+            NewChildScenery(_sideTable, "PeeBreakWaterCup", new Color(0.62f, 0.86f, 1f, 0.72f), new Vector3(0.22f, 0.34f, 1f), new Vector3(-0.28f, 0.7f, -0.02f), 3);
 
             NewChildScenery(_teenager, "PeeBreakTeenagerHead", new Color(0.95f, 0.72f, 0.52f), new Vector3(0.42f, 0.34f, 1f), new Vector3(0f, 0.42f, -0.01f), 4);
             NewChildScenery(_teenager, "PeeBreakTeenagerHair", new Color(0.12f, 0.08f, 0.05f), new Vector3(0.42f, 0.1f, 1f), new Vector3(0f, 0.58f, -0.02f), 5);
             NewChildScenery(_teenager, "PeeBreakTeenagerLegs", new Color(0.16f, 0.18f, 0.26f), new Vector3(0.78f, 0.18f, 1f), new Vector3(0f, -0.38f, -0.01f), 4);
-            NewChildScenery(_teenager, "PeeBreakTeenagerThumbs", new Color(0.95f, 0.72f, 0.52f), new Vector3(0.32f, 0.1f, 1f), new Vector3(0.25f, 0.03f, -0.02f), 5);
+            NewChildScenery(_teenager, "PeeBreakTeenagerHoodie", new Color(0.32f, 0.38f, 0.62f), new Vector3(0.64f, 0.64f, 1f), new Vector3(0f, -0.02f, 0.01f), 3);
+            _teenagerThumbs = NewChildScenery(_teenager, "PeeBreakTeenagerThumbs", new Color(0.95f, 0.72f, 0.52f), new Vector3(0.32f, 0.1f, 1f), new Vector3(0.25f, 0.03f, -0.02f), 5);
+            NewChildScenery(_teenager, "PeeBreakTeenagerAirPod", new Color(0.94f, 0.94f, 0.88f), new Vector3(0.08f, 0.16f, 1f), new Vector3(0.28f, 0.45f, -0.03f), 6);
+            _teenagerPhoneBeam = NewChildScenery(_teenager, "PeeBreakTeenagerPhoneAttentionBeam", new Color(0.2f, 0.9f, 1f, 0.36f), new Vector3(1.2f, 0.08f, 1f), new Vector3(0.46f, 0.08f, -0.04f), 2);
+            _teenagerDoorBeam = NewChildScenery(_teenager, "PeeBreakTeenagerDoorAttentionBeam", new Color(1f, 0.92f, 0.35f, 0.42f), new Vector3(1.65f, 0.08f, 1f), new Vector3(-0.56f, -0.08f, -0.04f), 2);
+            _teenagerQuestionBubble = NewChildScenery(_teenager, "PeeBreakTeenagerQuestionBubble", new Color(1f, 1f, 1f, 0.88f), new Vector3(0.28f, 0.28f, 1f), new Vector3(-0.42f, 0.72f, -0.05f), 6);
+            _teenagerOhBubble = NewChildScenery(_teenager, "PeeBreakTeenagerOhBubble", new Color(1f, 0.92f, 0.36f, 0.95f), new Vector3(0.42f, 0.42f, 1f), new Vector3(-0.5f, 0.82f, -0.05f), 6);
+            _comprehensionTrack = NewChildScenery(_teenager, "PeeBreakTeenagerComprehensionTrack", new Color(0.02f, 0.04f, 0.05f, 0.72f), new Vector3(1.35f, 0.16f, 1f), new Vector3(0f, 1.05f, -0.04f), 6);
+            _comprehensionFill = NewChildScenery(_comprehensionTrack, "PeeBreakTeenagerComprehensionFill", new Color(0.3f, 1f, 0.55f, 0.94f), new Vector3(0.04f, 0.1f, 1f), Vector3.zero, 7);
+            _confusionFill = NewChildScenery(_comprehensionTrack, "PeeBreakTeenagerConfusionFill", new Color(1f, 0.38f, 0.12f, 0.88f), new Vector3(0.04f, 0.04f, 1f), new Vector3(0f, -0.11f, -0.01f), 7);
+            for (int i = 0; i < _beatPips.Length; i++)
+            {
+                _beatPips[i] = NewChildScenery(_teenager, $"PeeBreakBeatPip{i + 1}", new Color(0.16f, 0.2f, 0.22f, 0.86f),
+                    new Vector3(0.13f, 0.13f, 1f), new Vector3(-0.33f + i * 0.22f, 1.25f, -0.05f), 7);
+            }
 
             NewChildScenery(_phone, "PeeBreakPhoneScreen", new Color(0.02f, 0.04f, 0.08f), new Vector3(0.52f, 0.68f, 1f), Vector3.zero, 5);
             NewChildScenery(_phone, "PeeBreakPhoneReflection", new Color(0.7f, 1f, 1f, 0.62f), new Vector3(0.1f, 0.54f, 1f), new Vector3(-0.12f, 0f, -0.01f), 6);
+            NewChildScenery(_phone, "PeeBreakPhoneBatteryShell", new Color(0.88f, 0.96f, 1f), new Vector3(0.42f, 0.08f, 1f), new Vector3(0f, -0.22f, -0.02f), 7);
+            _phoneBatteryFill = NewChildScenery(_phone, "PeeBreakPhoneBatteryFill", new Color(0.2f, 1f, 0.55f), new Vector3(0.38f, 0.05f, 1f), new Vector3(0f, -0.22f, -0.03f), 8);
+            _phoneChargeBolt = NewChildScenery(_phone, "PeeBreakPhoneChargeBolt", new Color(1f, 0.92f, 0.2f), new Vector3(0.08f, 0.32f, 1f), new Vector3(0.18f, 0.04f, -0.03f), 8);
+            _phoneDeadSlash = NewChildScenery(_phone, "PeeBreakPhoneDeadSlash", new Color(1f, 0.2f, 0.12f), new Vector3(0.08f, 0.78f, 1f), Vector3.zero, 9);
+            _phoneDeadSlash.transform.localRotation = Quaternion.Euler(0f, 0f, -38f);
 
             NewChildScenery(_door, "PeeBreakDoorPanelTop", new Color(0.72f, 0.42f, 0.16f), new Vector3(0.62f, 0.2f, 1f), new Vector3(0f, 0.22f, -0.01f), 4);
             NewChildScenery(_door, "PeeBreakDoorPanelBottom", new Color(0.72f, 0.42f, 0.16f), new Vector3(0.62f, 0.2f, 1f), new Vector3(0f, -0.24f, -0.01f), 4);
             NewChildScenery(_door, "PeeBreakDoorKnob", new Color(1f, 0.96f, 0.55f), new Vector3(0.12f, 0.08f, 1f), new Vector3(0.34f, 0f, -0.02f), 5);
+            _doorOutdoorView = NewChildScenery(_door, "PeeBreakDoorOutdoorView", new Color(0.42f, 0.82f, 0.34f), new Vector3(0.72f, 0.82f, 1f), new Vector3(0.34f, 0f, 0.03f), 1);
+            _doorOpenPanel = NewChildScenery(_door, "PeeBreakDoorOpenPanel", new Color(0.55f, 0.28f, 0.1f), new Vector3(0.26f, 0.96f, 1f), new Vector3(-0.42f, 0f, -0.02f), 5);
+            _outdoorGrassPatch = NewChildScenery(_door, "PeeBreakOutdoorGrassPatch", new Color(0.18f, 0.62f, 0.22f), new Vector3(0.92f, 0.16f, 1f), new Vector3(0.42f, -0.34f, -0.04f), 6);
+            _outdoorFireHydrant = NewChildScenery(_door, "PeeBreakOutdoorFireHydrant", new Color(0.92f, 0.16f, 0.12f), new Vector3(0.2f, 0.42f, 1f), new Vector3(0.62f, -0.06f, -0.05f), 7);
+            NewChildScenery(_outdoorFireHydrant, "PeeBreakOutdoorHydrantCap", new Color(1f, 0.82f, 0.22f), new Vector3(1.25f, 0.2f, 1f), new Vector3(0f, 0.55f, -0.01f), 8);
+            NewChildScenery(_outdoorFireHydrant, "PeeBreakOutdoorHydrantSidePeg", new Color(0.72f, 0.08f, 0.08f), new Vector3(1.6f, 0.18f, 1f), new Vector3(0f, 0.08f, -0.01f), 8);
+            _reliefSparkleA = NewChildScenery(_door, "PeeBreakReliefSparkleA", new Color(1f, 0.95f, 0.35f), new Vector3(0.12f, 0.42f, 1f), new Vector3(0.18f, 0.5f, -0.06f), 8);
+            _reliefSparkleB = NewChildScenery(_door, "PeeBreakReliefSparkleB", new Color(0.72f, 1f, 0.52f), new Vector3(0.1f, 0.34f, 1f), new Vector3(0.72f, 0.38f, -0.06f), 8);
+            _reliefSparkleC = NewChildScenery(_door, "PeeBreakReliefSparkleC", new Color(0.55f, 0.95f, 1f), new Vector3(0.08f, 0.3f, 1f), new Vector3(0.52f, -0.46f, -0.06f), 8);
 
             NewChildScenery(_leash, "PeeBreakLeashStrap", new Color(0.02f, 0.16f, 0.23f), new Vector3(0.18f, 1.36f, 1f), Vector3.zero, 4);
             NewChildScenery(_leash, "PeeBreakLeashClip", new Color(0.86f, 0.86f, 0.74f), new Vector3(0.24f, 0.2f, 1f), new Vector3(0f, -0.52f, -0.01f), 5);
+            NewChildScenery(_leash, "PeeBreakLeashHandleLoop", new Color(0.04f, 0.34f, 0.46f), new Vector3(0.46f, 0.34f, 1f), new Vector3(0f, 0.52f, -0.01f), 5);
+            _leashPresentedTrail = NewChildScenery(_leash, "PeeBreakLeashPresentedTrail", new Color(0.2f, 0.95f, 1f, 0.34f), new Vector3(1.35f, 0.08f, 1f), new Vector3(0.55f, -0.06f, -0.02f), 3);
             NewChildScenery(_leashHook, "PeeBreakHookPeg", new Color(0.45f, 0.45f, 0.4f), new Vector3(0.26f, 0.1f, 1f), Vector3.zero, 2);
             NewChildScenery(_leashHook, "PeeBreakHangingLeashLoop", new Color(0.04f, 0.3f, 0.42f), new Vector3(0.44f, 0.48f, 1f), new Vector3(0f, -0.45f, -0.01f), 2);
             NewChildScenery(_leashHook, "PeeBreakHangingLeashTail", new Color(0.02f, 0.18f, 0.26f), new Vector3(0.12f, 1.05f, 1f), new Vector3(0.18f, -0.8f, -0.02f), 3);
@@ -356,6 +438,14 @@ namespace CheddarAndCocoa.Game
             NewChildScenery(_charger, "PeeBreakOutletPlate", new Color(0.93f, 0.88f, 0.75f), new Vector3(0.46f, 0.34f, 1f), Vector3.zero, 4);
             NewChildScenery(_charger, "PeeBreakOutletSlots", new Color(0.16f, 0.12f, 0.18f), new Vector3(0.08f, 0.24f, 1f), new Vector3(0.08f, 0f, -0.01f), 5);
             NewChildScenery(_chargerCord, "PeeBreakCordPlug", new Color(0.04f, 0.04f, 0.06f), new Vector3(0.16f, 2.4f, 1f), new Vector3(0.5f, 0f, -0.01f), 2);
+            _chargerPluggedEnd = NewChildScenery(_charger, "PeeBreakChargerPluggedEnd", new Color(0.04f, 0.04f, 0.06f), new Vector3(0.3f, 0.2f, 1f), new Vector3(-0.34f, 0f, -0.02f), 6);
+            _chargerUnpluggedEnd = NewChildScenery(_charger, "PeeBreakChargerUnpluggedEnd", new Color(0.04f, 0.04f, 0.06f), new Vector3(0.36f, 0.18f, 1f), new Vector3(-0.68f, -0.42f, -0.02f), 6);
+
+            NewChildScenery(_hallwayRug, "PeeBreakHallwayWallLeft", new Color(0.24f, 0.16f, 0.13f, 0.9f), new Vector3(0.08f, 1.1f, 1f), new Vector3(-0.48f, 0f, -0.01f), 0);
+            NewChildScenery(_hallwayRug, "PeeBreakHallwayWallRight", new Color(0.24f, 0.16f, 0.13f, 0.9f), new Vector3(0.08f, 1.1f, 1f), new Vector3(0.48f, 0f, -0.01f), 0);
+
+            _bladderWarningFill = NewChildScenery(_bladderMeter, "PeeBreakBladderWarningFill", new Color(1f, 0.35f, 0.2f, 0.62f), new Vector3(0.9f, 0.22f, 1f), Vector3.zero, 4);
+            _bladderUrgencyTick = NewChildScenery(_bladderMeter, "PeeBreakBladderUrgencyTick", new Color(1f, 0.95f, 0.2f), new Vector3(0.08f, 0.7f, 1f), new Vector3(0.52f, 0f, -0.02f), 5);
         }
 
         private GameObject NewScenery(string name, Color color, Vector3 scale, int sortingOrder)
@@ -463,6 +553,12 @@ namespace CheddarAndCocoa.Game
             bool cheddarAtHallway = DogAt(DogId.Cheddar, _hallwayPosition);
             bool cocoaAtCharger = DogAt(DogId.Cocoa, _chargerPosition);
             _door.transform.localScale = DoorOpen ? new Vector3(0.35f, 4f, 1f) : new Vector3(2.4f, 4f, 1f);
+            float pulse = 1f + Mathf.Sin(Time.time * 7.5f) * 0.04f;
+            if (_teenagerThumbs != null)
+                _teenagerThumbs.transform.localPosition = new Vector3(0.25f + Mathf.Sin(Time.time * 16f) * 0.04f, 0.03f, -0.02f);
+            if (_phoneGlow != null)
+                _phoneGlow.transform.localScale = new Vector3(1.25f, 1.25f, 1f) * Mathf.Lerp(0.92f, pulse, PhoneBattery);
+            UpdateTeenagerProgressRead();
             SetMarkerColor(_door, cocoaAtDoor ? new Color(0.5f, 1f, 0.5f) : new Color(1f, 0.82f, 0.3f));
             SetMarkerColor(_leash, cheddarAtLeash ? new Color(0.5f, 1f, 0.5f) : new Color(0.3f, 0.9f, 1f));
             SetMarkerColor(_cheddarCoach, cheddarAtCoach ? new Color(0.5f, 1f, 0.5f) : new Color(0.55f, 0.78f, 1f));
@@ -470,22 +566,45 @@ namespace CheddarAndCocoa.Game
             SetMarkerColor(_charger, cocoaAtCharger ? new Color(0.5f, 1f, 0.5f) : new Color(0.75f, 0.45f, 1f));
             _phone.GetComponent<SpriteRenderer>().color = Color.Lerp(new Color(0.2f, 0.15f, 0.25f), new Color(0.4f, 0.9f, 1f), PhoneBattery);
             _phoneGlow.GetComponent<SpriteRenderer>().color = Color.Lerp(new Color(0.08f, 0.08f, 0.12f, 0.16f), new Color(0.2f, 0.9f, 1f, 0.5f), PhoneBattery);
+            if (_phoneBatteryFill != null)
+            {
+                _phoneBatteryFill.transform.localScale = new Vector3(Mathf.Lerp(0.04f, 0.38f, PhoneBattery), 0.05f, 1f);
+                _phoneBatteryFill.GetComponent<SpriteRenderer>().color = Color.Lerp(new Color(1f, 0.16f, 0.08f), new Color(0.2f, 1f, 0.55f), PhoneBattery);
+            }
+            if (_phoneChargeBolt != null) _phoneChargeBolt.SetActive(PhoneBattery > 0.08f && CurrentBeat != Beat.UnitedBark);
+            if (_phoneDeadSlash != null) _phoneDeadSlash.SetActive(PhoneBattery <= 0.08f);
             _bladderMeter.transform.localScale = new Vector3(Mathf.Lerp(0.5f, 4f, Bladder), 0.35f, 1f);
             _bladderMeter.GetComponent<SpriteRenderer>().color = Color.Lerp(new Color(0.4f, 0.8f, 1f), new Color(1f, 0.35f, 0.2f), Bladder);
+            if (_bladderWarningFill != null)
+            {
+                _bladderWarningFill.SetActive(Bladder >= 0.45f);
+                _bladderWarningFill.transform.localScale = new Vector3(Mathf.Lerp(0.15f, 0.92f, Bladder), 0.22f, 1f);
+            }
+            if (_bladderUrgencyTick != null)
+            {
+                _bladderUrgencyTick.SetActive(Bladder >= 0.72f);
+                _bladderUrgencyTick.transform.localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(Time.time * 12f) * 12f);
+            }
             if (_doorLabel != null)
                 _doorLabel.text = DoorOpen ? "DOOR OPEN"
                     : CurrentBeat == Beat.ChargerGambit ? "DOOR WAITING"
+                    : CurrentBeat == Beat.UnitedBark && cocoaAtDoor && !cheddarAtLeash ? "COCOA STARE LOCKED\nNEEDS CHEDDAR LEASH"
+                    : CurrentBeat == Beat.UnitedBark && cocoaAtDoor && cheddarAtLeash ? "COCOA STARE LOCKED\nBARK TOGETHER"
                     : CurrentBeat == Beat.LeashMessage && cocoaAtDoor && !cheddarAtLeash ? "COCOA STARE LOCKED\nNEEDS CHEDDAR LEASH"
                     : cocoaAtDoor ? "COCOA STARE LOCKED" : "COCOA STAND HERE\nDOOR STARE";
             if (_leashLabel != null)
                 _leashLabel.text = CurrentBeat == Beat.LeashMessage && cheddarAtLeash && !cocoaAtDoor ? "CHEDDAR LEASH READY\nNEEDS COCOA STARE"
+                    : CurrentBeat == Beat.UnitedBark && cheddarAtLeash && !cocoaAtDoor ? "CHEDDAR LEASH READY\nNEEDS COCOA STARE"
+                    : CurrentBeat == Beat.UnitedBark && cheddarAtLeash && cocoaAtDoor ? "CHEDDAR LEASH READY\nBARK TOGETHER"
                     : cheddarAtLeash ? "CHEDDAR LEASH READY" : CurrentBeat == Beat.UnitedBark ? "CHEDDAR HOLD LEASH\nTHEN BOTH BARK" : "CHEDDAR STAND HERE\nPRESENT LEASH";
             if (_cheddarCoachLabel != null)
                 _cheddarCoachLabel.text = cheddarAtCoach ? "CHEDDAR WATCHING\nNO BARK YET" : "CHEDDAR WATCH PAD\nNO BARK YET";
             if (_hallwayLabel != null)
-                _hallwayLabel.text = cheddarAtHallway ? "CHEDDAR BLOCK LOCKED" : "CHEDDAR STAND HERE\nBLOCK HALLWAY";
+                _hallwayLabel.text = cheddarAtHallway && !cocoaAtCharger ? "CHEDDAR BLOCK LOCKED\nNEEDS COCOA CHARGER"
+                    : cheddarAtHallway ? "CHEDDAR BLOCK LOCKED" : "CHEDDAR STAND HERE\nBLOCK HALLWAY";
             if (_chargerLabel != null)
-                _chargerLabel.text = cocoaAtCharger ? "COCOA UNPLUGGING" : "COCOA STAND HERE\nUNPLUG CHARGER";
+                _chargerLabel.text = cocoaAtCharger && !cheddarAtHallway ? "COCOA UNPLUGGING\nNEEDS CHEDDAR BLOCK"
+                    : cocoaAtCharger ? "COCOA UNPLUGGING" : "COCOA STAND HERE\nUNPLUG CHARGER";
             if (_phoneLabel != null) _phoneLabel.text = $"PHONE {PhoneBattery * 100f:0}%";
             if (_bladderLabel != null) _bladderLabel.text = $"BLADDER {Bladder * 100f:0}%";
             if (_teenagerLabel != null)
@@ -493,6 +612,12 @@ namespace CheddarAndCocoa.Game
                     : CurrentBeat == Beat.LeashMessage && cocoaAtDoor && !cheddarAtLeash ? "TEENAGER: NEEDS LEASH TOO"
                     : CurrentBeat == Beat.LeashMessage && cheddarAtLeash && !cocoaAtDoor ? "TEENAGER: NEEDS STARE TOO"
                     : CurrentBeat == Beat.LeashMessage && cocoaAtDoor && cheddarAtLeash ? "TEENAGER: GETTING IT!"
+                    : CurrentBeat == Beat.ChargerGambit && cheddarAtHallway && !cocoaAtCharger ? "TEENAGER: NEEDS CHARGER TOO"
+                    : CurrentBeat == Beat.ChargerGambit && cocoaAtCharger && !cheddarAtHallway ? "TEENAGER: NEEDS HALLWAY BLOCK"
+                    : CurrentBeat == Beat.ChargerGambit && cheddarAtHallway && cocoaAtCharger ? "TEENAGER: PHONE FADING!"
+                    : CurrentBeat == Beat.UnitedBark && cocoaAtDoor && !cheddarAtLeash ? "TEENAGER: NEEDS LEASH + BARK"
+                    : CurrentBeat == Beat.UnitedBark && cheddarAtLeash && !cocoaAtDoor ? "TEENAGER: NEEDS STARE + BARK"
+                    : CurrentBeat == Beat.UnitedBark && cocoaAtDoor && cheddarAtLeash ? "TEENAGER: BARK TOGETHER!"
                     : CurrentBeat switch
                 {
                     Beat.DoorStare => "TEENAGER: SCROLLING",
@@ -507,6 +632,66 @@ namespace CheddarAndCocoa.Game
             _chargerCord.SetActive(!DoorOpen && _beatIndex == 2);
             _openSunbeam.SetActive(DoorOpen);
             _leash.SetActive(!DoorOpen && (_beatIndex == 1 || _beatIndex == 3));
+            if (_teenagerPhoneBeam != null) _teenagerPhoneBeam.SetActive(!DoorOpen && PhoneBattery > 0.08f && CurrentBeat != Beat.ChargerGambit);
+            if (_teenagerDoorBeam != null) _teenagerDoorBeam.SetActive(!DoorOpen && (cocoaAtDoor || cheddarAtLeash || CurrentBeat == Beat.UnitedBark || PhoneBattery <= 0.08f));
+            if (_teenagerQuestionBubble != null) _teenagerQuestionBubble.SetActive(!DoorOpen && CurrentBeat != Beat.UnitedBark && PhoneBattery > 0.08f);
+            if (_teenagerOhBubble != null) _teenagerOhBubble.SetActive(DoorOpen || CurrentBeat == Beat.UnitedBark || PhoneBattery <= 0.08f);
+            if (_chargerPluggedEnd != null) _chargerPluggedEnd.SetActive(!DoorOpen && CurrentBeat == Beat.ChargerGambit && PhoneBattery > 0.08f);
+            if (_chargerUnpluggedEnd != null) _chargerUnpluggedEnd.SetActive(CurrentBeat == Beat.UnitedBark || PhoneBattery <= 0.08f);
+            if (_doorOutdoorView != null) _doorOutdoorView.SetActive(DoorOpen);
+            if (_doorOpenPanel != null) _doorOpenPanel.SetActive(DoorOpen);
+            if (_outdoorGrassPatch != null) _outdoorGrassPatch.SetActive(DoorOpen);
+            if (_outdoorFireHydrant != null) _outdoorFireHydrant.SetActive(DoorOpen);
+            AnimateReliefSparkle(_reliefSparkleA, DoorOpen, 0f);
+            AnimateReliefSparkle(_reliefSparkleB, DoorOpen, 0.7f);
+            AnimateReliefSparkle(_reliefSparkleC, DoorOpen, 1.4f);
+            if (_leashPresentedTrail != null) _leashPresentedTrail.SetActive(!DoorOpen && (_beatIndex == 1 || _beatIndex == 3) && cheddarAtLeash);
+        }
+
+        private static void AnimateReliefSparkle(GameObject sparkle, bool active, float phase)
+        {
+            if (sparkle == null) return;
+            sparkle.SetActive(active);
+            if (!active) return;
+            float wag = Mathf.Sin(Time.time * 9f + phase);
+            sparkle.transform.localRotation = Quaternion.Euler(0f, 0f, wag * 22f);
+            float scale = 0.92f + wag * 0.08f;
+            sparkle.transform.localScale = new Vector3(sparkle.transform.localScale.x, Mathf.Max(0.08f, scale * 0.34f), 1f);
+        }
+
+        private void UpdateTeenagerProgressRead()
+        {
+            float comprehensionNeeded = _beatIndex < ComprehensionByBeat.Length ? ComprehensionByBeat[_beatIndex] : 1f;
+            float confusionMax = _beatIndex < ConfusionByBeat.Length ? ConfusionByBeat[_beatIndex] : 1f;
+            float comprehension = DoorOpen ? 1f : Mathf.Clamp01(_puzzle.Comprehension / comprehensionNeeded);
+            float confusion = DoorOpen ? 0f : Mathf.Clamp01(_puzzle.Confusion / confusionMax);
+
+            if (_comprehensionTrack != null)
+                _comprehensionTrack.SetActive(!DoorOpen);
+            if (_comprehensionFill != null)
+            {
+                _comprehensionFill.transform.localScale = new Vector3(Mathf.Lerp(0.04f, 0.98f, comprehension), 0.1f, 1f);
+                _comprehensionFill.GetComponent<SpriteRenderer>().color =
+                    Color.Lerp(new Color(0.3f, 0.7f, 1f, 0.8f), new Color(0.45f, 1f, 0.35f, 0.96f), comprehension);
+            }
+            if (_confusionFill != null)
+            {
+                _confusionFill.SetActive(!DoorOpen && confusion > 0.02f);
+                _confusionFill.transform.localScale = new Vector3(Mathf.Lerp(0.04f, 0.98f, confusion), 0.04f, 1f);
+            }
+
+            for (int i = 0; i < _beatPips.Length; i++)
+            {
+                var pip = _beatPips[i];
+                if (pip == null) continue;
+                bool completed = _beatIndex > i || DoorOpen;
+                bool current = _beatIndex == i && !DoorOpen;
+                pip.SetActive(!DoorOpen);
+                pip.transform.localScale = Vector3.one * (current ? 0.18f + Mathf.Sin(Time.time * 8f) * 0.015f : 0.13f);
+                SetMarkerColor(pip, completed ? new Color(0.55f, 1f, 0.35f, 0.96f)
+                    : current ? new Color(1f, 0.88f, 0.28f, 0.96f)
+                    : new Color(0.16f, 0.2f, 0.22f, 0.86f));
+            }
         }
 
         private bool DogAt(DogId dogId, Vector2 position)
