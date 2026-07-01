@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using CheddarAndCocoa.Game;
 
@@ -13,8 +14,10 @@ namespace CheddarAndCocoa.Game
     {
         private GameManager _game;
         private GUIStyle _hud, _big, _mid, _small, _overlay, _briefing, _resultHeadline, _resultSubtitle, _resultBody, _resultHint, _resultButton;
+        private GUIStyle _detailName, _detailBody, _detailHeader;
         private Texture2D _uiKitTexture;
         private Sprite _hudPanelFrame, _hudMissionTile, _hudMissionTileSelected, _hudBadgeFrame, _hudButtonPrimary, _hudOverlayPanel;
+        private readonly Dictionary<GameManager.MissionVariant, Sprite> _missionTileCache = new Dictionary<GameManager.MissionVariant, Sprite>();
         public const string PlayerOwnershipLabel = "P1 Cheddar: WASD + Space/E  |  P2 Cocoa: Arrows + Enter/Right Shift";
         public const string PadControlsLabel = "Pads: left stick moves  |  X / West barks  |  Y / North interacts";
         public const int ResultHeadlineFontSize = 54;
@@ -298,11 +301,13 @@ namespace CheddarAndCocoa.Game
             int count = _game.MissionSelectOptionCount;
             const int columns = 2;
             int rows = Mathf.CeilToInt(count / (float)columns);
-            var box = FitPanel(Screen.width, Screen.height, 900f, MissionSelectPanelHeight(count));
+
+            // Fill nearly the whole viewport instead of a small centered dialog: pass oversized
+            // desired dimensions so FitPanel clamps down to (screen - margin) on any resolution.
+            var box = FitPanel(Screen.width, Screen.height, Screen.width, Screen.height, 12f);
             float w = box.width;
             DrawHudPanel(box);
             DrawTintedRect(new Rect(box.x + 12f, box.y + 10f, w - 24f, 92f), new Color(0.04f, 0.08f, 0.1f, 0.62f));
-            DrawTintedRect(new Rect(box.x + 20f, box.y + 124f, w - 40f, rows * 42f + 4f), new Color(0.02f, 0.04f, 0.05f, 0.42f));
             DrawUiKitAccent(new Rect(box.x + w - 116, box.y + 16, 76, 50));
             GUI.Label(new Rect(box.x, box.y + 14, w, 42), "Cheddar + Cocoa Couch Missions", _big);
             GUI.Label(new Rect(box.x + 32, box.y + 56, w - 64, 26),
@@ -315,86 +320,135 @@ namespace CheddarAndCocoa.Game
                 _game.FamilyShowcaseShortcutLabel,
                 _small);
 
+            float contentTop = box.y + 134f;
+            float contentBottom = box.yMax - 14f;
+            float contentHeight = Mathf.Max(rows * 40f, contentBottom - contentTop);
+            float leftX = box.x + 20f;
+            float rightX = box.xMax - 20f;
+            float gridGap = 24f;
+            float gridWidth = (rightX - leftX - gridGap) * 0.56f;
+            float detailWidth = rightX - leftX - gridGap - gridWidth;
+            float detailX = leftX + gridWidth + gridGap;
+
+            DrawTintedRect(new Rect(leftX, contentTop, gridWidth, contentHeight), new Color(0.02f, 0.04f, 0.05f, 0.42f));
+
+            float rowGap = 4f;
+            float columnGap = 12f;
+            float columnWidth = (gridWidth - columnGap) * 0.5f;
+            float rowHeight = contentHeight / rows;
             for (int i = 0; i < count; i++)
             {
                 int column = i / rows;
                 int row = i % rows;
-                float gap = 10f;
-                float columnWidth = (w - 54f - gap) * 0.5f;
-                var rowRect = new Rect(box.x + 27f + column * (columnWidth + gap), box.y + 126f + row * 42f, columnWidth, 38f);
+                var rowRect = new Rect(leftX + column * (columnWidth + columnGap), contentTop + row * rowHeight, columnWidth, rowHeight - rowGap);
                 DrawMissionRow(rowRect, i, _game.MissionVariantAt(i));
             }
 
-            float footY = box.y + 126f + rows * 42f + 4f;
-            DrawSelectedMissionShowcase(new Rect(box.x + 20f, footY - 4f, w - 40f, 128f), _game.SelectedMissionVariant);
-            DrawMissionBadge(new Rect(box.x + 34f, footY + 12f, 58f, 58f), _game.SelectedMissionVariant, true);
-            GUI.Label(new Rect(box.x + 100, footY, w - 130, 42),
-                $"{_game.SelectedMissionName} • {_game.MissionSelectDetailsFor(_game.SelectedMissionVariant)} • {_game.MissionSelectStatusFor(_game.SelectedMissionVariant)}\n{_game.SelectedMissionPresentationLine}", _mid);
-            GUI.Label(new Rect(box.x + 104, footY + 42f, w - 144, 52), $"GOAL: {_game.SelectedMissionBriefing}", _briefing);
-            GUI.Label(new Rect(box.x + 104f, footY + 94f, w * 0.5f - 126f, 26f),
-                _game.SelectedMissionChallengeLabel, _small);
-            GUI.Label(new Rect(box.x + 104f, footY + 116f, w * 0.5f - 126f, 20f),
-                _game.SelectedMissionReadinessLabel, _small);
-            float startWidth = Mathf.Min(240f, Mathf.Max(120f, (w - 52f) * 0.5f));
-            float focusWidth = Mathf.Min(238f, Mathf.Max(120f, (w - 52f) * 0.5f));
-            float startX = box.x + w - 20f - startWidth;
-            float focusX = startX - 12f - focusWidth;
-            if (_game.SelectedMissionVariant != _game.CouchTestFocusVariant
-                && DrawSkinnedButton(new Rect(focusX, footY + 94f, focusWidth, 32f), "Highlight Couch Test", _small))
-                _game.SelectCouchTestFocusMission();
-            if (DrawSkinnedButton(new Rect(startX, footY + 94f, startWidth, 32), $"Start {_game.SelectedMissionName}", _small))
-                _game.StartSelectedMission();
+            DrawMissionDetailPanel(new Rect(detailX, contentTop, detailWidth, contentHeight), _game.SelectedMissionVariant);
         }
 
-        private void DrawSelectedMissionShowcase(Rect rect, GameManager.MissionVariant variant)
+        private void DrawMissionDetailPanel(Rect rect, GameManager.MissionVariant variant)
         {
             Color accent = MissionBadgeColorFor(variant);
-            DrawHudOverlay(rect);
-            DrawTintedRect(new Rect(rect.x + 8f, rect.y + 8f, rect.width - 16f, rect.height - 16f),
-                new Color(0.02f, 0.04f, 0.05f, 0.34f));
-            DrawTintedRect(new Rect(rect.x, rect.y, rect.width, 6f),
-                new Color(accent.r, accent.g, accent.b, 0.78f));
-            DrawTintedRect(new Rect(rect.x, rect.y + rect.height - 6f, rect.width, 6f),
-                new Color(accent.r, accent.g, accent.b, 0.42f));
-            DrawTintedRect(new Rect(rect.x + 8f, rect.y + 8f, 76f, 76f),
-                new Color(accent.r, accent.g, accent.b, 0.24f));
+            DrawTintedRect(rect, new Color(0.02f, 0.04f, 0.05f, 0.82f));
+            DrawTintedRect(new Rect(rect.x, rect.y, rect.width, 6f), new Color(accent.r, accent.g, accent.b, 0.85f));
 
-            float pulse = (Mathf.Sin(Time.unscaledTime * 3.2f) + 1f) * 0.5f;
-            for (int i = 0; i < 5; i++)
-            {
-                float x = rect.x + rect.width - 156f + i * 28f;
-                float y = rect.y + 16f + Mathf.Sin(Time.unscaledTime * 2.4f + i * 0.8f) * 8f;
-                float size = 8f + pulse * 5f + (i % 2) * 3f;
-                DrawTintedRect(new Rect(x, y, size, size),
-                    i % 2 == 0
-                        ? new Color(1f, 0.95f, 0.32f, 0.44f)
-                        : new Color(accent.r, accent.g, accent.b, 0.46f));
-            }
+            float pad = 20f;
+            float x = rect.x + pad;
+            float innerW = rect.width - pad * 2f;
+            float imageSize = Mathf.Clamp(Mathf.Min(innerW, rect.height * 0.4f), 160f, 360f);
+            var imageRect = new Rect(x + (innerW - imageSize) * 0.5f, rect.y + pad, imageSize, imageSize);
+            DrawCroppedSprite(imageRect, GetMissionTileSprite(variant));
+            DrawMissionBadge(new Rect(imageRect.x + 8f, imageRect.y + 8f, 40f, 28f), variant, false);
 
-            DrawTintedRect(new Rect(rect.x + rect.width - 270f, rect.y + 82f, 248f, 38f),
-                new Color(accent.r, accent.g, accent.b, 0.18f));
+            float y = imageRect.yMax + 14f;
+            GUI.Label(new Rect(x, y, innerW, 36f), _game.SelectedMissionName, _detailName);
+            y += 34f;
+            GUI.Label(new Rect(x, y, innerW, 20f),
+                $"{_game.MissionSelectDetailsFor(variant)} • {_game.MissionSelectStatusFor(variant)}", _overlay);
+            y += 26f;
+
+            GUI.Label(new Rect(x, y, innerW, 78f), MissionInstructionCatalog.DescriptionFor(variant), _detailBody);
+            y += 82f;
+
+            GUI.Label(new Rect(x, y, innerW, 20f), "HOW TO PLAY", _detailHeader);
+            y += 22f;
+            float instructionsHeight = Mathf.Clamp(rect.yMax - pad - 74f - y, 90f, 220f);
+            GUI.Label(new Rect(x, y, innerW, instructionsHeight), MissionInstructionCatalog.HowToPlayFor(variant), _detailBody);
+            y += instructionsHeight + 8f;
+
+            GUI.Label(new Rect(x, y, innerW, 24f), _game.SelectedMissionChallengeLabel, _overlay);
+            y += 22f;
+            GUI.Label(new Rect(x, y, innerW, 20f), _game.SelectedMissionReadinessLabel, _overlay);
+
+            float buttonY = rect.yMax - pad - 34f;
+            float startWidth = Mathf.Min(240f, Mathf.Max(120f, (innerW - 12f) * 0.5f));
+            float focusWidth = Mathf.Min(238f, Mathf.Max(120f, (innerW - 12f) * 0.5f));
+            if (variant != _game.CouchTestFocusVariant
+                && DrawSkinnedButton(new Rect(x, buttonY, focusWidth, 32f), "Highlight Couch Test", _small))
+                _game.SelectCouchTestFocusMission();
+            if (DrawSkinnedButton(new Rect(x + innerW - startWidth, buttonY, startWidth, 32f), $"Start {_game.SelectedMissionName}", _small))
+                _game.StartSelectedMission();
         }
 
         public static float MissionSelectPanelHeight(int missionCount)
         {
             int rows = Mathf.CeilToInt(Mathf.Max(1, missionCount) / 2f);
-            return 126f + rows * 42f + 142f;
+            return 126f + rows * 110f + 260f;
+        }
+
+        private Sprite GetMissionTileSprite(GameManager.MissionVariant variant)
+        {
+            if (!_missionTileCache.TryGetValue(variant, out Sprite sprite))
+            {
+                sprite = FinalGameplayArt.LoadMissionTile(variant);
+                _missionTileCache[variant] = sprite;
+            }
+
+            return sprite;
+        }
+
+        private static void DrawCroppedSprite(Rect rect, Sprite sprite)
+        {
+            if (sprite == null)
+            {
+                DrawTintedRect(rect, new Color(0.05f, 0.08f, 0.09f, 0.85f));
+                return;
+            }
+
+            GUI.DrawTexture(rect, sprite.texture, ScaleMode.ScaleAndCrop, true);
         }
 
         private void DrawMissionRow(Rect row, int index, GameManager.MissionVariant variant)
         {
             bool selected = _game.SelectedMissionIndex == index;
-            string prefix = selected ? "> " : "";
             string key = index < 9 ? (index + 1).ToString() : index == 9 ? "0" : "-";
             var def = GameManager.BuildMissionDefinition(variant);
-            string label = $"{prefix}{key}. {def.Name}\n{_game.MissionSelectStatusFor(variant)}";
-            Color previous = GUI.color;
-            DrawHudMissionTile(row, selected);
-            DrawTintedRect(row, selected ? new Color(1f, 0.82f, 0.18f, 0.16f) : new Color(0.1f, 0.14f, 0.16f, 0.18f));
+            Color accent = MissionBadgeColorFor(variant);
+
+            float thumbSize = row.height;
+            var thumbRect = new Rect(row.x, row.y, thumbSize, thumbSize);
+            var textRect = new Rect(row.x + thumbSize + 8f, row.y, row.width - thumbSize - 8f, row.height);
+
+            DrawTintedRect(textRect, selected ? new Color(0.16f, 0.2f, 0.1f, 0.9f) : new Color(0.04f, 0.06f, 0.07f, 0.7f));
+            DrawTintedRect(new Rect(textRect.x, textRect.y, 4f, textRect.height), new Color(accent.r, accent.g, accent.b, 0.95f));
+            if (selected)
+            {
+                Color glow = new Color(1f, 0.86f, 0.28f, 0.95f);
+                DrawTintedRect(new Rect(row.x - 2f, row.y - 2f, row.width + 4f, 2f), glow);
+                DrawTintedRect(new Rect(row.x - 2f, row.yMax, row.width + 4f, 2f), glow);
+                DrawTintedRect(new Rect(row.x - 2f, row.y - 2f, 2f, row.height + 4f), glow);
+                DrawTintedRect(new Rect(row.xMax, row.y - 2f, 2f, row.height + 4f), glow);
+            }
+
             if (GUI.Button(row, GUIContent.none, GUIStyle.none)) _game.SelectMission(variant);
-            DrawMissionBadge(new Rect(row.x + 6f, row.y + 5f, 30f, 28f), variant, selected);
+
+            DrawCroppedSprite(thumbRect, GetMissionTileSprite(variant));
+
+            string label = $"{(selected ? "> " : "")}{key}. {def.Name}\n{_game.MissionSelectStatusFor(variant)}";
+            Color previous = GUI.color;
             if (selected) GUI.color = new Color(1f, 0.92f, 0.42f);
-            GUI.Label(new Rect(row.x + 42f, row.y + 2f, row.width - 46f, row.height - 2f), label, _small);
+            GUI.Label(new Rect(textRect.x + 12f, textRect.y, textRect.width - 16f, textRect.height), label, _overlay);
             GUI.color = previous;
         }
 
@@ -597,6 +651,13 @@ namespace CheddarAndCocoa.Game
             _resultHint = new GUIStyle(GUI.skin.label) { fontSize = ResultHintFontSize, alignment = TextAnchor.MiddleCenter };
             _resultHint.normal.textColor = new Color(0.78f, 0.88f, 0.92f);
             _resultHint.wordWrap = true;
+            _detailName = new GUIStyle(GUI.skin.label) { fontSize = 26, fontStyle = FontStyle.Bold, alignment = TextAnchor.UpperLeft };
+            _detailName.normal.textColor = new Color(1f, 0.95f, 0.4f);
+            _detailBody = new GUIStyle(GUI.skin.label) { fontSize = 16, alignment = TextAnchor.UpperLeft };
+            _detailBody.normal.textColor = new Color(0.94f, 0.97f, 1f);
+            _detailBody.wordWrap = true;
+            _detailHeader = new GUIStyle(GUI.skin.label) { fontSize = 15, fontStyle = FontStyle.Bold, alignment = TextAnchor.UpperLeft };
+            _detailHeader.normal.textColor = new Color(1f, 0.82f, 0.3f);
         }
 
         private void LoadGeneratedHudSkin()

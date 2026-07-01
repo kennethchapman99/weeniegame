@@ -26,11 +26,15 @@ namespace CheddarAndCocoa.Tests
         [Test]
         public void MissionSelectPanel_FitsAllMissionRowsAndReadableGoal()
         {
+            // The mission select screen now fills nearly the full viewport (picture-tile grid plus
+            // a detail panel) instead of sizing a small dialog to its content, so the content-driven
+            // formula only needs to stay large enough to always exceed the viewport and get clamped.
             float height = ArenaHud.MissionSelectPanelHeight(22);
             Assert.GreaterOrEqual(height, 126f + 11f * 42f + 142f);
 
-            Rect panel = ArenaHud.FitPanel(1920f, 1080f, 900f, height);
-            Assert.GreaterOrEqual(panel.height, height);
+            Rect panel = ArenaHud.FitPanel(1920f, 1080f, 1920f, height, 12f);
+            Assert.GreaterOrEqual(panel.height, 1080f - 24f - 1f,
+                "Mission select should occupy essentially the full screen height, not a small centered dialog.");
 
             Assert.AreEqual("PEE", ArenaHud.MissionBadgeCodeFor(GameManager.MissionVariant.OperationPeeBreak));
             Assert.AreNotEqual(ArenaHud.MissionBadgeColorFor(GameManager.MissionVariant.OperationPeeBreak),
@@ -44,6 +48,20 @@ namespace CheddarAndCocoa.Tests
                 "Mission select/end-card HUD should have generated skin sprites, not only IMGUI boxes.");
             Assert.IsTrue(WorldLabelSkin.GeneratedWorldLabelSkinAvailable,
                 "Mission world labels and score pops should have generated skins, not only raw TextMesh.");
+        }
+
+        [Test]
+        public void MissionSelect_HasPictureTileAndInstructionsForEveryMission()
+        {
+            foreach (GameManager.MissionVariant variant in System.Enum.GetValues(typeof(GameManager.MissionVariant)))
+            {
+                Assert.IsTrue(FinalGameplayArt.HasMissionTile(variant),
+                    $"{variant} is missing a mission select picture tile at {FinalGameplayArt.MissionTilePath(variant)}.");
+                Assert.IsFalse(string.IsNullOrWhiteSpace(MissionInstructionCatalog.DescriptionFor(variant)),
+                    $"{variant} is missing level-select description text.");
+                Assert.IsFalse(string.IsNullOrWhiteSpace(MissionInstructionCatalog.HowToPlayFor(variant)),
+                    $"{variant} is missing level-select how-to-play text.");
+            }
         }
 
         [Test]
@@ -346,12 +364,14 @@ namespace CheddarAndCocoa.Tests
             var prop = snack.GetComponent<MissionPropArtAttachment>();
             Assert.IsNotNull(prop, "Snack Heist snacks should use shared mission prop art.");
             Assert.IsTrue(prop.HasRuntimeSprite);
+            Vector3 snackPosition = snack.transform.position;
+            float affordanceRange = prop.AffordanceRange;
 
             var dogs = Object.FindObjectsByType<DogController>(FindObjectsSortMode.None);
             Assert.GreaterOrEqual(dogs.Length, 2);
             foreach (var dog in dogs)
             {
-                dog.transform.position = snack.transform.position + Vector3.right * 30f;
+                dog.transform.position = snackPosition + Vector3.right * 30f;
             }
             yield return null;
             yield return null;
@@ -359,14 +379,18 @@ namespace CheddarAndCocoa.Tests
             Assert.IsFalse(prop.IsAffordanceActive,
                 "Generated mission props should not stay permanently highlighted when the dogs are far away.");
 
-            dogs[0].transform.position = snack.transform.position + Vector3.right * (prop.AffordanceRange * 0.45f);
+            dogs[0].transform.position = snackPosition + Vector3.right * (affordanceRange * 0.45f);
             yield return null;
             yield return null;
 
             Assert.IsTrue(prop.IsAffordanceActive,
                 "Generated mission props should pulse/tint as a diegetic nearby interactable affordance.");
 
-            dogs[0].transform.position = snack.transform.position + Vector3.right * 30f;
+            Vector3 currentPropPosition = prop.transform.position;
+            foreach (var dog in dogs)
+            {
+                dog.transform.position = currentPropPosition + Vector3.right * 30f;
+            }
             yield return null;
             yield return null;
 

@@ -79,13 +79,16 @@ accents:
   squirrel/predator actors without changing gameplay transforms, range indicators, or labels. Marker
   states that reuse the squirrel actor, such as coyote weak spots or eagle talon grips, intentionally
   fall back to generated marker art instead of showing the wrong animal.
-- Mission select/end-card HUD keeps IMGUI text controls, but the mission picker now uses TV-safe
-  generated HUD skin sprites for panel frames, mission rows, selected rows, badges, button backs,
-  and overlay panels. The picker still exposes header/detail bands, compact visual mission badges on
-  every row, a larger selected-slice badge/launch area, a couch-test focus callout that jumps
-  straight to Operation Pee Break, a visible per-mission replay challenge, and the subtle imported
-  UI-kit accent. End cards now echo the next replay target, or call out that the challenge was beaten
-  on a flawless run.
+- Mission select/end-card HUD keeps IMGUI text controls, but the mission picker now fills nearly the
+  full viewport instead of a small centered dialog. The left 2-column, 11-row grid shows a generated
+  picture-tile thumbnail (one AI-illustrated cover per mission, `Assets/Art/Resources/ArenaFinal/UI/
+  MissionTiles/`, loaded through `FinalGameplayArt.LoadMissionTile`) beside a colored accent stripe
+  and status text per row; keyboard/gamepad grid navigation is unchanged (still 2 columns x 11 rows).
+  The right-hand detail panel shows a large picture of the selected mission plus its name, a
+  generated one-line premise, a grounded "HOW TO PLAY" readout naming the real on-screen labels/
+  markers/verbs for that mission (`MissionInstructionCatalog`), the per-mission replay challenge, and
+  the readability gate, with Start/Highlight Couch Test buttons pinned to the bottom. End cards now
+  echo the next replay target, or call out that the challenge was beaten on a flawless run.
 - Mission result/end-state HUD now uses one shared full-screen readable overlay for every mission:
   a dark dimmed backdrop suppresses gameplay/HUD behind it, a large opaque centered card carries the
   `MISSION COMPLETE` / `MISSION FAILED` / `SESSION COMPLETE` headline, score/stars/best/reason are
@@ -288,6 +291,37 @@ spinning props are unreadable; the dog's name text covers the dog"):
 
 Covered by `ArenaGameLoopPlayModeTests.ThreatActors_AreOnScreenAndReadable_NotOffscreenSpinningBlobs`.
 
+### Full-screen picture-tile mission select (2026-07-01)
+
+The mission picker was a small centered dialog (900px wide, sized to its row count) with only a
+3-letter color badge per mission and a single shared text description below the grid. It now fills
+nearly the full viewport (`ArenaHud.DrawMissionSelect`, `FitPanel` clamped to `Screen.width/height`)
+and is split into two areas:
+
+- **Left: the 2-column, 11-row mission grid.** Each row now shows a generated picture-tile
+  thumbnail (`Assets/Art/Resources/ArenaFinal/UI/MissionTiles/<variant>.png`, loaded through
+  `FinalGameplayArt.LoadMissionTile`) next to its name, key number, and status, with a colored
+  accent stripe matching the mission's badge color and a bright outline on the selected row.
+  Keyboard/gamepad grid navigation (`GameManager.SelectMissionGridStep`) is unchanged — still a
+  fixed 2 columns x 11 rows — so this is a presentation-only change.
+- **Right: the mission detail panel.** Shows a large picture of the selected mission, its name, a
+  generated one-line premise, and a grounded "HOW TO PLAY" readout that names the mission's real
+  on-screen labels, markers, and dog verbs (both come from the new `MissionInstructionCatalog`,
+  cross-checked against this doc and `docs/COOP-PUZZLE-PRIMITIVES.md` rather than invented copy),
+  plus the existing per-mission replay challenge and readability gate, and the Start/Highlight
+  Couch Test buttons.
+
+Every mission variant has a matching generated picture tile and catalog entry, asserted by
+`BackyardEnvironmentPlayModeTests.MissionSelect_HasPictureTileAndInstructionsForEveryMission`. The
+full-viewport contract is asserted by the updated
+`MissionSelectPanel_FitsAllMissionRowsAndReadableGoal`.
+
+Manual acceptance check: open mission select and confirm the panel fills essentially the whole
+window instead of a small centered box. Confirm every row shows a distinct picture thumbnail (not a
+generic badge) and the selected row has a clear highlight border. Arrow/D-pad through several
+missions and confirm the detail panel's picture, description, and "HOW TO PLAY" text update to
+match, stay readable at 1080p, and do not overlap the Start / Highlight Couch Test buttons.
+
 ### First-minute objective readability pass (2026-06-21)
 
 The first playtest also reported that it was not clear what to do even when some mechanics were
@@ -357,15 +391,20 @@ and reports `ON TARGET` inside interaction range, so split players can coordinat
 small world text.
 
 1. Open `unity/CheddarAndCocoa` in Unity 6 LTS, open `Assets/Scenes/ArenaScene.unity`, and press Play. `ArenaScene` is also the scripted local build entry point.
-2. The mission picker appears immediately. Use **Up/Down** or gamepad **D-pad** to highlight a mission, then press **Enter**, **Space**, gamepad **Start**, or gamepad **South** to start. Keyboard **1-9 and 0** directly starts the original first ten missions; use arrow/D-pad selection for later missions including Kitchen Falling Food Frenzy.
-   - All 22 mission variants use the adaptive two-column picker as of 2026-06-21.
+2. The mission picker appears immediately, filling nearly the full window. Use **Up/Down** or gamepad **D-pad** to highlight a mission, then press **Enter**, **Space**, gamepad **Start**, or gamepad **South** to start. Keyboard **1-9 and 0** directly starts the original first ten missions; use arrow/D-pad selection for later missions including Kitchen Falling Food Frenzy.
+   - All 22 mission variants use the same 2-column, 11-row picture-tile grid as of 2026-07-01. Each
+     row shows a generated cover-art thumbnail for that mission; the right-hand detail panel shows a
+     large picture of the currently selected mission plus a generated description and a "HOW TO
+     PLAY" readout naming its real on-screen labels/markers/verbs (see `MissionInstructionCatalog`
+     and `Assets/Art/Resources/ArenaFinal/UI/MissionTiles/`).
    - For the family showcase runbook in `docs/FAMILY-SHOWCASE-MANUAL-TEST.md`, the host can press
      **F7/B** to highlight Backyard Rescue, **F6/K** to highlight Kitchen Falling Food Frenzy,
      **F8/W** to highlight Weenie Roundup, **F9/L** to highlight Walkies on the Leash, or **F5/P**
      to highlight Operation Pee Break.
    - For the current couch-test focus, press keyboard **F5**/**P** or gamepad **North/Y** on the
      mission picker to highlight **Operation Pee Break**, then press **Start/South** to launch.
-   - Each tile shows `NEW`, `RETRY`, `CLEARED`, or `FLAWLESS` plus its session-best score; the selected detail line shows round time and objective size.
+   - Each row shows `NEW`, `RETRY`, `CLEARED`, or `FLAWLESS` plus its session-best score; the detail
+     panel shows round time and objective size.
    - The header keeps missions played/tried, total score, and flawless clears visible before the next choice.
 3. Read the selected mission's wrapped `GOAL` block, then start it. The opening goal card repeats the
    premise, names the first current objective, and shows the core controller verbs while the HUD

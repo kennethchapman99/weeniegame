@@ -399,6 +399,13 @@ namespace CheddarAndCocoa.Game
         public static Sprite Load(string path) => string.IsNullOrEmpty(path) ? null : Resources.Load<Sprite>(path);
         public static bool Has(string path) => Load(path) != null;
 
+        // One generated picture-tile portrait per mission variant for the full-screen mission select
+        // screen, keyed by the lowercased enum name so adding a mission only needs a matching PNG.
+        public static string MissionTilePath(GameManager.MissionVariant variant) =>
+            Root + "/UI/MissionTiles/" + variant.ToString().ToLowerInvariant();
+        public static Sprite LoadMissionTile(GameManager.MissionVariant variant) => Load(MissionTilePath(variant));
+        public static bool HasMissionTile(GameManager.MissionVariant variant) => Has(MissionTilePath(variant));
+
         public static string PathFor(RuntimeArtSpriteFactory.RuntimeSpriteId id)
         {
             switch (id)
