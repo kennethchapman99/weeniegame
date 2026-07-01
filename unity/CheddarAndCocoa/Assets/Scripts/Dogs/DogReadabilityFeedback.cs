@@ -13,6 +13,7 @@ namespace CheddarAndCocoa.Dogs
     {
         private static readonly Vector3 AuthoredFallbackScale = new Vector3(0.8f, 1.65f, 1f);
         private static readonly Vector3 AuthoredMotionScale = new Vector3(1.12f, 2.3f, 1f);
+        private static bool _debugIdentityLabelsVisible;
 
         public enum Pose
         {
@@ -43,6 +44,7 @@ namespace CheddarAndCocoa.Dogs
         private SpriteRenderer _intentArrow;
         private SpriteRenderer _authoredPose;
         private TextMesh _label;
+        private MeshRenderer _labelRenderer;
         private Vector3 _baseScale;
         private Vector3 _labelBaseScale;
         private Vector2 _lastIntentDir = Vector2.right;
@@ -53,10 +55,12 @@ namespace CheddarAndCocoa.Dogs
         private DogVisualSlot _art;
         private DogActionFeedback _actionFeedback;
         private DogProceduralAudio _proceduralAudio;
+        private DogShowcasePolish _showcasePolish;
 
         public Pose CurrentPose { get; private set; } = Pose.Idle;
         public string CurrentPoseLabel => CurrentPose.ToString();
         public string IdentityLabel => _label != null ? _label.text : string.Empty;
+        public bool IdentityTextVisible => _labelRenderer != null && _labelRenderer.enabled;
         public string FacingIntentLabel => _lastIntentDir.x >= 0f ? "FacingRight" : "FacingLeft";
         public string DetailedFacingIntentLabel => $"Facing{CharacterMotionArt.FacingLabel(_lastIntentDir)}";
         public string LastMovementJuiceLabel { get; private set; } = string.Empty;
@@ -69,9 +73,20 @@ namespace CheddarAndCocoa.Dogs
         public string MotionPersonalityLabel { get; private set; } = string.Empty;
         public DogActionFeedback ActionFeedback => _actionFeedback;
         public DogProceduralAudio ProceduralAudio => _proceduralAudio;
+        public bool HasShowcasePersonalityPolish => _showcasePolish != null && _showcasePolish.Built;
+        public string ShowcasePersonalitySignature => _showcasePolish != null ? _showcasePolish.PersonalitySignature : string.Empty;
         public string ArtDirectionSignature => _identity == null
             ? string.Empty
             : ArenaArtCatalog.Dog(_identity.Id).ArtDirectionSignature;
+
+        public static void SetDebugIdentityLabelsVisible(bool visible)
+        {
+            _debugIdentityLabelsVisible = visible;
+            foreach (var feedback in Object.FindObjectsByType<DogReadabilityFeedback>(FindObjectsSortMode.None))
+            {
+                feedback.ApplyLabelVisibility();
+            }
+        }
 
         public void Init(Sprite sprite)
         {
@@ -89,6 +104,9 @@ namespace CheddarAndCocoa.Dogs
             _proceduralAudio = GetComponent<DogProceduralAudio>();
             if (_proceduralAudio == null) _proceduralAudio = gameObject.AddComponent<DogProceduralAudio>();
             _proceduralAudio.Initialize(_actionFeedback);
+            _showcasePolish = GetComponent<DogShowcasePolish>();
+            if (_showcasePolish == null) _showcasePolish = gameObject.AddComponent<DogShowcasePolish>();
+            _showcasePolish.Begin();
             _dog.OnBark += OnBark;
             ApplyPose(Pose.Idle);
         }
@@ -397,6 +415,8 @@ namespace CheddarAndCocoa.Dogs
             _label.alignment = TextAlignment.Center;
             _label.fontSize = labelSlot.FontSize;
             _label.color = labelSlot.Color;
+            _labelRenderer = _label.GetComponent<MeshRenderer>();
+            ApplyLabelVisibility();
         }
 
         private void BuildAuthoredPoseArt()
@@ -451,6 +471,11 @@ namespace CheddarAndCocoa.Dogs
         }
 
         private string DogTitle() => _art.Title;
+
+        private void ApplyLabelVisibility()
+        {
+            if (_labelRenderer != null) _labelRenderer.enabled = _debugIdentityLabelsVisible;
+        }
 
         private string PoseCopy(Pose pose) => pose switch
         {

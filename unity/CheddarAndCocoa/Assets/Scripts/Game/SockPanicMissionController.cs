@@ -33,6 +33,7 @@ namespace CheddarAndCocoa.Game
         {
             _context = context;
             _basket = _context.CreateActor(ArenaArtCatalog.ActorKind.LaundryBasket);
+            MissionPropArt.AttachObject(_basket, FinalGameplayArt.MissionLaundryBasket, 0.013f, 18, true);
             _basket.SetActive(false);
         }
 
@@ -170,6 +171,7 @@ namespace CheddarAndCocoa.Game
             _context.AddScore(ScoreEventCatalog.BasketTipped.Points, ScoreEventCatalog.BasketTipped.Label);
             _context.SetCue($"{DogName(dogIndex)} tipped the basket - partner dive for the sock!");
             _context.SetActorState(_basket, "BASKET HELD OPEN - PARTNER DIVE NOW!", new Color(0.96f, 0.72f, 0.32f), 0.22f);
+            MissionPropArt.SetSprite(_basket.GetComponent<MissionPropArtAttachment>(), FinalGameplayArt.MissionLaundryBasketOpen);
             _context.SpawnWorldPop(_basket.transform.position, "TIP! PARTNER DIVE!", new Color(0.62f, 0.9f, 1f));
             _context.RequestAudioCue(ArenaFeedbackCatalog.Bark);
             _context.LogEvent("SockBasket", $"{DogName(dogIndex)} tipped the basket");
@@ -198,7 +200,10 @@ namespace CheddarAndCocoa.Game
         {
             _openingUntil = 0f;
             if (_basket != null)
+            {
                 _context.SetActorState(_basket, label, new Color(0.78f, 0.56f, 0.3f), 0.08f);
+                MissionPropArt.SetSprite(_basket.GetComponent<MissionPropArtAttachment>(), FinalGameplayArt.MissionLaundryBasket);
+            }
         }
 
         private DogId DogIdAt(int dogIndex) => dogIndex >= 0 && dogIndex < _context.Dogs.Length &&

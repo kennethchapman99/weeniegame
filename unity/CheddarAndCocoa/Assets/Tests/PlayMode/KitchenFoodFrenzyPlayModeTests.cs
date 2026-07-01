@@ -54,6 +54,7 @@ namespace CheddarAndCocoa.Tests
             Assert.IsFalse(_game.KitchenFoodObject.activeSelf);
             Assert.That(_game.ObjectiveLabel, Does.Contain("DROP TELEGRAPHED"));
             Assert.IsTrue(LogContains("KitchenTelegraph"));
+            AssertKitchenCueSprites("kitchen_telegraph_purple", "kitchen_landing_purple");
 
             _game.ForceKitchenReleaseTelegraph();
             Assert.IsFalse(_game.KitchenState.TelegraphActive);
@@ -168,6 +169,18 @@ namespace CheddarAndCocoa.Tests
             foreach (string entry in _game.PlaytestEvents)
                 if (entry.Contains(text)) return true;
             return false;
+        }
+
+        private void AssertKitchenCueSprites(string telegraphName, string landingName)
+        {
+            var telegraphArt = _game.KitchenTelegraphObject.GetComponent<MissionPropArtAttachment>();
+            var landingArt = _game.KitchenLandingWarningObject.GetComponent<MissionPropArtAttachment>();
+            Assert.IsNotNull(telegraphArt);
+            Assert.IsNotNull(landingArt);
+            Assert.IsTrue(telegraphArt.HasRuntimeSprite);
+            Assert.IsTrue(landingArt.HasRuntimeSprite);
+            Assert.AreEqual(telegraphName, telegraphArt.RuntimeSpriteName);
+            Assert.AreEqual(landingName, landingArt.RuntimeSpriteName);
         }
     }
 }

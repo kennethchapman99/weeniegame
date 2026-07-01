@@ -414,6 +414,7 @@ namespace CheddarAndCocoa.Game
             sr.color = new Color(0.35f, 0.8f, 1f, 0.34f);
             sr.sortingOrder = 1;
             _context.AddWorldLabel(_gapMarker, "ESCAPE GAP - HOLD HERE", Vector3.up * 0.38f, 14, Color.white);
+            MissionPropArt.AttachPad(_gapMarker, FinalGameplayArt.MissionEscapeGap, 0.012f, 18);
             _gapMarker.SetActive(false);
         }
 

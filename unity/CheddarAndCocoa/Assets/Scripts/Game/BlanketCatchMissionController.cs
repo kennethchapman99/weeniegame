@@ -209,6 +209,7 @@ namespace CheddarAndCocoa.Game
             if (_context.ActorSprite != null) bsr.sprite = _context.ActorSprite;
             bsr.color = new Color(0.85f, 0.8f, 0.35f);
             _blanketLabel = _context.AddWorldLabel(_blanketObj, "BLANKET", Vector3.up * 1.6f, 12, Color.white);
+            MissionPropArt.AttachObject(_blanketObj, FinalGameplayArt.MissionCatchBlanket, 0.012f, 18, false);
             _blanketObj.SetActive(false);
 
             _fallingItem = new GameObject("FallingSnack");
@@ -218,6 +219,7 @@ namespace CheddarAndCocoa.Game
             if (_context.ActorSprite != null) isr.sprite = _context.ActorSprite;
             isr.color = new Color(0.95f, 0.8f, 0.4f);
             _context.AddWorldLabel(_fallingItem, "SNACK", Vector3.up * 1.1f, 11, Color.white);
+            MissionPropArt.AttachObject(_fallingItem, FinalGameplayArt.MissionFallingSnack, 0.012f, 18, true);
             _fallingItem.SetActive(false);
         }
 

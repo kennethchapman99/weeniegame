@@ -36,6 +36,25 @@ namespace CheddarAndCocoa.Tests
             Assert.That(_game.TeamGuidanceLabel, Does.Contain("HOLD DOOR STARE"));
             Assert.IsNotNull(GameObject.Find("PeeBreakTeenager"));
             Assert.IsNotNull(GameObject.Find("PeeBreakDoor"));
+            Assert.IsTrue(Controller.HasGeneratedCartoonProps,
+                "Operation Pee Break should load generated cartoon prop sprites, not only colored-square room diagrams.");
+            Assert.GreaterOrEqual(Controller.GeneratedPeeBreakPropSpriteCount, 8);
+            AssertGeneratedPeeBreakArt("PeeBreakGeneratedCouchArt");
+            AssertGeneratedPeeBreakArt("PeeBreakGeneratedTeenagerArt");
+            AssertGeneratedPeeBreakArt("PeeBreakGeneratedPhoneChargerArt");
+            AssertGeneratedPeeBreakArt("PeeBreakGeneratedOpenDoorArt");
+            AssertGeneratedPeeBreakArt("PeeBreakGeneratedLeashArt");
+            AssertGeneratedPeeBreakArt("PeeBreakGeneratedHydrantReliefArt");
+            AssertGeneratedPeeBreakArt("PeeBreakGeneratedBladderMeterArt");
+            AssertGeneratedPeeBreakArt("PeeBreakGeneratedMisreadTennisBallArt");
+            Assert.IsTrue(FindLoadedObject("PeeBreakGeneratedCouchArt").activeSelf,
+                "The generated couch sprite should carry the couch-bound cold read.");
+            Assert.IsTrue(FindLoadedObject("PeeBreakGeneratedTeenagerArt").activeSelf,
+                "The generated Teenager sprite should replace the block-built person as the dominant read.");
+            Assert.IsFalse(FindLoadedObject("PeeBreakGeneratedHydrantReliefArt").activeSelf,
+                "The hydrant payoff should still wait for the climax.");
+            Assert.IsFalse(FindLoadedObject("PeeBreakGeneratedMisreadTennisBallArt").activeSelf,
+                "The misread tennis ball should wait until the Teenager misunderstands.");
             AssertPeeBreakScenery("PeeBreakRoomFloor", "The active slice should read as an interior room before labels.");
             AssertPeeBreakScenery("PeeBreakCouchBack", "The Teenager situation should read as couch-bound.");
             AssertPeeBreakScenery("PeeBreakCouchSeat", "The Teenager situation should read as couch-bound.");
@@ -49,10 +68,16 @@ namespace CheddarAndCocoa.Tests
             AssertPeeBreakDetail("PeeBreakCouchCushionLine", "Couch should show cushion structure before labels.");
             AssertPeeBreakDetail("PeeBreakCouchPillowA", "Couch should feel like a lived-in room, not a diagram block.");
             AssertPeeBreakDetail("PeeBreakCouchPillowB", "Couch should feel like a lived-in room, not a diagram block.");
+            AssertPeeBreakDetail("PeeBreakCouchBlanketSlump", "The room should feel lived-in, with soft couch clutter behind the puzzle read.");
+            AssertPeeBreakDetail("PeeBreakStraySockA", "Dog-life scenery should include small chewable household details.");
+            AssertPeeBreakDetail("PeeBreakStraySockB", "Dog-life scenery should include small chewable household details.");
+            AssertPeeBreakDetail("PeeBreakChewToyUnderTable", "The Teenager room should include dog-authentic floor clutter.");
             AssertPeeBreakDetail("PeeBreakTeenagerHead", "Teenager should read as a person on the couch.");
             AssertPeeBreakDetail("PeeBreakTeenagerHair", "Teenager should read as a person on the couch.");
             AssertPeeBreakDetail("PeeBreakTeenagerLegs", "Teenager should read as sitting on the couch.");
+            AssertPeeBreakDetail("PeeBreakTeenagerHoodie", "Teenager should have a readable body silhouette, not only head and phone pieces.");
             AssertPeeBreakDetail("PeeBreakTeenagerThumbs", "Teenager should read as phone-absorbed.");
+            AssertPeeBreakDetail("PeeBreakTeenagerFootWiggle", "Teenager should have subtle character animation details.");
             AssertPeeBreakDetail("PeeBreakTeenagerPhoneAttentionBeam", "Beat 1 should visually show the Teenager's attention stuck on the phone.");
             AssertPeeBreakDetail("PeeBreakTeenagerQuestionBubble", "The Teenager should emote visually before labels do all the work.");
             AssertPeeBreakDetail("PeeBreakTeenagerComprehensionTrack", "Teenager understanding should have an in-world progress read.");
@@ -68,9 +93,13 @@ namespace CheddarAndCocoa.Tests
             AssertPeeBreakDetail("PeeBreakPhoneBatteryShell", "Phone battery should be visible in-world.");
             AssertPeeBreakDetail("PeeBreakPhoneBatteryFill", "Phone drain should have a visual state, not only text.");
             AssertPeeBreakDetail("PeeBreakPhoneChargeBolt", "The charged phone should visibly read as powered.");
+            AssertPeeBreakDetail("PeeBreakPhoneNotificationPing", "The phone should visibly demand the Teenager's attention before labels explain it.");
             AssertPeeBreakDetail("PeeBreakDoorPanelTop", "Door should have panel structure.");
             AssertPeeBreakDetail("PeeBreakDoorPanelBottom", "Door should have panel structure.");
             AssertPeeBreakDetail("PeeBreakDoorKnob", "Door should have a knob before labels.");
+            AssertPeeBreakDetail("PeeBreakDoorMat", "Door should have walk-context staging before labels.");
+            AssertPeeBreakDetail("PeeBreakShoeLeft", "Shoes should make the pee-break/walk affordance readable.");
+            AssertPeeBreakDetail("PeeBreakShoeRight", "Shoes should make the pee-break/walk affordance readable.");
             AssertPeeBreakDetail("PeeBreakHookPeg", "Leash area should have a visible hook.");
             AssertPeeBreakDetail("PeeBreakHangingLeashLoop", "Leash should be visible in the room before Beat 2 labels.");
             AssertPeeBreakDetail("PeeBreakHangingLeashTail", "Leash should hang from the hook before the gameplay station appears.");
@@ -84,10 +113,54 @@ namespace CheddarAndCocoa.Tests
                 "Relief sparkles should be saved for the catharsis beat.");
             var coach = FindLoadedObject("PeeBreakCheddarCoach");
             Assert.IsNotNull(coach);
-            Assert.That(coach.GetComponentInChildren<TextMesh>().text, Does.Contain("NO BARK"));
-            Assert.That(coach.GetComponentInChildren<TextMesh>().text, Does.Contain("CHEDDAR"));
-            Assert.That(GameObject.Find("PeeBreakPhone").GetComponentInChildren<TextMesh>().text, Does.Contain("100%"));
-            Assert.That(GameObject.Find("PeeBreakBladderMeter").GetComponentInChildren<TextMesh>().text, Does.Contain("12%"));
+            Assert.That(WorldLabel("PeeBreakCheddarCoach"), Does.Contain("NO BARK"));
+            Assert.That(WorldLabel("PeeBreakCheddarCoach"), Does.Contain("CHEDDAR"));
+            Assert.That(WorldLabel("PeeBreakPhone"), Does.Contain("100%"));
+            Assert.That(WorldLabel("PeeBreakBladderMeter"), Does.Contain("12%"));
+            Assert.IsFalse(WorldLabelVisible("PeeBreakDoor"),
+                "Production Pee Break should not start with giant station labels; prompts appear only near objects or in debug overlay.");
+            Assert.IsFalse(GameObject.Find("PeeBreakDoor").GetComponent<SpriteRenderer>().enabled,
+                "The door prop should carry the read; the colored objective pad should stay hidden until contextual/debug use.");
+            Assert.Greater(FindLoadedObject("PeeBreakGeneratedTeenagerArt").GetComponent<SpriteRenderer>().bounds.size.y,
+                FindDog(DogId.Cheddar).GetComponent<SpriteRenderer>().bounds.size.y,
+                "The Teenager art should be visibly larger than the dachshund-scale dog body.");
+            var cocoa = FindDog(DogId.Cocoa);
+            cocoa.transform.position = Controller.DoorPosition;
+            _game.ForcePeeBreakAdvance(SocialStimulus.DoorStare, 0.01f);
+            Assert.IsTrue(WorldLabelVisible("PeeBreakDoor"),
+                "The door prompt should appear only once a dog is in interaction range.");
+            Assert.IsTrue(GameObject.Find("PeeBreakDoor").GetComponent<SpriteRenderer>().enabled,
+                "The colored pad should act as a contextual highlight, not a constant production circle.");
+        }
+
+        [UnityTest]
+        public IEnumerator PeeBreakCharacterAndRoomDetailsAnimateWithoutGameplayColliders()
+        {
+            yield return LoadMission();
+            var head = FindLoadedObject("PeeBreakTeenagerHead");
+            var foot = FindLoadedObject("PeeBreakTeenagerFootWiggle");
+            var phonePing = FindLoadedObject("PeeBreakPhoneNotificationPing");
+            var blanket = FindLoadedObject("PeeBreakCouchBlanketSlump");
+            AssertPeeBreakDetail("PeeBreakTeenagerHead", "Teenager should have a moving head detail.");
+            AssertPeeBreakDetail("PeeBreakTeenagerFootWiggle", "Teenager should have a readable idle fidget.");
+            AssertPeeBreakDetail("PeeBreakPhoneNotificationPing", "Phone should have animated attention pressure.");
+            AssertPeeBreakDetail("PeeBreakCouchBlanketSlump", "Room clutter should stay decorative and readable.");
+
+            Vector3 headStart = head.transform.localPosition;
+            Quaternion footStart = foot.transform.localRotation;
+            Vector3 pingStart = phonePing.transform.localScale;
+            Quaternion blanketStart = blanket.transform.localRotation;
+
+            yield return LiveSeconds(0.35f);
+
+            Assert.AreNotEqual(headStart, head.transform.localPosition,
+                "The Teenager should subtly move while phone-absorbed, not sit as a static marker.");
+            Assert.AreNotEqual(footStart.eulerAngles.z, foot.transform.localRotation.eulerAngles.z,
+                "The foot fidget should animate as character detail without changing gameplay state.");
+            Assert.AreNotEqual(pingStart, phonePing.transform.localScale,
+                "The phone notification ping should pulse while it is the attention boss.");
+            Assert.AreNotEqual(blanketStart.eulerAngles.z, blanket.transform.localRotation.eulerAngles.z,
+                "Soft room clutter should carry light animation without gaining colliders.");
         }
 
         [UnityTest]
@@ -140,10 +213,10 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(leash);
             Assert.IsFalse(coach.activeSelf, "Beat 2 should remove the Beat 1 watch pad so Cheddar has only the leash job.");
             Assert.IsTrue(leash.activeSelf, "Beat 2 must expose Cheddar's leash station.");
-            Assert.That(door.GetComponentInChildren<TextMesh>().text, Does.Contain("COCOA"));
-            Assert.That(door.GetComponentInChildren<TextMesh>().text, Does.Contain("DOOR STARE"));
-            Assert.That(leash.GetComponentInChildren<TextMesh>().text, Does.Contain("CHEDDAR"));
-            Assert.That(leash.GetComponentInChildren<TextMesh>().text, Does.Contain("PRESENT LEASH"));
+            Assert.That(WorldLabel("PeeBreakDoor"), Does.Contain("COCOA"));
+            Assert.That(WorldLabel("PeeBreakDoor"), Does.Contain("DOOR STARE"));
+            Assert.That(WorldLabel("PeeBreakLeash"), Does.Contain("CHEDDAR"));
+            Assert.That(WorldLabel("PeeBreakLeash"), Does.Contain("PRESENT LEASH"));
             AssertPeeBreakDetail("PeeBreakLeashStrap", "The active leash station should read as a strap before labels.");
             AssertPeeBreakDetail("PeeBreakLeashClip", "The active leash station should show clip hardware.");
         }
@@ -166,6 +239,8 @@ namespace CheddarAndCocoa.Tests
             Assert.That(WorldLabel("PeeBreakCheddarCoach"), Does.Contain("NO BARK"));
             Assert.That(WorldLabel("PeeBreakDoor"), Does.Contain("COCOA"));
             Assert.That(WorldLabel("PeeBreakTeenager"), Does.Contain("SCROLLING"));
+            Assert.That(_game.ActiveMissionReadinessLabel, Does.Contain("Readability gate: READY"));
+            Assert.That(_game.ActiveMissionReadinessLabel, Does.Contain("Social manipulation"));
             Assert.That(_game.PlaytestHotkeysLabel, Does.Contain("F4"));
             Assert.That(_game.PlaytestCountersLabel, Does.Contain("cold-read ? 0"));
 
@@ -243,6 +318,8 @@ namespace CheddarAndCocoa.Tests
             Assert.That(WorldLabel("PeeBreakTeenager"), Does.Contain("TENNIS BALL"));
             Assert.That(WorldLabel("PeeBreakMisreadProp"), Does.Contain("WRONG IDEA"));
             Assert.That(WorldLabel("PeeBreakMisreadProp"), Does.Contain("TRY DOG JOBS"));
+            Assert.IsTrue(FindLoadedObject("PeeBreakGeneratedMisreadTennisBallArt").activeSelf,
+                "The first misread should show the generated tennis-ball gag instead of only a colored square.");
             Assert.That(_game.LastCue, Does.Contain("Funny, but not outside"));
             Assert.That(_game.LastJuiceLabel, Does.Contain("MISREAD: TENNIS BALL"));
             Assert.That(_game.TeamGuidanceLabel, Does.Contain("BLOCK HALLWAY"));
@@ -417,18 +494,18 @@ namespace CheddarAndCocoa.Tests
             cocoa.transform.position = Controller.DoorPosition;
             cheddar.transform.position = Controller.DoorPosition + Vector2.left * 6f;
             _game.ForcePeeBreakAdvance(SocialStimulus.DoorStare, 0.1f);
-            Assert.That(teenager.GetComponentInChildren<TextMesh>().text, Does.Contain("NEEDS LEASH TOO"));
-            Assert.That(door.GetComponentInChildren<TextMesh>().text, Does.Contain("NEEDS CHEDDAR LEASH"));
+            Assert.That(WorldLabel("PeeBreakTeenager"), Does.Contain("NEEDS LEASH TOO"));
+            Assert.That(WorldLabel("PeeBreakDoor"), Does.Contain("NEEDS CHEDDAR LEASH"));
 
             cocoa.transform.position = Controller.DoorPosition + Vector2.left * 6f;
             cheddar.transform.position = Controller.LeashPosition;
             _game.ForcePeeBreakAdvance(SocialStimulus.PresentLeash, 0.1f);
-            Assert.That(teenager.GetComponentInChildren<TextMesh>().text, Does.Contain("NEEDS STARE TOO"));
-            Assert.That(leash.GetComponentInChildren<TextMesh>().text, Does.Contain("NEEDS COCOA STARE"));
+            Assert.That(WorldLabel("PeeBreakTeenager"), Does.Contain("NEEDS STARE TOO"));
+            Assert.That(WorldLabel("PeeBreakLeash"), Does.Contain("NEEDS COCOA STARE"));
 
             cocoa.transform.position = Controller.DoorPosition;
             _game.ForcePeeBreakAdvance(SocialStimulus.DoorStare | SocialStimulus.PresentLeash, 0.1f);
-            Assert.That(teenager.GetComponentInChildren<TextMesh>().text, Does.Contain("GETTING IT"));
+            Assert.That(WorldLabel("PeeBreakTeenager"), Does.Contain("GETTING IT"));
         }
 
         [UnityTest]
@@ -491,9 +568,9 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(LogContains("PeeBreakMisread"));
             var wrongItem = GameObject.Find("PeeBreakMisreadProp");
             Assert.IsNotNull(wrongItem);
-            Assert.That(wrongItem.GetComponentInChildren<TextMesh>().text, Does.Contain("TENNIS BALL"));
-            Assert.That(wrongItem.GetComponentInChildren<TextMesh>().text, Does.Contain("WRONG IDEA"));
-            Assert.That(wrongItem.GetComponentInChildren<TextMesh>().text, Does.Contain("TRY DOG JOBS"));
+            Assert.That(WorldLabel("PeeBreakMisreadProp"), Does.Contain("TENNIS BALL"));
+            Assert.That(WorldLabel("PeeBreakMisreadProp"), Does.Contain("WRONG IDEA"));
+            Assert.That(WorldLabel("PeeBreakMisreadProp"), Does.Contain("TRY DOG JOBS"));
             Assert.AreEqual(new Color(0.55f, 1f, 0.28f), wrongItem.GetComponent<SpriteRenderer>().color);
             Assert.Greater(wrongItem.transform.localScale.x, 1.2f);
             var accent = FindLoadedObject("PeeBreakMisreadAccent");
@@ -554,12 +631,42 @@ namespace CheddarAndCocoa.Tests
             _game.ForcePeeBreakAdvance(Controller.Required, 0.5f);
             Assert.Less(Controller.PhoneBattery, 1f);
             Assert.AreNotEqual(chargedColor, phone.GetComponent<SpriteRenderer>().color);
-            Assert.That(phone.GetComponentInChildren<TextMesh>().text, Does.Not.Contain("100%"));
+            Assert.That(WorldLabel("PeeBreakPhone"), Does.Not.Contain("100%"));
 
             _game.ForcePeeBreakAdvance(Controller.Required, 2.1f);
             Assert.AreEqual(PeeBreakMissionController.Beat.UnitedBark, Controller.CurrentBeat);
             Assert.AreEqual(0f, Controller.PhoneBattery, 0.001f);
-            Assert.That(phone.GetComponentInChildren<TextMesh>().text, Does.Contain("0%"));
+            Assert.That(WorldLabel("PeeBreakPhone"), Does.Contain("0%"));
+        }
+
+        [UnityTest]
+        public IEnumerator BladderPressureAddsDogLocalUrgencyCuesWithoutGameplayColliders()
+        {
+            yield return LoadMission();
+            var cheddarCue = FindLoadedObject("PeeBreakCheddarUrgencyCue");
+            var cocoaCue = FindLoadedObject("PeeBreakCocoaUrgencyCue");
+            var warningFill = FindLoadedObject("PeeBreakBladderWarningFill");
+            var urgencyTick = FindLoadedObject("PeeBreakBladderUrgencyTick");
+            Assert.IsNotNull(cheddarCue);
+            Assert.IsNotNull(cocoaCue);
+            Assert.IsNotNull(warningFill);
+            Assert.IsNotNull(urgencyTick);
+            Assert.IsFalse(cheddarCue.activeInHierarchy, "Dog-local urgency cues should stay quiet at low bladder pressure.");
+            Assert.IsFalse(cocoaCue.activeInHierarchy, "Dog-local urgency cues should stay quiet at low bladder pressure.");
+            Assert.IsFalse(warningFill.activeInHierarchy, "The warning fill should wait until bladder pressure is readable.");
+            Assert.IsNull(cheddarCue.GetComponent<Collider2D>(), "Urgency cues must remain cosmetic-only.");
+            Assert.IsNull(cocoaCue.GetComponent<Collider2D>(), "Urgency cues must remain cosmetic-only.");
+
+            _game.ForcePeeBreakAdvance(SocialStimulus.None, 38f);
+            Assert.GreaterOrEqual(Controller.Bladder, 0.45f);
+            Assert.IsTrue(cheddarCue.activeInHierarchy, "Cheddar should show visible pee-pressure urgency before the climax.");
+            Assert.IsTrue(cocoaCue.activeInHierarchy, "Cocoa should show visible pee-pressure urgency before the climax.");
+            Assert.IsTrue(warningFill.activeInHierarchy, "The in-world bladder meter should visibly warn once pressure rises.");
+            Assert.IsFalse(urgencyTick.activeInHierarchy, "The strongest tick should stay reserved for the final high-pressure range.");
+
+            _game.ForcePeeBreakAdvance(SocialStimulus.None, 35f);
+            Assert.GreaterOrEqual(Controller.Bladder, 0.72f);
+            Assert.IsTrue(urgencyTick.activeInHierarchy, "Late Pee Break pressure should add a stronger visible tick on the bladder meter.");
         }
 
         [UnityTest]
@@ -579,6 +686,8 @@ namespace CheddarAndCocoa.Tests
                 "The open door should show a changed door silhouette.");
             AssertPeeBreakDetail("PeeBreakOutdoorGrassPatch", "The open door should reveal a readable outdoor grass payoff.");
             AssertPeeBreakDetail("PeeBreakOutdoorFireHydrant", "The Pee Break climax should land as a dog-authentic hydrant gag.");
+            Assert.IsTrue(FindLoadedObject("PeeBreakGeneratedHydrantReliefArt").activeSelf,
+                "The door-open payoff should use the generated hydrant sprite, not only square-built fire-hydrant blocks.");
             AssertPeeBreakDetail("PeeBreakOutdoorHydrantCap", "The hydrant should have enough silhouette detail to read before labels.");
             AssertPeeBreakDetail("PeeBreakReliefSparkleA", "The door-open payoff should have celebratory motion-ready sparkles.");
             AssertPeeBreakDetail("PeeBreakReliefSparkleB", "The door-open payoff should feel celebratory, not just like a state toggle.");
@@ -631,7 +740,15 @@ namespace CheddarAndCocoa.Tests
                 FindLoadedObject("PeeBreakDoorFrame"),
                 FindLoadedObject("PeeBreakOpenSunbeam"),
                 FindLoadedObject("PeeBreakLeashHook"),
-                FindLoadedObject("PeeBreakHallwayRug")
+                FindLoadedObject("PeeBreakHallwayRug"),
+                FindLoadedObject("PeeBreakGeneratedCouchArt"),
+                FindLoadedObject("PeeBreakGeneratedTeenagerArt"),
+                FindLoadedObject("PeeBreakGeneratedPhoneChargerArt"),
+                FindLoadedObject("PeeBreakGeneratedOpenDoorArt"),
+                FindLoadedObject("PeeBreakGeneratedLeashArt"),
+                FindLoadedObject("PeeBreakGeneratedHydrantReliefArt"),
+                FindLoadedObject("PeeBreakGeneratedBladderMeterArt"),
+                FindLoadedObject("PeeBreakGeneratedMisreadTennisBallArt")
             };
 
             _game.ForcePeeBreakAdvance(SocialStimulus.BarkRhythm, 4f);
@@ -747,6 +864,18 @@ namespace CheddarAndCocoa.Tests
                 $"{objectName} should render below dog sprites.");
         }
 
+        private static void AssertGeneratedPeeBreakArt(string objectName)
+        {
+            var target = FindLoadedObject(objectName);
+            Assert.IsNotNull(target, $"{objectName} should exist as reusable generated Pee Break art.");
+            var renderer = target.GetComponent<SpriteRenderer>();
+            Assert.IsNotNull(renderer, $"{objectName} should render as a generated sprite.");
+            Assert.IsNotNull(renderer.sprite, $"{objectName} should load its Resources sprite.");
+            Assert.AreNotSame(SpriteShapeCache.WhiteSquare, renderer.sprite,
+                $"{objectName} must not fall back to the white-square placeholder.");
+            Assert.IsNull(target.GetComponent<Collider2D>(), $"{objectName} must remain cosmetic-only.");
+        }
+
         private static DogController FindDog(DogId dogId)
         {
             foreach (var identity in Object.FindObjectsByType<DogIdentity>(FindObjectsSortMode.None))
@@ -758,9 +887,18 @@ namespace CheddarAndCocoa.Tests
         {
             var target = FindLoadedObject(objectName);
             Assert.IsNotNull(target, $"{objectName} should exist for the observer rehearsal.");
-            var label = target.GetComponentInChildren<TextMesh>();
+            var label = target.GetComponentInChildren<TextMesh>(true);
             Assert.IsNotNull(label, $"{objectName} should expose a readable world label.");
             return label.text;
+        }
+
+        private static bool WorldLabelVisible(string objectName)
+        {
+            var target = FindLoadedObject(objectName);
+            Assert.IsNotNull(target, $"{objectName} should exist for label visibility checks.");
+            var label = target.GetComponentInChildren<TextMesh>(true);
+            Assert.IsNotNull(label, $"{objectName} should expose a readable world label.");
+            return label.gameObject.activeInHierarchy;
         }
     }
 }

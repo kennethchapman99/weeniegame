@@ -27,6 +27,24 @@ namespace CheddarAndCocoa.Tests
         {
             foreach (string path in RequiredPaths)
                 Assert.IsNotNull(FinalGameplayArt.Load(path), $"Missing ArenaFinal sprite at Resources/{path}.");
+            foreach (string path in FinalGameplayArt.MissionPropPackPass2)
+                Assert.IsNotNull(FinalGameplayArt.Load(path), $"Missing generated mission prop sprite at Resources/{path}.");
+            foreach (string path in FinalGameplayArt.EnvironmentPropPack)
+                Assert.IsNotNull(FinalGameplayArt.Load(path), $"Missing generated environment prop sprite at Resources/{path}.");
+            foreach (string path in FinalGameplayArt.GameplayCuePack)
+                Assert.IsNotNull(FinalGameplayArt.Load(path), $"Missing generated gameplay cue sprite at Resources/{path}.");
+            foreach (string path in FinalGameplayArt.DogFxPack)
+                Assert.IsNotNull(FinalGameplayArt.Load(path), $"Missing generated dog FX sprite at Resources/{path}.");
+            foreach (string path in FinalGameplayArt.KitchenCuePack)
+                Assert.IsNotNull(FinalGameplayArt.Load(path), $"Missing generated Kitchen cue sprite at Resources/{path}.");
+            foreach (string path in FinalGameplayArt.ChaosMachinePropPack)
+                Assert.IsNotNull(FinalGameplayArt.Load(path), $"Missing generated Chaos Machine prop sprite at Resources/{path}.");
+            foreach (string path in FinalGameplayArt.BuildingPropPack)
+                Assert.IsNotNull(FinalGameplayArt.Load(path), $"Missing generated building prop sprite at Resources/{path}.");
+            foreach (string path in FinalGameplayArt.HudSkinPack)
+                Assert.IsNotNull(FinalGameplayArt.Load(path), $"Missing generated HUD skin sprite at Resources/{path}.");
+            foreach (string path in FinalGameplayArt.WorldLabelSkinPack)
+                Assert.IsNotNull(FinalGameplayArt.Load(path), $"Missing generated world-label skin sprite at Resources/{path}.");
 
             foreach (DogId dog in new[] { DogId.Cheddar, DogId.Cocoa })
             foreach (DogReadabilityFeedback.Pose pose in System.Enum.GetValues(typeof(DogReadabilityFeedback.Pose)))
@@ -109,6 +127,9 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(FinalGameplayArt.FailPuff,
                 FinalJuiceEffect.SelectSpritePath(GameManager.JuiceFeedbackKind.WarningMiss, "SAD FLOP", -50, true));
             Assert.IsNull(FinalJuiceEffect.SelectSpritePath(GameManager.JuiceFeedbackKind.BarkBurst, "BARK", 0, false));
+
+            Assert.LessOrEqual(FinalJuiceEffect.EffectWorldWidth(FinalGameplayArt.WarningAlert), 2.4f);
+            Assert.LessOrEqual(FinalJuiceEffect.EffectWorldWidth(FinalGameplayArt.SuccessPop), 1.3f);
         }
 
         [Test]
@@ -318,6 +339,163 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(weakSpotMotion);
             Assert.IsFalse(weakSpotMotion.UsesAuthoredMotion,
                 "Coyotes uses the shared squirrel actor as a dirt/weak-spot marker, so squirrel art should fall back there.");
+        }
+
+        [UnityTest]
+        public IEnumerator GeneratedMissionPropPackPass2_CoversVisibleMissionFocusProps()
+        {
+            yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
+            yield return null;
+            yield return null;
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            Assert.IsNotNull(game);
+
+            game.StartMission(GameManager.MissionVariant.BackyardRescue);
+            yield return new WaitForSeconds(0.1f);
+            AssertMissionProp("BackyardSquirrelTrapEscapeGap", FinalGameplayArt.MissionEscapeGap);
+
+            game.StartMission(GameManager.MissionVariant.SnackHeist);
+            yield return new WaitForSeconds(0.1f);
+            AssertTreatProp(FinalGameplayArt.MissionSnackPlate);
+            yield return new WaitForSeconds(0.45f);
+            AssertTreatProp(FinalGameplayArt.MissionSnackPlate);
+
+            game.StartMission(GameManager.MissionVariant.SockPanic);
+            yield return new WaitForSeconds(0.1f);
+            AssertMissionProp(ArenaArtCatalog.LaundryBasketObjectName, FinalGameplayArt.MissionLaundryBasket);
+            game.ForceSockBasketTip(DogId.Cocoa);
+            yield return null;
+            AssertMissionProp(ArenaArtCatalog.LaundryBasketObjectName, FinalGameplayArt.MissionLaundryBasketOpen);
+            AssertTreatProp(FinalGameplayArt.MissionSockBundle);
+
+            game.StartMission(GameManager.MissionVariant.SquirrelConspiracy);
+            yield return new WaitForSeconds(0.1f);
+            AssertMissionProp("SquirrelCutoff_0", FinalGameplayArt.MissionEscapeGap);
+
+            game.StartMission(GameManager.MissionVariant.EagleShadowPanic);
+            yield return new WaitForSeconds(0.1f);
+            AssertMissionProp("EagleCover_0", FinalGameplayArt.Bush);
+
+            game.StartMission(GameManager.MissionVariant.CoyotesFence);
+            yield return new WaitForSeconds(0.1f);
+            AssertMissionProp("FenceGap_0", FinalGameplayArt.MissionEscapeGap);
+
+            game.StartMission(GameManager.MissionVariant.WeenieRoundup);
+            yield return new WaitForSeconds(0.1f);
+            AssertMissionProp("LooseWeenie_0", FinalGameplayArt.Weenie);
+            AssertMissionProp("HomeBowl", FinalGameplayArt.DogBowl);
+
+            game.StartMission(GameManager.MissionVariant.ScentSearch);
+            yield return new WaitForSeconds(0.1f);
+            AssertMissionProp("DigSpot_0", FinalGameplayArt.MissionDigMound);
+
+            game.StartMission(GameManager.MissionVariant.MarkTheYard);
+            yield return new WaitForSeconds(0.1f);
+            AssertMissionProp("TerritoryZone_0", FinalGameplayArt.MissionTerritoryZone);
+
+            game.StartMission(GameManager.MissionVariant.LeashWalk);
+            yield return new WaitForSeconds(0.1f);
+            AssertMissionProp("LeashCheckpoint_0", FinalGameplayArt.MissionLeashCheckpoint);
+
+            game.StartMission(GameManager.MissionVariant.CarRide);
+            yield return new WaitForSeconds(0.1f);
+            AssertMissionProp("Car Ride Balance Vehicle", FinalGameplayArt.MissionCarBalance);
+
+            game.StartMission(GameManager.MissionVariant.GateCrash);
+            yield return new WaitForSeconds(0.1f);
+            AssertMissionProp("GateCrashGate", FinalGameplayArt.MissionGate);
+            AssertMissionProp("GateCrashToy", FinalGameplayArt.MissionSqueakyToy);
+
+            game.StartMission(GameManager.MissionVariant.TableStealth);
+            yield return new WaitForSeconds(0.1f);
+            AssertMissionProp("TableStealthHuman", FinalGameplayArt.MissionTableHuman);
+            AssertMissionProp("TableStealthSteak", FinalGameplayArt.MissionSteakPlate);
+
+            game.StartMission(GameManager.MissionVariant.SquirrelSwitcheroo);
+            yield return new WaitForSeconds(0.1f);
+            AssertMissionProp("SwitcherooDecoy", FinalGameplayArt.MissionDecoyToy);
+            AssertMissionProp("SwitcherooStash", FinalGameplayArt.MissionSquirrelStash);
+
+            game.StartMission(GameManager.MissionVariant.WalkCampaign);
+            yield return new WaitForSeconds(0.1f);
+            AssertMissionProp("WalkCampaignHuman", FinalGameplayArt.MissionWalkHuman);
+            AssertMissionProp("WalkCampaignLeash", FinalGameplayArt.MissionWalkLeash);
+
+            game.StartMission(GameManager.MissionVariant.BoneRelay);
+            yield return new WaitForSeconds(0.1f);
+            AssertMissionProp("BoneMound_0", FinalGameplayArt.MissionBoneMound);
+            AssertMissionProp("ScentPost", FinalGameplayArt.MissionScentPost);
+
+            game.StartMission(GameManager.MissionVariant.GreatEscape);
+            yield return new WaitForSeconds(0.1f);
+            AssertMissionProp("EscapeStation_0", FinalGameplayArt.MissionEscapeStation);
+
+            game.StartMission(GameManager.MissionVariant.ChaosMachine);
+            yield return new WaitForSeconds(0.1f);
+            AssertMissionProp("ChaosMachineLever", FinalGameplayArt.MissionChaosLever);
+            AssertMissionProp("ChaosJunction_0", FinalGameplayArt.ChaosJunctionTowelDrop);
+            AssertMissionProp("ChaosJunction_1", FinalGameplayArt.ChaosJunctionBasketTip);
+            AssertMissionProp("ChaosJunction_2", FinalGameplayArt.ChaosJunctionToyLaunch);
+
+            game.StartMission(GameManager.MissionVariant.BlanketCatch);
+            yield return new WaitForSeconds(0.1f);
+            AssertMissionProp("CatchBlanket", FinalGameplayArt.MissionCatchBlanket);
+            AssertMissionProp("FallingSnack", FinalGameplayArt.MissionFallingSnack);
+
+            game.StartMission(GameManager.MissionVariant.KitchenFoodFrenzy);
+            yield return new WaitForSeconds(0.1f);
+            AssertMissionProp("KitchenCounterRoute", FinalGameplayArt.MissionKitchenCounter);
+            AssertMissionProp("KitchenSafeBowl", FinalGameplayArt.MissionKitchenSafeBowl);
+            game.ForceKitchenDrop(KitchenFoodFrenzyMissionState.FoodKind.Bad);
+            yield return null;
+            AssertMissionProp("KitchenFallingFood", FinalGameplayArt.MissionKitchenBadFood);
+            AssertMissionProp("KitchenLandingWarning", FinalGameplayArt.KitchenCueLandingPurple);
+        }
+
+        private static void AssertTreatProp(string expectedResourcePath)
+        {
+            foreach (var treat in Object.FindObjectsByType<Treat>(FindObjectsSortMode.None))
+            {
+                if (treat != null && AssertMissionProp(treat.gameObject, expectedResourcePath, requiredActive: true))
+                    return;
+            }
+            Assert.Fail($"No active treat uses generated prop art {expectedResourcePath}.");
+        }
+
+        private static void AssertMissionProp(string objectName, string expectedResourcePath)
+        {
+            var go = GameObject.Find(objectName);
+            Assert.IsNotNull(go, $"Missing active mission prop object {objectName}.");
+            AssertMissionProp(go, expectedResourcePath, requiredActive: true);
+        }
+
+        private static bool AssertMissionProp(GameObject go, string expectedResourcePath, bool requiredActive)
+        {
+            if (requiredActive && !go.activeInHierarchy)
+                Assert.Fail($"{go.name} should be active for art coverage.");
+            var attachment = go.GetComponent<MissionPropArtAttachment>();
+            if (attachment == null) return false;
+            Assert.AreEqual(expectedResourcePath, attachment.ResourcePath, $"{go.name} should use the expected generated prop path.");
+            Assert.IsTrue(attachment.HasRuntimeSprite, $"{go.name} should load a runtime sprite overlay.");
+            Assert.That(attachment.RuntimeSpriteName, Does.Not.Contain("WhiteSquare"), $"{go.name} must not use the runtime white square as its focus art.");
+            Assert.AreEqual(ExpectedSpriteName(expectedResourcePath), attachment.RuntimeSpriteName,
+                $"{go.name} should keep the mission-specific generated sprite active at runtime.");
+            var overlay = go.transform.Find("ActualArtOverlay");
+            Assert.IsNotNull(overlay, $"{go.name} should have an actual art overlay child.");
+            var renderer = overlay.GetComponent<SpriteRenderer>();
+            Assert.IsNotNull(renderer);
+            Assert.AreNotSame(SpriteShapeCache.WhiteSquare, renderer.sprite, $"{go.name} overlay should not be the runtime white square.");
+            var fallback = go.GetComponent<SpriteRenderer>();
+            Assert.IsNotNull(fallback, $"{go.name} should keep its generated fallback marker for interaction readability.");
+            Assert.LessOrEqual(fallback.color.a, 0.22f, $"{go.name} fallback marker should not dominate the generated prop sprite.");
+            return true;
+        }
+
+        private static string ExpectedSpriteName(string resourcePath)
+        {
+            int slash = resourcePath.LastIndexOf('/');
+            return slash >= 0 ? resourcePath.Substring(slash + 1) : resourcePath;
         }
     }
 }

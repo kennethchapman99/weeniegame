@@ -91,19 +91,40 @@ namespace CheddarAndCocoa.Tests
                 ArenaFeedbackCatalog.ScorePenalty,
                 ArenaFeedbackCatalog.MissionWin,
                 ArenaFeedbackCatalog.MissionFail,
-                ArenaFeedbackCatalog.UiReplayNextSelect
+                ArenaFeedbackCatalog.UiReplayNextSelect,
+                ArenaFeedbackCatalog.ThreatWarning
             };
 
             foreach (string cue in required)
                 Assert.IsTrue(ArenaFeedbackCatalog.ContainsCue(cue), $"Missing replaceable audio cue slot {cue}.");
 
             var names = new HashSet<string>();
+            var signatures = new HashSet<string>();
+            bool hasDogLifeCue = false;
+            bool hasNoiseShapedCue = false;
+            bool hasPitchMotion = false;
             foreach (var cue in ArenaFeedbackCatalog.RequiredAudioCues)
             {
                 Assert.IsTrue(names.Add(cue.Name), $"Duplicate audio cue slot {cue.Name}.");
+                Assert.IsTrue(signatures.Add(ArenaFeedbackCatalog.SignatureFor(cue)),
+                    $"Audio cue {cue.Name} should have a distinct generated SFX profile.");
                 Assert.Greater(cue.Seconds, 0f);
                 Assert.Greater(cue.Volume, 0f);
+                Assert.AreNotEqual(default(ArenaFeedbackCatalog.GeneratedSfxKind), cue.Kind);
+                hasDogLifeCue |= cue.Kind == ArenaFeedbackCatalog.GeneratedSfxKind.DogBark
+                    || cue.Kind == ArenaFeedbackCatalog.GeneratedSfxKind.CrunchCollect
+                    || cue.Kind == ArenaFeedbackCatalog.GeneratedSfxKind.SquirrelAlarm;
+                hasNoiseShapedCue |= cue.Noise > 0.2f;
+                hasPitchMotion |= Mathf.Abs(cue.Sweep) > 0.3f;
             }
+
+            Assert.IsTrue(hasDogLifeCue, "Arena feedback should use dog-life SFX profiles with authored identities.");
+            Assert.IsTrue(hasNoiseShapedCue, "At least one cue should include generated texture/noise for physical action.");
+            Assert.IsTrue(hasPitchMotion, "At least one cue should use pitch motion so cues are not flat tones.");
+            Assert.AreEqual(ArenaFeedbackCatalog.GeneratedSfxKind.DogBark,
+                ArenaFeedbackCatalog.BuildLookup()[ArenaFeedbackCatalog.Bark].Kind);
+            Assert.AreEqual(ArenaFeedbackCatalog.GeneratedSfxKind.VictoryFanfare,
+                ArenaFeedbackCatalog.BuildLookup()[ArenaFeedbackCatalog.MissionWin].Kind);
         }
 
         [UnityTest]
@@ -182,6 +203,8 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(squirrelRange.IsVisible);
             Assert.AreEqual("BARK RANGE", squirrelRange.Label);
             Assert.AreEqual(game.Tuning.SquirrelRangeIndicatorRadius, squirrelRange.Radius);
+            Assert.IsTrue(squirrelRange.UsesGeneratedCueArt);
+            Assert.AreEqual("cue_bark_range", squirrelRange.CueSpriteName);
 
             for (int i = 0; i < 3; i++)
             {
@@ -193,6 +216,8 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(tugRange.IsVisible);
             Assert.AreEqual("BOTH DOGS", tugRange.Label);
             Assert.AreEqual(game.Tuning.TugRangeIndicatorRadius, tugRange.Radius);
+            Assert.IsTrue(tugRange.UsesGeneratedCueArt);
+            Assert.AreEqual("cue_tug_range", tugRange.CueSpriteName);
 
             game.ForcePredatorAttack();
             yield return null;
@@ -203,6 +228,8 @@ namespace CheddarAndCocoa.Tests
                 if (indicator != null && indicator.IsVisible && indicator.Label == "RESCUE BARK")
                 {
                     Assert.AreEqual(game.Tuning.RescueRangeIndicatorRadius, indicator.Radius);
+                    Assert.IsTrue(indicator.UsesGeneratedCueArt);
+                    Assert.AreEqual("cue_rescue_range", indicator.CueSpriteName);
                     rescueRangeVisible = true;
                 }
             }
@@ -233,9 +260,16 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(22, game.MissionSelectOptionCount);
             Assert.AreEqual(GameManager.MissionVariant.BackyardRescue, game.SelectedMissionVariant);
             Assert.AreEqual("Backyard Rescue", game.SelectedMissionName);
+            Assert.That(game.SelectedMissionReadinessLabel, Does.Contain("Readability gate: READY"));
+            Assert.That(game.SelectedMissionReadinessLabel, Does.Contain("Rescue + bait-and-switch"));
             Assert.AreEqual(GameManager.MissionVariant.OperationPeeBreak, game.CouchTestFocusVariant);
             Assert.That(game.CouchTestFocusLabel, Does.Contain("COUCH TEST FOCUS"));
             Assert.That(game.CouchTestFocusLabel, Does.Contain("Operation Pee Break"));
+            Assert.That(game.FamilyShowcaseShortcutLabel, Does.Contain("F7 Backyard"));
+            Assert.That(game.FamilyShowcaseShortcutLabel, Does.Contain("F6 Kitchen"));
+            Assert.That(game.FamilyShowcaseShortcutLabel, Does.Contain("F8 Weenies"));
+            Assert.That(game.FamilyShowcaseShortcutLabel, Does.Contain("F9 Walkies"));
+            Assert.That(game.FamilyShowcaseShortcutLabel, Does.Contain("F5 Pee"));
             Assert.That(game.ObjectiveLabel, Does.Contain("Choose a mission"));
             Assert.AreEqual(0, game.SessionMissionsPlayed);
             Assert.AreEqual(0, game.SessionTotalScore);
@@ -251,6 +285,8 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(game.RopeObject);
             Assert.IsNotEmpty(game.LastCue);
             Assert.That(game.MissionIntroPrompt, Is.EqualTo("Cheddar + Cocoa must protect the weenies together."));
+            Assert.That(game.ActiveMissionReadinessLabel, Does.Contain("Readability gate: READY"));
+            Assert.That(game.ActiveMissionReadinessLabel, Does.Contain("Rescue + bait-and-switch"));
             Assert.That(game.MissionBanner, Does.Contain("protect the weenies"));
             Assert.IsTrue(game.MissionBriefingVisible, "The opening goal card must remain visible long enough to orient first-time players.");
             Assert.That(game.ObjectiveLabel, Does.Contain("Save weenies"));
@@ -291,20 +327,32 @@ namespace CheddarAndCocoa.Tests
             Assert.That(cocoaFeedback.ArtDirectionSignature, Does.Contain("chocolate-spot"));
             Assert.IsTrue(cheddarFeedback.UsesAuthoredPoseArt);
             Assert.IsTrue(cocoaFeedback.UsesAuthoredPoseArt);
+            Assert.IsTrue(cheddarFeedback.HasShowcasePersonalityPolish);
+            Assert.IsTrue(cocoaFeedback.HasShowcasePersonalityPolish);
+            Assert.That(cheddarFeedback.ShowcasePersonalitySignature, Does.Contain("Cheddar"));
+            Assert.That(cocoaFeedback.ShowcasePersonalitySignature, Does.Contain("Cocoa"));
             Assert.That(cheddarFeedback.AuthoredPoseSpriteName, Does.StartWith("cheddar_idle"));
             Assert.That(cocoaFeedback.AuthoredPoseSpriteName, Does.StartWith("cocoa_idle"));
             AssertHasChildren(cheddar.transform, ArenaArtCatalog.DogPartNames(DogId.Cheddar));
             AssertHasChildren(cocoa.transform, ArenaArtCatalog.DogPartNames(DogId.Cocoa));
+            AssertDogShowcasePolishIsCosmetic(cheddar.transform);
+            AssertDogShowcasePolishIsCosmetic(cocoa.transform);
             Assert.IsNotNull(cheddar.transform.Find(ArenaDraftArt.CheddarPortraitBadgeName));
             Assert.IsNotNull(cocoa.transform.Find(ArenaDraftArt.CocoaPortraitBadgeName));
             Assert.IsNotNull(cheddar.transform.Find(ArenaArtCatalog.DogLabel.Name));
             Assert.IsNotNull(cocoa.transform.Find(ArenaArtCatalog.DogLabel.Name));
             Assert.IsNotNull(cheddar.transform.Find(ArenaArtCatalog.ObjectiveArrowLabel.Name));
             Assert.IsNotNull(cocoa.transform.Find(ArenaArtCatalog.ObjectiveArrowLabel.Name));
+            Assert.IsNotNull(cheddar.transform.Find("ObjectiveArrowCue"));
+            Assert.IsNotNull(cocoa.transform.Find("ObjectiveArrowCue"));
             Assert.IsNotNull(game.ObjectiveArrows);
             Assert.AreEqual(2, game.ObjectiveArrows.Length);
             Assert.IsNotNull(game.ObjectiveArrows[0]);
             Assert.IsNotNull(game.ObjectiveArrows[1]);
+            Assert.IsTrue(game.ObjectiveArrows[0].UsesGeneratedCueArt);
+            Assert.IsTrue(game.ObjectiveArrows[1].UsesGeneratedCueArt);
+            Assert.AreEqual("cue_objective_arrow", game.ObjectiveArrows[0].CueSpriteName);
+            Assert.AreEqual("cue_objective_arrow", game.ObjectiveArrows[1].CueSpriteName);
             Assert.That(game.SquirrelObject.GetComponent<MissionActorFeedback>().Label, Does.Contain("WAITING"));
             float introGuard = 0f;
             while (introGuard < 3f)
@@ -538,6 +586,10 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(game.EndReplayAvailable);
             Assert.IsTrue(game.EndNextMissionAvailable);
             Assert.IsTrue(game.EndMissionSelectAvailable);
+            Assert.AreEqual("MISSION COMPLETE", game.EndHeadlineLabel);
+            Assert.That(game.EndScoreLabel, Does.Contain($"Score {game.Score}"));
+            Assert.That(game.EndScoreLabel, Does.Contain($"Stars {game.StarRating}/3"));
+            Assert.That(game.EndBestScoreLabel, Does.Contain("Best"));
             Assert.AreEqual("Replay", game.EndReplayActionLabel);
             Assert.AreEqual("Next Mission", game.EndNextActionLabel);
             Assert.AreEqual("Mission Select", game.EndMissionSelectActionLabel);
@@ -576,6 +628,13 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(game.EndReplayAvailable);
             Assert.IsTrue(game.EndNextMissionAvailable);
             Assert.IsTrue(game.EndMissionSelectAvailable);
+            Assert.AreEqual("MISSION FAILED", game.EndHeadlineLabel);
+            Assert.That(game.EndScoreLabel, Does.Contain($"Score {game.Score}"));
+            Assert.That(game.EndScoreLabel, Does.Contain("Stars 0/3"));
+            Assert.That(game.EndBestScoreLabel, Does.Contain("Best"));
+            Assert.AreEqual("Replay", game.EndReplayActionLabel);
+            Assert.AreEqual("Next Mission", game.EndNextActionLabel);
+            Assert.AreEqual("Mission Select", game.EndMissionSelectActionLabel);
             Assert.That(game.ReplayPromptLabel, Does.Contain("replay"));
             Assert.AreEqual(GameManager.FeedbackKind.GameOver, game.LastFeedback);
             Assert.IsTrue(LogContains(game, "MissionFail: Failed"));
@@ -591,6 +650,9 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(0, game.Score);
             Assert.AreEqual(GameManager.MissionOutcome.InProgress, game.Outcome);
             Assert.IsFalse(game.ReplayPromptVisible);
+            Assert.IsEmpty(game.EndHeadlineLabel);
+            Assert.IsEmpty(game.EndScoreLabel);
+            Assert.IsEmpty(game.EndBestScoreLabel);
             Assert.IsEmpty(game.EndSummaryLabel);
             Assert.IsEmpty(game.EndReasonLabel);
             Assert.That(game.ObjectiveLabel, Does.Contain("Save weenies"));
@@ -813,7 +875,23 @@ namespace CheddarAndCocoa.Tests
             game.SelectCouchTestFocusMission();
             Assert.AreEqual(GameManager.MissionVariant.OperationPeeBreak, game.SelectedMissionVariant,
                 "The couch-test focus shortcut should make the active deep slice one action away from cold start.");
+            game.SelectKitchenShowcaseMission();
+            Assert.AreEqual(GameManager.MissionVariant.KitchenFoodFrenzy, game.SelectedMissionVariant,
+                "The family-showcase Kitchen shortcut should make the chaos warmup one action away.");
+            game.SelectBackyardShowcaseMission();
+            Assert.AreEqual(GameManager.MissionVariant.BackyardRescue, game.SelectedMissionVariant,
+                "The family-showcase Backyard shortcut should make the safe warmup one action away.");
+            game.SelectWeenieShowcaseMission();
+            Assert.AreEqual(GameManager.MissionVariant.WeenieRoundup, game.SelectedMissionVariant,
+                "The family-showcase Weenies shortcut should make the confidence reset one action away.");
+            game.SelectWalkiesShowcaseMission();
+            Assert.AreEqual(GameManager.MissionVariant.LeashWalk, game.SelectedMissionVariant,
+                "The family-showcase Walkies shortcut should make the physical-comedy reset one action away.");
+            game.SelectCouchTestFocusMission();
             Assert.That(game.SelectedMissionChallengeLabel, Does.Contain("Pawfect signal"));
+            Assert.That(game.SelectedMissionReadinessLabel, Does.Contain("Social manipulation"));
+            Assert.That(game.MissionSelectDetailsFor(GameManager.MissionVariant.OperationPeeBreak), Does.Contain("8m"));
+            Assert.AreEqual(480f, GameManager.BuildMissionDefinition(GameManager.MissionVariant.OperationPeeBreak).RoundSeconds);
             Assert.That(GameManager.MissionChallengeLabelFor(GameManager.MissionVariant.OperationPeeBreak), Does.Contain("0 misreads"));
 
             game.SelectMission(GameManager.MissionVariant.BackyardRescue);
@@ -925,7 +1003,7 @@ namespace CheddarAndCocoa.Tests
 
             game.ForceGameOver();
             Assert.IsTrue(game.SessionSummaryReady);
-            Assert.AreEqual("Session Summary", game.EndNextActionLabel);
+            Assert.AreEqual("Next Mission", game.EndNextActionLabel);
             game.ChooseNextMission();
             Assert.AreEqual(GameManager.FlowState.SessionSummary, game.CurrentFlow);
             Assert.IsTrue(game.SessionSummaryVisible);
@@ -982,7 +1060,7 @@ namespace CheddarAndCocoa.Tests
             game.ForceGameOver();
             Assert.AreEqual(3, game.SessionUniqueMissionsCompleted);
             Assert.IsTrue(game.SessionSummaryReady);
-            Assert.AreEqual("Session Summary", game.EndNextActionLabel);
+            Assert.AreEqual("Next Mission", game.EndNextActionLabel);
 
             game.ChooseNextMission();
             Assert.IsTrue(game.SessionSummaryVisible);
@@ -1041,6 +1119,10 @@ namespace CheddarAndCocoa.Tests
 
             Assert.AreEqual(GameManager.MissionOutcome.Clear, game.Outcome);
             Assert.IsTrue(game.ReplayPromptVisible);
+            Assert.AreEqual("MISSION COMPLETE", game.EndHeadlineLabel);
+            Assert.AreEqual("Replay", game.EndReplayActionLabel);
+            Assert.AreEqual("Next Mission", game.EndNextActionLabel);
+            Assert.AreEqual("Mission Select", game.EndMissionSelectActionLabel);
             Assert.That(game.ReplayPromptLabel, Does.Contain("Snack Heist"));
             Assert.That(game.MissionBanner, Does.Contain("SNACK STASH SAVED"));
             Assert.That(game.LastScoreEventLabel, Does.Contain("SNACK HEIST CLEAR"));
@@ -1057,6 +1139,10 @@ namespace CheddarAndCocoa.Tests
             yield return WaitForOutcome(game, GameManager.MissionOutcome.Failed);
             Assert.AreEqual(GameManager.MissionOutcome.Failed, game.Outcome);
             Assert.IsTrue(game.ReplayPromptVisible);
+            Assert.AreEqual("MISSION FAILED", game.EndHeadlineLabel);
+            Assert.AreEqual("Replay", game.EndReplayActionLabel);
+            Assert.AreEqual("Next Mission", game.EndNextActionLabel);
+            Assert.AreEqual("Mission Select", game.EndMissionSelectActionLabel);
             Assert.That(game.EndReasonLabel, Does.Contain("forbidden snacks"));
             Assert.That(game.ReplayPromptLabel, Does.Contain("Snack Heist"));
         }
@@ -1118,6 +1204,10 @@ namespace CheddarAndCocoa.Tests
 
             Assert.AreEqual(GameManager.MissionOutcome.Clear, game.Outcome);
             Assert.IsTrue(game.ReplayPromptVisible);
+            Assert.AreEqual("MISSION COMPLETE", game.EndHeadlineLabel);
+            Assert.AreEqual("Replay", game.EndReplayActionLabel);
+            Assert.AreEqual("Next Mission", game.EndNextActionLabel);
+            Assert.AreEqual("Mission Select", game.EndMissionSelectActionLabel);
             Assert.That(game.ReplayPromptLabel, Does.Contain("Sock Panic"));
             Assert.That(game.MissionBanner, Does.Contain("SOCKS SORTED"));
             Assert.That(game.LastScoreEventLabel, Does.Contain("SOCK PANIC CLEAR"));
@@ -1130,6 +1220,10 @@ namespace CheddarAndCocoa.Tests
             yield return WaitForOutcome(game, GameManager.MissionOutcome.Failed);
             Assert.AreEqual(GameManager.MissionOutcome.Failed, game.Outcome);
             Assert.IsTrue(game.ReplayPromptVisible);
+            Assert.AreEqual("MISSION FAILED", game.EndHeadlineLabel);
+            Assert.AreEqual("Replay", game.EndReplayActionLabel);
+            Assert.AreEqual("Next Mission", game.EndNextActionLabel);
+            Assert.AreEqual("Mission Select", game.EndMissionSelectActionLabel);
             Assert.That(game.EndReasonLabel, Does.Contain("Laundry order returned"));
             Assert.That(game.ObjectiveLabel, Does.Contain("Sock Panic"));
         }
@@ -1287,6 +1381,18 @@ namespace CheddarAndCocoa.Tests
             {
                 Assert.IsNotNull(root.Find(childName), $"{root.name} should expose visual replacement slot {childName}.");
             }
+        }
+
+        private static void AssertDogShowcasePolishIsCosmetic(Transform dog)
+        {
+            var root = dog.Find(DogShowcasePolish.RootName);
+            Assert.IsNotNull(root, $"{dog.name} should carry dog-local family-showcase polish.");
+            Assert.IsNull(root.GetComponentInChildren<Collider2D>(), $"{dog.name} showcase polish must not add gameplay collision.");
+            Assert.GreaterOrEqual(root.GetComponentsInChildren<SpriteRenderer>().Length, 5,
+                $"{dog.name} showcase polish should be visible at couch distance.");
+            var polish = dog.GetComponent<DogShowcasePolish>();
+            Assert.IsNotNull(polish);
+            Assert.IsTrue(polish.UsesGeneratedDogFx, $"{dog.name} showcase polish should use generated dog FX sprites, not white-square-only geometry.");
         }
 
         private static void AssertMissionBalance(GameManager.MissionVariant variant, ArenaMissionTuning tuning, bool expectSquirrel, bool expectPredator, bool expectTug)

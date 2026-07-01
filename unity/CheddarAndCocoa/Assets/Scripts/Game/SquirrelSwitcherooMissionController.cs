@@ -182,6 +182,8 @@ namespace CheddarAndCocoa.Game
         {
             _decoy = NewMarker("SwitcherooDecoy", GuardingColor, "SQUIRREL - CHEDDAR FEINT THE DECOY!", new Vector3(1.6f, 3f, 1f), out _decoyLabel);
             _stash = NewMarker("SwitcherooStash", new Color(0.6f, 0.8f, 1f), "STASH - COCOA RAID IT WHEN HE BITES!", Vector3.one * 1.2f, out _stashLabel);
+            MissionPropArt.AttachObject(_decoy, FinalGameplayArt.MissionDecoyToy, 0.012f, 18, true);
+            MissionPropArt.AttachObject(_stash, FinalGameplayArt.MissionSquirrelStash, 0.012f, 18, true);
         }
 
         private GameObject NewMarker(string name, Color color, string label, Vector3 scale, out TextMesh worldLabel)

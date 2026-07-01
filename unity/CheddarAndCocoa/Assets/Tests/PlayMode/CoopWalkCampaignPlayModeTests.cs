@@ -103,6 +103,36 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator Walk_HumanActorStatesShowConfusionComprehensionMisreadAndOutcome()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.WalkCampaign);
+            yield return null;
+
+            var human = GameObject.Find("WalkCampaignHuman");
+            Assert.IsNotNull(human);
+            var feedback = human.GetComponent<MissionActorFeedback>();
+            Assert.IsNotNull(feedback);
+            Assert.IsTrue(feedback.HasContextualTextVisibility,
+                "The walk human explanation must be contextual/debug text, not an always-on production crutch.");
+            Assert.That(feedback.Label, Does.Contain("CONFUSED"));
+
+            _game.ForceWalkCampaign(1f, doorStare: true, presentLeash: true);
+            Assert.That(feedback.Label, Does.Contain("GETTING IT"));
+
+            _game.ForceWalkCampaign(2f, doorStare: true, presentLeash: true);
+            Assert.That(feedback.Label, Does.Contain("WALKIES"));
+
+            _game.StartMission(GameManager.MissionVariant.WalkCampaign);
+            yield return null;
+            _game.ForceWalkCampaign(3f, doorStare: true, presentLeash: false);
+            Assert.That(feedback.Label, Does.Contain("WRONG THING"));
+
+            for (int i = 0; i < 2; i++) _game.ForceWalkCampaign(3f, doorStare: true, presentLeash: false);
+            Assert.That(feedback.Label, Does.Contain("GAVE UP"));
+        }
+
+        [UnityTest]
         public IEnumerator Walk_Replay_ResetsThePuzzle()
         {
             yield return LoadArena();

@@ -38,6 +38,7 @@ namespace CheddarAndCocoa.Game
             _context = context;
             _car = _context.CreateActor(ArenaArtCatalog.ActorKind.Predator);
             _car.name = "Car Ride Balance Vehicle";
+            MissionPropArt.AttachObject(_car, FinalGameplayArt.MissionCarBalance, 0.013f, 18, true);
             _car.SetActive(false);
         }
 

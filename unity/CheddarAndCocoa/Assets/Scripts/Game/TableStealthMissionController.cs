@@ -21,20 +21,28 @@ namespace CheddarAndCocoa.Game
         private const float FlopRise = 3f;
         private const float FlopStamina = 8f;
         private const int MaxExposures = 4;
+        private const float HumanReactionSeconds = 0.55f;
 
         private static readonly Color HumanIdleColor = new(0.7f, 0.5f, 0.2f);
         private static readonly Color HumanDistractedColor = new(0.4f, 0.8f, 0.5f);
+        private static readonly Color HumanSpottedColor = new(1f, 0.36f, 0.18f);
+        private static readonly Color HumanSuccessColor = new(0.45f, 0.9f, 0.55f);
+        private static readonly Color HumanFailColor = new(0.9f, 0.12f, 0.08f);
 
         private readonly CoopHumanDistractionPuzzle _puzzle = new();
         private MissionContext _context;
         private GameObject _human;
         private GameObject _steak;
+        private MissionActorFeedback _humanFeedback;
+        private MissionPropArtAttachment _humanArt;
+        private MissionPropArtAttachment _steakArt;
         private TextMesh _humanLabel;
         private TextMesh _steakLabel;
         private Vector2 _humanZone;
         private Vector2 _stealZone;
         private int _exposuresSeen;
         private bool _failed;
+        private float _humanReactionUntil;
 
         public GameManager.MissionVariant Variant => GameManager.MissionVariant.TableStealth;
         public bool IsComplete => _puzzle.Solved;
@@ -72,6 +80,7 @@ namespace CheddarAndCocoa.Game
                 BurpSpike, BurpCooldown, FlopRise, FlopStamina);
             _exposuresSeen = 0;
             _failed = false;
+            _humanReactionUntil = 0f;
             _humanZone = new Vector2(_context.Bounds.center.x - 10f, _context.Bounds.center.y);
             _stealZone = new Vector2(_context.Bounds.center.x + 10f, _context.Bounds.center.y);
             SetSceneActive(true);
@@ -138,7 +147,11 @@ namespace CheddarAndCocoa.Game
                 outcome == GameManager.MissionOutcome.Clear, outcome == GameManager.MissionOutcome.Failed);
 
         /// <summary>Test hook: Cocoa commits to / releases the belly-flop distraction (the sustain hold).</summary>
-        public void ForceTableFlop(bool flopped) => _puzzle.SetBellyFlop(flopped);
+        public void ForceTableFlop(bool flopped)
+        {
+            _puzzle.SetBellyFlop(flopped);
+            UpdateLabels();
+        }
 
         /// <summary>Test hook: Cheddar fires a burp-cloud distraction (the burst spike).</summary>
         public void ForceTableBurp() => _puzzle.Burp();
@@ -149,6 +162,7 @@ namespace CheddarAndCocoa.Game
             _puzzle.Advance(seconds, true);
             _puzzle.Advance(0.0001f, false); // reset the exposure edge so repeated forced sneaks each register
             HandleExposures();
+            UpdateLabels();
         }
 
         private void HandleExposures()
@@ -162,13 +176,28 @@ namespace CheddarAndCocoa.Game
             _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "SPOTTED!");
             _context.SpawnWorldPop(_stealZone, "SPOTTED!", new Color(1f, 0.35f, 0.2f));
             _context.LogEvent("TableSpotted", $"{_puzzle.Exposures}/{MaxExposures}");
-            if (_puzzle.Exposures >= MaxExposures) _failed = true;
+            if (_puzzle.Exposures >= MaxExposures)
+            {
+                _failed = true;
+                SetHumanState("HUMAN CAUGHT THE TABLE HEIST!", HumanFailColor, 0.16f,
+                    new Color(1f, 0.62f, 0.55f, 1f));
+            }
+            else
+            {
+                _humanReactionUntil = _context.Now() + HumanReactionSeconds;
+                SetHumanState("HUMAN SPOTTED CHEDDAR!", HumanSpottedColor, 0.14f,
+                    new Color(1f, 0.78f, 0.42f, 1f));
+            }
         }
 
         private void BuildScene()
         {
             _human = NewMarker("TableStealthHuman", HumanIdleColor, "COCOA: FLOP TO DISTRACT THE HUMAN!", new Vector3(1.6f, 4f, 1f), out _humanLabel);
             _steak = NewMarker("TableStealthSteak", new Color(0.6f, 0.8f, 1f), "STEAK - CHEDDAR SNEAK IT!", Vector3.one * 1.2f, out _steakLabel);
+            _humanArt = MissionPropArt.AttachObject(_human, FinalGameplayArt.MissionTableHuman, 0.013f, 18, true);
+            _steakArt = MissionPropArt.AttachObject(_steak, FinalGameplayArt.MissionSteakPlate, 0.012f, 18, true);
+            _humanFeedback = _human.AddComponent<MissionActorFeedback>();
+            _humanFeedback.Init(_human.GetComponent<SpriteRenderer>(), "HUMAN WATCHING TABLE", 0.03f, Vector3.forward * 12f);
         }
 
         private GameObject NewMarker(string name, Color color, string label, Vector3 scale, out TextMesh worldLabel)
@@ -195,14 +224,47 @@ namespace CheddarAndCocoa.Game
             if (_human != null)
             {
                 _human.transform.position = _humanZone;
-                var sr = _human.GetComponent<SpriteRenderer>();
-                if (sr != null) sr.color = _puzzle.HumanDistracted ? HumanDistractedColor : HumanIdleColor;
-                if (_humanLabel != null) _humanLabel.text = _puzzle.HumanDistracted ? "HUMAN DISTRACTED - SNEAK IT!" : "COCOA: FLOP TO DISTRACT!";
+                if (_puzzle.Solved)
+                    SetHumanState("HUMAN DISTRACTED - STEAK GONE!", HumanSuccessColor, 0.12f,
+                        new Color(0.8f, 1f, 0.78f, 1f));
+                else if (_failed)
+                    SetHumanState("HUMAN CAUGHT THE TABLE HEIST!", HumanFailColor, 0.16f,
+                        new Color(1f, 0.62f, 0.55f, 1f));
+                else if (_context.Now() >= _humanReactionUntil)
+                {
+                    bool watchingCocoa = _puzzle.BellyFlopped || _puzzle.HumanDistracted;
+                    SetHumanState(
+                        watchingCocoa ? "HUMAN WATCHING COCOA - STEAK OPEN!" : "HUMAN WATCHING TABLE",
+                        watchingCocoa ? HumanDistractedColor : HumanIdleColor,
+                        watchingCocoa ? 0.08f : 0.03f,
+                        watchingCocoa ? new Color(0.78f, 1f, 0.78f, 1f) : Color.white);
+                }
             }
             if (_steak != null)
             {
                 _steak.transform.position = _stealZone;
-                if (_steakLabel != null) _steakLabel.text = $"STEAK - SNEAK {Mathf.RoundToInt(_puzzle.SneakRatio * 100f)}%";
+                if (_steakLabel != null)
+                    _steakLabel.text = _puzzle.Solved
+                        ? "STEAK GONE!"
+                        : $"STEAK - SNEAK {Mathf.RoundToInt(_puzzle.SneakRatio * 100f)}%";
+                if (_steakArt != null)
+                {
+                    _steakArt.SetTint(_puzzle.Solved
+                        ? new Color(1f, 1f, 1f, 0.45f)
+                        : _puzzle.HumanDistracted ? new Color(1f, 0.95f, 0.72f, 1f) : Color.white);
+                    if (_puzzle.HumanDistracted && !_puzzle.Solved) _steakArt.Pulse(0.12f, 0.04f);
+                }
+            }
+        }
+
+        private void SetHumanState(string label, Color fallbackColor, float pulseAmount, Color artTint)
+        {
+            if (_humanFeedback != null) _humanFeedback.SetState(label, fallbackColor, pulseAmount);
+            else if (_humanLabel != null) _humanLabel.text = label;
+            if (_humanArt != null)
+            {
+                _humanArt.SetTint(artTint);
+                _humanArt.Pulse(0.18f, pulseAmount);
             }
         }
 

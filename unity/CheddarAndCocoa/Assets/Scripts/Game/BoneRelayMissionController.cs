@@ -220,6 +220,7 @@ namespace CheddarAndCocoa.Game
                 if (_context.ActorSprite != null) sr.sprite = _context.ActorSprite;
                 sr.color = MoundIdleColor;
                 _moundLabels[i] = _context.AddWorldLabel(go, "DIG?", Vector3.up * 1.2f, 13, Color.white);
+                MissionPropArt.AttachObject(go, FinalGameplayArt.MissionBoneMound, 0.012f, 18, true);
                 go.SetActive(false);
                 _mounds[i] = go;
             }
@@ -231,6 +232,7 @@ namespace CheddarAndCocoa.Game
             if (_context.ActorSprite != null) psr.sprite = _context.ActorSprite;
             psr.color = new Color(0.7f, 0.6f, 0.95f);
             _scentPostLabel = _context.AddWorldLabel(_scentPost, "SCENT POST - COCOA SNIFF HERE", Vector3.up * 1.5f, 11, Color.white);
+            MissionPropArt.AttachObject(_scentPost, FinalGameplayArt.MissionScentPost, 0.012f, 18, true);
             _scentPost.SetActive(false);
         }
 

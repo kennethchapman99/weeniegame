@@ -210,6 +210,7 @@ namespace CheddarAndCocoa.Game
                 sr.color = new Color(0.3f, 0.3f, 0.34f);
                 sr.sortingOrder = 3;
                 _stationLabels[i] = _context.AddWorldLabel(go, $"{i + 1}.", Vector3.up * 1.3f, 12, Color.white);
+                MissionPropArt.AttachObject(go, FinalGameplayArt.MissionEscapeStation, 0.012f, 18, true);
                 go.SetActive(false);
                 _stations[i] = go;
             }

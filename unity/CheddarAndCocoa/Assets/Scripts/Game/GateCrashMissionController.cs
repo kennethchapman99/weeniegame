@@ -162,6 +162,8 @@ namespace CheddarAndCocoa.Game
         {
             _gate = NewMarker("GateCrashGate", GateIdleColor, "COCOA: HOLD THE GATE!", new Vector3(1.4f, 4f, 1f), out _gateLabel);
             _toy = NewMarker("GateCrashToy", new Color(0.6f, 0.8f, 1f), "TOY - CHEDDAR SQUEEZE THROUGH!", Vector3.one * 1.2f, out _toyLabel);
+            MissionPropArt.AttachObject(_gate, FinalGameplayArt.MissionGate, 0.013f, 18, true);
+            MissionPropArt.AttachObject(_toy, FinalGameplayArt.MissionSqueakyToy, 0.012f, 18, true);
         }
 
         private GameObject NewMarker(string name, Color color, string label, Vector3 scale, out TextMesh worldLabel)

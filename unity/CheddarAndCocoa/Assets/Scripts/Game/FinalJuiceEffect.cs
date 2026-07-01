@@ -53,7 +53,7 @@ namespace CheddarAndCocoa.Game
             if (LastSpawnedObject != null) Destroy(LastSpawnedObject);
 
             var effect = new GameObject($"{EffectNamePrefix}{_observedSequence}");
-            effect.transform.position = FeedbackPosition(_game) + Vector3.up * 0.9f;
+            effect.transform.position = FeedbackPosition(_game) + new Vector3(0.9f, 1.55f, 0f);
             float width = EffectWorldWidth(path);
             float scale = sprite.bounds.size.x > 0.001f ? width / sprite.bounds.size.x : 1f;
             effect.transform.localScale = Vector3.one * scale;
@@ -105,12 +105,13 @@ namespace CheddarAndCocoa.Game
             return count > 0 ? total / count : Vector3.zero;
         }
 
-        private static float EffectWorldWidth(string path)
+        public static float EffectWorldWidth(string path)
         {
-            if (path == FinalGameplayArt.RescueBurst) return 5.2f;
-            if (path == FinalGameplayArt.WarningAlert) return 4.5f;
-            if (path == FinalGameplayArt.FailPuff) return 4.2f;
-            return 3.8f;
+            if (path == FinalGameplayArt.RescueBurst) return 3.6f;
+            if (path == FinalGameplayArt.WarningAlert) return 2.35f;
+            if (path == FinalGameplayArt.FailPuff) return 2.7f;
+            if (path == FinalGameplayArt.SuccessPop) return 1.25f;
+            return 2.3f;
         }
 
         private sealed class PopLifetime : MonoBehaviour

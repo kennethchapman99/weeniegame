@@ -141,8 +141,8 @@ Shared callouts:
 ## Audio Style Direction
 
 Future authored audio should be cute, comic, toy-like, and readable at couch co-op volume. The
-current Unity arena uses generated placeholder tones/noises only; those clips are replaceable cue
-slots, not a final sound palette.
+current Unity arena uses generated procedural dog-life cue profiles for major feedback events. Those
+clips are replaceable cue slots, not authored recordings or a final mixed sound palette.
 
 - Dog barks should be funny and expressive, not realistic, aggressive, or annoying.
 - Cheddar's bark can be brighter, eager, and a little chaotic.

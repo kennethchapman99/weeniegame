@@ -11,6 +11,102 @@ namespace CheddarAndCocoa.Game
             out GameManager.MissionDefinition definition) =>
             MissionControllerRegistry.TryBuildDefinition(variant, tuning, out definition);
 
+        internal static GameManager.MissionDefinition ApplyPresentationMetadata(GameManager.MissionDefinition definition)
+        {
+            if (definition == null) return null;
+            var profile = PresentationProfileFor(definition.Variant);
+            definition.RoleHint = profile.RoleHint;
+            definition.MechanicTag = profile.MechanicTag;
+            definition.SceneCue = profile.SceneCue;
+            definition.ReusablePresentation = profile.ReusablePresentation;
+            definition.RequiredReadability = ReadabilityRequirement.ObjectiveVisible |
+                                             ReadabilityRequirement.ScoreVisible |
+                                             ReadabilityRequirement.RoleLabelVisible |
+                                             ReadabilityRequirement.ReplayVisible |
+                                             ReadabilityRequirement.DogIdentityReadable |
+                                             profile.ExtraRequirements;
+            return definition;
+        }
+
+        private static MissionPresentationProfile PresentationProfileFor(GameManager.MissionVariant variant)
+        {
+            const string dogs = "Shared Cheddar/Cocoa dog rigs, bark VFX, objective arrows, and reusable pose-state animation.";
+            const string threats = "Shared Cheddar/Cocoa rigs plus squirrel/eagle/coyote motion actors, bark VFX, and objective arrows.";
+
+            switch (variant)
+            {
+                case GameManager.MissionVariant.BackyardRescue:
+                    return new MissionPresentationProfile("Cheddar pressures first; Cocoa holds and recovers, then the trap roles flip.", "Rescue + bait-and-switch", "Backyard lawn, fence gap, rope, and predator lanes", threats, ReadabilityRequirement.WarningVisible);
+                case GameManager.MissionVariant.SnackHeist:
+                    return new MissionPresentationProfile("Either dog can stash snacks while the partner guards the squirrel lane.", "Steal + defend", "Snack district with plates, crumbs, and stash cues", threats, ReadabilityRequirement.WarningVisible);
+                case GameManager.MissionVariant.SockPanic:
+                    return new MissionPresentationProfile("One dog tips the basket; the partner dives for the exposed sock.", "Hold-and-release", "Laundry district with basket, sock, and decoy cues", dogs);
+                case GameManager.MissionVariant.SquirrelConspiracy:
+                    return new MissionPresentationProfile("Nearest dog pressures the squirrel while the partner holds the active cutoff.", "Chase + cutoff", "Fence route, stash reveal, and cutoff markers", threats, ReadabilityRequirement.WarningVisible);
+                case GameManager.MissionVariant.EagleShadowPanic:
+                    return new MissionPresentationProfile("Both dogs hide, then Cocoa rescues Cheddar before the united-bark finish.", "Hide + rescue", "Eagle sweep lane, cover bands, and rescue circle", threats, ReadabilityRequirement.WarningVisible);
+                case GameManager.MissionVariant.CoyotesFence:
+                    return new MissionPresentationProfile("One dog bark-pins the coyote while the partner fills the weak spot.", "Defend + repair", "Fence pressure lane, weak gaps, and fake lure", threats, ReadabilityRequirement.WarningVisible);
+                case GameManager.MissionVariant.WeenieRoundup:
+                    return new MissionPresentationProfile("Each dog carries loose weenies to the shared bowl without fumbling.", "Carry + deliver", "Bowl lane with loose/carry weenie markers", dogs);
+                case GameManager.MissionVariant.ScentSearch:
+                    return new MissionPresentationProfile("Use bark-sniff heat cues, then commit to the right dig spot.", "Sniff + dig", "Scent patches, mounds, and dig-spot grass", dogs);
+                case GameManager.MissionVariant.ThunderstormComfort:
+                    return new MissionPresentationProfile("Stay close, comfort panic spikes, and bark together through thunder.", "Comfort + calm", "Storm band, huddle zone, and emotion feedback", dogs, ReadabilityRequirement.WarningVisible);
+                case GameManager.MissionVariant.MarkTheYard:
+                    return new MissionPresentationProfile("Split up to claim zones, then regroup coverage before the squirrel reclaims.", "Territory control", "Central lawn zones with reclaim feedback", threats, ReadabilityRequirement.WarningVisible);
+                case GameManager.MissionVariant.LeashWalk:
+                    return new MissionPresentationProfile("Move as a tethered pair and negotiate each checkpoint without snapping.", "Tethered traversal", "Route stones, leash dashes, and checkpoint markers", dogs, ReadabilityRequirement.WarningVisible);
+                case GameManager.MissionVariant.CarRide:
+                    return new MissionPresentationProfile("Counter-lean together as lurches threaten the back-seat balance.", "Balance + timing", "Car silhouette, lurch cues, and spill meter", dogs, ReadabilityRequirement.WarningVisible);
+                case GameManager.MissionVariant.GateCrash:
+                    return new MissionPresentationProfile("Cocoa braces the gate while Cheddar squeezes through for the toy.", "Hold-and-release", "Gate, toy, brace pad, and squeeze lane", dogs, ReadabilityRequirement.WarningVisible);
+                case GameManager.MissionVariant.TableStealth:
+                    return new MissionPresentationProfile("One dog distracts the human while the partner sneaks the steak.", "Distract-and-sneak", "Table, human attention, steak, and exposure reads", dogs, ReadabilityRequirement.WarningVisible);
+                case GameManager.MissionVariant.SquirrelSwitcheroo:
+                    return new MissionPresentationProfile("One dog sells the decoy while the partner raids the real stash.", "Bait-and-switch", "Decoy, stash, squirrel route, and backfire cues", threats, ReadabilityRequirement.WarningVisible);
+                case GameManager.MissionVariant.WalkCampaign:
+                    return new MissionPresentationProfile("Split the door stare and leash presentation until the human gets it.", "Social manipulation", "Human, door, leash, and comprehension meter", dogs);
+                case GameManager.MissionVariant.BoneRelay:
+                    return new MissionPresentationProfile("One dog reads the scent relay while the partner digs the matching mound.", "Smell-and-act", "Scent zone, mounds, bone, and relay arrows", dogs);
+                case GameManager.MissionVariant.GreatEscape:
+                    return new MissionPresentationProfile("Alternate station ownership through the escape contraption chain.", "Sequence chain", "Contraption stations, owner colors, and botch cues", dogs, ReadabilityRequirement.WarningVisible);
+                case GameManager.MissionVariant.ChaosMachine:
+                    return new MissionPresentationProfile("Pull the lever, then split through machine junctions before they reset.", "Chaos machine", "Machine stages, junction pads, and cause/effect pops", dogs, ReadabilityRequirement.WarningVisible);
+                case GameManager.MissionVariant.BlanketCatch:
+                    return new MissionPresentationProfile("Stretch the blanket together and catch the falling prize in the shared span.", "Long-dog geometry", "Blanket span, falling object, and catch lane", dogs);
+                case GameManager.MissionVariant.KitchenFoodFrenzy:
+                    return new MissionPresentationProfile("Cheddar pops food loose; Cocoa reads the warning circle and catches gold.", "Bark + catch relay", "Counter, bowl, warning circle, and dinner-rush callouts", dogs, ReadabilityRequirement.WarningVisible);
+                case GameManager.MissionVariant.OperationPeeBreak:
+                    return new MissionPresentationProfile("Cocoa stares, Cheddar carries/blocks, then both unite-bark the door open.", "Social manipulation", "Couch, phone, leash, charger, door, and relief payoff", dogs, ReadabilityRequirement.WarningVisible);
+                default:
+                    return new MissionPresentationProfile("Cheddar and Cocoa use their shared dog verbs together.", "Co-op dog mission", "Readable greybox arena with objective markers", dogs);
+            }
+        }
+
+        private readonly struct MissionPresentationProfile
+        {
+            public readonly string RoleHint;
+            public readonly string MechanicTag;
+            public readonly string SceneCue;
+            public readonly string ReusablePresentation;
+            public readonly ReadabilityRequirement ExtraRequirements;
+
+            public MissionPresentationProfile(
+                string roleHint,
+                string mechanicTag,
+                string sceneCue,
+                string reusablePresentation,
+                ReadabilityRequirement extraRequirements = ReadabilityRequirement.None)
+            {
+                RoleHint = roleHint;
+                MechanicTag = mechanicTag;
+                SceneCue = sceneCue;
+                ReusablePresentation = reusablePresentation;
+                ExtraRequirements = extraRequirements;
+            }
+        }
+
         internal static GameManager.MissionDefinition BuildKitchenDefinition(ArenaMissionTuning tuning)
         {
             const GameManager.MissionVariant variant = GameManager.MissionVariant.KitchenFoodFrenzy;

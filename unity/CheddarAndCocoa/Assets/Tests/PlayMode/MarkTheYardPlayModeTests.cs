@@ -108,6 +108,50 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator MarkTheYard_SquirrelUsesReadableGeneratedActorStates()
+        {
+            yield return LoadArena();
+            var game = _game;
+
+            game.StartMission(GameManager.MissionVariant.MarkTheYard);
+            yield return new WaitForSeconds(0.15f);
+
+            var squirrel = GameObject.Find("MarkTheYardSquirrel");
+            Assert.IsNotNull(squirrel, "The reclaim threat should be a visible actor, not only objective text.");
+
+            var art = squirrel.GetComponent<MissionPropArtAttachment>();
+            Assert.IsNotNull(art);
+            Assert.AreEqual(FinalGameplayArt.SquirrelIdle, art.ResourcePath);
+            Assert.IsTrue(art.HasRuntimeSprite);
+            Assert.AreEqual("squirrel_mischief_v02", art.RuntimeSpriteName);
+
+            var feedback = squirrel.GetComponent<MissionActorFeedback>();
+            Assert.IsNotNull(feedback);
+            Assert.IsTrue(feedback.HasContextualTextVisibility,
+                "The old squirrel explanation label should behave like a contextual/debug label.");
+
+            var motion = squirrel.GetComponent<ThreatReadabilityAnimator>();
+            Assert.IsNotNull(motion);
+            Assert.IsTrue(motion.UsesAuthoredMotion);
+            Assert.AreEqual("Squirrel", motion.CurrentActorLabel);
+            Assert.AreEqual("Idle", motion.CurrentClipLabel);
+            Assert.That(motion.RuntimeSpriteName, Does.StartWith("squirrel_idle_e_"));
+
+            game.ForceClaimZone(DogId.Cheddar);
+            yield return new WaitForSeconds(0.15f);
+            Assert.AreEqual("Scared", motion.CurrentClipLabel,
+                "Claiming territory should visibly push the squirrel into a reaction state.");
+            Assert.AreEqual(FinalGameplayArt.SquirrelScared, art.ResourcePath);
+
+            game.ForceSquirrelReclaim();
+            yield return new WaitForSeconds(0.15f);
+            Assert.AreEqual("Steal", motion.CurrentClipLabel,
+                "A stolen zone should visibly read as squirrel mischief, not just a HUD/state change.");
+            Assert.That(motion.RuntimeSpriteName, Does.StartWith("squirrel_steal_e_"));
+            Assert.AreEqual(FinalGameplayArt.SquirrelSteal, art.ResourcePath);
+        }
+
+        [UnityTest]
         public IEnumerator MarkTheYard_Replay_ResetsTerritoryState()
         {
             yield return LoadArena();

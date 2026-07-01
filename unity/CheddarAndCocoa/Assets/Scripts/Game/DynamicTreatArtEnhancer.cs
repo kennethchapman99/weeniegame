@@ -47,6 +47,14 @@ namespace CheddarAndCocoa.Game
                 int id = treat.GetInstanceID();
                 if (_enhanced.Contains(id)) continue;
 
+                var missionProp = treat.GetComponent<MissionPropArtAttachment>();
+                if (missionProp != null && missionProp.HasRuntimeSprite)
+                {
+                    _enhanced.Add(id);
+                    EnhancedTreatCount++;
+                    continue;
+                }
+
                 var overlay = treat.GetComponent<ArtSpriteOverlay>() ?? treat.gameObject.AddComponent<ArtSpriteOverlay>();
                 overlay.Init(sprite, new Vector3(0f, 0f, -0.22f), new Vector3(0.032f, 0.032f, 1f), 31, new Color(1f, 1f, 1f, 0.94f), true);
                 _enhanced.Add(id);

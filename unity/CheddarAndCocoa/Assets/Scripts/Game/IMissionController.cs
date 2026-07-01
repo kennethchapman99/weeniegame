@@ -74,6 +74,7 @@ namespace CheddarAndCocoa.Game
         public Func<System.Random> Random { get; }
         public Func<float> Now { get; }
         public Func<GameManager.RoundModifier> ActiveModifier { get; }
+        public Func<bool> DebugPresentationEnabled { get; }
         public Func<IReadOnlyList<Treat>> ActiveTreats { get; }
         /// <summary>True once the shared predator sequence has been resolved for this round.</summary>
         public Func<bool> IsPredatorResolved { get; }
@@ -123,6 +124,7 @@ namespace CheddarAndCocoa.Game
             Func<System.Random> random,
             Func<float> now,
             Func<GameManager.RoundModifier> activeModifier,
+            Func<bool> debugPresentationEnabled,
             Func<IReadOnlyList<Treat>> activeTreats,
             Func<bool> isPredatorResolved,
             Func<bool> isTugComplete,
@@ -171,6 +173,7 @@ namespace CheddarAndCocoa.Game
             Random = random ?? throw new ArgumentNullException(nameof(random));
             Now = now ?? throw new ArgumentNullException(nameof(now));
             ActiveModifier = activeModifier ?? throw new ArgumentNullException(nameof(activeModifier));
+            DebugPresentationEnabled = debugPresentationEnabled ?? throw new ArgumentNullException(nameof(debugPresentationEnabled));
             ActiveTreats = activeTreats ?? throw new ArgumentNullException(nameof(activeTreats));
             IsPredatorResolved = isPredatorResolved ?? throw new ArgumentNullException(nameof(isPredatorResolved));
             IsTugComplete = isTugComplete ?? throw new ArgumentNullException(nameof(isTugComplete));

@@ -19,6 +19,12 @@ namespace CheddarAndCocoa.Game
         private static readonly ChainActor[] Owners = { ChainActor.Cocoa, ChainActor.Cheddar, ChainActor.Cocoa };
         private static readonly Vector2[] JunctionSpots = { new(-4f, 7f), new(6f, -7f), new(14f, 7f) };
         private static readonly string[] Actions = { "TOWEL DROP", "BASKET TIP", "TOY LAUNCH" };
+        private static readonly string[] JunctionArtPaths =
+        {
+            FinalGameplayArt.ChaosJunctionTowelDrop,
+            FinalGameplayArt.ChaosJunctionBasketTip,
+            FinalGameplayArt.ChaosJunctionToyLaunch
+        };
         private static readonly Vector2 LeverPos = new(-14f, -7f);
 
         private readonly CoopChaosMachinePuzzle _puzzle = new();
@@ -27,6 +33,7 @@ namespace CheddarAndCocoa.Game
         private TextMesh _leverLabel;
         private GameObject[] _junctions;
         private TextMesh[] _junctionLabels;
+        private MissionPropArtAttachment[] _junctionArt;
         private int _stageSeen;
         private int _stallsSeen;
         private bool _failed;
@@ -202,10 +209,12 @@ namespace CheddarAndCocoa.Game
             leverSr.color = new Color(0.85f, 0.55f, 0.3f);
             leverSr.sortingOrder = 3;
             _leverLabel = _context.AddWorldLabel(_lever, "LEVER - PULL TO START THE CASCADE", Vector3.up * 1.3f, 11, Color.white);
+            MissionPropArt.AttachObject(_lever, FinalGameplayArt.MissionChaosLever, 0.012f, 18, true);
             _lever.SetActive(false);
 
             _junctions = new GameObject[JunctionSpots.Length];
             _junctionLabels = new TextMesh[JunctionSpots.Length];
+            _junctionArt = new MissionPropArtAttachment[JunctionSpots.Length];
             for (int i = 0; i < JunctionSpots.Length; i++)
             {
                 var go = new GameObject($"ChaosJunction_{i}");
@@ -216,6 +225,7 @@ namespace CheddarAndCocoa.Game
                 sr.color = new Color(0.3f, 0.3f, 0.34f);
                 sr.sortingOrder = 3;
                 _junctionLabels[i] = _context.AddWorldLabel(go, $"{i + 1}.", Vector3.up * 1.3f, 12, Color.white);
+                _junctionArt[i] = MissionPropArt.AttachObject(go, JunctionArtPaths[i], 0.013f, 18, true);
                 go.SetActive(false);
                 _junctions[i] = go;
             }
@@ -253,12 +263,24 @@ namespace CheddarAndCocoa.Game
                     : isActive && _puzzle.Running ? ownerTint
                     : new Color(0.3f, 0.3f, 0.34f);
                 if (_junctions[i].TryGetComponent<SpriteRenderer>(out var sr)) sr.color = shown;
+                if (_junctionArt != null && _junctionArt[i] != null)
+                    _junctionArt[i].SetTint(JunctionTint(fired, stalledHere, isActive, owner));
                 if (_junctionLabels != null && _junctionLabels[i] != null)
                 {
                     string who = owner == ChainActor.Cheddar ? "CHEDDAR" : "COCOA";
                     _junctionLabels[i].text = fired ? "FIRED" : $"{who}: {Actions[i]}";
                 }
             }
+        }
+
+        private static Color JunctionTint(bool fired, bool stalled, bool active, ChainActor owner)
+        {
+            if (fired) return new Color(0.75f, 1f, 0.78f, 1f);
+            if (stalled) return new Color(1f, 0.58f, 0.45f, 1f);
+            if (!active) return Color.white;
+            return owner == ChainActor.Cheddar
+                ? new Color(1f, 0.88f, 0.55f, 1f)
+                : new Color(0.68f, 0.9f, 1f, 1f);
         }
 
         private Vector2 ClampInsideBounds(Vector2 point, float margin) => new(

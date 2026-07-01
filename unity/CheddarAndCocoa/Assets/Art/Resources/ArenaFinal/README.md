@@ -47,6 +47,53 @@ ArenaFinal/
       rope_complete.png
       weenie_collectible.png
       dog_bowl.png
+    Missions/
+      snack_plate.png
+      sock_bundle.png
+      laundry_basket.png
+      laundry_basket_open.png
+      squirrel_stash.png
+      escape_gap.png
+      gate.png
+      squeaky_toy.png
+      steak_plate.png
+      table_human.png
+      decoy_toy.png
+      walk_human.png
+      walk_leash.png
+      car_balance.png
+      dig_mound.png
+      buried_bone.png
+      scent_post.png
+      territory_zone.png
+      leash_checkpoint.png
+      bone_mound.png
+      chaos_lever.png
+      chaos_junction.png
+      escape_station.png
+      catch_blanket.png
+      falling_snack.png
+      kitchen_counter.png
+      kitchen_safe_bowl.png
+      kitchen_good_food.png
+      kitchen_bad_food.png
+      kitchen_warning.png
+    PeeBreak/
+      pee_break_couch.png
+      pee_break_teenager.png
+      pee_break_phone_charger.png
+      pee_break_open_door.png
+      pee_break_leash.png
+      pee_break_hydrant_relief.png
+      pee_break_bladder_meter.png
+      pee_break_misread_tennis_ball.png
+    Wow/
+      cheddar_cocoa_duo.png
+      motif_pee_break.png
+      motif_food_heist.png
+      motif_threat_watch.png
+      motif_adventure_route.png
+      motif_backyard_props.png
   VFX/
     bark_burst.png
     bark_ring.png

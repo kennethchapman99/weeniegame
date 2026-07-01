@@ -38,7 +38,8 @@ accents:
 - Squirrel, rope, and predator actors keep generated role silhouettes while loading squirrel,
   backyard-prop, eagle, and coyote draft badges as background reference accents.
 - A noninteractive bunny cameo appears at the yard edge as a placeholder/background prop.
-- Bark feedback uses the transparent final ring and bark burst while retaining generated text.
+- Bark feedback uses the transparent final ring and bark burst; support text is reserved for
+  contextual/debug review instead of production staging.
 - Pickup, success, warning, rescue, and failure events use distinct short-lived ArenaFinal effects.
 - Final dog poses, squirrel/eagle/coyote states, rope, weenies, bushes, rocks, and selected ground
   dressing are live. Squirrel, eagle, and coyote now also have lightweight runtime motion strips
@@ -60,8 +61,14 @@ accents:
   Teenager comprehension/confusion progress, four beat pips, open-door outdoor view/panel, and
   bladder urgency accents. Pass 3 adds a climax-only grass patch, hydrant gag, and relief sparkles
   behind the open door so the payoff reads as a dog-life joke rather than a generic state change.
-  Labels remain as support, but the
-  couch/phone/leash/door situation should read before text is parsed.
+  Pass 4 adds generated transparent cartoon props under
+  `Assets/Art/Resources/ArenaFinal/Props/PeeBreak/`: couch, distracted Teenager, phone/charger,
+  open door, leash, hydrant relief payoff, bladder gauge, and misread tennis ball. These sprites sit
+  over the older colored station pads so the room reads as a cartoon dog-life scene before labels are
+  parsed, while controller-owned markers remain the source of gameplay truth. The controller-owned
+  room now also adds lived-in dog/Teenager details (blanket, socks, chew toy, hoodie/foot silhouette,
+  phone notification ping) with subtle idle animation so the scene reads as a characterful household
+  moment without adding colliders or mission rules.
 - Cheddar and Cocoa now play distinct four-frame idle, run, and bark strips. Run has complete eight-way
   coverage using authored east/southeast/south/northeast/north and mirrored west-side travel. Their cadence reinforces
   chaos-pup versus spot-queen identity. Idle, run, and bark preserve all eight facing directions, and tug uses distinct three-frame brace/pull/recover loops;
@@ -73,23 +80,137 @@ accents:
   states that reuse the squirrel actor, such as coyote weak spots or eagle talon grips, intentionally
   fall back to generated marker art instead of showing the wrong animal.
 - Mission select/end-card HUD keeps IMGUI text controls, but the mission picker now uses TV-safe
-  header/detail bands, highlighted mission rows, compact visual mission badges on every row, a larger
-  selected-slice badge/launch area, a couch-test focus callout that jumps straight to Operation Pee
-  Break, a visible per-mission replay challenge, and the subtle imported UI-kit accent. End cards now
-  echo the next replay target, or call out that the challenge was beaten on a flawless run.
+  generated HUD skin sprites for panel frames, mission rows, selected rows, badges, button backs,
+  and overlay panels. The picker still exposes header/detail bands, compact visual mission badges on
+  every row, a larger selected-slice badge/launch area, a couch-test focus callout that jumps
+  straight to Operation Pee Break, a visible per-mission replay challenge, and the subtle imported
+  UI-kit accent. End cards now echo the next replay target, or call out that the challenge was beaten
+  on a flawless run.
+- Mission result/end-state HUD now uses one shared full-screen readable overlay for every mission:
+  a dark dimmed backdrop suppresses gameplay/HUD behind it, a large opaque centered card carries the
+  `MISSION COMPLETE` / `MISSION FAILED` / `SESSION COMPLETE` headline, score/stars/best/reason are
+  grouped as large text, and Replay / Next Mission / Mission Select use large high-contrast buttons
+  with secondary control hints underneath.
+- Every mission definition now carries shared couch-test presentation metadata: role hint, mechanic
+  family, scene cue, reusable Cheddar/Cocoa presentation guidance, and required readability flags.
+  The mission picker exposes the mechanic/scene line and the opening briefing exposes role copy, so
+  all selectable levels introduce their co-op job, visual context, and reusable dog presentation in
+  the same structure before play begins.
+- The mission picker footer and playtest overlay now show a per-mission readability gate. It reports
+  `READY` only when the selected or active mission has the required objective, score, role, warning,
+  replay, and Cheddar/Cocoa identity affordances represented in its definition.
+- `ArenaWowSetDressing` now installs automatically in `ArenaScene` and adds a cosmetic-only
+  presentation layer across the full shared arena: soft background color bands, patio/house glow,
+  fence string lights, a pawprint runway, floating sparkle accents, and a mission-reactive spotlight
+  tinted from the selected mission badge palette. It also swaps reusable animated motif families for
+  the selected or active mission: couch-to-door Pee Break props, food-heist staging, threat-watch
+  lanes, adventure-route cues, or backyard dog props. Those motif families now use generated
+  transparent cartoon sprite assets under `Assets/Art/Resources/ArenaFinal/Props/Wow/`, cut from the
+  reference atlas in `Assets/Art/ReferenceOnly/GeneratedWow/wow_mission_atlas_source.png`, instead
+  of square-only placeholder compositions. The 2026-06-29 showcase polish pass adds extra porch
+  glows, a welcome mat, garden-bed depth, breezy grass blades, porch fireflies, and small
+  Cheddar/Cocoa snapshot vignettes. More than 75 generated ambient set pieces plus per-mission
+  cartoon motifs animate continuously without colliders or gameplay ownership changes, giving every
+  mission a livelier first impression before final authored environment art exists.
+- `DogShowcasePolish` now attaches through `DogReadabilityFeedback` and gives Cheddar/Cocoa distinct
+  dog-local presentation flourishes: Cheddar gets faster warm chaos-comet sparks, Cocoa gets calmer
+  teal queen glints, and both receive a soft ground glow/collar glint that animates with movement,
+  bark pulse, and zoomies. This is child-renderer-only polish; the dog roots, colliders, Rigidbody2D
+  movement, bark logic, and mission controllers remain authoritative.
+- Generated Mission Prop Pack Pass 2 now promotes 30 deterministic transparent cartoon prop sprites
+  under `Assets/Art/Resources/ArenaFinal/Props/Missions/`, with the contact sheet and source notes
+  retained in `Assets/Art/ReferenceOnly/GeneratedMissionProps/`. `MissionPropArt` overlays these on
+  controller-owned markers for Snack Heist, Sock Panic, Squirrel Conspiracy, Eagle/Coyote backyard
+  threat targets, Weenie Roundup, Scent Search, Mark the Yard, Leash Walk, Car Ride, Gate Crash,
+  Table Stealth, Squirrel Switcheroo, Walk Campaign, Bone Relay, Great Escape, Rube Goldberg, Blanket
+  Catch, Kitchen/Food, and the Backyard squirrel-trap gap. Existing colliders, labels, range pads,
+  objective arrows, and Cheddar/Cocoa character presentation remain shared and authoritative. The
+  older colored fallback pads are now alpha-capped behind loaded prop sprites so generated cartoon
+  art, dog poses, and objective labels carry the first read. Shared mission prop overlays also add a
+  subtle proximity affordance: props sit normally at distance, then pulse/tint when Cheddar or Cocoa
+  enters staging range, and clear the cue again when the dogs leave.
+- Table Stealth and Walk Campaign now give their human NPC props a minimal acting/readability layer:
+  contextual actor labels, tint, and pulse states distinguish watching/confused idle, distraction or
+  comprehension, spotted/misread reactions, success, and fail beats while preserving mission logic
+  ownership in the controllers. These are couch-test state changes, not final character animation.
+- Generated Environment Prop Pack now promotes 17 deterministic transparent cartoon backyard
+  district sprites under `Assets/Art/Resources/ArenaFinal/Props/Environment/`, with the contact
+  sheet and source notes retained in `Assets/Art/ReferenceOnly/GeneratedEnvironmentProps/`.
+  `BackyardRescueArtEnhancer` layers these over the patio/back door, fence rails, Pee Break outdoor
+  route, snack table, laundry corner, scent trail, leash route, lawn landmark, pond, shade tree,
+  garden bed, flowers, picnic blanket, sandbox, stepping-stone path, eagle/coyote threat lane, and
+  mission-district markers while dimming the older square district renderers behind them. The
+  environment overlays are cosmetic-only and add no colliders.
+- Generated Building Prop Pack now promotes 3 deterministic transparent cartoon home-exterior
+  sprites under `Assets/Art/Resources/ArenaFinal/Props/Buildings/`, with the contact sheet and
+  source notes retained in `Assets/Art/ReferenceOnly/GeneratedBuildingProps/`.
+  `BackyardRescueArtEnhancer` layers the home facade and back-porch entry over the existing
+  house/patio and back-door objects, plus a nonblocking yard shed accent, so the house cluster reads
+  as a home exterior instead of stacked district geometry.
+- Generated HUD Skin Pack now promotes 6 deterministic transparent couch-test UI sprites under
+  `Assets/Art/Resources/ArenaFinal/UI/Hud/`, with the contact sheet and source notes retained in
+  `Assets/Art/ReferenceOnly/GeneratedHudSkin/`. `ArenaHud` uses them for mission picker panels,
+  mission tiles, selected-row highlights, badges, skinned buttons, mission briefing, pause, end
+  cards, session summary, selected-mission showcase, playtest overlay, and the debug mode toggle
+  while leaving IMGUI text and hitboxes authoritative.
+- Generated World Label Skin Pack now promotes 4 deterministic transparent couch-test label sprites
+  under `Assets/Art/Resources/ArenaFinal/UI/WorldLabels/`, with the contact sheet and source notes
+  retained in `Assets/Art/ReferenceOnly/GeneratedWorldLabelSkin/`. `WorldLabelSkin` attaches through
+  the shared `AddWorldLabel` and score-pop paths so mission object labels, command/warning labels,
+  and transient score pops draw cartoon bubble/ribbon/warning/burst skins behind their existing
+  `TextMesh` strings instead of reading as raw floating placeholder text. `WorldLabelVisibility`
+  now keeps shared mission and actor-state labels hidden until a dog is near the object; the F1
+  playtest overlay restores all mission labels for review while score pops stay visible as
+  short-lived feedback.
+- Generated Gameplay Cue Pack now promotes 5 deterministic transparent cartoon cue sprites under
+  `Assets/Art/Resources/ArenaFinal/UI/Cues/`, with the contact sheet and source notes retained in
+  `Assets/Art/ReferenceOnly/GeneratedGameplayCues/`. Dog-mounted objective arrows now use a paw
+  arrow sprite in production and reserve support text for the F1 playtest overlay; actionable bark,
+  tug, and rescue ranges use distinct generated ring sprites instead of generic range geometry and
+  reserve labels like `BARK RANGE`, `BOTH DOGS`, and `RESCUE BARK` for the F1 overlay. Existing
+  objective copy, labels, target selection, and range radii remain gameplay-authoritative.
+- Generated Dog FX Pack now promotes 6 deterministic transparent dog-local sprites under
+  `Assets/Art/Resources/ArenaFinal/VFX/Dog/`, with the contact sheet and source notes retained in
+  `Assets/Art/ReferenceOnly/GeneratedDogFx/`. Dog action particles, Cheddar/Cocoa paw trails,
+  dog-local ground glow, sparks, queen glints, and collar glints now use generated transparent
+  sprites instead of white-square-only geometry, while movement timing, action phases, and colliders
+  remain unchanged.
+- Generated Kitchen Cue Pack now promotes 4 deterministic transparent falling-food warning sprites
+  under `Assets/Art/Resources/ArenaFinal/UI/KitchenCues/`, with the contact sheet and source notes
+  retained in `Assets/Art/ReferenceOnly/GeneratedKitchenCues/`. Kitchen Falling Food Frenzy now
+  swaps gold-food and purple-onion counter telegraphs plus landing circles through
+  `MissionPropArtAttachment`, preserving the controller-owned warning markers and labels while
+  removing the generic warning sprite as the primary gameplay read.
+- Generated Chaos Machine Prop Pack now promotes 3 deterministic transparent Rube Goldberg junction
+  sprites under `Assets/Art/Resources/ArenaFinal/Props/ChaosMachine/`, with the contact sheet and
+  source notes retained in `Assets/Art/ReferenceOnly/GeneratedChaosMachineProps/`. The Rube Goldberg
+  now gives the towel-drop, basket-tip, and toy-launch stations distinct generated prop art while
+  preserving controller-owned markers, owner labels, objective targets, cascade timing, and stall
+  recovery behavior.
 
 Still placeholder or deliberately deferred:
 
 - Dog and threat sprites and gameplay effects are extracted draft art or promoted motion frames rather
   than final animation-ready assets.
-- Snack/sock mission collectibles, range rings, objective arrows, buildings, pond/patio, and most
-  large environment districts still rely on generated geometry/text for the primary gameplay read.
-- Operation Pee Break's room is now more readable from generated Unity composites, but the Teenager,
-  couch, leash, charger, and door are still code-side placeholder silhouettes rather than authored
-  final sprites or character animation.
+- The new wow/motif assets are generated cartoon PNGs, not a final hand-authored art pipeline; they
+  are acceptable couch-test art but still need later art direction review.
+- Debug/readiness text overlays and some large environment districts
+  still intentionally rely on generated geometry/text for the primary gameplay read. The major
+  patio, back-door, route, snack, laundry, threat, scent, leash, fence, lawn, pond, shade-tree,
+  garden, picnic, sandbox, stepping-stone, house facade, back porch, yard shed, objective-arrow,
+  bark-range, tug-range, rescue-range, Kitchen falling-food telegraph, Kitchen landing-warning,
+  Chaos Machine junction station, HUD panel/tile/badge/button, mission world-label bubble/ribbon/
+  warning/burst, and dog-local paw-trail/polish cues now have generated cartoon sprite overlays, but
+  debug/readiness text affordances are still not final UI or environment art.
+- The Pass-2 mission props are generated cartoon PNGs, not a final hand-authored environment/prop
+  pipeline; they are acceptable couch-test art and retain dimmed colored pads underneath as readable
+  interaction targets.
+- Operation Pee Break's room now uses generated transparent couch-test prop sprites, but those are
+  not final hand-authored environment or character animation assets. The older colored pads remain
+  underneath as readable interaction targets.
 - The bunny is decorative only and has no mission logic.
-- Final menu/UI art remains deferred; the current couch menu is still generated IMGUI rather than a
-  production UI system.
+- Final menu/UI system remains deferred; the current couch menu still uses IMGUI text and hitboxes,
+  now skinned with generated couch-test HUD sprites rather than production UI components.
 
 Final polish still needed:
 
@@ -98,6 +219,33 @@ Final polish still needed:
   remaining generated environment districts.
 - Run a two-player television readability pass; the automated 1920x1080 local/full-yard/action
   capture gate verifies composition but cannot judge player attention.
+- Run the second human couch pass; latest automated evidence is `390/390` PlayMode tests passing on
+  2026-06-30 after the human-NPC readability pass.
+
+### Automated art-review cleanup pass (2026-06-29)
+
+The 66-frame `--arena-art-review` pass at
+`unity/builds/art-review-current/arena-art-review-contact-sheet.jpg` was regenerated from the macOS
+dev player after the showcase scenery and dog-personality polish pass. The pass confirmed that every
+roster mission renders at 1920x1080 with 66/66 nonblank captures and that the previously weak review
+shots now show their active dog/objective beats:
+
+- Weenie Roundup main/payoff now stage Cheddar and Cocoa at the current weenie/bowl objective instead
+  of reviewing an empty home-bowl frame.
+- Walkies on the Leash main/payoff now stage both dogs at the active checkpoint before the forced
+  checkpoint state change.
+- The Rube Goldberg/Chaos Machine main frame now stages the dogs at the active junction after the
+  cascade starts, so the co-op coverage beat is visible.
+- Car Ride, Pee Break, Kitchen, and other success/failure beats use smaller juice sprites, reducing
+  coverage of dogs and mission props while keeping feedback readable.
+- Mission prop fallback pads and the ambient Cheddar/Cocoa wow duo are deliberately quieter behind
+  the generated prop and character sprites.
+
+Remaining visual limits from the pass: debug/readiness text, IMGUI overlays, and some environment
+districts still use generated geometry as gameplay/readability primitives. Range rings, objective
+arrows, Kitchen falling-food telegraphs, Kitchen landing warnings, Chaos Machine junction stations,
+mission world-label skins, score-pop burst skins, and the house/back-porch/shed cluster now have
+generated cue/prop/UI sprites, but they are still couch-test assets rather than final UI/VFX art.
 
 ### Threat/label readability pass (2026-06-21)
 
@@ -168,7 +316,9 @@ so their names and current emotional poses remain legible when the yard view pul
 
 All blocking HUD panels now share an eight-pixel safe-area contract. Mission select, pause, end-card,
 session summary, and the playtest overlay shrink to the current viewport instead of clipping fixed
-640-900 pixel layouts on narrow desktop windows.
+640-900 pixel layouts on narrow desktop windows. The shared mission result overlay additionally keeps
+the card at roughly couch-readable full-modal scale on normal playtest displays instead of returning
+to the old small translucent panel.
 
 End-card rivalry copy now reflects which dog made more objective plays: Cheddar earns the `Chaos
 Crown`, Cocoa becomes `Queen of the Yard`, and equal contributions produce a quiet nose-to-nose draw.
@@ -191,6 +341,10 @@ small world text.
 1. Open `unity/CheddarAndCocoa` in Unity 6 LTS, open `Assets/Scenes/ArenaScene.unity`, and press Play. `ArenaScene` is also the scripted local build entry point.
 2. The mission picker appears immediately. Use **Up/Down** or gamepad **D-pad** to highlight a mission, then press **Enter**, **Space**, gamepad **Start**, or gamepad **South** to start. Keyboard **1-9 and 0** directly starts the original first ten missions; use arrow/D-pad selection for later missions including Kitchen Falling Food Frenzy.
    - All 22 mission variants use the adaptive two-column picker as of 2026-06-21.
+   - For the family showcase runbook in `docs/FAMILY-SHOWCASE-MANUAL-TEST.md`, the host can press
+     **F7/B** to highlight Backyard Rescue, **F6/K** to highlight Kitchen Falling Food Frenzy,
+     **F8/W** to highlight Weenie Roundup, **F9/L** to highlight Walkies on the Leash, or **F5/P**
+     to highlight Operation Pee Break.
    - For the current couch-test focus, press keyboard **F5**/**P** or gamepad **North/Y** on the
      mission picker to highlight **Operation Pee Break**, then press **Start/South** to launch.
    - Each tile shows `NEW`, `RETRY`, `CLEARED`, or `FLAWLESS` plus its session-best score; the selected detail line shows round time and objective size.
@@ -233,7 +387,9 @@ Snack Heist is a compact protect-and-collect mission using the existing item and
 
 Readable differences:
 
-- Collectibles are round orange snack placeholders with plate/crumb markers and **Snack!** labels.
+- Collectibles use generated snack-plate prop sprites with dimmed fallback markers and **Snack!**
+  labels. A delayed art-stability check verifies the dynamic treat enhancer does not replace them
+  with Backyard weenie art after spawn.
 - Objective text starts as **Stash snacks 0/4**.
 - Squirrel pressure uses snack-specific labels like **SQUIRREL SNACK HEIST - BARK!** and **SQUIRREL STOLE A SNACK!**.
 - Unique scoring/events include **+60 SNACK STASHED**, **+35 SNACK GUARD BARK**, **-90 SNACK THIEF**, and **SNACK HEIST CLEAR**.
@@ -372,6 +528,8 @@ Mark the Yard is a **territory-control** mission using `TerritoryMissionState`. 
 Readable differences:
 
 - The squirrel is repurposed as a territory rival that steals zones back rather than stealing food.
+- The reclaim squirrel is now a generated/animated actor: idle/watch while waiting, a brief scared
+  reaction when a dog marks territory, and a steal animation when it re-marks a zone.
 - Zones recolor grey→green when held and flash "SQUIRREL STOLE IT!" when re-marked.
 - Objective text tracks zones held and how many the squirrel has stolen back.
 - Unique scoring/events include **ZONE MARKED**, **ZONE STOLEN** (penalty), and **YARD MARKED**.
@@ -379,7 +537,7 @@ Readable differences:
 
 The deterministic test/pacing hooks are `ForceClaimZone(dog)` and `ForceSquirrelReclaim()` (`TerritoryZones` exposes the zone positions); in normal play claiming is driven by a dog standing in a zone and the squirrel re-marks on a timer.
 
-Manual check: press **0**, split the dogs to stand in different zones until all five glow green at once; confirm the squirrel steals one back if you leave it too long, and that holding all five clears with **Yard Is Ours**.
+Manual check: press **0**, split the dogs to stand in different zones until all five glow green at once; confirm the squirrel visibly flinches after a zone is claimed, then moves in with stealing animation if you leave a claimed zone too long, and that holding all five clears with **Yard Is Ours**.
 
 ### Walkies on the Leash
 
@@ -424,16 +582,16 @@ cause of lost balance reads before the next lurch.
 
 ### Kitchen Falling Food Frenzy
 
-Kitchen Falling Food Frenzy is a compact counter-to-floor relay. Cheddar is the counter scout: he must reach the marked **COUNTER** route and **bark** to knock the next item loose. The bark first reveals a colored counter flash and pulsing floor landing circle, then releases the item after a readable delay. Cocoa is the floor sweeper: she tracks gold food into the marked **SAFE BOWL** to score, while purple onions should be dodged and allowed to splat.
+Kitchen Falling Food Frenzy is a compact counter-to-floor relay. Cheddar is the counter scout: he must reach the marked **COUNTER** route and **bark** to knock the next item loose. The bark first reveals a generated gold-food or purple-onion counter telegraph plus a matching pulsing floor landing cue, then releases the item after a readable delay. Cocoa is the floor sweeper: she tracks gold food into the marked **SAFE BOWL** to score, while purple onions should be dodged and allowed to splat.
 
 - Dog-local arrows and the team route line always name the current jobs: **BARK-KNOCK FOOD / GUARD THE BOWL**, then **RESET AT COUNTER / CATCH GOLD IN BOWL** or **DODGE PURPLE** during the telegraph and fall.
 - Good catches build a score combo. Missing good food, catching outside the bowl, eating an onion, or attempting the partner's role breaks momentum but remains recoverable.
-- Gold placeholder food means catch; purple placeholder onion means dodge. Cocoa gets distinct proud/flinch poses, audio, pop text, and controller rumble for catch, dodge, splat, and gross-out outcomes.
+- Gold food cues mean catch; purple onion cues mean dodge. Cocoa gets distinct proud/flinch poses, audio, pop text, and controller rumble for catch, dodge, splat, and gross-out outcomes.
 - After three warm-up catches, a short **DINNER RUSH** finale calls a fixed **GOOD → BAD → GOOD** sequence with shorter telegraphs and faster falls. Each call still requires Cheddar's bark and Cocoa's correct catch/dodge response. A mistake retries the current call, so the finale adds pressure without an unrecoverable fail state. Five good catches plus the finale onion dodge clear the mission.
 - The Kitchen stations now occupy a compact 13-unit vertical stage inside the arena. At the 16:9 couch target the shared camera needs at most `12` orthographic units to frame both stations, keeping both dogs and the landing lane readable without split-screen.
 - No squirrel, predator, tug, or generic collectible loop runs during this mission.
 
-Deterministic hooks are `ForceKitchenTelegraph(dog, kind)`, `ForceKitchenReleaseTelegraph()`, `ForceKitchenDrop(kind)`, `ForceKitchenCatch(dog, intoSafeZone)`, and `ForceKitchenLetFall()`. `KitchenFoodFrenzyMissionStateTests` covers bark/telegraph ownership, busy-state rejection, recoverable outcomes, finale sequencing, completion, and reset. `KitchenFoodFrenzyPlayModeTests` covers mission wiring, warning objects, compact camera framing, good/bad feedback paths, the dinner-rush clear, and replay reset.
+Deterministic hooks are `ForceKitchenTelegraph(dog, kind)`, `ForceKitchenReleaseTelegraph()`, `ForceKitchenDrop(kind)`, `ForceKitchenCatch(dog, intoSafeZone)`, and `ForceKitchenLetFall()`. `KitchenFoodFrenzyMissionStateTests` covers bark/telegraph ownership, busy-state rejection, recoverable outcomes, finale sequencing, completion, and reset. `KitchenFoodFrenzyPlayModeTests` covers mission wiring, generated telegraph sprite swaps, warning objects, compact camera framing, good/bad feedback paths, the dinner-rush clear, and replay reset.
 
 Manual acceptance check: arrow-select **Kitchen Falling Food Frenzy** with two local players. Confirm the initial shared camera keeps both dogs, the counter, and bowl readable. Move Cheddar into the counter route and bark; verify no item falls merely from standing there. Confirm the colored counter flash and landing circle appear before the item releases. For gold food, intercept it with Cocoa while she is inside the bowl and confirm **YUM**, proud pose, score, audio, and light rumble. For a purple onion, move Cocoa clear and let it splat; confirm **DODGED**, proud feedback, and no lost progress. Let one good item splat and deliberately eat one onion; confirm the warning/flinch feedback is distinct and both calls can be retried. After three warm-up catches, confirm **DINNER RUSH** announces **GOOD → BAD → GOOD**, uses visibly tighter timing, and still waits for a Cheddar bark before every call. Complete the three calls and confirm **KITCHEN CLEARED!**. Replay and confirm food, telegraphs, finale progress, combo, and feedback reset.
 
@@ -442,22 +600,27 @@ Manual acceptance check: arrow-select **Kitchen Falling Food Frenzy** with two l
 Operation Pee Break is the first controller-native deep slice. It uses four escalating exact-message
 beats: Cocoa's door stare; Cocoa's stare plus Cheddar presenting the leash; the role-flipped charger
 gambit where Cheddar blocks the hallway while Cocoa unplugs the charger; and the final stare, leash,
-and near-door united bark. Controller-owned world meters expose bladder pressure and phone battery,
-while the Teenager label changes with each beat. The phone now drains only while Cocoa actively
+and near-door united bark. The mission picker presents it as an `8m` couch-test focus slice rather
+than a short arcade round. Controller-owned world meters expose bladder pressure and phone battery,
+while the Teenager changes pose/state with each beat. The phone now drains only while Cocoa actively
 holds the unplug station and visibly powers down when the charger gambit succeeds. Wrong or
 incomplete signals reset comprehension without failing the mission. The room now has generated,
 controller-owned set dressing for the couch, side table, glowing phone, charger cord, door frame,
-leash hook, hallway rug, and door-open sunbeam so the scene reads as a dog-life emergency before
-labels carry the whole explanation. The couch, Teenager, phone, door, charger, and leash hook also
+leash hook, hallway rug, shoes, door mat, and door-open sunbeam so the scene reads as a dog-life
+emergency before labels carry the whole explanation. The couch, Teenager, phone, door, charger, and leash hook also
 carry small nonblocking child silhouettes so a cold player can identify the room/door/phone/leash
 situation before reading labels. Pass 2 adds generated lived-in and state-change details: couch
 pillows, side-table cup, Teenager hoodie/AirPod/thumb animation, phone-attention and door-attention
 beams, question/OH bubbles, a phone battery fill plus charged/dead states, plugged/unplugged charger
 ends, presented-leash trail, in-world comprehension/confusion progress bars, four beat pips, bladder
 urgency accents, an open-door outdoor-view panel, and a climax-only grass/hydrant/relief-sparkle
-payoff. Beat 3 and Beat 4 now mirror the Beat 2 missing-partner hints: if only one dog is doing the
-charger or final door/leash job, the station and Teenager labels name the absent partner action
-before players need to parse the HUD. The
+payoff. The Teenager is now staged as a human-scale couch actor relative to the dachshunds, with
+phone-idle, annoyed glance, distracted-again, and stand-up success states. Production station pads
+and explanatory world labels are hidden until a dog is near the relevant object; the F1 playtest
+overlay restores the full debug labels/rings for review. Beat 3 and Beat 4 still mirror the Beat 2
+missing-partner hints through close-range prompts: if only one dog is doing the charger or final
+door/leash job, the station and Teenager labels name the absent partner action before players need
+to parse the HUD. The
 backyard shell now gives the door payoff context with a visible house/patio district, back-door
 window/knob, outdoor path, central lawn, route dashes, snack district plate/crumbs, and laundry
 line/sock cues. The end card now uses Pee Break-specific replay copy: clean runs earn **Pee Break
@@ -466,13 +629,15 @@ dogs so the MVP line reinforces Cocoa/Cheddar contributions instead of generic s
 runs also surface **Replay target: Pawfect signal - 0 misreads** so the first couch test has an
 obvious rematch goal.
 
-Manual acceptance check: arrow-select **Operation Pee Break** with two local players. Confirm Beat 1
-routes Cocoa to the door and routes Cheddar to the visible **WATCH / NO BARK YET** pad, then advances
-from Cocoa's stare alone. During the cold run, press **F4** the first time either player asks
+Manual acceptance check: arrow-select **Operation Pee Break** with two local players and keep the F1
+playtest overlay off for the first cold read. Confirm Beat 1 reads from the couch, Teenager, glowing
+phone, door, leash hook, shoes, and door mat before any large label appears. Move Cocoa near the door
+and Cheddar near the watch spot to verify only close-range prompts appear, then confirm the beat
+advances from Cocoa's stare alone. During the cold run, press **F4** the first time either player asks
 "what do I do?" so the playtest overlay log captures the active objective, team guidance, and dog
 positions. In Beat 2, verify neither the stare nor leash alone solves the message.
-Confirm the Teenager and station labels name the missing partner job (**NEEDS LEASH TOO** /
-**NEEDS STARE TOO**) when only one dog is correct.
+Confirm the Teenager and station prompts name the missing partner job (**NEEDS LEASH TOO** /
+**NEEDS STARE TOO**) only when players are close enough or the debug overlay is enabled.
 Intentionally bark early until the Teenager misreads the request and confirm the striped tennis-ball
 **WRONG IDEA / TRY DOG JOBS** gag is readable and the run continues. In Beat 3, have Cheddar leave the
 hallway while Cocoa holds the charger and confirm comprehension falls; then hold both roles to
@@ -517,11 +682,19 @@ Together they verify the couch-readiness surfaces from cold read through the liv
   sparkle payoff before end-screen cleanup, the end card names the Pawfect/0-misread replay target or
   beaten challenge, and replay resets the door, bladder, phone, misreads, arrows, and world labels.
 
-Latest automated verification: Unity 6000.0.65f1 batch PlayMode run passed `370/370` tests on
-2026-06-28. The targeted presentation coverage inside `PeeBreakPlayModeTests`,
-`BackyardEnvironmentPlayModeTests`, and `FinalArtIntegrationPlayModeTests` now asserts Pass-2 room
-state props, outdoor payoff context, backyard districts, route cues, mission badge metadata, and
-squirrel/eagle/coyote motion resources plus runtime actor switching.
+Latest automated verification: Unity 6000.0.65f1 batch PlayMode run passed `390/390` tests on
+2026-06-30 after the human-NPC readability pass. The targeted presentation
+coverage inside `PeeBreakPlayModeTests`, `BackyardEnvironmentPlayModeTests`,
+`ArenaGameLoopPlayModeTests`, `KitchenFoodFrenzyPlayModeTests`, and
+`CoopChaosMachinePlayModeTests`, and `FinalArtIntegrationPlayModeTests` now asserts Pass-2 room state
+props, outdoor payoff context, backyard districts, route cues, mission badge metadata, cosmetic wow
+set dressing, dog-local personality polish, generated environment overlays, generated objective/range
+cue sprites, generated dog-local FX sprites, generated Kitchen falling-food cue sprites, generated
+Chaos Machine junction prop sprites, generated building/home-exterior sprites, generated HUD skin
+sprites, generated world-label skin sprites, generated arena SFX profiles, mission-specific
+collectible prop sprite stability after the dynamic treat enhancer scan, and squirrel/eagle/coyote
+motion resources plus runtime
+actor switching.
 
 For gameplay-first iteration, generate the editor-only lab with
 **Cheddar & Cocoa > Gameplay First > Build Generated Playtest Lab**. Use it to adjust primitive room
@@ -656,12 +829,25 @@ The playtest overlay shows mission, flow/phase, timer, score, last score event, 
 
 Manual check: press **F1** during mission select and during play, or click the bottom-left Playtest Mode button. Confirm the overlay appears in the top-right, does not hide the dogs or end buttons, and updates after collecting an item, barking, missing an interaction, forcing a fail/clear, replaying, and choosing Next Mission. The overlay also reports whether audio and rumble are enabled plus the latest requested cue/request name.
 
-## Audio/rumble placeholder checks
+F1 also restores the full world-label map, actor-state support text, dog-arrow support text, and
+range-ring support text. With the overlay off, mission labels created through the shared label path
+should behave as close-range contextual prompts rather than permanent objective text, mission actors
+should communicate mainly through silhouette/sprite state/color/pulse/motion, dog-mounted objective
+arrows should guide primarily through the generated icon, and bark/tug/rescue rings should read
+through their icon cue rather than explanatory copy.
+
+## Generated audio/rumble checks
 
 The arena now has replaceable generated feedback slots in `ArenaFeedbackCatalog`, plus a light
-looping procedural backyard music bed that follows the F2 audio toggle. The event cues remain
-placeholder tones/noises and rumble pulses; authored bark recordings, final mixing, and final
+looping procedural backyard music bed that follows the F2 audio toggle. Event cues now use named
+generated dog-life SFX profiles for bark, team success, crunch collect, squirrel alarm, score
+sparkle, penalty thunk, victory fanfare, failure sigh, UI blip, and threat rattle. They are no
+longer one generic tone/noise generator, but authored bark recordings, final mixing, and final
 haptics are still required.
+
+Automated evidence: the generated-SFX catalog profile check passed at `1/1`, the event-driven audio
+and rumble request check passed at `1/1`, and the full PlayMode suite passed at `390/390` on
+2026-06-30 after the human-NPC readability pass.
 
 Manual audio check:
 
@@ -776,7 +962,9 @@ Once per round, a **Predator Warning** telegraphs danger and targets one dog. Th
 
 Manual readability check: when the warning starts, the HUD objective says **Huddle + bark at the shadow**, the predator label becomes **HUDDLE + BARK!**, and both dogs' arrows should point toward each other with **HUDDLE + BARK** if they are separated. A successful huddle bark should show **DOUBLE WOOF drove the predator away!**, create a **DOUBLE WOOF!** success pop, and move the predator to **PREDATOR YEETED** offscreen. During an attack, the grabbed dog should read **STUNNED**, the HUD objective should say **Rescue Cheddar/Cocoa**, the partner arrow should say **BARK RESCUE**, and a successful partner bark should show a distinct rescue cue plus **RESCUED!** world pop. The rescue cue is deliberately separate from united bark feedback.
 
-During a predator grab, the grabbed dog shows a temporary **RESCUE BARK** range ring. This is meant to explain rescue distance without adding permanent clutter.
+During a predator grab, the grabbed dog shows a temporary rescue range ring. This is meant to explain
+rescue distance without adding permanent clutter; the **RESCUE BARK** support label appears only in
+the playtest/debug overlay.
 
 ## Rope/Tug shared-object mechanic
 
@@ -784,7 +972,9 @@ The labeled, pulsing **Rope/Tug** object is a required co-op objective. Its plac
 
 Manual readability check: after early food recovery, the HUD objective and objective arrows should switch to **BOTH TUG** while dogs are away from the rope. If only one dog reaches the rope, the rope label should call out **WAITING FOR CHEDDAR** or **WAITING FOR COCOA** and the HUD should say both dogs must commit together. When both dogs stand on the rope, their labels briefly read **TUG!**, the rope label changes to **BOTH TUGGING X%**, and completion flips the rope label to **ROPE COMPLETE!** with a **TUG POP!** world pop.
 
-After enough food recovery makes tug the next likely bottleneck, the rope shows a temporary **BOTH DOGS** range ring. It uses the current `1.6` tug-together radius and hides on non-tug missions.
+After enough food recovery makes tug the next likely bottleneck, the rope shows a temporary tug
+range ring. It uses the current `1.6` tug-together radius, hides on non-tug missions, and reserves
+the **BOTH DOGS** support label for the playtest/debug overlay.
 
 ## United bark
 
@@ -958,11 +1148,11 @@ Use this after any placeholder-art, authored-art, or sprite import change:
   only on text labels.
 - Cheddar keeps golden/red chaos reads, including the current generated chaos tuft/flash/bolt; Cocoa keeps chocolate/teal spot-queen reads, including the current generated cream chest, extra spot, and larger crown marker.
 - Dog pose states are still distinct: idle, run, bark, tug, stunned, rescued, proud, sad.
-- Bark ring/text, objective arrows, score pops, and playtest overlay remain readable but do not hide
-  the dogs or core mission objects.
+- Bark ring/text, generated objective cue arrows, score pops, and playtest overlay remain readable
+  but do not hide the dogs or core mission objects.
 - Movement lean, squash/stretch, and paw trails are readable during motion but do not become constant noise.
 - Camera framing keeps all three current missions readable from mission select without changing the orthographic backyard direction.
-- Temporary bark, rescue, and tug range rings appear only in actionable states and hide on mission select, end screens, and non-relevant missions.
+- Temporary bark, rescue, and tug cue rings appear only in actionable states and hide on mission select, end screens, and non-relevant missions.
 - Weenie, snack, and sock collectibles are visually distinct from each other and from the squirrel
   and rope.
 - Squirrel, predator, and rope expose their expected replacement slots from
@@ -973,20 +1163,27 @@ Use this after any placeholder-art, authored-art, or sprite import change:
   **ROPE COMPLETE! TEAM CHOMP!** so a silent observer can verify huddle, rescue, and tug intent
   without opening the inspector.
 - Mission select, end actions, and session summary remain legible with placeholder IMGUI styling.
+- Mission select and the shared arena backdrop should visibly shift with the selected/active mission
+  through badge color, spotlight, and the matching reusable motif family; no level should feel like a
+  blank generic arena before play begins.
 
 ## Known limitations
 
-- Mission actors still use generated gameplay silhouettes/text labels as the primary read, with
-  imported DRAFT badges layered in for first-pass character/art reference. The imported sheets are
-  not final transparent gameplay sprites.
+- Mission actors still use generated gameplay silhouettes, simple state motion, color/pulse changes,
+  imported DRAFT badges, and close-range/debug support text. The imported sheets are not final
+  transparent gameplay sprites, and stronger authored actor-state animation is still needed.
 - Mission select, end actions, and session summary are generated IMGUI placeholders with a small
   imported UI-kit accent, not authored production UI.
 - The playtest overlay and event log are debug/playtest aids only. They are not analytics, persistence, telemetry, or player-facing production UI.
-- Snack Heist remains an architecture proof inside the existing arena. Sock Panic now has a complete first-pass co-op lock/key beat, but still uses generated basket/sock placeholder art.
-- Dog identity art, pose labels, collars, expression markers, prop silhouettes, and objective arrows are generated placeholders. They are intentionally readable and easy to delete once authored sprites/animation exist.
+- Snack Heist remains an architecture proof inside the existing arena, now with stable generated
+  snack-plate collectible art. Sock Panic has a complete first-pass co-op lock/key beat and generated
+  basket/sock prop art, but both missions still need final authored environment and UI treatment.
+- Dog identity art, pose labels, collars, expression markers, prop silhouettes, and objective cue
+  arrows are generated couch-test assets. They are intentionally readable and easy to delete once
+  authored sprites/animation exist.
 - The squirrel and predator use intentionally simple movement/state rules so the PlayMode tests remain deterministic.
-- The intro, bark, squirrel, predator, tug, clear, fail, score-pop, and objective feedback are still text/scale/audio-placeholder driven; they are designed to be replaced by authored animation/SFX later.
-- Audio cues are generated placeholder clips from named slots, and rumble is a simple best-effort gamepad pulse. Neither is mixed, balanced, platform-tuned, or authored final feedback.
+- The intro, bark, squirrel, predator, tug, clear, fail, score-pop, and objective feedback are still text/scale/generated-audio driven; they are designed to be replaced by authored animation/SFX later.
+- Audio cues are generated procedural SFX clips from named dog-life slots, and rumble is a simple best-effort gamepad pulse. Neither is mixed, balanced, platform-tuned, or authored final feedback.
 - `ForceSquirrelStealAttempt()` exists as a deterministic PlayMode test hook and is not intended as a player-facing control.
 - Scoring is intentionally flat and session-local only. There is no save file, leaderboard, unlock economy, or persistent progression yet.
 - The end rank is based only on final score and clear/fail state; it does not yet account for style, dog-specific contributions, or advanced co-op medals.
@@ -994,7 +1191,7 @@ Use this after any placeholder-art, authored-art, or sprite import change:
 - Predator targeting and modifier selection are seeded but still prototype-simple.
 - The scene now has basic procedural sound cues, an arena `AudioListener`, and simple placeholder animation, but real prefab art, authored animation, better SFX, and richer rescue/tug feel are still future work.
 - Camera feel is tuned for the current generated backyard arena only. A larger authored level may need level-specific camera anchors or bounds.
-- Paw trails and range rings are placeholder geometry/text. They are useful for playtest readability, not a final VFX style.
+- Paw trails and range rings now use generated cue sprites, but neither is a final VFX style.
 
 ## Test coverage
 

@@ -18,8 +18,18 @@ namespace CheddarAndCocoa.Game
             Complete
         }
 
+        public enum TeenPresentationState
+        {
+            DistractedIdle,
+            AnnoyedReacting,
+            DistractedAgain,
+            StandingSuccess,
+            ImpatientFail
+        }
+
         private const float StationRange = 2.25f;
         private const float UnitedBarkWindow = 0.8f;
+        private const float PromptRange = StationRange + 0.35f;
 
         private static readonly SocialStimulus[] RequiredByBeat =
         {
@@ -54,7 +64,20 @@ namespace CheddarAndCocoa.Game
         private GameObject _openSunbeam;
         private GameObject _leashHook;
         private GameObject _hallwayRug;
+        private GameObject _couchBlanketSlump;
+        private GameObject _chewToyUnderTable;
+        private GameObject _straySockA;
+        private GameObject _straySockB;
+        private GameObject _phoneNotificationPing;
+        private GameObject _doorMat;
+        private GameObject _shoeLeft;
+        private GameObject _shoeRight;
+        private GameObject _cheddarUrgencyCue;
+        private GameObject _cocoaUrgencyCue;
+        private GameObject _teenagerHead;
+        private GameObject _teenagerHoodie;
         private GameObject _teenagerThumbs;
+        private GameObject _teenagerFootWiggle;
         private GameObject _teenagerPhoneBeam;
         private GameObject _teenagerDoorBeam;
         private GameObject _teenagerQuestionBubble;
@@ -74,6 +97,14 @@ namespace CheddarAndCocoa.Game
         private GameObject _leashPresentedTrail;
         private GameObject _bladderWarningFill;
         private GameObject _bladderUrgencyTick;
+        private GameObject _couchArt;
+        private GameObject _teenagerArt;
+        private GameObject _phoneArt;
+        private GameObject _openDoorArt;
+        private GameObject _leashArt;
+        private GameObject _hydrantArt;
+        private GameObject _bladderArt;
+        private GameObject _misreadTennisBallArt;
         private GameObject _comprehensionTrack;
         private GameObject _comprehensionFill;
         private GameObject _confusionFill;
@@ -99,6 +130,7 @@ namespace CheddarAndCocoa.Game
         private int _beatMisreadsSeen;
         private string _latestMisreadThing = string.Empty;
 
+        public TeenPresentationState TeenState { get; private set; }
         public GameManager.MissionVariant Variant => GameManager.MissionVariant.OperationPeeBreak;
         public Beat CurrentBeat => (Beat)Mathf.Clamp(_beatIndex, 0, 4);
         public int CompletedBeats => Mathf.Clamp(_beatIndex, 0, 4);
@@ -106,6 +138,8 @@ namespace CheddarAndCocoa.Game
         public float Bladder { get; private set; }
         public float PhoneBattery { get; private set; }
         public bool DoorOpen { get; private set; }
+        public int GeneratedPeeBreakPropSpriteCount { get; private set; }
+        public bool HasGeneratedCartoonProps => GeneratedPeeBreakPropSpriteCount >= 8;
         public bool IsComplete => DoorOpen;
         public CoopSocialManipulationPuzzle Puzzle => _puzzle;
         public SocialStimulus Required => _beatIndex < RequiredByBeat.Length ? RequiredByBeat[_beatIndex] : SocialStimulus.None;
@@ -157,6 +191,7 @@ namespace CheddarAndCocoa.Game
             Bladder = 0.12f;
             PhoneBattery = 1f;
             DoorOpen = false;
+            TeenState = TeenPresentationState.DistractedIdle;
             _latestMisreadThing = string.Empty;
             _lastDoorBarks[0] = _lastDoorBarks[1] = float.NegativeInfinity;
             _barkSignalUntil = float.NegativeInfinity;
@@ -353,8 +388,8 @@ namespace CheddarAndCocoa.Game
         private void BuildScene()
         {
             _roomFloor = NewScenery("PeeBreakRoomFloor", new Color(0.36f, 0.3f, 0.24f), new Vector3(25f, 15f, 1f), -2);
-            _couchBack = NewScenery("PeeBreakCouchBack", new Color(0.22f, 0.36f, 0.55f), new Vector3(7.5f, 1.2f, 1f), 0);
-            _couchSeat = NewScenery("PeeBreakCouchSeat", new Color(0.29f, 0.45f, 0.66f), new Vector3(7f, 2.2f, 1f), 0);
+            _couchBack = NewScenery("PeeBreakCouchBack", new Color(0.22f, 0.36f, 0.55f), new Vector3(9.4f, 1.45f, 1f), 0);
+            _couchSeat = NewScenery("PeeBreakCouchSeat", new Color(0.29f, 0.45f, 0.66f), new Vector3(8.8f, 2.75f, 1f), 0);
             _sideTable = NewScenery("PeeBreakSideTable", new Color(0.38f, 0.22f, 0.12f), new Vector3(1.4f, 1.2f, 1f), 0);
             _phoneGlow = NewScenery("PeeBreakPhoneGlow", new Color(0.2f, 0.9f, 1f, 0.38f), new Vector3(1.25f, 1.25f, 1f), 1);
             _chargerCord = NewScenery("PeeBreakChargerCord", new Color(0.06f, 0.06f, 0.08f), new Vector3(5f, 0.16f, 1f), 1);
@@ -367,12 +402,15 @@ namespace CheddarAndCocoa.Game
             _hallway = NewMarker("PeeBreakHallwayBlock", new Color(1f, 0.58f, 0.25f), "HALLWAY - CHEDDAR BLOCKS", Vector3.one * 2.6f, out _hallwayLabel);
             _charger = NewMarker("PeeBreakCharger", new Color(0.75f, 0.45f, 1f), "CHARGER - COCOA UNPLUGS", Vector3.one * 1.5f, out _chargerLabel);
             _cheddarCoach = NewMarker("PeeBreakCheddarCoach", new Color(0.55f, 0.78f, 1f), "CHEDDAR WATCH PAD\nNO BARK YET", new Vector3(1.7f, 1.1f, 1f), out _cheddarCoachLabel);
-            _teenager = NewMarker("PeeBreakTeenager", new Color(0.65f, 0.72f, 0.9f), "TEENAGER ?", new Vector3(2f, 2.6f, 1f), out _teenagerLabel);
+            _teenager = NewMarker("PeeBreakTeenager", new Color(0.65f, 0.72f, 0.9f), "TEENAGER ?", new Vector3(3.1f, 4.7f, 1f), out _teenagerLabel);
             _phone = NewMarker("PeeBreakPhone", new Color(0.4f, 0.9f, 1f), "PHONE 100%", Vector3.one * 0.7f, out _phoneLabel);
             _bladderMeter = NewMarker("PeeBreakBladderMeter", new Color(0.4f, 0.8f, 1f), "BLADDER 12%", new Vector3(0.5f, 0.35f, 1f), out _bladderLabel);
             _misreadProp = NewMarker("PeeBreakMisreadProp", new Color(1f, 0.48f, 0.2f), "MISREAD", Vector3.one * 1.1f, out _misreadLabel);
             _misreadAccent = NewChildMarker(_misreadProp, "PeeBreakMisreadAccent", Color.white, new Vector3(0.16f, 1.4f, 1f), new Vector3(0f, 0f, -0.05f), 4);
+            _cheddarUrgencyCue = NewScenery("PeeBreakCheddarUrgencyCue", new Color(1f, 0.9f, 0.22f, 0.82f), new Vector3(0.28f, 0.78f, 1f), 21);
+            _cocoaUrgencyCue = NewScenery("PeeBreakCocoaUrgencyCue", new Color(0.55f, 0.95f, 1f, 0.82f), new Vector3(0.28f, 0.78f, 1f), 21);
             BuildRecognizableRoomDetails();
+            BuildGeneratedPropArt();
         }
 
         private void BuildRecognizableRoomDetails()
@@ -383,16 +421,21 @@ namespace CheddarAndCocoa.Game
             NewChildScenery(_couchSeat, "PeeBreakCouchSeatFrontLip", new Color(0.12f, 0.21f, 0.34f, 0.82f), new Vector3(1.04f, 0.08f, 1f), new Vector3(0f, -0.46f, -0.01f), 2);
             NewChildScenery(_couchSeat, "PeeBreakCouchPillowA", new Color(0.88f, 0.72f, 0.42f), new Vector3(0.18f, 0.32f, 1f), new Vector3(-0.25f, 0.22f, -0.02f), 3);
             NewChildScenery(_couchSeat, "PeeBreakCouchPillowB", new Color(0.63f, 0.22f, 0.32f), new Vector3(0.2f, 0.3f, 1f), new Vector3(0.25f, 0.18f, -0.02f), 3);
+            _couchBlanketSlump = NewChildScenery(_couchSeat, "PeeBreakCouchBlanketSlump", new Color(0.72f, 0.82f, 0.95f, 0.86f), new Vector3(0.28f, 0.34f, 1f), new Vector3(0.08f, -0.18f, -0.03f), 4);
+            _straySockA = NewChildScenery(_couchSeat, "PeeBreakStraySockA", new Color(0.95f, 0.95f, 0.86f, 0.9f), new Vector3(0.1f, 0.22f, 1f), new Vector3(-0.42f, -0.58f, -0.04f), 4);
+            _straySockB = NewChildScenery(_couchSeat, "PeeBreakStraySockB", new Color(0.22f, 0.28f, 0.38f, 0.88f), new Vector3(0.08f, 0.2f, 1f), new Vector3(-0.32f, -0.63f, -0.05f), 4);
             NewChildScenery(_sideTable, "PeeBreakTableLeg", new Color(0.2f, 0.1f, 0.05f), new Vector3(0.18f, 1.55f, 1f), new Vector3(0f, -0.58f, 0f), 1);
             NewChildScenery(_sideTable, "PeeBreakTableTopLip", new Color(0.55f, 0.32f, 0.16f), new Vector3(1.1f, 0.16f, 1f), new Vector3(0f, 0.48f, -0.01f), 2);
             NewChildScenery(_sideTable, "PeeBreakWaterCup", new Color(0.62f, 0.86f, 1f, 0.72f), new Vector3(0.22f, 0.34f, 1f), new Vector3(-0.28f, 0.7f, -0.02f), 3);
+            _chewToyUnderTable = NewChildScenery(_sideTable, "PeeBreakChewToyUnderTable", new Color(0.95f, 0.56f, 0.18f, 0.92f), new Vector3(0.22f, 0.12f, 1f), new Vector3(0.34f, -0.72f, -0.03f), 4);
 
-            NewChildScenery(_teenager, "PeeBreakTeenagerHead", new Color(0.95f, 0.72f, 0.52f), new Vector3(0.42f, 0.34f, 1f), new Vector3(0f, 0.42f, -0.01f), 4);
-            NewChildScenery(_teenager, "PeeBreakTeenagerHair", new Color(0.12f, 0.08f, 0.05f), new Vector3(0.42f, 0.1f, 1f), new Vector3(0f, 0.58f, -0.02f), 5);
-            NewChildScenery(_teenager, "PeeBreakTeenagerLegs", new Color(0.16f, 0.18f, 0.26f), new Vector3(0.78f, 0.18f, 1f), new Vector3(0f, -0.38f, -0.01f), 4);
-            NewChildScenery(_teenager, "PeeBreakTeenagerHoodie", new Color(0.32f, 0.38f, 0.62f), new Vector3(0.64f, 0.64f, 1f), new Vector3(0f, -0.02f, 0.01f), 3);
-            _teenagerThumbs = NewChildScenery(_teenager, "PeeBreakTeenagerThumbs", new Color(0.95f, 0.72f, 0.52f), new Vector3(0.32f, 0.1f, 1f), new Vector3(0.25f, 0.03f, -0.02f), 5);
-            NewChildScenery(_teenager, "PeeBreakTeenagerAirPod", new Color(0.94f, 0.94f, 0.88f), new Vector3(0.08f, 0.16f, 1f), new Vector3(0.28f, 0.45f, -0.03f), 6);
+            _teenagerHead = NewChildScenery(_teenager, "PeeBreakTeenagerHead", new Color(0.95f, 0.72f, 0.52f), new Vector3(0.5f, 0.42f, 1f), new Vector3(0f, 0.42f, -0.01f), 4);
+            NewChildScenery(_teenager, "PeeBreakTeenagerHair", new Color(0.12f, 0.08f, 0.05f), new Vector3(0.5f, 0.12f, 1f), new Vector3(0f, 0.58f, -0.02f), 5);
+            NewChildScenery(_teenager, "PeeBreakTeenagerLegs", new Color(0.16f, 0.18f, 0.26f), new Vector3(0.95f, 0.24f, 1f), new Vector3(0f, -0.38f, -0.01f), 4);
+            _teenagerHoodie = NewChildScenery(_teenager, "PeeBreakTeenagerHoodie", new Color(0.32f, 0.38f, 0.62f), new Vector3(0.82f, 0.82f, 1f), new Vector3(0f, -0.02f, 0.01f), 3);
+            _teenagerThumbs = NewChildScenery(_teenager, "PeeBreakTeenagerThumbs", new Color(0.95f, 0.72f, 0.52f), new Vector3(0.42f, 0.12f, 1f), new Vector3(0.28f, 0.03f, -0.02f), 5);
+            _teenagerFootWiggle = NewChildScenery(_teenager, "PeeBreakTeenagerFootWiggle", new Color(0.09f, 0.1f, 0.14f), new Vector3(0.32f, 0.1f, 1f), new Vector3(0.44f, -0.48f, -0.02f), 5);
+            NewChildScenery(_teenager, "PeeBreakTeenagerAirPod", new Color(0.94f, 0.94f, 0.88f), new Vector3(0.1f, 0.18f, 1f), new Vector3(0.3f, 0.45f, -0.03f), 6);
             _teenagerPhoneBeam = NewChildScenery(_teenager, "PeeBreakTeenagerPhoneAttentionBeam", new Color(0.2f, 0.9f, 1f, 0.36f), new Vector3(1.2f, 0.08f, 1f), new Vector3(0.46f, 0.08f, -0.04f), 2);
             _teenagerDoorBeam = NewChildScenery(_teenager, "PeeBreakTeenagerDoorAttentionBeam", new Color(1f, 0.92f, 0.35f, 0.42f), new Vector3(1.65f, 0.08f, 1f), new Vector3(-0.56f, -0.08f, -0.04f), 2);
             _teenagerQuestionBubble = NewChildScenery(_teenager, "PeeBreakTeenagerQuestionBubble", new Color(1f, 1f, 1f, 0.88f), new Vector3(0.28f, 0.28f, 1f), new Vector3(-0.42f, 0.72f, -0.05f), 6);
@@ -411,12 +454,18 @@ namespace CheddarAndCocoa.Game
             NewChildScenery(_phone, "PeeBreakPhoneBatteryShell", new Color(0.88f, 0.96f, 1f), new Vector3(0.42f, 0.08f, 1f), new Vector3(0f, -0.22f, -0.02f), 7);
             _phoneBatteryFill = NewChildScenery(_phone, "PeeBreakPhoneBatteryFill", new Color(0.2f, 1f, 0.55f), new Vector3(0.38f, 0.05f, 1f), new Vector3(0f, -0.22f, -0.03f), 8);
             _phoneChargeBolt = NewChildScenery(_phone, "PeeBreakPhoneChargeBolt", new Color(1f, 0.92f, 0.2f), new Vector3(0.08f, 0.32f, 1f), new Vector3(0.18f, 0.04f, -0.03f), 8);
+            _phoneNotificationPing = NewChildScenery(_phone, "PeeBreakPhoneNotificationPing", new Color(1f, 0.95f, 0.28f, 0.88f), new Vector3(0.1f, 0.1f, 1f), new Vector3(-0.18f, 0.24f, -0.04f), 9);
             _phoneDeadSlash = NewChildScenery(_phone, "PeeBreakPhoneDeadSlash", new Color(1f, 0.2f, 0.12f), new Vector3(0.08f, 0.78f, 1f), Vector3.zero, 9);
             _phoneDeadSlash.transform.localRotation = Quaternion.Euler(0f, 0f, -38f);
 
             NewChildScenery(_door, "PeeBreakDoorPanelTop", new Color(0.72f, 0.42f, 0.16f), new Vector3(0.62f, 0.2f, 1f), new Vector3(0f, 0.22f, -0.01f), 4);
             NewChildScenery(_door, "PeeBreakDoorPanelBottom", new Color(0.72f, 0.42f, 0.16f), new Vector3(0.62f, 0.2f, 1f), new Vector3(0f, -0.24f, -0.01f), 4);
             NewChildScenery(_door, "PeeBreakDoorKnob", new Color(1f, 0.96f, 0.55f), new Vector3(0.12f, 0.08f, 1f), new Vector3(0.34f, 0f, -0.02f), 5);
+            _doorMat = NewChildScenery(_door, "PeeBreakDoorMat", new Color(0.2f, 0.32f, 0.18f), new Vector3(1.02f, 0.18f, 1f), new Vector3(-0.02f, -0.62f, -0.05f), 2);
+            _shoeLeft = NewChildScenery(_door, "PeeBreakShoeLeft", new Color(0.08f, 0.07f, 0.06f), new Vector3(0.22f, 0.42f, 1f), new Vector3(-0.58f, -0.58f, -0.06f), 6);
+            _shoeRight = NewChildScenery(_door, "PeeBreakShoeRight", new Color(0.1f, 0.08f, 0.06f), new Vector3(0.22f, 0.42f, 1f), new Vector3(-0.32f, -0.62f, -0.06f), 6);
+            _shoeLeft.transform.localRotation = Quaternion.Euler(0f, 0f, -22f);
+            _shoeRight.transform.localRotation = Quaternion.Euler(0f, 0f, 12f);
             _doorOutdoorView = NewChildScenery(_door, "PeeBreakDoorOutdoorView", new Color(0.42f, 0.82f, 0.34f), new Vector3(0.72f, 0.82f, 1f), new Vector3(0.34f, 0f, 0.03f), 1);
             _doorOpenPanel = NewChildScenery(_door, "PeeBreakDoorOpenPanel", new Color(0.55f, 0.28f, 0.1f), new Vector3(0.26f, 0.96f, 1f), new Vector3(-0.42f, 0f, -0.02f), 5);
             _outdoorGrassPatch = NewChildScenery(_door, "PeeBreakOutdoorGrassPatch", new Color(0.18f, 0.62f, 0.22f), new Vector3(0.92f, 0.16f, 1f), new Vector3(0.42f, -0.34f, -0.04f), 6);
@@ -448,6 +497,42 @@ namespace CheddarAndCocoa.Game
             _bladderUrgencyTick = NewChildScenery(_bladderMeter, "PeeBreakBladderUrgencyTick", new Color(1f, 0.95f, 0.2f), new Vector3(0.08f, 0.7f, 1f), new Vector3(0.52f, 0f, -0.02f), 5);
         }
 
+        private void BuildGeneratedPropArt()
+        {
+            GeneratedPeeBreakPropSpriteCount = 0;
+            _couchArt = NewGeneratedProp("PeeBreakGeneratedCouchArt", FinalGameplayArt.PeeBreakCouch, 11);
+            _teenagerArt = NewGeneratedProp("PeeBreakGeneratedTeenagerArt", FinalGameplayArt.PeeBreakTeenager, 15);
+            _phoneArt = NewGeneratedProp("PeeBreakGeneratedPhoneChargerArt", FinalGameplayArt.PeeBreakPhoneCharger, 16);
+            _openDoorArt = NewGeneratedProp("PeeBreakGeneratedOpenDoorArt", FinalGameplayArt.PeeBreakOpenDoor, 13);
+            _leashArt = NewGeneratedProp("PeeBreakGeneratedLeashArt", FinalGameplayArt.PeeBreakLeash, 15);
+            _hydrantArt = NewGeneratedProp("PeeBreakGeneratedHydrantReliefArt", FinalGameplayArt.PeeBreakHydrantRelief, 15);
+            _bladderArt = NewGeneratedProp("PeeBreakGeneratedBladderMeterArt", FinalGameplayArt.PeeBreakBladderMeter, 15);
+            _misreadTennisBallArt = NewGeneratedProp("PeeBreakGeneratedMisreadTennisBallArt", FinalGameplayArt.PeeBreakMisreadTennisBall, 16);
+            FadeGeneratedBackedBlocks();
+        }
+
+        private void FadeGeneratedBackedBlocks()
+        {
+            FadeRenderer(_couchBack, 0.08f);
+            FadeRenderer(_couchSeat, 0.08f);
+            FadeRenderer(_doorFrame, 0.10f);
+            FadeRenderer(_leashHook, 0.12f);
+            FadeRenderer(_teenager, 0.08f);
+            FadeRenderer(_phone, 0.12f);
+
+            FadeNamedChildren(_couchSeat, 0.04f, "CouchLeftArm", "CouchRightArm", "CouchCushionLine",
+                "CouchSeatFrontLip", "CouchPillowA", "CouchPillowB", "CouchBlanketSlump",
+                "StraySockA", "StraySockB");
+            FadeNamedChildren(_teenager, 0.04f, "TeenagerHead", "TeenagerHair", "TeenagerLegs",
+                "TeenagerHoodie", "TeenagerThumbs", "TeenagerFootWiggle", "TeenagerAirPod");
+            FadeNamedChildren(_sideTable, 0.05f, "ChewToyUnderTable");
+            FadeNamedChildren(_phone, 0.05f, "PhoneScreen", "PhoneReflection", "PhoneNotificationPing");
+            FadeNamedChildren(_door, 0.05f, "DoorPanelTop", "DoorPanelBottom", "DoorKnob",
+                "DoorOutdoorView", "DoorOpenPanel", "OutdoorGrassPatch", "OutdoorFireHydrant");
+            FadeNamedChildren(_leash, 0.05f, "LeashStrap", "LeashClip", "LeashHandleLoop");
+            FadeNamedChildren(_leashHook, 0.05f, "HookPeg", "HangingLeashLoop", "HangingLeashTail");
+        }
+
         private GameObject NewScenery(string name, Color color, Vector3 scale, int sortingOrder)
         {
             var marker = new GameObject(name);
@@ -458,6 +543,45 @@ namespace CheddarAndCocoa.Game
             marker.transform.localScale = scale;
             marker.SetActive(false);
             return marker;
+        }
+
+        private GameObject NewGeneratedProp(string name, string resourcePath, int sortingOrder)
+        {
+            Sprite sprite = FinalGameplayArt.Load(resourcePath);
+            if (sprite == null) return null;
+
+            var marker = new GameObject(name);
+            var renderer = marker.AddComponent<SpriteRenderer>();
+            renderer.sprite = sprite;
+            renderer.color = Color.white;
+            renderer.sortingOrder = sortingOrder;
+            marker.SetActive(false);
+            GeneratedPeeBreakPropSpriteCount++;
+            return marker;
+        }
+
+        private static void FadeNamedChildren(GameObject parent, float alpha, params string[] fragments)
+        {
+            if (parent == null) return;
+            foreach (Transform child in parent.transform)
+            {
+                foreach (string fragment in fragments)
+                {
+                    if (child.name.Contains(fragment))
+                    {
+                        FadeRenderer(child.gameObject, alpha);
+                        break;
+                    }
+                }
+            }
+        }
+
+        private static void FadeRenderer(GameObject marker, float alpha)
+        {
+            if (marker == null || !marker.TryGetComponent<SpriteRenderer>(out var renderer)) return;
+            var color = renderer.color;
+            color.a = alpha;
+            renderer.color = color;
         }
 
         private GameObject NewChildScenery(GameObject parent, string name, Color color, Vector3 scale, Vector3 localPosition, int sortingOrder)
@@ -486,7 +610,7 @@ namespace CheddarAndCocoa.Game
             renderer.color = color;
             renderer.sortingOrder = 3;
             marker.transform.localScale = scale;
-            worldLabel = _context.AddWorldLabel(marker, label, Vector3.up * 0.55f, 12, Color.white);
+            worldLabel = _context.AddWorldLabel(marker, label, Vector3.up * 0.68f, 9, Color.white);
             marker.SetActive(false);
             return marker;
         }
@@ -512,12 +636,16 @@ namespace CheddarAndCocoa.Game
             {
                 _roomFloor, _couchBack, _couchSeat, _sideTable, _phoneGlow, _chargerCord, _doorFrame, _openSunbeam,
                 _leashHook, _hallwayRug, _door, _leash, _hallway, _charger, _cheddarCoach, _teenager, _phone,
-                _bladderMeter, _misreadProp, _misreadAccent
+                _bladderMeter, _misreadProp, _misreadAccent, _cheddarUrgencyCue, _cocoaUrgencyCue,
+                _couchArt, _teenagerArt, _phoneArt, _openDoorArt,
+                _leashArt, _hydrantArt, _bladderArt, _misreadTennisBallArt
             })
                 if (marker != null) marker.SetActive(active);
             if (active && _misreadProp != null) _misreadProp.SetActive(false);
             if (active && _misreadAccent != null) _misreadAccent.SetActive(false);
+            if (active && _misreadTennisBallArt != null) _misreadTennisBallArt.SetActive(false);
             if (active && _openSunbeam != null) _openSunbeam.SetActive(false);
+            if (active && _hydrantArt != null) _hydrantArt.SetActive(false);
             if (active) UpdateScene();
         }
 
@@ -525,8 +653,8 @@ namespace CheddarAndCocoa.Game
         {
             if (_door == null) return;
             _roomFloor.transform.position = _context.Bounds.center + new Vector2(2f, 3.6f);
-            _couchBack.transform.position = _context.Bounds.center + new Vector2(2f, 6.4f);
-            _couchSeat.transform.position = _context.Bounds.center + new Vector2(2f, 5.2f);
+            _couchBack.transform.position = _context.Bounds.center + new Vector2(2f, 6.55f);
+            _couchSeat.transform.position = _context.Bounds.center + new Vector2(2f, 5.25f);
             _sideTable.transform.position = _context.Bounds.center + new Vector2(5.3f, 5.1f);
             _doorFrame.transform.position = _doorPosition;
             _openSunbeam.transform.position = _doorPosition + new Vector2(1.8f, -1.2f);
@@ -537,7 +665,15 @@ namespace CheddarAndCocoa.Game
             _cheddarCoach.transform.position = _cheddarCoachPosition;
             _hallway.transform.position = _hallwayPosition;
             _charger.transform.position = _chargerPosition;
-            _teenager.transform.position = _context.Bounds.center + new Vector2(2f, 5f);
+            bool cocoaAtDoor = DogAt(DogId.Cocoa, _doorPosition);
+            bool cheddarAtLeash = DogAt(DogId.Cheddar, _leashPosition);
+            bool cheddarAtCoach = DogAt(DogId.Cheddar, _cheddarCoachPosition);
+            bool cheddarAtHallway = DogAt(DogId.Cheddar, _hallwayPosition);
+            bool cocoaAtCharger = DogAt(DogId.Cocoa, _chargerPosition);
+            UpdateTeenPresentationState(cocoaAtDoor, cheddarAtLeash, cheddarAtHallway, cocoaAtCharger);
+            _teenager.transform.position = TeenState == TeenPresentationState.StandingSuccess
+                ? _context.Bounds.center + new Vector2(5.8f, 4.8f)
+                : _context.Bounds.center + new Vector2(2f, 5.08f);
             _phone.transform.position = (Vector2)_teenager.transform.position + new Vector2(0.8f, -0.2f);
             _phoneGlow.transform.position = _phone.transform.position;
             _chargerCord.transform.position = ((_phone.transform.position + _charger.transform.position) * 0.5f);
@@ -547,15 +683,69 @@ namespace CheddarAndCocoa.Game
             _bladderMeter.transform.position = _doorPosition + new Vector2(0f, -3.2f);
             _misreadProp.transform.position = (Vector2)_teenager.transform.position + new Vector2(2f, -1.3f);
 
-            bool cocoaAtDoor = DogAt(DogId.Cocoa, _doorPosition);
-            bool cheddarAtLeash = DogAt(DogId.Cheddar, _leashPosition);
-            bool cheddarAtCoach = DogAt(DogId.Cheddar, _cheddarCoachPosition);
-            bool cheddarAtHallway = DogAt(DogId.Cheddar, _hallwayPosition);
-            bool cocoaAtCharger = DogAt(DogId.Cocoa, _chargerPosition);
             _door.transform.localScale = DoorOpen ? new Vector3(0.35f, 4f, 1f) : new Vector3(2.4f, 4f, 1f);
             float pulse = 1f + Mathf.Sin(Time.time * 7.5f) * 0.04f;
+            PlaceGeneratedArt(_couchArt, _couchSeat.transform.position + new Vector3(0.2f, 0.25f, -0.25f), 1.18f);
+            PlaceGeneratedArt(_teenagerArt, _teenager.transform.position + new Vector3(0f, TeenState == TeenPresentationState.StandingSuccess ? 0.24f : -0.08f, -0.25f),
+                TeenState == TeenPresentationState.StandingSuccess ? 1.34f : 1.08f,
+                true,
+                TeenState == TeenPresentationState.AnnoyedReacting ? Mathf.Sin(Time.time * 12f) * 2.5f : 0f);
+            PlaceGeneratedArt(_phoneArt, _phone.transform.position + new Vector3(0.2f, 0f, -0.25f), 0.58f,
+                !DoorOpen && PhoneBattery > 0.02f, Mathf.Sin(Time.time * 5.5f) * 2f);
+            if (DoorOpen)
+            {
+                PlaceGeneratedArt(_openDoorArt, _doorFrame.transform.position + new Vector3(0.25f, 0f, -0.25f), 0.82f);
+            }
+            else
+            {
+                PlaceGeneratedArt(_openDoorArt, _door.transform.position + new Vector3(0f, 0f, -0.25f), 0.28f, false);
+            }
+            PlaceGeneratedArt(_leashArt, _leash.transform.position + new Vector3(0.05f, 0f, -0.25f), 0.48f,
+                !DoorOpen && (_beatIndex == 1 || _beatIndex == 3 || _beatIndex == 0));
+            PlaceGeneratedArt(_hydrantArt, _doorPosition + new Vector2(1.25f, -0.35f), 0.82f, DoorOpen,
+                Mathf.Sin(Time.time * 6f) * 3f);
+            PlaceGeneratedArt(_bladderArt, _bladderMeter.transform.position + new Vector3(0f, 0.25f, -0.25f),
+                Mathf.Lerp(0.34f, 0.66f, Bladder), !DoorOpen, Mathf.Sin(Time.time * 8f) * Mathf.Lerp(0f, 7f, Bladder));
+            PlaceGeneratedArt(_misreadTennisBallArt, _misreadProp.transform.position + new Vector3(0f, 0.25f, -0.25f),
+                0.55f, _misreadProp.activeSelf && _latestMisreadThing == "TENNIS BALL?", Mathf.Sin(Time.time * 9f) * 8f);
             if (_teenagerThumbs != null)
-                _teenagerThumbs.transform.localPosition = new Vector3(0.25f + Mathf.Sin(Time.time * 16f) * 0.04f, 0.03f, -0.02f);
+            {
+                bool phoneInHand = TeenState != TeenPresentationState.StandingSuccess;
+                _teenagerThumbs.SetActive(phoneInHand);
+                if (phoneInHand)
+                    _teenagerThumbs.transform.localPosition = new Vector3(0.28f + Mathf.Sin(Time.time * 16f) * 0.04f, 0.03f, -0.02f);
+            }
+            if (_teenagerHead != null)
+            {
+                float glance = TeenState == TeenPresentationState.AnnoyedReacting || TeenState == TeenPresentationState.StandingSuccess ? -0.08f : 0f;
+                _teenagerHead.transform.localPosition = new Vector3(glance + Mathf.Sin(Time.time * 2.2f) * 0.018f,
+                    0.42f + Mathf.Sin(Time.time * 1.7f) * 0.016f, -0.01f);
+            }
+            if (_teenagerHoodie != null)
+            {
+                float standStretch = TeenState == TeenPresentationState.StandingSuccess ? 1.26f : 1f;
+                _teenagerHoodie.transform.localScale = new Vector3(0.82f, (0.82f + Mathf.Sin(Time.time * 1.7f) * 0.018f) * standStretch, 1f);
+            }
+            if (_teenagerFootWiggle != null)
+                _teenagerFootWiggle.transform.localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(Time.time * 10.5f) * 14f);
+            if (_couchBlanketSlump != null)
+                _couchBlanketSlump.transform.localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(Time.time * 1.35f) * 3f);
+            if (_straySockA != null)
+                _straySockA.transform.localRotation = Quaternion.Euler(0f, 0f, -16f + Mathf.Sin(Time.time * 1.8f) * 2f);
+            if (_straySockB != null)
+                _straySockB.transform.localRotation = Quaternion.Euler(0f, 0f, 14f + Mathf.Sin(Time.time * 1.5f) * 2f);
+            if (_chewToyUnderTable != null)
+                _chewToyUnderTable.transform.localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(Time.time * 2.4f) * 5f);
+            if (_phoneNotificationPing != null)
+            {
+                bool phoneDistracting = !DoorOpen && PhoneBattery > 0.08f && CurrentBeat != Beat.ChargerGambit;
+                _phoneNotificationPing.SetActive(phoneDistracting);
+                if (phoneDistracting)
+                {
+                    float ping = 1f + Mathf.Abs(Mathf.Sin(Time.time * 5.8f)) * 0.55f;
+                    _phoneNotificationPing.transform.localScale = new Vector3(0.1f, 0.1f, 1f) * ping;
+                }
+            }
             if (_phoneGlow != null)
                 _phoneGlow.transform.localScale = new Vector3(1.25f, 1.25f, 1f) * Mathf.Lerp(0.92f, pulse, PhoneBattery);
             UpdateTeenagerProgressRead();
@@ -585,6 +775,8 @@ namespace CheddarAndCocoa.Game
                 _bladderUrgencyTick.SetActive(Bladder >= 0.72f);
                 _bladderUrgencyTick.transform.localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(Time.time * 12f) * 12f);
             }
+            UpdateDogUrgencyCue(DogId.Cheddar, _cheddarUrgencyCue, 0f);
+            UpdateDogUrgencyCue(DogId.Cocoa, _cocoaUrgencyCue, 1.3f);
             if (_doorLabel != null)
                 _doorLabel.text = DoorOpen ? "DOOR OPEN"
                     : CurrentBeat == Beat.ChargerGambit ? "DOOR WAITING"
@@ -646,6 +838,29 @@ namespace CheddarAndCocoa.Game
             AnimateReliefSparkle(_reliefSparkleB, DoorOpen, 0.7f);
             AnimateReliefSparkle(_reliefSparkleC, DoorOpen, 1.4f);
             if (_leashPresentedTrail != null) _leashPresentedTrail.SetActive(!DoorOpen && (_beatIndex == 1 || _beatIndex == 3) && cheddarAtLeash);
+            ApplyPromptVisibility();
+        }
+
+        private void ApplyPromptVisibility()
+        {
+            bool debug = _context.DebugPresentationEnabled();
+            bool doorRelevant = !DoorOpen && CurrentBeat != Beat.ChargerGambit;
+            SetMarkerPrompt(_door, _doorLabel, doorRelevant && (debug || AnyDogNear(_doorPosition)));
+            SetMarkerPrompt(_leash, _leashLabel, !DoorOpen && (_beatIndex == 1 || _beatIndex == 3) && (debug || AnyDogNear(_leashPosition)));
+            SetMarkerPrompt(_cheddarCoach, _cheddarCoachLabel, !DoorOpen && _beatIndex == 0 && (debug || AnyDogNear(_cheddarCoachPosition)));
+            SetMarkerPrompt(_hallway, _hallwayLabel, !DoorOpen && _beatIndex == 2 && (debug || AnyDogNear(_hallwayPosition)));
+            SetMarkerPrompt(_charger, _chargerLabel, !DoorOpen && _beatIndex == 2 && (debug || AnyDogNear(_chargerPosition)));
+            SetMarkerPrompt(_phone, _phoneLabel, debug || AnyDogNear(_phone.transform.position));
+            SetMarkerPrompt(_bladderMeter, _bladderLabel, debug);
+            SetMarkerPrompt(_teenager, _teenagerLabel, debug);
+            SetMarkerPrompt(_misreadProp, _misreadLabel, _misreadProp != null && _misreadProp.activeSelf && (debug || AnyDogNear(_misreadProp.transform.position)));
+        }
+
+        private void SetMarkerPrompt(GameObject marker, TextMesh label, bool visible)
+        {
+            if (marker != null && marker.TryGetComponent<SpriteRenderer>(out var renderer))
+                renderer.enabled = visible;
+            if (label != null) label.gameObject.SetActive(visible);
         }
 
         private static void AnimateReliefSparkle(GameObject sparkle, bool active, float phase)
@@ -694,6 +909,58 @@ namespace CheddarAndCocoa.Game
             }
         }
 
+        private void UpdateTeenPresentationState(bool cocoaAtDoor, bool cheddarAtLeash, bool cheddarAtHallway, bool cocoaAtCharger)
+        {
+            if (DoorOpen)
+            {
+                TeenState = TeenPresentationState.StandingSuccess;
+                return;
+            }
+
+            bool partialMessage = CurrentBeat switch
+            {
+                Beat.LeashMessage => cocoaAtDoor ^ cheddarAtLeash,
+                Beat.ChargerGambit => cheddarAtHallway ^ cocoaAtCharger,
+                Beat.UnitedBark => cocoaAtDoor ^ cheddarAtLeash,
+                _ => false
+            };
+
+            if (!string.IsNullOrEmpty(_latestMisreadThing) || _puzzle.Confusion > 0.05f || partialMessage)
+                TeenState = TeenPresentationState.AnnoyedReacting;
+            else if (_beatIndex > 0 && _puzzle.Comprehension <= 0.02f && PhoneBattery > 0.08f)
+                TeenState = TeenPresentationState.DistractedAgain;
+            else
+                TeenState = TeenPresentationState.DistractedIdle;
+        }
+
+        private void UpdateDogUrgencyCue(DogId dogId, GameObject cue, float phase)
+        {
+            if (cue == null) return;
+            int index = _context.IndexOfDog(dogId);
+            bool active = !DoorOpen && Bladder >= 0.42f && index >= 0 && index < _context.Dogs.Length && _context.Dogs[index] != null;
+            cue.SetActive(active);
+            if (!active) return;
+
+            var dog = _context.Dogs[index];
+            cue.transform.position = dog.transform.position + new Vector3(0f, 1.15f + Mathf.Sin(Time.time * 9f + phase) * 0.12f, -0.2f);
+            float scale = Mathf.Lerp(0.42f, 0.88f, Bladder);
+            cue.transform.localScale = new Vector3(0.22f, 0.66f, 1f) * scale;
+            cue.transform.localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(Time.time * 13f + phase) * 18f);
+            if (Bladder >= 0.72f && _context.DogFeedback != null && index < _context.DogFeedback.Length)
+                _context.DogFeedback[index]?.ShowPanic();
+        }
+
+        private bool AnyDogNear(Vector2 position)
+        {
+            if (_context.Dogs == null) return false;
+            foreach (var dog in _context.Dogs)
+                if (dog != null && Vector2.Distance(dog.transform.position, position) <= PromptRange)
+                    return true;
+            return false;
+        }
+
+        private bool AnyDogNear(Vector3 position) => AnyDogNear((Vector2)position);
+
         private bool DogAt(DogId dogId, Vector2 position)
         {
             int dog = _context.IndexOfDog(dogId);
@@ -704,6 +971,16 @@ namespace CheddarAndCocoa.Game
         {
             if (marker != null && marker.TryGetComponent<SpriteRenderer>(out var renderer))
                 renderer.color = color;
+        }
+
+        private static void PlaceGeneratedArt(GameObject art, Vector3 position, float scale, bool active = true, float zRotation = 0f)
+        {
+            if (art == null) return;
+            art.SetActive(active);
+            if (!active) return;
+            art.transform.position = position;
+            art.transform.localScale = Vector3.one * scale;
+            art.transform.rotation = Quaternion.Euler(0f, 0f, zRotation);
         }
 
         private void ShowMisreadProp(string wrongThing)

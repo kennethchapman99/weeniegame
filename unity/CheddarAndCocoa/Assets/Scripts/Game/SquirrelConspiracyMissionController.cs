@@ -242,6 +242,7 @@ namespace CheddarAndCocoa.Game
                 renderer.color = new Color(1f, 0.72f, 0.18f, 0.38f);
                 renderer.sortingOrder = 1;
                 _context.AddWorldLabel(marker, "HOLD CUTOFF", Vector3.up * 0.38f, 14, Color.white);
+                MissionPropArt.AttachPad(marker, FinalGameplayArt.MissionEscapeGap, 0.012f, 18);
                 marker.SetActive(false);
                 _cutoffMarkers[i] = marker;
             }

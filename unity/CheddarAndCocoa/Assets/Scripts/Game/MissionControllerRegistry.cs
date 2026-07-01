@@ -113,7 +113,7 @@ namespace CheddarAndCocoa.Game
             if (tuning == null) throw new ArgumentNullException(nameof(tuning));
             if (Registrations.TryGetValue(variant, out var registration))
             {
-                definition = registration.DefinitionFactory(tuning);
+                definition = MissionCatalog.ApplyPresentationMetadata(registration.DefinitionFactory(tuning));
                 if (definition == null || definition.Variant != variant)
                     throw new InvalidOperationException($"Definition registration for {variant} returned an invalid definition.");
                 return true;

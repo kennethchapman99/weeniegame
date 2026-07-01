@@ -23,6 +23,10 @@ These documents govern current decisions and work:
 - [Production Readiness](PRODUCTION-READINESS.md) — technical evidence versus human fun gate.
 - [Level Readiness Scores](LEVEL-READINESS-SCORES.md) — current level-design, scenery/assets, and
   couch-readiness scorecard.
+- [Visual Readability Contract](VISUAL-READABILITY-CONTRACT.md) — scale, staging, debug-overlay, and
+  diegetic-guidance rules for Unity scene readability passes.
+- [Family Showcase Manual Test](FAMILY-SHOWCASE-MANUAL-TEST.md) — host script, mission order,
+  fallback plan, and acceptance checklist for the family-facing couch session.
 - [Local Codex Handoff](LOCAL-CODEX-HANDOFF.md) — agent execution contract.
 
 ## OPERATIONAL REFERENCE

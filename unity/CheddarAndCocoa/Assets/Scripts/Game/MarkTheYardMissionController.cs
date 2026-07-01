@@ -14,6 +14,7 @@ namespace CheddarAndCocoa.Game
         private const float ReclaimInitialDelay = 4f;   // matches the legacy ZoneReclaimInterval.
         private const float ReclaimRepeatDelay = 1.5f;
         private const float SquirrelSpeed = 1.9f * 0.8f; // matches SquirrelMoveSpeed * 0.8f.
+        private const float SquirrelReactionSeconds = 0.45f;
 
         private static readonly Color UnclaimedColor = new(0.5f, 0.5f, 0.55f, 0.4f);
         private static readonly Color ClaimedColor = new(0.3f, 0.8f, 0.4f, 0.55f);
@@ -24,7 +25,11 @@ namespace CheddarAndCocoa.Game
         private GameObject[] _zoneMarkers;
         private bool[] _zoneClaimed;
         private GameObject _squirrel;
+        private MissionActorFeedback _squirrelFeedback;
+        private ThreatReadabilityAnimator _squirrelMotion;
+        private MissionPropArtAttachment _squirrelArt;
         private float _nextReclaimAt;
+        private float _squirrelReactionUntil;
 
         public GameManager.MissionVariant Variant => GameManager.MissionVariant.MarkTheYard;
         public bool IsComplete => _state.AllClaimed;
@@ -58,6 +63,7 @@ namespace CheddarAndCocoa.Game
             _zones = ComputeZones(_context.Bounds);
             _state.Configure(_zones.Length);
             _nextReclaimAt = _context.Now() + ReclaimInitialDelay;
+            _squirrelReactionUntil = 0f;
             for (int i = 0; i < _zoneMarkers.Length; i++)
             {
                 if (_zoneMarkers[i] != null)
@@ -71,6 +77,8 @@ namespace CheddarAndCocoa.Game
             if (_squirrel != null)
             {
                 _squirrel.transform.position = new Vector2(0f, _context.Bounds.yMax - 2f);
+                SetSquirrelState("SQUIRREL WATCHING YOUR MARKS", new Color(0.65f, 0.42f, 0.18f, 0.72f), 0.03f,
+                    FinalGameplayArt.SquirrelIdle);
                 _squirrel.SetActive(true);
             }
         }
@@ -91,6 +99,9 @@ namespace CheddarAndCocoa.Game
                 int target = NearestClaimedZone(_squirrel.transform.position);
                 if (target >= 0)
                 {
+                    if (now < _squirrelReactionUntil) return;
+                    SetSquirrelState("SQUIRREL STEALING A MARK!", new Color(0.85f, 0.42f, 0.12f, 0.82f), 0.07f,
+                        FinalGameplayArt.SquirrelSteal);
                     _squirrel.transform.position = Vector3.MoveTowards(
                         _squirrel.transform.position, _zones[target], deltaTime * SquirrelSpeed);
                     if (Vector2.Distance(_squirrel.transform.position, _zones[target]) < 1f && now >= _nextReclaimAt)
@@ -165,6 +176,9 @@ namespace CheddarAndCocoa.Game
             _context.AddScore(ScoreEventCatalog.ZoneClaimed.Points, ScoreEventCatalog.ZoneClaimed.Label);
             _context.SetFeedback(GameManager.FeedbackKind.SquirrelScared);
             _context.SetCue($"{DogNameFor(dogIndex)} marked a zone! ({_state.Claimed}/{_state.ZoneCount})");
+            _squirrelReactionUntil = _context.Now() + SquirrelReactionSeconds;
+            SetSquirrelState("SQUIRREL SCARED OFF!", new Color(0.55f, 0.3f, 0.12f, 0.65f), 0.08f,
+                FinalGameplayArt.SquirrelScared);
             _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, ScoreEventCatalog.ZoneClaimed.Label);
             _context.RequestAudioCue(ArenaFeedbackCatalog.SnackSockCollect);
             _context.LogEvent("ZoneClaimed", $"{_state.Claimed}/{_state.ZoneCount}");
@@ -183,7 +197,12 @@ namespace CheddarAndCocoa.Game
             _context.AddScore(ScoreEventCatalog.ZoneStolen.Points, ScoreEventCatalog.ZoneStolen.Label);
             _context.SetFeedback(GameManager.FeedbackKind.SquirrelStealing);
             _context.SetCue($"The squirrel re-marked a zone! ({_state.Claimed}/{_state.ZoneCount}) Go reclaim it.");
-            if (_squirrel != null) _squirrel.transform.position = _zones[target];
+            if (_squirrel != null)
+            {
+                _squirrel.transform.position = _zones[target];
+                SetSquirrelState("SQUIRREL STOLE A MARK!", new Color(0.9f, 0.32f, 0.08f, 0.9f), 0.12f,
+                    FinalGameplayArt.SquirrelSteal);
+            }
             _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, ScoreEventCatalog.ZoneStolen.Label);
             _context.LogEvent("ZoneStolen", $"{_state.Claimed}/{_state.ZoneCount}");
             _context.LogObjectiveChanged();
@@ -233,6 +252,7 @@ namespace CheddarAndCocoa.Game
                 sr.color = UnclaimedColor;
                 sr.sortingOrder = 1;
                 _context.AddWorldLabel(go, "CLAIM", Vector3.up * 0.9f, 13, Color.white);
+                MissionPropArt.AttachPad(go, FinalGameplayArt.MissionTerritoryZone, 0.012f, 18);
                 go.SetActive(false);
                 _zoneMarkers[i] = go;
             }
@@ -244,6 +264,13 @@ namespace CheddarAndCocoa.Game
             squirrelRenderer.sortingOrder = 6;
             _squirrel.transform.localScale = Vector3.one * 0.9f;
             _context.AddWorldLabel(_squirrel, "SQUIRREL - WILL RE-MARK YOUR ZONES!", Vector3.up * 0.6f, 12, Color.white);
+            _squirrelArt = MissionPropArt.AttachObject(_squirrel, FinalGameplayArt.SquirrelIdle, 0.014f, 24);
+            _squirrelFeedback = _squirrel.AddComponent<MissionActorFeedback>();
+            _squirrelFeedback.Init(squirrelRenderer, "SQUIRREL WATCHING YOUR MARKS", 0.03f, Vector3.forward * 28f);
+            _squirrelMotion = _squirrel.AddComponent<ThreatReadabilityAnimator>();
+            _squirrelMotion.Init(ThreatMotionArt.Actor.Squirrel, _squirrel.GetComponentsInChildren<SpriteRenderer>(true));
+            SetSquirrelState("SQUIRREL WATCHING YOUR MARKS", new Color(0.65f, 0.42f, 0.18f, 0.72f), 0.03f,
+                FinalGameplayArt.SquirrelIdle);
             _squirrel.SetActive(false);
         }
 
@@ -252,6 +279,17 @@ namespace CheddarAndCocoa.Game
             if (_zoneMarkers[i] == null) return;
             var sr = _zoneMarkers[i].GetComponent<SpriteRenderer>();
             if (sr != null) sr.color = claimed ? ClaimedColor : UnclaimedColor;
+        }
+
+        private void SetSquirrelState(string label, Color fallbackColor, float pulseAmount, string spritePath)
+        {
+            if (_squirrelFeedback != null) _squirrelFeedback.SetState(label, fallbackColor, pulseAmount);
+            if (_squirrelMotion != null) _squirrelMotion.SetLabelState(label);
+            if (_squirrelArt != null)
+            {
+                MissionPropArt.SetSprite(_squirrelArt, spritePath);
+                _squirrelArt.Pulse(0.18f, pulseAmount);
+            }
         }
 
         private Vector2 ClampInsideBounds(Vector2 point, float margin) => new(

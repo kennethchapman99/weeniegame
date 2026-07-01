@@ -24,6 +24,8 @@ namespace CheddarAndCocoa.Game
         private GameObject _foodObject;
         private GameObject _telegraphMarker;
         private GameObject _landingWarning;
+        private MissionPropArtAttachment _telegraphArt;
+        private MissionPropArtAttachment _landingWarningArt;
         private Vector2 _counterPosition;
         private Vector2 _safeZonePosition;
         private float _floorY;
@@ -202,6 +204,11 @@ namespace CheddarAndCocoa.Game
             _landingWarning = NewMarker("KitchenLandingWarning", _context.RangeSprite ?? _context.ActorSprite,
                 new Color(1f, 0.85f, 0.35f, 0.45f), 2, Vector3.one * (CatchRadius * 2.4f),
                 "LANDING HERE", 0.45f, 12);
+            MissionPropArt.AttachObject(_counterMarker, FinalGameplayArt.MissionKitchenCounter, 0.013f, 18, true);
+            MissionPropArt.AttachObject(_safeZoneMarker, FinalGameplayArt.MissionKitchenSafeBowl, 0.013f, 18, true);
+            MissionPropArt.AttachObject(_foodObject, FinalGameplayArt.MissionKitchenGoodFood, 0.013f, 18, true);
+            _telegraphArt = MissionPropArt.AttachPad(_telegraphMarker, FinalGameplayArt.KitchenCueTelegraphGold, 0.13f, 17);
+            _landingWarningArt = MissionPropArt.AttachPad(_landingWarning, FinalGameplayArt.KitchenCueLandingGold, 0.14f, 17);
         }
 
         private GameObject NewMarker(string name, Sprite sprite, Color color, int sortingOrder, Vector3 scale,
@@ -274,6 +281,12 @@ namespace CheddarAndCocoa.Game
             _landingWarning.SetActive(true);
 
             bool bad = kind == KitchenFoodFrenzyMissionState.FoodKind.Bad;
+            MissionPropArt.SetSprite(_telegraphArt, bad
+                ? FinalGameplayArt.KitchenCueTelegraphPurple
+                : FinalGameplayArt.KitchenCueTelegraphGold);
+            MissionPropArt.SetSprite(_landingWarningArt, bad
+                ? FinalGameplayArt.KitchenCueLandingPurple
+                : FinalGameplayArt.KitchenCueLandingGold);
             _context.SetCue(bad
                 ? "Cheddar bark-knocked an ONION loose - Cocoa, clear the landing circle!"
                 : "Cheddar bark-knocked dinner loose - Cocoa, line up the gold landing circle!");
@@ -291,6 +304,10 @@ namespace CheddarAndCocoa.Game
             var kind = _state.ActiveKind;
             _foodObject.transform.position = new Vector2(_dropX, _counterPosition.y);
             _foodObject.GetComponent<SpriteRenderer>().color = kind == KitchenFoodFrenzyMissionState.FoodKind.Bad ? BadColor : GoodColor;
+            MissionPropArt.SetSprite(_foodObject.GetComponent<MissionPropArtAttachment>(),
+                kind == KitchenFoodFrenzyMissionState.FoodKind.Bad
+                    ? FinalGameplayArt.MissionKitchenBadFood
+                    : FinalGameplayArt.MissionKitchenGoodFood);
             _foodObject.SetActive(true);
             _telegraphMarker.SetActive(false);
             _context.LogEvent("KitchenDrop", kind == KitchenFoodFrenzyMissionState.FoodKind.Bad ? "bad" : "good");

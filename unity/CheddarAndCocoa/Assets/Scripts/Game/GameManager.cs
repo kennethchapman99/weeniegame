@@ -150,10 +150,14 @@ namespace CheddarAndCocoa.Game
         public MissionVariant MissionVariantAt(int index) => MissionOrder[Mathf.Clamp(index, 0, MissionOrder.Length - 1)];
         public string SelectedMissionName => BuildMissionDefinition(SelectedMissionVariant, _tuning).Name;
         public string SelectedMissionBriefing => BuildMissionDefinition(SelectedMissionVariant, _tuning).IntroPrompt;
+        public string SelectedMissionPresentationLine => BuildMissionDefinition(SelectedMissionVariant, _tuning).PresentationLine;
+        public string SelectedMissionRoleHint => BuildMissionDefinition(SelectedMissionVariant, _tuning).RoleHint;
+        public string SelectedMissionReadinessLabel => MissionReadinessLabelFor(SelectedMissionVariant);
         public string SelectedMissionChallengeLabel => MissionChallengeLabelFor(SelectedMissionVariant);
         public MissionVariant CouchTestFocusVariant => MissionVariant.OperationPeeBreak;
         public string CouchTestFocusName => BuildMissionDefinition(CouchTestFocusVariant, _tuning).Name;
         public string CouchTestFocusLabel => $"COUCH TEST FOCUS: {CouchTestFocusName} - press F5 / P / Y to highlight";
+        public string FamilyShowcaseShortcutLabel => "Showcase jumps: F7 Backyard | F6 Kitchen | F8 Weenies | F9 Walkies | F5 Pee";
         public State Phase { get; private set; } = State.Intro;
         public bool IsGameOver => Phase == State.GameOver;
         public bool IsLevelClear => Phase == State.LevelClear;
@@ -203,9 +207,16 @@ namespace CheddarAndCocoa.Game
         public string ActiveMissionName => _mission != null ? _mission.Name : "Backyard Rescue";
         public string MissionItemPlural => _mission != null ? _mission.ItemRootName : "Breakfast/Weenies";
         public string MissionIntroPrompt => _mission != null ? _mission.IntroPrompt : "Cheddar + Cocoa must protect the weenies together.";
+        public string MissionPresentationLine => _mission != null ? _mission.PresentationLine : string.Empty;
+        public string MissionRoleHint => _mission != null ? _mission.RoleHint : string.Empty;
+        public string MissionReusablePresentation => _mission != null ? _mission.ReusablePresentation : string.Empty;
+        public string ActiveMissionReadinessLabel => _mission != null ? MissionReadinessLabelFor(_mission.Variant) : SelectedMissionReadinessLabel;
         public bool MissionBriefingVisible => MissionActive() && Time.time < _introPromptUntil;
         public string MissionBanner { get; private set; } = string.Empty;
         public string EndRank { get; private set; } = "Needs More Bark";
+        public string EndHeadlineLabel => !EndScreenVisible ? string.Empty : IsLevelClear ? "MISSION COMPLETE" : "MISSION FAILED";
+        public string EndScoreLabel => !EndScreenVisible ? string.Empty : $"Score {Score}  |  Stars {StarRating}/3";
+        public string EndBestScoreLabel => !EndScreenVisible ? string.Empty : $"Best {BestScoreForMission(ActiveMissionVariant)}";
         public string EndSummaryLabel { get; private set; } = string.Empty;
         public string EndReasonLabel { get; private set; } = string.Empty;
         public string EndChallengeLabel
@@ -227,7 +238,7 @@ namespace CheddarAndCocoa.Game
         public bool EndNextMissionAvailable => EndScreenVisible;
         public bool EndMissionSelectAvailable => EndScreenVisible;
         public string EndReplayActionLabel => EndReplayAvailable ? "Replay" : string.Empty;
-        public string EndNextActionLabel => EndNextMissionAvailable ? (SessionSummaryReady ? "Session Summary" : "Next Mission") : string.Empty;
+        public string EndNextActionLabel => EndNextMissionAvailable ? "Next Mission" : string.Empty;
         public string EndMissionSelectActionLabel => EndMissionSelectAvailable ? "Mission Select" : string.Empty;
         public int SessionMissionsPlayed { get; private set; }
         public int SessionTotalScore { get; private set; }
@@ -431,6 +442,12 @@ namespace CheddarAndCocoa.Game
                 InteractionRangeIndicators[i] = dogs[i].gameObject.AddComponent<InteractionRangeIndicator>();
                 InteractionRangeIndicators[i].Init(_rangeSprite, new Color(0.6f, 1f, 0.75f, 0.42f), "RESCUE BARK");
             }
+            WorldLabelVisibility.SetPromptTargets(_dogs);
+            WorldLabelVisibility.SetDebugVisible(PlaytestOverlayVisible);
+            ObjectiveArrowFeedback.SetDebugTextVisible(PlaytestOverlayVisible);
+            InteractionRangeIndicator.SetDebugTextVisible(PlaytestOverlayVisible);
+            DogReadabilityFeedback.SetDebugIdentityLabelsVisible(PlaytestOverlayVisible);
+            MissionPropArtAttachment.SetAffordanceTargets(_dogs);
 
             _playtestLog.Clear();
             _panic = gameObject.AddComponent<PanicMeter>();
@@ -482,6 +499,7 @@ namespace CheddarAndCocoa.Game
             random: () => _rng,
             now: () => Time.time,
             activeModifier: () => ActiveModifier,
+            debugPresentationEnabled: () => PlaytestOverlayVisible,
             activeTreats: () => _treats,
             isPredatorResolved: () => PredatorResolved,
             isTugComplete: () => TugComplete,
@@ -621,6 +639,10 @@ namespace CheddarAndCocoa.Game
         public void SelectMissionRight() => SelectMissionGridStep(1, 0);
 
         public void SelectCouchTestFocusMission() => SelectMission(CouchTestFocusVariant);
+        public void SelectKitchenShowcaseMission() => SelectMission(MissionVariant.KitchenFoodFrenzy);
+        public void SelectBackyardShowcaseMission() => SelectMission(MissionVariant.BackyardRescue);
+        public void SelectWeenieShowcaseMission() => SelectMission(MissionVariant.WeenieRoundup);
+        public void SelectWalkiesShowcaseMission() => SelectMission(MissionVariant.LeashWalk);
 
         private void SelectMissionGridStep(int columnDelta, int rowDelta)
         {
@@ -716,6 +738,10 @@ namespace CheddarAndCocoa.Game
         {
             if (PlaytestOverlayVisible == visible) return;
             PlaytestOverlayVisible = visible;
+            WorldLabelVisibility.SetDebugVisible(visible);
+            ObjectiveArrowFeedback.SetDebugTextVisible(visible);
+            InteractionRangeIndicator.SetDebugTextVisible(visible);
+            DogReadabilityFeedback.SetDebugIdentityLabelsVisible(visible);
             LogPlaytestEvent("Overlay", visible ? "shown" : "hidden");
         }
 
@@ -815,7 +841,14 @@ namespace CheddarAndCocoa.Game
         {
             var mission = BuildMissionDefinition(variant, _tuning);
             string goal = mission.ItemGoal > 0 ? $"{mission.ItemGoal} {mission.ItemRootName}" : "team objective";
-            return $"{mission.RoundSeconds:0}s • {goal}";
+            return $"{FormatMissionDuration(mission.RoundSeconds)} • {goal}";
+        }
+
+        private static string FormatMissionDuration(float seconds)
+        {
+            if (seconds >= 120f && Mathf.Approximately(seconds % 60f, 0f))
+                return $"{Mathf.RoundToInt(seconds / 60f)}m";
+            return $"{seconds:0}s";
         }
 
         public static string MissionChallengeLabelFor(MissionVariant variant)
@@ -830,6 +863,15 @@ namespace CheddarAndCocoa.Game
                 MissionVariant.CoyotesFence => "Challenge: perfect fence defense",
                 _ => "Challenge: clear clean for FLAWLESS"
             };
+        }
+
+        public string MissionReadinessLabelFor(MissionVariant variant)
+        {
+            var definition = BuildMissionDefinition(variant, _tuning);
+            var result = ReadabilityValidator.ValidateMissionDefinition(definition);
+            return result.Passed
+                ? $"Readability gate: READY - {definition.MechanicTag}"
+                : $"Readability gate: BLOCKED - missing {result.Missing}";
         }
 
         public int FailuresForMission(MissionVariant variant)
@@ -1286,6 +1328,7 @@ namespace CheddarAndCocoa.Game
                 sr.color = new Color(0.3f, 0.7f, 0.4f, 0.45f);
                 sr.sortingOrder = 1;
                 AddWorldLabel(go, "HIDE HERE", Vector3.up * 0.9f, 14, Color.white);
+                MissionPropArt.AttachObject(go, FinalGameplayArt.Bush, 0.012f, 18, true);
                 go.SetActive(false);
                 _eagleCoverMarkers[i] = go;
             }
@@ -1311,6 +1354,7 @@ namespace CheddarAndCocoa.Game
                 sr.color = new Color(0.5f, 0.36f, 0.18f, 0.6f);
                 sr.sortingOrder = 1;
                 AddWorldLabel(go, "WEAK SPOT", Vector3.up * 1.4f, 13, Color.white);
+                MissionPropArt.AttachObject(go, FinalGameplayArt.MissionEscapeGap, 0.012f, 18, true);
                 go.SetActive(false);
                 _coyoteGapMarkers[i] = go;
             }
@@ -2486,6 +2530,26 @@ namespace CheddarAndCocoa.Game
                     if (kb.digit9Key.wasPressedThisFrame) { StartMission(MissionVariant.ThunderstormComfort); return; }
                     if (kb.digit0Key.wasPressedThisFrame) { StartMission(MissionVariant.MarkTheYard); return; }
                     focus |= kb.f5Key.wasPressedThisFrame || kb.pKey.wasPressedThisFrame;
+                    if (kb.f6Key.wasPressedThisFrame || kb.kKey.wasPressedThisFrame)
+                    {
+                        SelectKitchenShowcaseMission();
+                        return;
+                    }
+                    if (kb.f7Key.wasPressedThisFrame || kb.bKey.wasPressedThisFrame)
+                    {
+                        SelectBackyardShowcaseMission();
+                        return;
+                    }
+                    if (kb.f8Key.wasPressedThisFrame || kb.wKey.wasPressedThisFrame)
+                    {
+                        SelectWeenieShowcaseMission();
+                        return;
+                    }
+                    if (kb.f9Key.wasPressedThisFrame || kb.lKey.wasPressedThisFrame)
+                    {
+                        SelectWalkiesShowcaseMission();
+                        return;
+                    }
                     up |= kb.upArrowKey.wasPressedThisFrame;
                     down |= kb.downArrowKey.wasPressedThisFrame;
                     left |= kb.leftArrowKey.wasPressedThisFrame;
@@ -2795,7 +2859,7 @@ namespace CheddarAndCocoa.Game
             switch (variant)
             {
                 case MissionVariant.EagleShadowPanic:
-                    return new MissionDefinition
+                    return MissionCatalog.ApplyPresentationMetadata(new MissionDefinition
                     {
                         Variant = MissionVariant.EagleShadowPanic,
                         Name = "Eagle Shadow Panic",
@@ -2850,9 +2914,9 @@ namespace CheddarAndCocoa.Game
                         ItemAccentColor = new Color(0.7f, 0.82f, 1f),
                         ItemSecondaryColor = new Color(0.14f, 0.16f, 0.22f),
                         ItemPopColor = new Color(0.7f, 0.85f, 1f)
-                    };
+                    });
                 case MissionVariant.CoyotesFence:
-                    return new MissionDefinition
+                    return MissionCatalog.ApplyPresentationMetadata(new MissionDefinition
                     {
                         Variant = MissionVariant.CoyotesFence,
                         Name = "Coyotes at the Fence",
@@ -2907,7 +2971,7 @@ namespace CheddarAndCocoa.Game
                         ItemAccentColor = new Color(0.85f, 0.7f, 0.35f),
                         ItemSecondaryColor = new Color(0.2f, 0.14f, 0.06f),
                         ItemPopColor = new Color(0.95f, 0.8f, 0.35f)
-                    };
+                    });
                 default:
                     throw new System.InvalidOperationException($"No MissionDefinition registered for {variant}. Add it to MissionCatalog.");
             }
@@ -3247,6 +3311,7 @@ namespace CheddarAndCocoa.Game
             sr.color = _mission.ItemColor;
             sr.sortingOrder = 5;
             BuildCollectibleArt(go, art);
+            AttachCollectiblePropArt(go);
 
             var col = go.AddComponent<CircleCollider2D>();
             col.isTrigger = true;
@@ -3267,6 +3332,19 @@ namespace CheddarAndCocoa.Game
                 AddActorPart(go, part, _sprite,
                     part.ResolveColor(_mission.ItemColor, _mission.ItemAccentColor, _mission.ItemSecondaryColor));
             }
+        }
+
+        private void AttachCollectiblePropArt(GameObject go)
+        {
+            string path = _mission.Variant switch
+            {
+                MissionVariant.SnackHeist => FinalGameplayArt.MissionSnackPlate,
+                MissionVariant.SockPanic => FinalGameplayArt.MissionSockBundle,
+                MissionVariant.BlanketCatch => FinalGameplayArt.MissionFallingSnack,
+                _ => null
+            };
+            if (!string.IsNullOrEmpty(path))
+                MissionPropArt.AttachObject(go, path, 0.013f, 18, true);
         }
 
         private void ClearTreats()
@@ -3319,8 +3397,10 @@ namespace CheddarAndCocoa.Game
         {
             ThreatMotionArt.Actor defaultActor = art.ObjectName == "Squirrel"
                 ? ThreatMotionArt.Actor.Squirrel
+                : art.ObjectName == "Predator Warning"
+                    ? ThreatMotionArt.Actor.Eagle
                 : ThreatMotionArt.Actor.Unknown;
-            bool supportsThreatMotion = defaultActor != ThreatMotionArt.Actor.Unknown || art.ObjectName == "Predator Warning";
+            bool supportsThreatMotion = defaultActor != ThreatMotionArt.Actor.Unknown;
             if (!supportsThreatMotion) return null;
 
             var fallbackRenderers = go.GetComponentsInChildren<SpriteRenderer>(true);
@@ -3413,6 +3493,8 @@ namespace CheddarAndCocoa.Game
             label.anchor = TextAnchor.MiddleCenter;
             label.alignment = TextAlignment.Center;
             label.color = color;
+            WorldLabelSkin.Attach(label, scorePop: false);
+            WorldLabelVisibility.Attach(label);
             return label;
         }
 
@@ -3440,6 +3522,7 @@ namespace CheddarAndCocoa.Game
             label.anchor = TextAnchor.MiddleCenter;
             label.alignment = TextAlignment.Center;
             label.color = color;
+            WorldLabelSkin.Attach(label, scorePop: true);
             go.AddComponent<MissionWorldPop>().Begin(label);
         }
 
@@ -3462,7 +3545,7 @@ namespace CheddarAndCocoa.Game
             _audio.volume = 1f;
 
             foreach (var cue in ArenaFeedbackCatalog.RequiredAudioCues)
-                _audioClips[cue.Name] = MakePlaceholderClip(cue);
+                _audioClips[cue.Name] = MakeGeneratedArenaSfxClip(cue);
 
             _music = gameObject.AddComponent<AudioSource>();
             _music.playOnAwake = false;
@@ -3502,33 +3585,76 @@ namespace CheddarAndCocoa.Game
             return clip;
         }
 
-        private AudioClip MakePlaceholderClip(AudioCueSlot cue)
+        private static AudioClip MakeGeneratedArenaSfxClip(AudioCueSlot cue)
         {
             const int sampleRate = 22050;
             int sampleCount = Mathf.CeilToInt(sampleRate * cue.Seconds);
             var samples = new float[sampleCount];
-            uint noise = 2166136261u;
+            uint noise = 2166136261u ^ (uint)(cue.Name.Length * 16777619);
             for (int i = 0; i < sampleCount; i++)
             {
                 float t = i / (float)sampleRate;
-                float envelope = 1f - (i / (float)sampleCount);
-                float wave;
-                if (cue.Wave == ArenaFeedbackCatalog.PlaceholderWave.Noise)
-                {
-                    noise ^= (uint)(i + cue.Name.Length * 31);
-                    noise *= 16777619u;
-                    wave = ((noise & 1023u) / 511.5f) - 1f;
-                }
-                else
-                {
-                    wave = Mathf.Sin(2f * Mathf.PI * cue.Frequency * t);
-                }
-                samples[i] = wave * envelope * cue.Volume;
+                float progress = i / Mathf.Max(1f, sampleCount - 1f);
+                float envelope = AttackReleaseEnvelope(progress, 0.08f, 1.8f);
+                float hz = Mathf.Max(40f, cue.Frequency * (1f + cue.Sweep * progress));
+                float white = NextNoise(ref noise) * cue.Noise;
+                float wave = SfxWave(cue.Kind, hz, t, progress, white);
+                samples[i] = Mathf.Clamp(wave * envelope * cue.Volume, -1f, 1f);
             }
 
             var clip = AudioClip.Create(cue.Name, sampleCount, 1, sampleRate, false);
             clip.SetData(samples, 0);
             return clip;
+        }
+
+        private static float AttackReleaseEnvelope(float progress, float attack, float releasePower)
+        {
+            float a = Mathf.Clamp01(progress / Mathf.Max(0.001f, attack));
+            float r = Mathf.Pow(1f - progress, releasePower);
+            return Mathf.Clamp01(a * r);
+        }
+
+        private static float NextNoise(ref uint state)
+        {
+            state ^= state << 13;
+            state ^= state >> 17;
+            state ^= state << 5;
+            return ((state & 0xffffu) / 32767.5f) - 1f;
+        }
+
+        private static float SfxWave(ArenaFeedbackCatalog.GeneratedSfxKind kind, float hz, float t, float progress, float noise)
+        {
+            float main = Mathf.Sin(2f * Mathf.PI * hz * t);
+            float harmonic = Mathf.Sin(2f * Mathf.PI * hz * 2.01f * t) * 0.32f;
+            float sub = Mathf.Sin(2f * Mathf.PI * hz * 0.5f * t) * 0.28f;
+            float chirp = Mathf.Sin(2f * Mathf.PI * hz * (1f + progress * 2.2f) * t);
+
+            switch (kind)
+            {
+                case ArenaFeedbackCatalog.GeneratedSfxKind.DogBark:
+                    return Mathf.Sign(main + harmonic * 0.7f) * (0.62f + 0.25f * Mathf.Sin(progress * Mathf.PI * 3f)) + noise * 0.38f;
+                case ArenaFeedbackCatalog.GeneratedSfxKind.TeamSuccess:
+                    return main * 0.45f + Mathf.Sin(2f * Mathf.PI * hz * 1.5f * t) * 0.3f + chirp * 0.18f;
+                case ArenaFeedbackCatalog.GeneratedSfxKind.CrunchCollect:
+                    return main * 0.18f + Mathf.Sign(Mathf.Sin(2f * Mathf.PI * hz * 3f * t)) * 0.22f + noise * 0.6f;
+                case ArenaFeedbackCatalog.GeneratedSfxKind.SquirrelAlarm:
+                    return chirp * 0.45f + Mathf.Sign(Mathf.Sin(2f * Mathf.PI * hz * 5f * t)) * 0.24f + noise * 0.5f;
+                case ArenaFeedbackCatalog.GeneratedSfxKind.ScoreSparkle:
+                    return chirp * 0.42f + Mathf.Sin(2f * Mathf.PI * hz * 2.5f * t) * 0.3f + noise * 0.12f;
+                case ArenaFeedbackCatalog.GeneratedSfxKind.PenaltyThunk:
+                    return sub * (1f - progress) + main * 0.16f + noise * 0.26f;
+                case ArenaFeedbackCatalog.GeneratedSfxKind.VictoryFanfare:
+                    return main * 0.3f + Mathf.Sin(2f * Mathf.PI * hz * 1.25f * t) * 0.28f
+                        + Mathf.Sin(2f * Mathf.PI * hz * 1.5f * t) * 0.22f + chirp * 0.16f;
+                case ArenaFeedbackCatalog.GeneratedSfxKind.FailureSigh:
+                    return sub * 0.44f + main * 0.18f + noise * 0.28f;
+                case ArenaFeedbackCatalog.GeneratedSfxKind.UiBlip:
+                    return main * 0.55f + chirp * 0.2f;
+                case ArenaFeedbackCatalog.GeneratedSfxKind.ThreatRattle:
+                    return sub * 0.35f + Mathf.Sign(main) * 0.24f + noise * 0.72f;
+                default:
+                    return main + noise;
+            }
         }
 
         private void RequestAudioCue(string cueName)

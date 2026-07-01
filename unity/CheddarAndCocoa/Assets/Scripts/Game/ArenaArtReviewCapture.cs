@@ -15,6 +15,7 @@ namespace CheddarAndCocoa.Game
         public const string ArgumentPrefix = "--arena-art-review=";
         private GameManager _game;
         private string _outputDirectory;
+        private Vector2? _focusOverride;
 
         public static bool TryAttach(GameManager game)
         {
@@ -43,67 +44,279 @@ namespace CheddarAndCocoa.Game
         private IEnumerator CaptureSequence()
         {
             Directory.CreateDirectory(_outputDirectory);
-            _game.StartMission(GameManager.MissionVariant.BackyardRescue);
-            yield return new WaitForSecondsRealtime(0.8f);
-            yield return Capture("01-local-gameplay.ppm");
+            var manifest = new StringBuilder();
+            manifest.AppendLine("# Arena Art Review Capture");
+            manifest.AppendLine();
+            manifest.AppendLine($"Generated: {DateTime.UtcNow:O}");
+            manifest.AppendLine();
 
-            DogController[] dogs = FindObjectsByType<DogController>(FindObjectsSortMode.None);
-            foreach (var dog in dogs)
+            int index = 1;
+            foreach (GameManager.MissionVariant variant in Enum.GetValues(typeof(GameManager.MissionVariant)))
             {
-                var input = dog.GetComponent<GamepadPlayerInput>();
-                if (input != null) input.enabled = false;
-                dog.GetComponent<Rigidbody2D>().linearVelocity = Vector2.right * 5f;
-            }
-            yield return new WaitForSecondsRealtime(0.14f);
-            yield return Capture("02-run-east.ppm");
-            foreach (var dog in dogs) dog.GetComponent<Rigidbody2D>().linearVelocity = Vector2.up * 5f;
-            yield return new WaitForSecondsRealtime(0.14f);
-            yield return Capture("03-run-north.ppm");
-            foreach (var dog in dogs) dog.GetComponent<Rigidbody2D>().linearVelocity = Vector2.down * 5f;
-            yield return new WaitForSecondsRealtime(0.14f);
-            yield return Capture("04-run-south.ppm");
-            foreach (var dog in dogs)
-            {
-                dog.GetComponent<Rigidbody2D>().linearVelocity = Vector2.zero;
-                var input = dog.GetComponent<GamepadPlayerInput>();
-                if (input != null) input.enabled = true;
+                _focusOverride = null;
+                string slug = Slug(variant.ToString());
+                _game.StartMission(variant);
+                yield return new WaitForSecondsRealtime(0.25f);
+                FocusCameraOnActiveMission(variant);
+                yield return new WaitForSecondsRealtime(0.08f);
+                string start = $"{index:00}-{slug}-start.ppm";
+                yield return Capture(start);
+                manifest.AppendLine($"- `{start}` — {variant} start");
+
+                DriveMainInteraction(variant);
+                yield return new WaitForSecondsRealtime(0.2f);
+                FocusCameraOnActiveMission(variant);
+                string main = $"{index:00}-{slug}-main.ppm";
+                yield return Capture(main);
+                manifest.AppendLine($"- `{main}` — {variant} main interaction");
+
+                DrivePayoff(variant);
+                yield return new WaitForSecondsRealtime(0.35f);
+                FocusCameraOnActiveMission(variant);
+                string payoff = $"{index:00}-{slug}-payoff.ppm";
+                yield return Capture(payoff);
+                manifest.AppendLine($"- `{payoff}` — {variant} payoff/state change");
+                index++;
             }
 
-            if (dogs.Length > 0) dogs[0].Bark();
-            yield return new WaitForSecondsRealtime(0.08f);
-            yield return Capture("05-bark.ppm");
-
-            _game.ForcePredatorWarning();
-            yield return new WaitForSecondsRealtime(0.12f);
-            yield return Capture("06-warning.ppm");
-            yield return new WaitForSecondsRealtime(0.8f);
-
-            _game.ForcePredatorAttack();
-            yield return null;
-            foreach (var dog in dogs)
-            {
-                dog.transform.position = _game.PredatorObject.transform.position;
-                dog.Bark();
-            }
-            yield return new WaitForSecondsRealtime(0.12f);
-            yield return Capture("07-rescue.ppm");
-            yield return new WaitForSecondsRealtime(0.9f);
-
-            Camera camera = Camera.main;
-            if (camera != null)
-            {
-                var rig = camera.GetComponent<SharedCameraController>();
-                if (rig != null) rig.enabled = false;
-                Rect bounds = _game.ArenaBounds;
-                camera.transform.position = new Vector3(bounds.center.x, bounds.center.y, camera.transform.position.z);
-                float aspect = Mathf.Max(0.1f, camera.aspect);
-                camera.orthographicSize = Mathf.Max(bounds.height * 0.5f + 2f, bounds.width * 0.5f / aspect + 2f);
-            }
-            yield return new WaitForSecondsRealtime(0.2f);
-            yield return Capture("08-full-yard.ppm");
+            File.WriteAllText(Path.Combine(_outputDirectory, "arena-art-review-manifest.md"),
+                manifest.ToString(), Encoding.UTF8);
 
             Debug.Log($"Arena art review captures complete: {_outputDirectory}");
             Application.Quit();
+        }
+
+        private void DriveMainInteraction(GameManager.MissionVariant variant)
+        {
+            switch (variant)
+            {
+                case GameManager.MissionVariant.BackyardRescue:
+                case GameManager.MissionVariant.SnackHeist:
+                    _game.ForceSquirrelStealAttempt();
+                    break;
+                case GameManager.MissionVariant.SockPanic:
+                    _game.ForceSockBasketTip(DogId.Cocoa);
+                    break;
+                case GameManager.MissionVariant.SquirrelConspiracy:
+                    _game.ForceSquirrelConspiracyHerd(DogId.Cheddar);
+                    break;
+                case GameManager.MissionVariant.EagleShadowPanic:
+                    _game.ForceEagleShadowSweepPass();
+                    break;
+                case GameManager.MissionVariant.CoyotesFence:
+                    _game.ForceCoyoteProwlReach();
+                    break;
+                case GameManager.MissionVariant.WeenieRoundup:
+                    StageDogsAtCurrentObjective();
+                    _game.ForceWeeniePickup(DogId.Cheddar);
+                    break;
+                case GameManager.MissionVariant.ScentSearch:
+                    _game.ForceScentSniff(DogId.Cheddar);
+                    break;
+                case GameManager.MissionVariant.ThunderstormComfort:
+                    _game.ForceThunderclap();
+                    break;
+                case GameManager.MissionVariant.MarkTheYard:
+                    _game.ForceClaimZone(DogId.Cheddar);
+                    break;
+                case GameManager.MissionVariant.LeashWalk:
+                    StageDogsAtCurrentObjective();
+                    _game.ForceReachCheckpoint();
+                    break;
+                case GameManager.MissionVariant.CarRide:
+                    _game.ForceCarLurch();
+                    break;
+                case GameManager.MissionVariant.GateCrash:
+                    _game.ForceGateHold(true);
+                    break;
+                case GameManager.MissionVariant.TableStealth:
+                    _game.ForceTableFlop(true);
+                    break;
+                case GameManager.MissionVariant.SquirrelSwitcheroo:
+                    _game.ForceSwitcherooBait(0.7f);
+                    break;
+                case GameManager.MissionVariant.WalkCampaign:
+                    _game.ForceWalkCampaign(1f, doorStare: true, presentLeash: false);
+                    break;
+                case GameManager.MissionVariant.BoneRelay:
+                    _game.ForceBoneReveal();
+                    break;
+                case GameManager.MissionVariant.GreatEscape:
+                    _game.ForceEscapeStep(_game.GreatEscapePuzzle.NextOwner);
+                    break;
+                case GameManager.MissionVariant.ChaosMachine:
+                    _game.ForceChaosTrigger();
+                    StageDogsAtCurrentObjective();
+                    break;
+                case GameManager.MissionVariant.BlanketCatch:
+                    _game.ForceBlanketSpan(6f, 0f);
+                    break;
+                case GameManager.MissionVariant.KitchenFoodFrenzy:
+                    _game.ForceKitchenDrop(KitchenFoodFrenzyMissionState.FoodKind.Good);
+                    break;
+                case GameManager.MissionVariant.OperationPeeBreak:
+                    _game.ForcePeeBreakAdvance(SocialStimulus.DoorStare, 1f);
+                    break;
+            }
+        }
+
+        private void DrivePayoff(GameManager.MissionVariant variant)
+        {
+            switch (variant)
+            {
+                case GameManager.MissionVariant.BackyardRescue:
+                    _game.ForceBackyardTrapRedirect(DogId.Cheddar, true);
+                    _game.ForceBackyardTrapRecovery(DogId.Cocoa);
+                    break;
+                case GameManager.MissionVariant.SnackHeist:
+                    _game.ForceCollectTreat();
+                    break;
+                case GameManager.MissionVariant.SockPanic:
+                    _game.ForceSockBasketTip(DogId.Cocoa);
+                    break;
+                case GameManager.MissionVariant.SquirrelConspiracy:
+                    for (int i = 0; i < 4; i++) _game.ForceSquirrelConspiracyHerd(i % 2 == 0 ? DogId.Cheddar : DogId.Cocoa);
+                    _game.ForceSquirrelConspiracyFindStash(DogId.Cocoa);
+                    break;
+                case GameManager.MissionVariant.EagleShadowPanic:
+                    _game.ForceEagleShadowUnitedFront();
+                    break;
+                case GameManager.MissionVariant.CoyotesFence:
+                    _game.ForceCoyoteRepair(DogId.Cheddar);
+                    _game.ForceCoyoteFinalBlock();
+                    break;
+                case GameManager.MissionVariant.WeenieRoundup:
+                    StageDogsAround(_game.BowlPosition);
+                    _focusOverride = _game.BowlPosition;
+                    _game.ForceWeenieDeliver(DogId.Cheddar);
+                    break;
+                case GameManager.MissionVariant.ScentSearch:
+                    _game.ForceScentDigCorrect(DogId.Cheddar);
+                    break;
+                case GameManager.MissionVariant.ThunderstormComfort:
+                    _game.ForceComfortStep(3f);
+                    break;
+                case GameManager.MissionVariant.MarkTheYard:
+                    for (int i = 0; i < 5; i++) _game.ForceClaimZone(i % 2 == 0 ? DogId.Cheddar : DogId.Cocoa);
+                    break;
+                case GameManager.MissionVariant.LeashWalk:
+                    StageDogsAtCurrentObjective();
+                    _game.ForceReachCheckpoint();
+                    break;
+                case GameManager.MissionVariant.CarRide:
+                    _game.ForceCarSpill();
+                    break;
+                case GameManager.MissionVariant.GateCrash:
+                    _game.ForceGateHold(true);
+                    _game.ForceGateCross(1f);
+                    break;
+                case GameManager.MissionVariant.TableStealth:
+                    _game.ForceTableSneak(2f);
+                    break;
+                case GameManager.MissionVariant.SquirrelSwitcheroo:
+                    _game.ForceSwitcherooStrike();
+                    break;
+                case GameManager.MissionVariant.WalkCampaign:
+                    _game.ForceWalkCampaign(3f, doorStare: true, presentLeash: true);
+                    break;
+                case GameManager.MissionVariant.BoneRelay:
+                    _game.ForceBoneDig(_game.BoneRelayPuzzle.CorrectTarget);
+                    break;
+                case GameManager.MissionVariant.GreatEscape:
+                    for (int i = 0; i < _game.EscapeStationCount; i++)
+                        _game.ForceEscapeStep(_game.GreatEscapePuzzle.NextOwner);
+                    break;
+                case GameManager.MissionVariant.ChaosMachine:
+                    _game.ForceChaosAdvance(0.5f, assisting: true);
+                    break;
+                case GameManager.MissionVariant.BlanketCatch:
+                    _game.ForceBlanketCatch(0f);
+                    break;
+                case GameManager.MissionVariant.KitchenFoodFrenzy:
+                    _game.ForceKitchenCatch(DogId.Cocoa, true);
+                    break;
+                case GameManager.MissionVariant.OperationPeeBreak:
+                    var peeBreak = _game.PeeBreakController;
+                    if (peeBreak != null)
+                    {
+                        _game.ForcePeeBreakAdvance(SocialStimulus.DoorStare | SocialStimulus.PresentLeash, 2.1f);
+                        _game.ForcePeeBreakAdvance(peeBreak.Required, 2.6f);
+                        _game.ForcePeeBreakAdvance(peeBreak.Required, 2.3f);
+                    }
+                    break;
+            }
+        }
+
+        private void FocusCameraOnActiveMission(GameManager.MissionVariant variant)
+        {
+            Camera camera = Camera.main;
+            if (camera == null || _game == null) return;
+
+            var rig = camera.GetComponent<SharedCameraController>();
+            if (rig != null) rig.enabled = false;
+
+            Vector2 focus = _game.ArenaBounds.center;
+            if (_focusOverride.HasValue)
+            {
+                focus = _focusOverride.Value;
+                _focusOverride = null;
+            }
+            else if (variant == GameManager.MissionVariant.OperationPeeBreak && _game.PeeBreakController != null)
+            {
+                focus = _game.PeeBreakController.DoorPosition + new Vector2(-4f, -1.4f);
+            }
+            else if (_game.ActiveMissionController != null &&
+                     _game.ActiveMissionController.TryGetObjectiveTarget(0, out Transform target, out _, out _)
+                     && target != null)
+            {
+                focus = target.position;
+            }
+            else
+            {
+                var dogs = FindObjectsByType<DogController>(FindObjectsSortMode.None);
+                if (dogs.Length > 0) focus = dogs[0].transform.position;
+            }
+
+            camera.transform.position = new Vector3(focus.x, focus.y, camera.transform.position.z);
+            camera.orthographicSize = variant == GameManager.MissionVariant.OperationPeeBreak ? 8.5f : 8f;
+        }
+
+        private bool StageDogsAtCurrentObjective()
+        {
+            if (_game == null || _game.ActiveMissionController == null) return false;
+            if (!_game.ActiveMissionController.TryGetObjectiveTarget(0, out Transform target, out _, out _) || target == null)
+                return false;
+
+            StageDogsAround(target.position);
+            _focusOverride = target.position;
+            return true;
+        }
+
+        private static void StageDogsAround(Vector2 point)
+        {
+            var dogs = FindObjectsByType<DogController>(FindObjectsSortMode.None);
+            if (dogs == null || dogs.Length == 0) return;
+            for (int i = 0; i < dogs.Length; i++)
+            {
+                float side = i % 2 == 0 ? -1f : 1f;
+                if (dogs[i].TryGetComponent<DogIdentity>(out var identity))
+                    side = identity.Id == DogId.Cheddar ? -1f : 1f;
+                dogs[i].transform.position = point + new Vector2(side * 1.1f, -0.65f);
+                if (dogs[i].TryGetComponent<Rigidbody2D>(out var body)) body.linearVelocity = Vector2.zero;
+            }
+        }
+
+        private static string Slug(string value)
+        {
+            if (string.IsNullOrEmpty(value)) return "mission";
+            var builder = new StringBuilder(value.Length + 8);
+            for (int i = 0; i < value.Length; i++)
+            {
+                char c = value[i];
+                if (char.IsUpper(c) && i > 0) builder.Append('-');
+                builder.Append(char.IsLetterOrDigit(c) ? char.ToLowerInvariant(c) : '-');
+            }
+            return builder.ToString();
         }
 
         private IEnumerator Capture(string fileName)

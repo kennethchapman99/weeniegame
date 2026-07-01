@@ -52,6 +52,18 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator Chaos_JunctionsUseDistinctGeneratedActionProps()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.ChaosMachine);
+            yield return null;
+
+            AssertJunctionArt(0, FinalGameplayArt.ChaosJunctionTowelDrop, "chaos_junction_towel_drop");
+            AssertJunctionArt(1, FinalGameplayArt.ChaosJunctionBasketTip, "chaos_junction_basket_tip");
+            AssertJunctionArt(2, FinalGameplayArt.ChaosJunctionToyLaunch, "chaos_junction_toy_launch");
+        }
+
+        [UnityTest]
         public IEnumerator Chaos_ClearPath_LeverThenAssistEveryJunction()
         {
             yield return LoadArena();
@@ -199,6 +211,17 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(_game);
             Assert.IsNotNull(_cheddar);
             Assert.IsNotNull(_cocoa);
+        }
+
+        private static void AssertJunctionArt(int index, string expectedResource, string expectedSpriteName)
+        {
+            var junction = GameObject.Find($"ChaosJunction_{index}");
+            Assert.IsNotNull(junction);
+            var art = junction.GetComponent<MissionPropArtAttachment>();
+            Assert.IsNotNull(art);
+            Assert.AreEqual(expectedResource, art.ResourcePath);
+            Assert.IsTrue(art.HasRuntimeSprite);
+            Assert.AreEqual(expectedSpriteName, art.RuntimeSpriteName);
         }
     }
 }

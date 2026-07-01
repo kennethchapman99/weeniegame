@@ -37,6 +37,11 @@ Required:
 - fail
 - replay/select
 
+Current Unity implementation: `ArenaFeedbackCatalog` now maps the major feedback events to generated
+procedural dog-life SFX profiles for bark, team success, crunch collect, squirrel alarm, score
+sparkle, penalty thunk, victory fanfare, failure sigh, UI blip, and threat rattle. These are
+replaceable runtime cue slots for couch-test clarity, not authored recordings or a final mix.
+
 ## Threat Cues
 
 Squirrel:

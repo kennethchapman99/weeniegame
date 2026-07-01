@@ -58,6 +58,8 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(DogFeedbackPhase.Impact, feedback.CurrentPhase);
             Assert.AreEqual(style.ParticleCount, feedback.TotalParticlesEmitted);
             Assert.AreEqual(style.Signature, feedback.LastParticleSignature);
+            Assert.IsTrue(feedback.UsesGeneratedParticleArt);
+            Assert.AreEqual("dog_fx_chaos_spark", feedback.LastParticleSpriteName);
 
             feedback.Tick(style.Impact + style.Recovery + 0.01f);
             Assert.IsTrue(feedback.IsNeutral, "The action should settle fully after recovery.");
@@ -82,6 +84,8 @@ namespace CheddarAndCocoa.Tests
 
             feedback.TrackMotion(Vector2.right * 3f, style.TrailInterval * 2.1f);
             Assert.GreaterOrEqual(feedback.TotalTrailsEmitted, 2);
+            Assert.IsTrue(feedback.UsesGeneratedTrailArt);
+            Assert.AreEqual("dog_fx_paw_cocoa", feedback.LastTrailSpriteName);
 
             feedback.SetSustained(action, false);
             Assert.AreEqual(DogFeedbackPhase.Recovery, feedback.CurrentPhase);

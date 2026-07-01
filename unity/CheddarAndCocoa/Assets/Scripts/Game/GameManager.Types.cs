@@ -85,6 +85,16 @@ namespace CheddarAndCocoa.Game
             public Color ItemAccentColor;
             public Color ItemSecondaryColor;
             public Color ItemPopColor;
+            public string RoleHint;
+            public string MechanicTag;
+            public string SceneCue;
+            public string ReusablePresentation;
+            public ReadabilityRequirement RequiredReadability;
+
+            public string PresentationLine =>
+                string.IsNullOrEmpty(MechanicTag) && string.IsNullOrEmpty(SceneCue)
+                    ? string.Empty
+                    : $"{MechanicTag} | {SceneCue}";
         }
 
         public enum JuiceFeedbackKind

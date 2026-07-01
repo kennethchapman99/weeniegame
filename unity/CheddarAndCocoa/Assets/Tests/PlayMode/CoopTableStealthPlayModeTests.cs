@@ -89,6 +89,36 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator TableStealth_HumanActorStatesShowDistractionSpottingAndOutcome()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.TableStealth);
+            yield return null;
+
+            var human = GameObject.Find("TableStealthHuman");
+            Assert.IsNotNull(human);
+            var feedback = human.GetComponent<MissionActorFeedback>();
+            Assert.IsNotNull(feedback);
+            Assert.IsTrue(feedback.HasContextualTextVisibility,
+                "The human explanation must be contextual/debug text, not an always-on production crutch.");
+            Assert.That(feedback.Label, Does.Contain("WATCHING TABLE"));
+
+            _game.ForceTableFlop(true);
+            Assert.That(feedback.Label, Does.Contain("WATCHING COCOA"));
+
+            _game.ForceTableSneak(2.0f);
+            Assert.That(feedback.Label, Does.Contain("STEAK GONE"));
+
+            _game.StartMission(GameManager.MissionVariant.TableStealth);
+            yield return null;
+            _game.ForceTableSneak(0.3f);
+            Assert.That(feedback.Label, Does.Contain("SPOTTED"));
+
+            for (int i = 0; i < 3; i++) _game.ForceTableSneak(0.3f);
+            Assert.That(feedback.Label, Does.Contain("CAUGHT"));
+        }
+
+        [UnityTest]
         public IEnumerator TableStealth_Replay_ResetsThePuzzle()
         {
             yield return LoadArena();

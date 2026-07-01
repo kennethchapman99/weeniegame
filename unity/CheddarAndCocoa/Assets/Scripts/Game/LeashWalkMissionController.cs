@@ -165,6 +165,7 @@ namespace CheddarAndCocoa.Game
                 sr.color = new Color(0.45f, 0.6f, 0.85f, 0.4f);
                 sr.sortingOrder = 1;
                 _context.AddWorldLabel(go, "CHECKPOINT", Vector3.up * 0.9f, 13, Color.white);
+                MissionPropArt.AttachPad(go, FinalGameplayArt.MissionLeashCheckpoint, 0.012f, 18);
                 go.SetActive(false);
                 _markers[i] = go;
             }

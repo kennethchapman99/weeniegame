@@ -1,4 +1,5 @@
 using System;
+using CheddarAndCocoa.Game;
 using UnityEngine;
 
 namespace CheddarAndCocoa.Dogs
@@ -137,6 +138,10 @@ namespace CheddarAndCocoa.Dogs
         public float VisualRotationDegrees { get; private set; }
         public string CurrentSignature => CurrentAction == DogFeedbackAction.None ? string.Empty : _style.Signature;
         public string LastParticleSignature { get; private set; } = string.Empty;
+        public string LastParticleSpriteName { get; private set; } = string.Empty;
+        public string LastTrailSpriteName { get; private set; } = string.Empty;
+        public bool UsesGeneratedParticleArt => !string.IsNullOrEmpty(LastParticleSpriteName);
+        public bool UsesGeneratedTrailArt => !string.IsNullOrEmpty(LastTrailSpriteName);
         public int TotalParticlesEmitted { get; private set; }
         public int TotalTrailsEmitted { get; private set; }
         public Transform VisualRoot => _visualRoot;
@@ -358,9 +363,10 @@ namespace CheddarAndCocoa.Dogs
             float size = _identity.Id == DogId.Cheddar ? 0.07f + (index % 2) * 0.025f : 0.095f;
             particle.transform.localScale = new Vector3(size, size * (_identity.Id == DogId.Cheddar ? 0.65f : 1f), 1f);
             var renderer = particle.AddComponent<SpriteRenderer>();
-            renderer.sprite = _particleSprite;
+            renderer.sprite = SelectParticleSprite() ?? _particleSprite;
             renderer.sortingOrder = 42;
             renderer.color = index % 2 == 0 ? _style.Primary : _style.Secondary;
+            LastParticleSpriteName = renderer.sprite != null && renderer.sprite != _particleSprite ? renderer.sprite.name : string.Empty;
             particle.AddComponent<DogActionParticle>().Launch(renderer, direction * speed,
                 _identity.Id == DogId.Cheddar ? 0.34f : 0.46f);
         }
@@ -374,13 +380,30 @@ namespace CheddarAndCocoa.Dogs
                 ? new Vector3(0.22f, 0.045f, 1f)
                 : new Vector3(0.3f, 0.075f, 1f);
             var renderer = trail.AddComponent<SpriteRenderer>();
-            renderer.sprite = _particleSprite;
+            renderer.sprite = SelectTrailSprite() ?? _particleSprite;
             renderer.sortingOrder = 5;
             Color color = _style.Primary;
             color.a = _identity.Id == DogId.Cheddar ? 0.42f : 0.3f;
             renderer.color = color;
+            LastTrailSpriteName = renderer.sprite != null && renderer.sprite != _particleSprite ? renderer.sprite.name : string.Empty;
             trail.AddComponent<DogActionTrail>().Begin(renderer, _identity.Id == DogId.Cheddar ? 0.22f : 0.34f);
             TotalTrailsEmitted++;
+        }
+
+        private Sprite SelectParticleSprite()
+        {
+            if (_identity == null) return null;
+            return _identity.Id == DogId.Cheddar
+                ? FinalGameplayArt.Load(FinalGameplayArt.DogFxChaosSpark)
+                : FinalGameplayArt.Load(FinalGameplayArt.DogFxQueenGlint);
+        }
+
+        private Sprite SelectTrailSprite()
+        {
+            if (_identity == null) return null;
+            return _identity.Id == DogId.Cheddar
+                ? FinalGameplayArt.Load(FinalGameplayArt.DogFxPawCheddar)
+                : FinalGameplayArt.Load(FinalGameplayArt.DogFxPawCocoa);
         }
 
         private static float EaseOut(float t) => 1f - (1f - t) * (1f - t);

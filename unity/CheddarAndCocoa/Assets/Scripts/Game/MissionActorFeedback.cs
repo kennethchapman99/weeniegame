@@ -7,6 +7,7 @@ namespace CheddarAndCocoa.Game
     {
         private SpriteRenderer _renderer;
         private TextMesh _label;
+        private MeshRenderer _labelRenderer;
         private Vector3 _baseScale;
         private float _pulseAmount;
         private Quaternion _baseRotation;
@@ -15,11 +16,19 @@ namespace CheddarAndCocoa.Game
         private float _swayPhase;
 
         public string Label => _label != null ? _label.text : string.Empty;
+        public bool TextVisible => _labelRenderer != null && _labelRenderer.enabled;
+        public bool HasContextualTextVisibility => _label != null && _label.GetComponent<WorldLabelVisibility>() != null;
 
         public void Init(SpriteRenderer renderer, string label, float pulseAmount, Vector3 rotationPerSecond)
         {
             _renderer = renderer;
             _label = GetComponentInChildren<TextMesh>();
+            if (_label != null)
+            {
+                if (!_label.TryGetComponent(out _labelRenderer)) _labelRenderer = null;
+                if (_label.GetComponent<WorldLabelVisibility>() == null)
+                    WorldLabelVisibility.Attach(_label);
+            }
             _baseScale = transform.localScale;
             _pulseAmount = pulseAmount;
             _baseRotation = transform.localRotation;

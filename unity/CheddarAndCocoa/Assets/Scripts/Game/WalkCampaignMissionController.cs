@@ -15,12 +15,22 @@ namespace CheddarAndCocoa.Game
         private const float ComprehendNeeded = 2.5f; // both dogs hold the combo this long -> walk earned.
         private const float ConfusionMax = 3f;       // incomplete combo this long -> the human misreads.
         private const int MaxMisreads = 3;
+        private const float HumanReactionSeconds = 0.65f;
         private const SocialStimulus RequiredMessage = SocialStimulus.DoorStare | SocialStimulus.PresentLeash;
+
+        private static readonly Color HumanConfusedColor = new(0.9f, 0.8f, 0.5f);
+        private static readonly Color HumanGettingItColor = new(0.5f, 0.85f, 0.55f);
+        private static readonly Color HumanMisreadColor = new(0.95f, 0.6f, 0.25f);
+        private static readonly Color HumanSuccessColor = new(0.45f, 0.9f, 0.6f);
+        private static readonly Color HumanFailColor = new(0.9f, 0.16f, 0.1f);
 
         private readonly CoopSocialManipulationPuzzle _puzzle = new();
         private MissionContext _context;
         private GameObject _human;
         private GameObject _leash;
+        private MissionActorFeedback _humanFeedback;
+        private MissionPropArtAttachment _humanArt;
+        private MissionPropArtAttachment _leashArt;
         private TextMesh _humanLabel;
         private TextMesh _leashLabel;
         private Vector2 _doorZone;
@@ -28,6 +38,7 @@ namespace CheddarAndCocoa.Game
         private int _misreadsSeen;
         private bool _gettingItScored;
         private bool _failed;
+        private float _humanReactionUntil;
 
         public GameManager.MissionVariant Variant => GameManager.MissionVariant.WalkCampaign;
         public bool IsComplete => _puzzle.Solved;
@@ -58,6 +69,7 @@ namespace CheddarAndCocoa.Game
             _misreadsSeen = 0;
             _gettingItScored = false;
             _failed = false;
+            _humanReactionUntil = 0f;
             _doorZone = new Vector2(_context.Bounds.center.x - 6f, _context.Bounds.center.y - 6f);
             _leashZone = new Vector2(_context.Bounds.center.x + 11f, _context.Bounds.center.y + 3f);
             SetSceneActive(true);
@@ -137,6 +149,7 @@ namespace CheddarAndCocoa.Game
             _puzzle.SetActiveSet(active);
             _puzzle.Advance(seconds);
             HandleProgress();
+            UpdateLabels();
         }
 
         private void HandleProgress()
@@ -150,6 +163,8 @@ namespace CheddarAndCocoa.Game
                 _context.SetCue("The human's getting it - hold the door-stare and the leash together!");
                 _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "GETTING IT!");
                 _context.LogEvent("WalkGettingIt", "combo");
+                SetHumanState("HUMAN GETTING IT - HOLD THE MESSAGE!", HumanGettingItColor, 0.1f,
+                    new Color(0.78f, 1f, 0.78f, 1f));
             }
 
             if (_puzzle.Misreads > _misreadsSeen)
@@ -162,7 +177,18 @@ namespace CheddarAndCocoa.Game
                 _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "CONFUSED!");
                 if (_human != null) _context.SpawnWorldPop(_human.transform.position, "WRONG THING!", new Color(0.95f, 0.6f, 0.25f));
                 _context.LogEvent("WalkMisread", $"{_puzzle.Misreads}/{MaxMisreads}");
-                if (_puzzle.Misreads >= MaxMisreads) _failed = true;
+                if (_puzzle.Misreads >= MaxMisreads)
+                {
+                    _failed = true;
+                    SetHumanState("HUMAN GAVE UP - MIXED SIGNALS!", HumanFailColor, 0.16f,
+                        new Color(1f, 0.58f, 0.52f, 1f));
+                }
+                else
+                {
+                    _humanReactionUntil = _context.Now() + HumanReactionSeconds;
+                    SetHumanState("HUMAN MISREAD - WRONG THING!", HumanMisreadColor, 0.13f,
+                        new Color(1f, 0.84f, 0.52f, 1f));
+                }
             }
 
             if (_puzzle.Solved)
@@ -171,6 +197,8 @@ namespace CheddarAndCocoa.Game
                 _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "WALKIES!");
                 if (_human != null) _context.SpawnWorldPop(_human.transform.position, "WALKIES!", new Color(0.5f, 0.9f, 0.55f));
                 _context.LogEvent("WalkConned", "solved");
+                SetHumanState("HUMAN GRABBED THE LEASH - WALKIES!", HumanSuccessColor, 0.14f,
+                    new Color(0.75f, 1f, 0.78f, 1f));
             }
         }
 
@@ -178,6 +206,10 @@ namespace CheddarAndCocoa.Game
         {
             _human = NewMarker("WalkCampaignHuman", new Color(0.9f, 0.8f, 0.5f), "HUMAN - CONVINCE THEM TO WALK YOU!", new Vector3(1.8f, 3.4f, 1f), out _humanLabel);
             _leash = NewMarker("WalkCampaignLeash", new Color(0.6f, 0.8f, 1f), "LEASH - CHEDDAR PRESENT IT!", Vector3.one * 1.2f, out _leashLabel);
+            _humanArt = MissionPropArt.AttachObject(_human, FinalGameplayArt.MissionWalkHuman, 0.013f, 18, true);
+            _leashArt = MissionPropArt.AttachObject(_leash, FinalGameplayArt.MissionWalkLeash, 0.012f, 18, true);
+            _humanFeedback = _human.AddComponent<MissionActorFeedback>();
+            _humanFeedback.Init(_human.GetComponent<SpriteRenderer>(), "HUMAN CONFUSED - SEND ONE MESSAGE!", 0.03f, Vector3.forward * 10f);
         }
 
         private GameObject NewMarker(string name, Color color, string label, Vector3 scale, out TextMesh worldLabel)
@@ -204,18 +236,43 @@ namespace CheddarAndCocoa.Game
             if (_human != null)
             {
                 _human.transform.position = _doorZone;
-                var sr = _human.GetComponent<SpriteRenderer>();
-                if (sr != null) sr.color = _puzzle.ExactMatch ? new Color(0.5f, 0.85f, 0.55f) : new Color(0.9f, 0.8f, 0.5f);
-                if (_humanLabel != null)
-                    _humanLabel.text = _puzzle.ExactMatch
-                        ? $"HUMAN GETTING IT - HOLD IT! ({Mathf.RoundToInt(_puzzle.Comprehension / ComprehendNeeded * 100f)}%)"
-                        : $"HUMAN CONFUSED - SEND ONE MESSAGE! (misreads {_puzzle.Misreads}/{MaxMisreads})";
+                if (_puzzle.Solved)
+                    SetHumanState("HUMAN GRABBED THE LEASH - WALKIES!", HumanSuccessColor, 0.14f,
+                        new Color(0.75f, 1f, 0.78f, 1f));
+                else if (_failed)
+                    SetHumanState("HUMAN GAVE UP - MIXED SIGNALS!", HumanFailColor, 0.16f,
+                        new Color(1f, 0.58f, 0.52f, 1f));
+                else if (_context.Now() >= _humanReactionUntil)
+                    SetHumanState(
+                        _puzzle.ExactMatch
+                            ? $"HUMAN GETTING IT - HOLD IT! ({Mathf.RoundToInt(_puzzle.Comprehension / ComprehendNeeded * 100f)}%)"
+                            : $"HUMAN CONFUSED - SEND ONE MESSAGE! (misreads {_puzzle.Misreads}/{MaxMisreads})",
+                        _puzzle.ExactMatch ? HumanGettingItColor : HumanConfusedColor,
+                        _puzzle.ExactMatch ? 0.09f : 0.03f,
+                        _puzzle.ExactMatch ? new Color(0.78f, 1f, 0.78f, 1f) : Color.white);
             }
             if (_leash != null)
             {
                 _leash.transform.position = _leashZone;
                 if (_leashLabel != null)
                     _leashLabel.text = (_puzzle.Active & SocialStimulus.PresentLeash) != 0 ? "LEASH PRESENTED!" : "LEASH - CHEDDAR PRESENT IT!";
+                if (_leashArt != null)
+                {
+                    bool presented = (_puzzle.Active & SocialStimulus.PresentLeash) != 0;
+                    _leashArt.SetTint(presented ? new Color(1f, 0.96f, 0.72f, 1f) : Color.white);
+                    if (presented) _leashArt.Pulse(0.12f, 0.04f);
+                }
+            }
+        }
+
+        private void SetHumanState(string label, Color fallbackColor, float pulseAmount, Color artTint)
+        {
+            if (_humanFeedback != null) _humanFeedback.SetState(label, fallbackColor, pulseAmount);
+            else if (_humanLabel != null) _humanLabel.text = label;
+            if (_humanArt != null)
+            {
+                _humanArt.SetTint(artTint);
+                _humanArt.Pulse(0.18f, pulseAmount);
             }
         }
 

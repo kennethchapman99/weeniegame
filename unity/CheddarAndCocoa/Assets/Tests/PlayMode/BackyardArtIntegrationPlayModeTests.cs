@@ -20,13 +20,27 @@ namespace CheddarAndCocoa.Tests
         [Test]
         public void FinalGameplayArt_ProvidesStableRuntimeResourcePaths()
         {
-            Assert.AreEqual("ArenaFinal/Characters/Squirrel/squirrel_idle", FinalGameplayArt.PathFor(RuntimeArtSpriteFactory.RuntimeSpriteId.Squirrel));
-            Assert.AreEqual("ArenaFinal/Characters/Squirrel/squirrel_steal", FinalGameplayArt.PathFor(RuntimeArtSpriteFactory.RuntimeSpriteId.SquirrelSteal));
-            Assert.AreEqual("ArenaFinal/Characters/Eagle/eagle_action", FinalGameplayArt.PathFor(RuntimeArtSpriteFactory.RuntimeSpriteId.PredatorAttack));
+            Assert.AreEqual("ArenaFinal/Characters/Squirrel/squirrel_mischief_v02", FinalGameplayArt.PathFor(RuntimeArtSpriteFactory.RuntimeSpriteId.Squirrel));
+            Assert.AreEqual("ArenaFinal/Characters/Squirrel/squirrel_mischief_v02", FinalGameplayArt.PathFor(RuntimeArtSpriteFactory.RuntimeSpriteId.SquirrelSteal));
+            Assert.AreEqual("ArenaFinal/Characters/Eagle/eagle_banking_v02", FinalGameplayArt.PathFor(RuntimeArtSpriteFactory.RuntimeSpriteId.PredatorAttack));
             Assert.AreEqual("ArenaFinal/Props/Mission/weenie_collectible", FinalGameplayArt.PathFor(RuntimeArtSpriteFactory.RuntimeSpriteId.WeenieCollectible));
             Assert.AreEqual("ArenaFinal/Props/Mission/rope_complete", FinalGameplayArt.PathFor(RuntimeArtSpriteFactory.RuntimeSpriteId.RopeComplete));
             Assert.AreEqual("ArenaFinal/VFX/bark_burst", FinalGameplayArt.PathFor(RuntimeArtSpriteFactory.RuntimeSpriteId.BarkBurst));
             Assert.AreEqual("ArenaFinal/VFX/rescue_burst", FinalGameplayArt.PathFor(RuntimeArtSpriteFactory.RuntimeSpriteId.RescueBurst));
+        }
+
+        [Test]
+        public void GeneratedBackyardPlate_IsSceneryOnly_NotFrozenDogBackground()
+        {
+            Assert.AreEqual("ArenaFinal/Props/Environment/yard_backyard_plate_v02", FinalGameplayArt.EnvironmentBackyardPlate);
+            Assert.That(FinalGameplayArt.EnvironmentBackyardPlate, Does.Not.Contain("Dog").IgnoreCase);
+            Assert.That(FinalGameplayArt.EnvironmentBackyardPlate, Does.Not.Contain("Cheddar").IgnoreCase);
+            Assert.That(FinalGameplayArt.EnvironmentBackyardPlate, Does.Not.Contain("Cocoa").IgnoreCase);
+
+            Assert.That(FinalGameplayArt.SquirrelIdle, Does.Contain("Characters/Squirrel"));
+            Assert.That(FinalGameplayArt.EagleThreat, Does.Contain("Characters/Eagle"));
+            Assert.That(FinalGameplayArt.SquirrelIdle, Does.Not.Contain("Environment"));
+            Assert.That(FinalGameplayArt.EagleThreat, Does.Not.Contain("Environment"));
         }
 
         [Test]

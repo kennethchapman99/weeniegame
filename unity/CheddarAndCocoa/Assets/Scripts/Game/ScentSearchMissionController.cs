@@ -221,6 +221,7 @@ namespace CheddarAndCocoa.Game
                 renderer.color = new Color(0.42f, 0.3f, 0.16f);
                 renderer.sortingOrder = 3;
                 _context.AddWorldLabel(marker, "DIG?", Vector3.up * 1.1f, 13, Color.white);
+                MissionPropArt.AttachObject(marker, FinalGameplayArt.MissionDigMound, 0.012f, 18, true);
                 marker.SetActive(false);
                 _digMarkers[i] = marker;
             }

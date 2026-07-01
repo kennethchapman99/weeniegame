@@ -240,6 +240,8 @@ namespace CheddarAndCocoa.Game
             renderer.sortingOrder = order;
             if (label != null) _context.AddWorldLabel(go, label, Vector3.up * (name == "HomeBowl" ? 1.4f : 1.2f), name == "HomeBowl" ? 16 : 13, Color.white);
             go.AddComponent<MissionActorFeedback>().Init(renderer, label ?? name, 0.1f, Vector3.zero);
+            string propPath = name == "HomeBowl" ? FinalGameplayArt.DogBowl : FinalGameplayArt.Weenie;
+            MissionPropArt.AttachObject(go, propPath, name == "HomeBowl" ? 0.013f : 0.011f, order + 14, name != "HomeBowl");
             go.SetActive(false);
             return go;
         }

@@ -13,9 +13,17 @@ namespace CheddarAndCocoa.Game
         private float _pulseUntil;
         private float _pulseStrength;
         private string _runtimeSpriteName = string.Empty;
+        private Color _currentTint = Color.white;
 
         public bool HasRuntimeSprite => _renderer != null && _renderer.sprite != null;
+        public bool Visible => _renderer != null && _renderer.enabled;
         public string RuntimeSpriteName => _runtimeSpriteName;
+        public Color CurrentTint => _currentTint;
+        public Vector3 BaseScale => _baseScale;
+        public int SortingOrder => _renderer != null ? _renderer.sortingOrder : int.MinValue;
+        public bool HasShadow => _shadow != null;
+        public Vector3 ShadowLocalPosition => _shadow != null ? _shadow.transform.localPosition : Vector3.zero;
+        public Vector3 ShadowLocalScale => _shadow != null ? _shadow.transform.localScale : Vector3.zero;
 
         public void Init(Sprite sprite, Vector3 localPosition, Vector3 localScale, int sortingOrder, Color tint, bool shadow = true)
         {
@@ -49,6 +57,23 @@ namespace CheddarAndCocoa.Game
             }
         }
 
+        public void ConfigureShadow(Vector3 localPosition, Vector3 localScale, Color color, int sortingOrder)
+        {
+            if (_shadow == null)
+            {
+                var shadowGo = new GameObject("ActualArtShadow");
+                shadowGo.transform.SetParent(transform);
+                shadowGo.transform.localRotation = Quaternion.identity;
+                _shadow = shadowGo.AddComponent<SpriteRenderer>();
+                _shadow.sprite = SpriteShapeCache.WhiteSquare;
+            }
+
+            _shadow.transform.localPosition = localPosition;
+            _shadow.transform.localScale = localScale;
+            _shadow.color = color;
+            _shadow.sortingOrder = sortingOrder;
+        }
+
         public void SetSprite(Sprite sprite)
         {
             if (_renderer == null) return;
@@ -59,7 +84,14 @@ namespace CheddarAndCocoa.Game
 
         public void SetTint(Color color)
         {
+            _currentTint = color;
             if (_renderer != null) _renderer.color = color;
+        }
+
+        public void SetVisible(bool visible)
+        {
+            if (_renderer != null) _renderer.enabled = visible;
+            if (_shadow != null) _shadow.enabled = visible;
         }
 
         public void Pulse(float seconds, float strength)

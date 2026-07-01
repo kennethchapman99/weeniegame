@@ -61,6 +61,14 @@ namespace CheddarAndCocoa.Tests
                 game.ForceGameOver();
                 yield return null;
                 Assert.AreEqual(GameManager.MissionOutcome.Failed, game.Outcome, $"{variant} forced game over should fail.");
+                Assert.IsTrue(game.EndScreenVisible, $"{variant} should route failure through the shared end screen.");
+                Assert.AreEqual("MISSION FAILED", game.EndHeadlineLabel, $"{variant} should expose the shared failure headline.");
+                Assert.IsFalse(string.IsNullOrWhiteSpace(game.EndReasonLabel), $"{variant} should expose a readable fail reason.");
+                Assert.That(game.EndScoreLabel, Does.Contain("Score"), $"{variant} should expose score on the shared result overlay.");
+                Assert.That(game.EndScoreLabel, Does.Contain("Stars"), $"{variant} should expose stars on the shared result overlay.");
+                Assert.AreEqual("Replay", game.EndReplayActionLabel, $"{variant} should expose the shared Replay action.");
+                Assert.AreEqual("Next Mission", game.EndNextActionLabel, $"{variant} should expose the shared Next Mission action.");
+                Assert.AreEqual("Mission Select", game.EndMissionSelectActionLabel, $"{variant} should expose the shared Mission Select action.");
 
                 game.Restart();
                 yield return null;
