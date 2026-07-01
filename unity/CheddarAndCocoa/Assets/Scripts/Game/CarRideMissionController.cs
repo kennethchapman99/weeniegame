@@ -11,6 +11,7 @@ namespace CheddarAndCocoa.Game
         private readonly CarBalanceMissionState _state = new();
         private MissionContext _context;
         private GameObject _car;
+        private MissionLevelAreaArt _levelAreaArt;
         private float _balance;
         private int _lurchDirection;
         private float _nextLurchAt;
@@ -38,7 +39,7 @@ namespace CheddarAndCocoa.Game
             _context = context;
             _car = _context.CreateActor(ArenaArtCatalog.ActorKind.Predator);
             _car.name = "Car Ride Balance Vehicle";
-            MissionPropArt.AttachObject(_car, FinalGameplayArt.MissionCarBalance, 0.013f, 18, true);
+            MissionPropArt.AttachObject(_car, FinalGameplayArt.CarRideLevel, 0.013f, 18, true);
             _car.SetActive(false);
         }
 
@@ -49,7 +50,9 @@ namespace CheddarAndCocoa.Game
             _lurchDirection = 1;
             _nextLurchAt = _context.Now() + LurchInterval;
             _car.transform.position = new Vector2(0f, _context.Bounds.yMax - 1.5f);
+            _levelAreaArt = MissionLevelAreaArt.CreateCarRideArea(_context.Bounds, _car.transform.position);
             _car.SetActive(true);
+            SetCarArt(FinalGameplayArt.CarRideLevel);
             _context.SetActorState(_car, "CAR - LEAN TO KEEP IT LEVEL!", new Color(0.5f, 0.4f, 0.3f), 0.12f);
         }
 
@@ -87,6 +90,11 @@ namespace CheddarAndCocoa.Game
         public void Cleanup()
         {
             if (_car != null) _car.SetActive(false);
+            if (_levelAreaArt != null)
+            {
+                Object.Destroy(_levelAreaArt.gameObject);
+                _levelAreaArt = null;
+            }
         }
 
         public void StageDogsForEntry()
@@ -126,6 +134,7 @@ namespace CheddarAndCocoa.Game
             }
 
             _state.SurviveLurch();
+            SetCarArt(_balance >= 0f ? FinalGameplayArt.CarRideLurchRight : FinalGameplayArt.CarRideLurchLeft);
             _context.AddScore(ScoreEventCatalog.LurchSteadied.Points, ScoreEventCatalog.LurchSteadied.Label);
             _context.SetFeedback(GameManager.FeedbackKind.UnitedBark);
             _context.SetCue($"Steadied the lurch! ({_state.LurchesSurvived}/{_state.RequiredLurches}) Lean to balance.");
@@ -147,6 +156,7 @@ namespace CheddarAndCocoa.Game
             if (IsComplete || IsFailed) return;
             _state.Spill();
             _balance = 0f;
+            SetCarArt(FinalGameplayArt.CarRideSpill);
             _context.AddScore(ScoreEventCatalog.CarSpill.Points, ScoreEventCatalog.CarSpill.Label);
             _context.SetFeedback(GameManager.FeedbackKind.SquirrelStoleFood);
             _context.SetCue($"The car tipped and everyone spilled! ({_state.Spills}/{MaxSpills}) Lean the other way next time.");
@@ -163,5 +173,11 @@ namespace CheddarAndCocoa.Game
         private Vector2 DogMidpoint() => _context.Dogs != null && _context.Dogs.Length >= 2
             ? (_context.Dogs[0].transform.position + _context.Dogs[1].transform.position) * 0.5f
             : _context.Bounds.center;
+
+        private void SetCarArt(string resourcePath)
+        {
+            if (_car == null) return;
+            MissionPropArt.SetSprite(_car.GetComponent<MissionPropArtAttachment>(), resourcePath);
+        }
     }
 }

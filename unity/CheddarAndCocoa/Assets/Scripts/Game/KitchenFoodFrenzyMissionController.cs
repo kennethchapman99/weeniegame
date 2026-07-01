@@ -24,8 +24,12 @@ namespace CheddarAndCocoa.Game
         private GameObject _foodObject;
         private GameObject _telegraphMarker;
         private GameObject _landingWarning;
+        private MissionPropArtAttachment _counterArt;
+        private MissionPropArtAttachment _safeZoneArt;
+        private MissionPropArtAttachment _foodArt;
         private MissionPropArtAttachment _telegraphArt;
         private MissionPropArtAttachment _landingWarningArt;
+        private MissionLevelAreaArt _levelAreaArt;
         private Vector2 _counterPosition;
         private Vector2 _safeZonePosition;
         private float _floorY;
@@ -76,6 +80,10 @@ namespace CheddarAndCocoa.Game
             _counterPosition = new Vector2(_context.Bounds.center.x, _context.Bounds.center.y + 8f);
             _safeZonePosition = new Vector2(_context.Bounds.center.x, _context.Bounds.center.y - 5f);
             _floorY = _context.Bounds.center.y - 7f;
+            MissionPropArt.SetSprite(_counterArt, FinalGameplayArt.KitchenCounterReady);
+            MissionPropArt.SetSprite(_safeZoneArt, FinalGameplayArt.KitchenSafeBowlEmpty);
+            MissionPropArt.SetSprite(_foodArt, FinalGameplayArt.KitchenFoodGoodFalling);
+            _levelAreaArt = MissionLevelAreaArt.CreateKitchenArea(_context.Bounds, _counterPosition, _safeZonePosition);
             SetSceneActive(true);
         }
 
@@ -134,7 +142,15 @@ namespace CheddarAndCocoa.Game
             return ArmTelegraph(dogId, kind);
         }
 
-        public void Cleanup() => SetSceneActive(false);
+        public void Cleanup()
+        {
+            SetSceneActive(false);
+            if (_levelAreaArt != null)
+            {
+                Object.Destroy(_levelAreaArt.gameObject);
+                _levelAreaArt = null;
+            }
+        }
 
         public void StageDogsForEntry()
         {
@@ -204,9 +220,9 @@ namespace CheddarAndCocoa.Game
             _landingWarning = NewMarker("KitchenLandingWarning", _context.RangeSprite ?? _context.ActorSprite,
                 new Color(1f, 0.85f, 0.35f, 0.45f), 2, Vector3.one * (CatchRadius * 2.4f),
                 "LANDING HERE", 0.45f, 12);
-            MissionPropArt.AttachObject(_counterMarker, FinalGameplayArt.MissionKitchenCounter, 0.013f, 18, true);
-            MissionPropArt.AttachObject(_safeZoneMarker, FinalGameplayArt.MissionKitchenSafeBowl, 0.013f, 18, true);
-            MissionPropArt.AttachObject(_foodObject, FinalGameplayArt.MissionKitchenGoodFood, 0.013f, 18, true);
+            _counterArt = MissionPropArt.AttachObject(_counterMarker, FinalGameplayArt.KitchenCounterReady, 0.013f, 18, true);
+            _safeZoneArt = MissionPropArt.AttachObject(_safeZoneMarker, FinalGameplayArt.KitchenSafeBowlEmpty, 0.013f, 18, true);
+            _foodArt = MissionPropArt.AttachObject(_foodObject, FinalGameplayArt.KitchenFoodGoodFalling, 0.013f, 18, true);
             _telegraphArt = MissionPropArt.AttachPad(_telegraphMarker, FinalGameplayArt.KitchenCueTelegraphGold, 0.13f, 17);
             _landingWarningArt = MissionPropArt.AttachPad(_landingWarning, FinalGameplayArt.KitchenCueLandingGold, 0.14f, 17);
         }
@@ -281,6 +297,7 @@ namespace CheddarAndCocoa.Game
             _landingWarning.SetActive(true);
 
             bool bad = kind == KitchenFoodFrenzyMissionState.FoodKind.Bad;
+            MissionPropArt.SetSprite(_counterArt, FinalGameplayArt.KitchenCounterBarked);
             MissionPropArt.SetSprite(_telegraphArt, bad
                 ? FinalGameplayArt.KitchenCueTelegraphPurple
                 : FinalGameplayArt.KitchenCueTelegraphGold);
@@ -304,10 +321,11 @@ namespace CheddarAndCocoa.Game
             var kind = _state.ActiveKind;
             _foodObject.transform.position = new Vector2(_dropX, _counterPosition.y);
             _foodObject.GetComponent<SpriteRenderer>().color = kind == KitchenFoodFrenzyMissionState.FoodKind.Bad ? BadColor : GoodColor;
-            MissionPropArt.SetSprite(_foodObject.GetComponent<MissionPropArtAttachment>(),
+            MissionPropArt.SetSprite(_foodArt,
                 kind == KitchenFoodFrenzyMissionState.FoodKind.Bad
-                    ? FinalGameplayArt.MissionKitchenBadFood
-                    : FinalGameplayArt.MissionKitchenGoodFood);
+                    ? FinalGameplayArt.KitchenFoodBadFalling
+                    : FinalGameplayArt.KitchenFoodGoodFalling);
+            MissionPropArt.SetSprite(_counterArt, FinalGameplayArt.KitchenCounterReady);
             _foodObject.SetActive(true);
             _telegraphMarker.SetActive(false);
             _context.LogEvent("KitchenDrop", kind == KitchenFoodFrenzyMissionState.FoodKind.Bad ? "bad" : "good");
@@ -331,6 +349,7 @@ namespace CheddarAndCocoa.Game
                     _context.RequestAudioCue(ArenaFeedbackCatalog.SnackSockCollect);
                     _context.RequestRumble("kitchen_catch", 0.18f, 0.32f, 0.12f);
                     if (dogIndex >= 0 && _context.DogFeedback[dogIndex] != null) _context.DogFeedback[dogIndex].ShowProudBrief();
+                    MissionPropArt.SetSprite(_safeZoneArt, FinalGameplayArt.KitchenSafeBowlCatch);
                     HideFood();
                     _context.LogEvent("KitchenCatch", $"{_state.GoodCatches}/{KitchenFoodFrenzyMissionState.RequiredCatches}");
                     if (!wasFinale && _state.FinaleActive)
@@ -351,6 +370,7 @@ namespace CheddarAndCocoa.Game
                     _context.RequestAudioCue(ArenaFeedbackCatalog.ScorePenalty);
                     _context.RequestRumble("kitchen_gross", 0.3f, 0.58f, 0.18f);
                     if (dogIndex >= 0 && _context.DogFeedback[dogIndex] != null) _context.DogFeedback[dogIndex].ShowPanic();
+                    MissionPropArt.SetSprite(_safeZoneArt, FinalGameplayArt.KitchenSafeBowlEmpty);
                     HideFood();
                     _context.LogEvent("KitchenGrossOut", "onion eaten");
                     break;
@@ -362,6 +382,7 @@ namespace CheddarAndCocoa.Game
                     _context.RequestAudioCue(ArenaFeedbackCatalog.ScorePenalty);
                     _context.RequestRumble("kitchen_splat", 0.2f, 0.42f, 0.14f);
                     if (dogIndex >= 0 && _context.DogFeedback[dogIndex] != null) _context.DogFeedback[dogIndex].ShowPanic();
+                    MissionPropArt.SetSprite(_foodArt, FinalGameplayArt.KitchenFoodSplat);
                     HideFood();
                     _context.LogEvent("KitchenUnsafe", "off bowl");
                     break;
@@ -394,6 +415,7 @@ namespace CheddarAndCocoa.Game
                 _context.RequestAudioCue(ArenaFeedbackCatalog.SnackSockCollect);
                 _context.RequestRumble("kitchen_dodge", 0.12f, 0.24f, 0.1f);
                 if (sweeper >= 0 && _context.DogFeedback[sweeper] != null) _context.DogFeedback[sweeper].ShowProudBrief();
+                MissionPropArt.SetSprite(_foodArt, FinalGameplayArt.KitchenFoodSplat);
                 _context.LogEvent("KitchenDodge", "bad food avoided");
             }
             else if (result == KitchenFoodFrenzyMissionState.FallResult.MissedGood)
@@ -404,6 +426,7 @@ namespace CheddarAndCocoa.Game
                 _context.RequestAudioCue(ArenaFeedbackCatalog.ScorePenalty);
                 _context.RequestRumble("kitchen_miss", 0.25f, 0.48f, 0.16f);
                 if (sweeper >= 0 && _context.DogFeedback[sweeper] != null) _context.DogFeedback[sweeper].ShowPanic();
+                MissionPropArt.SetSprite(_foodArt, FinalGameplayArt.KitchenFoodSplat);
                 _context.LogEvent("KitchenMiss", "good food dropped");
             }
             HideFood();
@@ -418,6 +441,7 @@ namespace CheddarAndCocoa.Game
             if (_foodObject != null) _foodObject.SetActive(false);
             if (_telegraphMarker != null) _telegraphMarker.SetActive(false);
             if (_landingWarning != null) _landingWarning.SetActive(false);
+            if (_state.Complete || !_state.DropActive) MissionPropArt.SetSprite(_counterArt, FinalGameplayArt.KitchenCounterReady);
         }
     }
 }

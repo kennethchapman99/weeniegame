@@ -12,6 +12,8 @@ namespace CheddarAndCocoa.Game
 
         private readonly ThunderstormMissionState _stormState = new();
         private MissionContext _context;
+        private GameObject _stormMarker;
+        private MissionPropArtAttachment _stormArt;
         private float _nextClapAt;
         private bool _cleared;
 
@@ -36,7 +38,20 @@ namespace CheddarAndCocoa.Game
             }
         }
 
-        public void Initialize(MissionContext context) => _context = context;
+        public void Initialize(MissionContext context)
+        {
+            _context = context;
+            _stormMarker = new GameObject("ThunderstormComfortCue");
+            _stormMarker.transform.position = _context.Bounds.center + Vector2.up * 2.8f;
+            _stormMarker.transform.localScale = Vector3.one * 1.4f;
+            var renderer = _stormMarker.AddComponent<SpriteRenderer>();
+            renderer.sprite = _context.RangeSprite != null ? _context.RangeSprite : _context.ActorSprite;
+            renderer.color = new Color(0.42f, 0.5f, 0.82f, 0.18f);
+            renderer.sortingOrder = 2;
+            _context.AddWorldLabel(_stormMarker, "HUDDLE", Vector3.up * 0.9f, 13, Color.white);
+            _stormArt = MissionPropArt.AttachPad(_stormMarker, FinalGameplayArt.ThunderstormCloudWaiting, 0.012f, 18);
+            _stormMarker.SetActive(false);
+        }
 
         public void StartMission()
         {
@@ -44,6 +59,8 @@ namespace CheddarAndCocoa.Game
             _context.PanicMeter?.ResetMeter();
             _cleared = false;
             _nextClapAt = _context.Now() + ClapInterval;
+            SetStormArt(FinalGameplayArt.ThunderstormCloudWaiting);
+            if (_stormMarker != null) _stormMarker.SetActive(true);
         }
 
         public void Tick(float deltaTime, float now)
@@ -54,8 +71,11 @@ namespace CheddarAndCocoa.Game
 
             pm.Step(_context.Dogs[0].transform.position, _context.Dogs[1].transform.position, deltaTime);
             if (Vector2.Distance(_context.Dogs[0].transform.position, _context.Dogs[1].transform.position) <= pm.CuddleRadius)
+            {
+                SetStormArt(FinalGameplayArt.ThunderstormComfortHuddle);
                 for (int i = 0; i < _context.DogFeedback.Length; i++)
                     if (_context.DogFeedback[i] != null) _context.DogFeedback[i].ShowComfort();
+            }
             if (pm.Maxed != null) return;
 
             if (now >= _nextClapAt)
@@ -67,7 +87,10 @@ namespace CheddarAndCocoa.Game
 
         public bool HandleBark(int dogIndex) => false;
 
-        public void Cleanup() { }
+        public void Cleanup()
+        {
+            if (_stormMarker != null) _stormMarker.SetActive(false);
+        }
 
         public void StageDogsForEntry()
         {
@@ -111,6 +134,7 @@ namespace CheddarAndCocoa.Game
             if (pm == null) return;
             pm.AddSpike(DogId.Cheddar, CheddarSpike);
             pm.AddSpike(DogId.Cocoa, CocoaSpike);
+            SetStormArt(FinalGameplayArt.ThunderstormThunderclap);
             for (int i = 0; i < _context.DogFeedback.Length; i++)
                 if (_context.DogFeedback[i] != null) _context.DogFeedback[i].ShowPanic();
             _context.RequestAudioCue(ArenaFeedbackCatalog.ThreatWarning);
@@ -129,7 +153,13 @@ namespace CheddarAndCocoa.Game
             {
                 _context.AddScore(ScoreEventCatalog.StormCleared.Points, ScoreEventCatalog.StormCleared.Label);
                 _cleared = true;
+                SetStormArt(FinalGameplayArt.ThunderstormStormCleared);
             }
+        }
+
+        private void SetStormArt(string resourcePath)
+        {
+            MissionPropArt.SetSprite(_stormArt, resourcePath);
         }
 
         private Vector2 ClampInsideBounds(Vector2 point)

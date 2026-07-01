@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="14" result="Passed" total="14" passed="14" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-07-01 00:03:06Z" end-time="2026-07-01 00:03:15Z" duration="8.5412928">
+  <test-suite type="TestSuite" id="1475" name="Cheddar and Cocoa" fullname="Cheddar and Cocoa" runstate="Runnable" testcasecount="392" result="Passed" start-time="2026-07-01 00:03:06Z" end-time="2026-07-01 00:03:15Z" duration="8.541293" total="14" passed="14" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1467" name="CheddarAndCocoa.Tests.PlayMode.dll" fullname="/Users/kchapman/Weeniegame/unity/CheddarAndCocoa/Library/ScriptAssemblies/CheddarAndCocoa.Tests.PlayMode.dll" runstate="Runnable" testcasecount="392" result="Passed" start-time="2026-07-01 00:03:06Z" end-time="2026-07-01 00:03:15Z" duration="8.536738" total="14" passed="14" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="92426" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1468" name="CheddarAndCocoa" fullname="CheddarAndCocoa" runstate="Runnable" testcasecount="392" result="Passed" start-time="2026-07-01 00:03:06Z" end-time="2026-07-01 00:03:15Z" duration="8.535316" total="14" passed="14" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1471" name="Tests" fullname="CheddarAndCocoa.Tests" runstate="Runnable" testcasecount="390" result="Passed" start-time="2026-07-01 00:03:06Z" end-time="2026-07-01 00:03:15Z" duration="8.534259" total="14" passed="14" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1020" name="ArenaGameLoopPlayModeTests" fullname="CheddarAndCocoa.Tests.ArenaGameLoopPlayModeTests" classname="CheddarAndCocoa.Tests.ArenaGameLoopPlayModeTests" runstate="Runnable" testcasecount="14" result="Passed" start-time="2026-07-01 00:03:06Z" end-time="2026-07-01 00:03:15Z" duration="8.527460" total="14" passed="14" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1022" name="ArenaArtCatalog_DefinesReplaceableVisualSlots" fullname="CheddarAndCocoa.Tests.ArenaGameLoopPlayModeTests.ArenaArtCatalog_DefinesReplaceableVisualSlots" methodname="ArenaArtCatalog_DefinesReplaceableVisualSlots" classname="CheddarAndCocoa.Tests.ArenaGameLoopPlayModeTests" runstate="Runnable" seed="1661749994" result="Passed" start-time="2026-07-01 00:03:06Z" end-time="2026-07-01 00:03:06Z" duration="0.055053" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1027" name="ArenaFeedback_AudioAndRumbleRequests_AreEventDrivenAndToggleable" fullname="CheddarAndCocoa.Tests.ArenaGameLoopPlayModeTests.ArenaFeedback_AudioAndRumbleRequests_AreEventDrivenAndToggleable" methodname="ArenaFeedback_AudioAndRumbleRequests_AreEventDrivenAndToggleable" classname="CheddarAndCocoa.Tests.ArenaGameLoopPlayModeTests" runstate="Runnable" seed="1090688390" result="Passed" start-time="2026-07-01 00:03:06Z" end-time="2026-07-01 00:03:07Z" duration="0.322452" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[Cheddar] WOOF!
+[Cheddar] WOOF!
+[Cocoa] WOOF!
+[Cheddar] WOOF!
+[Cheddar] WOOF!
+]]></output>
+            </test-case>
+            <test-case id="1023" name="ArenaFeedbackCatalog_DefinesReplaceableAudioCueSlots" fullname="CheddarAndCocoa.Tests.ArenaGameLoopPlayModeTests.ArenaFeedbackCatalog_DefinesReplaceableAudioCueSlots" methodname="ArenaFeedbackCatalog_DefinesReplaceableAudioCueSlots" classname="CheddarAndCocoa.Tests.ArenaGameLoopPlayModeTests" runstate="Runnable" seed="359271246" result="Passed" start-time="2026-07-01 00:03:07Z" end-time="2026-07-01 00:03:07Z" duration="0.000935" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1024" name="ArenaMovementCameraAndRangeFeel_AreConfigured_AndStateDriven" fullname="CheddarAndCocoa.Tests.ArenaGameLoopPlayModeTests.ArenaMovementCameraAndRangeFeel_AreConfigured_AndStateDriven" methodname="ArenaMovementCameraAndRangeFeel_AreConfigured_AndStateDriven" classname="CheddarAndCocoa.Tests.ArenaGameLoopPlayModeTests" runstate="Runnable" seed="203285251" result="Passed" start-time="2026-07-01 00:03:07Z" end-time="2026-07-01 00:03:08Z" duration="0.836126" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1021" name="ArenaTuningDefaults_AreCentralized_AndKeepMissionBalanceInRange" fullname="CheddarAndCocoa.Tests.ArenaGameLoopPlayModeTests.ArenaTuningDefaults_AreCentralized_AndKeepMissionBalanceInRange" methodname="ArenaTuningDefaults_AreCentralized_AndKeepMissionBalanceInRange" classname="CheddarAndCocoa.Tests.ArenaGameLoopPlayModeTests" runstate="Runnable" seed="1099823731" result="Passed" start-time="2026-07-01 00:03:08Z" end-time="2026-07-01 00:03:08Z" duration="0.000971" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1025" name="BackyardMission_Objectives_Hazards_Tug_Clear_AndRestart" fullname="CheddarAndCocoa.Tests.ArenaGameLoopPlayModeTests.BackyardMission_Objectives_Hazards_Tug_Clear_AndRestart" methodname="BackyardMission_Objectives_Hazards_Tug_Clear_AndRestart" classname="CheddarAndCocoa.Tests.ArenaGameLoopPlayModeTests" runstate="Runnable" seed="1431902899" result="Passed" start-time="2026-07-01 00:03:08Z" end-time="2026-07-01 00:03:13Z" duration="5.422060" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[Cheddar] WOOF!
+[Cheddar] WOOF!
+[Cocoa] WOOF!
+[Cheddar] WOOF!
+[Cocoa] WOOF!
+[Cheddar] WOOF!
+[Cheddar] WOOF!
+[Cocoa] WOOF!
+[Cheddar] WOOF!
+[Cocoa] WOOF!
+[Cheddar] WOOF!
+[Cocoa] WOOF!
+]]></output>
+            </test-case>
+            <test-case id="1030" name="DemoRegression_ColdStartFlowDogsCameraOverlay_StayReachable" fullname="CheddarAndCocoa.Tests.ArenaGameLoopPlayModeTests.DemoRegression_ColdStartFlowDogsCameraOverlay_StayReachable" methodname="DemoRegression_ColdStartFlowDogsCameraOverlay_StayReachable" classname="CheddarAndCocoa.Tests.ArenaGameLoopPlayModeTests" runstate="Runnable" seed="1085717708" result="Passed" start-time="2026-07-01 00:03:13Z" end-time="2026-07-01 00:03:13Z" duration="0.046692" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1029" name="MissionFlow_Select_StartsEveryMission_AndEndActionsNavigate" fullname="CheddarAndCocoa.Tests.ArenaGameLoopPlayModeTests.MissionFlow_Select_StartsEveryMission_AndEndActionsNavigate" methodname="MissionFlow_Select_StartsEveryMission_AndEndActionsNavigate" classname="CheddarAndCocoa.Tests.ArenaGameLoopPlayModeTests" runstate="Runnable" seed="1389257361" result="Passed" start-time="2026-07-01 00:03:13Z" end-time="2026-07-01 00:03:13Z" duration="0.039462" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1031" name="MissionFlow_SessionTotals_UpdateAcrossTwoMissions" fullname="CheddarAndCocoa.Tests.ArenaGameLoopPlayModeTests.MissionFlow_SessionTotals_UpdateAcrossTwoMissions" methodname="MissionFlow_SessionTotals_UpdateAcrossTwoMissions" classname="CheddarAndCocoa.Tests.ArenaGameLoopPlayModeTests" runstate="Runnable" seed="897553132" result="Passed" start-time="2026-07-01 00:03:13Z" end-time="2026-07-01 00:03:13Z" duration="0.044909" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1028" name="Pause_DisablesPlay_AndAlwaysRestoresTimeScale" fullname="CheddarAndCocoa.Tests.ArenaGameLoopPlayModeTests.Pause_DisablesPlay_AndAlwaysRestoresTimeScale" methodname="Pause_DisablesPlay_AndAlwaysRestoresTimeScale" classname="CheddarAndCocoa.Tests.ArenaGameLoopPlayModeTests" runstate="Runnable" seed="1886696947" result="Passed" start-time="2026-07-01 00:03:13Z" end-time="2026-07-01 00:03:13Z" duration="0.033772" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1026" name="PlaytestOverlay_Toggles_AndEventLogCapturesFlowEvents" fullname="CheddarAndCocoa.Tests.ArenaGameLoopPlayModeTests.PlaytestOverlay_Toggles_AndEventLogCapturesFlowEvents" methodname="PlaytestOverlay_Toggles_AndEventLogCapturesFlowEvents" classname="CheddarAndCocoa.Tests.ArenaGameLoopPlayModeTests" runstate="Runnable" seed="433715683" result="Passed" start-time="2026-07-01 00:03:13Z" end-time="2026-07-01 00:03:13Z" duration="0.083344" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[Cheddar] WOOF!
+[Cheddar] interact (grab placeholder)
+]]></output>
+            </test-case>
+            <test-case id="1032" name="SnackHeist_Initializes_Scores_Clears_Fails_AndReplays" fullname="CheddarAndCocoa.Tests.ArenaGameLoopPlayModeTests.SnackHeist_Initializes_Scores_Clears_Fails_AndReplays" methodname="SnackHeist_Initializes_Scores_Clears_Fails_AndReplays" classname="CheddarAndCocoa.Tests.ArenaGameLoopPlayModeTests" runstate="Runnable" seed="1106658346" result="Passed" start-time="2026-07-01 00:03:13Z" end-time="2026-07-01 00:03:13Z" duration="0.040497" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1033" name="SockPanic_Initializes_Scores_Clears_Fails_AndReplays" fullname="CheddarAndCocoa.Tests.ArenaGameLoopPlayModeTests.SockPanic_Initializes_Scores_Clears_Fails_AndReplays" methodname="SockPanic_Initializes_Scores_Clears_Fails_AndReplays" classname="CheddarAndCocoa.Tests.ArenaGameLoopPlayModeTests" runstate="Runnable" seed="501551914" result="Passed" start-time="2026-07-01 00:03:13Z" end-time="2026-07-01 00:03:13Z" duration="0.057808" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1034" name="ThreatActors_AreOnScreenAndReadable_NotOffscreenSpinningBlobs" fullname="CheddarAndCocoa.Tests.ArenaGameLoopPlayModeTests.ThreatActors_AreOnScreenAndReadable_NotOffscreenSpinningBlobs" methodname="ThreatActors_AreOnScreenAndReadable_NotOffscreenSpinningBlobs" classname="CheddarAndCocoa.Tests.ArenaGameLoopPlayModeTests" runstate="Runnable" seed="173981352" result="Passed" start-time="2026-07-01 00:03:13Z" end-time="2026-07-01 00:03:15Z" duration="1.533642" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: /Users/kchapman/Weeniegame/unity/test-results/arena-game-loop-focused-results.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

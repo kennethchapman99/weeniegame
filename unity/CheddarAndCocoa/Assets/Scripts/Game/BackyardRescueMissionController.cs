@@ -18,11 +18,13 @@ namespace CheddarAndCocoa.Game
         private MissionContext _context;
         private Vector2 _gapPosition;
         private GameObject _gapMarker;
+        private MissionPropArtAttachment _gapArt;
         private Treat _droppedWeenie;
         private Treat _squirrelTarget;
         private float _squirrelTimer;
         private float _scaredUntil;
         private float _nextScareScoreAt;
+        private float _gapFakeRouteUntil;
         private bool _squirrelHasStarted;
         private int _collected;
         private int _stolen;
@@ -83,6 +85,7 @@ namespace CheddarAndCocoa.Game
             _squirrelHasStarted = false;
             _scaredUntil = 0f;
             _nextScareScoreAt = 0f;
+            _gapFakeRouteUntil = 0f;
             _squirrelTimer = NextDelay();
             _context.SquirrelObject.SetActive(true);
             _context.SquirrelObject.transform.position = new Vector2(11f, 7f);
@@ -258,6 +261,7 @@ namespace CheddarAndCocoa.Game
                 _droppedWeenie = _squirrelTarget;
                 _squirrelTarget = null;
                 _droppedWeenie.transform.position = _gapPosition + Vector2.left * 3f;
+                SetTreatProp(_droppedWeenie, FinalGameplayArt.BackyardWeenieDropped);
                 PlaceSquirrel(_gapPosition + Vector2.right * 4f);
                 _squirrelTimer = NextDelay();
                 _context.AddScore(_context.SquirrelScareScore, "SQUIRREL REDIRECTED");
@@ -287,6 +291,7 @@ namespace CheddarAndCocoa.Game
             {
                 Treat recovered = _droppedWeenie;
                 _droppedWeenie = null;
+                SetTreatProp(recovered, FinalGameplayArt.BackyardWeenieSaved);
                 _context.AddScore(_context.SquirrelScareScore, "TRAP PASS COMPLETE");
                 _context.SetFeedback(GameManager.FeedbackKind.SquirrelScared);
                 string banner = _trapState.Complete ? "TRAP COMPLETE!" : "SWAP ROLES!";
@@ -328,6 +333,7 @@ namespace CheddarAndCocoa.Game
         {
             if (target == null) return;
             _squirrelTarget = target;
+            SetTreatProp(target, FinalGameplayArt.BackyardWeenieTargeted);
             _squirrelHasStarted = true;
             _context.SetFeedback(GameManager.FeedbackKind.SquirrelStealing);
             _context.SetCue("Squirrel is tiptoeing off with a weenie - bark now!");
@@ -380,6 +386,7 @@ namespace CheddarAndCocoa.Game
 
         private void RegisterFumble(string cue)
         {
+            _gapFakeRouteUntil = _context.Now() + 1.15f;
             _context.SetCue(cue + " The squirrel loops back for another try.");
             _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "SQUIRREL JUKE!");
             _context.SpawnWorldPop(_context.SquirrelObject.transform.position, "NYEH-HEH! WRONG WAY!", new Color(1f, 0.45f, 0.25f));
@@ -414,7 +421,7 @@ namespace CheddarAndCocoa.Game
             sr.color = new Color(0.35f, 0.8f, 1f, 0.34f);
             sr.sortingOrder = 1;
             _context.AddWorldLabel(_gapMarker, "ESCAPE GAP - HOLD HERE", Vector3.up * 0.38f, 14, Color.white);
-            MissionPropArt.AttachPad(_gapMarker, FinalGameplayArt.MissionEscapeGap, 0.012f, 18);
+            _gapArt = MissionPropArt.AttachPad(_gapMarker, FinalGameplayArt.BackyardTrapGapOpen, 0.013f, 18);
             _gapMarker.SetActive(false);
         }
 
@@ -427,6 +434,32 @@ namespace CheddarAndCocoa.Game
                 sr.color = IsGapHeld()
                     ? new Color(0.35f, 1f, 0.5f, 0.48f)
                     : new Color(0.35f, 0.8f, 1f, 0.34f);
+            UpdateGapArt();
+        }
+
+        private void UpdateGapArt()
+        {
+            if (_gapArt == null || _context == null) return;
+            string path = _context.Now() < _gapFakeRouteUntil
+                ? FinalGameplayArt.BackyardTrapGapFakeRoute
+                : IsGapHeld()
+                    ? FinalGameplayArt.BackyardTrapGapHeld
+                    : FinalGameplayArt.BackyardTrapGapOpen;
+            MissionPropArt.SetSprite(_gapArt, path);
+        }
+
+        private static void SetTreatProp(Treat treat, string resourcePath)
+        {
+            if (treat == null || string.IsNullOrEmpty(resourcePath)) return;
+
+            var attachment = treat.GetComponent<MissionPropArtAttachment>();
+            if (attachment != null && attachment.HasRuntimeSprite)
+            {
+                MissionPropArt.SetSprite(attachment, resourcePath);
+                return;
+            }
+
+            MissionPropArt.AttachObject(treat.gameObject, resourcePath, 0.013f, 31, true);
         }
 
         private float NextDelay()

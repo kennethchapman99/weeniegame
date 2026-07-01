@@ -1,6 +1,6 @@
 # Level Readiness Scores
 
-Status date: 2026-06-30
+Status date: 2026-07-01
 
 This scorecard rates the current Unity arena mission roster for the first couch-test push. It is not
 a final art review. Scores reflect the playable Unity implementation, documentation in
@@ -18,8 +18,9 @@ test passing on 2026-06-29), the targeted world-label skin evidence (`13/13` fil
 world-label tests and `1/1` final-art resource test passing on 2026-06-29), the targeted generated
 Arena SFX evidence (`1/1` catalog profile test and `1/1` event-driven audio/rumble test passing on
 2026-06-29), the targeted collectible-art stability evidence (`1/1` final-art integration test
-passing on 2026-06-29), and the latest full PlayMode evidence after the human-NPC readability pass
-(`390/390` passing on 2026-06-30). Each mission definition now also carries a reusable couch-test
+passing on 2026-06-29), the targeted generated P0 mission-state art evidence (`8/8` final-art
+integration tests passing on 2026-07-01), and the latest full PlayMode evidence after that P0 pass
+(`400/400` passing on 2026-07-01). Each mission definition now also carries a reusable couch-test
 presentation profile for role copy, mechanic family, scene cue, Cheddar/Cocoa presentation guidance,
 and required readability flags, with the selected/active mission's readability gate surfaced in the
 mission picker and playtest overlay. The shared arena also has a runtime animated set-dressing layer
@@ -32,6 +33,11 @@ bladder gauge, and first misread tennis ball, reducing the active deep slice's v
 colored-square silhouettes. The non-Pee roster now also uses Generated Mission Prop Pack Pass 2 under
 `ArenaFinal/Props/Missions` for its visible focus props, hazards, pickups, and payoff stations while
 leaving dimmed fallback pads and debug/UI labels as intentional readability primitives. Generated
+P0 mission-state packs now add state-specific transparent cartoon sprites under each mission's
+`ArenaFinal/Props/<Mission>/` folder for trap gaps, guard lanes, baskets, cutoffs, threat states,
+roundup cargo, dig patches, storm cues, yard zones, checkpoints, vehicle lurches, gates, humans,
+decoys, leashes, bone mounds, escape stations, blankets, Kitchen food states, and Chaos Machine
+lever states while preserving controller-owned gameplay objects as the source of truth. Generated
 mission-specific collectible overlays now remain stable after the dynamic treat-art enhancer scans
 spawned treats, so Snack Heist snack plates, Sock Panic socks, and Blanket Catch falling snacks do
 not revert to Backyard weenie art during play. Generated

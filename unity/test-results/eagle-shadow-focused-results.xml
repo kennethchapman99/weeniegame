@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="7" result="Passed" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-07-01 00:02:40Z" end-time="2026-07-01 00:02:41Z" duration="0.5402888">
+  <test-suite type="TestSuite" id="1475" name="Cheddar and Cocoa" fullname="Cheddar and Cocoa" runstate="Runnable" testcasecount="392" result="Passed" start-time="2026-07-01 00:02:40Z" end-time="2026-07-01 00:02:41Z" duration="0.540289" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1467" name="CheddarAndCocoa.Tests.PlayMode.dll" fullname="/Users/kchapman/Weeniegame/unity/CheddarAndCocoa/Library/ScriptAssemblies/CheddarAndCocoa.Tests.PlayMode.dll" runstate="Runnable" testcasecount="392" result="Passed" start-time="2026-07-01 00:02:40Z" end-time="2026-07-01 00:02:41Z" duration="0.534490" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="90958" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1468" name="CheddarAndCocoa" fullname="CheddarAndCocoa" runstate="Runnable" testcasecount="392" result="Passed" start-time="2026-07-01 00:02:40Z" end-time="2026-07-01 00:02:41Z" duration="0.530758" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1471" name="Tests" fullname="CheddarAndCocoa.Tests" runstate="Runnable" testcasecount="390" result="Passed" start-time="2026-07-01 00:02:40Z" end-time="2026-07-01 00:02:41Z" duration="0.527240" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1324" name="EagleShadowPanicPlayModeTests" fullname="CheddarAndCocoa.Tests.EagleShadowPanicPlayModeTests" classname="CheddarAndCocoa.Tests.EagleShadowPanicPlayModeTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-07-01 00:02:40Z" end-time="2026-07-01 00:02:41Z" duration="0.521393" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1325" name="EagleShadowPanic_AppearsInMissionSelectRotation" fullname="CheddarAndCocoa.Tests.EagleShadowPanicPlayModeTests.EagleShadowPanic_AppearsInMissionSelectRotation" methodname="EagleShadowPanic_AppearsInMissionSelectRotation" classname="CheddarAndCocoa.Tests.EagleShadowPanicPlayModeTests" runstate="Runnable" seed="1554779783" result="Passed" start-time="2026-07-01 00:02:40Z" end-time="2026-07-01 00:02:40Z" duration="0.268003" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1326" name="EagleShadowPanic_ClearPath_HideRescueUnitedFront" fullname="CheddarAndCocoa.Tests.EagleShadowPanicPlayModeTests.EagleShadowPanic_ClearPath_HideRescueUnitedFront" methodname="EagleShadowPanic_ClearPath_HideRescueUnitedFront" classname="CheddarAndCocoa.Tests.EagleShadowPanicPlayModeTests" runstate="Runnable" seed="645108185" result="Passed" start-time="2026-07-01 00:02:40Z" end-time="2026-07-01 00:02:40Z" duration="0.057606" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1329" name="EagleShadowPanic_FailPath_ExposuresEndMission" fullname="CheddarAndCocoa.Tests.EagleShadowPanicPlayModeTests.EagleShadowPanic_FailPath_ExposuresEndMission" methodname="EagleShadowPanic_FailPath_ExposuresEndMission" classname="CheddarAndCocoa.Tests.EagleShadowPanicPlayModeTests" runstate="Runnable" seed="1385983359" result="Passed" start-time="2026-07-01 00:02:40Z" end-time="2026-07-01 00:02:40Z" duration="0.039977" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1330" name="EagleShadowPanic_Replay_ResetsThreatSweepRuntimeState" fullname="CheddarAndCocoa.Tests.EagleShadowPanicPlayModeTests.EagleShadowPanic_Replay_ResetsThreatSweepRuntimeState" methodname="EagleShadowPanic_Replay_ResetsThreatSweepRuntimeState" classname="CheddarAndCocoa.Tests.EagleShadowPanicPlayModeTests" runstate="Runnable" seed="1607397865" result="Passed" start-time="2026-07-01 00:02:40Z" end-time="2026-07-01 00:02:40Z" duration="0.035971" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1328" name="EagleShadowPanic_Rescue_PullWithNoWindow_IsAMistimedMiss" fullname="CheddarAndCocoa.Tests.EagleShadowPanicPlayModeTests.EagleShadowPanic_Rescue_PullWithNoWindow_IsAMistimedMiss" methodname="EagleShadowPanic_Rescue_PullWithNoWindow_IsAMistimedMiss" classname="CheddarAndCocoa.Tests.EagleShadowPanicPlayModeTests" runstate="Runnable" seed="1784866360" result="Passed" start-time="2026-07-01 00:02:40Z" end-time="2026-07-01 00:02:40Z" duration="0.036412" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1327" name="EagleShadowPanic_Rescue_WiggleOpensWindow_PullInWindowFreesHim" fullname="CheddarAndCocoa.Tests.EagleShadowPanicPlayModeTests.EagleShadowPanic_Rescue_WiggleOpensWindow_PullInWindowFreesHim" methodname="EagleShadowPanic_Rescue_WiggleOpensWindow_PullInWindowFreesHim" classname="CheddarAndCocoa.Tests.EagleShadowPanicPlayModeTests" runstate="Runnable" seed="1164887387" result="Passed" start-time="2026-07-01 00:02:40Z" end-time="2026-07-01 00:02:40Z" duration="0.037791" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1331" name="EagleShadowPanic_SweepGeometry_CoverHidesAndOpenGroundExposes" fullname="CheddarAndCocoa.Tests.EagleShadowPanicPlayModeTests.EagleShadowPanic_SweepGeometry_CoverHidesAndOpenGroundExposes" methodname="EagleShadowPanic_SweepGeometry_CoverHidesAndOpenGroundExposes" classname="CheddarAndCocoa.Tests.EagleShadowPanicPlayModeTests" runstate="Runnable" seed="1320181063" result="Passed" start-time="2026-07-01 00:02:40Z" end-time="2026-07-01 00:02:41Z" duration="0.039178" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: /Users/kchapman/Weeniegame/unity/test-results/eagle-shadow-focused-results.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

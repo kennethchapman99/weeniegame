@@ -18,9 +18,13 @@ namespace CheddarAndCocoa.Game
         private MissionContext _context;
         private int _seed;
         private GameObject _scentPost;
+        private MissionPropArtAttachment _scentPostArt;
         private TextMesh _scentPostLabel;
         private GameObject[] _mounds;
+        private MissionPropArtAttachment[] _moundArt;
+        private string[] _moundOverrideArt;
         private TextMesh[] _moundLabels;
+        private int _lastActedMound = -1;
         private int _diggerInside = -1;
         private int _findsSeen;
         private int _blindSeen;
@@ -65,8 +69,11 @@ namespace CheddarAndCocoa.Game
             _findsSeen = 0;
             _blindSeen = 0;
             _wrongSeen = 0;
+            _lastActedMound = -1;
+            ClearMoundOverrides();
             _failed = false;
             SetSceneActive(true);
+            MissionPropArt.SetSprite(_scentPostArt, FinalGameplayArt.BoneRelayScentPostIdle);
             UpdateMoundVisuals();
         }
 
@@ -88,7 +95,11 @@ namespace CheddarAndCocoa.Game
                 if (Vector2.Distance(_context.Dogs[digger].transform.position, _mounds[i].transform.position) <= DigRange)
                 { inside = i; break; }
             }
-            if (inside >= 0 && inside != _diggerInside) _puzzle.ActOn(inside);
+            if (inside >= 0 && inside != _diggerInside)
+            {
+                _lastActedMound = inside;
+                _puzzle.ActOn(inside);
+            }
             _diggerInside = inside;
 
             HandleProgress();
@@ -136,12 +147,14 @@ namespace CheddarAndCocoa.Game
 
         public void ForceBoneReveal()
         {
+            ClearMoundOverrides();
             _puzzle.Reveal();
             UpdateMoundVisuals();
         }
 
         public void ForceBoneDig(int target)
         {
+            _lastActedMound = target;
             _puzzle.ActOn(target);
             HandleProgress();
             if (!_failed) UpdateMoundVisuals();
@@ -161,6 +174,7 @@ namespace CheddarAndCocoa.Game
                 _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "BONE!");
                 _context.SpawnWorldPop(digPos, "BONE!", new Color(0.5f, 0.9f, 0.55f));
                 _context.LogEvent("BoneFound", $"{_puzzle.Finds}/{FindsNeeded}");
+                SetMoundOverride(_lastActedMound, FinalGameplayArt.BoneRelayMoundFound);
             }
 
             bool wasted = false;
@@ -182,6 +196,7 @@ namespace CheddarAndCocoa.Game
                 _context.SetFeedback(GameManager.FeedbackKind.SquirrelStoleFood);
                 _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "NOPE!");
                 _context.SpawnWorldPop(digPos, "NOPE!", new Color(0.85f, 0.5f, 0.3f));
+                SetMoundOverride(_lastActedMound, FinalGameplayArt.BoneRelayMoundWrong);
                 int totalWasted = _puzzle.BlindActs + _puzzle.WrongDigs;
                 _context.LogEvent("BoneWaste", $"{totalWasted}/{MaxWasted}");
                 if (totalWasted >= MaxWasted) _failed = true;
@@ -198,6 +213,15 @@ namespace CheddarAndCocoa.Game
                 bool isCall = i == call;
                 if (_mounds[i].TryGetComponent<SpriteRenderer>(out var sr))
                     sr.color = isCall ? MoundCallColor : MoundIdleColor;
+                if (_moundArt != null && _moundArt[i] != null)
+                {
+                    string overridePath = _moundOverrideArt != null ? _moundOverrideArt[i] : null;
+                    MissionPropArt.SetSprite(_moundArt[i], !string.IsNullOrEmpty(overridePath)
+                        ? overridePath
+                        : isCall
+                            ? FinalGameplayArt.BoneRelayMoundCalled
+                            : FinalGameplayArt.BoneRelayMoundUnknown);
+                }
                 if (_moundLabels != null && _moundLabels[i] != null)
                     _moundLabels[i].text = isCall ? "DIG HERE!" : "DIG?";
             }
@@ -205,11 +229,16 @@ namespace CheddarAndCocoa.Game
                 _scentPostLabel.text = _puzzle.Known ? "SCENT POST - SHE'S CALLING IT!" : "SCENT POST - COCOA SNIFF HERE";
             if (_scentPost != null && _scentPost.TryGetComponent<SpriteRenderer>(out var psr))
                 psr.color = _puzzle.Known ? MoundCallColor : new Color(0.7f, 0.6f, 0.95f);
+            MissionPropArt.SetSprite(_scentPostArt, _puzzle.Known
+                ? FinalGameplayArt.BoneRelayScentPostCalled
+                : FinalGameplayArt.BoneRelayScentPostIdle);
         }
 
         private void BuildScene()
         {
             _mounds = new GameObject[MoundSpots.Length];
+            _moundArt = new MissionPropArtAttachment[MoundSpots.Length];
+            _moundOverrideArt = new string[MoundSpots.Length];
             _moundLabels = new TextMesh[MoundSpots.Length];
             for (int i = 0; i < MoundSpots.Length; i++)
             {
@@ -220,7 +249,7 @@ namespace CheddarAndCocoa.Game
                 if (_context.ActorSprite != null) sr.sprite = _context.ActorSprite;
                 sr.color = MoundIdleColor;
                 _moundLabels[i] = _context.AddWorldLabel(go, "DIG?", Vector3.up * 1.2f, 13, Color.white);
-                MissionPropArt.AttachObject(go, FinalGameplayArt.MissionBoneMound, 0.012f, 18, true);
+                _moundArt[i] = MissionPropArt.AttachObject(go, FinalGameplayArt.BoneRelayMoundUnknown, 0.012f, 18, true);
                 go.SetActive(false);
                 _mounds[i] = go;
             }
@@ -232,7 +261,7 @@ namespace CheddarAndCocoa.Game
             if (_context.ActorSprite != null) psr.sprite = _context.ActorSprite;
             psr.color = new Color(0.7f, 0.6f, 0.95f);
             _scentPostLabel = _context.AddWorldLabel(_scentPost, "SCENT POST - COCOA SNIFF HERE", Vector3.up * 1.5f, 11, Color.white);
-            MissionPropArt.AttachObject(_scentPost, FinalGameplayArt.MissionScentPost, 0.012f, 18, true);
+            _scentPostArt = MissionPropArt.AttachObject(_scentPost, FinalGameplayArt.BoneRelayScentPostIdle, 0.012f, 18, true);
             _scentPost.SetActive(false);
         }
 
@@ -242,6 +271,18 @@ namespace CheddarAndCocoa.Game
             if (_mounds == null) return;
             foreach (var m in _mounds)
                 if (m != null) m.SetActive(active);
+        }
+
+        private void ClearMoundOverrides()
+        {
+            if (_moundOverrideArt == null) return;
+            for (int i = 0; i < _moundOverrideArt.Length; i++) _moundOverrideArt[i] = null;
+        }
+
+        private void SetMoundOverride(int index, string resourcePath)
+        {
+            if (_moundOverrideArt == null || index < 0 || index >= _moundOverrideArt.Length) return;
+            _moundOverrideArt[index] = resourcePath;
         }
 
         private Transform FindNearestActiveMound(int dogIndex)

@@ -18,6 +18,7 @@ namespace CheddarAndCocoa.Game
         private GameObject[] _cutoffMarkers;
         private Vector2 _stashPosition;
         private float _routeTimer;
+        private float _fakeoutUntil;
 
         public GameManager.MissionVariant Variant => GameManager.MissionVariant.SquirrelConspiracy;
         public bool IsComplete => _state.StashFound;
@@ -64,6 +65,7 @@ namespace CheddarAndCocoa.Game
         {
             _state.Reset();
             _routeTimer = RouteResetSeconds;
+            _fakeoutUntil = 0f;
             _context.SquirrelObject.transform.position = _route[0];
             _context.SquirrelObject.SetActive(true);
             _context.SetActorState(_context.SquirrelObject, "SQUIRREL CONSPIRACY ROUTE 1", new Color(0.55f, 0.32f, 0.12f), 0.06f);
@@ -73,6 +75,7 @@ namespace CheddarAndCocoa.Game
         public void Tick(float deltaTime, float now)
         {
             if (_context.SquirrelObject == null) return;
+            UpdateCutoffMarkers();
             _routeTimer -= deltaTime;
             Vector2 target = _state.StashRevealed ? _stashPosition : _route[_state.RouteIndex];
             _context.SquirrelObject.transform.position = Vector3.MoveTowards(
@@ -95,6 +98,8 @@ namespace CheddarAndCocoa.Game
                 _context.SpawnWorldPop(_context.Dogs[dogIndex].transform.position, "FAKE OUT!", new Color(1f, 0.42f, 0.24f));
                 _context.RequestAudioCue(ArenaFeedbackCatalog.SquirrelStealMiss);
                 _context.LogEvent("SquirrelFakeOut", "The dogs barked at absolutely nothing.");
+                _fakeoutUntil = _context.Now() + 1f;
+                UpdateCutoffMarkers();
                 return false;
             }
 
@@ -118,6 +123,7 @@ namespace CheddarAndCocoa.Game
             {
                 _state.RevealStash();
                 HideCutoffMarkers();
+                SetMissionProp(_context.SquirrelObject, FinalGameplayArt.SquirrelConspiracyStashRevealed, 0.013f, 31);
                 _context.AddScore(ScoreEventCatalog.DoubleBarkBlock.Points, ScoreEventCatalog.DoubleBarkBlock.Label);
                 _context.SquirrelObject.transform.position = _stashPosition + Vector2.left * 1.2f;
                 _context.SetActorState(_context.SquirrelObject, "STASH REVEALED - SNIFF + INTERACT!", new Color(1f, 0.72f, 0.18f), 0.34f);
@@ -200,6 +206,7 @@ namespace CheddarAndCocoa.Game
             }
 
             _state.FindStash();
+            SetMissionProp(_context.SquirrelObject, FinalGameplayArt.SquirrelConspiracyStashCracked, 0.013f, 31);
             _context.CreditDog(dogIndex);
             _context.AddScore(ScoreEventCatalog.StashFound.Points, ScoreEventCatalog.StashFound.Label);
             _context.AddScore(ScoreEventCatalog.ConspiracyCracked.Points, ScoreEventCatalog.ConspiracyCracked.Label);
@@ -242,7 +249,7 @@ namespace CheddarAndCocoa.Game
                 renderer.color = new Color(1f, 0.72f, 0.18f, 0.38f);
                 renderer.sortingOrder = 1;
                 _context.AddWorldLabel(marker, "HOLD CUTOFF", Vector3.up * 0.38f, 14, Color.white);
-                MissionPropArt.AttachPad(marker, FinalGameplayArt.MissionEscapeGap, 0.012f, 18);
+                MissionPropArt.AttachPad(marker, FinalGameplayArt.SquirrelConspiracyCutoffOpen, 0.012f, 18);
                 marker.SetActive(false);
                 _cutoffMarkers[i] = marker;
             }
@@ -251,7 +258,12 @@ namespace CheddarAndCocoa.Game
         private void UpdateCutoffMarkers()
         {
             for (int i = 0; i < _cutoffMarkers.Length; i++)
-                _cutoffMarkers[i].SetActive(!_state.StashRevealed && i == _state.RouteIndex);
+            {
+                bool active = !_state.StashRevealed && i == _state.RouteIndex;
+                _cutoffMarkers[i].SetActive(active);
+                if (active)
+                    MissionPropArt.SetSprite(_cutoffMarkers[i].GetComponent<MissionPropArtAttachment>(), CutoffArtPath());
+            }
         }
 
         private void HideCutoffMarkers()
@@ -267,6 +279,27 @@ namespace CheddarAndCocoa.Game
                     Vector2.Distance(_context.Dogs[i].transform.position, ActiveCutoffZone) <= CutoffRadius)
                     return true;
             return false;
+        }
+
+        private string CutoffArtPath()
+        {
+            if (_context.Now() < _fakeoutUntil) return FinalGameplayArt.SquirrelConspiracyCutoffFakeout;
+            for (int i = 0; i < _context.Dogs.Length; i++)
+                if (_context.Dogs[i] != null && Vector2.Distance(_context.Dogs[i].transform.position, ActiveCutoffZone) <= CutoffRadius)
+                    return FinalGameplayArt.SquirrelConspiracyCutoffHeld;
+            return FinalGameplayArt.SquirrelConspiracyCutoffOpen;
+        }
+
+        private static void SetMissionProp(GameObject go, string resourcePath, float scale, int sortingOrder)
+        {
+            if (go == null || string.IsNullOrEmpty(resourcePath)) return;
+            var attachment = go.GetComponent<MissionPropArtAttachment>();
+            if (attachment != null && attachment.HasRuntimeSprite)
+            {
+                MissionPropArt.SetSprite(attachment, resourcePath);
+                return;
+            }
+            MissionPropArt.AttachObject(go, resourcePath, scale, sortingOrder, true);
         }
 
         private int ClosestDogIndex(Vector2 position)

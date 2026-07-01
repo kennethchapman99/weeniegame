@@ -23,12 +23,15 @@ namespace CheddarAndCocoa.Game
         private MissionContext _context;
         private GameObject _gate;
         private GameObject _toy;
+        private MissionPropArtAttachment _gateArt;
+        private MissionPropArtAttachment _toyArt;
         private TextMesh _gateLabel;
         private TextMesh _toyLabel;
         private Vector2 _holdZone;
         private Vector2 _crossZone;
         private int _snapsSeen;
         private bool _failed;
+        private float _gateSnapReactionUntil;
 
         public GameManager.MissionVariant Variant => GameManager.MissionVariant.GateCrash;
         public bool IsComplete => _puzzle.Solved;
@@ -65,9 +68,12 @@ namespace CheddarAndCocoa.Game
             _puzzle.Configure(CrossNeeded, HoldWindow);
             _snapsSeen = 0;
             _failed = false;
+            _gateSnapReactionUntil = 0f;
             _holdZone = new Vector2(_context.Bounds.center.x - 10f, _context.Bounds.center.y);
             _crossZone = new Vector2(_context.Bounds.center.x + 10f, _context.Bounds.center.y);
             SetSceneActive(true);
+            MissionPropArt.SetSprite(_gateArt, FinalGameplayArt.GateCrashGateClosed);
+            MissionPropArt.SetSprite(_toyArt, FinalGameplayArt.GateCrashToyWaiting);
             UpdateLabels();
         }
 
@@ -135,6 +141,7 @@ namespace CheddarAndCocoa.Game
         {
             _puzzle.SetHeld(held);
             HandleSnaps();
+            UpdateLabels();
         }
 
         /// <summary>Test hook: advance the squeeze by <paramref name="seconds"/> with the gate held.</summary>
@@ -142,6 +149,7 @@ namespace CheddarAndCocoa.Game
         {
             _puzzle.Advance(seconds);
             HandleSnaps();
+            UpdateLabels();
         }
 
         private void HandleSnaps()
@@ -149,6 +157,8 @@ namespace CheddarAndCocoa.Game
             if (_puzzle.Snaps <= _snapsSeen) return;
 
             _snapsSeen = _puzzle.Snaps;
+            _gateSnapReactionUntil = _context.Now() + 0.55f;
+            MissionPropArt.SetSprite(_gateArt, FinalGameplayArt.GateCrashGateSnap);
             _context.AddScore(ScoreEventCatalog.FakeOut.Points, "GATE SNAP");
             _context.SetFeedback(GameManager.FeedbackKind.SquirrelStoleFood);
             _context.SetCue($"The gate snapped shut! ({_puzzle.Snaps}/{MaxSnaps}) Cocoa has to brace it.");
@@ -162,8 +172,8 @@ namespace CheddarAndCocoa.Game
         {
             _gate = NewMarker("GateCrashGate", GateIdleColor, "COCOA: HOLD THE GATE!", new Vector3(1.4f, 4f, 1f), out _gateLabel);
             _toy = NewMarker("GateCrashToy", new Color(0.6f, 0.8f, 1f), "TOY - CHEDDAR SQUEEZE THROUGH!", Vector3.one * 1.2f, out _toyLabel);
-            MissionPropArt.AttachObject(_gate, FinalGameplayArt.MissionGate, 0.013f, 18, true);
-            MissionPropArt.AttachObject(_toy, FinalGameplayArt.MissionSqueakyToy, 0.012f, 18, true);
+            _gateArt = MissionPropArt.AttachObject(_gate, FinalGameplayArt.GateCrashGateClosed, 0.013f, 18, true);
+            _toyArt = MissionPropArt.AttachObject(_toy, FinalGameplayArt.GateCrashToyWaiting, 0.012f, 18, true);
         }
 
         private GameObject NewMarker(string name, Color color, string label, Vector3 scale, out TextMesh worldLabel)
@@ -192,11 +202,16 @@ namespace CheddarAndCocoa.Game
                 _gate.transform.position = _holdZone;
                 var sr = _gate.GetComponent<SpriteRenderer>();
                 if (sr != null) sr.color = _puzzle.Held ? GateHeldColor : GateIdleColor;
+                if (_context.Now() < _gateSnapReactionUntil)
+                    MissionPropArt.SetSprite(_gateArt, FinalGameplayArt.GateCrashGateSnap);
+                else
+                    MissionPropArt.SetSprite(_gateArt, _puzzle.Held ? FinalGameplayArt.GateCrashGateHeld : FinalGameplayArt.GateCrashGateClosed);
                 if (_gateLabel != null) _gateLabel.text = _puzzle.Held ? "GATE HELD - SQUEEZE THROUGH!" : "COCOA: HOLD THE GATE!";
             }
             if (_toy != null)
             {
                 _toy.transform.position = _crossZone;
+                MissionPropArt.SetSprite(_toyArt, _puzzle.Solved ? FinalGameplayArt.GateCrashToyClaimed : FinalGameplayArt.GateCrashToyWaiting);
                 if (_toyLabel != null) _toyLabel.text = $"TOY - SQUEEZE {Mathf.RoundToInt(_puzzle.CrossRatio * 100f)}%";
             }
         }

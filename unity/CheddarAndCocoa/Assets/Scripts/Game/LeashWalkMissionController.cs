@@ -43,6 +43,7 @@ namespace CheddarAndCocoa.Game
             _state.Configure(_checkpoints.Length);
             _nextSnapAt = 0f;
             _cleared = false;
+            for (int i = 0; i < _markers.Length; i++) SetMarkerArt(i, FinalGameplayArt.LeashWalkCheckpointWaiting);
             SetMarkersActive(true);
         }
 
@@ -108,7 +109,10 @@ namespace CheddarAndCocoa.Game
             int idx = _state.CheckpointIndex;
             _state.ReachCheckpoint();
             if (_markers != null && idx >= 0 && idx < _markers.Length && _markers[idx] != null)
+            {
+                SetMarkerArt(idx, FinalGameplayArt.LeashWalkCheckpointReached);
                 _markers[idx].SetActive(false);
+            }
 
             _context.AddScore(ScoreEventCatalog.CheckpointReached.Points, ScoreEventCatalog.CheckpointReached.Label);
             _context.SetFeedback(GameManager.FeedbackKind.UnitedBark);
@@ -136,6 +140,8 @@ namespace CheddarAndCocoa.Game
         private void RegisterSnap()
         {
             _state.Snap();
+            int idx = _state.CheckpointIndex;
+            if (idx >= 0 && idx < _markers.Length) SetMarkerArt(idx, FinalGameplayArt.LeashWalkSnapWarning);
             _context.AddScore(ScoreEventCatalog.LeashSnap.Points, ScoreEventCatalog.LeashSnap.Label);
             _context.SetFeedback(GameManager.FeedbackKind.TugNeedsPartner);
             _context.SetCue($"The leash snapped taut - too far apart! ({_state.Snaps}/{MaxSnaps})");
@@ -165,10 +171,16 @@ namespace CheddarAndCocoa.Game
                 sr.color = new Color(0.45f, 0.6f, 0.85f, 0.4f);
                 sr.sortingOrder = 1;
                 _context.AddWorldLabel(go, "CHECKPOINT", Vector3.up * 0.9f, 13, Color.white);
-                MissionPropArt.AttachPad(go, FinalGameplayArt.MissionLeashCheckpoint, 0.012f, 18);
+                MissionPropArt.AttachPad(go, FinalGameplayArt.LeashWalkCheckpointWaiting, 0.012f, 18);
                 go.SetActive(false);
                 _markers[i] = go;
             }
+        }
+
+        private void SetMarkerArt(int index, string resourcePath)
+        {
+            if (_markers == null || index < 0 || index >= _markers.Length || _markers[index] == null) return;
+            MissionPropArt.SetSprite(_markers[index].GetComponent<MissionPropArtAttachment>(), resourcePath);
         }
 
         private void SetMarkersActive(bool active)

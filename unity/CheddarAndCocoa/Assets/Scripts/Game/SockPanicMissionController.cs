@@ -13,6 +13,7 @@ namespace CheddarAndCocoa.Game
         private GameObject _basket;
         private Treat _exposedSock;
         private float _openingUntil;
+        private float _basketFumbleUntil;
 
         public GameManager.MissionVariant Variant => GameManager.MissionVariant.SockPanic;
         public bool IsComplete => _state.SuccessfulDives >= _context.ObjectiveGoal;
@@ -33,7 +34,7 @@ namespace CheddarAndCocoa.Game
         {
             _context = context;
             _basket = _context.CreateActor(ArenaArtCatalog.ActorKind.LaundryBasket);
-            MissionPropArt.AttachObject(_basket, FinalGameplayArt.MissionLaundryBasket, 0.013f, 18, true);
+            MissionPropArt.AttachObject(_basket, FinalGameplayArt.SockPanicBasketClosed, 0.013f, 18, true);
             _basket.SetActive(false);
         }
 
@@ -42,6 +43,7 @@ namespace CheddarAndCocoa.Game
             HideExposedSock();
             _state.Reset();
             _openingUntil = 0f;
+            _basketFumbleUntil = 0f;
             _basket.transform.position = _context.Bounds.center;
             _basket.SetActive(true);
             SetBasketClosed("LAUNDRY BASKET - ONE DOG TIP, PARTNER DIVE!");
@@ -49,6 +51,7 @@ namespace CheddarAndCocoa.Game
 
         public void Tick(float deltaTime, float now)
         {
+            UpdateBasketArt();
             if (!_state.BasketOpen || now < _openingUntil) return;
             _state.ExpireOpening();
             RegisterFumble("FUMBLE! The basket flopped shut on the runaway sock.");
@@ -79,10 +82,12 @@ namespace CheddarAndCocoa.Game
             }
             if (result == SockBasketMissionState.CollectResult.SameDogDecoy)
             {
+                SetTreatProp(treat, FinalGameplayArt.SockPanicSockDecoy);
                 RegisterFumble("DECOY! The basket-tipper needs their partner to dive.");
                 return true;
             }
 
+            SetTreatProp(treat, FinalGameplayArt.SockPanicSockSaved);
             _exposedSock = null;
             SetBasketClosed("LAUNDRY BASKET - TIP AGAIN!");
             _context.AddScore(ScoreEventCatalog.SockDive.Points, ScoreEventCatalog.SockDive.Label);
@@ -167,11 +172,12 @@ namespace CheddarAndCocoa.Game
 
             _exposedSock.transform.position = _basket.transform.position + Vector3.right * 2f;
             _exposedSock.gameObject.SetActive(true);
+            SetTreatProp(_exposedSock, FinalGameplayArt.SockPanicSockExposed);
             _openingUntil = _context.Now() + OpeningSeconds;
             _context.AddScore(ScoreEventCatalog.BasketTipped.Points, ScoreEventCatalog.BasketTipped.Label);
             _context.SetCue($"{DogName(dogIndex)} tipped the basket - partner dive for the sock!");
             _context.SetActorState(_basket, "BASKET HELD OPEN - PARTNER DIVE NOW!", new Color(0.96f, 0.72f, 0.32f), 0.22f);
-            MissionPropArt.SetSprite(_basket.GetComponent<MissionPropArtAttachment>(), FinalGameplayArt.MissionLaundryBasketOpen);
+            MissionPropArt.SetSprite(_basket.GetComponent<MissionPropArtAttachment>(), FinalGameplayArt.SockPanicBasketOpen);
             _context.SpawnWorldPop(_basket.transform.position, "TIP! PARTNER DIVE!", new Color(0.62f, 0.9f, 1f));
             _context.RequestAudioCue(ArenaFeedbackCatalog.Bark);
             _context.LogEvent("SockBasket", $"{DogName(dogIndex)} tipped the basket");
@@ -181,6 +187,7 @@ namespace CheddarAndCocoa.Game
         private void RegisterFumble(string cue)
         {
             HideExposedSock();
+            _basketFumbleUntil = _context.Now() + 1f;
             _context.AddScore(ScoreEventCatalog.SockDecoy.Points, ScoreEventCatalog.SockDecoy.Label);
             _context.SetCue(cue);
             SetBasketClosed("LAUNDRY BASKET - TIP AGAIN!");
@@ -202,8 +209,33 @@ namespace CheddarAndCocoa.Game
             if (_basket != null)
             {
                 _context.SetActorState(_basket, label, new Color(0.78f, 0.56f, 0.3f), 0.08f);
-                MissionPropArt.SetSprite(_basket.GetComponent<MissionPropArtAttachment>(), FinalGameplayArt.MissionLaundryBasket);
+                UpdateBasketArt();
             }
+        }
+
+        private void UpdateBasketArt()
+        {
+            if (_basket == null || _context == null) return;
+            string path = _state.BasketOpen
+                ? FinalGameplayArt.SockPanicBasketOpen
+                : _context.Now() < _basketFumbleUntil
+                    ? FinalGameplayArt.SockPanicBasketFumble
+                    : FinalGameplayArt.SockPanicBasketClosed;
+            MissionPropArt.SetSprite(_basket.GetComponent<MissionPropArtAttachment>(), path);
+        }
+
+        private static void SetTreatProp(Treat treat, string resourcePath)
+        {
+            if (treat == null || string.IsNullOrEmpty(resourcePath)) return;
+
+            var attachment = treat.GetComponent<MissionPropArtAttachment>();
+            if (attachment != null && attachment.HasRuntimeSprite)
+            {
+                MissionPropArt.SetSprite(attachment, resourcePath);
+                return;
+            }
+
+            MissionPropArt.AttachObject(treat.gameObject, resourcePath, 0.013f, 31, true);
         }
 
         private DogId DogIdAt(int dogIndex) => dogIndex >= 0 && dogIndex < _context.Dogs.Length &&

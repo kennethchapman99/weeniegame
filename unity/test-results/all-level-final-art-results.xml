@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="8" result="Passed" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-07-01 17:24:09Z" end-time="2026-07-01 17:24:15Z" duration="5.6191759">
+  <test-suite type="TestSuite" id="1483" name="Cheddar and Cocoa" fullname="Cheddar and Cocoa" runstate="Runnable" testcasecount="400" result="Passed" start-time="2026-07-01 17:24:09Z" end-time="2026-07-01 17:24:15Z" duration="5.619176" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1475" name="CheddarAndCocoa.Tests.PlayMode.dll" fullname="/Users/kchapman/Weeniegame/unity/CheddarAndCocoa/Library/ScriptAssemblies/CheddarAndCocoa.Tests.PlayMode.dll" runstate="Runnable" testcasecount="400" result="Passed" start-time="2026-07-01 17:24:09Z" end-time="2026-07-01 17:24:15Z" duration="5.611897" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="99220" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1476" name="CheddarAndCocoa" fullname="CheddarAndCocoa" runstate="Runnable" testcasecount="400" result="Passed" start-time="2026-07-01 17:24:09Z" end-time="2026-07-01 17:24:15Z" duration="5.607929" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1479" name="Tests" fullname="CheddarAndCocoa.Tests" runstate="Runnable" testcasecount="398" result="Passed" start-time="2026-07-01 17:24:09Z" end-time="2026-07-01 17:24:15Z" duration="5.604011" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1337" name="FinalArtIntegrationPlayModeTests" fullname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests" classname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-07-01 17:24:09Z" end-time="2026-07-01 17:24:15Z" duration="5.598647" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1338" name="ArenaFinal_RequiredResourcesLoadAndMissingResourcesStayOptional" fullname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests.ArenaFinal_RequiredResourcesLoadAndMissingResourcesStayOptional" methodname="ArenaFinal_RequiredResourcesLoadAndMissingResourcesStayOptional" classname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests" runstate="Runnable" seed="200076807" result="Passed" start-time="2026-07-01 17:24:09Z" end-time="2026-07-01 17:24:09Z" duration="0.274502" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1340" name="ArtReviewCapture_ParsesOnlyExplicitOutputArgument" fullname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests.ArtReviewCapture_ParsesOnlyExplicitOutputArgument" methodname="ArtReviewCapture_ParsesOnlyExplicitOutputArgument" classname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests" runstate="Runnable" seed="1552821815" result="Passed" start-time="2026-07-01 17:24:09Z" end-time="2026-07-01 17:24:09Z" duration="0.000160" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1343" name="BackyardRescue_UsesFinalSpritesWithoutReplacingGameplayObjects" fullname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests.BackyardRescue_UsesFinalSpritesWithoutReplacingGameplayObjects" methodname="BackyardRescue_UsesFinalSpritesWithoutReplacingGameplayObjects" classname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests" runstate="Runnable" seed="2027689314" result="Passed" start-time="2026-07-01 17:24:09Z" end-time="2026-07-01 17:24:12Z" duration="2.481493" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[Cheddar] WOOF!
+]]></output>
+            </test-case>
+            <test-case id="1341" name="CharacterMotionArt_BuildsStableDirectionalPathsAndFallsBackSafely" fullname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests.CharacterMotionArt_BuildsStableDirectionalPathsAndFallsBackSafely" methodname="CharacterMotionArt_BuildsStableDirectionalPathsAndFallsBackSafely" classname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests" runstate="Runnable" seed="917932621" result="Passed" start-time="2026-07-01 17:24:12Z" end-time="2026-07-01 17:24:12Z" duration="0.014188" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1339" name="FinalJuiceEffect_MapsGameplayFeedbackToDistinctReadableSprites" fullname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests.FinalJuiceEffect_MapsGameplayFeedbackToDistinctReadableSprites" methodname="FinalJuiceEffect_MapsGameplayFeedbackToDistinctReadableSprites" classname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests" runstate="Runnable" seed="1616355104" result="Passed" start-time="2026-07-01 17:24:12Z" end-time="2026-07-01 17:24:12Z" duration="0.000962" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1345" name="GeneratedMissionPropPackPass2_CoversVisibleMissionFocusProps" fullname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests.GeneratedMissionPropPackPass2_CoversVisibleMissionFocusProps" methodname="GeneratedMissionPropPackPass2_CoversVisibleMissionFocusProps" classname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests" runstate="Runnable" seed="869672958" result="Passed" start-time="2026-07-01 17:24:12Z" end-time="2026-07-01 17:24:14Z" duration="2.180724" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1344" name="MissionThreatActors_UseAuthoredMotionAndMarkerFallbacks" fullname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests.MissionThreatActors_UseAuthoredMotionAndMarkerFallbacks" methodname="MissionThreatActors_UseAuthoredMotionAndMarkerFallbacks" classname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests" runstate="Runnable" seed="115944500" result="Passed" start-time="2026-07-01 17:24:14Z" end-time="2026-07-01 17:24:15Z" duration="0.639114" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1342" name="ThreatMotionArt_BuildsStablePathsAndInfersReadableClips" fullname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests.ThreatMotionArt_BuildsStablePathsAndInfersReadableClips" methodname="ThreatMotionArt_BuildsStablePathsAndInfersReadableClips" classname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests" runstate="Runnable" seed="1587027357" result="Passed" start-time="2026-07-01 17:24:15Z" end-time="2026-07-01 17:24:15Z" duration="0.000419" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: /Users/kchapman/Weeniegame/unity/test-results/all-level-final-art-results.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

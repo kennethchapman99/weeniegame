@@ -18,9 +18,13 @@ namespace CheddarAndCocoa.Game
         private MissionContext _context;
         private GameObject _blanketObj;
         private TextMesh _blanketLabel;
+        private MissionPropArtAttachment _blanketArt;
         private GameObject _fallingItem;
+        private MissionPropArtAttachment _fallingArt;
         private float _itemX;
         private float _itemY;
+        private string _fallingOverrideArt;
+        private float _fallingOverrideUntil;
         private int _caughtSeen;
         private int _missedSeen;
         private int _ripsSeen;
@@ -59,6 +63,8 @@ namespace CheddarAndCocoa.Game
             _caughtSeen = 0;
             _missedSeen = 0;
             _ripsSeen = 0;
+            _fallingOverrideArt = null;
+            _fallingOverrideUntil = 0f;
             _failed = false;
             SetSceneActive(true);
             SpawnItem();
@@ -138,6 +144,7 @@ namespace CheddarAndCocoa.Game
             _context.SetFeedback(GameManager.FeedbackKind.SquirrelStoleFood);
             _context.SetCue($"Over-stretched! The blanket ripped. ({_puzzle.Rips}/{MaxRips})");
             _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "RIP!");
+            MissionPropArt.SetSprite(_blanketArt, FinalGameplayArt.BlanketCatchRipping);
             _context.LogEvent("BlanketRip", $"{_puzzle.Rips}/{MaxRips}");
             if (_puzzle.TooManyRips) _failed = true;
         }
@@ -152,6 +159,7 @@ namespace CheddarAndCocoa.Game
                 _context.SetCue($"Nice catch! The blanket snagged the snack. ({_puzzle.Caught}/{CatchesNeeded})");
                 _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "CAUGHT!");
                 _context.SpawnWorldPop(new Vector2(_itemX, CatchLineY), "CAUGHT!", new Color(0.5f, 0.95f, 0.55f));
+                ShowFallingReaction(FinalGameplayArt.BlanketSnackCaught, 0.6f);
                 _context.LogEvent("BlanketCatch", $"{_puzzle.Caught}/{CatchesNeeded}");
             }
             if (_puzzle.Missed > _missedSeen)
@@ -164,6 +172,7 @@ namespace CheddarAndCocoa.Game
                 _context.SetCue(cue);
                 _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "MISSED!");
                 _context.SpawnWorldPop(new Vector2(_itemX, CatchLineY), "SPLAT!", new Color(0.85f, 0.5f, 0.3f));
+                ShowFallingReaction(FinalGameplayArt.BlanketSnackSplat, 0.6f);
                 _context.LogEvent("BlanketMiss", $"{_puzzle.Missed}");
             }
         }
@@ -175,6 +184,9 @@ namespace CheddarAndCocoa.Game
             _itemY = SpawnY;
             if (_fallingItem != null)
             {
+                _fallingOverrideArt = null;
+                _fallingOverrideUntil = 0f;
+                MissionPropArt.SetSprite(_fallingArt, FinalGameplayArt.BlanketSnackFalling);
                 _fallingItem.SetActive(true);
                 _fallingItem.transform.position = new Vector3(_itemX, _itemY, 0f);
             }
@@ -192,6 +204,8 @@ namespace CheddarAndCocoa.Game
             float width = Mathf.Clamp(_puzzle.Separation, 1f, MaxSeparation + 2f);
             _blanketObj.transform.localScale = new Vector3(width, 0.5f, 1f);
             if (_blanketObj.TryGetComponent<SpriteRenderer>(out var sr)) sr.color = tint;
+            MissionPropArt.SetSprite(_blanketArt, SelectBlanketSprite());
+            MissionPropArt.SetSprite(_fallingArt, SelectFallingSprite());
             if (_blanketLabel != null)
             {
                 _blanketLabel.text = _puzzle.Taut ? $"BLANKET TAUT - CATCH! ({_puzzle.Caught}/{CatchesNeeded})"
@@ -209,7 +223,7 @@ namespace CheddarAndCocoa.Game
             if (_context.ActorSprite != null) bsr.sprite = _context.ActorSprite;
             bsr.color = new Color(0.85f, 0.8f, 0.35f);
             _blanketLabel = _context.AddWorldLabel(_blanketObj, "BLANKET", Vector3.up * 1.6f, 12, Color.white);
-            MissionPropArt.AttachObject(_blanketObj, FinalGameplayArt.MissionCatchBlanket, 0.012f, 18, false);
+            _blanketArt = MissionPropArt.AttachObject(_blanketObj, FinalGameplayArt.BlanketCatchSlack, 0.012f, 18, false);
             _blanketObj.SetActive(false);
 
             _fallingItem = new GameObject("FallingSnack");
@@ -219,8 +233,29 @@ namespace CheddarAndCocoa.Game
             if (_context.ActorSprite != null) isr.sprite = _context.ActorSprite;
             isr.color = new Color(0.95f, 0.8f, 0.4f);
             _context.AddWorldLabel(_fallingItem, "SNACK", Vector3.up * 1.1f, 11, Color.white);
-            MissionPropArt.AttachObject(_fallingItem, FinalGameplayArt.MissionFallingSnack, 0.012f, 18, true);
+            _fallingArt = MissionPropArt.AttachObject(_fallingItem, FinalGameplayArt.BlanketSnackFalling, 0.012f, 18, true);
             _fallingItem.SetActive(false);
+        }
+
+        private string SelectBlanketSprite()
+        {
+            if (_puzzle.Overstretched) return FinalGameplayArt.BlanketCatchRipping;
+            if (_puzzle.Taut) return FinalGameplayArt.BlanketCatchTaut;
+            return FinalGameplayArt.BlanketCatchSlack;
+        }
+
+        private string SelectFallingSprite()
+        {
+            if (!string.IsNullOrEmpty(_fallingOverrideArt) && _context.Now() < _fallingOverrideUntil)
+                return _fallingOverrideArt;
+            return FinalGameplayArt.BlanketSnackFalling;
+        }
+
+        private void ShowFallingReaction(string resourcePath, float seconds)
+        {
+            _fallingOverrideArt = resourcePath;
+            _fallingOverrideUntil = _context.Now() + seconds;
+            MissionPropArt.SetSprite(_fallingArt, resourcePath);
         }
 
         private void SetSceneActive(bool active)

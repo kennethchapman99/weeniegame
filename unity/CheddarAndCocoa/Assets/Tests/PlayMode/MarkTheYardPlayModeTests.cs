@@ -121,9 +121,9 @@ namespace CheddarAndCocoa.Tests
 
             var art = squirrel.GetComponent<MissionPropArtAttachment>();
             Assert.IsNotNull(art);
-            Assert.AreEqual(FinalGameplayArt.SquirrelIdle, art.ResourcePath);
+            Assert.AreEqual(FinalGameplayArt.MarkYardSquirrelWatch, art.ResourcePath);
             Assert.IsTrue(art.HasRuntimeSprite);
-            Assert.AreEqual("squirrel_mischief_v02", art.RuntimeSpriteName);
+            Assert.AreEqual("mark_yard_squirrel_watch", art.RuntimeSpriteName);
 
             var feedback = squirrel.GetComponent<MissionActorFeedback>();
             Assert.IsNotNull(feedback);
@@ -141,14 +141,15 @@ namespace CheddarAndCocoa.Tests
             yield return new WaitForSeconds(0.15f);
             Assert.AreEqual("Scared", motion.CurrentClipLabel,
                 "Claiming territory should visibly push the squirrel into a reaction state.");
-            Assert.AreEqual(FinalGameplayArt.SquirrelScared, art.ResourcePath);
+            Assert.AreEqual(FinalGameplayArt.MarkYardSquirrelWatch, art.ResourcePath);
 
             game.ForceSquirrelReclaim();
             yield return new WaitForSeconds(0.15f);
             Assert.AreEqual("Steal", motion.CurrentClipLabel,
                 "A stolen zone should visibly read as squirrel mischief, not just a HUD/state change.");
             Assert.That(motion.RuntimeSpriteName, Does.StartWith("squirrel_steal_e_"));
-            Assert.AreEqual(FinalGameplayArt.SquirrelSteal, art.ResourcePath);
+            Assert.AreEqual(FinalGameplayArt.MarkYardSquirrelSteal, art.ResourcePath);
+            Assert.AreEqual("mark_yard_squirrel_steal", art.RuntimeSpriteName);
         }
 
         [UnityTest]

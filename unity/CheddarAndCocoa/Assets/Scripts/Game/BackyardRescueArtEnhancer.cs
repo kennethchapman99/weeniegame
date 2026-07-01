@@ -253,6 +253,8 @@ namespace CheddarAndCocoa.Game
                 new Vector2(34f, 7f), -4, new Color(1f, 1f, 1f, 0.82f));
             AddEnvironmentOverlay(root, "CoyoteFencePressureLane", FinalGameplayArt.EnvironmentThreatLane,
                 new Vector2(30f, 5f), -4, new Color(1f, 1f, 1f, 0.72f));
+            AddWorldEnvironmentArt("ActualBackyardPredatorLaneWarning", FinalGameplayArt.BackyardPredatorLaneWarning,
+                new Vector3(0f, 0.5f, 0.17f), new Vector2(30f, 5f), -2, new Color(1f, 1f, 1f, 0.72f));
             AddEnvironmentOverlay(root, "FenceRailTop", FinalGameplayArt.EnvironmentFenceRun,
                 new Vector2(58f, 4.2f), -4, new Color(1f, 1f, 1f, 0.86f));
             AddEnvironmentOverlay(root, "FenceRailBottom", FinalGameplayArt.EnvironmentFenceRun,
@@ -380,6 +382,25 @@ namespace CheddarAndCocoa.Game
             sr.color = tint;
             OverlayCount++;
             BuildingArtOverlayCount++;
+        }
+
+        private void AddWorldEnvironmentArt(string name, string resourcePath, Vector3 position, Vector2 worldSize, int sortingOrder, Color tint)
+        {
+            Sprite sprite = FinalGameplayArt.Load(resourcePath);
+            if (sprite == null || GameObject.Find(name) != null) return;
+
+            var go = new GameObject(name);
+            go.transform.position = position;
+            float xScale = worldSize.x / Mathf.Max(0.01f, sprite.bounds.size.x);
+            float yScale = worldSize.y / Mathf.Max(0.01f, sprite.bounds.size.y);
+            go.transform.localScale = new Vector3(xScale, yScale, 1f);
+
+            var sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = sprite;
+            sr.sortingOrder = sortingOrder;
+            sr.color = tint;
+            OverlayCount++;
+            EnvironmentArtOverlayCount++;
         }
 
         private void ReactToFeedback(GameManager.FeedbackKind feedback)

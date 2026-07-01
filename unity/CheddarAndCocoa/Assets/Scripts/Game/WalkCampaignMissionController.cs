@@ -73,6 +73,8 @@ namespace CheddarAndCocoa.Game
             _doorZone = new Vector2(_context.Bounds.center.x - 6f, _context.Bounds.center.y - 6f);
             _leashZone = new Vector2(_context.Bounds.center.x + 11f, _context.Bounds.center.y + 3f);
             SetSceneActive(true);
+            MissionPropArt.SetSprite(_humanArt, FinalGameplayArt.WalkCampaignHumanConfused);
+            MissionPropArt.SetSprite(_leashArt, FinalGameplayArt.WalkCampaignLeashWaiting);
             UpdateLabels();
         }
 
@@ -164,7 +166,7 @@ namespace CheddarAndCocoa.Game
                 _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "GETTING IT!");
                 _context.LogEvent("WalkGettingIt", "combo");
                 SetHumanState("HUMAN GETTING IT - HOLD THE MESSAGE!", HumanGettingItColor, 0.1f,
-                    new Color(0.78f, 1f, 0.78f, 1f));
+                    new Color(0.78f, 1f, 0.78f, 1f), FinalGameplayArt.WalkCampaignHumanGettingIt);
             }
 
             if (_puzzle.Misreads > _misreadsSeen)
@@ -181,13 +183,13 @@ namespace CheddarAndCocoa.Game
                 {
                     _failed = true;
                     SetHumanState("HUMAN GAVE UP - MIXED SIGNALS!", HumanFailColor, 0.16f,
-                        new Color(1f, 0.58f, 0.52f, 1f));
+                        new Color(1f, 0.58f, 0.52f, 1f), FinalGameplayArt.WalkCampaignHumanGaveUp);
                 }
                 else
                 {
                     _humanReactionUntil = _context.Now() + HumanReactionSeconds;
                     SetHumanState("HUMAN MISREAD - WRONG THING!", HumanMisreadColor, 0.13f,
-                        new Color(1f, 0.84f, 0.52f, 1f));
+                        new Color(1f, 0.84f, 0.52f, 1f), FinalGameplayArt.WalkCampaignHumanMisread);
                 }
             }
 
@@ -198,7 +200,8 @@ namespace CheddarAndCocoa.Game
                 if (_human != null) _context.SpawnWorldPop(_human.transform.position, "WALKIES!", new Color(0.5f, 0.9f, 0.55f));
                 _context.LogEvent("WalkConned", "solved");
                 SetHumanState("HUMAN GRABBED THE LEASH - WALKIES!", HumanSuccessColor, 0.14f,
-                    new Color(0.75f, 1f, 0.78f, 1f));
+                    new Color(0.75f, 1f, 0.78f, 1f), FinalGameplayArt.WalkCampaignHumanWalkies);
+                MissionPropArt.SetSprite(_leashArt, FinalGameplayArt.WalkCampaignLeashGrabbed);
             }
         }
 
@@ -206,8 +209,8 @@ namespace CheddarAndCocoa.Game
         {
             _human = NewMarker("WalkCampaignHuman", new Color(0.9f, 0.8f, 0.5f), "HUMAN - CONVINCE THEM TO WALK YOU!", new Vector3(1.8f, 3.4f, 1f), out _humanLabel);
             _leash = NewMarker("WalkCampaignLeash", new Color(0.6f, 0.8f, 1f), "LEASH - CHEDDAR PRESENT IT!", Vector3.one * 1.2f, out _leashLabel);
-            _humanArt = MissionPropArt.AttachObject(_human, FinalGameplayArt.MissionWalkHuman, 0.013f, 18, true);
-            _leashArt = MissionPropArt.AttachObject(_leash, FinalGameplayArt.MissionWalkLeash, 0.012f, 18, true);
+            _humanArt = MissionPropArt.AttachObject(_human, FinalGameplayArt.WalkCampaignHumanConfused, 0.013f, 18, true);
+            _leashArt = MissionPropArt.AttachObject(_leash, FinalGameplayArt.WalkCampaignLeashWaiting, 0.012f, 18, true);
             _humanFeedback = _human.AddComponent<MissionActorFeedback>();
             _humanFeedback.Init(_human.GetComponent<SpriteRenderer>(), "HUMAN CONFUSED - SEND ONE MESSAGE!", 0.03f, Vector3.forward * 10f);
         }
@@ -238,10 +241,10 @@ namespace CheddarAndCocoa.Game
                 _human.transform.position = _doorZone;
                 if (_puzzle.Solved)
                     SetHumanState("HUMAN GRABBED THE LEASH - WALKIES!", HumanSuccessColor, 0.14f,
-                        new Color(0.75f, 1f, 0.78f, 1f));
+                        new Color(0.75f, 1f, 0.78f, 1f), FinalGameplayArt.WalkCampaignHumanWalkies);
                 else if (_failed)
                     SetHumanState("HUMAN GAVE UP - MIXED SIGNALS!", HumanFailColor, 0.16f,
-                        new Color(1f, 0.58f, 0.52f, 1f));
+                        new Color(1f, 0.58f, 0.52f, 1f), FinalGameplayArt.WalkCampaignHumanGaveUp);
                 else if (_context.Now() >= _humanReactionUntil)
                     SetHumanState(
                         _puzzle.ExactMatch
@@ -249,7 +252,8 @@ namespace CheddarAndCocoa.Game
                             : $"HUMAN CONFUSED - SEND ONE MESSAGE! (misreads {_puzzle.Misreads}/{MaxMisreads})",
                         _puzzle.ExactMatch ? HumanGettingItColor : HumanConfusedColor,
                         _puzzle.ExactMatch ? 0.09f : 0.03f,
-                        _puzzle.ExactMatch ? new Color(0.78f, 1f, 0.78f, 1f) : Color.white);
+                        _puzzle.ExactMatch ? new Color(0.78f, 1f, 0.78f, 1f) : Color.white,
+                        _puzzle.ExactMatch ? FinalGameplayArt.WalkCampaignHumanGettingIt : FinalGameplayArt.WalkCampaignHumanConfused);
             }
             if (_leash != null)
             {
@@ -259,18 +263,22 @@ namespace CheddarAndCocoa.Game
                 if (_leashArt != null)
                 {
                     bool presented = (_puzzle.Active & SocialStimulus.PresentLeash) != 0;
+                    MissionPropArt.SetSprite(_leashArt, _puzzle.Solved
+                        ? FinalGameplayArt.WalkCampaignLeashGrabbed
+                        : presented ? FinalGameplayArt.WalkCampaignLeashPresented : FinalGameplayArt.WalkCampaignLeashWaiting);
                     _leashArt.SetTint(presented ? new Color(1f, 0.96f, 0.72f, 1f) : Color.white);
                     if (presented) _leashArt.Pulse(0.12f, 0.04f);
                 }
             }
         }
 
-        private void SetHumanState(string label, Color fallbackColor, float pulseAmount, Color artTint)
+        private void SetHumanState(string label, Color fallbackColor, float pulseAmount, Color artTint, string spritePath)
         {
             if (_humanFeedback != null) _humanFeedback.SetState(label, fallbackColor, pulseAmount);
             else if (_humanLabel != null) _humanLabel.text = label;
             if (_humanArt != null)
             {
+                MissionPropArt.SetSprite(_humanArt, spritePath);
                 _humanArt.SetTint(artTint);
                 _humanArt.Pulse(0.18f, pulseAmount);
             }

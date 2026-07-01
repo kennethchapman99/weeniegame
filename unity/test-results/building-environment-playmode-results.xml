@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="11" result="Passed" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-06-29 15:54:30Z" end-time="2026-06-29 15:54:31Z" duration="0.7786257">
+  <test-suite type="TestSuite" id="1463" name="Cheddar and Cocoa" fullname="Cheddar and Cocoa" runstate="Runnable" testcasecount="380" result="Passed" start-time="2026-06-29 15:54:30Z" end-time="2026-06-29 15:54:31Z" duration="0.778626" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1455" name="CheddarAndCocoa.Tests.PlayMode.dll" fullname="/Users/kchapman/Weeniegame/unity/CheddarAndCocoa/Library/ScriptAssemblies/CheddarAndCocoa.Tests.PlayMode.dll" runstate="Runnable" testcasecount="380" result="Passed" start-time="2026-06-29 15:54:30Z" end-time="2026-06-29 15:54:31Z" duration="0.774007" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="16805" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1456" name="CheddarAndCocoa" fullname="CheddarAndCocoa" runstate="Runnable" testcasecount="380" result="Passed" start-time="2026-06-29 15:54:30Z" end-time="2026-06-29 15:54:31Z" duration="0.772413" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1459" name="Tests" fullname="CheddarAndCocoa.Tests" runstate="Runnable" testcasecount="378" result="Passed" start-time="2026-06-29 15:54:30Z" end-time="2026-06-29 15:54:31Z" duration="0.770029" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1047" name="BackyardEnvironmentPlayModeTests" fullname="CheddarAndCocoa.Tests.BackyardEnvironmentPlayModeTests" classname="CheddarAndCocoa.Tests.BackyardEnvironmentPlayModeTests" runstate="Runnable" testcasecount="11" result="Passed" start-time="2026-06-29 15:54:30Z" end-time="2026-06-29 15:54:31Z" duration="0.765487" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1053" name="ArenaWowSetDressing_AddsShowcaseSceneryWithoutGameplayColliders" fullname="CheddarAndCocoa.Tests.BackyardEnvironmentPlayModeTests.ArenaWowSetDressing_AddsShowcaseSceneryWithoutGameplayColliders" methodname="ArenaWowSetDressing_AddsShowcaseSceneryWithoutGameplayColliders" classname="CheddarAndCocoa.Tests.BackyardEnvironmentPlayModeTests" runstate="Runnable" seed="1059477889" result="Passed" start-time="2026-06-29 15:54:30Z" end-time="2026-06-29 15:54:31Z" duration="0.428674" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1054" name="BackyardEnvironment_BuildsDecorativePropsInsideLargeYard" fullname="CheddarAndCocoa.Tests.BackyardEnvironmentPlayModeTests.BackyardEnvironment_BuildsDecorativePropsInsideLargeYard" methodname="BackyardEnvironment_BuildsDecorativePropsInsideLargeYard" classname="CheddarAndCocoa.Tests.BackyardEnvironmentPlayModeTests" runstate="Runnable" seed="760323804" result="Passed" start-time="2026-06-29 15:54:31Z" end-time="2026-06-29 15:54:31Z" duration="0.037520" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1059" name="BackyardEnvironment_UsesGeneratedBuildingSpritesForHouseCluster" fullname="CheddarAndCocoa.Tests.BackyardEnvironmentPlayModeTests.BackyardEnvironment_UsesGeneratedBuildingSpritesForHouseCluster" methodname="BackyardEnvironment_UsesGeneratedBuildingSpritesForHouseCluster" classname="CheddarAndCocoa.Tests.BackyardEnvironmentPlayModeTests" runstate="Runnable" seed="205200828" result="Passed" start-time="2026-06-29 15:54:31Z" end-time="2026-06-29 15:54:31Z" duration="0.039009" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1058" name="BackyardEnvironment_UsesGeneratedEnvironmentSpritesOverDistrictMarkers" fullname="CheddarAndCocoa.Tests.BackyardEnvironmentPlayModeTests.BackyardEnvironment_UsesGeneratedEnvironmentSpritesOverDistrictMarkers" methodname="BackyardEnvironment_UsesGeneratedEnvironmentSpritesOverDistrictMarkers" classname="CheddarAndCocoa.Tests.BackyardEnvironmentPlayModeTests" runstate="Runnable" seed="1586159325" result="Passed" start-time="2026-06-29 15:54:31Z" end-time="2026-06-29 15:54:31Z" duration="0.039982" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1056" name="DistantObjective_EnablesVisibleTravelAssist_AndReleasesNearTarget" fullname="CheddarAndCocoa.Tests.BackyardEnvironmentPlayModeTests.DistantObjective_EnablesVisibleTravelAssist_AndReleasesNearTarget" methodname="DistantObjective_EnablesVisibleTravelAssist_AndReleasesNearTarget" classname="CheddarAndCocoa.Tests.BackyardEnvironmentPlayModeTests" runstate="Runnable" seed="1987011366" result="Passed" start-time="2026-06-29 15:54:31Z" end-time="2026-06-29 15:54:31Z" duration="0.048355" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1055" name="EveryMission_StagesDogsWithinAReasonableFirstObjectiveWalk" fullname="CheddarAndCocoa.Tests.BackyardEnvironmentPlayModeTests.EveryMission_StagesDogsWithinAReasonableFirstObjectiveWalk" methodname="EveryMission_StagesDogsWithinAReasonableFirstObjectiveWalk" classname="CheddarAndCocoa.Tests.BackyardEnvironmentPlayModeTests" runstate="Runnable" seed="651148086" result="Passed" start-time="2026-06-29 15:54:31Z" end-time="2026-06-29 15:54:31Z" duration="0.130206" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-suite type="ParameterizedMethod" id="1051" name="HudPanels_StayInsideViewport" fullname="CheddarAndCocoa.Tests.BackyardEnvironmentPlayModeTests.HudPanels_StayInsideViewport" classname="CheddarAndCocoa.Tests.BackyardEnvironmentPlayModeTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-06-29 15:54:31Z" end-time="2026-06-29 15:54:31Z" duration="0.003590" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1048" name="HudPanels_StayInsideViewport(480.0f,480.0f,640.0f,296.0f)" fullname="CheddarAndCocoa.Tests.BackyardEnvironmentPlayModeTests.HudPanels_StayInsideViewport(480.0f,480.0f,640.0f,296.0f)" methodname="HudPanels_StayInsideViewport" classname="CheddarAndCocoa.Tests.BackyardEnvironmentPlayModeTests" runstate="Runnable" seed="2145611596" result="Passed" start-time="2026-06-29 15:54:31Z" end-time="2026-06-29 15:54:31Z" duration="0.000927" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1049" name="HudPanels_StayInsideViewport(1024.0f,600.0f,900.0f,458.0f)" fullname="CheddarAndCocoa.Tests.BackyardEnvironmentPlayModeTests.HudPanels_StayInsideViewport(1024.0f,600.0f,900.0f,458.0f)" methodname="HudPanels_StayInsideViewport" classname="CheddarAndCocoa.Tests.BackyardEnvironmentPlayModeTests" runstate="Runnable" seed="328605112" result="Passed" start-time="2026-06-29 15:54:31Z" end-time="2026-06-29 15:54:31Z" duration="0.000020" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1050" name="HudPanels_StayInsideViewport(2560.0f,1080.0f,680.0f,292.0f)" fullname="CheddarAndCocoa.Tests.BackyardEnvironmentPlayModeTests.HudPanels_StayInsideViewport(2560.0f,1080.0f,680.0f,292.0f)" methodname="HudPanels_StayInsideViewport" classname="CheddarAndCocoa.Tests.BackyardEnvironmentPlayModeTests" runstate="Runnable" seed="673754712" result="Passed" start-time="2026-06-29 15:54:31Z" end-time="2026-06-29 15:54:31Z" duration="0.000022" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-case id="1052" name="MissionSelectPanel_FitsAllMissionRowsAndReadableGoal" fullname="CheddarAndCocoa.Tests.BackyardEnvironmentPlayModeTests.MissionSelectPanel_FitsAllMissionRowsAndReadableGoal" methodname="MissionSelectPanel_FitsAllMissionRowsAndReadableGoal" classname="CheddarAndCocoa.Tests.BackyardEnvironmentPlayModeTests" runstate="Runnable" seed="1257014575" result="Passed" start-time="2026-06-29 15:54:31Z" end-time="2026-06-29 15:54:31Z" duration="0.000722" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1057" name="StrategicZoom_KeepsActionWorldPopsReadable" fullname="CheddarAndCocoa.Tests.BackyardEnvironmentPlayModeTests.StrategicZoom_KeepsActionWorldPopsReadable" methodname="StrategicZoom_KeepsActionWorldPopsReadable" classname="CheddarAndCocoa.Tests.BackyardEnvironmentPlayModeTests" runstate="Runnable" seed="1396385092" result="Passed" start-time="2026-06-29 15:54:31Z" end-time="2026-06-29 15:54:31Z" duration="0.031549" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: /Users/kchapman/Weeniegame/unity/test-results/building-environment-playmode-results.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

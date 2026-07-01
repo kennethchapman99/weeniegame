@@ -48,6 +48,7 @@ namespace CheddarAndCocoa.Game
             for (int i = 0; i < _digMarkers.Length; i++)
             {
                 _digMarkers[i].transform.position = _digSpots[i];
+                SetDigArt(i, FinalGameplayArt.ScentSearchDigUnknown);
                 _digMarkers[i].SetActive(true);
             }
             ChooseBuriedSpot();
@@ -123,6 +124,7 @@ namespace CheddarAndCocoa.Game
             _state.AddSniff();
             float distance = Vector2.Distance(_context.Dogs[dogIndex].transform.position, _digSpots[_buriedSpot]);
             string heat = distance < 5f ? "RED HOT" : distance < 11f ? "WARM" : "COLD";
+            SetDigArt(_buriedSpot, distance < 5f ? FinalGameplayArt.ScentSearchScentHot : FinalGameplayArt.ScentSearchDigUnknown);
             if (distance < 5f) _context.AddScore(ScoreEventCatalog.ScentSniff.Points, ScoreEventCatalog.ScentSniff.Label);
             _context.SetFeedback(GameManager.FeedbackKind.SquirrelScared);
             _context.SetCue($"{DogName(dogIndex)} sniffs... the bone scent is {heat}!");
@@ -151,6 +153,7 @@ namespace CheddarAndCocoa.Game
             if (spotIndex == _buriedSpot)
             {
                 _state.AddFind();
+                SetDigArt(spotIndex, FinalGameplayArt.ScentSearchBoneFound);
                 _digMarkers[spotIndex].SetActive(false);
                 _context.CreditDog(dogIndex);
                 if (dogIndex < _context.DogFeedback.Length && _context.DogFeedback[dogIndex] != null)
@@ -171,6 +174,7 @@ namespace CheddarAndCocoa.Game
             else
             {
                 _state.AddWastedDig();
+                SetDigArt(spotIndex, FinalGameplayArt.ScentSearchScentCold);
                 _context.AddScore(ScoreEventCatalog.ColdDig.Points, ScoreEventCatalog.ColdDig.Label);
                 _context.SetFeedback(GameManager.FeedbackKind.SquirrelStoleFood);
                 _context.SetCue($"{DogName(dogIndex)} dug a cold hole - nothing here ({_state.WastedDigs}/{MaxWastedDigs}).");
@@ -221,10 +225,16 @@ namespace CheddarAndCocoa.Game
                 renderer.color = new Color(0.42f, 0.3f, 0.16f);
                 renderer.sortingOrder = 3;
                 _context.AddWorldLabel(marker, "DIG?", Vector3.up * 1.1f, 13, Color.white);
-                MissionPropArt.AttachObject(marker, FinalGameplayArt.MissionDigMound, 0.012f, 18, true);
+                MissionPropArt.AttachObject(marker, FinalGameplayArt.ScentSearchDigUnknown, 0.012f, 18, true);
                 marker.SetActive(false);
                 _digMarkers[i] = marker;
             }
+        }
+
+        private void SetDigArt(int index, string resourcePath)
+        {
+            if (_digMarkers == null || index < 0 || index >= _digMarkers.Length || _digMarkers[index] == null) return;
+            MissionPropArt.SetSprite(_digMarkers[index].GetComponent<MissionPropArtAttachment>(), resourcePath);
         }
 
         private DogId DogIdAt(int dogIndex) => _context.Dogs[dogIndex].TryGetComponent<DogIdentity>(out var identity)

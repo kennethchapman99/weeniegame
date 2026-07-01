@@ -26,6 +26,8 @@ namespace CheddarAndCocoa.Game
         private MissionContext _context;
         private GameObject _decoy;
         private GameObject _stash;
+        private MissionPropArtAttachment _decoyArt;
+        private MissionPropArtAttachment _stashArt;
         private TextMesh _decoyLabel;
         private TextMesh _stashLabel;
         private Vector2 _decoyZone;
@@ -34,6 +36,8 @@ namespace CheddarAndCocoa.Game
         private int _hitsSeen;
         private bool _struckThisWindow;
         private bool _failed;
+        private float _decoyReactionUntil;
+        private float _stashReactionUntil;
 
         public GameManager.MissionVariant Variant => GameManager.MissionVariant.SquirrelSwitcheroo;
         public bool IsComplete => _puzzle.Solved;
@@ -65,9 +69,13 @@ namespace CheddarAndCocoa.Game
             _hitsSeen = 0;
             _struckThisWindow = false;
             _failed = false;
+            _decoyReactionUntil = 0f;
+            _stashReactionUntil = 0f;
             _decoyZone = new Vector2(_context.Bounds.center.x - 10f, _context.Bounds.center.y);
             _stashZone = new Vector2(_context.Bounds.center.x + 10f, _context.Bounds.center.y);
             SetSceneActive(true);
+            MissionPropArt.SetSprite(_decoyArt, FinalGameplayArt.SwitcherooDecoyGuarded);
+            MissionPropArt.SetSprite(_stashArt, FinalGameplayArt.SwitcherooStashGuarded);
             UpdateLabels();
         }
 
@@ -143,6 +151,7 @@ namespace CheddarAndCocoa.Game
         {
             _puzzle.Advance(seconds, baiting);
             HandleProgress();
+            if (!_failed) UpdateLabels();
         }
 
         /// <summary>Test hook: Cocoa raids the stash; lands only while the squirrel is committed to the decoy.</summary>
@@ -163,6 +172,8 @@ namespace CheddarAndCocoa.Game
                 _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "SWITCHEROO!");
                 _context.SpawnWorldPop(_stashZone, "SWITCHEROO!", new Color(0.45f, 0.9f, 0.55f));
                 _context.LogEvent("SwitcherooRaid", $"{_puzzle.Hits}/{HitsNeeded}");
+                _stashReactionUntil = _context.Now() + 0.55f;
+                MissionPropArt.SetSprite(_stashArt, FinalGameplayArt.SwitcherooStashRaided);
             }
 
             if (_puzzle.Backfires > _backfiresSeen)
@@ -174,6 +185,8 @@ namespace CheddarAndCocoa.Game
                 _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "BACKFIRE!");
                 _context.SpawnWorldPop(_decoyZone, "WISED UP!", new Color(1f, 0.35f, 0.2f));
                 _context.LogEvent("SwitcherooBackfire", $"{_puzzle.Backfires}/{MaxBackfires}");
+                _decoyReactionUntil = _context.Now() + 0.55f;
+                MissionPropArt.SetSprite(_decoyArt, FinalGameplayArt.SwitcherooDecoyBackfire);
                 if (_puzzle.Backfires >= MaxBackfires) _failed = true;
             }
         }
@@ -182,8 +195,8 @@ namespace CheddarAndCocoa.Game
         {
             _decoy = NewMarker("SwitcherooDecoy", GuardingColor, "SQUIRREL - CHEDDAR FEINT THE DECOY!", new Vector3(1.6f, 3f, 1f), out _decoyLabel);
             _stash = NewMarker("SwitcherooStash", new Color(0.6f, 0.8f, 1f), "STASH - COCOA RAID IT WHEN HE BITES!", Vector3.one * 1.2f, out _stashLabel);
-            MissionPropArt.AttachObject(_decoy, FinalGameplayArt.MissionDecoyToy, 0.012f, 18, true);
-            MissionPropArt.AttachObject(_stash, FinalGameplayArt.MissionSquirrelStash, 0.012f, 18, true);
+            _decoyArt = MissionPropArt.AttachObject(_decoy, FinalGameplayArt.SwitcherooDecoyGuarded, 0.012f, 18, true);
+            _stashArt = MissionPropArt.AttachObject(_stash, FinalGameplayArt.SwitcherooStashGuarded, 0.012f, 18, true);
         }
 
         private GameObject NewMarker(string name, Color color, string label, Vector3 scale, out TextMesh worldLabel)
@@ -212,11 +225,21 @@ namespace CheddarAndCocoa.Game
                 _decoy.transform.position = _decoyZone;
                 var sr = _decoy.GetComponent<SpriteRenderer>();
                 if (sr != null) sr.color = _puzzle.Committed ? ChasingColor : GuardingColor;
+                MissionPropArt.SetSprite(_decoyArt, _context.Now() < _decoyReactionUntil
+                    ? FinalGameplayArt.SwitcherooDecoyBackfire
+                    : _puzzle.Committed
+                        ? FinalGameplayArt.SwitcherooDecoyChased
+                        : FinalGameplayArt.SwitcherooDecoyGuarded);
                 if (_decoyLabel != null) _decoyLabel.text = _puzzle.Committed ? "SQUIRREL CHASING THE DECOY - RAID NOW!" : "SQUIRREL GUARDING THE STASH - FEINT IT!";
             }
             if (_stash != null)
             {
                 _stash.transform.position = _stashZone;
+                MissionPropArt.SetSprite(_stashArt, _context.Now() < _stashReactionUntil
+                    ? FinalGameplayArt.SwitcherooStashRaided
+                    : _puzzle.Committed
+                        ? FinalGameplayArt.SwitcherooStashOpen
+                        : FinalGameplayArt.SwitcherooStashGuarded);
                 if (_stashLabel != null) _stashLabel.text = $"STASH - RAIDS {_puzzle.Hits}/{HitsNeeded}";
             }
         }

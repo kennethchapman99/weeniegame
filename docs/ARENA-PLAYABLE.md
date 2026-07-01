@@ -129,6 +129,16 @@ accents:
   art, dog poses, and objective labels carry the first read. Shared mission prop overlays also add a
   subtle proximity affordance: props sit normally at distance, then pulse/tint when Cheddar or Cocoa
   enters staging range, and clear the cue again when the dogs leave.
+- Generated P0 state packs now add mission-specific transparent cartoon sprite states under each
+  mission's `Assets/Art/Resources/ArenaFinal/Props/<Mission>/` folder, covering Backyard trap
+  redirects, Snack Heist target/guard-lane reads, Sock Panic basket/sock states, Squirrel
+  Conspiracy cutoff fakeouts, Eagle talon/cover states, Coyote fence states, Weenie Roundup cargo,
+  Scent Search hot/cold/found patches, Thunderstorm comfort cues, Mark the Yard zone/squirrel
+  states, Leash Walk checkpoints, Car Ride lurch/spill states, Gate Crash gate/toy states, Table
+  Stealth human/steak states, Switcheroo decoy/stash states, Walk Campaign human/leash states, Bone
+  Relay scent/mound states, Great Escape station states, Blanket Catch blanket/snack states, Kitchen
+  counter/bowl/food states, and Chaos Machine lever states. These remain couch-test generated art;
+  controller-owned markers, colliders, labels, and deterministic hooks remain authoritative.
 - Table Stealth and Walk Campaign now give their human NPC props a minimal acting/readability layer:
   contextual actor labels, tint, and pulse states distinguish watching/confused idle, distraction or
   comprehension, spotted/misread reactions, success, and fail beats while preserving mission logic
@@ -187,6 +197,13 @@ accents:
   now gives the towel-drop, basket-tip, and toy-launch stations distinct generated prop art while
   preserving controller-owned markers, owner labels, objective targets, cascade timing, and stall
   recovery behavior.
+- Generated Level Area Prop Pack now promotes 4 deterministic transparent cartoon area sprites under
+  `Assets/Art/Resources/ArenaFinal/Props/LevelAreas/`, with the contact sheet and source notes
+  retained in `Assets/Art/ReferenceOnly/GeneratedLevelAreas/`. Kitchen Falling Food Frenzy now
+  stages an indoor tile/counter area behind the controller-owned counter and safe bowl, and Car Ride
+  Balance now stages a car cabin plus narrow balance lane so the counter-lean play space reads
+  constrained instead of like the generic backyard. These are decorative mission-owned roots with no
+  colliders.
 
 Still placeholder or deliberately deferred:
 
@@ -199,8 +216,9 @@ Still placeholder or deliberately deferred:
   patio, back-door, route, snack, laundry, threat, scent, leash, fence, lawn, pond, shade-tree,
   garden, picnic, sandbox, stepping-stone, house facade, back porch, yard shed, objective-arrow,
   bark-range, tug-range, rescue-range, Kitchen falling-food telegraph, Kitchen landing-warning,
-  Chaos Machine junction station, HUD panel/tile/badge/button, mission world-label bubble/ribbon/
-  warning/burst, and dog-local paw-trail/polish cues now have generated cartoon sprite overlays, but
+  Chaos Machine junction station, Kitchen indoor area, Car Ride cabin/balance lane, HUD
+  panel/tile/badge/button, mission world-label bubble/ribbon/warning/burst, and dog-local
+  paw-trail/polish cues now have generated cartoon sprite overlays, but
   debug/readiness text affordances are still not final UI or environment art.
 - The Pass-2 mission props are generated cartoon PNGs, not a final hand-authored environment/prop
   pipeline; they are acceptable couch-test art and retain dimmed colored pads underneath as readable
@@ -219,8 +237,8 @@ Final polish still needed:
   remaining generated environment districts.
 - Run a two-player television readability pass; the automated 1920x1080 local/full-yard/action
   capture gate verifies composition but cannot judge player attention.
-- Run the second human couch pass; latest automated evidence is `390/390` PlayMode tests passing on
-  2026-06-30 after the human-NPC readability pass.
+- Run the second human couch pass; latest automated evidence is `400/400` PlayMode tests passing on
+  2026-07-01 after the generated P0 mission-state art pass.
 
 ### Automated art-review cleanup pass (2026-06-29)
 
@@ -682,8 +700,8 @@ Together they verify the couch-readiness surfaces from cold read through the liv
   sparkle payoff before end-screen cleanup, the end card names the Pawfect/0-misread replay target or
   beaten challenge, and replay resets the door, bladder, phone, misreads, arrows, and world labels.
 
-Latest automated verification: Unity 6000.0.65f1 batch PlayMode run passed `390/390` tests on
-2026-06-30 after the human-NPC readability pass. The targeted presentation
+Latest automated verification: Unity 6000.0.65f1 batch PlayMode run passed `400/400` tests on
+2026-07-01 after the generated P0 mission-state art pass. The targeted presentation
 coverage inside `PeeBreakPlayModeTests`, `BackyardEnvironmentPlayModeTests`,
 `ArenaGameLoopPlayModeTests`, `KitchenFoodFrenzyPlayModeTests`, and
 `CoopChaosMachinePlayModeTests`, and `FinalArtIntegrationPlayModeTests` now asserts Pass-2 room state
@@ -692,9 +710,8 @@ set dressing, dog-local personality polish, generated environment overlays, gene
 cue sprites, generated dog-local FX sprites, generated Kitchen falling-food cue sprites, generated
 Chaos Machine junction prop sprites, generated building/home-exterior sprites, generated HUD skin
 sprites, generated world-label skin sprites, generated arena SFX profiles, mission-specific
-collectible prop sprite stability after the dynamic treat enhancer scan, and squirrel/eagle/coyote
-motion resources plus runtime
-actor switching.
+collectible prop sprite stability after the dynamic treat enhancer scan, generated P0 mission-state
+prop packs, and squirrel/eagle/coyote motion resources plus runtime actor switching.
 
 For gameplay-first iteration, generate the editor-only lab with
 **Cheddar & Cocoa > Gameplay First > Build Generated Playtest Lab**. Use it to adjust primitive room
@@ -846,8 +863,8 @@ longer one generic tone/noise generator, but authored bark recordings, final mix
 haptics are still required.
 
 Automated evidence: the generated-SFX catalog profile check passed at `1/1`, the event-driven audio
-and rumble request check passed at `1/1`, and the full PlayMode suite passed at `390/390` on
-2026-06-30 after the human-NPC readability pass.
+and rumble request check passed at `1/1`, and the full PlayMode suite passed at `400/400` on
+2026-07-01 after the generated P0 mission-state art pass.
 
 Manual audio check:
 

@@ -152,5 +152,7 @@ check passing on 2026-06-29. Targeted evidence after the generated world-label s
 environment/world-label PlayMode tests and `1/1` final-art resource check passing on 2026-06-29.
 Targeted evidence after the generated arena-SFX pass: `1/1` catalog profile PlayMode test and `1/1`
 event-driven audio/rumble PlayMode test passing on 2026-06-29.
-Full-suite evidence after the dynamic treat-art stability pass: `382/382` PlayMode tests passing on
-2026-06-29.
+Targeted evidence after the generated P0 mission-state art pass: `8/8` final-art integration tests
+passing on 2026-07-01, including resource loading and visible mission focus prop state coverage.
+Full-suite evidence after the generated P0 mission-state art pass: `400/400` PlayMode tests passing
+on 2026-07-01.

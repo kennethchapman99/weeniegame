@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Passed" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-06-29 15:54:45Z" end-time="2026-06-29 15:54:46Z" duration="0.1819687">
+  <test-suite type="TestSuite" id="1463" name="Cheddar and Cocoa" fullname="Cheddar and Cocoa" runstate="Runnable" testcasecount="380" result="Passed" start-time="2026-06-29 15:54:45Z" end-time="2026-06-29 15:54:46Z" duration="0.181969" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1455" name="CheddarAndCocoa.Tests.PlayMode.dll" fullname="/Users/kchapman/Weeniegame/unity/CheddarAndCocoa/Library/ScriptAssemblies/CheddarAndCocoa.Tests.PlayMode.dll" runstate="Runnable" testcasecount="380" result="Passed" start-time="2026-06-29 15:54:46Z" end-time="2026-06-29 15:54:46Z" duration="0.173641" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="18651" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1456" name="CheddarAndCocoa" fullname="CheddarAndCocoa" runstate="Runnable" testcasecount="380" result="Passed" start-time="2026-06-29 15:54:46Z" end-time="2026-06-29 15:54:46Z" duration="0.169073" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1459" name="Tests" fullname="CheddarAndCocoa.Tests" runstate="Runnable" testcasecount="378" result="Passed" start-time="2026-06-29 15:54:46Z" end-time="2026-06-29 15:54:46Z" duration="0.164757" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1321" name="FinalArtIntegrationPlayModeTests" fullname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests" classname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-06-29 15:54:46Z" end-time="2026-06-29 15:54:46Z" duration="0.157656" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1322" name="ArenaFinal_RequiredResourcesLoadAndMissingResourcesStayOptional" fullname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests.ArenaFinal_RequiredResourcesLoadAndMissingResourcesStayOptional" methodname="ArenaFinal_RequiredResourcesLoadAndMissingResourcesStayOptional" classname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests" runstate="Runnable" seed="213150847" result="Passed" start-time="2026-06-29 15:54:46Z" end-time="2026-06-29 15:54:46Z" duration="0.152038" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: /Users/kchapman/Weeniegame/unity/test-results/building-final-art-results.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

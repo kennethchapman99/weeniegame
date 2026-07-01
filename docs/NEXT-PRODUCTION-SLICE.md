@@ -109,6 +109,20 @@ sparkle, penalty thunk, victory fanfare, failure sigh, UI blip, and threat rattl
 the replaceable cue-slot boundary for future authored recordings and mix work. Targeted catalog
 profile coverage passed at `1/1` and event-driven audio/rumble coverage passed at `1/1` on
 2026-06-29.
+Generated Level Area Prop Pack now adds distinct transparent cartoon area plates under
+`ArenaFinal/Props/LevelAreas`, with source notes/contact sheet in
+`ReferenceOnly/GeneratedLevelAreas`: Kitchen Falling Food Frenzy gets an indoor tile/counter area,
+and Car Ride Balance gets a car cabin plus narrow balance lane so it no longer reads like the shared
+backyard. The area roots are controller-owned, decorative-only, and preserve existing mission
+markers/colliders.
+Generated P0 mission-state packs now add state-specific transparent cartoon sprites under each
+mission's `ArenaFinal/Props/<Mission>/` folder, replacing more single-state colored-block reads for
+trap gaps, guard lanes, basket/sock windows, cutoffs, threat states, cargo, dig patches, storm cues,
+yard zones, checkpoints, vehicle lurches, gates, human/steak beats, decoys/stashes, leashes, bone
+mounds, escape stations, blankets/snacks, Kitchen food states, and Chaos Machine lever states while
+preserving controller-owned markers and deterministic hooks as the gameplay authority. Targeted
+final-art integration coverage passed at `8/8` and the full PlayMode suite passed at `400/400` on
+2026-07-01.
 Generated Gameplay Cue Pack now adds 5 transparent cartoon
 cue sprites under `ArenaFinal/UI/Cues`, with source notes/contact sheet in
 `ReferenceOnly/GeneratedGameplayCues`, and uses them for dog-mounted objective arrows plus bark, tug,
@@ -126,7 +140,7 @@ now adds 3 transparent Rube Goldberg station sprites under `ArenaFinal/Props/Cha
 source notes/contact sheet in `ReferenceOnly/GeneratedChaosMachineProps`, and uses them for the
 towel-drop, basket-tip, and toy-launch junctions while preserving cascade logic. Targeted Chaos
 Machine coverage passed at `9/9` and final-art coverage passed at `8/8` on 2026-06-29. The latest
-full PlayMode suite after the dynamic treat-art stability pass was green at `382/382` on 2026-06-29, and the
+full PlayMode suite after the generated P0 mission-state art pass was green at `400/400` on 2026-07-01, and the
 rebuilt macOS dev player generated a valid 66-frame art-review pass at
 `unity/builds/art-review-current/arena-art-review-contact-sheet.jpg`. Placeholder presentation still
 needs the second two-player couch acceptance pass.

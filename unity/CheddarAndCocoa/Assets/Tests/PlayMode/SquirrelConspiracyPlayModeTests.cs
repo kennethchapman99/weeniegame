@@ -158,6 +158,25 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(1, game.MissionReplayCount);
         }
 
+        [UnityTest]
+        public IEnumerator SquirrelConspiracy_UsesReadableCutoffStateArt()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.SquirrelConspiracy);
+            yield return null;
+
+            AssertMissionArt("SquirrelCutoff_0", FinalGameplayArt.SquirrelConspiracyCutoffOpen);
+
+            _cocoa.transform.position = _game.ActiveSquirrelCutoffZone;
+            yield return null;
+            AssertMissionArt("SquirrelCutoff_0", FinalGameplayArt.SquirrelConspiracyCutoffHeld);
+
+            _cocoa.transform.position = _game.SquirrelObject.transform.position + Vector3.right * 20f;
+            _game.ForceSquirrelConspiracyHerd(DogId.Cocoa);
+            yield return null;
+            AssertMissionArt("SquirrelCutoff_0", FinalGameplayArt.SquirrelConspiracyCutoffFakeout);
+        }
+
         private IEnumerator LoadArena()
         {
             _game = null;
@@ -177,6 +196,16 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(_game);
             Assert.IsNotNull(_cheddar);
             Assert.IsNotNull(_cocoa);
+        }
+
+        private static void AssertMissionArt(string objectName, string expectedResourcePath)
+        {
+            var go = GameObject.Find(objectName);
+            Assert.IsNotNull(go, $"Missing object {objectName}.");
+            var art = go.GetComponent<MissionPropArtAttachment>();
+            Assert.IsNotNull(art, $"Missing MissionPropArtAttachment on {go.name}.");
+            Assert.AreEqual(expectedResourcePath, art.ResourcePath);
+            Assert.IsTrue(art.HasRuntimeSprite, $"Expected runtime sprite for {expectedResourcePath}.");
         }
     }
 }

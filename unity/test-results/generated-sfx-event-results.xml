@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Passed" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-06-29 16:22:37Z" end-time="2026-06-29 16:22:38Z" duration="0.468206">
+  <test-suite type="TestSuite" id="1465" name="Cheddar and Cocoa" fullname="Cheddar and Cocoa" runstate="Runnable" testcasecount="382" result="Passed" start-time="2026-06-29 16:22:37Z" end-time="2026-06-29 16:22:38Z" duration="0.468206" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1457" name="CheddarAndCocoa.Tests.PlayMode.dll" fullname="/Users/kchapman/Weeniegame/unity/CheddarAndCocoa/Library/ScriptAssemblies/CheddarAndCocoa.Tests.PlayMode.dll" runstate="Runnable" testcasecount="382" result="Passed" start-time="2026-06-29 16:22:37Z" end-time="2026-06-29 16:22:38Z" duration="0.463707" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="49512" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1458" name="CheddarAndCocoa" fullname="CheddarAndCocoa" runstate="Runnable" testcasecount="382" result="Passed" start-time="2026-06-29 16:22:37Z" end-time="2026-06-29 16:22:38Z" duration="0.462175" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1461" name="Tests" fullname="CheddarAndCocoa.Tests" runstate="Runnable" testcasecount="380" result="Passed" start-time="2026-06-29 16:22:37Z" end-time="2026-06-29 16:22:38Z" duration="0.459814" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1020" name="ArenaGameLoopPlayModeTests" fullname="CheddarAndCocoa.Tests.ArenaGameLoopPlayModeTests" classname="CheddarAndCocoa.Tests.ArenaGameLoopPlayModeTests" runstate="Runnable" testcasecount="14" result="Passed" start-time="2026-06-29 16:22:37Z" end-time="2026-06-29 16:22:38Z" duration="0.453688" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1027" name="ArenaFeedback_AudioAndRumbleRequests_AreEventDrivenAndToggleable" fullname="CheddarAndCocoa.Tests.ArenaGameLoopPlayModeTests.ArenaFeedback_AudioAndRumbleRequests_AreEventDrivenAndToggleable" methodname="ArenaFeedback_AudioAndRumbleRequests_AreEventDrivenAndToggleable" classname="CheddarAndCocoa.Tests.ArenaGameLoopPlayModeTests" runstate="Runnable" seed="703516300" result="Passed" start-time="2026-06-29 16:22:37Z" end-time="2026-06-29 16:22:38Z" duration="0.448024" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[Cheddar] WOOF!
+[Cheddar] WOOF!
+[Cocoa] WOOF!
+[Cheddar] WOOF!
+[Cheddar] WOOF!
+Saving results to: /Users/kchapman/Weeniegame/unity/test-results/generated-sfx-event-results.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

@@ -31,6 +31,7 @@ namespace CheddarAndCocoa.Game
         private MissionContext _context;
         private GameObject _lever;
         private TextMesh _leverLabel;
+        private MissionPropArtAttachment _leverArt;
         private GameObject[] _junctions;
         private TextMesh[] _junctionLabels;
         private MissionPropArtAttachment[] _junctionArt;
@@ -209,7 +210,7 @@ namespace CheddarAndCocoa.Game
             leverSr.color = new Color(0.85f, 0.55f, 0.3f);
             leverSr.sortingOrder = 3;
             _leverLabel = _context.AddWorldLabel(_lever, "LEVER - PULL TO START THE CASCADE", Vector3.up * 1.3f, 11, Color.white);
-            MissionPropArt.AttachObject(_lever, FinalGameplayArt.MissionChaosLever, 0.012f, 18, true);
+            _leverArt = MissionPropArt.AttachObject(_lever, FinalGameplayArt.ChaosLeverReady, 0.012f, 18, true);
             _lever.SetActive(false);
 
             _junctions = new GameObject[JunctionSpots.Length];
@@ -244,6 +245,7 @@ namespace CheddarAndCocoa.Game
             if (_lever != null && _lever.TryGetComponent<SpriteRenderer>(out var leverSr))
             {
                 leverSr.color = _puzzle.Running ? new Color(0.5f, 0.85f, 0.55f) : new Color(0.85f, 0.55f, 0.3f);
+                MissionPropArt.SetSprite(_leverArt, _puzzle.Running ? FinalGameplayArt.ChaosLeverRunning : FinalGameplayArt.ChaosLeverReady);
                 if (_leverLabel != null)
                     _leverLabel.text = _puzzle.Running ? "CASCADE RUNNING - COVER YOUR JUNCTIONS!" : "LEVER - PULL TO START THE CASCADE";
             }

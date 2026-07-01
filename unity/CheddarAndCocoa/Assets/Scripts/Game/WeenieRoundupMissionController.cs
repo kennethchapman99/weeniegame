@@ -51,10 +51,12 @@ namespace CheddarAndCocoa.Game
             _bowlPosition = new Vector2(_context.Bounds.xMax - 4f, _context.Bounds.yMin + 3f);
             _bowl.transform.position = _bowlPosition;
             _bowl.SetActive(true);
+            SetProp(_bowl, FinalGameplayArt.WeenieRoundupBowlEmpty);
             _context.SetActorState(_bowl, $"HOME BOWL 0/{RequiredDeliveries}", new Color(0.85f, 0.85f, 0.9f), 0.1f);
             for (int i = 0; i < _looseMarkers.Length; i++)
             {
                 _looseMarkers[i].transform.position = _spots[i];
+                SetProp(_looseMarkers[i], FinalGameplayArt.WeenieRoundupLoose);
                 _looseMarkers[i].SetActive(true);
             }
             for (int i = 0; i < _dogCarrying.Length; i++)
@@ -147,6 +149,7 @@ namespace CheddarAndCocoa.Game
             if (!_state.TryPickup()) return;
             _looseMarkers[markerIndex].SetActive(false);
             _dogCarrying[dogIndex] = true;
+            SetProp(_carriedMarkers[dogIndex], FinalGameplayArt.WeenieRoundupCarried);
             _carriedMarkers[dogIndex].SetActive(true);
             if (_context.DogFeedback[dogIndex] != null)
             {
@@ -176,6 +179,9 @@ namespace CheddarAndCocoa.Game
                 _context.DogFeedback[dogIndex].ShowProudBrief();
             }
             _state.Deliver();
+            SetProp(_bowl, _state.Delivered >= RequiredDeliveries
+                ? FinalGameplayArt.WeenieRoundupBowlFull
+                : FinalGameplayArt.WeenieRoundupBowlProgress);
             _context.CreditDog(dogIndex);
             _context.AddScore(ScoreEventCatalog.WeenieDelivered.Points, ScoreEventCatalog.WeenieDelivered.Label);
             _context.SetFeedback(GameManager.FeedbackKind.LevelClear);
@@ -207,6 +213,7 @@ namespace CheddarAndCocoa.Game
             if (marker >= 0)
             {
                 _looseMarkers[marker].transform.position = dropAt;
+                SetProp(_looseMarkers[marker], FinalGameplayArt.WeenieRoundupDropped);
                 _looseMarkers[marker].SetActive(true);
             }
             _context.AddScore(ScoreEventCatalog.WeenieDropped.Points, ScoreEventCatalog.WeenieDropped.Label);
@@ -240,10 +247,21 @@ namespace CheddarAndCocoa.Game
             renderer.sortingOrder = order;
             if (label != null) _context.AddWorldLabel(go, label, Vector3.up * (name == "HomeBowl" ? 1.4f : 1.2f), name == "HomeBowl" ? 16 : 13, Color.white);
             go.AddComponent<MissionActorFeedback>().Init(renderer, label ?? name, 0.1f, Vector3.zero);
-            string propPath = name == "HomeBowl" ? FinalGameplayArt.DogBowl : FinalGameplayArt.Weenie;
+            string propPath = name == "HomeBowl"
+                ? FinalGameplayArt.WeenieRoundupBowlEmpty
+                : name.StartsWith("CarriedWeenie")
+                    ? FinalGameplayArt.WeenieRoundupCarried
+                    : FinalGameplayArt.WeenieRoundupLoose;
             MissionPropArt.AttachObject(go, propPath, name == "HomeBowl" ? 0.013f : 0.011f, order + 14, name != "HomeBowl");
             go.SetActive(false);
             return go;
+        }
+
+        private static void SetProp(GameObject go, string resourcePath)
+        {
+            if (go == null) return;
+            var attachment = go.GetComponent<MissionPropArtAttachment>();
+            if (attachment != null) MissionPropArt.SetSprite(attachment, resourcePath);
         }
 
         private int NearestLoose(Vector2 position)

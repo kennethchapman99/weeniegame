@@ -84,6 +84,20 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(0, _game.StolenFood);
         }
 
+        [UnityTest]
+        public IEnumerator SnackHeist_UsesReadableTargetAndGuardLaneArt()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.SnackHeist);
+            yield return null;
+
+            _game.SnackHeistController.ForceStartStealForArt();
+            yield return null;
+
+            AssertTreatArt(FinalGameplayArt.SnackHeistPlateTargeted);
+            AssertMissionArt("SnackHeistBarkGuardLane", FinalGameplayArt.SnackHeistGuardLane);
+        }
+
         private IEnumerator LoadArena()
         {
             _game = null;
@@ -92,6 +106,31 @@ namespace CheddarAndCocoa.Tests
             yield return null;
             _game = Object.FindFirstObjectByType<GameManager>();
             Assert.IsNotNull(_game);
+        }
+
+        private static void AssertTreatArt(string expectedResourcePath)
+        {
+            foreach (var treat in Object.FindObjectsByType<Treat>(FindObjectsSortMode.None))
+            {
+                if (treat == null || !treat.gameObject.activeInHierarchy) continue;
+                var art = treat.GetComponent<MissionPropArtAttachment>();
+                if (art == null) continue;
+                if (art.ResourcePath != expectedResourcePath) continue;
+                Assert.IsTrue(art.HasRuntimeSprite, $"Expected runtime sprite for {expectedResourcePath}.");
+                return;
+            }
+
+            Assert.Fail($"No active treat uses generated prop art {expectedResourcePath}.");
+        }
+
+        private static void AssertMissionArt(string objectName, string expectedResourcePath)
+        {
+            var go = GameObject.Find(objectName);
+            Assert.IsNotNull(go, $"Missing object {objectName}.");
+            var art = go.GetComponent<MissionPropArtAttachment>();
+            Assert.IsNotNull(art, $"Missing MissionPropArtAttachment on {go.name}.");
+            Assert.AreEqual(expectedResourcePath, art.ResourcePath);
+            Assert.IsTrue(art.HasRuntimeSprite, $"Expected runtime sprite for {expectedResourcePath}.");
         }
     }
 }

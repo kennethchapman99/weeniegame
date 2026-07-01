@@ -79,6 +79,27 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator SquirrelTrap_UsesReadableBackyardStateArt()
+        {
+            yield return Load();
+
+            AssertMissionArt("BackyardSquirrelTrapEscapeGap", FinalGameplayArt.BackyardTrapGapOpen);
+
+            _game.ForceBackyardTrapRedirect(DogId.Cocoa, true);
+            yield return null;
+            AssertMissionArt("BackyardSquirrelTrapEscapeGap", FinalGameplayArt.BackyardTrapGapFakeRoute);
+
+            _cocoa.transform.position = _game.BackyardTrapGapPosition;
+            yield return new WaitForSeconds(1.25f);
+            AssertMissionArt("BackyardSquirrelTrapEscapeGap", FinalGameplayArt.BackyardTrapGapHeld);
+
+            _game.ForceBackyardTrapRedirect(DogId.Cheddar, true);
+            yield return null;
+            Assert.IsNotNull(_game.BackyardDroppedWeenie);
+            AssertMissionArt(_game.BackyardDroppedWeenie.gameObject, FinalGameplayArt.BackyardWeenieDropped);
+        }
+
+        [UnityTest]
         public IEnumerator SquirrelStealing_ScoresPenaltyAndTracksStolen()
         {
             yield return Load();
@@ -182,6 +203,21 @@ namespace CheddarAndCocoa.Tests
             foreach (string entry in _game.PlaytestEvents)
                 if (entry.Contains(text)) return true;
             return false;
+        }
+
+        private static void AssertMissionArt(string objectName, string expectedResourcePath)
+        {
+            var go = GameObject.Find(objectName);
+            Assert.IsNotNull(go, $"Missing object {objectName}.");
+            AssertMissionArt(go, expectedResourcePath);
+        }
+
+        private static void AssertMissionArt(GameObject go, string expectedResourcePath)
+        {
+            var art = go.GetComponent<MissionPropArtAttachment>();
+            Assert.IsNotNull(art, $"Missing MissionPropArtAttachment on {go.name}.");
+            Assert.AreEqual(expectedResourcePath, art.ResourcePath);
+            Assert.IsTrue(art.HasRuntimeSprite, $"Expected runtime sprite for {expectedResourcePath}.");
         }
     }
 }

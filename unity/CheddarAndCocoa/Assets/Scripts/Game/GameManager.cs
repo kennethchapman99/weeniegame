@@ -1328,7 +1328,7 @@ namespace CheddarAndCocoa.Game
                 sr.color = new Color(0.3f, 0.7f, 0.4f, 0.45f);
                 sr.sortingOrder = 1;
                 AddWorldLabel(go, "HIDE HERE", Vector3.up * 0.9f, 14, Color.white);
-                MissionPropArt.AttachObject(go, FinalGameplayArt.Bush, 0.012f, 18, true);
+                MissionPropArt.AttachObject(go, FinalGameplayArt.EagleShadowCoverSafe, 0.012f, 18, true);
                 go.SetActive(false);
                 _eagleCoverMarkers[i] = go;
             }
@@ -1354,7 +1354,7 @@ namespace CheddarAndCocoa.Game
                 sr.color = new Color(0.5f, 0.36f, 0.18f, 0.6f);
                 sr.sortingOrder = 1;
                 AddWorldLabel(go, "WEAK SPOT", Vector3.up * 1.4f, 13, Color.white);
-                MissionPropArt.AttachObject(go, FinalGameplayArt.MissionEscapeGap, 0.012f, 18, true);
+                MissionPropArt.AttachObject(go, FinalGameplayArt.CoyotesFenceGapOpen, 0.012f, 18, true);
                 go.SetActive(false);
                 _coyoteGapMarkers[i] = go;
             }
@@ -1365,6 +1365,37 @@ namespace CheddarAndCocoa.Game
             if (_coyoteGapMarkers == null) return;
             foreach (var marker in _coyoteGapMarkers)
                 if (marker != null) marker.SetActive(active);
+        }
+
+        private void SetEagleCoverArt(string resourcePath)
+        {
+            if (_eagleCoverMarkers == null) return;
+            foreach (var marker in _eagleCoverMarkers)
+                SetMissionProp(marker, resourcePath, 0.012f, 18);
+        }
+
+        private void SetCoyoteActiveGapArt(string resourcePath)
+        {
+            SetCoyoteGapArt(_patrolState.ActiveGapIndex, resourcePath);
+        }
+
+        private void SetCoyoteGapArt(int gapIndex, string resourcePath)
+        {
+            if (_coyoteGapMarkers == null || _coyoteGapMarkers.Length == 0) return;
+            int index = Mathf.Clamp(gapIndex, 0, _coyoteGapMarkers.Length - 1);
+            SetMissionProp(_coyoteGapMarkers[index], resourcePath, 0.012f, 18);
+        }
+
+        private static void SetMissionProp(GameObject go, string resourcePath, float scale, int sortingOrder)
+        {
+            if (go == null || string.IsNullOrEmpty(resourcePath)) return;
+            var attachment = go.GetComponent<MissionPropArtAttachment>();
+            if (attachment != null && attachment.HasRuntimeSprite)
+            {
+                MissionPropArt.SetSprite(attachment, resourcePath);
+                return;
+            }
+            MissionPropArt.AttachObject(go, resourcePath, scale, sortingOrder, true);
         }
 
         // The coyote prowls toward the active weak spot. If the dogs are holding bark pressure when
@@ -1597,6 +1628,9 @@ namespace CheddarAndCocoa.Game
                 SetActorState(SquirrelObject,
                     _eagleRescue.WindowOpen ? "GRIP CRACKED - COCOA PULL NOW!" : "TALON GRIP - CHEDDAR WIGGLE!",
                     _eagleRescue.WindowOpen ? new Color(0.45f, 1f, 0.55f) : new Color(0.85f, 0.5f, 0.5f), 0.16f);
+            SetMissionProp(SquirrelObject,
+                _eagleRescue.WindowOpen ? FinalGameplayArt.EagleShadowTalonGripOpen : FinalGameplayArt.EagleShadowTalonGripClosed,
+                0.013f, 31);
         }
 
         private void HandleEagleRescueProgress()
@@ -1634,6 +1668,7 @@ namespace CheddarAndCocoa.Game
             LastCue = "Cocoa yanked Cheddar free of the talons! Now form the united-front bark circle.";
             if (PredatorObject != null) PlaceObject(PredatorObject, new Vector2(0f, _bounds.yMax + 2f));
             if (SquirrelObject != null) { SetActorState(SquirrelObject, "CHEDDAR'S FREE! HUDDLE FOR THE UNITED FRONT!", new Color(0.45f, 1f, 0.65f), 0.12f); }
+            SetMissionProp(SquirrelObject, FinalGameplayArt.EagleShadowTalonGripFreed, 0.013f, 31);
             SetJuice(JuiceFeedbackKind.SuccessPop, "RESCUED!");
             SpawnWorldPop(_eagleSnatchPosition, "RESCUED!", new Color(0.5f, 1f, 0.45f));
             RequestAudioCue(ArenaFeedbackCatalog.TugRescueSuccess);
@@ -1651,6 +1686,7 @@ namespace CheddarAndCocoa.Game
             AddScore(ScoreEventCatalog.SafeHide.Points, ScoreEventCatalog.SafeHide.Label);
             LastFeedback = FeedbackKind.PredatorHuddle;
             LastCue = "Safe in cover! The eagle shadow swept past.";
+            SetEagleCoverArt(FinalGameplayArt.EagleShadowCoverSafe);
             SetActorState(PredatorObject, $"SHADOW SWEEP {_threatSweepState.SweepIndex + 1} - HIDES {_threatSweepState.SafeHides}/{EagleRequiredHides}", new Color(0.16f, 0.16f, 0.2f), 0.28f);
             SetJuice(JuiceFeedbackKind.SuccessPop, ScoreEventCatalog.SafeHide.Label);
             SpawnWorldPop(PredatorObject.transform.position, "SAFE HIDE!", new Color(0.55f, 0.85f, 1f));
@@ -1673,6 +1709,7 @@ namespace CheddarAndCocoa.Game
             AddScore(ScoreEventCatalog.FakeOut.Points, "EAGLE SPOOK");
             LastFeedback = FeedbackKind.SquirrelStoleFood;
             LastCue = $"Caught in the open! The eagle shadow spotted a dog ({_threatSweepState.Exposures}/{EagleMaxExposures}).";
+            SetEagleCoverArt(FinalGameplayArt.EagleShadowCoverSpotted);
             SetActorState(PredatorObject, $"SPOTTED! EXPOSURE {_threatSweepState.Exposures}/{EagleMaxExposures}", new Color(0.85f, 0.12f, 0.12f), 0.4f);
             SetJuice(JuiceFeedbackKind.WarningMiss, "EAGLE SPOOK!");
             SpawnWorldPop(PredatorObject.transform.position, "SPOTTED!", new Color(1f, 0.3f, 0.2f));
@@ -1770,6 +1807,7 @@ namespace CheddarAndCocoa.Game
 
             _patrolState.AddBarkPressure();
             _coyotePressureHeld = true;
+            SetCoyoteActiveGapArt(FinalGameplayArt.CoyotesFenceGapPinned);
             AddScore(ScoreEventCatalog.FenceHeld.Points, ScoreEventCatalog.FenceHeld.Label);
             LastFeedback = FeedbackKind.SquirrelScared;
             LastCue = $"{DogName(_dogs[dogIndex])} bark-pinned the coyote at the fence - partner can fill dirt now!";
@@ -1783,6 +1821,7 @@ namespace CheddarAndCocoa.Game
             if (_patrolState.FakeSnackActive)
             {
                 _patrolState.ResolveFakeSnack();
+                SetMissionProp(PredatorObject, FinalGameplayArt.CoyotesFenceGapPinned, 0.013f, 31);
                 LastCue = "The fake snack lure fizzled - the dogs held the fence instead of taking the bait!";
                 LogPlaytestEvent("CoyoteFakeSnackResolved", LastCue);
             }
@@ -1813,8 +1852,11 @@ namespace CheddarAndCocoa.Game
             _patrolState.AddRepair();
             CreditDog(dogIndex);
             _coyotePressureHeld = false;
+            int repairedGap = _patrolState.ActiveGapIndex;
+            SetCoyoteGapArt(repairedGap, FinalGameplayArt.CoyotesFenceGapRepaired);
             _patrolState.SelectGap((_patrolState.ActiveGapIndex + 1) % FenceGapCount);
             _fenceGapPosition = _fenceGaps[_patrolState.ActiveGapIndex % _fenceGaps.Length];
+            SetCoyoteActiveGapArt(FinalGameplayArt.CoyotesFenceGapOpen);
             PlaceObject(SquirrelObject, _fenceGapPosition);
             AddScore(ScoreEventCatalog.DirtFilled.Points, ScoreEventCatalog.DirtFilled.Label);
             LastFeedback = FeedbackKind.PartnerRescue;
@@ -1840,6 +1882,8 @@ namespace CheddarAndCocoa.Game
         {
             _patrolState.AddBreach();
             _coyotePressureHeld = false;
+            int breachedGap = _patrolState.ActiveGapIndex;
+            SetCoyoteGapArt(breachedGap, FinalGameplayArt.CoyotesFenceGapBreached);
             _patrolState.SelectGap((_patrolState.ActiveGapIndex + 1) % FenceGapCount);
             AddScore(ScoreEventCatalog.FakeOut.Points, "COYOTE BREACH");
             LastFeedback = FeedbackKind.SquirrelStoleFood;
@@ -1867,6 +1911,7 @@ namespace CheddarAndCocoa.Game
                 ? "Fake snack lure! Cheddar is RABIDLY tempted - someone bark him back to the fence!"
                 : "Fake snack lure! Don't take the bait - keep barking the coyote off the fence.";
             SetActorState(PredatorObject, cheddarCloser ? "FAKE SNACK BAIT - CHEDDAR, NO!" : "FAKE SNACK BAIT - IGNORE IT!", new Color(0.9f, 0.6f, 0.15f), 0.32f);
+            SetMissionProp(PredatorObject, FinalGameplayArt.CoyotesFenceFakeSnack, 0.013f, 31);
             SetJuice(JuiceFeedbackKind.WarningMiss, "FAKE SNACK BAIT!");
             RequestAudioCue(ArenaFeedbackCatalog.SquirrelStealMiss);
             RequestRumble("coyote_fake_snack", 0.14f, 0.3f, 0.12f);

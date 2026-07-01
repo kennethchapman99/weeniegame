@@ -7,6 +7,8 @@ namespace CheddarAndCocoa.Game
     {
         private MissionContext _context;
         private Treat _squirrelTarget;
+        private GameObject _guardLane;
+        private MissionPropArtAttachment _guardLaneArt;
         private float _squirrelTimer;
         private float _scaredUntil;
         private float _nextScareScoreAt;
@@ -36,6 +38,7 @@ namespace CheddarAndCocoa.Game
             _scaredUntil = 0f;
             _nextScareScoreAt = 0f;
             _squirrelTimer = NextDelay();
+            HideGuardLane();
             _context.SquirrelObject.SetActive(true);
             _context.SquirrelObject.transform.position = new Vector2(11f, 7f);
             _context.SetActorState(_context.SquirrelObject, "Squirrel: WAITING", new Color(0.55f, 0.32f, 0.12f), 0.06f);
@@ -77,6 +80,7 @@ namespace CheddarAndCocoa.Game
                 return false;
 
             _squirrelTarget = null;
+            HideGuardLane();
             _scaredUntil = Mathf.Max(_scaredUntil, _context.Now() + _context.SingleBarkScareSeconds);
             _squirrelTimer = NextDelay();
             if (_context.Now() >= _nextScareScoreAt)
@@ -99,6 +103,7 @@ namespace CheddarAndCocoa.Game
         public bool HandleTreatCollected(Treat treat, int dogIndex)
         {
             if (treat == null) return false;
+            SetTreatProp(treat, FinalGameplayArt.SnackHeistPlateStashed);
             Recovered++;
             _context.AddScore(_context.ItemScore, "SNACK STASHED");
             if (dogIndex >= 0) _context.CreditDog(dogIndex);
@@ -109,6 +114,7 @@ namespace CheddarAndCocoa.Game
             _context.SpawnWorldPop(popAt, $"+{_context.ItemScore} SNACK STASHED", new Color(1f, 0.78f, 0.25f));
             _context.RequestAudioCue(ArenaFeedbackCatalog.SnackSockCollect);
             if (_squirrelTarget == treat) _squirrelTarget = null;
+            HideGuardLane();
             _context.ReplaceCollectible(treat);
             _context.LogEvent("Collection", $"{DogName(dogIndex)} collected a forbidden snack {Recovered}/{_context.ObjectiveGoal}");
             _context.LogObjectiveChanged();
@@ -118,6 +124,7 @@ namespace CheddarAndCocoa.Game
         public void Cleanup()
         {
             _squirrelTarget = null;
+            HideGuardLane();
             if (_context?.SquirrelObject != null) _context.SquirrelObject.SetActive(false);
         }
 
@@ -183,11 +190,19 @@ namespace CheddarAndCocoa.Game
             StealTarget();
         }
 
+        public void ForceStartStealForArt()
+        {
+            Treat target = NearestTreat(_context.Bounds.center);
+            StartSteal(target);
+        }
+
         private void StartSteal(Treat target)
         {
             if (target == null) return;
             _squirrelTarget = target;
             _squirrelHasStarted = true;
+            SetTreatProp(target, FinalGameplayArt.SnackHeistPlateTargeted);
+            ShowGuardLane(target);
             _context.SetFeedback(GameManager.FeedbackKind.SquirrelStealing);
             _context.SetCue("Squirrel is reaching for the forbidden snack stash - bark guard!");
             _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "BARK-GUARD THE SNACK THIEF");
@@ -200,13 +215,18 @@ namespace CheddarAndCocoa.Game
 
         private void StealTarget()
         {
-            if (_squirrelTarget != null) _context.ReplaceCollectible(_squirrelTarget);
+            if (_squirrelTarget != null)
+            {
+                SetTreatProp(_squirrelTarget, FinalGameplayArt.SnackHeistPlateStolen);
+                _context.ReplaceCollectible(_squirrelTarget);
+            }
             Stolen++;
             int penalty = _context.ActiveModifier() == GameManager.RoundModifier.PancakePanic
                 ? _context.PancakeSquirrelPenalty
                 : _context.SquirrelPenalty;
             _context.AddScore(-penalty, "SNACK THIEF");
             _squirrelTarget = null;
+            HideGuardLane();
             _squirrelTimer = NextDelay();
             _context.SetFeedback(GameManager.FeedbackKind.SquirrelStoleFood);
             _context.SetCue("Squirrel got a snack and looks professionally smug!");
@@ -250,5 +270,42 @@ namespace CheddarAndCocoa.Game
         private string DogName(int dogIndex) => dogIndex >= 0 && dogIndex < _context.Dogs.Length
             ? _context.Dogs[dogIndex].name
             : "Dog";
+
+        private void ShowGuardLane(Treat target)
+        {
+            if (target == null) return;
+            if (_guardLane == null)
+            {
+                _guardLane = new GameObject("SnackHeistBarkGuardLane");
+                var fallback = _guardLane.AddComponent<SpriteRenderer>();
+                fallback.sprite = SpriteShapeCache.WhiteSquare;
+                fallback.color = new Color(0.25f, 0.65f, 1f, 0.08f);
+                fallback.sortingOrder = 10;
+                _guardLaneArt = MissionPropArt.AttachObject(_guardLane, FinalGameplayArt.SnackHeistGuardLane, 0.019f, 11, true);
+            }
+
+            _guardLane.transform.position = Vector3.Lerp(_context.SquirrelObject.transform.position, target.transform.position, 0.5f);
+            _guardLane.SetActive(true);
+            MissionPropArt.SetSprite(_guardLaneArt, FinalGameplayArt.SnackHeistGuardLane);
+        }
+
+        private void HideGuardLane()
+        {
+            if (_guardLane != null) _guardLane.SetActive(false);
+        }
+
+        private static void SetTreatProp(Treat treat, string resourcePath)
+        {
+            if (treat == null || string.IsNullOrEmpty(resourcePath)) return;
+
+            var attachment = treat.GetComponent<MissionPropArtAttachment>();
+            if (attachment != null && attachment.HasRuntimeSprite)
+            {
+                MissionPropArt.SetSprite(attachment, resourcePath);
+                return;
+            }
+
+            MissionPropArt.AttachObject(treat.gameObject, resourcePath, 0.013f, 31, true);
+        }
     }
 }

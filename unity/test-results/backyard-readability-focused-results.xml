@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="4" result="Passed" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-07-01 00:02:20Z" end-time="2026-07-01 00:02:20Z" duration="0.4767389">
+  <test-suite type="TestSuite" id="1475" name="Cheddar and Cocoa" fullname="Cheddar and Cocoa" runstate="Runnable" testcasecount="392" result="Passed" start-time="2026-07-01 00:02:20Z" end-time="2026-07-01 00:02:20Z" duration="0.476739" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1467" name="CheddarAndCocoa.Tests.PlayMode.dll" fullname="/Users/kchapman/Weeniegame/unity/CheddarAndCocoa/Library/ScriptAssemblies/CheddarAndCocoa.Tests.PlayMode.dll" runstate="Runnable" testcasecount="392" result="Passed" start-time="2026-07-01 00:02:20Z" end-time="2026-07-01 00:02:20Z" duration="0.472216" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="90391" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1468" name="CheddarAndCocoa" fullname="CheddarAndCocoa" runstate="Runnable" testcasecount="392" result="Passed" start-time="2026-07-01 00:02:20Z" end-time="2026-07-01 00:02:20Z" duration="0.469911" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1471" name="Tests" fullname="CheddarAndCocoa.Tests" runstate="Runnable" testcasecount="390" result="Passed" start-time="2026-07-01 00:02:20Z" end-time="2026-07-01 00:02:20Z" duration="0.468693" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1035" name="BackyardArtEnhancerScenePlayModeTests" fullname="CheddarAndCocoa.Tests.BackyardArtEnhancerScenePlayModeTests" classname="CheddarAndCocoa.Tests.BackyardArtEnhancerScenePlayModeTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-07-01 00:02:20Z" end-time="2026-07-01 00:02:20Z" duration="0.463166" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1039" name="ArenaWowSetDressing_InstallsAnimatedDetailsForEveryMission" fullname="CheddarAndCocoa.Tests.BackyardArtEnhancerScenePlayModeTests.ArenaWowSetDressing_InstallsAnimatedDetailsForEveryMission" methodname="ArenaWowSetDressing_InstallsAnimatedDetailsForEveryMission" classname="CheddarAndCocoa.Tests.BackyardArtEnhancerScenePlayModeTests" runstate="Runnable" seed="749078867" result="Passed" start-time="2026-07-01 00:02:20Z" end-time="2026-07-01 00:02:20Z" duration="0.337339" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1036" name="BackyardArtEnhancer_InstallsWithoutBlockingArenaStart" fullname="CheddarAndCocoa.Tests.BackyardArtEnhancerScenePlayModeTests.BackyardArtEnhancer_InstallsWithoutBlockingArenaStart" methodname="BackyardArtEnhancer_InstallsWithoutBlockingArenaStart" classname="CheddarAndCocoa.Tests.BackyardArtEnhancerScenePlayModeTests" runstate="Runnable" seed="1197227848" result="Passed" start-time="2026-07-01 00:02:20Z" end-time="2026-07-01 00:02:20Z" duration="0.041079" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1037" name="BackyardThreatPresentation_UsesQuietReferenceArtGroundShadowsAndEagleMotion" fullname="CheddarAndCocoa.Tests.BackyardArtEnhancerScenePlayModeTests.BackyardThreatPresentation_UsesQuietReferenceArtGroundShadowsAndEagleMotion" methodname="BackyardThreatPresentation_UsesQuietReferenceArtGroundShadowsAndEagleMotion" classname="CheddarAndCocoa.Tests.BackyardArtEnhancerScenePlayModeTests" runstate="Runnable" seed="371225146" result="Passed" start-time="2026-07-01 00:02:20Z" end-time="2026-07-01 00:02:20Z" duration="0.036391" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1038" name="EagleRescuePresentation_HidesSquirrelOverlayFromTalonGripMarker" fullname="CheddarAndCocoa.Tests.BackyardArtEnhancerScenePlayModeTests.EagleRescuePresentation_HidesSquirrelOverlayFromTalonGripMarker" methodname="EagleRescuePresentation_HidesSquirrelOverlayFromTalonGripMarker" classname="CheddarAndCocoa.Tests.BackyardArtEnhancerScenePlayModeTests" runstate="Runnable" seed="1503755306" result="Passed" start-time="2026-07-01 00:02:20Z" end-time="2026-07-01 00:02:20Z" duration="0.042631" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: /Users/kchapman/Weeniegame/unity/test-results/backyard-readability-focused-results.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

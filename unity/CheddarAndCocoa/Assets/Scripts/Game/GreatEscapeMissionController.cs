@@ -23,6 +23,9 @@ namespace CheddarAndCocoa.Game
         private MissionContext _context;
         private GameObject[] _stations;
         private TextMesh[] _stationLabels;
+        private MissionPropArtAttachment[] _stationArt;
+        private string[] _stationOverrideArt;
+        private float[] _stationOverrideUntil;
         private int _dogInside = -1;
         private int _stepSeen;
         private int _fumblesSeen;
@@ -68,6 +71,7 @@ namespace CheddarAndCocoa.Game
             _fumblesSeen = 0;
             _settlesSeen = 0;
             _failed = false;
+            ClearStationOverrides();
             SetSceneActive(true);
             UpdateVisuals();
         }
@@ -177,12 +181,14 @@ namespace CheddarAndCocoa.Game
             {
                 _fumblesSeen = _puzzle.Fumbles;
                 wasted = true;
+                ShowStationReaction(Mathf.Clamp(_puzzle.Step, 0, Spots.Length - 1), FinalGameplayArt.GreatEscapeStationFumble, 0.55f);
                 _context.SetCue("Wrong dog or wrong order - nothing budged.");
             }
             if (_puzzle.Settles > _settlesSeen)
             {
                 _settlesSeen = _puzzle.Settles;
                 wasted = true;
+                ShowStationReaction(Mathf.Clamp(_puzzle.Step, 0, Spots.Length - 1), FinalGameplayArt.GreatEscapeStationSettle, 0.7f);
                 _context.SetCue("Too slow - the contraption eased back a step. Keep pace!");
             }
             if (wasted)
@@ -200,6 +206,9 @@ namespace CheddarAndCocoa.Game
         {
             _stations = new GameObject[Spots.Length];
             _stationLabels = new TextMesh[Spots.Length];
+            _stationArt = new MissionPropArtAttachment[Spots.Length];
+            _stationOverrideArt = new string[Spots.Length];
+            _stationOverrideUntil = new float[Spots.Length];
             for (int i = 0; i < Spots.Length; i++)
             {
                 var go = new GameObject($"EscapeStation_{i}");
@@ -210,7 +219,7 @@ namespace CheddarAndCocoa.Game
                 sr.color = new Color(0.3f, 0.3f, 0.34f);
                 sr.sortingOrder = 3;
                 _stationLabels[i] = _context.AddWorldLabel(go, $"{i + 1}.", Vector3.up * 1.3f, 12, Color.white);
-                MissionPropArt.AttachObject(go, FinalGameplayArt.MissionEscapeStation, 0.012f, 18, true);
+                _stationArt[i] = MissionPropArt.AttachObject(go, FinalGameplayArt.GreatEscapeStationWaiting, 0.012f, 18, true);
                 go.SetActive(false);
                 _stations[i] = go;
             }
@@ -240,11 +249,43 @@ namespace CheddarAndCocoa.Game
                 Color ownerTint = owner == ChainActor.Cheddar ? new Color(0.95f, 0.72f, 0.3f) : new Color(0.55f, 0.78f, 1f);
                 Color shown = done ? new Color(0.3f, 0.55f, 0.32f) : (isActive ? ownerTint : new Color(0.3f, 0.3f, 0.34f));
                 if (_stations[i].TryGetComponent<SpriteRenderer>(out var sr)) sr.color = shown;
+                string spritePath = SelectStationSprite(i, isActive, done, owner);
+                MissionPropArt.SetSprite(_stationArt != null && i < _stationArt.Length ? _stationArt[i] : null, spritePath);
                 if (_stationLabels != null && _stationLabels[i] != null)
                 {
                     string who = owner == ChainActor.Cheddar ? "CHEDDAR" : "COCOA";
                     _stationLabels[i].text = done ? "DONE" : $"{i + 1}. {who}: {Actions[i]}";
                 }
+            }
+        }
+
+        private string SelectStationSprite(int index, bool isActive, bool done, ChainActor owner)
+        {
+            if (_stationOverrideArt != null && index < _stationOverrideArt.Length
+                && !string.IsNullOrEmpty(_stationOverrideArt[index])
+                && _context.Now() < _stationOverrideUntil[index])
+                return _stationOverrideArt[index];
+            if (done) return FinalGameplayArt.GreatEscapeStationCompleted;
+            if (!isActive) return FinalGameplayArt.GreatEscapeStationWaiting;
+            return owner == ChainActor.Cocoa
+                ? FinalGameplayArt.GreatEscapeStationCocoaActive
+                : FinalGameplayArt.GreatEscapeStationCheddarActive;
+        }
+
+        private void ShowStationReaction(int index, string resourcePath, float seconds)
+        {
+            if (_stationOverrideArt == null || index < 0 || index >= _stationOverrideArt.Length) return;
+            _stationOverrideArt[index] = resourcePath;
+            _stationOverrideUntil[index] = _context.Now() + seconds;
+        }
+
+        private void ClearStationOverrides()
+        {
+            if (_stationOverrideArt == null) return;
+            for (int i = 0; i < _stationOverrideArt.Length; i++)
+            {
+                _stationOverrideArt[i] = null;
+                _stationOverrideUntil[i] = 0f;
             }
         }
 
