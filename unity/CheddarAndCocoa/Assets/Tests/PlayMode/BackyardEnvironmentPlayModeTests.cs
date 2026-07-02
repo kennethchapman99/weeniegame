@@ -418,24 +418,27 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(wow, "ArenaScene should install the cosmetic wow set dressing.");
             Assert.IsTrue(wow.Built, "Wow set dressing should finish building after scene load.");
             Assert.IsTrue(wow.HasShowcaseSceneryPolish,
-                "Family showcase should have layered scenery and animated ambient motion without frozen dog backdrop art.");
-            Assert.GreaterOrEqual(wow.ShowcaseScenerySetPieceCount, 26);
-            Assert.GreaterOrEqual(wow.AnimatedShowcaseSceneryCount, 20);
+                "Showcase dressing should be authored-art accents over the painted yard plate, without frozen dog backdrop art.");
+            Assert.AreEqual(0, wow.PlaceholderRectCount,
+                "One-background rule: the wow layer must not draw placeholder rectangles over the painted yard plate.");
+            Assert.GreaterOrEqual(wow.ShowcaseScenerySetPieceCount, 2);
+            Assert.GreaterOrEqual(wow.AnimatedShowcaseSceneryCount, 2);
             Assert.AreEqual(0, wow.CharacterVignetteCount);
             Assert.IsTrue(wow.HasNoFrozenDogBackdrops);
 
             foreach (string objectName in new[]
                      {
-                         "WowPorchWelcomeMat",
-                         "WowBreezyGrassBlade00",
-                         "WowPorchFirefly00",
                          "WowPropSnapshotLeft",
-                         "WowPropSnapshotRight"
+                         "WowPropSnapshotRight",
+                         "WowMissionSpotlight"
                      })
             {
                 var go = GameObject.Find(objectName);
                 Assert.IsNotNull(go, $"{objectName} should be visible showcase set dressing.");
-                Assert.IsNotNull(go.GetComponent<SpriteRenderer>(), $"{objectName} should render as scenery.");
+                var renderer = go.GetComponent<SpriteRenderer>();
+                Assert.IsNotNull(renderer, $"{objectName} should render as scenery.");
+                Assert.IsFalse(SpriteShapeCache.IsPlaceholder(renderer.sprite),
+                    $"{objectName} should use authored art, not a runtime primitive square.");
                 Assert.IsNull(go.GetComponent<Collider2D>(), $"{objectName} must stay nonblocking.");
             }
         }
@@ -666,8 +669,22 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(enhancer.Enhanced, "Backyard art enhancer should finish after scene load.");
             Assert.GreaterOrEqual(enhancer.EnvironmentArtOverlayCount, 40,
                 "Broad yard districts should have generated sprite overlays, not only square markers.");
-            Assert.GreaterOrEqual(enhancer.PhotoBackyardReskinOverlayCount, 8,
-                "Photo-inspired backyard reskin sprites should layer in as nonblocking scenery.");
+            Assert.IsTrue(enhancer.PaintedPlateIsSoleYardBackground,
+                "One-background rule: the painted plate renders at full opacity and no placeholder rectangle stays visible in the yard.");
+
+            // The photo-crop reskin collage is retired: the painted plate is the single background.
+            foreach (string legacyPhotoReskin in new[]
+                     {
+                         "ActualPhotoReskinLawnStripes", "ActualPhotoReskinPoolPatio",
+                         "ActualPhotoReskinPatioPavers", "ActualPhotoReskinHouseDeck",
+                         "ActualPhotoReskinBigTree", "ActualPhotoReskinGardenBoxes",
+                         "ActualPhotoReskinHedgeBottom", "ActualPhotoReskinHedgeRight",
+                         "ActualPhotoReskinWoodFenceTop"
+                     })
+            {
+                Assert.IsNull(GameObject.Find(legacyPhotoReskin),
+                    $"{legacyPhotoReskin} should no longer layer photo crops over the painted yard plate.");
+            }
 
             var env = GameObject.Find(ArenaArtCatalog.BackyardEnvironmentObjectName);
             Assert.IsNotNull(env);
@@ -686,11 +703,7 @@ namespace CheddarAndCocoa.Tests
             AssertEnvironmentOverlay(env.transform, "PicnicBlanket", "yard_picnic_blanket");
             AssertEnvironmentOverlay(env.transform, "Sandbox", "yard_sandbox");
             AssertEnvironmentOverlay(env.transform, "SteppingStone_0", "yard_stepping_stone");
-            AssertWorldEnvironmentArt("ActualPhotoReskinLawnStripes", "yard_photo_lawn_stripes");
-            AssertWorldEnvironmentArt("ActualPhotoReskinPoolPatio", "yard_photo_pool_patio");
-            AssertWorldEnvironmentArt("ActualPhotoReskinBigTree", "yard_photo_big_tree");
-            AssertWorldEnvironmentArt("ActualPhotoReskinHedgeBottom", "yard_photo_hedge_run");
-            AssertWorldEnvironmentArt("ActualPhotoReskinWoodFenceTop", "yard_photo_wood_fence");
+            AssertEnvironmentOverlay(env.transform, "CoverBush_0", "bush");
         }
 
         [UnityTest]
@@ -761,8 +774,8 @@ namespace CheddarAndCocoa.Tests
                 $"{objectName} overlay should not use the runtime white square.");
             var fallback = target.GetComponent<SpriteRenderer>();
             Assert.IsNotNull(fallback);
-            Assert.LessOrEqual(fallback.color.a, 0.1f,
-                $"{objectName} square fallback should be visually capped behind generated art.");
+            Assert.LessOrEqual(fallback.color.a, 0.001f,
+                $"{objectName} square fallback must be fully invisible behind generated art (one-background rule).");
         }
 
         private static void AssertBuildingOverlay(Transform root, string objectName, string expectedSpriteName)
@@ -793,17 +806,5 @@ namespace CheddarAndCocoa.Tests
                 $"{objectName} should not use the runtime white square.");
         }
 
-        private static void AssertWorldEnvironmentArt(string objectName, string expectedSpriteName)
-        {
-            var go = GameObject.Find(objectName);
-            Assert.IsNotNull(go, $"{objectName} should be visible backyard reskin scenery.");
-            Assert.IsNull(go.GetComponent<Collider2D>(), $"{objectName} must stay nonblocking.");
-            var renderer = go.GetComponent<SpriteRenderer>();
-            Assert.IsNotNull(renderer);
-            Assert.IsNotNull(renderer.sprite);
-            Assert.AreEqual(expectedSpriteName, renderer.sprite.name);
-            Assert.AreNotSame(SpriteShapeCache.WhiteSquare, renderer.sprite,
-                $"{objectName} should not use the runtime white square.");
-        }
     }
 }

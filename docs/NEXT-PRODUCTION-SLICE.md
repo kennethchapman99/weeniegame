@@ -58,11 +58,14 @@ signal. All mission definitions now expose reusable couch-test presentation meta
 mechanic families, scene cues, shared Cheddar/Cocoa presentation guidance, and readability flags, and
 the picker/playtest overlay now surfaces a per-mission readability gate for the selected or active
 mission. Operation Pee Break's picker details now present its authored 480-second timer as an `8m`
-deep-slice session. `ArenaWowSetDressing` now adds a shared animated first-impression layer with
-background glow, fence lights, pawprints, sparkle accents, mission-reactive spotlight color, and
-reusable animated motif families for every roster mission. Those motifs are now backed by generated
-transparent cartoon sprites in `ArenaFinal/Props/Wow`, with the source atlas retained under
-`ReferenceOnly/GeneratedWow`, instead of square-only placeholder compositions. Operation Pee Break's
+deep-slice session. The backyard now follows a one-background rule (2026-07-02): the painted plate
+(`yard_backyard_plate_v02`) covers the full 120×68 yard at full opacity as the single background,
+the bootstrap rectangles stay only as invisible anchors, and the photo-crop reskin layer is
+retired. `ArenaWowSetDressing` keeps a lean authored-art accent layer (snapshot props, attract
+parade, mission-reactive spotlight/spark) plus reusable animated motif families for every roster
+mission, backed by generated transparent cartoon sprites in `ArenaFinal/Props/Wow`, with the source
+atlas retained under `ReferenceOnly/GeneratedWow`; it no longer draws placeholder rectangles over
+the plate. Operation Pee Break's
 deep-slice room now also overlays generated transparent cartoon prop sprites from
 `ArenaFinal/Props/PeeBreak`, with the atlas source retained under
 `ReferenceOnly/GeneratedPeeBreakProps`, for the couch, distracted Teenager, phone/charger, open door,

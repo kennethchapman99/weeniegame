@@ -6,6 +6,16 @@ namespace CheddarAndCocoa.Game
     {
         private static Sprite _whiteSquare;
 
+        /// <summary>
+        /// True for runtime-generated primitive sprites (the cached white square or any unnamed
+        /// Sprite.Create result), false for authored art loaded from Resources.
+        /// </summary>
+        public static bool IsPlaceholder(Sprite sprite) =>
+            sprite == null ||
+            sprite == _whiteSquare ||
+            string.IsNullOrEmpty(sprite.name) ||
+            sprite.name.Contains("RuntimeWhiteSquare");
+
         public static Sprite WhiteSquare
         {
             get

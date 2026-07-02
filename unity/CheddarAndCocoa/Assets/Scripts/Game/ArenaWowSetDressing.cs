@@ -5,8 +5,10 @@ using UnityEngine.SceneManagement;
 namespace CheddarAndCocoa.Game
 {
     /// <summary>
-    /// Cosmetic-only arena set dressing for couch-test appeal. It adds animated background props and
-    /// a mission-reactive color accent without changing gameplay transforms, colliders, or rules.
+    /// Cosmetic-only arena set dressing for couch-test appeal. The painted backyard plate owns the
+    /// background (one-background rule), so this layer only adds authored sprite accents and a
+    /// mission-reactive motif — never placeholder rectangles — and changes no gameplay transforms,
+    /// colliders, or rules.
     /// </summary>
     public sealed class ArenaWowSetDressing : MonoBehaviour
     {
@@ -36,8 +38,26 @@ namespace CheddarAndCocoa.Game
         public bool HasMissionReactiveMotifs => _missionMotifRoot != null && MissionMotifPieceCount >= 1 && GeneratedMissionSpriteCount >= 1;
         public bool HasGeneratedCartoonAssets => GeneratedCartoonSpriteCount >= 3;
         public bool HasNoFrozenDogBackdrops => AttractCharacterCount == 0 && CharacterVignetteCount == 0;
-        public bool HasShowcaseSceneryPolish => ShowcaseScenerySetPieceCount >= 26 &&
-                                                AnimatedShowcaseSceneryCount >= 20 &&
+
+        /// <summary>
+        /// Live count of runtime-primitive (white square / unnamed) sprites in the wow layer. The
+        /// one-background rule requires this to stay zero: the painted plate is the background and
+        /// every accent on top of it must be authored art.
+        /// </summary>
+        public int PlaceholderRectCount
+        {
+            get
+            {
+                int count = 0;
+                foreach (var renderer in GetComponentsInChildren<SpriteRenderer>(true))
+                    if (SpriteShapeCache.IsPlaceholder(renderer.sprite)) count++;
+                return count;
+            }
+        }
+
+        public bool HasShowcaseSceneryPolish => PlaceholderRectCount == 0 &&
+                                                ShowcaseScenerySetPieceCount >= 2 &&
+                                                AnimatedShowcaseSceneryCount >= 2 &&
                                                 HasNoFrozenDogBackdrops;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -77,14 +97,8 @@ namespace CheddarAndCocoa.Game
             _root.SetParent(transform);
             _root.localPosition = Vector3.zero;
 
-            BuildBackgroundBands();
-            BuildFenceLights();
-            BuildPawprintRunway();
-            BuildCenterStageAccents();
-            BuildLayeredYardDepth();
             BuildFamilyShowcaseVignettes();
             BuildAttractPropParade();
-            BuildAnimatedSparkles();
             BuildMissionSpotlight();
             BuildMissionMotifRoot();
 
@@ -98,123 +112,14 @@ namespace CheddarAndCocoa.Game
             RefreshMissionAccent(false);
         }
 
-        private void BuildBackgroundBands()
-        {
-            AddRect("WowSkyGlowTop", new Vector3(0f, 27.5f, 5f), new Vector3(124f, 12f, 1f),
-                new Color(0.42f, 0.74f, 1f, 0.20f), -18, WowMotionKind.Shimmer, 0.08f, 0.15f);
-            AddRect("WowYardWarmth", new Vector3(0f, -23.5f, 4.8f), new Vector3(124f, 13f, 1f),
-                new Color(0.55f, 0.90f, 0.36f, 0.16f), -17, WowMotionKind.Shimmer, 0.06f, 1.2f);
-            AddRect("WowPatioStageWash", new Vector3(-43f, -16f, 4.7f), new Vector3(22f, 12f, 1f),
-                new Color(1f, 0.72f, 0.32f, 0.18f), -16, WowMotionKind.Pulse, 0.08f, 0.4f);
-            AddRect("WowHouseWindowGlow", new Vector3(43f, 18f, 4.7f), new Vector3(18f, 9f, 1f),
-                new Color(0.95f, 0.58f, 0.20f, 0.18f), -16, WowMotionKind.Pulse, 0.10f, 1.1f);
-        }
-
-        private void BuildFenceLights()
-        {
-            for (int i = 0; i < 13; i++)
-            {
-                float x = -54f + i * 9f;
-                float phase = i * 0.43f;
-                AddRect($"WowFenceLight{i:00}", new Vector3(x, 30.5f, 4.4f),
-                    new Vector3(0.85f, 0.85f, 1f),
-                    i % 2 == 0 ? new Color(1f, 0.92f, 0.32f, 0.72f) : new Color(0.42f, 0.95f, 1f, 0.62f),
-                    -8, WowMotionKind.Pulse, 0.18f, phase);
-                AddRect($"WowFenceLightCord{i:00}", new Vector3(x + 4.5f, 30.1f, 4.45f),
-                    new Vector3(8.2f, 0.12f, 1f), new Color(0.08f, 0.12f, 0.12f, 0.32f),
-                    -9, WowMotionKind.None, 0f, phase);
-            }
-        }
-
-        private void BuildPawprintRunway()
-        {
-            for (int i = 0; i < 18; i++)
-            {
-                float t = i / 17f;
-                float x = Mathf.Lerp(-34f, 34f, t);
-                float y = Mathf.Sin(t * Mathf.PI * 2.4f) * 6.5f - 1.5f;
-                float side = i % 2 == 0 ? -0.55f : 0.55f;
-                AddRect($"WowPawPrint{i:00}", new Vector3(x, y + side, 4.2f),
-                    new Vector3(0.7f, 0.42f, 1f),
-                    new Color(0.05f, 0.10f, 0.07f, 0.20f),
-                    -5, WowMotionKind.Pulse, 0.05f, i * 0.21f);
-            }
-        }
-
-        private void BuildCenterStageAccents()
-        {
-            AddRect("WowCenterPlayWash", new Vector3(0f, -4.8f, 3.9f), new Vector3(36f, 7.5f, 1f),
-                new Color(0.10f, 0.32f, 0.16f, 0.26f), 0, WowMotionKind.Shimmer, 0.10f, 0.35f);
-            AddRect("WowCenterPartyStripeA", new Vector3(-13f, -0.9f, 3.8f), new Vector3(7.2f, 0.36f, 1f),
-                new Color(1f, 0.86f, 0.24f, 0.46f), 2, WowMotionKind.Wag, 0.08f, 0.8f);
-            AddRect("WowCenterPartyStripeB", new Vector3(13f, -0.9f, 3.8f), new Vector3(7.2f, 0.36f, 1f),
-                new Color(0.26f, 0.92f, 1f, 0.42f), 2, WowMotionKind.Wag, 0.08f, 1.2f);
-            AddRect("WowCenterCueSparkA", new Vector3(-18f, -6.2f, 3.7f), new Vector3(1.2f, 1.2f, 1f),
-                new Color(1f, 0.92f, 0.30f, 0.58f), 3, WowMotionKind.FloatRotate, 0.24f, 1.6f);
-            AddRect("WowCenterCueSparkB", new Vector3(18f, -6.4f, 3.7f), new Vector3(1.2f, 1.2f, 1f),
-                new Color(0.26f, 0.88f, 1f, 0.52f), 3, WowMotionKind.FloatRotate, 0.24f, 2.0f);
-        }
-
-        private void BuildLayeredYardDepth()
-        {
-            AddShowcaseRect("WowPorchWelcomeMat", new Vector3(43f, 10.4f, 4.15f), new Vector3(8.2f, 1.05f, 1f),
-                new Color(0.92f, 0.38f, 0.18f, 0.42f), -3, WowMotionKind.Pulse, 0.025f, 0.4f);
-            AddShowcaseRect("WowPorchStepHighlight", new Vector3(43f, 8.9f, 4.12f), new Vector3(10.4f, 0.42f, 1f),
-                new Color(1f, 0.82f, 0.42f, 0.34f), -2, WowMotionKind.Shimmer, 0.07f, 1.1f);
-            AddShowcaseRect("WowGardenBedLeft", new Vector3(-37f, -25.6f, 4.25f), new Vector3(16f, 1.5f, 1f),
-                new Color(0.13f, 0.42f, 0.17f, 0.38f), -7, WowMotionKind.Shimmer, 0.05f, 0.2f);
-            AddShowcaseRect("WowGardenBedRight", new Vector3(37f, -25.6f, 4.25f), new Vector3(16f, 1.5f, 1f),
-                new Color(0.12f, 0.46f, 0.20f, 0.36f), -7, WowMotionKind.Shimmer, 0.05f, 0.8f);
-            AddShowcaseRect("WowShowcaseSightline", new Vector3(0f, -12.2f, 4.18f), new Vector3(54f, 0.28f, 1f),
-                new Color(1f, 0.98f, 0.62f, 0.18f), -6, WowMotionKind.Shimmer, 0.12f, 1.5f);
-
-            for (int i = 0; i < 12; i++)
-            {
-                float x = -52f + i * 9.4f;
-                float height = 0.9f + (i % 4) * 0.22f;
-                AddShowcaseRect($"WowBreezyGrassBlade{i:00}", new Vector3(x, -27.6f + (i % 3) * 0.42f, 4.1f),
-                    new Vector3(0.24f, height, 1f), new Color(0.38f, 0.92f, 0.34f, 0.34f),
-                    -5, WowMotionKind.Wag, 0.045f, i * 0.29f);
-            }
-
-            for (int i = 0; i < 9; i++)
-            {
-                float x = 32f + Mathf.Sin(i * 1.9f) * 16f;
-                float y = 10f + i * 2.2f;
-                AddShowcaseRect($"WowPorchFirefly{i:00}", new Vector3(x, y, 4.05f),
-                    Vector3.one * (0.24f + (i % 3) * 0.05f),
-                    i % 2 == 0 ? new Color(1f, 0.96f, 0.42f, 0.54f) : new Color(0.46f, 1f, 0.78f, 0.46f),
-                    1, WowMotionKind.FloatRotate, 0.34f, i * 0.62f);
-            }
-        }
-
         private void BuildFamilyShowcaseVignettes()
         {
-            AddShowcaseRect("WowPhotoBoothFrameA", new Vector3(-52f, 18.2f, 4.22f), new Vector3(7.6f, 5.2f, 1f),
-                new Color(1f, 0.74f, 0.24f, 0.22f), -7, WowMotionKind.Pulse, 0.025f, 0.3f);
-            AddShowcaseRect("WowPhotoBoothFrameB", new Vector3(52f, -4.2f, 4.22f), new Vector3(7.6f, 5.2f, 1f),
-                new Color(0.20f, 0.88f, 1f, 0.20f), -7, WowMotionKind.Pulse, 0.025f, 1.0f);
-
             AddShowcaseSprite("WowPropSnapshotLeft", FinalGameplayArt.EnvironmentPicnicBlanket,
                 new Vector3(-52f, 18.2f, 4.0f), Vector3.one * 0.92f, -2,
                 WowMotionKind.Bounce, 0.035f, 0.6f);
             AddShowcaseSprite("WowPropSnapshotRight", FinalGameplayArt.EnvironmentFlowerPatch,
                 new Vector3(52f, -4.2f, 4.0f), Vector3.one * 0.84f, -2,
                 WowMotionKind.Bounce, 0.035f, 1.3f);
-        }
-
-        private void BuildAnimatedSparkles()
-        {
-            for (int i = 0; i < 14; i++)
-            {
-                float angle = i * 0.82f;
-                float radius = 12f + (i % 4) * 5f;
-                var pos = new Vector3(Mathf.Cos(angle) * radius, Mathf.Sin(angle * 0.7f) * 13f, 4.1f);
-                AddRect($"WowFloatingSpark{i:00}", pos,
-                    new Vector3(0.34f + (i % 3) * 0.08f, 0.34f + (i % 3) * 0.08f, 1f),
-                    i % 3 == 0 ? new Color(1f, 0.94f, 0.35f, 0.52f) : new Color(0.58f, 0.95f, 1f, 0.42f),
-                    -4, WowMotionKind.FloatRotate, 0.22f, i * 0.37f);
-            }
         }
 
         private void BuildAttractPropParade()
@@ -227,12 +132,12 @@ namespace CheddarAndCocoa.Game
 
         private void BuildMissionSpotlight()
         {
-            _missionSpotlight = AddRect("WowMissionSpotlight", new Vector3(0f, 0f, 4.0f),
-                new Vector3(28f, 18f, 1f), new Color(1f, 1f, 1f, 0.10f),
-                0, WowMotionKind.Pulse, 0.12f, 0.2f);
-            _missionSpark = AddRect("WowMissionSpark", new Vector3(0f, 7.2f, 3.9f),
-                new Vector3(2.2f, 2.2f, 1f), new Color(1f, 1f, 1f, 0.55f),
-                4, WowMotionKind.FloatRotate, 0.35f, 0.8f);
+            _missionSpotlight = AddSprite("WowMissionSpotlight", FinalGameplayArt.DogFxGroundGlow,
+                new Vector3(0f, 0f, 4.0f), WorldSizeScale(FinalGameplayArt.DogFxGroundGlow, new Vector2(28f, 18f)),
+                0, WowMotionKind.Pulse, 0.12f, 0.2f, _root, true, new Color(1f, 1f, 1f, 0.10f));
+            _missionSpark = AddSprite("WowMissionSpark", FinalGameplayArt.PickupSparkle,
+                new Vector3(0f, 7.2f, 3.9f), WorldSizeScale(FinalGameplayArt.PickupSparkle, new Vector2(2.2f, 2.2f)),
+                4, WowMotionKind.FloatRotate, 0.35f, 0.8f, _root, true, new Color(1f, 1f, 1f, 0.55f));
         }
 
         private void BuildMissionMotifRoot()
@@ -240,45 +145,6 @@ namespace CheddarAndCocoa.Game
             _missionMotifRoot = new GameObject("WowMissionMotifRoot").transform;
             _missionMotifRoot.SetParent(_root);
             _missionMotifRoot.localPosition = Vector3.zero;
-        }
-
-        private SpriteRenderer AddRect(string name, Vector3 position, Vector3 scale, Color color,
-            int sortingOrder, WowMotionKind motionKind, float motionAmount, float phase) =>
-            AddRect(name, position, scale, color, sortingOrder, motionKind, motionAmount, phase, _root, true);
-
-        private SpriteRenderer AddShowcaseRect(string name, Vector3 position, Vector3 scale, Color color,
-            int sortingOrder, WowMotionKind motionKind, float motionAmount, float phase)
-        {
-            var renderer = AddRect(name, position, scale, color, sortingOrder, motionKind, motionAmount, phase);
-            if (renderer != null)
-            {
-                ShowcaseScenerySetPieceCount++;
-                if (motionKind != WowMotionKind.None) AnimatedShowcaseSceneryCount++;
-            }
-            return renderer;
-        }
-
-        private SpriteRenderer AddRect(string name, Vector3 position, Vector3 scale, Color color,
-            int sortingOrder, WowMotionKind motionKind, float motionAmount, float phase, Transform parent, bool countInTotals)
-        {
-            var go = new GameObject(name);
-            go.transform.SetParent(parent);
-            go.transform.position = position;
-            go.transform.localScale = scale;
-
-            var renderer = go.AddComponent<SpriteRenderer>();
-            renderer.sprite = SpriteShapeCache.WhiteSquare;
-            renderer.color = color;
-            renderer.sortingOrder = sortingOrder;
-            if (countInTotals) SetPieceCount++;
-
-            if (motionKind != WowMotionKind.None)
-            {
-                go.AddComponent<WowSetPieceMotion>().Begin(renderer, motionKind, motionAmount, phase);
-                if (countInTotals) AnimatedSetPieceCount++;
-            }
-
-            return renderer;
         }
 
         private void RefreshMissionAccent(bool force)
@@ -433,7 +299,8 @@ namespace CheddarAndCocoa.Game
         }
 
         private SpriteRenderer AddSprite(string name, string resourcePath, Vector3 position, Vector3 scale,
-            int sortingOrder, WowMotionKind motionKind, float motionAmount, float phase, Transform parent, bool countInTotals)
+            int sortingOrder, WowMotionKind motionKind, float motionAmount, float phase, Transform parent,
+            bool countInTotals, Color? tint = null)
         {
             Sprite sprite = FinalGameplayArt.Load(resourcePath);
             if (sprite == null) return null;
@@ -446,7 +313,7 @@ namespace CheddarAndCocoa.Game
             var renderer = go.AddComponent<SpriteRenderer>();
             renderer.sprite = sprite;
             renderer.sortingOrder = sortingOrder;
-            renderer.color = Color.white;
+            renderer.color = tint ?? Color.white;
 
             if (countInTotals) SetPieceCount++;
             if (motionKind != WowMotionKind.None)
@@ -456,6 +323,16 @@ namespace CheddarAndCocoa.Game
             }
 
             return renderer;
+        }
+
+        private static Vector3 WorldSizeScale(string resourcePath, Vector2 worldSize)
+        {
+            Sprite sprite = FinalGameplayArt.Load(resourcePath);
+            if (sprite == null) return Vector3.one;
+            return new Vector3(
+                worldSize.x / Mathf.Max(0.01f, sprite.bounds.size.x),
+                worldSize.y / Mathf.Max(0.01f, sprite.bounds.size.y),
+                1f);
         }
 
         private enum WowMotionKind

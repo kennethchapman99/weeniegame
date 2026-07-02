@@ -122,19 +122,25 @@ accents:
 - The mission picker footer and playtest overlay now show a per-mission readability gate. It reports
   `READY` only when the selected or active mission has the required objective, score, role, warning,
   replay, and Cheddar/Cocoa identity affordances represented in its definition.
+- **One-background rule (2026-07-02).** The painted backyard plate
+  (`yard_backyard_plate_v02`) now covers the entire 120×68 yard at full opacity and is the single
+  background. The bootstrap district rectangles stay in the hierarchy only as fully invisible
+  anchors for authored overlays and gameplay staging, the photo-crop reskin layer
+  (`ActualPhotoReskin*`) and the translucent runtime-art accents (`ActualArt*`) are retired, and
+  the Eagle Shadow cover bushes get authored `bush` art so hide zones stay readable. PlayMode
+  coverage asserts the invariant directly: `PaintedPlateIsSoleYardBackground` (plate alpha 1.0,
+  full-yard coverage, zero visible runtime-primitive rectangles in the environment) and
+  `ArenaWowSetDressing.PlaceholderRectCount == 0`.
 - `ArenaWowSetDressing` now installs automatically in `ArenaScene` and adds a cosmetic-only
-  presentation layer across the full shared arena: soft background color bands, patio/house glow,
-  fence string lights, a pawprint runway, floating sparkle accents, and a mission-reactive spotlight
-  tinted from the selected mission badge palette. It also swaps reusable animated motif families for
-  the selected or active mission: couch-to-door Pee Break props, food-heist staging, threat-watch
-  lanes, adventure-route cues, or backyard dog props. Those motif families now use generated
-  transparent cartoon sprite assets under `Assets/Art/Resources/ArenaFinal/Props/Wow/`, cut from the
-  reference atlas in `Assets/Art/ReferenceOnly/GeneratedWow/wow_mission_atlas_source.png`, instead
-  of square-only placeholder compositions. The 2026-06-29 showcase polish pass adds extra porch
-  glows, a welcome mat, garden-bed depth, breezy grass blades, porch fireflies, and small
-  Cheddar/Cocoa snapshot vignettes. More than 75 generated ambient set pieces plus per-mission
-  cartoon motifs animate continuously without colliders or gameplay ownership changes, giving every
-  mission a livelier first impression before final authored environment art exists.
+  presentation layer over the painted plate: two authored snapshot props, an attract prop parade,
+  and a mission-reactive spotlight/spark pair reskinned with authored glow/sparkle art. It also
+  swaps reusable animated motif families for the selected or active mission: couch-to-door Pee
+  Break props, food-heist staging, threat-watch lanes, adventure-route cues, or backyard dog
+  props, all using generated transparent cartoon sprite assets under
+  `Assets/Art/Resources/ArenaFinal/Props/Wow/`. The former square-based ambience (background
+  bands, fence string lights, pawprint runway, sparkles, grass blades, fireflies, welcome mat)
+  was removed by the one-background rule: placeholder rectangles no longer layer over the painted
+  yard plate.
 - `DogShowcasePolish` now attaches through `DogReadabilityFeedback` and gives Cheddar/Cocoa distinct
   dog-local presentation flourishes: Cheddar gets faster warm chaos-comet sparks, Cocoa gets calmer
   teal queen glints, and both receive a soft ground glow/collar glint that animates with movement,

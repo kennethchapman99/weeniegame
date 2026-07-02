@@ -67,6 +67,17 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(renderer);
             Assert.AreEqual("yard_backyard_plate_v02", renderer.sprite.name);
             Assert.Less(renderer.sortingOrder, 0, "The painted yard plate must stay behind runtime actors and gameplay cues.");
+
+            // One-background rule: the plate IS the yard background — full opacity, full coverage,
+            // with no visible placeholder geometry fighting it.
+            Assert.AreEqual(1f, renderer.color.a, 0.001f,
+                "The painted yard plate must render at full opacity, not as a translucent collage layer.");
+            Assert.AreEqual(ArenaWorldScale.BackyardWidth, renderer.bounds.size.x, 0.5f,
+                "The painted yard plate should cover the full yard width.");
+            Assert.AreEqual(ArenaWorldScale.BackyardHeight, renderer.bounds.size.y, 0.5f,
+                "The painted yard plate should cover the full yard height.");
+            Assert.IsTrue(enhancer.PaintedPlateIsSoleYardBackground,
+                "No placeholder rectangle may stay visible where the painted plate provides authored art.");
         }
 
         [UnityTest]
@@ -174,8 +185,10 @@ namespace CheddarAndCocoa.Tests
             yield return null;
 
             Assert.IsTrue(wow.Built);
-            Assert.GreaterOrEqual(wow.SetPieceCount, 50, "The couch-test arena should have a dense ambient presentation layer.");
-            Assert.GreaterOrEqual(wow.AnimatedSetPieceCount, 25, "The wow layer should include visible motion, not only static props.");
+            Assert.AreEqual(0, wow.PlaceholderRectCount,
+                "One-background rule: the wow layer must not add placeholder rectangles over the painted yard plate.");
+            Assert.GreaterOrEqual(wow.SetPieceCount, 6, "The wow layer should keep its authored ambient accent sprites.");
+            Assert.GreaterOrEqual(wow.AnimatedSetPieceCount, 6, "The wow layer should include visible motion, not only static props.");
             Assert.AreEqual(0, wow.AttractCharacterCount,
                 "Cheddar/Cocoa should never be baked into level-background set dressing.");
             Assert.IsTrue(wow.HasNoFrozenDogBackdrops,
