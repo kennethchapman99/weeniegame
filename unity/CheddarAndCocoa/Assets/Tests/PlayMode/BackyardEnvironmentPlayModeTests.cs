@@ -26,15 +26,15 @@ namespace CheddarAndCocoa.Tests
         [Test]
         public void MissionSelectPanel_FitsAllMissionRowsAndReadableGoal()
         {
-            // The mission select screen now fills nearly the full viewport (picture-tile grid plus
-            // a detail panel) instead of sizing a small dialog to its content, so the content-driven
-            // formula only needs to stay large enough to always exceed the viewport and get clamped.
-            float height = ArenaHud.MissionSelectPanelHeight(22);
-            Assert.GreaterOrEqual(height, 126f + 11f * 42f + 142f);
-
-            Rect panel = ArenaHud.FitPanel(1920f, 1080f, 1920f, height, 12f);
-            Assert.GreaterOrEqual(panel.height, 1080f - 24f - 1f,
-                "Mission select should occupy essentially the full screen height, not a small centered dialog.");
+            // The mission select screen is a UGUI/TMP paged picture-tile grid plus a detail panel.
+            // The grid shape lives on GameManager so directional navigation and the rendered tiles
+            // can never disagree, and the view lays out in a 1080p reference space that
+            // CanvasScaler scales crisply on any resolution (unlike the old IMGUI bitmap scaling).
+            Assert.AreEqual(4, GameManager.MissionSelectGridColumns);
+            Assert.AreEqual(3, GameManager.MissionSelectGridRowsPerPage);
+            Assert.AreEqual(12, GameManager.MissionSelectTilesPerPage);
+            Assert.AreEqual(1920f, MissionSelectScreen.ReferenceWidth);
+            Assert.AreEqual(1080f, MissionSelectScreen.ReferenceHeight);
 
             Assert.AreEqual("PEE", ArenaHud.MissionBadgeCodeFor(GameManager.MissionVariant.OperationPeeBreak));
             Assert.AreNotEqual(ArenaHud.MissionBadgeColorFor(GameManager.MissionVariant.OperationPeeBreak),

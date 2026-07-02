@@ -2,7 +2,9 @@
   "name": "CheddarAndCocoa",
   "rootNamespace": "CheddarAndCocoa",
   "references": [
-    "Unity.InputSystem"
+    "Unity.InputSystem",
+    "UnityEngine.UI",
+    "Unity.TextMeshPro"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

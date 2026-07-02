@@ -15,6 +15,7 @@ namespace CheddarAndCocoa.Game
         public enum ColorRole { Fixed, MissionPrimary, MissionAccent, MissionSecondary }
 
         public const string ArenaHudObjectName = "ArenaHud";
+        public const string MissionSelectScreenObjectName = "MissionSelectScreen";
         public const string DebugHudObjectName = "DebugHud";
         public const string GameManagerObjectName = "GameManager";
         public const string DogReadabilityLabelName = "DogReadabilityLabel";

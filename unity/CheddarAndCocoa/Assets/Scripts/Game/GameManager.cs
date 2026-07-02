@@ -62,6 +62,16 @@ namespace CheddarAndCocoa.Game
         public bool EndScreenVisible => CurrentFlow == FlowState.EndScreen;
         public bool SessionSummaryVisible => CurrentFlow == FlowState.SessionSummary;
         public int MissionSelectOptionCount => MissionOrder.Length;
+
+        // Mission select renders as a paged picture-tile grid (row-major, 4x3 per page). The grid
+        // shape lives here, not in the view, so directional navigation and the UGUI screen can
+        // never disagree about which tile is next.
+        public const int MissionSelectGridColumns = 4;
+        public const int MissionSelectGridRowsPerPage = 3;
+        public const int MissionSelectTilesPerPage = MissionSelectGridColumns * MissionSelectGridRowsPerPage;
+        public int MissionSelectPageCount =>
+            (MissionOrder.Length + MissionSelectTilesPerPage - 1) / MissionSelectTilesPerPage;
+        public int SelectedMissionPage => _selectedMissionIndex / MissionSelectTilesPerPage;
         public SnackHeistMissionController SnackHeistController => _activeMissionController as SnackHeistMissionController;
         public SquirrelConspiracyMissionController SquirrelConspiracyController => _activeMissionController as SquirrelConspiracyMissionController;
         public HerdingMissionState SquirrelConspiracyState => SquirrelConspiracyController?.State ?? _emptyHerdingState;
@@ -646,17 +656,27 @@ namespace CheddarAndCocoa.Game
 
         private void SelectMissionGridStep(int columnDelta, int rowDelta)
         {
-            const int columns = 2;
-            int rows = Mathf.CeilToInt(MissionOrder.Length / (float)columns);
-            int currentColumn = _selectedMissionIndex / rows;
-            int currentRow = _selectedMissionIndex % rows;
-            int targetColumn = (currentColumn + columnDelta + columns) % columns;
-            int targetRow = (currentRow + rowDelta + rows) % rows;
-            int targetIndex = targetColumn * rows + targetRow;
+            int count = MissionOrder.Length;
+            if (columnDelta != 0)
+            {
+                // Horizontal steps walk the row-major tile order linearly, so pushing right past a
+                // row (or page) edge lands on the next tile the couch sees, wrapping at the ends.
+                SelectMission(MissionOrder[(_selectedMissionIndex + columnDelta + count) % count]);
+                return;
+            }
 
-            // Keep grid navigation safe if the final column is not full.
-            if (targetIndex >= MissionOrder.Length)
-                targetIndex = MissionOrder.Length - 1;
+            int pageStart = SelectedMissionPage * MissionSelectTilesPerPage;
+            int pageSize = Mathf.Min(MissionSelectTilesPerPage, count - pageStart);
+            int rowsThisPage = Mathf.CeilToInt(pageSize / (float)MissionSelectGridColumns);
+            int local = _selectedMissionIndex - pageStart;
+            int row = local / MissionSelectGridColumns;
+            int column = local % MissionSelectGridColumns;
+            int targetRow = (row + rowDelta + rowsThisPage) % rowsThisPage;
+            int targetIndex = pageStart + targetRow * MissionSelectGridColumns + column;
+
+            // Keep grid navigation safe if the final row is not full.
+            if (targetIndex >= count)
+                targetIndex = count - 1;
 
             SelectMission(MissionOrder[targetIndex]);
         }

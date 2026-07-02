@@ -86,6 +86,12 @@ namespace CheddarAndCocoa.Bootstrap
             var hud = new GameObject(ArenaArtCatalog.ArenaHudObjectName).AddComponent<ArenaHud>();
             hud.Init(game);
 
+            // Crisp UGUI/TMP mission picker (paged picture-tile grid + detail panel). ArenaHud keeps
+            // drawing the in-mission IMGUI overlays; this canvas owns only the select screen.
+            var missionSelect = new GameObject(ArenaArtCatalog.MissionSelectScreenObjectName)
+                .AddComponent<MissionSelectScreen>();
+            missionSelect.Init(game);
+
             // Controller/keyboard legend + name tags + WOOF flash (reuse the existing debug overlay).
             var dbg = new GameObject(ArenaArtCatalog.DebugHudObjectName).AddComponent<DebugHud>();
             dbg.Init(cam,

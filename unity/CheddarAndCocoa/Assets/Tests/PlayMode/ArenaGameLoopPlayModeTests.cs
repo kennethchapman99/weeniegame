@@ -857,21 +857,34 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(game);
             Assert.IsTrue(game.MissionSelectVisible);
 
-            // The selector is rendered as two columns (22 missions, rows = ceil(22/2) = 11: column 0 holds
-            // indices 0-10, column 1 holds 11-21). Directional navigation must match that visible grid
-            // instead of walking one linear list in every direction.
-            game.SelectMission(GameManager.MissionVariant.BackyardRescue); // top-left (index 0)
+            // The selector renders as a paged picture-tile grid (row-major, 4 columns x 3 rows per
+            // page: page 0 holds indices 0-11, page 1 holds 12-21). Directional navigation must
+            // match that visible grid: vertical steps wrap within the current page's column, and
+            // horizontal steps walk the tile order linearly so the page flips at page edges.
+            game.SelectMission(GameManager.MissionVariant.BackyardRescue); // page 0, top-left (index 0)
+            Assert.AreEqual(0, game.SelectedMissionPage);
             game.SelectMissionRight();
-            Assert.AreEqual(GameManager.MissionVariant.CarRide, game.SelectedMissionVariant); // index 11
-            game.SelectMissionBelow();
-            Assert.AreEqual(GameManager.MissionVariant.GateCrash, game.SelectedMissionVariant); // index 12
-            game.SelectMissionLeft();
             Assert.AreEqual(GameManager.MissionVariant.SnackHeist, game.SelectedMissionVariant); // index 1
+            game.SelectMissionBelow();
+            Assert.AreEqual(GameManager.MissionVariant.CoyotesFence, game.SelectedMissionVariant); // index 5 (row below)
+            game.SelectMissionLeft();
+            Assert.AreEqual(GameManager.MissionVariant.EagleShadowPanic, game.SelectedMissionVariant); // index 4
             game.SelectMissionAbove();
             Assert.AreEqual(GameManager.MissionVariant.BackyardRescue, game.SelectedMissionVariant); // index 0
             game.SelectMissionAbove();
-            Assert.AreEqual(GameManager.MissionVariant.LeashWalk, game.SelectedMissionVariant, // wraps to index 10
-                "Vertical navigation should wrap within the visible column.");
+            Assert.AreEqual(GameManager.MissionVariant.ThunderstormComfort, game.SelectedMissionVariant, // wraps to index 8
+                "Vertical navigation should wrap within the visible column of the current page.");
+            game.SelectMission(GameManager.MissionVariant.CarRide); // index 11, last tile of page 0
+            Assert.AreEqual(0, game.SelectedMissionPage);
+            game.SelectMissionRight();
+            Assert.AreEqual(GameManager.MissionVariant.GateCrash, game.SelectedMissionVariant, // index 12
+                "Pushing right past the last tile of a page should flip to the next page.");
+            Assert.AreEqual(1, game.SelectedMissionPage);
+            game.SelectMission(GameManager.MissionVariant.BlanketCatch); // index 19: page 1, row 1, col 3
+            game.SelectMissionBelow();
+            Assert.AreEqual(GameManager.MissionVariant.OperationPeeBreak, game.SelectedMissionVariant, // clamps to index 21
+                "Stepping into the missing corner of the short last page should clamp to the final mission.");
+            Assert.AreEqual(2, game.MissionSelectPageCount);
             game.SelectCouchTestFocusMission();
             Assert.AreEqual(GameManager.MissionVariant.OperationPeeBreak, game.SelectedMissionVariant,
                 "The couch-test focus shortcut should make the active deep slice one action away from cold start.");

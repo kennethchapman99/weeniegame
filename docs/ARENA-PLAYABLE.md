@@ -94,16 +94,30 @@ accents:
   on retina/4K displays instead of shrinking with the physical pixel count. Manual acceptance check:
   on a retina/4K screen, mission-select row names and detail text should be comfortably readable
   from the couch; on a 1080p or smaller window the layout is unchanged.
-- Mission select/end-card HUD keeps IMGUI text controls, but the mission picker now fills nearly the
-  full viewport instead of a small centered dialog. The left 2-column, 11-row grid shows a generated
-  picture-tile thumbnail (one AI-illustrated cover per mission, `Assets/Art/Resources/ArenaFinal/UI/
-  MissionTiles/`, loaded through `FinalGameplayArt.LoadMissionTile`) beside a colored accent stripe
-  and status text per row; keyboard/gamepad grid navigation is unchanged (still 2 columns x 11 rows).
-  The right-hand detail panel shows a large picture of the selected mission plus its name, a
-  generated one-line premise, a grounded "HOW TO PLAY" readout naming the real on-screen labels/
-  markers/verbs for that mission (`MissionInstructionCatalog`), the per-mission replay challenge, and
-  the readability gate, with Start/Highlight Couch Test buttons pinned to the bottom. End cards now
-  echo the next replay target, or call out that the challenge was beaten on a flawless run.
+- **Mission select is now a UGUI Canvas + TextMeshPro screen (2026-07-02)**, the project's first
+  UGUI surface (`MissionSelectScreen`, built entirely in code by `ArenaBootstrap` like everything
+  else — the scene file is unchanged). A `CanvasScaler` (1920x1080 reference, Expand) renders TMP
+  vector text crisply at any resolution, fixing the blurry stretched-bitmap text the IMGUI picker
+  had on retina/4K. The left side is a paged picture-tile grid — 4 columns x 3 rows per page, 22
+  missions = 2 pages — where each tile shows the mission's AI-illustrated cover
+  (`Assets/Art/Resources/ArenaFinal/UI/MissionTiles/`, via `FinalGameplayArt.LoadMissionTile`), its
+  accent stripe, badge code, name, and NEW/RETRY status, with a page indicator underneath. The grid
+  shape lives on `GameManager` (`MissionSelectGridColumns`/`MissionSelectTilesPerPage`) so
+  keyboard/gamepad navigation and the visible tiles can never disagree: up/down wraps within the
+  current page's column, left/right walks the tile order and flips pages at page edges, and the
+  F5/P/Y couch-test, F6-F9 showcase, and 1-9/0 quick-start shortcuts are unchanged
+  (`TickFlowInput` untouched). The right-hand detail panel keeps the large cover, badge, name, the
+  one-line premise and grounded "HOW TO PLAY" readout (`MissionInstructionCatalog`), the
+  per-mission replay challenge, and the readability gate, with Start/Highlight Couch Test buttons
+  (UGUI, wired to the same `GameManager` methods) pinned to the bottom. In-mission HUD, pause, end
+  cards, and session summary still draw through IMGUI `ArenaHud`. End cards echo the next replay
+  target, or call out that the challenge was beaten on a flawless run. PlayMode coverage:
+  `MissionSelectScreenPlayModeTests` (canvas/TMP setup, per-page tiles, paging, detail panel,
+  button flow) plus the updated grid-navigation assertions in `ArenaGameLoopPlayModeTests`. Manual
+  acceptance check: on a retina/4K display the tile names and detail text should be pin-sharp (no
+  bitmap scaling), arrows/D-pad should move the highlight through the visible grid, pushing right
+  from the last tile of page 1 should flip to page 2, and Enter/Start should begin the highlighted
+  mission.
 - Mission result/end-state HUD now uses one shared full-screen readable overlay for every mission:
   a dark dimmed backdrop suppresses gameplay/HUD behind it, a large opaque centered card carries the
   `MISSION COMPLETE` / `MISSION FAILED` / `SESSION COMPLETE` headline, score/stars/best/reason are

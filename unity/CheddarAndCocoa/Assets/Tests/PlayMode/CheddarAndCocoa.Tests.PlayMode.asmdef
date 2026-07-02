@@ -4,6 +4,8 @@
   "references": [
     "CheddarAndCocoa",
     "Unity.InputSystem",
+    "UnityEngine.UI",
+    "Unity.TextMeshPro",
     "Unity.InputSystem.TestFramework",
     "UnityEngine.TestRunner",
     "UnityEditor.TestRunner"
