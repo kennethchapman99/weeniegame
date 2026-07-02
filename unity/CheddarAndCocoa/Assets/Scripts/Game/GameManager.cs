@@ -3421,14 +3421,20 @@ namespace CheddarAndCocoa.Game
         private GameObject MakeActor(ActorVisualSlot art)
         {
             var go = new GameObject(art.ObjectName);
-            go.transform.localScale = Vector3.one * art.RootScale;
 
-            var sr = go.AddComponent<SpriteRenderer>();
+            // The placeholder rig keeps its authored non-uniform BodyScale, but on a child object.
+            // Putting BodyScale on the root squashed everything parented to the actor afterwards
+            // (authored motion frames, mission prop art, labels, range rings) into skewed sprites.
+            var body = new GameObject(ArenaArtCatalog.PlaceholderBodyName);
+            body.transform.SetParent(go.transform, false);
+            body.transform.localScale = art.BodyScale;
+
+            var sr = body.AddComponent<SpriteRenderer>();
             sr.sprite = _sprite;
             sr.color = art.RootColor;
             sr.sortingOrder = 6;
 
-            BuildActorArt(go, art, sr);
+            BuildActorArt(body, art);
             var threatAnimator = AddThreatAnimator(go, art);
             AddWorldLabel(go, art.Label, art.LabelOffset, 24, Color.white);
             go.AddComponent<MissionActorFeedback>().Init(sr, art.Label, art.PulseAmount, art.RotationPerSecond);
@@ -3450,18 +3456,18 @@ namespace CheddarAndCocoa.Game
 
             var fallbackRenderers = go.GetComponentsInChildren<SpriteRenderer>(true);
             var animator = go.AddComponent<ThreatReadabilityAnimator>();
-            animator.Init(defaultActor, fallbackRenderers);
+            // RootScale is the authored-motion size knob now that the root itself stays unscaled.
+            animator.Init(defaultActor, fallbackRenderers, art.RootScale);
             return animator;
         }
 
-        private void BuildActorArt(GameObject go, ActorVisualSlot art, SpriteRenderer root)
+        private void BuildActorArt(GameObject body, ActorVisualSlot art)
         {
-            root.transform.localScale = art.BodyScale;
             foreach (var part in art.Parts)
             {
-                AddActorPart(go, part, _sprite, part.Color);
+                AddActorPart(body, part, _sprite, part.Color);
             }
-            AddDraftActorBadges(go, art);
+            AddDraftActorBadges(body, art);
         }
 
         private void AddDraftActorBadges(GameObject go, ActorVisualSlot art)

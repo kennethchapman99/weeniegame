@@ -104,7 +104,9 @@ namespace CheddarAndCocoa.Game
 
         private void ApplyFallbackAlphaCap()
         {
-            if (_fallbackMaxAlpha >= 0.999f || !TryGetComponent<SpriteRenderer>(out var renderer)) return;
+            if (_fallbackMaxAlpha >= 0.999f) return;
+            var renderer = MissionPropArt.FindFallbackRenderer(gameObject);
+            if (renderer == null) return;
             var color = renderer.color;
             if (color.a <= _fallbackMaxAlpha) return;
             color.a = _fallbackMaxAlpha;

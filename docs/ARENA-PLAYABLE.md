@@ -77,8 +77,23 @@ accents:
 - Threat actors now follow the same Resources-based motion pattern at a smaller scope. `ThreatMotionArt`
   provides stable frame paths and `ThreatReadabilityAnimator` swaps a child sprite renderer on the
   squirrel/predator actors without changing gameplay transforms, range indicators, or labels. Marker
-  states that reuse the squirrel actor, such as coyote weak spots or eagle talon grips, intentionally
-  fall back to generated marker art instead of showing the wrong animal.
+  states that reuse the squirrel actor, such as coyote weak spots, intentionally fall back to
+  generated marker art instead of showing the wrong animal; the eagle talon-grip marker shows eagle
+  attack frames (the talons are the eagle's).
+- `ThreatReadabilityAnimator` is the single owner of squirrel/eagle/coyote character art. The actor
+  root transform stays uniformly scaled: the placeholder rig's non-uniform `BodyScale` lives on a
+  `PlaceholderBody` child, so authored motion frames, mission prop attachments, world labels, and
+  range rings no longer render squashed/skewed. The frames draw at full opacity sized by the slot's
+  `RootScale`, and `BackyardRescueArtEnhancer` no longer layers semi-transparent squirrel/eagle
+  reference overlays over the animated characters (it keeps the couch-readable ground shadows and
+  transient beat VFX). Manual acceptance check: start Backyard Rescue and force a predator warning
+  (F5 hotkeys/playtest overlay) — the eagle should read as one solid, correctly-proportioned animated
+  character with no ghost second eagle and no vertical squash.
+- All IMGUI HUDs (`ArenaHud`, `AdventureMapHud`) now scale from a 1920x1080-referenced virtual space
+  via `GUI.matrix` (`ArenaHud.UiScaleFor`, never below 1x), so fixed pixel font sizes stay readable
+  on retina/4K displays instead of shrinking with the physical pixel count. Manual acceptance check:
+  on a retina/4K screen, mission-select row names and detail text should be comfortably readable
+  from the couch; on a 1080p or smaller window the layout is unchanged.
 - Mission select/end-card HUD keeps IMGUI text controls, but the mission picker now fills nearly the
   full viewport instead of a small centered dialog. The left 2-column, 11-row grid shows a generated
   picture-tile thumbnail (one AI-illustrated cover per mission, `Assets/Art/Resources/ArenaFinal/UI/

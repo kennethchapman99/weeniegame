@@ -23,7 +23,8 @@ namespace CheddarAndCocoa.Game
         public int CurrentFrameIndex { get; private set; } = -1;
         public string RuntimeSpriteName => UsesAuthoredMotion ? _authored.sprite.name : string.Empty;
 
-        public void Init(ThreatMotionArt.Actor defaultActor, SpriteRenderer[] fallbackRenderers)
+        public void Init(ThreatMotionArt.Actor defaultActor, SpriteRenderer[] fallbackRenderers,
+            float authoredScale = 1f)
         {
             _defaultActor = defaultActor;
             _fallbackRenderers = fallbackRenderers ?? System.Array.Empty<SpriteRenderer>();
@@ -32,7 +33,9 @@ namespace CheddarAndCocoa.Game
             var go = new GameObject(AuthoredMotionName);
             go.transform.SetParent(transform);
             go.transform.localPosition = new Vector3(0f, -0.08f, -0.18f);
-            go.transform.localScale = Vector3.one;
+            // Uniform scale under a uniformly scaled actor root: the frames must never render
+            // squashed the way the old BodyScale-on-root setup drew them.
+            go.transform.localScale = Vector3.one * Mathf.Max(0.01f, authoredScale);
             _authored = go.AddComponent<SpriteRenderer>();
             _authored.sortingOrder = 29;
             _authored.enabled = false;

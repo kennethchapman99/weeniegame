@@ -92,23 +92,33 @@ namespace CheddarAndCocoa.Tests
 
             Assert.IsTrue(enhancer.BackyardThreatsHaveReadableShadows,
                 "Squirrel and eagle should carry explicit couch-readable oval ground shadows.");
-            Assert.IsTrue(enhancer.UsesQuietThreatReferenceOverlays,
-                "Static reference art should sit below authored motion so it cannot cover animation.");
-
-            var squirrelOverlay = game.SquirrelObject.GetComponent<ArtSpriteOverlay>();
-            var predatorOverlay = game.PredatorObject.GetComponent<ArtSpriteOverlay>();
-            Assert.IsNotNull(squirrelOverlay);
-            Assert.IsNotNull(predatorOverlay);
-            Assert.LessOrEqual(squirrelOverlay.BaseScale.x, 0.026f,
-                "The squirrel should read as a small backyard troublemaker, not a screen-filling boss.");
-            Assert.LessOrEqual(predatorOverlay.BaseScale.x, 0.038f,
-                "The eagle reference overlay should be restrained so authored wing motion carries the read.");
+            Assert.IsTrue(enhancer.ThreatVisualsHaveSingleOwner,
+                "ThreatReadabilityAnimator must be the only owner of squirrel/eagle character art.");
+            Assert.IsNull(game.SquirrelObject.GetComponent<ArtSpriteOverlay>(),
+                "The enhancer must not ghost a second semi-transparent squirrel over the animated one.");
+            Assert.IsNull(game.PredatorObject.GetComponent<ArtSpriteOverlay>(),
+                "The enhancer must not ghost a second semi-transparent eagle over the animated one.");
 
             var predatorMotion = game.PredatorObject.GetComponent<ThreatReadabilityAnimator>();
             Assert.IsNotNull(predatorMotion);
             Assert.AreEqual("Eagle", predatorMotion.CurrentActorLabel);
             Assert.IsTrue(predatorMotion.UsesAuthoredMotion,
                 "Backyard/eagle threat presentation should use frame-swapped motion instead of only a skewed badge.");
+
+            // The old rig put the non-uniform placeholder BodyScale on the actor root, which drew
+            // every authored frame squashed to half height. The authored sprite must render with a
+            // uniform world scale and at full opacity now.
+            var authored = game.PredatorObject.transform.Find("ThreatAuthoredMotion");
+            Assert.IsNotNull(authored);
+            Assert.AreEqual(authored.lossyScale.x, authored.lossyScale.y, 0.001f,
+                "Eagle motion frames must not inherit a skewed scale from the actor root.");
+            Assert.AreEqual(1f, authored.GetComponent<SpriteRenderer>().color.a, 0.001f,
+                "The eagle should be a solid character, not a translucent ghost.");
+
+            var squirrelAuthored = game.SquirrelObject.transform.Find("ThreatAuthoredMotion");
+            Assert.IsNotNull(squirrelAuthored);
+            Assert.AreEqual(squirrelAuthored.lossyScale.x, squirrelAuthored.lossyScale.y, 0.001f,
+                "Squirrel motion frames must not inherit a skewed scale from the actor root.");
         }
 
         [UnityTest]
@@ -132,10 +142,6 @@ namespace CheddarAndCocoa.Tests
             enhancer.EnhanceNow();
             yield return null;
 
-            var squirrelOverlay = game.SquirrelObject.GetComponent<ArtSpriteOverlay>();
-            Assert.IsNotNull(squirrelOverlay);
-            Assert.IsTrue(squirrelOverlay.Visible, "Normal squirrel missions may show the squirrel reference overlay.");
-
             game.ForceEagleShadowSafeHide();
             game.ForceEagleShadowSafeHide();
             yield return null;
@@ -143,7 +149,11 @@ namespace CheddarAndCocoa.Tests
 
             Assert.IsTrue(game.EagleShadowPanicState.RescueObjectiveActive,
                 "Two safe hides should enter the talon-grip rescue beat.");
-            Assert.IsFalse(squirrelOverlay.Visible,
+            var marker = game.SquirrelObject.GetComponent<ThreatReadabilityAnimator>();
+            Assert.IsNotNull(marker);
+            Assert.IsTrue(marker.UsesAuthoredMotion,
+                "The talon-grip marker should keep using authored motion frames.");
+            Assert.AreEqual("Eagle", marker.CurrentActorLabel,
                 "The shared squirrel object becomes the talon-grip marker during eagle rescue, so squirrel art must not sit under the dog.");
         }
 

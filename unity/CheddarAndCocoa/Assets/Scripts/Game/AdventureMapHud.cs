@@ -75,10 +75,18 @@ namespace CheddarAndCocoa.Game
             EnsureStyles();
             if (_controller == null) return;
 
+            // Same DPI treatment as ArenaHud: lay out in 1080p-referenced virtual space so the map
+            // text stays readable on retina/4K displays.
+            float uiScale = ArenaHud.UiScaleFor(Screen.width, Screen.height);
+            Matrix4x4 previousMatrix = GUI.matrix;
+            GUI.matrix = Matrix4x4.Scale(new Vector3(uiScale, uiScale, 1f)) * previousMatrix;
+            float virtualWidth = Screen.width / uiScale;
+            float virtualHeight = Screen.height / uiScale;
+
             float safe = 18f;
-            float width = Mathf.Min(1120f, Screen.width - safe * 2f);
-            float height = Mathf.Min(720f, Screen.height - safe * 2f);
-            var box = new Rect((Screen.width - width) * 0.5f, (Screen.height - height) * 0.5f, width, height);
+            float width = Mathf.Min(1120f, virtualWidth - safe * 2f);
+            float height = Mathf.Min(720f, virtualHeight - safe * 2f);
+            var box = new Rect((virtualWidth - width) * 0.5f, (virtualHeight - height) * 0.5f, width, height);
 
             GUI.Box(box, GUIContent.none);
             GUI.Label(new Rect(box.x + 24, box.y + 18, box.width - 48, 34), _controller.BuildHeaderLabel(), _title);
@@ -118,6 +126,8 @@ namespace CheddarAndCocoa.Game
             if (GUI.Button(new Rect(missionX, box.y + box.height - 84, 180, 34), launchText)) LaunchSelectedMission();
             GUI.Label(new Rect(box.x + 24, box.y + box.height - 42, box.width - 48, 24),
                 "Controls: Left/Right location • Up/Down mission • Enter/Space/Start launch", _small);
+
+            GUI.matrix = previousMatrix;
         }
 
         public static Sprite LoadLocationPreviewSprite(AdventureLocationDefinition location)

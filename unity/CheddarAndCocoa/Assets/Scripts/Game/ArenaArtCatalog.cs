@@ -21,6 +21,9 @@ namespace CheddarAndCocoa.Game
         public const string ObjectiveArrowLabelName = "ObjectiveArrowLabel";
         public const string BackyardEnvironmentObjectName = "BackyardEnvironment";
         public const string LaundryBasketObjectName = "Sock Panic Laundry Basket";
+        // Child that carries the generated rig's non-uniform BodyScale so the actor root can stay
+        // uniformly scaled (a scaled root skews every sprite parented to the actor afterwards).
+        public const string PlaceholderBodyName = "PlaceholderBody";
 
         public static readonly Color FloorColor = Hex("#3c6b2f");
         public static readonly Color CameraBackgroundColor = Hex("#243a1c");

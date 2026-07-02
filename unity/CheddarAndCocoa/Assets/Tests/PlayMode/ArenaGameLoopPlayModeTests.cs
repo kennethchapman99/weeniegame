@@ -307,10 +307,10 @@ namespace CheddarAndCocoa.Tests
             AssertHasChildren(game.SquirrelObject.transform, ArenaArtCatalog.ActorPartNames(ArenaArtCatalog.ActorKind.Squirrel));
             AssertHasChildren(game.PredatorObject.transform, ArenaArtCatalog.ActorPartNames(ArenaArtCatalog.ActorKind.Predator));
             AssertHasChildren(game.RopeObject.transform, ArenaArtCatalog.ActorPartNames(ArenaArtCatalog.ActorKind.Rope));
-            Assert.IsNotNull(game.SquirrelObject.transform.Find(ArenaDraftArt.SquirrelBadgeName));
-            Assert.IsNotNull(game.PredatorObject.transform.Find(ArenaDraftArt.EagleBadgeName));
-            Assert.IsNotNull(game.PredatorObject.transform.Find(ArenaDraftArt.CoyoteBadgeName));
-            Assert.IsNotNull(game.RopeObject.transform.Find(ArenaDraftArt.BackyardPropsBadgeName));
+            Assert.IsNotNull(FindDeep(game.SquirrelObject.transform, ArenaDraftArt.SquirrelBadgeName));
+            Assert.IsNotNull(FindDeep(game.PredatorObject.transform, ArenaDraftArt.EagleBadgeName));
+            Assert.IsNotNull(FindDeep(game.PredatorObject.transform, ArenaDraftArt.CoyoteBadgeName));
+            Assert.IsNotNull(FindDeep(game.RopeObject.transform, ArenaDraftArt.BackyardPropsBadgeName));
             Assert.IsNotNull(GameObject.Find(ArenaDraftArt.BunnyCameoName));
             Assert.IsNotNull(game.GetComponent<AudioSource>());
             Assert.IsNotNull(Camera.main.GetComponent<AudioListener>());
@@ -1379,8 +1379,19 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(root);
             foreach (string childName in childNames)
             {
-                Assert.IsNotNull(root.Find(childName), $"{root.name} should expose visual replacement slot {childName}.");
+                Assert.IsNotNull(FindDeep(root, childName), $"{root.name} should expose visual replacement slot {childName}.");
             }
+        }
+
+        // Actor part slots live under the PlaceholderBody child (the root stays uniformly scaled),
+        // so slot lookups must search the whole hierarchy rather than direct children only.
+        private static Transform FindDeep(Transform root, string childName)
+        {
+            foreach (var child in root.GetComponentsInChildren<Transform>(true))
+            {
+                if (child != root && child.name == childName) return child;
+            }
+            return null;
         }
 
         private static void AssertDogShowcasePolishIsCosmetic(Transform dog)

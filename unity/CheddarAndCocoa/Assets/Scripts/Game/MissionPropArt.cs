@@ -43,10 +43,24 @@ namespace CheddarAndCocoa.Game
 
         private static void DimGeneratedFallback(GameObject target, float maxAlpha)
         {
-            if (target == null || !target.TryGetComponent<SpriteRenderer>(out var renderer)) return;
+            var renderer = FindFallbackRenderer(target);
+            if (renderer == null) return;
             var color = renderer.color;
             color.a = Mathf.Min(color.a, maxAlpha);
             renderer.color = color;
+        }
+
+        /// <summary>
+        /// The generated marker renderer a prop attachment should dim: the root renderer when one
+        /// exists, otherwise the actor's PlaceholderBody child (actor roots stay uniformly scaled
+        /// and carry their rig one level down).
+        /// </summary>
+        public static SpriteRenderer FindFallbackRenderer(GameObject target)
+        {
+            if (target == null) return null;
+            if (target.TryGetComponent<SpriteRenderer>(out var renderer)) return renderer;
+            var body = target.transform.Find(ArenaArtCatalog.PlaceholderBodyName);
+            return body != null && body.TryGetComponent(out renderer) ? renderer : null;
         }
     }
 }

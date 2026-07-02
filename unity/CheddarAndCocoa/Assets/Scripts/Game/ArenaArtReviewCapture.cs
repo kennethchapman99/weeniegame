@@ -38,6 +38,9 @@ namespace CheddarAndCocoa.Game
         {
             _game = game;
             _outputDirectory = Path.GetFullPath(outputDirectory);
+            // Capture runs are usually launched from a script/CI shell; without this the standalone
+            // player pauses when its window never gains focus and the sequence never starts.
+            Application.runInBackground = true;
             StartCoroutine(CaptureSequence());
         }
 

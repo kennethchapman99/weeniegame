@@ -12,8 +12,6 @@ namespace CheddarAndCocoa.Game
     public sealed class BackyardRescueArtEnhancer : MonoBehaviour
     {
         private GameManager _game;
-        private ArtSpriteOverlay _squirrelOverlay;
-        private ArtSpriteOverlay _predatorOverlay;
         private ArtSpriteOverlay _ropeOverlay;
         private string _lastScoreLabel = string.Empty;
         private GameManager.FeedbackKind _lastFeedback;
@@ -30,9 +28,11 @@ namespace CheddarAndCocoa.Game
         public bool BackyardThreatsHaveReadableShadows =>
             HasReadableShadow(_game != null ? _game.SquirrelObject : null, "CouchReadableSquirrelShadow") &&
             HasReadableShadow(_game != null ? _game.PredatorObject : null, "CouchReadableEagleShadow");
-        public bool UsesQuietThreatReferenceOverlays =>
-            _squirrelOverlay != null && _squirrelOverlay.SortingOrder < 29 &&
-            _predatorOverlay != null && _predatorOverlay.SortingOrder < 29;
+        // The squirrel and eagle are drawn by ThreatReadabilityAnimator alone; the enhancer must not
+        // layer a second semi-transparent reference sprite over the animated character.
+        public bool ThreatVisualsHaveSingleOwner =>
+            HasSingleThreatVisualOwner(_game != null ? _game.SquirrelObject : null) &&
+            HasSingleThreatVisualOwner(_game != null ? _game.PredatorObject : null);
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void InstallSceneHook()
@@ -72,20 +72,14 @@ namespace CheddarAndCocoa.Game
             if (Enhanced)
             {
                 AddPaintedBackyardPlate();
-                UpdateThreatOverlayVisibility();
                 return;
             }
 
             OverlayCount = 0;
             EnhanceDogShadows();
             AddPaintedBackyardPlate();
-            _squirrelOverlay = AddOverlay(_game.SquirrelObject, RuntimeArtSpriteFactory.RuntimeSpriteId.Squirrel, new Vector3(0f, 0.02f, -0.35f), new Vector3(0.024f, 0.024f, 1f), 24, new Color(1f, 1f, 1f, 0.64f));
-            _squirrelOverlay?.ConfigureShadow(new Vector3(0f, -0.34f, 0.08f), new Vector3(0.95f, 0.15f, 1f), new Color(0f, 0f, 0f, 0.18f), 4);
             AddReadableGroundShadow(_game.SquirrelObject, "CouchReadableSquirrelShadow",
                 new Vector3(0f, -0.34f, 0.07f), new Vector3(1.05f, 0.16f, 1f), 4, 0.18f);
-
-            _predatorOverlay = AddOverlay(_game.PredatorObject, RuntimeArtSpriteFactory.RuntimeSpriteId.EagleThreat, new Vector3(0f, 0.14f, -0.35f), new Vector3(0.036f, 0.036f, 1f), 25, new Color(1f, 1f, 1f, 0.42f));
-            _predatorOverlay?.ConfigureShadow(new Vector3(0f, -1.42f, 0.08f), new Vector3(1.85f, 0.24f, 1f), new Color(0f, 0f, 0f, 0.2f), 5);
             AddReadableGroundShadow(_game.PredatorObject, "CouchReadableEagleShadow",
                 new Vector3(0f, -1.42f, 0.07f), new Vector3(1.95f, 0.25f, 1f), 5, 0.2f);
 
@@ -94,7 +88,6 @@ namespace CheddarAndCocoa.Game
             AddGeneratedEnvironmentPropArt();
             AddGeneratedBuildingPropArt();
             AddPhotoInspiredBackyardReskinArt();
-            UpdateThreatOverlayVisibility();
 
             Enhanced = true;
             LastEnhancementSummary = $"Art overlays active: {OverlayCount}, environment overlays: {EnvironmentArtOverlayCount}, building overlays: {BuildingArtOverlayCount}";
@@ -118,7 +111,6 @@ namespace CheddarAndCocoa.Game
                 _lastScoreLabel = _game.LastScoreEventLabel;
             }
 
-            UpdateThreatOverlayVisibility();
             AddPaintedBackyardPlate();
 
             if (Time.time >= _nextAmbientAt)
@@ -449,29 +441,21 @@ namespace CheddarAndCocoa.Game
         {
             switch (feedback)
             {
+                // Squirrel/eagle state art is owned by ThreatReadabilityAnimator (driven through
+                // SetActorState labels); the enhancer only adds transient VFX around the beat.
                 case GameManager.FeedbackKind.SquirrelStealing:
-                    SetOverlaySprite(_squirrelOverlay, RuntimeArtSpriteFactory.RuntimeSpriteId.SquirrelSteal);
-                    _squirrelOverlay?.Pulse(0.35f, 0.055f);
                     SpawnAt(_game.SquirrelObject, RuntimeArtSpriteFactory.RuntimeSpriteId.WarningAlert, 0.032f, new Color(1f, 0.88f, 0.35f, 0.75f));
                     break;
                 case GameManager.FeedbackKind.SquirrelScared:
-                    SetOverlaySprite(_squirrelOverlay, RuntimeArtSpriteFactory.RuntimeSpriteId.SquirrelScared);
-                    _squirrelOverlay?.Pulse(0.28f, 0.07f);
                     SpawnAt(_game.SquirrelObject, RuntimeArtSpriteFactory.RuntimeSpriteId.SuccessPop, 0.033f, new Color(0.7f, 1f, 0.65f, 0.78f));
                     break;
                 case GameManager.FeedbackKind.SquirrelStoleFood:
-                    SetOverlaySprite(_squirrelOverlay, RuntimeArtSpriteFactory.RuntimeSpriteId.SquirrelSteal);
-                    _squirrelOverlay?.Pulse(0.38f, 0.08f);
                     SpawnAt(_game.SquirrelObject, RuntimeArtSpriteFactory.RuntimeSpriteId.FailPuff, 0.034f, new Color(1f, 0.35f, 0.25f, 0.78f));
                     break;
                 case GameManager.FeedbackKind.PredatorHuddle:
-                    SetOverlaySprite(_predatorOverlay, RuntimeArtSpriteFactory.RuntimeSpriteId.EagleThreat);
-                    _predatorOverlay?.Pulse(0.55f, 0.07f);
                     SpawnAt(_game.PredatorObject, RuntimeArtSpriteFactory.RuntimeSpriteId.WarningAlert, 0.04f, new Color(1f, 0.2f, 0.2f, 0.7f));
                     break;
                 case GameManager.FeedbackKind.PredatorAttack:
-                    SetOverlaySprite(_predatorOverlay, RuntimeArtSpriteFactory.RuntimeSpriteId.PredatorAttack);
-                    _predatorOverlay?.Pulse(0.55f, 0.08f);
                     SpawnAt(_game.PredatorObject, RuntimeArtSpriteFactory.RuntimeSpriteId.WarningAlert, 0.04f, new Color(1f, 0.2f, 0.2f, 0.74f));
                     break;
                 case GameManager.FeedbackKind.PartnerRescue:
@@ -492,9 +476,6 @@ namespace CheddarAndCocoa.Game
                 case GameManager.FeedbackKind.GameOver:
                     SpawnAt(_game.PredatorObject != null && _game.PredatorObject.activeInHierarchy ? _game.PredatorObject : _game.SquirrelObject, RuntimeArtSpriteFactory.RuntimeSpriteId.FailPuff, 0.07f, new Color(1f, 0.35f, 0.3f, 0.9f));
                     break;
-                default:
-                    SetOverlaySprite(_squirrelOverlay, RuntimeArtSpriteFactory.RuntimeSpriteId.Squirrel);
-                    break;
             }
         }
 
@@ -505,14 +486,12 @@ namespace CheddarAndCocoa.Game
                 SpawnAt(_game.SquirrelObject, RuntimeArtSpriteFactory.RuntimeSpriteId.PickupSparkle, 0.04f, new Color(1f, 0.95f, 0.45f, 0.85f));
         }
 
-        private void UpdateThreatOverlayVisibility()
+        private static bool HasSingleThreatVisualOwner(GameObject actor)
         {
-            if (_squirrelOverlay == null || _game == null) return;
-
-            bool squirrelIsTalonGrip =
-                _game.ActiveMissionVariant == GameManager.MissionVariant.EagleShadowPanic &&
-                _game.EagleShadowPanicState.RescueObjectiveActive;
-            _squirrelOverlay.SetVisible(!squirrelIsTalonGrip);
+            if (actor == null) return false;
+            // Mission prop attachments may add their own overlay later; the invariant here is that
+            // the enhancer itself never layers reference art over the animated threat characters.
+            return actor.GetComponent<ThreatReadabilityAnimator>() != null;
         }
 
         private void SpawnTeamBarkBurst()

@@ -649,7 +649,7 @@ namespace CheddarAndCocoa.Tests
             var renderer = overlay.GetComponent<SpriteRenderer>();
             Assert.IsNotNull(renderer);
             Assert.AreNotSame(SpriteShapeCache.WhiteSquare, renderer.sprite, $"{go.name} overlay should not be the runtime white square.");
-            var fallback = go.GetComponent<SpriteRenderer>();
+            var fallback = MissionPropArt.FindFallbackRenderer(go);
             Assert.IsNotNull(fallback, $"{go.name} should keep its generated fallback marker for interaction readability.");
             Assert.LessOrEqual(fallback.color.a, 0.22f, $"{go.name} fallback marker should not dominate the generated prop sprite.");
             return true;

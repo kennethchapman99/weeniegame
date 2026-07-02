@@ -12,7 +12,14 @@ namespace CheddarAndCocoa.Game
     /// </summary>
     public sealed class ArenaHud : MonoBehaviour
     {
+        // IMGUI lays out in physical pixels, so fixed font sizes shrink into unreadable text on
+        // retina/4K displays. OnGUI scales the whole HUD up from a 1920x1080 virtual space instead;
+        // never below 1 so smaller windows keep today's layout.
+        public const float ReferenceHeight = 1080f;
+        public const float ReferenceWidth = 1920f;
+
         private GameManager _game;
+        private float _uiScale = 1f;
         private GUIStyle _hud, _big, _mid, _small, _overlay, _briefing, _resultHeadline, _resultSubtitle, _resultBody, _resultHint, _resultButton;
         private GUIStyle _detailName, _detailBody, _detailHeader, _rowName;
         private Texture2D _uiKitTexture;
@@ -78,6 +85,13 @@ namespace CheddarAndCocoa.Game
         public void Init(GameManager game) => _game = game;
         public void WarmGeneratedHudSkinForTests() => LoadGeneratedHudSkin();
 
+        public static float UiScaleFor(float screenWidth, float screenHeight) =>
+            Mathf.Max(1f, Mathf.Min(screenWidth / ReferenceWidth, screenHeight / ReferenceHeight));
+
+        public float UiScale => _uiScale;
+        private float VirtualWidth => Screen.width / _uiScale;
+        private float VirtualHeight => Screen.height / _uiScale;
+
         public static Rect FitPanel(float screenWidth, float screenHeight, float desiredWidth, float desiredHeight, float margin = 8f)
         {
             float availableWidth = Mathf.Max(1f, screenWidth - margin * 2f);
@@ -139,6 +153,10 @@ namespace CheddarAndCocoa.Game
             if (_game == null) return;
             EnsureStyles();
 
+            _uiScale = UiScaleFor(Screen.width, Screen.height);
+            Matrix4x4 previousMatrix = GUI.matrix;
+            GUI.matrix = Matrix4x4.Scale(new Vector3(_uiScale, _uiScale, 1f)) * previousMatrix;
+
             if (_game.IsPaused)
             {
                 DrawPauseMenu();
@@ -161,6 +179,8 @@ namespace CheddarAndCocoa.Game
                 DrawPlaytestModeToggle();
                 if (_game.PlaytestOverlayVisible) DrawPlaytestOverlay();
             }
+
+            GUI.matrix = previousMatrix;
         }
 
         private void DrawGameplayHud()
@@ -172,20 +192,20 @@ namespace CheddarAndCocoa.Game
             }
 
             int secs = Mathf.CeilToInt(Mathf.Max(0f, _game.TimeRemaining));
-            GUI.Label(new Rect(0, 8, Screen.width, 30), $"SCORE  {_game.Score}", _hud);
-            GUI.Label(new Rect(0, 34, Screen.width, 26), $"Timer  {secs}s", _mid);
+            GUI.Label(new Rect(0, 8, VirtualWidth, 30), $"SCORE  {_game.Score}", _hud);
+            GUI.Label(new Rect(0, 34, VirtualWidth, 26), $"Timer  {secs}s", _mid);
             string squirrelState = _game.MaxStolenFood > 0 ? $"Stolen {_game.StolenFood}/{_game.MaxStolenFood}" : "No squirrel pressure";
-            GUI.Label(new Rect(0, 58, Screen.width, 24), $"MISSION: {_game.ActiveMissionName} / {_game.Phase} | {_game.BreakfastRecovered}/{_game.BreakfastGoal} {_game.MissionItemPlural} | {squirrelState}", _mid);
-            GUI.Label(new Rect(0, 82, Screen.width, 24), $"{PlayerOwnershipLabel}  |  {PadControlsLabel}  |  F1 Overlay | F2 Audio | F3 Rumble", _small);
-            GUI.Label(new Rect(0, 106, Screen.width, 24), $"Switch mission: keys 1-9, 0 ({_game.MissionSelectOptionCount} missions) | United barks: {_game.UnitedBarks} | Tug {Mathf.RoundToInt(_game.TugProgress * 100f)}% | Modifier: {_game.ActiveModifierLabel}", _mid);
-            GUI.Label(new Rect(0, 130, Screen.width, 24), _game.LastScoreEventLabel, _mid);
+            GUI.Label(new Rect(0, 58, VirtualWidth, 24), $"MISSION: {_game.ActiveMissionName} / {_game.Phase} | {_game.BreakfastRecovered}/{_game.BreakfastGoal} {_game.MissionItemPlural} | {squirrelState}", _mid);
+            GUI.Label(new Rect(0, 82, VirtualWidth, 24), $"{PlayerOwnershipLabel}  |  {PadControlsLabel}  |  F1 Overlay | F2 Audio | F3 Rumble", _small);
+            GUI.Label(new Rect(0, 106, VirtualWidth, 24), $"Switch mission: keys 1-9, 0 ({_game.MissionSelectOptionCount} missions) | United barks: {_game.UnitedBarks} | Tug {Mathf.RoundToInt(_game.TugProgress * 100f)}% | Modifier: {_game.ActiveModifierLabel}", _mid);
+            GUI.Label(new Rect(0, 130, VirtualWidth, 24), _game.LastScoreEventLabel, _mid);
             if (_game.ScorePopVisible)
-                GUI.Label(new Rect(0, 152, Screen.width, 30), _game.LastScorePopLabel, _big);
-            GUI.Label(new Rect(0, 180, Screen.width, 24), $"Objective: {_game.ObjectiveLabel}", _mid);
-            GUI.Label(new Rect(0, 204, Screen.width, 24), _game.TeamGuidanceLabel, _small);
-            GUI.Label(new Rect(0, 228, Screen.width, 24), _game.LastCue, _mid);
+                GUI.Label(new Rect(0, 152, VirtualWidth, 30), _game.LastScorePopLabel, _big);
+            GUI.Label(new Rect(0, 180, VirtualWidth, 24), $"Objective: {_game.ObjectiveLabel}", _mid);
+            GUI.Label(new Rect(0, 204, VirtualWidth, 24), _game.TeamGuidanceLabel, _small);
+            GUI.Label(new Rect(0, 228, VirtualWidth, 24), _game.LastCue, _mid);
             if (!string.IsNullOrEmpty(_game.MissionBanner) && !_game.IsGameOver && !_game.IsLevelClear && !_game.MissionBriefingVisible)
-                GUI.Label(new Rect(0, 260, Screen.width, 34), _game.MissionBanner, _big);
+                GUI.Label(new Rect(0, 260, VirtualWidth, 34), _game.MissionBanner, _big);
 
             if (_game.MissionBriefingVisible) DrawMissionBriefing();
 
@@ -193,7 +213,7 @@ namespace CheddarAndCocoa.Game
 
         private void DrawMissionBriefing()
         {
-            var box = FitPanel(Screen.width, Screen.height, 760f, 252f);
+            var box = FitPanel(VirtualWidth, VirtualHeight, 760f, 252f);
             box.y = Mathf.Min(box.y, 304f);
             DrawHudPanel(box);
             GUI.Label(new Rect(box.x + 24f, box.y + 12f, box.width - 48f, 34f), _game.ActiveMissionName, _big);
@@ -218,7 +238,7 @@ namespace CheddarAndCocoa.Game
         private void DrawPauseMenu()
         {
             DrawGameplayHud();
-            var box = FitPanel(Screen.width, Screen.height, 520f, 250f);
+            var box = FitPanel(VirtualWidth, VirtualHeight, 520f, 250f);
             float w = box.width;
             float buttonWidth = Mathf.Min(200f, w - 40f);
             float buttonX = box.x + (w - buttonWidth) * 0.5f;
@@ -236,7 +256,7 @@ namespace CheddarAndCocoa.Game
 
         private void DrawEndCard()
         {
-            var layout = BuildResultOverlayLayout(Screen.width, Screen.height);
+            var layout = BuildResultOverlayLayout(VirtualWidth, VirtualHeight);
             DrawTintedRect(layout.Backdrop, new Color(0f, 0f, 0f, 0.72f));
             DrawHudOverlay(layout.Card);
             DrawTintedRect(layout.Card, new Color(0.015f, 0.025f, 0.03f, 0.92f));
@@ -264,9 +284,9 @@ namespace CheddarAndCocoa.Game
 
         private void DrawPlaytestOverlay()
         {
-            float w = Mathf.Min(440f, Mathf.Max(1f, Screen.width - 24f));
-            float h = Mathf.Min(410f, Mathf.Max(1f, Screen.height - 24f));
-            var box = new Rect(Mathf.Max(12f, Screen.width - w - 12f), 12f, w, h);
+            float w = Mathf.Min(440f, Mathf.Max(1f, VirtualWidth - 24f));
+            float h = Mathf.Min(410f, Mathf.Max(1f, VirtualHeight - 24f));
+            var box = new Rect(Mathf.Max(12f, VirtualWidth - w - 12f), 12f, w, h);
             DrawHudOverlay(box);
 
             int secs = Mathf.CeilToInt(Mathf.Max(0f, _game.TimeRemaining));
@@ -292,7 +312,7 @@ namespace CheddarAndCocoa.Game
         private void DrawPlaytestModeToggle()
         {
             string label = _game.PlaytestModeEnabled ? "Playtest Mode: On" : "Playtest Mode: Off";
-            if (DrawSkinnedButton(new Rect(12f, Screen.height - 42f, 168f, 30f), label, _small))
+            if (DrawSkinnedButton(new Rect(12f, VirtualHeight - 42f, 168f, 30f), label, _small))
                 _game.TogglePlaytestOverlay();
         }
 
@@ -304,7 +324,7 @@ namespace CheddarAndCocoa.Game
 
             // Fill nearly the whole viewport instead of a small centered dialog: pass oversized
             // desired dimensions so FitPanel clamps down to (screen - margin) on any resolution.
-            var box = FitPanel(Screen.width, Screen.height, Screen.width, Screen.height, 12f);
+            var box = FitPanel(VirtualWidth, VirtualHeight, VirtualWidth, VirtualHeight, 12f);
             float w = box.width;
             DrawHudPanel(box);
             DrawTintedRect(new Rect(box.x + 12f, box.y + 10f, w - 24f, 92f), new Color(0.04f, 0.08f, 0.1f, 0.62f));
@@ -586,7 +606,7 @@ namespace CheddarAndCocoa.Game
 
         private void DrawSessionSummary()
         {
-            var layout = BuildResultOverlayLayout(Screen.width, Screen.height);
+            var layout = BuildResultOverlayLayout(VirtualWidth, VirtualHeight);
             var box = layout.Card;
             DrawTintedRect(layout.Backdrop, new Color(0f, 0f, 0f, 0.72f));
             DrawHudOverlay(box);
