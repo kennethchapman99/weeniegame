@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using UnityEngine;
 using CheddarAndCocoa.Game;
 
 namespace CheddarAndCocoa.Tests
@@ -93,6 +94,38 @@ namespace CheddarAndCocoa.Tests
 
             Assert.AreEqual(AdventureLocationCatalog.NeighborhoodParkId, controller.SelectedLocation.Id);
             Assert.AreEqual(0, controller.SelectedMissionIndex);
+        }
+
+        [Test]
+        public void AdventureMapPreviews_UseRealSprites_NotPrimitiveSquares()
+        {
+            var controller = new AdventureMapController(AdventureProgressService.CreateInMemoryForTests());
+
+            for (int i = 0; i < controller.Locations.Count; i++)
+            {
+                var location = controller.Locations[i];
+                AssertRealPreviewSprite(
+                    AdventureMapHud.LoadLocationPreviewSprite(location),
+                    $"{location.DisplayName} location card");
+
+                if (location.Missions == null) continue;
+                for (int m = 0; m < location.Missions.Length; m++)
+                {
+                    var mission = location.Missions[m];
+                    AssertRealPreviewSprite(
+                        AdventureMapHud.LoadMissionPreviewSprite(mission),
+                        $"{AdventureMapController.DisplayNameForMission(mission)} mission card");
+                }
+            }
+        }
+
+        private static void AssertRealPreviewSprite(Sprite sprite, string label)
+        {
+            Assert.IsNotNull(sprite, $"{label} should load an authored ArenaFinal preview sprite.");
+            Assert.AreNotSame(SpriteShapeCache.WhiteSquare, sprite, $"{label} must not use SpriteShapeCache.WhiteSquare.");
+            Assert.That(sprite.name, Does.Not.Contain("RuntimeWhiteSquare"), $"{label} must not be the runtime primitive square.");
+            Assert.IsNotNull(sprite.texture, $"{label} should be backed by an imported texture.");
+            Assert.That(sprite.texture.name, Does.Not.Contain("RuntimeWhiteSquare"), $"{label} texture must not be the runtime primitive square.");
         }
     }
 }

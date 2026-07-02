@@ -434,6 +434,9 @@ namespace CheddarAndCocoa.Game
 
             DrawTintedRect(row, selected ? new Color(0.16f, 0.2f, 0.1f, 0.9f) : new Color(0.04f, 0.06f, 0.07f, 0.7f));
             DrawTintedRect(new Rect(row.x, row.y, 5f, row.height), new Color(accent.r, accent.g, accent.b, 0.95f));
+            var thumb = new Rect(row.x + 10f, row.y + 7f, Mathf.Min(74f, row.width * 0.32f), row.height - 14f);
+            DrawCroppedSprite(thumb, GetMissionTileSprite(variant));
+            DrawTintedRect(thumb, new Color(0f, 0f, 0f, 0.12f));
             if (selected)
             {
                 Color glow = new Color(1f, 0.86f, 0.28f, 0.95f);
@@ -448,7 +451,7 @@ namespace CheddarAndCocoa.Game
             string label = $"{key}. {def.Name}";
             Color previous = GUI.color;
             if (selected) GUI.color = new Color(1f, 0.92f, 0.42f);
-            GUI.Label(new Rect(row.x + 16f, row.y, row.width - 22f, row.height), label, _rowName);
+            GUI.Label(new Rect(thumb.xMax + 10f, row.y, row.xMax - thumb.xMax - 16f, row.height), label, _rowName);
             GUI.color = previous;
         }
 

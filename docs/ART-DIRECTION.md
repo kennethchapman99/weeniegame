@@ -186,6 +186,26 @@ Current implementation rules:
   TUG, STUNNED, RESCUED, PROUD, SAD FLOP.
 - Objective arrows stay dog-accent colored and hide when the target is close.
 
+### Photo-Inspired Backyard Reskin Layer
+
+The first real-yard reskin pass uses Ken/Sue backyard aerial references as source direction, but
+exports simplified transparent sprites instead of photo plates. The current kit lives under
+`unity/CheddarAndCocoa/Assets/Art/Resources/ArenaFinal/Props/Environment/`:
+
+- `yard_photo_lawn_stripes`
+- `yard_photo_pool_patio`
+- `yard_photo_hedge_run`
+- `yard_photo_patio_pavers`
+- `yard_photo_big_tree`
+- `yard_photo_wood_fence`
+- `yard_photo_garden_boxes`
+- `yard_photo_house_deck`
+
+`BackyardRescueArtEnhancer` layers these as decorative scenery only. They must stay collider-free,
+lower-priority than mission actors, and readable at the current orthographic couch camera. If a
+photo-inspired prop creates ambiguity, reduce opacity/scale or move it behind a district anchor
+before changing mission mechanics.
+
 ## Backyard Prop Readability
 
 Weenie/breakfast:

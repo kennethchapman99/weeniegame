@@ -55,8 +55,13 @@ namespace CheddarAndCocoa.Tests
         {
             foreach (GameManager.MissionVariant variant in System.Enum.GetValues(typeof(GameManager.MissionVariant)))
             {
-                Assert.IsTrue(FinalGameplayArt.HasMissionTile(variant),
+                var tile = FinalGameplayArt.LoadMissionTile(variant);
+                Assert.IsNotNull(tile,
                     $"{variant} is missing a mission select picture tile at {FinalGameplayArt.MissionTilePath(variant)}.");
+                Assert.AreNotSame(SpriteShapeCache.WhiteSquare, tile,
+                    $"{variant} mission select picture tile must not use the runtime white square.");
+                Assert.That(tile.name, Does.Not.Contain("RuntimeWhiteSquare"),
+                    $"{variant} mission select picture tile must be authored art, not a primitive square.");
                 Assert.IsFalse(string.IsNullOrWhiteSpace(MissionInstructionCatalog.DescriptionFor(variant)),
                     $"{variant} is missing level-select description text.");
                 Assert.IsFalse(string.IsNullOrWhiteSpace(MissionInstructionCatalog.HowToPlayFor(variant)),
@@ -661,6 +666,8 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(enhancer.Enhanced, "Backyard art enhancer should finish after scene load.");
             Assert.GreaterOrEqual(enhancer.EnvironmentArtOverlayCount, 40,
                 "Broad yard districts should have generated sprite overlays, not only square markers.");
+            Assert.GreaterOrEqual(enhancer.PhotoBackyardReskinOverlayCount, 8,
+                "Photo-inspired backyard reskin sprites should layer in as nonblocking scenery.");
 
             var env = GameObject.Find(ArenaArtCatalog.BackyardEnvironmentObjectName);
             Assert.IsNotNull(env);
@@ -679,6 +686,11 @@ namespace CheddarAndCocoa.Tests
             AssertEnvironmentOverlay(env.transform, "PicnicBlanket", "yard_picnic_blanket");
             AssertEnvironmentOverlay(env.transform, "Sandbox", "yard_sandbox");
             AssertEnvironmentOverlay(env.transform, "SteppingStone_0", "yard_stepping_stone");
+            AssertWorldEnvironmentArt("ActualPhotoReskinLawnStripes", "yard_photo_lawn_stripes");
+            AssertWorldEnvironmentArt("ActualPhotoReskinPoolPatio", "yard_photo_pool_patio");
+            AssertWorldEnvironmentArt("ActualPhotoReskinBigTree", "yard_photo_big_tree");
+            AssertWorldEnvironmentArt("ActualPhotoReskinHedgeBottom", "yard_photo_hedge_run");
+            AssertWorldEnvironmentArt("ActualPhotoReskinWoodFenceTop", "yard_photo_wood_fence");
         }
 
         [UnityTest]
@@ -772,6 +784,19 @@ namespace CheddarAndCocoa.Tests
         {
             var go = GameObject.Find(objectName);
             Assert.IsNotNull(go, $"{objectName} should be visible building scenery.");
+            Assert.IsNull(go.GetComponent<Collider2D>(), $"{objectName} must stay nonblocking.");
+            var renderer = go.GetComponent<SpriteRenderer>();
+            Assert.IsNotNull(renderer);
+            Assert.IsNotNull(renderer.sprite);
+            Assert.AreEqual(expectedSpriteName, renderer.sprite.name);
+            Assert.AreNotSame(SpriteShapeCache.WhiteSquare, renderer.sprite,
+                $"{objectName} should not use the runtime white square.");
+        }
+
+        private static void AssertWorldEnvironmentArt(string objectName, string expectedSpriteName)
+        {
+            var go = GameObject.Find(objectName);
+            Assert.IsNotNull(go, $"{objectName} should be visible backyard reskin scenery.");
             Assert.IsNull(go.GetComponent<Collider2D>(), $"{objectName} must stay nonblocking.");
             var renderer = go.GetComponent<SpriteRenderer>();
             Assert.IsNotNull(renderer);

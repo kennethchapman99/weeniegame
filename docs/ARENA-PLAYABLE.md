@@ -94,6 +94,11 @@ accents:
   `MISSION COMPLETE` / `MISSION FAILED` / `SESSION COMPLETE` headline, score/stars/best/reason are
   grouped as large text, and Replay / Next Mission / Mission Select use large high-contrast buttons
   with secondary control hints underneath.
+- The Adventure Map flow now uses image-backed level presentation instead of text-only location and
+  mission rows. Location cards draw authored `ArenaFinal` environment/prop thumbnails, and mission
+  cards draw the same generated `ArenaFinal/UI/MissionTiles` cover art used by the arena mission
+  picker. PlayMode coverage asserts that every exposed adventure-map location and mission preview
+  loads a real imported sprite and never falls back to `SpriteShapeCache.WhiteSquare`.
 - Every mission definition now carries shared couch-test presentation metadata: role hint, mechanic
   family, scene cue, reusable Cheddar/Cocoa presentation guidance, and required readability flags.
   The mission picker exposes the mechanic/scene line and the opening briefing exposes role copy, so
@@ -205,8 +210,9 @@ accents:
   retained in `Assets/Art/ReferenceOnly/GeneratedLevelAreas/`. Kitchen Falling Food Frenzy now
   stages an indoor tile/counter area behind the controller-owned counter and safe bowl, and Car Ride
   Balance now stages a car cabin plus narrow balance lane so the counter-lean play space reads
-  constrained instead of like the generic backyard. These are decorative mission-owned roots with no
-  colliders.
+  constrained instead of like the generic backyard. The level-area roots now use sprite-backed safe
+  bowl, car-window/lurch, and spill-hazard preview accents instead of runtime white-square strips.
+  These are decorative mission-owned roots with no colliders.
 
 Still placeholder or deliberately deferred:
 

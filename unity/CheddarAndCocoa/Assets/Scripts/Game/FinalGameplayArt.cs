@@ -226,6 +226,14 @@ namespace CheddarAndCocoa.Game
         public const string EnvironmentSnackTable = Root + "/Props/Environment/yard_snack_table";
         public const string EnvironmentSteppingStone = Root + "/Props/Environment/yard_stepping_stone";
         public const string EnvironmentThreatLane = Root + "/Props/Environment/yard_threat_lane";
+        public const string EnvironmentPhotoLawnStripes = Root + "/Props/Environment/yard_photo_lawn_stripes";
+        public const string EnvironmentPhotoPoolPatio = Root + "/Props/Environment/yard_photo_pool_patio";
+        public const string EnvironmentPhotoHedgeRun = Root + "/Props/Environment/yard_photo_hedge_run";
+        public const string EnvironmentPhotoPatioPavers = Root + "/Props/Environment/yard_photo_patio_pavers";
+        public const string EnvironmentPhotoBigTree = Root + "/Props/Environment/yard_photo_big_tree";
+        public const string EnvironmentPhotoWoodFence = Root + "/Props/Environment/yard_photo_wood_fence";
+        public const string EnvironmentPhotoGardenBoxes = Root + "/Props/Environment/yard_photo_garden_boxes";
+        public const string EnvironmentPhotoHouseDeck = Root + "/Props/Environment/yard_photo_house_deck";
         public const string LevelAreaKitchenFloor = Root + "/Props/LevelAreas/kitchen_floor_area";
         public const string LevelAreaKitchenCounters = Root + "/Props/LevelAreas/kitchen_counter_wall";
         public const string LevelAreaCarInterior = Root + "/Props/LevelAreas/car_interior_cabin";
@@ -263,7 +271,9 @@ namespace CheddarAndCocoa.Game
             EnvironmentLeashRoute, EnvironmentPicnicBlanket, EnvironmentPond,
             EnvironmentPeeBreakPath, EnvironmentSandbox, EnvironmentScentTrail,
             EnvironmentShadeTree, EnvironmentSnackTable, EnvironmentSteppingStone,
-            EnvironmentThreatLane
+            EnvironmentThreatLane, EnvironmentPhotoLawnStripes, EnvironmentPhotoPoolPatio,
+            EnvironmentPhotoHedgeRun, EnvironmentPhotoPatioPavers, EnvironmentPhotoBigTree,
+            EnvironmentPhotoWoodFence, EnvironmentPhotoGardenBoxes, EnvironmentPhotoHouseDeck
         };
 
         public static readonly string[] BuildingPropPack =
@@ -405,6 +415,28 @@ namespace CheddarAndCocoa.Game
             Root + "/UI/MissionTiles/" + variant.ToString().ToLowerInvariant();
         public static Sprite LoadMissionTile(GameManager.MissionVariant variant) => Load(MissionTilePath(variant));
         public static bool HasMissionTile(GameManager.MissionVariant variant) => Has(MissionTilePath(variant));
+
+        public static string AdventureLocationThumbnailPath(string thumbnailKey)
+        {
+            switch (thumbnailKey)
+            {
+                case "yard":
+                    return EnvironmentPhotoPoolPatio;
+                case "front-yard":
+                    return EnvironmentPhotoWoodFence;
+                case "house":
+                    return PeeBreakCouch;
+                case "park":
+                    return EnvironmentPhotoBigTree;
+                default:
+                    return EnvironmentPhotoLawnStripes;
+            }
+        }
+
+        public static Sprite LoadAdventureLocationThumbnail(AdventureLocationDefinition location)
+        {
+            return location == null ? null : Load(AdventureLocationThumbnailPath(location.ThumbnailKey));
+        }
 
         public static string PathFor(RuntimeArtSpriteFactory.RuntimeSpriteId id)
         {

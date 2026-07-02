@@ -1,6 +1,8 @@
 using System;
 using System.IO;
 using NUnit.Framework;
+using UnityEngine;
+using UnityEngine.TestTools;
 using CheddarAndCocoa.Game;
 
 namespace CheddarAndCocoa.Tests
@@ -87,6 +89,8 @@ namespace CheddarAndCocoa.Tests
             try
             {
                 File.WriteAllText(path, "this is not json");
+                LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex(
+                    "^Adventure progress save could not be read\\. Starting fresh\\."));
 
                 var progress = AdventureProgressService.Load(path);
 

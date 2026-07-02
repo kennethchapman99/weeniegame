@@ -583,6 +583,8 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(kitchen, "Kitchen should install a mission-owned indoor level area.");
             AssertLevelAreaPlate(kitchen, "KitchenFloorPlate", "kitchen_floor_area", expectedMaxSortingOrder: -5);
             AssertLevelAreaPlate(kitchen, "KitchenCounterWallPlate", "kitchen_counter_wall", expectedMaxSortingOrder: -3);
+            AssertLevelAreaPlate(kitchen, "KitchenSafeBowlPreviewPlate", "kitchen_safe_bowl_empty", expectedMaxSortingOrder: -4);
+            AssertLevelAreaHasNoPrimitiveSquareMarkers(kitchen);
             Assert.IsNull(GameObject.Find(MissionLevelAreaArt.CarRideRootName),
                 "Starting Kitchen should not leave the car area visible.");
 
@@ -592,6 +594,9 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(car, "Car Ride should install a constrained car-interior level area.");
             AssertLevelAreaPlate(car, "CarInteriorCabinPlate", "car_interior_cabin", expectedMaxSortingOrder: -4);
             AssertLevelAreaPlate(car, "CarBalanceLanePlate", "car_balance_lane", expectedMaxSortingOrder: -2);
+            AssertLevelAreaPlate(car, "CarWindowMotionCuePlate", "car_ride_lurch_left", expectedMaxSortingOrder: -3);
+            AssertLevelAreaPlate(car, "CarSpillHazardPreviewPlate", "car_ride_spill", expectedMaxSortingOrder: -1);
+            AssertLevelAreaHasNoPrimitiveSquareMarkers(car);
             Assert.IsNull(GameObject.Find(MissionLevelAreaArt.KitchenRootName),
                 "Switching to Car Ride should clean up the Kitchen area.");
         }
@@ -668,6 +673,18 @@ namespace CheddarAndCocoa.Tests
             Assert.LessOrEqual(renderer.sortingOrder, expectedMaxSortingOrder,
                 $"{childName} should stay behind dogs, markers, and warning art.");
             Assert.IsNull(child.GetComponent<Collider2D>(), $"{childName} must not add gameplay collision.");
+        }
+
+        private static void AssertLevelAreaHasNoPrimitiveSquareMarkers(GameObject root)
+        {
+            foreach (var renderer in root.GetComponentsInChildren<SpriteRenderer>(true))
+            {
+                Assert.IsNotNull(renderer.sprite, $"{renderer.gameObject.name} should have sprite-backed scene art.");
+                Assert.AreNotSame(SpriteShapeCache.WhiteSquare, renderer.sprite,
+                    $"{renderer.gameObject.name} must not use SpriteShapeCache.WhiteSquare as level-area staging.");
+                Assert.That(renderer.sprite.name, Does.Not.Contain("RuntimeWhiteSquare"),
+                    $"{renderer.gameObject.name} must not use the runtime primitive square as level-area staging.");
+            }
         }
     }
 }

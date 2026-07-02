@@ -23,6 +23,7 @@ namespace CheddarAndCocoa.Game
         public int OverlayCount { get; private set; }
         public int EnvironmentArtOverlayCount { get; private set; }
         public int BuildingArtOverlayCount { get; private set; }
+        public int PhotoBackyardReskinOverlayCount { get; private set; }
         public bool UsesNoDogPaintedBackyardPlate { get; private set; }
         public int VfxSpawnCount { get; private set; }
         public string LastEnhancementSummary { get; private set; } = string.Empty;
@@ -92,6 +93,7 @@ namespace CheddarAndCocoa.Game
             AddBackyardSetDressing();
             AddGeneratedEnvironmentPropArt();
             AddGeneratedBuildingPropArt();
+            AddPhotoInspiredBackyardReskinArt();
             UpdateThreatOverlayVisibility();
 
             Enhanced = true;
@@ -288,6 +290,31 @@ namespace CheddarAndCocoa.Game
                 new Vector3(-36f, 12f, 0.16f), new Vector2(8.5f, 7.4f), -3, new Color(1f, 1f, 1f, 0.94f));
         }
 
+        private void AddPhotoInspiredBackyardReskinArt()
+        {
+            var env = GameObject.Find(ArenaArtCatalog.BackyardEnvironmentObjectName);
+            if (env == null) return;
+
+            AddPhotoWorldEnvironmentArt("ActualPhotoReskinLawnStripes", FinalGameplayArt.EnvironmentPhotoLawnStripes,
+                new Vector3(0f, -0.2f, 0.11f), new Vector2(64f, 36f), -7, new Color(1f, 1f, 1f, 0.42f));
+            AddPhotoWorldEnvironmentArt("ActualPhotoReskinPoolPatio", FinalGameplayArt.EnvironmentPhotoPoolPatio,
+                new Vector3(6.8f, -8.4f, 0.12f), new Vector2(15.5f, 10.2f), -2, new Color(1f, 1f, 1f, 0.78f));
+            AddPhotoWorldEnvironmentArt("ActualPhotoReskinPatioPavers", FinalGameplayArt.EnvironmentPhotoPatioPavers,
+                new Vector3(17.5f, -12.4f, 0.115f), new Vector2(17f, 10.5f), -4, new Color(1f, 1f, 1f, 0.66f));
+            AddPhotoWorldEnvironmentArt("ActualPhotoReskinHouseDeck", FinalGameplayArt.EnvironmentPhotoHouseDeck,
+                new Vector3(20.6f, -14.2f, 0.1f), new Vector2(19f, 11.5f), -1, new Color(1f, 1f, 1f, 0.76f));
+            AddPhotoWorldEnvironmentArt("ActualPhotoReskinBigTree", FinalGameplayArt.EnvironmentPhotoBigTree,
+                new Vector3(22.4f, 11.6f, 0.08f), new Vector2(14f, 14f), -1, new Color(1f, 1f, 1f, 0.82f));
+            AddPhotoWorldEnvironmentArt("ActualPhotoReskinGardenBoxes", FinalGameplayArt.EnvironmentPhotoGardenBoxes,
+                new Vector3(-20.8f, -1.2f, 0.12f), new Vector2(9f, 5.2f), -2, new Color(1f, 1f, 1f, 0.86f));
+            AddPhotoWorldEnvironmentArt("ActualPhotoReskinHedgeBottom", FinalGameplayArt.EnvironmentPhotoHedgeRun,
+                new Vector3(0f, -17.5f, 0.1f), new Vector2(59f, 4.2f), -2, new Color(1f, 1f, 1f, 0.84f));
+            AddPhotoWorldEnvironmentArt("ActualPhotoReskinHedgeRight", FinalGameplayArt.EnvironmentPhotoHedgeRun,
+                new Vector3(31f, 1f, 0.1f), new Vector2(34f, 4.2f), -2, new Color(1f, 1f, 1f, 0.8f), 90f);
+            AddPhotoWorldEnvironmentArt("ActualPhotoReskinWoodFenceTop", FinalGameplayArt.EnvironmentPhotoWoodFence,
+                new Vector3(0f, 17.6f, 0.1f), new Vector2(59f, 3.5f), -1, new Color(1f, 1f, 1f, 0.82f));
+        }
+
         private void AddEnvironmentOverlay(Transform environmentRoot, string targetName, string resourcePath,
             Vector2 worldSize, int sortingOrder, Color tint)
         {
@@ -386,11 +413,25 @@ namespace CheddarAndCocoa.Game
 
         private void AddWorldEnvironmentArt(string name, string resourcePath, Vector3 position, Vector2 worldSize, int sortingOrder, Color tint)
         {
+            AddWorldEnvironmentArt(name, resourcePath, position, worldSize, sortingOrder, tint, 0f);
+        }
+
+        private void AddPhotoWorldEnvironmentArt(string name, string resourcePath, Vector3 position,
+            Vector2 worldSize, int sortingOrder, Color tint, float rotationDegrees = 0f)
+        {
+            if (AddWorldEnvironmentArt(name, resourcePath, position, worldSize, sortingOrder, tint, rotationDegrees))
+                PhotoBackyardReskinOverlayCount++;
+        }
+
+        private bool AddWorldEnvironmentArt(string name, string resourcePath, Vector3 position,
+            Vector2 worldSize, int sortingOrder, Color tint, float rotationDegrees)
+        {
             Sprite sprite = FinalGameplayArt.Load(resourcePath);
-            if (sprite == null || GameObject.Find(name) != null) return;
+            if (sprite == null || GameObject.Find(name) != null) return false;
 
             var go = new GameObject(name);
             go.transform.position = position;
+            go.transform.rotation = Quaternion.Euler(0f, 0f, rotationDegrees);
             float xScale = worldSize.x / Mathf.Max(0.01f, sprite.bounds.size.x);
             float yScale = worldSize.y / Mathf.Max(0.01f, sprite.bounds.size.y);
             go.transform.localScale = new Vector3(xScale, yScale, 1f);
@@ -401,6 +442,7 @@ namespace CheddarAndCocoa.Game
             sr.color = tint;
             OverlayCount++;
             EnvironmentArtOverlayCount++;
+            return true;
         }
 
         private void ReactToFeedback(GameManager.FeedbackKind feedback)

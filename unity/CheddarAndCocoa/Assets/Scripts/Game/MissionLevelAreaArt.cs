@@ -20,8 +20,8 @@ namespace CheddarAndCocoa.Game
                 bounds.center + Vector2.down * 0.3f, new Vector2(33f, 25f), -7, new Color(1f, 1f, 1f, 0.96f));
             area.AddPlate("KitchenCounterWallPlate", FinalGameplayArt.LevelAreaKitchenCounters,
                 counterPosition + Vector2.up * 1.1f, new Vector2(28f, 9.2f), -4, Color.white);
-            area.AddFallbackStrip("KitchenBowlWorkZone", safeZonePosition, new Vector2(14f, 7f),
-                new Color(0.47f, 0.79f, 0.58f, 0.14f), -6);
+            area.AddPlate("KitchenSafeBowlPreviewPlate", FinalGameplayArt.KitchenSafeBowlEmpty,
+                safeZonePosition + Vector2.down * 0.2f, new Vector2(8.5f, 4.4f), -5, new Color(1f, 1f, 1f, 0.72f));
             return area;
         }
 
@@ -32,8 +32,10 @@ namespace CheddarAndCocoa.Game
                 carPosition + Vector2.down * 3.8f, new Vector2(25f, 21f), -6, new Color(1f, 1f, 1f, 0.96f));
             area.AddPlate("CarBalanceLanePlate", FinalGameplayArt.LevelAreaCarBalanceLane,
                 bounds.center + Vector2.down * 5.6f, new Vector2(18f, 7.2f), -3, Color.white);
-            area.AddFallbackStrip("CarWindowMotionBand", carPosition + Vector2.up * 1.2f,
-                new Vector2(30f, 2.2f), new Color(0.66f, 0.88f, 0.94f, 0.2f), -5);
+            area.AddPlate("CarWindowMotionCuePlate", FinalGameplayArt.CarRideLurchLeft,
+                carPosition + new Vector2(-7.8f, 1.2f), new Vector2(5.2f, 3f), -4, new Color(1f, 1f, 1f, 0.54f));
+            area.AddPlate("CarSpillHazardPreviewPlate", FinalGameplayArt.CarRideSpill,
+                carPosition + new Vector2(6.9f, -5.8f), new Vector2(5.4f, 3.2f), -2, new Color(1f, 1f, 1f, 0.82f));
             return area;
         }
 
@@ -66,19 +68,6 @@ namespace CheddarAndCocoa.Game
             renderer.sortingOrder = sortingOrder;
             renderer.color = tint;
             PlateCount++;
-        }
-
-        private void AddFallbackStrip(string name, Vector2 position, Vector2 worldSize, Color color, int sortingOrder)
-        {
-            var go = new GameObject(name);
-            go.transform.SetParent(transform);
-            go.transform.position = new Vector3(position.x, position.y, 0.34f);
-            go.transform.localScale = new Vector3(worldSize.x, worldSize.y, 1f);
-
-            var renderer = go.AddComponent<SpriteRenderer>();
-            renderer.sprite = SpriteShapeCache.WhiteSquare;
-            renderer.sortingOrder = sortingOrder;
-            renderer.color = color;
         }
 
         private static Vector3 WorldScale(Sprite sprite, Vector2 worldSize)
