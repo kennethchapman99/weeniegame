@@ -145,8 +145,13 @@ towel-drop, basket-tip, and toy-launch junctions while preserving cascade logic.
 Machine coverage passed at `9/9` and final-art coverage passed at `8/8` on 2026-06-29. The latest
 full PlayMode suite after the generated P0 mission-state art pass was green at `400/400` on 2026-07-01, and the
 rebuilt macOS dev player generated a valid 66-frame art-review pass at
-`unity/builds/art-review-current/arena-art-review-contact-sheet.jpg`. Placeholder presentation still
-needs the second two-player couch acceptance pass.
+`unity/builds/art-review-current/arena-art-review-contact-sheet.jpg`. The signal-language pass
+(2026-07-02) began retiring shouty world text in favor of icon signals: urgent actor states
+(`SetActorState` pulse `0.26+`) now raise a distance-visible, text-free `ActorSignalBadge` drawn
+with the authored warning/command label skins, starting with Backyard Rescue's stealing squirrel
+and the shared predator warning, while sentence text stays a close-range/debug prompt
+(`ActorSignalBadgePlayModeTests`; full suite green at `410/410` on 2026-07-02). Placeholder
+presentation still needs the second two-player couch acceptance pass.
 
 Gameplay-first presentation is now the active content approach: use generated Unity primitives,
 labels, role pads, and authored feedback to prove that Operation Pee Break is readable and fun before

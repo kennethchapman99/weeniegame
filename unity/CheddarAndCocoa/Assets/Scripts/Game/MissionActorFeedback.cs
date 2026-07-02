@@ -14,7 +14,9 @@ namespace CheddarAndCocoa.Game
         private float _swaySpeed;
         private float _swayAmplitudeDegrees;
         private float _swayPhase;
+        private ActorSignalBadge _signalBadge;
 
+        public ActorSignalBadge SignalBadge => _signalBadge;
         public string Label => _label != null ? _label.text : string.Empty;
         public bool TextVisible => _labelRenderer != null && _labelRenderer.enabled;
         public bool HasContextualTextVisibility => _label != null && _label.GetComponent<WorldLabelVisibility>() != null;
@@ -29,6 +31,7 @@ namespace CheddarAndCocoa.Game
                 if (_label.GetComponent<WorldLabelVisibility>() == null)
                     WorldLabelVisibility.Attach(_label);
             }
+            _signalBadge = ActorSignalBadge.Attach(gameObject);
             _baseScale = transform.localScale;
             _pulseAmount = pulseAmount;
             _baseRotation = transform.localRotation;
@@ -53,6 +56,7 @@ namespace CheddarAndCocoa.Game
             if (_label != null) _label.text = label;
             if (_renderer != null) _renderer.color = color;
             _pulseAmount = pulseAmount;
+            _signalBadge?.Apply(label, pulseAmount);
         }
 
         public void Pulse(float amount)

@@ -933,6 +933,18 @@ should communicate mainly through silhouette/sprite state/color/pulse/motion, do
 arrows should guide primarily through the generated icon, and bark/tug/rescue rings should read
 through their icon cue rather than explanatory copy.
 
+Urgent actor states additionally raise an icon-only **actor signal badge** (2026-07-02): when a
+`SetActorState` call authors an urgency pulse of `0.26+` (squirrel actively stealing, predator
+warning/attack, coyote breach/final push, eagle sweep), `ActorSignalBadge` shows the authored
+`world_label_warning`/`world_label_command` skin sprite above the actor with **no text**, visible at
+any distance and independent of the close-range text contract. Calm/aftermath states (waiting,
+dropped, trapped, yeeted, retreats) stay below the threshold and never raise it. Manual acceptance
+check: start Backyard Rescue, park both dogs at the fence far from the squirrel, and wait for (or
+F5-force) a steal — the warning/command icon should bob over the squirrel and read from couch
+distance with no sentence text; trap or bark-scare the squirrel and the icon should drop
+immediately. Force a predator warning and confirm the warning icon rides the shadow until the
+huddle double-bark yeets it.
+
 ## Generated audio/rumble checks
 
 The arena now has replaceable generated feedback slots in `ArenaFeedbackCatalog`, plus a light
