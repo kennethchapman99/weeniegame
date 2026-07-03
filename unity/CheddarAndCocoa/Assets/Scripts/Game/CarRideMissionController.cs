@@ -7,6 +7,8 @@ namespace CheddarAndCocoa.Game
         private const int RequiredLurches = 6;
         private const int MaxSpills = 4;
         private const float LurchInterval = 4f;
+        // Tilt fraction where the calm balance readout becomes an urgent spill warning.
+        private const float SpillWarningBalance = 0.7f;
 
         private readonly CarBalanceMissionState _state = new();
         private MissionContext _context;
@@ -69,9 +71,7 @@ namespace CheddarAndCocoa.Game
             }
             float lean = Mathf.Clamp(averageX / 8f, -1f, 1f);
             _balance = Mathf.Clamp(_balance + (lean * 0.6f + _lurchDirection * 0.04f) * deltaTime, -1.4f, 1.4f);
-            _context.SetActorState(_car,
-                $"CAR TILT {(_balance >= 0f ? "RIGHT" : "LEFT")} {Mathf.RoundToInt(Mathf.Abs(_balance) * 100f)}% - LEAN!",
-                new Color(0.5f, 0.4f, 0.3f), 0.12f);
+            UpdateBalanceSignal();
 
             if (Mathf.Abs(_balance) >= 1f)
             {
@@ -121,6 +121,26 @@ namespace CheddarAndCocoa.Game
 
         public void ForceLurch() => ApplyLurch();
         public void ForceSpill() => RegisterSpill();
+
+        /// <summary>Test hook: set the tilt directly; headless deltaTime is too small to lean there.</summary>
+        public void ForceBalance(float balance)
+        {
+            _balance = Mathf.Clamp(balance, -1.4f, 1.4f);
+            UpdateBalanceSignal();
+        }
+
+        private void UpdateBalanceSignal()
+        {
+            int percent = Mathf.RoundToInt(Mathf.Abs(_balance) * 100f);
+            // Past the warning tilt the state pulses in the urgency channel (0.26+) so the
+            // distance badge tells both dogs a spill is imminent before the meter maxes out.
+            bool nearSpill = Mathf.Abs(_balance) >= SpillWarningBalance;
+            _context.SetActorState(_car,
+                nearSpill
+                    ? $"SPILL WARNING {percent}% - LEAN {(_balance >= 0f ? "LEFT" : "RIGHT")}!"
+                    : $"CAR TILT {(_balance >= 0f ? "RIGHT" : "LEFT")} {percent}% - LEAN!",
+                new Color(0.5f, 0.4f, 0.3f), nearSpill ? 0.3f : 0.12f);
+        }
 
         private void ApplyLurch()
         {

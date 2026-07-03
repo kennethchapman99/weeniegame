@@ -106,7 +106,7 @@ namespace CheddarAndCocoa.Game
 
             if (upper.Contains("BARK") || upper.Contains("HOLD") || upper.Contains("STAND")
                 || upper.Contains("TUG") || upper.Contains("RESCUE") || upper.Contains("READY")
-                || upper.Contains("LOCKED") || upper.Contains("CHECKPOINT"))
+                || upper.Contains("LOCKED") || upper.Contains("CHECKPOINT") || upper.Contains("NOW!"))
                 return FinalGameplayArt.WorldLabelCommand;
 
             return FinalGameplayArt.WorldLabelBubble;
@@ -122,7 +122,7 @@ namespace CheddarAndCocoa.Game
                 return new Color(1f, 0.94f, 0.9f, 0.94f);
             if (upper.Contains("BARK") || upper.Contains("HOLD") || upper.Contains("STAND")
                 || upper.Contains("TUG") || upper.Contains("RESCUE") || upper.Contains("READY")
-                || upper.Contains("LOCKED") || upper.Contains("CHECKPOINT"))
+                || upper.Contains("LOCKED") || upper.Contains("CHECKPOINT") || upper.Contains("NOW!"))
                 return new Color(1f, 0.98f, 0.84f, 0.94f);
             return new Color(0.9f, 1f, 1f, 0.92f);
         }

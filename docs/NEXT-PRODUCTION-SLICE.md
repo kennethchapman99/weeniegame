@@ -151,7 +151,11 @@ rebuilt macOS dev player generated a valid 66-frame art-review pass at
 with the authored warning/command label skins, starting with Backyard Rescue's stealing squirrel
 and the shared predator warning, while sentence text stays a close-range/debug prompt
 (`ActorSignalBadgePlayModeTests`; full suite green at `410/410` on 2026-07-02). Slice 2 raised Mark
-the Yard's active steal prowl into the same urgency channel. The `IMissionController` migration also
+the Yard's active steal prowl into the same urgency channel. Slice 3 (2026-07-03) raised the
+remaining timed act-now windows into the channel — Sock Panic's open-basket dive window (command
+badge), Eagle Shadow's talon-grip rescue (warning badge during Cheddar's wiggle phase, command
+badge during Cocoa's pull window), and Car Ride's near-spill tilt at 70%+ (a `SPILL WARNING` state
+with a warning badge) — and labels ending in `NOW!` now classify as the authored command skin. The `IMissionController` migration also
 completed on 2026-07-02: Eagle Shadow Panic and Coyotes at the Fence were extracted behind the
 controller boundary (`MissionContext.PredatorObject`, `IMissionUnitedBarkListener`, static
 `Compute*` geometry helpers), so all 22 selectable missions are controller-owned and

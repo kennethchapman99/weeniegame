@@ -347,10 +347,13 @@ namespace CheddarAndCocoa.Game
 
         private void UpdateRescueVisuals()
         {
+            // Both rescue phases demand action before the grip re-tightens, so they pulse in the
+            // urgency channel (0.26+): the closed grip raises a warning badge for Cheddar's wiggle,
+            // the cracked window a command badge for Cocoa's pull.
             if (_context.SquirrelObject != null)
                 _context.SetActorState(_context.SquirrelObject,
                     _rescue.WindowOpen ? "GRIP CRACKED - COCOA PULL NOW!" : "TALON GRIP - CHEDDAR WIGGLE!",
-                    _rescue.WindowOpen ? new Color(0.45f, 1f, 0.55f) : new Color(0.85f, 0.5f, 0.5f), 0.16f);
+                    _rescue.WindowOpen ? new Color(0.45f, 1f, 0.55f) : new Color(0.85f, 0.5f, 0.5f), 0.3f);
             SetMissionProp(_context.SquirrelObject,
                 _rescue.WindowOpen ? FinalGameplayArt.EagleShadowTalonGripOpen : FinalGameplayArt.EagleShadowTalonGripClosed,
                 0.013f, 31);

@@ -1359,6 +1359,12 @@ namespace CheddarAndCocoa.Game
             CheckClear();
         }
 
+        /// <summary>Test hook: set the car tilt directly (headless deltaTime can't accumulate lean).</summary>
+        public void ForceCarBalance(float balance)
+        {
+            if (MissionActive()) CarRideController?.ForceBalance(balance);
+        }
+
         /// <summary>Test hook: the snatched dog wiggles to crack the grip open.</summary>
         public void ForceEagleShadowWiggle()
         {

@@ -945,6 +945,17 @@ distance with no sentence text; trap or bark-scare the squirrel and the icon sho
 immediately. Force a predator warning and confirm the warning icon rides the shadow until the
 huddle double-bark yeets it.
 
+The 2026-07-03 pass raised the remaining timed act-now windows into the same urgency channel, and
+labels ending in `NOW!` now classify as the command skin: Sock Panic's open-basket dive window
+raises a command badge until the sock is grabbed or the basket flops shut; Eagle Shadow's talon-grip
+rescue raises a warning badge while Cheddar wiggles and swaps to a command badge during Cocoa's
+cracked-grip pull window; Car Ride's balance readout becomes an urgent `SPILL WARNING` state (with a
+warning badge) once tilt reaches 70%, and returns to the calm tilt readout when the dogs recover the
+lean. Manual acceptance check: tip the basket and watch the command icon from across the yard; get
+snatched in Eagle Shadow and confirm the warning→command icon swap tracks the wiggle/pull rhythm;
+in Car Ride lean hard to one side until the label flips to SPILL WARNING and confirm the badge
+appears over the car and drops after recovering.
+
 ## Generated audio/rumble checks
 
 The arena now has replaceable generated feedback slots in `ArenaFeedbackCatalog`, plus a light

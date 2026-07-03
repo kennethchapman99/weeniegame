@@ -176,7 +176,9 @@ namespace CheddarAndCocoa.Game
             _openingUntil = _context.Now() + OpeningSeconds;
             _context.AddScore(ScoreEventCatalog.BasketTipped.Points, ScoreEventCatalog.BasketTipped.Label);
             _context.SetCue($"{DogName(dogIndex)} tipped the basket - partner dive for the sock!");
-            _context.SetActorState(_basket, "BASKET HELD OPEN - PARTNER DIVE NOW!", new Color(0.96f, 0.72f, 0.32f), 0.22f);
+            // The open basket is a closing timed window: pulse into the urgency channel (0.26+)
+            // so the partner reads the distance signal badge, not just the close-range text.
+            _context.SetActorState(_basket, "BASKET HELD OPEN - PARTNER DIVE NOW!", new Color(0.96f, 0.72f, 0.32f), 0.3f);
             MissionPropArt.SetSprite(_basket.GetComponent<MissionPropArtAttachment>(), FinalGameplayArt.SockPanicBasketOpen);
             _context.SpawnWorldPop(_basket.transform.position, "TIP! PARTNER DIVE!", new Color(0.62f, 0.9f, 1f));
             _context.RequestAudioCue(ArenaFeedbackCatalog.Bark);
