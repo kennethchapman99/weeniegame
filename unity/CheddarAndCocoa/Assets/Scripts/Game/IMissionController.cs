@@ -46,6 +46,16 @@ namespace CheddarAndCocoa.Game
     }
 
     /// <summary>
+    /// Optional hook for controllers whose climax consumes the shared united-bark detection
+    /// (both dogs barking in the timing window while huddled). The orchestrator invokes it once
+    /// per successful united bark; the controller decides whether its beat is ready.
+    /// </summary>
+    public interface IMissionUnitedBarkListener
+    {
+        void OnUnitedBark();
+    }
+
+    /// <summary>
     /// Narrow shared-services bundle for mission controllers. It intentionally exposes dogs,
     /// arena presentation services, scoring, and session-safe callbacks—not GameManager itself.
     /// </summary>
@@ -57,6 +67,8 @@ namespace CheddarAndCocoa.Game
         public Sprite ActorSprite { get; }
         public Sprite RangeSprite { get; }
         public GameObject SquirrelObject { get; }
+        /// <summary>Shared predator actor; null-checked by consumers (threat missions repurpose it).</summary>
+        public GameObject PredatorObject { get; }
         public float SquirrelMoveSpeed { get; }
         public float SingleBarkSquirrelRange { get; }
         public float SingleBarkScareSeconds { get; }
@@ -108,6 +120,7 @@ namespace CheddarAndCocoa.Game
             Sprite actorSprite,
             Sprite rangeSprite,
             GameObject squirrelObject,
+            GameObject predatorObject,
             float squirrelMoveSpeed,
             float singleBarkSquirrelRange,
             float singleBarkScareSeconds,
@@ -157,6 +170,7 @@ namespace CheddarAndCocoa.Game
             ActorSprite = actorSprite;
             RangeSprite = rangeSprite;
             SquirrelObject = squirrelObject ?? throw new ArgumentNullException(nameof(squirrelObject));
+            PredatorObject = predatorObject; // nullable — only threat missions consume it
             SquirrelMoveSpeed = squirrelMoveSpeed;
             SingleBarkSquirrelRange = singleBarkSquirrelRange;
             SingleBarkScareSeconds = singleBarkScareSeconds;

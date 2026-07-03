@@ -31,10 +31,11 @@
 | Squirrel Conspiracy | `SquirrelConspiracyMissionController` | Owns route/cutoff geometry, herding state, taunts, stash interaction, markers, failure, and snapshots; temporarily consumes the shared squirrel actor through `MissionContext`. |
 | Snack Heist | `SnackHeistMissionController` | Owns recovery/steal state, squirrel targeting/timing, bark defense, collectible interpretation, failure, and snapshots; consumes the shared squirrel and treat pool through narrow context services. |
 | Backyard Rescue | `BackyardRescueMissionController` | Owns two-pass squirrel trap state (`BackyardSquirrelTrapState`), role-reversal redirect/recovery logic, escape-gap marker, squirrel stealing loop, collectible interpretation, and snapshots. Added `IsPredatorResolved`/`IsTugComplete` to `MissionContext`; added `Collected`/`Stolen`/`IsSquirrelStealing` forwarding to `GameManager`. Bark return value now meaningful (SoloBark fires when controller returns false). |
+| Eagle Shadow Panic | `EagleShadowPanicMissionController` | First predator-cluster extraction. Owns threat-sweep state, cover zones/markers, snatch/rescue timing puzzle, and united-front completion via the new optional `IMissionUnitedBarkListener`. Added `MissionContext.PredatorObject` (nullable shared actor) and the static `ComputeCoverZones(bounds)` geometry helper pattern for pre-activation consumers. |
 
 ## Remaining in `GameManager` (not yet extracted)
 
-EagleShadowPanic, CoyotesFence.
+CoyotesFence.
 
 ## Contract additions so far
 

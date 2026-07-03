@@ -86,7 +86,10 @@ namespace CheddarAndCocoa.Game
                     MissionCatalog.BuildSnackHeistDefinition),
                 [GameManager.MissionVariant.BackyardRescue] = new Registration(
                     () => new BackyardRescueMissionController(),
-                    MissionCatalog.BuildBackyardRescueDefinition)
+                    MissionCatalog.BuildBackyardRescueDefinition),
+                [GameManager.MissionVariant.EagleShadowPanic] = new Registration(
+                    () => new EagleShadowPanicMissionController(),
+                    MissionCatalog.BuildEagleShadowPanicDefinition),
             };
 
         public static IEnumerable<GameManager.MissionVariant> RegisteredVariants => Registrations.Keys;

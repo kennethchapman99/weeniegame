@@ -1343,5 +1343,67 @@ namespace CheddarAndCocoa.Game
                 ItemPopColor = new Color(1f, 0.78f, 0.25f)
             };
         }
+
+        internal static GameManager.MissionDefinition BuildEagleShadowPanicDefinition(ArenaMissionTuning tuning)
+        {
+            const GameManager.MissionVariant variant = GameManager.MissionVariant.EagleShadowPanic;
+            var balance = tuning.BalanceFor(variant);
+            return new GameManager.MissionDefinition
+            {
+                Variant = variant,
+                Name = "Eagle Shadow Panic",
+                IntroPrompt = "Cheddar + Cocoa must hide from the sweeping eagle shadow. Hide twice and the eagle swoops and SNATCHES Cheddar - he wiggles (Tug/Rescue) to crack the talon grip while Cocoa pulls him free in the window. Then form a united-front bark circle to drive the eagle off.",
+                ReadyScoreLabel = "READY TO DODGE THE SHADOW",
+                ItemRootName = "Shadow Cover",
+                ItemObjectName = "Cover Spot",
+                ItemWorldLabel = "Hide!",
+                ItemArrowLabel = "HIDE",
+                ItemCollectCueNoun = "a safe hide",
+                CollectObjectiveFormat = "Survive shadow sweep {0}/{1}",
+                CollectedScoreLabel = "SAFE HIDE",
+                ItemScore = balance.ItemScore,
+                SpawnedItemCount = balance.SpawnedItemCount,
+                ItemGoal = balance.ItemGoal,
+                RoundSeconds = balance.RoundSeconds,
+                PawfectScore = balance.PawfectScore,
+                HeroScore = balance.HeroScore,
+                SurvivorScore = balance.SurvivorScore,
+                UsesSquirrel = false,
+                RequiresPredator = false,
+                RequiresTug = false,
+                MaxStolenFood = balance.MaxStolenFood,
+                SquirrelPenalty = balance.SquirrelPenalty,
+                SquirrelScareScore = balance.SquirrelScareScore,
+                SquirrelObjectiveText = "Hide from the eagle shadow",
+                SquirrelStealingCue = "No squirrel here - the eagle shadow is the threat.",
+                SquirrelStoleCue = "No squirrel here - watch the sky.",
+                SquirrelStealScoreLabel = "EAGLE SPOOK",
+                SquirrelScareScoreLabel = "SHADOW DISTRACTED",
+                SquirrelStealingActorLabel = "EAGLE SHADOW SWEEP",
+                SquirrelDroppedActorLabel = "SHADOW PASSED",
+                SquirrelStoleActorLabel = "SHADOW SPOTTED A DOG",
+                SquirrelMissPopLabel = "SPOTTED!",
+                SquirrelStealJuiceLabel = "EAGLE SPOOK!",
+                SquirrelScareJuiceLabel = "SHADOW DISTRACTED!",
+                TugObjectiveText = "Rescue the stranded toy",
+                WaitingObjectiveText = "Hide in cover and wait out the shadow",
+                ClearObjectiveText = "Yard defended - replay Eagle Shadow Panic",
+                ClearBannerPrefix = "EAGLE DRIVEN OFF!",
+                ClearScoreLabel = "SHADOW PANIC CLEAR",
+                ReplayPrompt = "Press R / Enter / Start to replay Eagle Shadow Panic",
+                FailObjectiveText = "Mission failed - replay Eagle Shadow Panic",
+                GenericFailReason = "Needs tighter hide-and-bark timing before the next flyover.",
+                TimeFailReason = "The eagle circled until the clock ran out.",
+                StolenFailReason = "The eagle shadow kept catching dogs in the open.",
+                PredatorFailReason = "The eagle shadow caught a dog in the open.",
+                PawfectClearReason = "Tiny defenders dodged every shadow and barked the eagle out of the sky.",
+                HeroClearReason = "The toy was rescued and the united front held strong.",
+                BasicClearReason = "The eagle gave up, even if a few sweeps got close.",
+                ItemColor = new Color(0.4f, 0.46f, 0.6f),
+                ItemAccentColor = new Color(0.7f, 0.82f, 1f),
+                ItemSecondaryColor = new Color(0.14f, 0.16f, 0.22f),
+                ItemPopColor = new Color(0.7f, 0.85f, 1f)
+            };
+        }
     }
 }
