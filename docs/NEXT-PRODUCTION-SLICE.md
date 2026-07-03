@@ -150,7 +150,12 @@ rebuilt macOS dev player generated a valid 66-frame art-review pass at
 (`SetActorState` pulse `0.26+`) now raise a distance-visible, text-free `ActorSignalBadge` drawn
 with the authored warning/command label skins, starting with Backyard Rescue's stealing squirrel
 and the shared predator warning, while sentence text stays a close-range/debug prompt
-(`ActorSignalBadgePlayModeTests`; full suite green at `410/410` on 2026-07-02). Placeholder
+(`ActorSignalBadgePlayModeTests`; full suite green at `410/410` on 2026-07-02). Slice 2 raised Mark
+the Yard's active steal prowl into the same urgency channel. The `IMissionController` migration also
+completed on 2026-07-02: Eagle Shadow Panic and Coyotes at the Fence were extracted behind the
+controller boundary (`MissionContext.PredatorObject`, `IMissionUnitedBarkListener`, static
+`Compute*` geometry helpers), so all 22 selectable missions are controller-owned and
+`GameManager.BuildMissionDefinition` resolves exclusively through the registry. Placeholder
 presentation still needs the second two-player couch acceptance pass.
 
 Gameplay-first presentation is now the active content approach: use generated Unity primitives,

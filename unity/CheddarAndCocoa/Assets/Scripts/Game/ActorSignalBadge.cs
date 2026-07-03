@@ -22,9 +22,10 @@ namespace CheddarAndCocoa.Game
         private const float WorldYOffset = 1.15f;
 
         private SpriteRenderer _icon;
+        private bool _showing;
         private float _phase;
 
-        public bool IsShowing => _icon != null && _icon.enabled && _icon.sprite != null;
+        public bool IsShowing => _showing && _icon != null && _icon.sprite != null;
         public string IconSpriteName => IsShowing ? _icon.sprite.name : string.Empty;
 
         public static ActorSignalBadge Attach(GameObject actor)
@@ -59,10 +60,12 @@ namespace CheddarAndCocoa.Game
 
             _icon.sprite = sprite;
             _icon.enabled = true;
+            _showing = true;
         }
 
         public void Hide()
         {
+            _showing = false;
             if (_icon != null) _icon.enabled = false;
         }
 
@@ -87,7 +90,17 @@ namespace CheddarAndCocoa.Game
 
         private void LateUpdate()
         {
-            if (!IsShowing) return;
+            if (!IsShowing)
+            {
+                if (_icon != null && _icon.enabled) _icon.enabled = false;
+                return;
+            }
+
+            // Reassert the renderer every frame: actors that swap authored motion frames
+            // (ThreatReadabilityAnimator) blanket-toggle child renderers they captured as
+            // placeholder fallbacks, and the badge must not be silenced as if it were one.
+            // WorldLabelVisibility survives the same way.
+            _icon.enabled = true;
 
             // Own the badge's world pose completely: the actor root pulses, sways, and carries
             // per-actor scale, none of which should distort a fixed-size overhead signal.

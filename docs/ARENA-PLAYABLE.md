@@ -935,7 +935,7 @@ through their icon cue rather than explanatory copy.
 
 Urgent actor states additionally raise an icon-only **actor signal badge** (2026-07-02): when a
 `SetActorState` call authors an urgency pulse of `0.26+` (squirrel actively stealing, predator
-warning/attack, coyote breach/final push, eagle sweep), `ActorSignalBadge` shows the authored
+warning/attack, coyote breach/final push, eagle sweep, Mark the Yard's steal prowl), `ActorSignalBadge` shows the authored
 `world_label_warning`/`world_label_command` skin sprite above the actor with **no text**, visible at
 any distance and independent of the close-range text contract. Calm/aftermath states (waiting,
 dropped, trapped, yeeted, retreats) stay below the threshold and never raise it. Manual acceptance

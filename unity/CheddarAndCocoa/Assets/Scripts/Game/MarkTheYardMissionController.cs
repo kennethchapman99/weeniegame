@@ -100,7 +100,9 @@ namespace CheddarAndCocoa.Game
                 if (target >= 0)
                 {
                     if (now < _squirrelReactionUntil) return;
-                    SetSquirrelState("SQUIRREL STEALING A MARK!", new Color(0.85f, 0.42f, 0.12f, 0.82f), 0.07f,
+                    // 0.26+ pulse is the authored urgency channel: the active steal raises the
+                    // distance signal badge so far players see the threat without reading text.
+                    SetSquirrelState("SQUIRREL STEALING A MARK!", new Color(0.85f, 0.42f, 0.12f, 0.82f), 0.3f,
                         FinalGameplayArt.MarkYardSquirrelSteal);
                     _squirrel.transform.position = Vector3.MoveTowards(
                         _squirrel.transform.position, _zones[target], deltaTime * SquirrelSpeed);

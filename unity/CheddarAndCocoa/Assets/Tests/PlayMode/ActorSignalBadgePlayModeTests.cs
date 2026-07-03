@@ -114,14 +114,46 @@ namespace CheddarAndCocoa.Tests
                 "The badge must hold a constant readable world size regardless of actor scale/pulse.");
         }
 
-        private IEnumerator Load()
+        [UnityTest]
+        public IEnumerator MarkTheYard_StealingProwl_RaisesDistanceSignal()
+        {
+            yield return Load(GameManager.MissionVariant.MarkTheYard);
+
+            var squirrel = GameObject.Find("MarkTheYardSquirrel");
+            Assert.IsNotNull(squirrel, "Mark the Yard should stage its controller-local squirrel.");
+            var feedback = squirrel.GetComponent<MissionActorFeedback>();
+            Assert.IsNotNull(feedback);
+            Assert.IsFalse(feedback.SignalBadge.IsShowing,
+                "A watching squirrel is not urgent and must not raise the signal badge.");
+
+            // One claimed zone gives the squirrel a steal target; the prowl starts after its
+            // short reaction window (0.45s) passes.
+            _game.ForceClaimZone(DogId.Cheddar);
+            yield return new WaitForSeconds(0.6f);
+            yield return null;
+
+            Assert.That(feedback.Label, Does.Contain("STEALING"));
+            Assert.IsTrue(feedback.SignalBadge.IsShowing,
+                "A squirrel actively prowling for a claimed zone must raise the distance signal.");
+
+            // The completed re-mark is an aftermath state; the zone art carries the recovery job.
+            _game.ForceSquirrelReclaim();
+            yield return null;
+            yield return null;
+
+            Assert.That(feedback.Label, Does.Contain("STOLE"));
+            Assert.IsFalse(feedback.SignalBadge.IsShowing,
+                "The signal badge must drop once the steal resolves.");
+        }
+
+        private IEnumerator Load(GameManager.MissionVariant variant = GameManager.MissionVariant.BackyardRescue)
         {
             yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
             yield return null;
             yield return null;
             _game = Object.FindFirstObjectByType<GameManager>();
             Assert.IsNotNull(_game);
-            _game.StartMission(GameManager.MissionVariant.BackyardRescue);
+            _game.StartMission(variant);
             yield return null;
 
             foreach (var id in Object.FindObjectsByType<DogIdentity>(FindObjectsSortMode.None))
