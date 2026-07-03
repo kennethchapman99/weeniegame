@@ -133,6 +133,49 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator EagleThreat_AnimatesWithWingFramesNotBodyScalePulse()
+        {
+            yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
+            yield return null;
+            yield return null;
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            Assert.IsNotNull(game);
+            game.StartMission(GameManager.MissionVariant.BackyardRescue);
+            yield return null;
+
+            var predator = game.PredatorObject;
+            var feedback = predator.GetComponent<MissionActorFeedback>();
+            var motion = predator.GetComponent<ThreatReadabilityAnimator>();
+            Assert.IsNotNull(feedback);
+            Assert.IsNotNull(motion);
+
+            // The strongest pulse the mission ever requests: this used to balloon the eagle by
+            // ±42% and completely drown the wing frames (couch test #2 feedback).
+            feedback.SetState("SHADOW! HUDDLE + DOUBLE BARK!", new Color(1f, 0.08f, 0.08f), 0.42f);
+            motion.SetLabelState("SHADOW! HUDDLE + DOUBLE BARK!");
+            yield return null;
+
+            Assert.IsTrue(motion.UsesAuthoredMotion);
+            Assert.IsTrue(feedback.ScalePulseSuppressedByAuthoredMotion,
+                "Frame-animated threats must not add a whole-body scale pulse on top of their frames.");
+
+            Vector3 baseline = predator.transform.localScale;
+            int firstFrame = motion.CurrentFrameIndex;
+            bool frameChanged = false;
+            float deadline = Time.time + 1.2f;
+            while (Time.time < deadline)
+            {
+                yield return null;
+                Assert.AreEqual(baseline.x, predator.transform.localScale.x, 0.002f,
+                    "The eagle must not grow and shrink; wing frames and the glide bob carry the motion.");
+                if (motion.CurrentFrameIndex != firstFrame) frameChanged = true;
+            }
+
+            Assert.IsTrue(frameChanged, "Eagle wing frames should cycle while the threat is active.");
+        }
+
+        [UnityTest]
         public IEnumerator EagleRescuePresentation_HidesSquirrelOverlayFromTalonGripMarker()
         {
             yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
@@ -187,8 +230,16 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(wow.Built);
             Assert.AreEqual(0, wow.PlaceholderRectCount,
                 "One-background rule: the wow layer must not add placeholder rectangles over the painted yard plate.");
-            Assert.GreaterOrEqual(wow.SetPieceCount, 6, "The wow layer should keep its authored ambient accent sprites.");
-            Assert.GreaterOrEqual(wow.AnimatedSetPieceCount, 6, "The wow layer should include visible motion, not only static props.");
+            // Couch feedback trimmed the wow layer: no more mid-yard prop parade or floating
+            // sparkle bone. What remains is the two fence-line showcase accents + the spotlight.
+            Assert.GreaterOrEqual(wow.SetPieceCount, 3, "The wow layer should keep its authored ambient accent sprites.");
+            Assert.GreaterOrEqual(wow.AnimatedSetPieceCount, 3, "The wow layer should include visible motion, not only static props.");
+            Assert.IsNull(GameObject.Find("WowMissionSpark"),
+                "The floating pickup-sparkle bone read as a fake collectible and must stay retired.");
+            Assert.IsNull(GameObject.Find("WowBackyardPropsParade"),
+                "Mid-yard bouncing prop dupes read as interactable scenery and must stay retired.");
+            Assert.IsNull(GameObject.Find("WowAdventurePropsEncore"),
+                "Mid-yard bouncing prop dupes read as interactable scenery and must stay retired.");
             Assert.AreEqual(0, wow.AttractCharacterCount,
                 "Cheddar/Cocoa should never be baked into level-background set dressing.");
             Assert.IsTrue(wow.HasNoFrozenDogBackdrops,

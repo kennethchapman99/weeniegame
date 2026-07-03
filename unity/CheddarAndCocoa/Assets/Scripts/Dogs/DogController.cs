@@ -73,6 +73,16 @@ namespace CheddarAndCocoa.Dogs
         private float _wetTimer;                    // dryT: slick render + AI avoids floaties
         private float _jumpT;                       // 0..jumpDuration; height = sin(pi * t/dur)
 
+        // Pool overlays/ratios ported from the frozen TS build (config/balance.ts SPEED + POOL):
+        // water 1.6 vs free 4.4, floater 4.9 vs free 4.4. The pool zone component owns splash,
+        // shake, and wet-timer orchestration; the controller only owns how each mode steers.
+        public const float SwimSpeedRatio = 0.36f;
+        public const float FloaterSpeedRatio = 1.11f;
+        public bool OnFloater { get; private set; }
+        public bool IsWet => _wetTimer > 0f;
+        public void SetOnFloater(bool onFloater) => OnFloater = onFloater;
+        public void SetWet(float seconds) => _wetTimer = Mathf.Max(_wetTimer, seconds);
+
         public float MaxSpeedUnitsPerSecond => CurrentSpeed();
         public float AccelerationUnitsPerSecond => tuning != null ? tuning.acceleration : 0f;
         public float DecelerationUnitsPerSecond => tuning != null ? tuning.deceleration : 0f;
@@ -100,10 +110,21 @@ namespace CheddarAndCocoa.Dogs
             if (intent.bark) Bark();
             if (intent.interact) Interact();
 
+            if (Mode == MovementMode.Swimming)
+            {
+                // Swimming stays steerable, just slow (prototype SPEED.water). Zoomies fizzle in
+                // the water; the pool zone flips the mode back at the deck edge via Shaking.
+                Vector2 swimInput = intent.move.sqrMagnitude > 1f ? intent.move.normalized : intent.move;
+                float swimSpeed = tuning.baseSpeed / pixelsPerUnit * 60f * SwimSpeedRatio;
+                _body.linearVelocity = Vector2.MoveTowards(
+                    _body.linearVelocity, swimInput * swimSpeed, tuning.acceleration * 0.6f * dt);
+                return;
+            }
+
             if (Busy)
             {
-                // Stunned/swimming/etc. still need their own per-mode update; stubbed for now.
-                // TODO: port per-mode handling (swim toward nearest deck, shake timer, transit lerp).
+                // Shaking/stunned/transit/tug: rooted. Shake and transit timers are owned by the
+                // systems that set those modes (pool zone, doors), not the controller.
                 _body.linearVelocity = Vector2.zero;
                 return;
             }
@@ -162,6 +183,7 @@ namespace CheddarAndCocoa.Dogs
             // Convert prototype per-frame target (already ratio-correct) to units/sec.
             float baseUnitsPerSec = tuning.baseSpeed / pixelsPerUnit * 60f;
             float speed = Zoomies ? baseUnitsPerSec * tuning.zoomiesMultiplier : baseUnitsPerSec;
+            if (OnFloater) speed *= FloaterSpeedRatio; // prototype: slightly faster scampering on floaties
             return TravelAssist ? speed * TravelAssistMultiplier : speed;
         }
 

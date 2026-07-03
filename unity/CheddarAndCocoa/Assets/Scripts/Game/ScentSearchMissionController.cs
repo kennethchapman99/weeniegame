@@ -32,7 +32,9 @@ namespace CheddarAndCocoa.Game
             Vector2 P(float x, float y) => new(
                 bounds.center.x + x * bounds.width * 0.5f,
                 bounds.center.y + y * bounds.height * 0.5f);
-            return new[] { P(-0.78f, 0.58f), P(0.68f, 0.64f), P(-0.74f, -0.58f), P(0.32f, -0.68f), P(0.82f, 0.08f), P(-0.18f, 0.36f) };
+            // The old (-0.18, 0.36) mound sat inside BackyardPoolZone.WaterRect; digging happens on
+            // dry land, so that mound moved just right of the pool deck.
+            return new[] { P(-0.78f, 0.58f), P(0.68f, 0.64f), P(-0.74f, -0.58f), P(0.32f, -0.68f), P(0.82f, 0.08f), P(0.08f, 0.42f) };
         }
 
         public void Initialize(MissionContext context)

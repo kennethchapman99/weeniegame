@@ -50,6 +50,93 @@ namespace CheddarAndCocoa.Tests
                 "Mission world labels and score pops should have generated skins, not only raw TextMesh.");
         }
 
+        [UnityTest]
+        public IEnumerator MissionSpecificSceneryCues_OnlyShowDuringTheirMission()
+        {
+            yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
+
+            BackyardRescueArtEnhancer enhancer = null;
+            for (int i = 0; i < 80 && (enhancer == null || !enhancer.Enhanced); i++)
+            {
+                enhancer = Object.FindFirstObjectByType<BackyardRescueArtEnhancer>();
+                yield return null;
+            }
+
+            Assert.IsNotNull(enhancer, "ArenaScene should install the additive art enhancer.");
+            Assert.IsTrue(enhancer.Enhanced);
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            Assert.IsNotNull(game);
+            var env = GameObject.Find(ArenaArtCatalog.BackyardEnvironmentObjectName);
+            Assert.IsNotNull(env);
+
+            Assert.IsNull(GameObject.Find("ActualBackyardPredatorLaneWarning"),
+                "Couch test #2: the screen-wide predator lane-warning banner is retired nonsense scenery.");
+            var openLawn = env.transform.Find("OpenLawnDistrict");
+            Assert.IsNotNull(openLawn);
+            Assert.IsNull(openLawn.Find("ActualEnvironmentArtOverlay"),
+                "The lawn-landmark icon must not stretch across the yard as a giant X panel; the painted plate is the lawn.");
+
+            var eagleLane = env.transform.Find("EagleShadowSweepLane").Find("ActualEnvironmentArtOverlay").GetComponent<SpriteRenderer>();
+            var coyoteLane = env.transform.Find("CoyoteFencePressureLane").Find("ActualEnvironmentArtOverlay").GetComponent<SpriteRenderer>();
+            var scentPatch = env.transform.Find("ScentTrailPatch_0").Find("ActualEnvironmentArtOverlay").GetComponent<SpriteRenderer>();
+            var leashStone = env.transform.Find("LeashRouteStone_0").Find("ActualEnvironmentArtOverlay").GetComponent<SpriteRenderer>();
+
+            game.StartMission(GameManager.MissionVariant.BackyardRescue);
+            yield return null;
+            yield return null;
+
+            Assert.IsFalse(eagleLane.enabled, "The eagle sweep lane must not litter Backyard Rescue.");
+            Assert.IsFalse(coyoteLane.enabled, "The coyote pressure lane must not litter Backyard Rescue.");
+            Assert.IsFalse(scentPatch.enabled, "Scent patches must not litter Backyard Rescue.");
+            Assert.IsFalse(leashStone.enabled, "Leash route stones must not litter Backyard Rescue.");
+
+            game.StartMission(GameManager.MissionVariant.EagleShadowPanic);
+            yield return null;
+            yield return null;
+
+            Assert.IsTrue(eagleLane.enabled, "Eagle Shadow keeps its readable sweep band.");
+            Assert.IsFalse(coyoteLane.enabled);
+
+            game.StartMission(GameManager.MissionVariant.ScentSearch);
+            yield return null;
+            yield return null;
+
+            Assert.IsTrue(scentPatch.enabled, "Scent Search keeps its scent patches.");
+            Assert.IsFalse(eagleLane.enabled, "Mission cues turn back off when their mission ends.");
+        }
+
+        [Test]
+        public void MissionBriefingCard_ContainsAllTextRowsWithoutOverlap()
+        {
+            var layout = ArenaHud.BuildMissionBriefingLayout(1920f, 1080f);
+            Rect[] rows =
+            {
+                layout.Title, layout.Presentation, layout.Goal, layout.First,
+                layout.Roles, layout.Ownership, layout.Controls
+            };
+
+            foreach (Rect row in rows)
+            {
+                Assert.GreaterOrEqual(row.xMin, layout.Card.xMin, "Briefing text must not spill off the card.");
+                Assert.LessOrEqual(row.xMax, layout.Card.xMax, "Briefing text must not spill off the card.");
+                Assert.GreaterOrEqual(row.yMin, layout.Card.yMin, "Briefing text must not spill off the card.");
+                Assert.LessOrEqual(row.yMax, layout.Card.yMax,
+                    "Briefing text must not spill past the bottom of the card (couch test #2 regression).");
+            }
+
+            for (int i = 1; i < rows.Length; i++)
+            {
+                Assert.GreaterOrEqual(rows[i].yMin, rows[i - 1].yMax,
+                    $"Briefing row {i} must not overlap the row above it.");
+            }
+
+            Assert.GreaterOrEqual(layout.Goal.height, 80f,
+                "The GOAL block needs room for a wrapped two-to-three line mission prompt.");
+            Assert.GreaterOrEqual(ArenaHud.MissionBriefingGoalFontSize, 22,
+                "The mission goal must be couch-readable.");
+        }
+
         [Test]
         public void MissionSelect_HasPictureTileAndInstructionsForEveryMission()
         {
@@ -677,7 +764,7 @@ namespace CheddarAndCocoa.Tests
 
             Assert.IsNotNull(enhancer, "ArenaScene should install the additive art enhancer.");
             Assert.IsTrue(enhancer.Enhanced, "Backyard art enhancer should finish after scene load.");
-            Assert.GreaterOrEqual(enhancer.EnvironmentArtOverlayCount, 40,
+            Assert.GreaterOrEqual(enhancer.EnvironmentArtOverlayCount, 38,
                 "Broad yard districts should have generated sprite overlays, not only square markers.");
             Assert.IsTrue(enhancer.PaintedPlateIsSoleYardBackground,
                 "One-background rule: the painted plate renders at full opacity and no placeholder rectangle stays visible in the yard.");
@@ -706,9 +793,15 @@ namespace CheddarAndCocoa.Tests
             AssertEnvironmentOverlay(env.transform, "LeashRouteStone_0", "yard_leash_route");
             AssertEnvironmentOverlay(env.transform, "EagleShadowSweepLane", "yard_threat_lane");
             AssertEnvironmentOverlay(env.transform, "FenceRailTop", "yard_fence_run");
-            AssertEnvironmentOverlay(env.transform, "Pond", "yard_pond");
-            AssertEnvironmentOverlay(env.transform, "TreeCanopy", "yard_shade_tree");
-            AssertEnvironmentOverlay(env.transform, "GardenBed", "yard_garden_bed");
+            // Couch feedback: the flat vector tree/garden/pond overlays clashed with the painted
+            // plate (which already paints those landmarks); BackyardPoolZone owns the water now.
+            foreach (string retired in new[] { "Pond", "PondShallows", "TreeTrunk", "TreeCanopy", "TreeCanopyHi", "GardenBed" })
+            {
+                var target = env.transform.Find(retired);
+                Assert.IsNotNull(target, $"{retired} anchor should survive as invisible staging.");
+                Assert.IsNull(target.Find("ActualEnvironmentArtOverlay"),
+                    $"{retired} must not re-grow a generated overlay that fights the painted plate.");
+            }
             AssertEnvironmentOverlay(env.transform, "Flower_0", "yard_flower_patch");
             AssertEnvironmentOverlay(env.transform, "PicnicBlanket", "yard_picnic_blanket");
             AssertEnvironmentOverlay(env.transform, "Sandbox", "yard_sandbox");

@@ -92,8 +92,12 @@ namespace CheddarAndCocoa.Tests
             Assert.That(screen.DetailNameText, Does.Contain(game.SelectedMissionName));
             Assert.AreEqual(MissionInstructionCatalog.DescriptionFor(GameManager.MissionVariant.OperationPeeBreak),
                 screen.DetailDescriptionText, "The detail panel should show the level-select description.");
-            Assert.AreEqual(MissionInstructionCatalog.HowToPlayFor(GameManager.MissionVariant.OperationPeeBreak),
+            Assert.AreEqual(MissionSelectScreen.BuildHowToPlayText(GameManager.MissionVariant.OperationPeeBreak),
                 screen.DetailHowToPlayText, "The detail panel should show the how-to-play instructions.");
+            Assert.That(screen.DetailHowToPlayText, Does.StartWith("•  "),
+                "Couch test #3: how-to-play renders as bullet steps, not a wall of text.");
+            Assert.That(screen.DetailHowToPlayText, Does.Contain("\n•  "),
+                "Every step gets its own bullet line.");
             Assert.AreEqual(ArenaHud.MissionBadgeCodeFor(GameManager.MissionVariant.OperationPeeBreak),
                 screen.DetailBadgeCodeText, "The detail panel should show the mission badge.");
             Assert.IsNotNull(screen.DetailCoverSprite, "The detail panel should show the mission cover art.");

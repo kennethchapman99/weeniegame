@@ -402,6 +402,24 @@ namespace CheddarAndCocoa.Game
             SyncDetail();
         }
 
+        /// <summary>
+        /// Couch test #3: HOW TO PLAY reads as short bullet steps, with every on-screen label
+        /// (SQUIRREL STEALING - BARK!, ESCAPE GAP...) highlighted gold exactly as it appears live.
+        /// Pure string build so tests can pin the rendered readout.
+        /// </summary>
+        public static string BuildHowToPlayText(GameManager.MissionVariant variant)
+        {
+            string[] steps = MissionInstructionCatalog.HowToPlayStepsFor(variant);
+            var builder = new System.Text.StringBuilder();
+            for (int i = 0; i < steps.Length; i++)
+            {
+                if (i > 0) builder.Append('\n');
+                builder.Append("•  ").Append(MissionInstructionCatalog.HighlightOnScreenLabels(steps[i]));
+            }
+
+            return builder.ToString();
+        }
+
         private void SyncDetail()
         {
             GameManager.MissionVariant variant = _game.SelectedMissionVariant;
@@ -414,7 +432,7 @@ namespace CheddarAndCocoa.Game
             _detailName.text = _game.SelectedMissionName;
             _detailMeta.text = $"{_game.MissionSelectDetailsFor(variant)} • {_game.MissionSelectStatusFor(variant)}";
             _detailDescription.text = MissionInstructionCatalog.DescriptionFor(variant);
-            _detailHowTo.text = MissionInstructionCatalog.HowToPlayFor(variant);
+            _detailHowTo.text = BuildHowToPlayText(variant);
             _detailChallenge.text = _game.SelectedMissionChallengeLabel;
             _detailReadiness.text = _game.SelectedMissionReadinessLabel;
             _startLabel.text = $"Start {_game.SelectedMissionName}";

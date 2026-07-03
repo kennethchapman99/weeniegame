@@ -48,9 +48,12 @@ accents:
   colliders remain authoritative.
 - Runtime backyard dressing now includes nonblocking mission-readability layers: an eagle sweep band,
   coyote fence pressure lane, continuous fence rails, a house/patio/back-door cluster with an
-  Operation Pee Break outdoor payoff path, a central lawn district, scent trail patches, leash route
-  stones, route dashes, and clearer snack/laundry districts. These are background cues only;
-  controller-owned markers, colliders, and objective arrows remain the source of gameplay truth.
+  Operation Pee Break outdoor payoff path, scent trail patches, leash route stones, route dashes, and
+  clearer snack/laundry districts. Couch test #2: mission-specific cues (threat lanes, scent patches,
+  leash stones, pee path) are `MissionScopedScenery`-gated and render only during their own mission;
+  the stretched lawn-landmark X panel and the screen-wide predator lane-warning banner are retired.
+  These are background cues only; controller-owned markers, colliders, and objective arrows remain
+  the source of gameplay truth.
 - Operation Pee Break now carries controller-owned, nonblocking interior set dressing: room floor,
   couch back/seat, side table, phone glow, charger cord, door frame, leash hook, hallway rug, misread
   prop, and a door-open sunbeam beat. A second silhouette pass adds couch arms/cushion lines, table
@@ -283,6 +286,98 @@ Final polish still needed:
   capture gate verifies composition but cannot judge player attention.
 - Run the second human couch pass; latest automated evidence is `400/400` PlayMode tests passing on
   2026-07-01 after the generated P0 mission-state art pass.
+
+### Couch test #2 readability + presentation fixes (2026-07-03)
+
+The second couch playtest reported five presentation defects. All are fixed and tested:
+
+1. **Level picture cropped beyond recognition.** 2. **Description/instructions too small.**
+   3. **Unreadable bottom buttons.** All three mission-select readability items were resolved by
+   the UGUI + TMP `MissionSelectScreen` rebuild (see the mission-select section above): vector TMP
+   text is crisp at any resolution, the detail panel shows the large cover with big name/premise
+   text, and Start / Highlight Couch Test are full-size UGUI buttons. An interim IMGUI
+   single-column redesign of the old picker was superseded by that rebuild and removed.
+4. **Nonsense background scenery.** The `yard_lawn_landmarks` icon was stretched across a quarter
+   of the yard (the giant salmon X panel), and `yard_threat_lane` was stretched into two full-width
+   trapezoid strips in every mission. The lawn-landmarks overlay and the screen-wide
+   `backyard_predator_lane_warning` banner are removed; threat lanes, scent patches, leash stones,
+   and the pee path are now `MissionScopedScenery`-gated to render only during their own mission.
+5. **Eagle "animation" was a scale pulse.** `MissionActorFeedback` ballooned frame-animated actors
+   by up to +/-45% root scale, drowning the 4-frame wing strips. The scale pulse is suppressed while
+   `ThreatReadabilityAnimator` owns the visual; the eagle instead gets a small authored-child glide
+   bob, and the wing/run frames carry the motion.
+
+6. **In-game HUD and briefing unreadable over the yard** (follow-up report from the same couch
+   sitting). The always-on gameplay HUD was bare white text floating on bright green, and the
+   mission briefing was a translucent frame whose text spilled past the card. All always-on HUD
+   blocks now sit on dark contrast bands, `_mid`/`_small` gameplay text moved up to 20px/16px, and
+   the briefing is an opaque dark card (same treatment as the result overlay) with an accent
+   stripe, 24px GOAL text, and a pure layout function (`ArenaHud.BuildMissionBriefingLayout`) so
+   containment is testable.
+
+Covered by `MissionSelectScreenPlayModeTests` (picker readability),
+`MissionSpecificSceneryCues_OnlyShowDuringTheirMission`,
+`EagleThreat_AnimatesWithWingFramesNotBodyScalePulse`, and
+`MissionBriefingCard_ContainsAllTextRowsWithoutOverlap`; the paged-grid d-pad walk is asserted
+in `MissionFlow_Select_StartsEveryMission_AndEndActionsNavigate`.
+
+Manual acceptance check: open mission select — the level picture must show the whole illustrated
+cover (dogs + scene readable from the couch), the description and HOW TO PLAY text must be
+comfortably readable, and the Start button must be large. Start any mission — every line of the
+top HUD block and the objective block must sit on a dark band and read clearly over the yard, and
+the mission briefing must be an opaque card with nothing spilling past its edges. Start Backyard Rescue — the yard should
+show only the painted plate plus real props (no X panel, no trapezoid lanes, no scent dots), and
+the eagle must fly with flapping wings instead of growing and shrinking. Start Eagle Shadow Panic /
+Scent Search and confirm the sweep band / scent patches come back for their own mission.
+
+### Couch test #3 presentation + pool pass (2026-07-03)
+
+The third couch feedback list reported seven items. All are addressed and tested:
+
+1. **HOW TO PLAY was a wall of text.** `MissionInstructionCatalog.HowToPlayStepsFor` now returns
+   short bullet steps per mission (the old `HowToPlayFor` paragraph is the joined steps, kept for
+   compatibility). The UGUI mission-select detail panel renders them as bullet lines
+   (`MissionSelectScreen.BuildHowToPlayText`), and every on-screen
+   label (SQUIRREL STEALING - BARK!, ESCAPE GAP, HIDE HERE...) is quoted verbatim and highlighted
+   gold/bold via `HighlightOnScreenLabels` so players recognize the live label when it appears.
+2. **"Weird stuff around" / 6. generated scenery clashing with the painted plate.** The generated
+   snack-table and laundry-corner district art is now `MissionScopedScenery`-gated to Snack Heist /
+   Sock Panic only; the flat vector shade-tree, canopy, and garden-bed overlays are retired (the
+   painted plate already paints those landmarks), and the wow-layer's mid-yard bouncing prop dupes
+   (`WowBackyardPropsParade`, `WowAdventurePropsEncore`) are removed.
+3. **Fake collectibles.** The floating `WowMissionSpark` — pickup-sparkle art that literally draws
+   a golden bone with sparkle rays — hovered mid-yard and read as an item you could never pick up.
+   Removed; the mission-tinted ground glow is the only ambient accent left in the yard.
+4. **Name text over the dogs.** The `DebugHud` floating CHEDDAR/COCOA tags are gone (authored dog
+   art carries identity); only the transient WOOF! bark flash remains. The identity/pose label on
+   the dog itself stays debug-only (playtest overlay).
+5. **Flat eagle.** `ThreatReadabilityAnimator` now banks the eagle into its vertical travel
+   (±18°, mirrored with facing) and breathes the sprite scale against the glide bob (higher =
+   smaller/farther, lower = bigger/closer), so the flight reads with depth instead of a cutout.
+7. **The HUGE pool.** `BackyardPoolZone` ports the frozen TS pool (scenes/pool.ts +
+   poolGeometry.ts + movement.ts): a 34x23 open-water rect in the top-left yard quadrant (~11% of
+   the whole yard), three drifting tinted floaties you can run across (slight speed bonus), open
+   water flips a dog into the slow `Swimming` mode with splash/ripple feedback, and exiting at the
+   deck edge roots the dog in a `Shaking` beat (0.9s) before it comes out `IsWet` (4.5s drip
+   timer). The pool is open in the 11 yard-staged missions and closed indoors (Kitchen, Car Ride,
+   Pee Break...); leaving the yard force-dries the dogs (scene-state reset rule). One Scent Search
+   dig mound moved right of the deck so digging never happens underwater. Treats can still land in
+   the water — swimming out or scampering the floaties to fetch a floating weenie is the fantasy,
+   not a bug.
+
+Covered by `BackyardPoolPlayModeTests` (pure geometry + swim/shake/wet transitions + indoor
+closure + bullet-step and highlight assertions + eagle depth pose) and the updated
+`BackyardEnvironmentPlayModeTests` / `BackyardArtEnhancerScenePlayModeTests` scenery assertions.
+
+Manual acceptance check: open mission select — HOW TO PLAY reads as bullets with the squirrel
+warning shown in gold exactly as it appears in-game. Start Backyard Rescue — no name text floats
+over the dogs; the top-left quadrant is dominated by the pool with three drifting floaties; run a
+dog across a floatie (slightly faster), walk off it (splash, dog visibly slows to a swim), swim to
+any edge (dog roots and shakes with droplets, then steps clear). Confirm the sparkle-bone prop and
+snack-table/laundry art are gone from the yard during Backyard Rescue, then start Snack Heist /
+Sock Panic and confirm their district art returns. Trigger the eagle (Backyard Rescue predator
+warning or Eagle Shadow Panic) — it should bank into climbs/dives and swell/shrink subtly with its
+glide instead of sliding around as a flat cutout.
 
 ### Automated art-review cleanup pass (2026-06-29)
 

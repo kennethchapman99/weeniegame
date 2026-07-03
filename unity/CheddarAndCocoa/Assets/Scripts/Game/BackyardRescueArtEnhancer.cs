@@ -234,35 +234,37 @@ namespace CheddarAndCocoa.Game
             AddEnvironmentOverlay(root, "BackDoorExterior", FinalGameplayArt.EnvironmentBackDoor,
                 new Vector2(4.6f, 6.5f), -3, Color.white);
             AddEnvironmentOverlay(root, "PeeBreakOutdoorPayoffPath", FinalGameplayArt.EnvironmentPeeBreakPath,
-                new Vector2(18f, 6f), -3, new Color(1f, 1f, 1f, 0.9f));
+                new Vector2(18f, 6f), -3, new Color(1f, 1f, 1f, 0.9f),
+                GameManager.MissionVariant.OperationPeeBreak);
+            // Snack/laundry districts are mission staging: in every other mission the generated
+            // table/laundry art was "weird stuff around" (couch feedback), so they only render
+            // while their mission is being played.
             AddEnvironmentOverlay(root, "SnackDistrictZone", FinalGameplayArt.EnvironmentSnackTable,
-                new Vector2(14f, 8f), -4, Color.white);
+                new Vector2(14f, 8f), -4, Color.white,
+                GameManager.MissionVariant.SnackHeist);
             AddEnvironmentOverlay(root, "LaundryDistrictZone", FinalGameplayArt.EnvironmentLaundryCorner,
-                new Vector2(14f, 9f), -4, Color.white);
-            AddEnvironmentOverlay(root, "OpenLawnDistrict", FinalGameplayArt.EnvironmentLawnLandmarks,
-                new Vector2(25f, 17f), -5, new Color(1f, 1f, 1f, 0.88f));
-            AddEnvironmentOverlay(root, "Pond", FinalGameplayArt.EnvironmentPond,
-                new Vector2(17f, 10f), -4, new Color(1f, 1f, 1f, 0.92f));
-            AddEnvironmentOverlay(root, "PondShallows", FinalGameplayArt.EnvironmentPond,
-                new Vector2(9f, 5.6f), -3, new Color(1f, 1f, 1f, 0.64f));
-            AddEnvironmentOverlay(root, "TreeTrunk", FinalGameplayArt.EnvironmentShadeTree,
-                new Vector2(8f, 10f), -3, Color.white);
-            AddEnvironmentOverlay(root, "TreeCanopy", FinalGameplayArt.EnvironmentShadeTree,
-                new Vector2(14f, 12f), -2, new Color(1f, 1f, 1f, 0.92f));
-            AddEnvironmentOverlay(root, "TreeCanopyHi", FinalGameplayArt.EnvironmentShadeTree,
-                new Vector2(9f, 7f), -1, new Color(1f, 1f, 1f, 0.78f));
-            AddEnvironmentOverlay(root, "GardenBed", FinalGameplayArt.EnvironmentGardenBed,
-                new Vector2(7f, 28f), -4, new Color(1f, 1f, 1f, 0.92f));
+                new Vector2(14f, 9f), -4, Color.white,
+                GameManager.MissionVariant.SockPanic);
+            // One-background rule, couch test #2: no OpenLawnDistrict overlay. Stretching the
+            // yard_lawn_landmarks icon across a quarter of the yard drew a giant nonsense X panel
+            // over the painted plate; the plate alone is the lawn.
+            // Couch feedback #3: the flat vector shade-tree/garden-bed overlays clashed hard with
+            // the painted plate (which already paints the big tree, swing, and beds), so they are
+            // retired. The pond overlays are gone too — BackyardPoolZone owns the water now.
             AddEnvironmentOverlay(root, "PicnicBlanket", FinalGameplayArt.EnvironmentPicnicBlanket,
                 new Vector2(10.5f, 6.5f), -4, Color.white);
             AddEnvironmentOverlay(root, "Sandbox", FinalGameplayArt.EnvironmentSandbox,
                 new Vector2(9f, 6.5f), -4, Color.white);
+            // Threat lanes are gameplay cues for exactly one mission each; in every other mission
+            // they were stretched trapezoid rows of visual noise (couch test #2).
             AddEnvironmentOverlay(root, "EagleShadowSweepLane", FinalGameplayArt.EnvironmentThreatLane,
-                new Vector2(34f, 7f), -4, new Color(1f, 1f, 1f, 0.82f));
+                new Vector2(34f, 7f), -4, new Color(1f, 1f, 1f, 0.82f),
+                GameManager.MissionVariant.EagleShadowPanic);
             AddEnvironmentOverlay(root, "CoyoteFencePressureLane", FinalGameplayArt.EnvironmentThreatLane,
-                new Vector2(30f, 5f), -4, new Color(1f, 1f, 1f, 0.72f));
-            AddWorldEnvironmentArt("ActualBackyardPredatorLaneWarning", FinalGameplayArt.BackyardPredatorLaneWarning,
-                new Vector3(0f, 0.5f, 0.17f), new Vector2(30f, 5f), -2, new Color(1f, 1f, 1f, 0.72f));
+                new Vector2(30f, 5f), -4, new Color(1f, 1f, 1f, 0.72f),
+                GameManager.MissionVariant.CoyotesFence);
+            // The giant lane-warning banner is retired: the eagle shadow, huddle labels, and
+            // sweep-lane cue already carry the warning without a screen-wide arrow strip.
             AddEnvironmentOverlay(root, "FenceRailTop", FinalGameplayArt.EnvironmentFenceRun,
                 new Vector2(58f, 4.2f), -4, new Color(1f, 1f, 1f, 0.86f));
             AddEnvironmentOverlay(root, "FenceRailBottom", FinalGameplayArt.EnvironmentFenceRun,
@@ -270,10 +272,12 @@ namespace CheddarAndCocoa.Game
 
             for (int i = 0; i < 6; i++)
                 AddEnvironmentOverlay(root, $"ScentTrailPatch_{i}", FinalGameplayArt.EnvironmentScentTrail,
-                    new Vector2(4.2f, 3.2f), -3, new Color(1f, 1f, 1f, 0.88f));
+                    new Vector2(4.2f, 3.2f), -3, new Color(1f, 1f, 1f, 0.88f),
+                    GameManager.MissionVariant.ScentSearch);
             for (int i = 0; i < 5; i++)
                 AddEnvironmentOverlay(root, $"LeashRouteStone_{i}", FinalGameplayArt.EnvironmentLeashRoute,
-                    new Vector2(4.7f, 3.5f), -3, new Color(1f, 1f, 1f, 0.86f));
+                    new Vector2(4.7f, 3.5f), -3, new Color(1f, 1f, 1f, 0.86f),
+                    GameManager.MissionVariant.LeashWalk, GameManager.MissionVariant.WalkCampaign);
             for (int i = 0; i < 9; i++)
                 AddEnvironmentOverlay(root, $"SteppingStone_{i}", FinalGameplayArt.EnvironmentSteppingStone,
                     new Vector2(3.2f, 2.2f), -3, new Color(1f, 1f, 1f, 0.88f));
@@ -302,7 +306,8 @@ namespace CheddarAndCocoa.Game
         }
 
         private void AddEnvironmentOverlay(Transform environmentRoot, string targetName, string resourcePath,
-            Vector2 worldSize, int sortingOrder, Color tint)
+            Vector2 worldSize, int sortingOrder, Color tint,
+            params GameManager.MissionVariant[] onlyDuringMissions)
         {
             var target = environmentRoot.Find(targetName);
             if (target == null || target.Find("ActualEnvironmentArtOverlay") != null) return;
@@ -331,6 +336,9 @@ namespace CheddarAndCocoa.Game
                 color.a = 0f;
                 fallback.color = color;
             }
+
+            if (onlyDuringMissions != null && onlyDuringMissions.Length > 0)
+                MissionScopedScenery.Attach(go, onlyDuringMissions);
 
             OverlayCount++;
             EnvironmentArtOverlayCount++;
@@ -380,25 +388,6 @@ namespace CheddarAndCocoa.Game
             sr.color = tint;
             OverlayCount++;
             BuildingArtOverlayCount++;
-        }
-
-        private void AddWorldEnvironmentArt(string name, string resourcePath, Vector3 position, Vector2 worldSize, int sortingOrder, Color tint)
-        {
-            Sprite sprite = FinalGameplayArt.Load(resourcePath);
-            if (sprite == null || GameObject.Find(name) != null) return;
-
-            var go = new GameObject(name);
-            go.transform.position = position;
-            float xScale = worldSize.x / Mathf.Max(0.01f, sprite.bounds.size.x);
-            float yScale = worldSize.y / Mathf.Max(0.01f, sprite.bounds.size.y);
-            go.transform.localScale = new Vector3(xScale, yScale, 1f);
-
-            var sr = go.AddComponent<SpriteRenderer>();
-            sr.sprite = sprite;
-            sr.sortingOrder = sortingOrder;
-            sr.color = tint;
-            OverlayCount++;
-            EnvironmentArtOverlayCount++;
         }
 
         private void ReactToFeedback(GameManager.FeedbackKind feedback)

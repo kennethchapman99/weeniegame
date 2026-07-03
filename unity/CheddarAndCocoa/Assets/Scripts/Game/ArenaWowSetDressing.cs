@@ -18,7 +18,6 @@ namespace CheddarAndCocoa.Game
         private Transform _root;
         private Transform _missionMotifRoot;
         private SpriteRenderer _missionSpotlight;
-        private SpriteRenderer _missionSpark;
         private GameManager.MissionVariant _lastVariant;
 
         public bool Built { get; private set; }
@@ -34,7 +33,9 @@ namespace CheddarAndCocoa.Game
         public int CharacterVignetteCount { get; private set; }
         public string MissionMotifName { get; private set; } = string.Empty;
         public Color MissionAccentColor { get; private set; }
-        public bool HasMissionReactiveSpotlight => _missionSpotlight != null && _missionSpark != null;
+        // Couch feedback: the floating PickupSparkle "bone" mid-yard read as a collectible you
+        // could never pick up, so the spotlight is the only mission-reactive ambient accent now.
+        public bool HasMissionReactiveSpotlight => _missionSpotlight != null;
         public bool HasMissionReactiveMotifs => _missionMotifRoot != null && MissionMotifPieceCount >= 1 && GeneratedMissionSpriteCount >= 1;
         public bool HasGeneratedCartoonAssets => GeneratedCartoonSpriteCount >= 3;
         public bool HasNoFrozenDogBackdrops => AttractCharacterCount == 0 && CharacterVignetteCount == 0;
@@ -98,7 +99,6 @@ namespace CheddarAndCocoa.Game
             _root.localPosition = Vector3.zero;
 
             BuildFamilyShowcaseVignettes();
-            BuildAttractPropParade();
             BuildMissionSpotlight();
             BuildMissionMotifRoot();
 
@@ -122,22 +122,14 @@ namespace CheddarAndCocoa.Game
                 WowMotionKind.Bounce, 0.035f, 1.3f);
         }
 
-        private void BuildAttractPropParade()
-        {
-            AddCartoonSprite("WowBackyardPropsParade", FinalGameplayArt.EnvironmentPicnicBlanket,
-                new Vector3(-20f, -13.6f, 3.8f), Vector3.one * 2.3f, -3, WowMotionKind.Bounce, 0.08f, 0.1f);
-            AddCartoonSprite("WowAdventurePropsEncore", FinalGameplayArt.EnvironmentSteppingStone,
-                new Vector3(16.5f, 9.2f, 3.8f), Vector3.one * 1.45f, -3, WowMotionKind.Bounce, 0.06f, 1.4f);
-        }
-
+        // Couch feedback: the mid-yard bouncing prop dupes ("weird stuff around") and the floating
+        // sparkle bone (looked interactable, wasn't) are gone. The attract parade is retired; the
+        // subtle mission-tinted ground glow is the only in-yard ambient accent.
         private void BuildMissionSpotlight()
         {
             _missionSpotlight = AddSprite("WowMissionSpotlight", FinalGameplayArt.DogFxGroundGlow,
                 new Vector3(0f, 0f, 4.0f), WorldSizeScale(FinalGameplayArt.DogFxGroundGlow, new Vector2(28f, 18f)),
                 0, WowMotionKind.Pulse, 0.12f, 0.2f, _root, true, new Color(1f, 1f, 1f, 0.10f));
-            _missionSpark = AddSprite("WowMissionSpark", FinalGameplayArt.PickupSparkle,
-                new Vector3(0f, 7.2f, 3.9f), WorldSizeScale(FinalGameplayArt.PickupSparkle, new Vector2(2.2f, 2.2f)),
-                4, WowMotionKind.FloatRotate, 0.35f, 0.8f, _root, true, new Color(1f, 1f, 1f, 0.55f));
         }
 
         private void BuildMissionMotifRoot()
@@ -158,8 +150,6 @@ namespace CheddarAndCocoa.Game
             MissionAccentColor = ArenaHud.MissionBadgeColorFor(variant);
             if (_missionSpotlight != null)
                 _missionSpotlight.color = new Color(MissionAccentColor.r, MissionAccentColor.g, MissionAccentColor.b, 0.16f);
-            if (_missionSpark != null)
-                _missionSpark.color = new Color(1f, Mathf.Lerp(0.78f, MissionAccentColor.g, 0.45f), MissionAccentColor.b, 0.62f);
 
             RebuildMissionMotif(variant, MissionAccentColor);
         }
@@ -258,15 +248,6 @@ namespace CheddarAndCocoa.Game
                 Vector3.one * 0.72f, 0, WowMotionKind.Pulse, 0.12f, 1.0f);
             AddMotifSprite("MotifBackyardSparkB", FinalGameplayArt.SuccessPop, new Vector3(-39.5f, 27.9f, 3.5f),
                 Vector3.one * 0.78f, 0, WowMotionKind.Pulse, 0.12f, 1.6f);
-        }
-
-        private SpriteRenderer AddCartoonSprite(string name, string resourcePath, Vector3 position, Vector3 scale,
-            int sortingOrder, WowMotionKind motionKind, float motionAmount, float phase)
-        {
-            var renderer = AddSprite(name, resourcePath, position, scale, sortingOrder, motionKind, motionAmount, phase,
-                _root, true);
-            if (renderer != null) GeneratedCartoonSpriteCount++;
-            return renderer;
         }
 
         private SpriteRenderer AddMotifSprite(string name, string resourcePath, Vector3 position, Vector3 scale,

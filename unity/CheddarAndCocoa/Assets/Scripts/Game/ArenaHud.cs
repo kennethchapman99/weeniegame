@@ -31,6 +31,56 @@ namespace CheddarAndCocoa.Game
         public const int ResultBodyFontSize = 26;
         public const int ResultButtonFontSize = 26;
         public const int ResultHintFontSize = 18;
+        public const int MissionBriefingGoalFontSize = 24;
+
+        public readonly struct MissionBriefingLayout
+        {
+            public readonly Rect Card;
+            public readonly Rect Title;
+            public readonly Rect Presentation;
+            public readonly Rect Goal;
+            public readonly Rect First;
+            public readonly Rect Roles;
+            public readonly Rect Ownership;
+            public readonly Rect Controls;
+
+            public MissionBriefingLayout(Rect card, Rect title, Rect presentation, Rect goal,
+                Rect first, Rect roles, Rect ownership, Rect controls)
+            {
+                Card = card;
+                Title = title;
+                Presentation = presentation;
+                Goal = goal;
+                First = first;
+                Roles = roles;
+                Ownership = ownership;
+                Controls = controls;
+            }
+        }
+
+        public static MissionBriefingLayout BuildMissionBriefingLayout(float screenWidth, float screenHeight)
+        {
+            Rect card = FitPanel(screenWidth, screenHeight, 920f, 360f);
+            card.y = Mathf.Min(card.y, 304f);
+            float pad = 28f;
+            float x = card.x + pad;
+            float w = card.width - pad * 2f;
+            float y = card.y + 16f;
+            var title = new Rect(x, y, w, 44f);
+            y += 48f;
+            var presentation = new Rect(x, y, w, 26f);
+            y += 32f;
+            var goal = new Rect(x, y, w, 88f);
+            y += 94f;
+            var first = new Rect(x, y, w, 32f);
+            y += 38f;
+            var roles = new Rect(x, y, w, 26f);
+            y += 30f;
+            var ownership = new Rect(x, y, w, 24f);
+            y += 26f;
+            var controls = new Rect(x, y, w, 24f);
+            return new MissionBriefingLayout(card, title, presentation, goal, first, roles, ownership, controls);
+        }
 
         public readonly struct ResultOverlayLayout
         {
@@ -191,6 +241,9 @@ namespace CheddarAndCocoa.Game
             }
 
             int secs = Mathf.CeilToInt(Mathf.Max(0f, _game.TimeRemaining));
+            // White labels straight on the bright yard were unreadable from the couch: every
+            // always-on HUD block sits on a dark contrast band now.
+            DrawTintedRect(new Rect(0f, 0f, VirtualWidth, 140f), new Color(0.02f, 0.05f, 0.06f, 0.62f));
             GUI.Label(new Rect(0, 8, VirtualWidth, 30), $"SCORE  {_game.Score}", _hud);
             GUI.Label(new Rect(0, 34, VirtualWidth, 26), $"Timer  {secs}s", _mid);
             string squirrelState = _game.MaxStolenFood > 0 ? $"Stolen {_game.StolenFood}/{_game.MaxStolenFood}" : "No squirrel pressure";
@@ -198,13 +251,18 @@ namespace CheddarAndCocoa.Game
             GUI.Label(new Rect(0, 82, VirtualWidth, 24), $"{PlayerOwnershipLabel}  |  {PadControlsLabel}  |  F1 Overlay | F2 Audio | F3 Rumble", _small);
             GUI.Label(new Rect(0, 106, VirtualWidth, 24), $"Switch mission: keys 1-9, 0 ({_game.MissionSelectOptionCount} missions) | United barks: {_game.UnitedBarks} | Tug {Mathf.RoundToInt(_game.TugProgress * 100f)}% | Modifier: {_game.ActiveModifierLabel}", _mid);
             GUI.Label(new Rect(0, 130, VirtualWidth, 24), _game.LastScoreEventLabel, _mid);
+
+            DrawTintedRect(new Rect(0f, 148f, VirtualWidth, 108f), new Color(0.02f, 0.05f, 0.06f, 0.5f));
             if (_game.ScorePopVisible)
                 GUI.Label(new Rect(0, 152, VirtualWidth, 30), _game.LastScorePopLabel, _big);
             GUI.Label(new Rect(0, 180, VirtualWidth, 24), $"Objective: {_game.ObjectiveLabel}", _mid);
             GUI.Label(new Rect(0, 204, VirtualWidth, 24), _game.TeamGuidanceLabel, _small);
             GUI.Label(new Rect(0, 228, VirtualWidth, 24), _game.LastCue, _mid);
             if (!string.IsNullOrEmpty(_game.MissionBanner) && !_game.IsGameOver && !_game.IsLevelClear && !_game.MissionBriefingVisible)
+            {
+                DrawTintedRect(new Rect(0f, 258f, VirtualWidth, 40f), new Color(0.02f, 0.05f, 0.06f, 0.6f));
                 GUI.Label(new Rect(0, 260, VirtualWidth, 34), _game.MissionBanner, _big);
+            }
 
             if (_game.MissionBriefingVisible) DrawMissionBriefing();
 
@@ -212,26 +270,21 @@ namespace CheddarAndCocoa.Game
 
         private void DrawMissionBriefing()
         {
-            var box = FitPanel(VirtualWidth, VirtualHeight, 760f, 252f);
-            box.y = Mathf.Min(box.y, 304f);
-            DrawHudPanel(box);
-            GUI.Label(new Rect(box.x + 24f, box.y + 12f, box.width - 48f, 34f), _game.ActiveMissionName, _big);
-            GUI.Label(new Rect(box.x + 32f, box.y + 46f, box.width - 64f, 22f),
-                _game.MissionPresentationLine,
-                _small);
-            GUI.Label(new Rect(box.x + 32f, box.y + 70f, box.width - 64f, 62f),
-                $"GOAL: {_game.MissionIntroPrompt}", _briefing);
-            GUI.Label(new Rect(box.x + 32f, box.y + 136f, box.width - 64f, 26f),
-                $"FIRST: {_game.ObjectiveLabel}", _hud);
-            GUI.Label(new Rect(box.x + 32f, box.y + 166f, box.width - 64f, 22f),
-                $"ROLES: {_game.MissionRoleHint}",
-                _small);
-            GUI.Label(new Rect(box.x + 32f, box.y + 194f, box.width - 64f, 22f),
-                PlayerOwnershipLabel,
-                _small);
-            GUI.Label(new Rect(box.x + 32f, box.y + 220f, box.width - 64f, 22f),
-                $"Follow each dog's arrow  |  {PadControlsLabel}",
-                _small);
+            var layout = BuildMissionBriefingLayout(VirtualWidth, VirtualHeight);
+            // Same treatment as the result overlay: an opaque dark card, not a translucent frame
+            // that lets the bright yard wash out white briefing text.
+            DrawHudOverlay(layout.Card);
+            DrawTintedRect(layout.Card, new Color(0.015f, 0.025f, 0.03f, 0.9f));
+            DrawTintedRect(new Rect(layout.Card.x, layout.Card.y, layout.Card.width, 8f),
+                MissionBadgeColorFor(_game.ActiveMissionVariant));
+
+            GUI.Label(layout.Title, _game.ActiveMissionName, _big);
+            GUI.Label(layout.Presentation, _game.MissionPresentationLine, _mid);
+            GUI.Label(layout.Goal, $"GOAL: {_game.MissionIntroPrompt}", _briefing);
+            GUI.Label(layout.First, $"FIRST: {_game.ObjectiveLabel}", _hud);
+            GUI.Label(layout.Roles, $"ROLES: {_game.MissionRoleHint}", _mid);
+            GUI.Label(layout.Ownership, PlayerOwnershipLabel, _small);
+            GUI.Label(layout.Controls, $"Follow each dog's arrow  |  {PadControlsLabel}", _small);
         }
 
         private void DrawPauseMenu()
@@ -474,14 +527,14 @@ namespace CheddarAndCocoa.Game
             LoadGeneratedHudSkin();
             _hud = new GUIStyle(GUI.skin.label) { fontSize = 22, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
             _hud.normal.textColor = Color.white;
-            _mid = new GUIStyle(GUI.skin.label) { fontSize = 18, alignment = TextAnchor.MiddleCenter };
+            _mid = new GUIStyle(GUI.skin.label) { fontSize = 20, alignment = TextAnchor.MiddleCenter };
             _mid.normal.textColor = Color.white;
             _mid.wordWrap = true;
-            _small = new GUIStyle(GUI.skin.label) { fontSize = 14, alignment = TextAnchor.MiddleCenter };
+            _small = new GUIStyle(GUI.skin.label) { fontSize = 16, alignment = TextAnchor.MiddleCenter };
             _small.normal.textColor = new Color(0.9f, 0.95f, 1f);
             _small.wordWrap = true;
-            _overlay = new GUIStyle(_small) { alignment = TextAnchor.MiddleLeft };
-            _briefing = new GUIStyle(_mid) { fontSize = 18, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
+            _overlay = new GUIStyle(_small) { fontSize = 14, alignment = TextAnchor.MiddleLeft };
+            _briefing = new GUIStyle(_mid) { fontSize = MissionBriefingGoalFontSize, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
             _briefing.normal.textColor = Color.white;
             _big = new GUIStyle(GUI.skin.label) { fontSize = 34, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
             _big.normal.textColor = new Color(1f, 0.95f, 0.4f);

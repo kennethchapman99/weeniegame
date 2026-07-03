@@ -49,20 +49,19 @@ namespace CheddarAndCocoa.Bootstrap
                 "Stick/keys: move   ·   X/Space/Enter: bark   ·   Y/E/Right Shift: interact",
                 _legend);
 
-            DrawTag(_a, "CHEDDAR");
-            DrawTag(_b, "COCOA");
+            // Couch feedback: no persistent name tag over the dogs — the authored dog art carries
+            // identity now. Only the transient WOOF! bark flash remains (bark readability).
+            DrawBarkFlash(_a);
+            DrawBarkFlash(_b);
         }
 
-        private void DrawTag(in Entry e, string name)
+        private void DrawBarkFlash(in Entry e)
         {
-            if (e.dog == null) return;
+            if (e.dog == null || Time.time - e.lastBark >= 0.6f) return;
             Vector3 sp = _cam.WorldToScreenPoint(e.dog.transform.position + Vector3.up * 0.9f);
             if (sp.z < 0) return;
             float y = Screen.height - sp.y; // GUI y is top-down
-            GUI.Label(new Rect(sp.x - 60, y - 14, 120, 22), name, _tag);
-
-            if (Time.time - e.lastBark < 0.6f)
-                GUI.Label(new Rect(sp.x - 60, y - 38, 120, 22), "WOOF!", _woof);
+            GUI.Label(new Rect(sp.x - 60, y - 38, 120, 22), "WOOF!", _woof);
         }
 
         private static string PadStatus(int slot)

@@ -8,6 +8,7 @@ namespace CheddarAndCocoa.Game
         private SpriteRenderer _renderer;
         private TextMesh _label;
         private MeshRenderer _labelRenderer;
+        private ThreatReadabilityAnimator _threatMotion;
         private Vector3 _baseScale;
         private float _pulseAmount;
         private Quaternion _baseRotation;
@@ -19,6 +20,17 @@ namespace CheddarAndCocoa.Game
         public ActorSignalBadge SignalBadge => _signalBadge;
         public string Label => _label != null ? _label.text : string.Empty;
         public bool TextVisible => _labelRenderer != null && _labelRenderer.enabled;
+        // Frame-swapped characters (squirrel/eagle/coyote) must not balloon in and out: the couch
+        // read that scale-pulse as the whole animation instead of the wing/run frames underneath.
+        // Lazy lookup: some missions attach the animator after this component is initialized.
+        public bool ScalePulseSuppressedByAuthoredMotion
+        {
+            get
+            {
+                if (_threatMotion == null) _threatMotion = GetComponent<ThreatReadabilityAnimator>();
+                return _threatMotion != null && _threatMotion.UsesAuthoredMotion;
+            }
+        }
         public bool HasContextualTextVisibility => _label != null && _label.GetComponent<WorldLabelVisibility>() != null;
 
         public void Init(SpriteRenderer renderer, string label, float pulseAmount, Vector3 rotationPerSecond)
@@ -32,6 +44,7 @@ namespace CheddarAndCocoa.Game
                     WorldLabelVisibility.Attach(_label);
             }
             _signalBadge = ActorSignalBadge.Attach(gameObject);
+            _threatMotion = GetComponent<ThreatReadabilityAnimator>();
             _baseScale = transform.localScale;
             _pulseAmount = pulseAmount;
             _baseRotation = transform.localRotation;
@@ -66,7 +79,9 @@ namespace CheddarAndCocoa.Game
 
         private void Update()
         {
-            float pulse = 1f + Mathf.Sin(Time.time * 5f) * _pulseAmount;
+            float pulse = ScalePulseSuppressedByAuthoredMotion
+                ? 1f
+                : 1f + Mathf.Sin(Time.time * 5f) * _pulseAmount;
             transform.localScale = _baseScale * pulse;
             if (_swayAmplitudeDegrees > 0f)
             {
