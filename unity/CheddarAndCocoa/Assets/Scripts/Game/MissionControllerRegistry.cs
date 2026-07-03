@@ -6,7 +6,7 @@ namespace CheddarAndCocoa.Game
     /// <summary>
     /// Atomic registrations for controller-owned missions. A controller factory and its shared
     /// presentation definition live in the same entry so selection cannot expose only half of a
-    /// migrated mission. Unmigrated missions intentionally have no entry yet.
+    /// migrated mission. The full roster is migrated; every selectable variant has an entry.
     /// </summary>
     public static class MissionControllerRegistry
     {
@@ -90,6 +90,9 @@ namespace CheddarAndCocoa.Game
                 [GameManager.MissionVariant.EagleShadowPanic] = new Registration(
                     () => new EagleShadowPanicMissionController(),
                     MissionCatalog.BuildEagleShadowPanicDefinition),
+                [GameManager.MissionVariant.CoyotesFence] = new Registration(
+                    () => new CoyotesFenceMissionController(),
+                    MissionCatalog.BuildCoyotesFenceDefinition),
             };
 
         public static IEnumerable<GameManager.MissionVariant> RegisteredVariants => Registrations.Keys;

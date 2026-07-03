@@ -364,8 +364,18 @@ namespace CheddarAndCocoa.Tests
             game.StartMission(GameManager.MissionVariant.SnackHeist);
             yield return null;
 
-            var snack = Object.FindFirstObjectByType<Treat>();
-            Assert.IsNotNull(snack);
+            // Watch the snack farthest from the squirrel: the live steal loop destroys/replaces
+            // its nearest snack, and this test must observe one stable prop across several frames.
+            var snacks = Object.FindObjectsByType<Treat>(FindObjectsSortMode.None);
+            Assert.IsNotEmpty(snacks);
+            Vector3 squirrelPosition = game.SquirrelObject.transform.position;
+            Treat snack = snacks[0];
+            foreach (var candidate in snacks)
+            {
+                if (Vector3.Distance(candidate.transform.position, squirrelPosition) >
+                    Vector3.Distance(snack.transform.position, squirrelPosition))
+                    snack = candidate;
+            }
             var prop = snack.GetComponent<MissionPropArtAttachment>();
             Assert.IsNotNull(prop, "Snack Heist snacks should use shared mission prop art.");
             Assert.IsTrue(prop.HasRuntimeSprite);

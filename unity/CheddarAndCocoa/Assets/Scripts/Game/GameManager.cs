@@ -81,9 +81,9 @@ namespace CheddarAndCocoa.Game
         public ThreatSweepMissionState EagleShadowPanicState => EagleShadowController?.SweepState ?? _emptyThreatSweepState;
         public CoopRescueTimingPuzzle EagleRescuePuzzle => EagleShadowController?.RescuePuzzle ?? _emptyEagleRescuePuzzle;
         public Vector2 EagleSnatchPosition => EagleShadowController?.SnatchPosition ?? default;
-        public PatrolDefenseMissionState CoyotesFenceState => _patrolState;
+        public PatrolDefenseMissionState CoyotesFenceState => CoyotesFenceController?.State ?? _emptyPatrolState;
         public Vector2[] EagleCoverZones => EagleShadowController?.CoverZones ?? EagleShadowPanicMissionController.ComputeCoverZones(_bounds);
-        public Vector2[] FenceGaps => (Vector2[])_fenceGaps.Clone();
+        public Vector2[] FenceGaps => CoyotesFenceController?.Gaps ?? CoyotesFenceMissionController.ComputeFenceGaps(_bounds);
         public WeenieRoundupMissionController WeenieRoundupController => _activeMissionController as WeenieRoundupMissionController;
         public CarryRoundupMissionState WeenieRoundupState => WeenieRoundupController?.State ?? _emptyCarryState;
         public Vector2 BowlPosition => WeenieRoundupController?.BowlPosition ?? _bounds.center;
@@ -330,16 +330,11 @@ namespace CheddarAndCocoa.Game
             _activeMissionController as KitchenFoodFrenzyMissionController;
         private EagleShadowPanicMissionController EagleShadowController =>
             _activeMissionController as EagleShadowPanicMissionController;
+        private CoyotesFenceMissionController CoyotesFenceController =>
+            _activeMissionController as CoyotesFenceMissionController;
         private readonly ThreatSweepMissionState _emptyThreatSweepState = new ThreatSweepMissionState();
-        private readonly PatrolDefenseMissionState _patrolState = new PatrolDefenseMissionState();
+        private readonly PatrolDefenseMissionState _emptyPatrolState = new PatrolDefenseMissionState();
         private readonly CoopRescueTimingPuzzle _emptyEagleRescuePuzzle = new CoopRescueTimingPuzzle();
-        private const int FenceGapCount = 4;
-        private const int CoyoteRequiredRepairs = 3;
-        private const int CoyoteMaxBreaches = 3;
-        private Vector2 _fenceGapPosition;
-        private bool _coyotePressureHeld;
-        private readonly Vector2[] _fenceGaps = { new(-22f, 6f), new(-22f, -6f), new(22f, 6f), new(22f, -6f) };
-        private GameObject[] _coyoteGapMarkers;
         private readonly CarryRoundupMissionState _emptyCarryState = new CarryRoundupMissionState();
         private readonly ScentSearchMissionState _emptyScentState = new ScentSearchMissionState();
         private PanicMeter _panic;
@@ -412,7 +407,6 @@ namespace CheddarAndCocoa.Game
             _sprite = treatSprite;
             _rangeSprite = rangeSprite;
             _bounds = bounds;
-            ConfigureSpatialLayout();
             _rng = new System.Random(seed);
             _dogStarts = new Vector2[dogs.Length];
             _lastBarks = new float[dogs.Length];
@@ -514,17 +508,6 @@ namespace CheddarAndCocoa.Game
             replaceCollectible: ReplaceControllerCollectible,
             setActorState: SetActorState,
             pulse: Pulse);
-
-        private void ConfigureSpatialLayout()
-        {
-            Vector2 P(float x, float y) => new Vector2(
-                _bounds.center.x + x * _bounds.width * 0.5f,
-                _bounds.center.y + y * _bounds.height * 0.5f);
-
-            Vector2[] gaps = { P(-0.94f, 0.38f), P(-0.94f, -0.38f), P(0.94f, 0.38f), P(0.94f, -0.38f) };
-
-            gaps.CopyTo(_fenceGaps, 0);
-        }
 
         public void OnTreatCollected(Treat treat, DogController dog)
         {
@@ -1008,38 +991,38 @@ namespace CheddarAndCocoa.Game
 
         public void ForceCoyoteBarkPressure(DogId dogId = DogId.Cocoa)
         {
-            if (MissionActive() && _mission != null && _mission.Variant == MissionVariant.CoyotesFence)
-                RegisterCoyoteBarkPressure(IndexOfDog(dogId));
+            if (MissionActive()) CoyotesFenceController?.ForceBarkPressure(dogId);
         }
 
         public void ForceCoyoteRepair(DogId dogId = DogId.Cheddar)
         {
-            if (MissionActive() && _mission != null && _mission.Variant == MissionVariant.CoyotesFence)
-                TryCoyoteRepair(dogId, true);
+            if (MissionActive()) CoyotesFenceController?.ForceRepair(dogId);
         }
 
         public void ForceCoyoteBreach()
         {
-            if (MissionActive() && _mission != null && _mission.Variant == MissionVariant.CoyotesFence)
-                RegisterCoyoteBreach();
+            if (!MissionActive()) return;
+            CoyotesFenceController?.ForceBreach();
+            CheckClear();
         }
 
         public void ForceCoyoteFakeSnack()
         {
-            if (MissionActive() && _mission != null && _mission.Variant == MissionVariant.CoyotesFence)
-                TriggerCoyoteFakeSnack();
+            if (MissionActive()) CoyotesFenceController?.ForceFakeSnack();
         }
 
         public void ForceCoyoteFinalBlock()
         {
-            if (MissionActive() && _mission != null && _mission.Variant == MissionVariant.CoyotesFence)
-                CompleteCoyoteFinalPressure();
+            if (!MissionActive()) return;
+            CoyotesFenceController?.ForceFinalBlock();
+            CheckClear();
         }
 
         public void ForceCoyoteProwlReach()
         {
-            if (MissionActive() && _mission != null && _mission.Variant == MissionVariant.CoyotesFence)
-                EvaluatePatrolReach();
+            if (!MissionActive()) return;
+            CoyotesFenceController?.ForceProwlReach();
+            CheckClear();
         }
 
         public void ForceSockBasketTip(DogId dogId = DogId.Cocoa)
@@ -1096,9 +1079,6 @@ namespace CheddarAndCocoa.Game
             _rng = new System.Random(_missionSeed);
             ActiveModifier = (RoundModifier)_rng.Next(0, 3);
             ActivateMissionController(_mission.Variant);
-            _patrolState.Reset();
-            _coyotePressureHeld = false;
-            _fenceGapPosition = _fenceGaps[0];
             if (_dogContribution != null) System.Array.Clear(_dogContribution, 0, _dogContribution.Length);
             if (_panic != null) _panic.ResetMeter();
             _nextUnitedBarkAt = 0f;
@@ -1147,22 +1127,6 @@ namespace CheddarAndCocoa.Game
             if (_mission.UsesSquirrel) SetActorState(SquirrelObject, _activeMissionController is SquirrelConspiracyMissionController ? "SQUIRREL CONSPIRACY ROUTE 1" : "Squirrel: WAITING", new Color(0.55f, 0.32f, 0.12f), 0.06f);
             if (_mission.RequiresPredator) SetActorState(PredatorObject, "Predator: OFFSCREEN", Color.gray, 0.04f);
             if (_mission.RequiresTug) SetActorState(RopeObject, "Rope/Tug - BOTH DOGS", new Color(0.95f, 0.7f, 0.15f), 0.08f);
-            if (_mission.Variant == MissionVariant.CoyotesFence)
-            {
-                PredatorObject.SetActive(true);
-                SquirrelObject.SetActive(true);
-                _patrolState.SelectGap(0);
-                _fenceGapPosition = _fenceGaps[0];
-                PlaceObject(PredatorObject, new Vector2(0f, _bounds.yMax + 2f));
-                PlaceObject(SquirrelObject, _fenceGapPosition);
-                SetActorState(PredatorObject, "COYOTE AT THE FENCE - BARK PRESSURE!", new Color(0.55f, 0.32f, 0.12f), 0.28f);
-                SetActorState(SquirrelObject, "WEAK SPOT - FILL DIRT (NEEDS PARTNER BARK)", new Color(0.62f, 0.45f, 0.2f), 0.1f);
-                SetCoyoteGapMarkersActive(true);
-            }
-            else
-            {
-                SetCoyoteGapMarkersActive(false);
-            }
             StageDogsForMissionEntry();
             UpdateObjectiveArrows();
             _lastLoggedObjective = string.Empty;
@@ -1189,8 +1153,7 @@ namespace CheddarAndCocoa.Game
             }
 
             TickModifier();
-            if (_mission.Variant == MissionVariant.CoyotesFence) TickPatrolDefense();
-            else if (_activeMissionController != null) _activeMissionController.Tick(Time.deltaTime, Time.time);
+            if (_activeMissionController != null) _activeMissionController.Tick(Time.deltaTime, Time.time);
             else TickSquirrel();
             TickPredator();
             TickTugProximity();
@@ -1285,89 +1248,6 @@ namespace CheddarAndCocoa.Game
             if (StolenFood >= maxStolenFood) EndRound(false);
         }
 
-
-        private void BuildCoyoteGapMarkers()
-        {
-            _coyoteGapMarkers = new GameObject[_fenceGaps.Length];
-            for (int i = 0; i < _fenceGaps.Length; i++)
-            {
-                var go = new GameObject($"FenceGap_{i}");
-                go.transform.position = _fenceGaps[i];
-                go.transform.localScale = new Vector3(1.2f, 2.4f, 1f);
-                var sr = go.AddComponent<SpriteRenderer>();
-                sr.sprite = _sprite;
-                sr.color = new Color(0.5f, 0.36f, 0.18f, 0.6f);
-                sr.sortingOrder = 1;
-                AddWorldLabel(go, "WEAK SPOT", Vector3.up * 1.4f, 13, Color.white);
-                MissionPropArt.AttachObject(go, FinalGameplayArt.CoyotesFenceGapOpen, 0.012f, 18, true);
-                go.SetActive(false);
-                _coyoteGapMarkers[i] = go;
-            }
-        }
-
-        private void SetCoyoteGapMarkersActive(bool active)
-        {
-            if (_coyoteGapMarkers == null) return;
-            foreach (var marker in _coyoteGapMarkers)
-                if (marker != null) marker.SetActive(active);
-        }
-
-        private void SetCoyoteActiveGapArt(string resourcePath)
-        {
-            SetCoyoteGapArt(_patrolState.ActiveGapIndex, resourcePath);
-        }
-
-        private void SetCoyoteGapArt(int gapIndex, string resourcePath)
-        {
-            if (_coyoteGapMarkers == null || _coyoteGapMarkers.Length == 0) return;
-            int index = Mathf.Clamp(gapIndex, 0, _coyoteGapMarkers.Length - 1);
-            SetMissionProp(_coyoteGapMarkers[index], resourcePath, 0.012f, 18);
-        }
-
-        private static void SetMissionProp(GameObject go, string resourcePath, float scale, int sortingOrder)
-        {
-            if (go == null || string.IsNullOrEmpty(resourcePath)) return;
-            var attachment = go.GetComponent<MissionPropArtAttachment>();
-            if (attachment != null && attachment.HasRuntimeSprite)
-            {
-                MissionPropArt.SetSprite(attachment, resourcePath);
-                return;
-            }
-            MissionPropArt.AttachObject(go, resourcePath, scale, sortingOrder, true);
-        }
-
-        // The coyote prowls toward the active weak spot. If the dogs are holding bark pressure when
-        // it arrives, it is driven off; otherwise it breaches the gap.
-        private void EvaluatePatrolReach()
-        {
-            if (_patrolState.FinalPressureComplete) return;
-
-            if (_coyotePressureHeld)
-            {
-                _coyotePressureHeld = false;
-                LastCue = "The coyote lunged at the weak spot but the bark pressure drove it back!";
-                SetActorState(PredatorObject, "COYOTE DRIVEN BACK!", new Color(0.7f, 0.42f, 0.16f), 0.24f);
-                SpawnWorldPop(PredatorObject.transform.position, "DRIVEN BACK!", new Color(1f, 0.85f, 0.3f));
-                LogPlaytestEvent("CoyoteDrivenBack", LastCue);
-                PlaceObject(PredatorObject, new Vector2(0f, _bounds.yMax + 2f));
-                LogObjectiveIfChanged();
-                return;
-            }
-
-            RegisterCoyoteBreach();
-            PlaceObject(PredatorObject, new Vector2(0f, _bounds.yMax + 2f));
-        }
-
-        private void TickPatrolDefense()
-        {
-            if (PredatorObject == null || _patrolState.FinalPressureComplete) return;
-
-            Vector2 target = _fenceGaps[_patrolState.ActiveGapIndex % _fenceGaps.Length];
-            PredatorObject.transform.position = Vector3.MoveTowards(
-                PredatorObject.transform.position, target, Time.deltaTime * (_tuning.SquirrelMoveSpeed * 0.7f));
-            if (Vector2.Distance(PredatorObject.transform.position, target) < 0.5f)
-                EvaluatePatrolReach();
-        }
 
         public void ForceWeeniePickup(DogId dogId = DogId.Cheddar)
         {
@@ -1499,141 +1379,6 @@ namespace CheddarAndCocoa.Game
             if (MissionActive()) EagleShadowController?.ForceRescueAdvance(seconds);
         }
 
-        private void RegisterCoyoteBarkPressure(int dogIndex)
-        {
-            if (dogIndex < 0 || dogIndex >= _dogs.Length || _patrolState.FinalPressureComplete) return;
-
-            _patrolState.AddBarkPressure();
-            _coyotePressureHeld = true;
-            SetCoyoteActiveGapArt(FinalGameplayArt.CoyotesFenceGapPinned);
-            AddScore(ScoreEventCatalog.FenceHeld.Points, ScoreEventCatalog.FenceHeld.Label);
-            LastFeedback = FeedbackKind.SquirrelScared;
-            LastCue = $"{DogName(_dogs[dogIndex])} bark-pinned the coyote at the fence - partner can fill dirt now!";
-            SetActorState(PredatorObject, "COYOTE BLOCKED - PARTNER FILLS DIRT!", new Color(0.7f, 0.42f, 0.16f), 0.26f);
-            SetJuice(JuiceFeedbackKind.SuccessPop, "COYOTE BLOCKED");
-            SpawnWorldPop(PredatorObject.transform.position, "BLOCKED!", new Color(1f, 0.85f, 0.3f));
-            RequestAudioCue(ArenaFeedbackCatalog.Bark);
-            RequestRumble("coyote_block", 0.12f, 0.24f, 0.12f);
-            LogPlaytestEvent("CoyoteBlocked", $"pressures {_patrolState.BarkPressures}");
-
-            if (_patrolState.FakeSnackActive)
-            {
-                _patrolState.ResolveFakeSnack();
-                SetMissionProp(PredatorObject, FinalGameplayArt.CoyotesFenceGapPinned, 0.013f, 31);
-                LastCue = "The fake snack lure fizzled - the dogs held the fence instead of taking the bait!";
-                LogPlaytestEvent("CoyoteFakeSnackResolved", LastCue);
-            }
-
-            LogObjectiveIfChanged();
-        }
-
-        private void TryCoyoteRepair(DogId dogId, bool force = false)
-        {
-            int dogIndex = IndexOfDog(dogId);
-            if (dogIndex < 0) return;
-            if (_patrolState.FinalPressureComplete)
-            {
-                MarkFailedInteraction(dogId, "yard already defended");
-                return;
-            }
-            if (!_coyotePressureHeld)
-            {
-                MarkFailedInteraction(dogId, "partner must bark-hold the coyote before filling dirt");
-                return;
-            }
-            if (!force && Vector2.Distance(_dogs[dogIndex].transform.position, _fenceGapPosition) > 2f)
-            {
-                MarkFailedInteraction(dogId, "too far from the fence weak spot");
-                return;
-            }
-
-            _patrolState.AddRepair();
-            CreditDog(dogIndex);
-            _coyotePressureHeld = false;
-            int repairedGap = _patrolState.ActiveGapIndex;
-            SetCoyoteGapArt(repairedGap, FinalGameplayArt.CoyotesFenceGapRepaired);
-            _patrolState.SelectGap((_patrolState.ActiveGapIndex + 1) % FenceGapCount);
-            _fenceGapPosition = _fenceGaps[_patrolState.ActiveGapIndex % _fenceGaps.Length];
-            SetCoyoteActiveGapArt(FinalGameplayArt.CoyotesFenceGapOpen);
-            PlaceObject(SquirrelObject, _fenceGapPosition);
-            AddScore(ScoreEventCatalog.DirtFilled.Points, ScoreEventCatalog.DirtFilled.Label);
-            LastFeedback = FeedbackKind.PartnerRescue;
-            LastCue = $"{DogName(_dogs[dogIndex])} filled the weak spot ({_patrolState.GapsRepaired}/{CoyoteRequiredRepairs}). Patrol the next gap!";
-            SetActorState(SquirrelObject, $"WEAK SPOT FILLED {_patrolState.GapsRepaired}/{CoyoteRequiredRepairs}", new Color(0.45f, 1f, 0.55f), 0.18f);
-            SetJuice(JuiceFeedbackKind.SuccessPop, ScoreEventCatalog.DirtFilled.Label);
-            SpawnWorldPop(_fenceGapPosition, "DIRT FILLED!", new Color(0.55f, 1f, 0.45f));
-            RequestAudioCue(ArenaFeedbackCatalog.TugRescueSuccess);
-            RequestRumble("coyote_repair", 0.2f, 0.4f, 0.14f);
-            LogPlaytestEvent("CoyoteRepair", $"repairs {_patrolState.GapsRepaired}/{CoyoteRequiredRepairs}");
-
-            if (_patrolState.ReadyForFinalPressure(CoyoteRequiredRepairs))
-            {
-                SetActorState(PredatorObject, "COYOTE GOING FOR THE FINAL PUSH - UNITED BARK!", new Color(0.85f, 0.3f, 0.12f), 0.34f);
-                LastCue = "Fence is mostly patched! Get both dogs together and bark down the final coyote push.";
-                LogPlaytestEvent("CoyoteFinalPressureReady", LastCue);
-            }
-
-            LogObjectiveIfChanged();
-        }
-
-        private void RegisterCoyoteBreach()
-        {
-            _patrolState.AddBreach();
-            _coyotePressureHeld = false;
-            int breachedGap = _patrolState.ActiveGapIndex;
-            SetCoyoteGapArt(breachedGap, FinalGameplayArt.CoyotesFenceGapBreached);
-            _patrolState.SelectGap((_patrolState.ActiveGapIndex + 1) % FenceGapCount);
-            AddScore(ScoreEventCatalog.FakeOut.Points, "COYOTE BREACH");
-            LastFeedback = FeedbackKind.SquirrelStoleFood;
-            LastCue = $"The coyote slipped through a weak spot! Breach {_patrolState.Breaches}/{CoyoteMaxBreaches}.";
-            SetActorState(PredatorObject, $"COYOTE BREACH {_patrolState.Breaches}/{CoyoteMaxBreaches}!", new Color(0.85f, 0.12f, 0.12f), 0.4f);
-            SetJuice(JuiceFeedbackKind.WarningMiss, "COYOTE BREACH!");
-            SpawnWorldPop(PredatorObject.transform.position, "BREACH!", new Color(1f, 0.3f, 0.2f));
-            RequestAudioCue(ArenaFeedbackCatalog.ThreatWarning);
-            RequestRumble("coyote_breach", 0.2f, 0.42f, 0.16f);
-            LogPlaytestEvent("CoyoteBreach", LastCue);
-            if (_patrolState.TooManyBreaches(CoyoteMaxBreaches)) EndRound(false);
-            else LogObjectiveIfChanged();
-        }
-
-        private void TriggerCoyoteFakeSnack()
-        {
-            if (_patrolState.FakeSnackActive) return;
-
-            _patrolState.StartFakeSnack();
-            bool cheddarCloser = _dogs.Length > 1 &&
-                Vector2.Distance(_dogs[0].transform.position, PredatorObject.transform.position) <=
-                Vector2.Distance(_dogs[1].transform.position, PredatorObject.transform.position);
-            LastFeedback = FeedbackKind.SquirrelStealing;
-            LastCue = cheddarCloser
-                ? "Fake snack lure! Cheddar is RABIDLY tempted - someone bark him back to the fence!"
-                : "Fake snack lure! Don't take the bait - keep barking the coyote off the fence.";
-            SetActorState(PredatorObject, cheddarCloser ? "FAKE SNACK BAIT - CHEDDAR, NO!" : "FAKE SNACK BAIT - IGNORE IT!", new Color(0.9f, 0.6f, 0.15f), 0.32f);
-            SetMissionProp(PredatorObject, FinalGameplayArt.CoyotesFenceFakeSnack, 0.013f, 31);
-            SetJuice(JuiceFeedbackKind.WarningMiss, "FAKE SNACK BAIT!");
-            RequestAudioCue(ArenaFeedbackCatalog.SquirrelStealMiss);
-            RequestRumble("coyote_fake_snack", 0.14f, 0.3f, 0.12f);
-            LogPlaytestEvent("CoyoteFakeSnack", LastCue);
-            LogObjectiveIfChanged();
-        }
-
-        private void CompleteCoyoteFinalPressure()
-        {
-            if (!_patrolState.ReadyForFinalPressure(CoyoteRequiredRepairs)) return;
-
-            _patrolState.CompleteFinalPressure();
-            AddScore(ScoreEventCatalog.YardDefended.Points, ScoreEventCatalog.YardDefended.Label);
-            LastFeedback = FeedbackKind.UnitedBark;
-            LastCue = "United bark slammed the final coyote push - the yard is defended!";
-            SetActorState(PredatorObject, "COYOTE RETREATS - YARD DEFENDED!", Color.gray, 0.1f);
-            SetJuice(JuiceFeedbackKind.SuccessPop, ScoreEventCatalog.YardDefended.Label);
-            SpawnWorldPop(_dogs[0].transform.position + Vector3.up, "YARD DEFENDED!", new Color(1f, 0.95f, 0.3f));
-            RequestAudioCue(ArenaFeedbackCatalog.TugRescueSuccess);
-            RequestRumble("coyote_yard_defended", 0.34f, 0.62f, 0.2f);
-            LogPlaytestEvent("CoyoteYardDefended", LastCue);
-            CheckClear();
-        }
-
         private MissionRuntimeSnapshot BuildRuntimeSnapshot()
         {
             if (_activeMissionController != null)
@@ -1643,20 +1388,10 @@ namespace CheddarAndCocoa.Game
             int progress;
             int goal;
             int mistakes;
-            if (_mission != null && _mission.Variant == MissionVariant.CoyotesFence)
-            {
-                missionId = "coyotes_fence";
-                progress = _patrolState.GapsRepaired + (_patrolState.FinalPressureComplete ? 1 : 0);
-                goal = CoyoteRequiredRepairs + 1;
-                mistakes = _patrolState.Breaches;
-            }
-            else
-            {
-                missionId = ActiveMissionVariant.ToString();
-                progress = BreakfastRecovered;
-                goal = BreakfastGoal;
-                mistakes = StolenFood + FailedInteractions;
-            }
+            missionId = ActiveMissionVariant.ToString();
+            progress = BreakfastRecovered;
+            goal = BreakfastGoal;
+            mistakes = StolenFood + FailedInteractions;
             return new MissionRuntimeSnapshot(missionId, Score, TimeRemaining, progress, goal, mistakes, Outcome == MissionOutcome.Clear, Outcome == MissionOutcome.Failed);
         }
 
@@ -1794,12 +1529,6 @@ namespace CheddarAndCocoa.Game
                 return;
             }
 
-            if (_mission != null && _mission.Variant == MissionVariant.CoyotesFence)
-            {
-                TryCoyoteRepair(dogId);
-                return;
-            }
-
             if (_mission == null || !_mission.RequiresTug)
             {
                 MarkFailedInteraction(dogId, "no interact target in this mission");
@@ -1862,12 +1591,7 @@ namespace CheddarAndCocoa.Game
             RequestRumble("bark", 0.08f, 0.18f, 0.08f);
             LogPlaytestEvent("Bark", DogName(dog));
 
-            if (_mission.Variant == MissionVariant.CoyotesFence)
-            {
-                RegisterCoyoteBarkPressure(dogIndex);
-                barkDidSomething = true;
-            }
-            else if (_activeMissionController != null)
+            if (_activeMissionController != null)
             {
                 barkDidSomething = _activeMissionController.HandleBark(dogIndex);
             }
@@ -1909,7 +1633,6 @@ namespace CheddarAndCocoa.Game
                 unitedBarkListener.OnUnitedBark();
                 CheckClear();
             }
-            if (_mission.Variant == MissionVariant.CoyotesFence && _patrolState.ReadyForFinalPressure(CoyoteRequiredRepairs)) CompleteCoyoteFinalPressure();
         }
 
         private void ScareSquirrel(float seconds, string cue, bool awardScore)
@@ -1962,11 +1685,6 @@ namespace CheddarAndCocoa.Game
             {
                 if (_activeMissionController.IsComplete) EndRound(true);
                 else if (_activeMissionController.IsFailed) EndRound(false);
-                return;
-            }
-            if (_mission.Variant == MissionVariant.CoyotesFence)
-            {
-                if (_patrolState.FinalPressureComplete) EndRound(true);
                 return;
             }
             bool hasItems = BreakfastRecovered >= _mission.ItemGoal;
@@ -2081,8 +1799,6 @@ namespace CheddarAndCocoa.Game
             string funny;
             if (_activeMissionController != null)
                 funny = _activeMissionController.OutcomeSummary ?? Outcome.ToString();
-            else if (_mission != null && _mission.Variant == MissionVariant.CoyotesFence)
-                funny = MissionOutcomeSummaryBuilder.BuildPatrolSummary(_patrolState);
             else
                 funny = Outcome.ToString();
             return $"{funny}: {Score} - {EndRank}";
@@ -2116,13 +1832,6 @@ namespace CheddarAndCocoa.Game
             if (Phase == State.PredatorWarning)
                 return "Huddle + bark at the shadow";
             if (_activeMissionController != null) return _activeMissionController.ObjectiveLabel;
-            if (_mission.Variant == MissionVariant.CoyotesFence)
-            {
-                if (_patrolState.ReadyForFinalPressure(CoyoteRequiredRepairs)) return "Block the final coyote push - both dogs bark together";
-                if (_patrolState.FakeSnackActive) return "Ignore the fake snack lure - hold the fence";
-                if (_coyotePressureHeld) return "Coyote pinned - partner fill the weak spot now";
-                return $"Patrol fence gap {_patrolState.ActiveGapIndex + 1}: repairs {_patrolState.GapsRepaired}/{CoyoteRequiredRepairs}, breaches {_patrolState.Breaches}/{CoyoteMaxBreaches}";
-            }
             if (_squirrelTarget != null)
                 return _mission.SquirrelObjectiveText;
             if (_mission.RequiresTug && !TugComplete && BreakfastRecovered >= Mathf.Max(2, recoveryGoal / 2))
@@ -2149,7 +1858,6 @@ namespace CheddarAndCocoa.Game
             if (_activeMissionController != null && !string.IsNullOrEmpty(_activeMissionController.FailReason))
                 return _activeMissionController.FailReason;
 
-            if (_mission.Variant == MissionVariant.CoyotesFence && _patrolState.TooManyBreaches(CoyoteMaxBreaches)) return "The coyote breached the fence one too many times while the dogs got separated.";
             if (_mission.UsesSquirrel && StolenFood >= maxStolenFood) return _mission.StolenFailReason;
             if (TimeRemaining <= 0f) return _mission.TimeFailReason;
             if (_mission.RequiresPredator && PredatorFailed) return _mission.PredatorFailReason;
@@ -2563,7 +2271,6 @@ namespace CheddarAndCocoa.Game
             if (RopeObject != null) RopeObject.SetActive(active && _mission != null && _mission.RequiresTug);
             if (_bunnyCameoObject != null) _bunnyCameoObject.SetActive(active);
             if (!active) _activeMissionController?.Cleanup();
-            if (!active || _mission == null || _mission.Variant != MissionVariant.CoyotesFence) SetCoyoteGapMarkersActive(false);
         }
 
         public static MissionDefinition BuildMissionDefinition(MissionVariant variant) =>
@@ -2574,69 +2281,7 @@ namespace CheddarAndCocoa.Game
             if (MissionCatalog.TryBuild(variant, tuning, out var registeredDefinition))
                 return registeredDefinition;
 
-            var balance = tuning.BalanceFor(variant);
-            switch (variant)
-            {
-                case MissionVariant.CoyotesFence:
-                    return MissionCatalog.ApplyPresentationMetadata(new MissionDefinition
-                    {
-                        Variant = MissionVariant.CoyotesFence,
-                        Name = "Coyotes at the Fence",
-                        IntroPrompt = "Cheddar + Cocoa must patrol the fence gaps, bark-pin the coyote, fill the weak spots together, and block the final push.",
-                        ReadyScoreLabel = "READY TO HOLD THE FENCE",
-                        ItemRootName = "Fence Weak Spots",
-                        ItemObjectName = "Weak Spot",
-                        ItemWorldLabel = "Gap!",
-                        ItemArrowLabel = "GAP",
-                        ItemCollectCueNoun = "a filled weak spot",
-                        CollectObjectiveFormat = "Fill weak spots {0}/{1}",
-                        CollectedScoreLabel = "DIRT FILLED",
-                        ItemScore = balance.ItemScore,
-                        SpawnedItemCount = balance.SpawnedItemCount,
-                        ItemGoal = balance.ItemGoal,
-                        RoundSeconds = balance.RoundSeconds,
-                        PawfectScore = balance.PawfectScore,
-                        HeroScore = balance.HeroScore,
-                        SurvivorScore = balance.SurvivorScore,
-                        UsesSquirrel = false,
-                        RequiresPredator = false,
-                        RequiresTug = false,
-                        MaxStolenFood = balance.MaxStolenFood,
-                        SquirrelPenalty = balance.SquirrelPenalty,
-                        SquirrelScareScore = balance.SquirrelScareScore,
-                        SquirrelObjectiveText = "Bark-pin the coyote at the fence",
-                        SquirrelStealingCue = "No squirrel here - the coyote is testing the fence.",
-                        SquirrelStoleCue = "No squirrel here - watch the gaps.",
-                        SquirrelStealScoreLabel = "COYOTE BREACH",
-                        SquirrelScareScoreLabel = "FENCE HELD",
-                        SquirrelStealingActorLabel = "COYOTE AT THE FENCE",
-                        SquirrelDroppedActorLabel = "COYOTE BLOCKED",
-                        SquirrelStoleActorLabel = "COYOTE BREACH",
-                        SquirrelMissPopLabel = "BREACH!",
-                        SquirrelStealJuiceLabel = "COYOTE BREACH!",
-                        SquirrelScareJuiceLabel = "FENCE HELD!",
-                        TugObjectiveText = "Fill the fence weak spot",
-                        WaitingObjectiveText = "Patrol the fence gaps together",
-                        ClearObjectiveText = "Yard defended - replay Coyotes at the Fence",
-                        ClearBannerPrefix = "YARD DEFENDED!",
-                        ClearScoreLabel = "COYOTE PATROL CLEAR",
-                        ReplayPrompt = "Press R / Enter / Start to replay Coyotes at the Fence",
-                        FailObjectiveText = "Mission failed - replay Coyotes at the Fence",
-                        GenericFailReason = "Needs tighter patrol splits before the next coyote shift.",
-                        TimeFailReason = "The coyote outlasted the patrol until the clock ran out.",
-                        StolenFailReason = "The coyote breached the fence too many times.",
-                        PredatorFailReason = "The coyote isolated a dog at the fence.",
-                        PawfectClearReason = "Tiny patrol legends held every gap and barked the coyote into retirement.",
-                        HeroClearReason = "The fence held and the final push was blocked clean.",
-                        BasicClearReason = "The yard survived, even if a few gaps got scary.",
-                        ItemColor = new Color(0.55f, 0.42f, 0.2f),
-                        ItemAccentColor = new Color(0.85f, 0.7f, 0.35f),
-                        ItemSecondaryColor = new Color(0.2f, 0.14f, 0.06f),
-                        ItemPopColor = new Color(0.95f, 0.8f, 0.35f)
-                    });
-                default:
-                    throw new System.InvalidOperationException($"No MissionDefinition registered for {variant}. Add it to MissionCatalog.");
-            }
+            throw new System.InvalidOperationException($"No MissionDefinition registered for {variant}. Add it to MissionCatalog.");
         }
 
         private int IndexOfDog(DogId dogId)
@@ -2797,42 +2442,7 @@ namespace CheddarAndCocoa.Game
             if (_activeMissionController != null)
                 return _activeMissionController.TryGetObjectiveTarget(dogIndex, out target, out copy, out hideDistance);
 
-            switch (_mission.Variant)
-            {
-                case MissionVariant.CoyotesFence:
-                    if (_patrolState.ReadyForFinalPressure(CoyoteRequiredRepairs))
-                    {
-                        target = _dogs[dogIndex == 0 ? 1 : 0].transform;
-                        copy = "UNITED BARK";
-                        hideDistance = 1.6f;
-                    }
-                    else
-                    {
-                        target = SquirrelObject != null ? SquirrelObject.transform : null;
-                        copy = _coyotePressureHeld ? "FILL DIRT" : "BARK COYOTE";
-                    }
-                    break;
-                default:
-                    return false;
-            }
-
-            return target != null;
-        }
-
-        private static Transform FindNearestActiveMarker(GameObject[] markers, Vector2 position)
-        {
-            Transform nearest = null;
-            float nearestDistance = float.PositiveInfinity;
-            if (markers == null) return null;
-            foreach (var marker in markers)
-            {
-                if (marker == null || !marker.activeSelf) continue;
-                float distance = Vector2.Distance(position, marker.transform.position);
-                if (distance >= nearestDistance) continue;
-                nearest = marker.transform;
-                nearestDistance = distance;
-            }
-            return nearest;
+            return false;
         }
 
         private void StageDogsForMissionEntry()
@@ -2861,13 +2471,8 @@ namespace CheddarAndCocoa.Game
 
         private Vector2 ResolveMissionEntryTarget()
         {
-            switch (_mission.Variant)
-            {
-                case MissionVariant.CoyotesFence: return _fenceGapPosition;
-                default:
-                    var nearestTreat = FindNearestTreat(_bounds.center);
-                    return nearestTreat != null ? (Vector2)nearestTreat.transform.position : _bounds.center;
-            }
+            var nearestTreat = FindNearestTreat(_bounds.center);
+            return nearestTreat != null ? (Vector2)nearestTreat.transform.position : _bounds.center;
         }
 
         private Vector2 ClampInsideBounds(Vector2 point, float margin)
@@ -2995,7 +2600,6 @@ namespace CheddarAndCocoa.Game
             PredatorObject = MakeActor(ArenaArtCatalog.Actor(ArenaArtCatalog.ActorKind.Predator));
             RopeObject = MakeActor(ArenaArtCatalog.Actor(ArenaArtCatalog.ActorKind.Rope));
             _bunnyCameoObject = MakeDraftBunnyCameo();
-            BuildCoyoteGapMarkers();
             if (InteractionRangeIndicators != null)
             {
                 int offset = _dogs != null ? _dogs.Length : 0;

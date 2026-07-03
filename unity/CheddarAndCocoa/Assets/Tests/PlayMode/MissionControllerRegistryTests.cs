@@ -45,22 +45,24 @@ namespace CheddarAndCocoa.Game.Tests
                     GameManager.MissionVariant.SquirrelConspiracy,
                     GameManager.MissionVariant.SnackHeist,
                     GameManager.MissionVariant.BackyardRescue,
-                    GameManager.MissionVariant.EagleShadowPanic
+                    GameManager.MissionVariant.EagleShadowPanic,
+                    GameManager.MissionVariant.CoyotesFence
                 },
                 seen,
                 "Only explicitly migrated missions belong in the controller registry.");
         }
 
         [Test]
-        public void UnmigratedMission_HasNoControllerRegistration()
+        public void UnknownVariant_HasNoControllerRegistration()
         {
+            // The full roster is migrated; the registry must still reject variants it never saw.
             var tuning = ArenaMissionTuning.CreateDefault();
 
             Assert.IsFalse(MissionControllerRegistry.TryCreate(
-                GameManager.MissionVariant.CoyotesFence, out var controller));
+                (GameManager.MissionVariant)(-1), out var controller));
             Assert.IsNull(controller);
             Assert.IsFalse(MissionControllerRegistry.TryBuildDefinition(
-                GameManager.MissionVariant.CoyotesFence, tuning, out var definition));
+                (GameManager.MissionVariant)(-1), tuning, out var definition));
             Assert.IsNull(definition);
         }
     }

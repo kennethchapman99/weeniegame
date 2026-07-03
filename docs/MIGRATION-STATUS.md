@@ -32,10 +32,11 @@
 | Snack Heist | `SnackHeistMissionController` | Owns recovery/steal state, squirrel targeting/timing, bark defense, collectible interpretation, failure, and snapshots; consumes the shared squirrel and treat pool through narrow context services. |
 | Backyard Rescue | `BackyardRescueMissionController` | Owns two-pass squirrel trap state (`BackyardSquirrelTrapState`), role-reversal redirect/recovery logic, escape-gap marker, squirrel stealing loop, collectible interpretation, and snapshots. Added `IsPredatorResolved`/`IsTugComplete` to `MissionContext`; added `Collected`/`Stolen`/`IsSquirrelStealing` forwarding to `GameManager`. Bark return value now meaningful (SoloBark fires when controller returns false). |
 | Eagle Shadow Panic | `EagleShadowPanicMissionController` | First predator-cluster extraction. Owns threat-sweep state, cover zones/markers, snatch/rescue timing puzzle, and united-front completion via the new optional `IMissionUnitedBarkListener`. Added `MissionContext.PredatorObject` (nullable shared actor) and the static `ComputeCoverZones(bounds)` geometry helper pattern for pre-activation consumers. |
+| Coyotes at the Fence | `CoyotesFenceMissionController` | Final extraction — the roster is fully controller-owned. Owns patrol state, fence-gap geometry/markers, prowl ticking, bark-pin pressure, dirt-fill repairs, fake-snack lure, breach-cap failure, and final-push completion via `IMissionUnitedBarkListener`. `GameManager.BuildMissionDefinition` now resolves exclusively through the registry. |
 
 ## Remaining in `GameManager` (not yet extracted)
 
-CoyotesFence.
+None — all 22 selectable missions run through `IMissionController` (2026-07-02).
 
 ## Contract additions so far
 
@@ -55,5 +56,7 @@ CoyotesFence.
 
 ## Next step
 
-Backyard Rescue extracted. Remaining missions are the two-actor predator cluster.
-**Eagle Shadow Panic** owns the threat-sweep state machine, cover zone positioning, eagle snatch/rescue sequence, and united-front bark completion. **Coyotes at the Fence** owns patrol state, fence-gap markers, gap-repair interaction, and final-pressure completion. Both use the shared predator actor and require `IsPredatorResolved`/`IsTugComplete` (now in `MissionContext`).
+The migration is complete. `GameManager` owns orchestration, mission selection, session flow, and
+shared-service wiring only; every mission's setup, state, ticking, input, cleanup, outcome, and
+snapshot lives in its controller. Future work is content/presentation through the controller
+boundary, gated on the second couch playtest.

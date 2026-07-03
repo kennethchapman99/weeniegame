@@ -1405,5 +1405,67 @@ namespace CheddarAndCocoa.Game
                 ItemPopColor = new Color(0.7f, 0.85f, 1f)
             };
         }
+
+        internal static GameManager.MissionDefinition BuildCoyotesFenceDefinition(ArenaMissionTuning tuning)
+        {
+            const GameManager.MissionVariant variant = GameManager.MissionVariant.CoyotesFence;
+            var balance = tuning.BalanceFor(variant);
+            return new GameManager.MissionDefinition
+            {
+                Variant = variant,
+                Name = "Coyotes at the Fence",
+                IntroPrompt = "Cheddar + Cocoa must patrol the fence gaps, bark-pin the coyote, fill the weak spots together, and block the final push.",
+                ReadyScoreLabel = "READY TO HOLD THE FENCE",
+                ItemRootName = "Fence Weak Spots",
+                ItemObjectName = "Weak Spot",
+                ItemWorldLabel = "Gap!",
+                ItemArrowLabel = "GAP",
+                ItemCollectCueNoun = "a filled weak spot",
+                CollectObjectiveFormat = "Fill weak spots {0}/{1}",
+                CollectedScoreLabel = "DIRT FILLED",
+                ItemScore = balance.ItemScore,
+                SpawnedItemCount = balance.SpawnedItemCount,
+                ItemGoal = balance.ItemGoal,
+                RoundSeconds = balance.RoundSeconds,
+                PawfectScore = balance.PawfectScore,
+                HeroScore = balance.HeroScore,
+                SurvivorScore = balance.SurvivorScore,
+                UsesSquirrel = false,
+                RequiresPredator = false,
+                RequiresTug = false,
+                MaxStolenFood = balance.MaxStolenFood,
+                SquirrelPenalty = balance.SquirrelPenalty,
+                SquirrelScareScore = balance.SquirrelScareScore,
+                SquirrelObjectiveText = "Bark-pin the coyote at the fence",
+                SquirrelStealingCue = "No squirrel here - the coyote is testing the fence.",
+                SquirrelStoleCue = "No squirrel here - watch the gaps.",
+                SquirrelStealScoreLabel = "COYOTE BREACH",
+                SquirrelScareScoreLabel = "FENCE HELD",
+                SquirrelStealingActorLabel = "COYOTE AT THE FENCE",
+                SquirrelDroppedActorLabel = "COYOTE BLOCKED",
+                SquirrelStoleActorLabel = "COYOTE BREACH",
+                SquirrelMissPopLabel = "BREACH!",
+                SquirrelStealJuiceLabel = "COYOTE BREACH!",
+                SquirrelScareJuiceLabel = "FENCE HELD!",
+                TugObjectiveText = "Fill the fence weak spot",
+                WaitingObjectiveText = "Patrol the fence gaps together",
+                ClearObjectiveText = "Yard defended - replay Coyotes at the Fence",
+                ClearBannerPrefix = "YARD DEFENDED!",
+                ClearScoreLabel = "COYOTE PATROL CLEAR",
+                ReplayPrompt = "Press R / Enter / Start to replay Coyotes at the Fence",
+                FailObjectiveText = "Mission failed - replay Coyotes at the Fence",
+                GenericFailReason = "Needs tighter patrol splits before the next coyote shift.",
+                TimeFailReason = "The coyote outlasted the patrol until the clock ran out.",
+                StolenFailReason = "The coyote breached the fence too many times.",
+                PredatorFailReason = "The coyote isolated a dog at the fence.",
+                PawfectClearReason = "Tiny patrol legends held every gap and barked the coyote into retirement.",
+                HeroClearReason = "The fence held and the final push was blocked clean.",
+                BasicClearReason = "The yard survived, even if a few gaps got scary.",
+                ItemColor = new Color(0.55f, 0.42f, 0.2f),
+                ItemAccentColor = new Color(0.85f, 0.7f, 0.35f),
+                ItemSecondaryColor = new Color(0.2f, 0.14f, 0.06f),
+                ItemPopColor = new Color(0.95f, 0.8f, 0.35f)
+            };
+        }
     }
 }
