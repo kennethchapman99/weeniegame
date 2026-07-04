@@ -92,6 +92,22 @@ accents:
   transient beat VFX). Manual acceptance check: start Backyard Rescue and force a predator warning
   (F5 hotkeys/playtest overlay) — the eagle should read as one solid, correctly-proportioned animated
   character with no ghost second eagle and no vertical squash.
+- Threat animation fidelity pass (2026-07-04). `ThreatMotionPose` adds a pure procedural pose layer
+  over the four-frame strips so every threat state carries between-frame life instead of sliding as
+  a cutout: coyote patrol gets a footfall gait bounce and pace sway, threaten coils back then snaps
+  forward with a volume-preserving lunge stretch, retreat leans away on nervous back-pedal steps;
+  squirrel run becomes a bounding hop with an airborne lean, steal ducks into grabby snatches,
+  scared cowers low with a fast side-to-side tremble; the eagle's glide lift is now synced to its
+  wing-flap cycle instead of a free-running clock, and the talon attack drops into a vertical dive
+  stretch. `ThreatReadabilityAnimator` also crossfades each strip frame into the next through a
+  `ThreatMotionBlend` child renderer (ease-in alpha, so frames stay crisp then melt into the next),
+  removing the hard 4-frame snap. All poses are bounded (offset ≤ 0.2, lean ≤ 20°, stretch ≤ 1.15
+  and volume-preserving) and live entirely on the authored child; actor roots, colliders, labels,
+  and range rings are untouched. Covered by `ThreatMotionFidelityPlayModeTests`. Manual acceptance
+  check: in Coyotes at the Fence the coyote should visibly prowl-bounce on patrol and snap toward
+  the fence when threatening; in Backyard Rescue the squirrel should bound in hop arcs and tremble
+  when scared off; the eagle's wingbeats, lift, and frame transitions should read as one smooth
+  flight rather than four snapping cutout poses.
 - All IMGUI HUDs (`ArenaHud`, `AdventureMapHud`) now scale from a 1920x1080-referenced virtual space
   via `GUI.matrix` (`ArenaHud.UiScaleFor`, never below 1x), so fixed pixel font sizes stay readable
   on retina/4K displays instead of shrinking with the physical pixel count. Manual acceptance check:

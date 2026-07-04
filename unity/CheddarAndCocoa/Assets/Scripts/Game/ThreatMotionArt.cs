@@ -21,22 +21,41 @@ namespace CheddarAndCocoa.Game
 
         public static int FrameAtTime(Actor actor, Clip clip, float elapsedSeconds)
         {
-            float fps = (actor, clip) switch
-            {
-                (Actor.Squirrel, Clip.Run) => 10f,
-                (Actor.Squirrel, Clip.Steal) => 8f,
-                (Actor.Squirrel, Clip.Scared) => 7f,
-                (Actor.Eagle, Clip.Attack) => 9f,
-                (Actor.Eagle, Clip.Sweep) => 7f,
-                (Actor.Coyote, Clip.Threaten) => 8f,
-                (Actor.Coyote, Clip.Retreat) => 9f,
-                (Actor.Coyote, Clip.Patrol) => 6f,
-                _ => 4f
-            };
-            int frame = Mathf.Max(0, Mathf.FloorToInt(Mathf.Max(0f, elapsedSeconds) * fps));
+            int frame = Mathf.Max(0, Mathf.FloorToInt(FractionalFrameAtTime(actor, clip, elapsedSeconds)));
             int count = FrameCount(actor, clip);
             return count <= 1 ? 0 : frame % count;
         }
+
+        /// <summary>Continuous frame position; the integer part is the FrameAtTime frame.</summary>
+        public static float FractionalFrameAtTime(Actor actor, Clip clip, float elapsedSeconds) =>
+            Mathf.Max(0f, elapsedSeconds) * FramesPerSecond(actor, clip);
+
+        /// <summary>How far the current frame has progressed toward the next one, 0-1.</summary>
+        public static float SubFrameFractionAtTime(Actor actor, Clip clip, float elapsedSeconds)
+        {
+            float fractionalFrame = FractionalFrameAtTime(actor, clip, elapsedSeconds);
+            return fractionalFrame - Mathf.Floor(fractionalFrame);
+        }
+
+        /// <summary>Continuous 0-1 phase through one full loop of the strip, for procedural poses.</summary>
+        public static float CyclePhaseAtTime(Actor actor, Clip clip, float elapsedSeconds)
+        {
+            int count = Mathf.Max(1, FrameCount(actor, clip));
+            return Mathf.Repeat(FractionalFrameAtTime(actor, clip, elapsedSeconds) / count, 1f);
+        }
+
+        private static float FramesPerSecond(Actor actor, Clip clip) => (actor, clip) switch
+        {
+            (Actor.Squirrel, Clip.Run) => 10f,
+            (Actor.Squirrel, Clip.Steal) => 8f,
+            (Actor.Squirrel, Clip.Scared) => 7f,
+            (Actor.Eagle, Clip.Attack) => 9f,
+            (Actor.Eagle, Clip.Sweep) => 7f,
+            (Actor.Coyote, Clip.Threaten) => 8f,
+            (Actor.Coyote, Clip.Retreat) => 9f,
+            (Actor.Coyote, Clip.Patrol) => 6f,
+            _ => 4f
+        };
 
         public static int FrameCount(Actor actor, Clip clip) =>
             actor == Actor.Squirrel && clip == Clip.Scared ? 2 : 4;
