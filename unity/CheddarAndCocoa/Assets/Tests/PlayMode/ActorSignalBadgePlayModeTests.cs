@@ -623,10 +623,55 @@ namespace CheddarAndCocoa.Tests
                 "The fresh gap starts back in the loose-coyote threat state.");
         }
 
+        [UnityTest]
+        public IEnumerator GateCrash_StationText_StaysIdentityOnly_AcrossTheHoldFlip()
+        {
+            yield return Load(GameManager.MissionVariant.GateCrash);
+
+            var gate = GameObject.Find("GateCrashGate");
+            var toy = GameObject.Find("GateCrashToy");
+            Assert.AreEqual("GATE", StationText(gate),
+                "Close-range station text is identity-only; the instruction lives on the badge, sprites, and HUD line.");
+            Assert.AreEqual("TOY", StationText(toy));
+
+            _game.ForceGateHold(true);
+            _game.ForceGateCross(0.3f);
+            yield return null;
+
+            Assert.AreEqual("GATE", StationText(gate),
+                "The hold flip must move to the badge handoff and held sprite, not back into shouting text.");
+            Assert.AreEqual("TOY", StationText(toy),
+                "Squeeze progress lives on the HUD objective line, not in world text.");
+        }
+
+        [UnityTest]
+        public IEnumerator BoneRelay_CalledMoundText_StaysDigQuestion_TheBadgeCarriesTheCall()
+        {
+            yield return Load(GameManager.MissionVariant.BoneRelay);
+
+            _game.ForceBoneReveal();
+            yield return null;
+
+            int call = _game.BoneRelayPuzzle.RevealedTarget;
+            Assert.GreaterOrEqual(call, 0);
+            var mound = GameObject.Find($"BoneMound_{call}");
+            Assert.IsNotNull(mound);
+            Assert.IsTrue(StationSignaling(mound),
+                "The called mound must carry the distance signal.");
+            Assert.AreEqual("DIG?", StationText(mound),
+                "The call reads through the badge, gold tint, and called sprite - the identity text must not flip to DIG HERE!.");
+        }
+
         private static bool StationSignaling(GameObject marker)
         {
             var badge = marker != null ? marker.GetComponent<ActorSignalBadge>() : null;
             return badge != null && badge.IsShowing;
+        }
+
+        private static string StationText(GameObject marker)
+        {
+            var label = marker != null ? marker.GetComponentInChildren<TextMesh>(true) : null;
+            return label != null ? label.text : string.Empty;
         }
 
         private static string StationIcon(GameObject marker) =>

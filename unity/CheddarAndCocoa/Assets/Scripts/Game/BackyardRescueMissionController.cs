@@ -420,7 +420,9 @@ namespace CheddarAndCocoa.Game
             if (_context.ActorSprite != null) sr.sprite = _context.ActorSprite;
             sr.color = new Color(0.35f, 0.8f, 1f, 0.34f);
             sr.sortingOrder = 1;
-            _context.AddWorldLabel(_gapMarker, "ESCAPE GAP - HOLD HERE", Vector3.up * 0.38f, 14, Color.white);
+            // "ESCAPE GAP" is the HOW TO PLAY proper noun; the hold instruction retired behind the
+            // badge (drops while held) and the HUD line that names the gap-holder.
+            _context.AddWorldLabel(_gapMarker, "ESCAPE GAP", Vector3.up * 0.38f, 14, Color.white);
             _gapArt = MissionPropArt.AttachPad(_gapMarker, FinalGameplayArt.BackyardTrapGapOpen, 0.013f, 18);
             _gapMarker.SetActive(false);
         }

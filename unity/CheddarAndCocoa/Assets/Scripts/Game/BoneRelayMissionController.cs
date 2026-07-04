@@ -19,11 +19,9 @@ namespace CheddarAndCocoa.Game
         private int _seed;
         private GameObject _scentPost;
         private MissionPropArtAttachment _scentPostArt;
-        private TextMesh _scentPostLabel;
         private GameObject[] _mounds;
         private MissionPropArtAttachment[] _moundArt;
         private string[] _moundOverrideArt;
-        private TextMesh[] _moundLabels;
         private int _lastActedMound = -1;
         private int _diggerInside = -1;
         private int _findsSeen;
@@ -222,14 +220,12 @@ namespace CheddarAndCocoa.Game
                             ? FinalGameplayArt.BoneRelayMoundCalled
                             : FinalGameplayArt.BoneRelayMoundUnknown);
                 }
-                if (_moundLabels != null && _moundLabels[i] != null)
-                    _moundLabels[i].text = isCall ? "DIG HERE!" : "DIG?";
+                // The static DIG? identity stays; the called mound reads through the gold tint,
+                // called sprite, and the badge instead of a DIG HERE! text flip.
                 ActorSignalBadge.SetStationSignal(_mounds[i], isCall);
             }
             // The relay's distance signal alternates: post while Cocoa owes a sniff, called mound after.
             ActorSignalBadge.SetStationSignal(_scentPost, !_puzzle.Known && !_puzzle.Solved && !_failed);
-            if (_scentPostLabel != null)
-                _scentPostLabel.text = _puzzle.Known ? "SCENT POST - SHE'S CALLING IT!" : "SCENT POST - COCOA SNIFF HERE";
             if (_scentPost != null && _scentPost.TryGetComponent<SpriteRenderer>(out var psr))
                 psr.color = _puzzle.Known ? MoundCallColor : new Color(0.7f, 0.6f, 0.95f);
             MissionPropArt.SetSprite(_scentPostArt, _puzzle.Known
@@ -242,7 +238,6 @@ namespace CheddarAndCocoa.Game
             _mounds = new GameObject[MoundSpots.Length];
             _moundArt = new MissionPropArtAttachment[MoundSpots.Length];
             _moundOverrideArt = new string[MoundSpots.Length];
-            _moundLabels = new TextMesh[MoundSpots.Length];
             for (int i = 0; i < MoundSpots.Length; i++)
             {
                 var go = new GameObject($"BoneMound_{i}");
@@ -251,7 +246,7 @@ namespace CheddarAndCocoa.Game
                 var sr = go.AddComponent<SpriteRenderer>();
                 if (_context.ActorSprite != null) sr.sprite = _context.ActorSprite;
                 sr.color = MoundIdleColor;
-                _moundLabels[i] = _context.AddWorldLabel(go, "DIG?", Vector3.up * 1.2f, 13, Color.white);
+                _context.AddWorldLabel(go, "DIG?", Vector3.up * 1.2f, 13, Color.white);
                 _moundArt[i] = MissionPropArt.AttachObject(go, FinalGameplayArt.BoneRelayMoundUnknown, 0.012f, 18, true);
                 go.SetActive(false);
                 _mounds[i] = go;
@@ -263,7 +258,9 @@ namespace CheddarAndCocoa.Game
             var psr = _scentPost.AddComponent<SpriteRenderer>();
             if (_context.ActorSprite != null) psr.sprite = _context.ActorSprite;
             psr.color = new Color(0.7f, 0.6f, 0.95f);
-            _scentPostLabel = _context.AddWorldLabel(_scentPost, "SCENT POST - COCOA SNIFF HERE", Vector3.up * 1.5f, 11, Color.white);
+            // Identity-only close-range text: idle/called sprites, the badge while a sniff is owed,
+            // and the HUD objective line carry the sniff-then-dig relay instruction.
+            _context.AddWorldLabel(_scentPost, "SCENT POST", Vector3.up * 1.5f, 11, Color.white);
             _scentPostArt = MissionPropArt.AttachObject(_scentPost, FinalGameplayArt.BoneRelayScentPostIdle, 0.012f, 18, true);
             _scentPost.SetActive(false);
         }

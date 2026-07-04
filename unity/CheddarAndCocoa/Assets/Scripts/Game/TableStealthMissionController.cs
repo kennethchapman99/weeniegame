@@ -194,8 +194,10 @@ namespace CheddarAndCocoa.Game
 
         private void BuildScene()
         {
-            _human = NewMarker("TableStealthHuman", HumanIdleColor, "COCOA: FLOP TO DISTRACT THE HUMAN!", new Vector3(1.6f, 4f, 1f), out _humanLabel);
-            _steak = NewMarker("TableStealthSteak", new Color(0.6f, 0.8f, 1f), "STEAK - CHEDDAR SNEAK IT!", Vector3.one * 1.2f, out _steakLabel);
+            // Identity-only close-range text: the human/steak badge alternation, sprite swaps, and
+            // the HUD objective line carry the flop/sneak instruction and the sneak percentage.
+            _human = NewMarker("TableStealthHuman", HumanIdleColor, "HUMAN", new Vector3(1.6f, 4f, 1f), out _humanLabel);
+            _steak = NewMarker("TableStealthSteak", new Color(0.6f, 0.8f, 1f), "STEAK", Vector3.one * 1.2f, out _steakLabel);
             _humanArt = MissionPropArt.AttachObject(_human, FinalGameplayArt.TableStealthHumanWatching, 0.013f, 18, true);
             _steakArt = MissionPropArt.AttachObject(_steak, FinalGameplayArt.TableStealthSteakAvailable, 0.012f, 18, true);
             _humanFeedback = _human.AddComponent<MissionActorFeedback>();
@@ -241,7 +243,7 @@ namespace CheddarAndCocoa.Game
                 {
                     bool watchingCocoa = _puzzle.BellyFlopped || _puzzle.HumanDistracted;
                     SetHumanState(
-                        watchingCocoa ? "HUMAN WATCHING COCOA - STEAK OPEN!" : "HUMAN WATCHING TABLE",
+                        watchingCocoa ? "HUMAN WATCHING COCOA" : "HUMAN WATCHING TABLE",
                         watchingCocoa ? HumanDistractedColor : HumanIdleColor,
                         watchingCocoa ? 0.08f : 0.03f,
                         watchingCocoa ? new Color(0.78f, 1f, 0.78f, 1f) : Color.white,
@@ -252,9 +254,7 @@ namespace CheddarAndCocoa.Game
             {
                 _steak.transform.position = _stealZone;
                 if (_steakLabel != null)
-                    _steakLabel.text = _puzzle.Solved
-                        ? "STEAK GONE!"
-                        : $"STEAK - SNEAK {Mathf.RoundToInt(_puzzle.SneakRatio * 100f)}%";
+                    _steakLabel.text = _puzzle.Solved ? "STEAK GONE!" : "STEAK";
                 if (_steakArt != null)
                 {
                     MissionPropArt.SetSprite(_steakArt, _puzzle.Solved

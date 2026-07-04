@@ -30,7 +30,6 @@ namespace CheddarAndCocoa.Game
         private readonly CoopChaosMachinePuzzle _puzzle = new();
         private MissionContext _context;
         private GameObject _lever;
-        private TextMesh _leverLabel;
         private MissionPropArtAttachment _leverArt;
         private GameObject[] _junctions;
         private TextMesh[] _junctionLabels;
@@ -209,7 +208,10 @@ namespace CheddarAndCocoa.Game
             leverSr.sprite = _context.ActorSprite;
             leverSr.color = new Color(0.85f, 0.55f, 0.3f);
             leverSr.sortingOrder = 3;
-            _leverLabel = _context.AddWorldLabel(_lever, "LEVER - PULL TO START THE CASCADE", Vector3.up * 1.3f, 11, Color.white);
+            // Identity-only close-range text: the ready/running sprite + color, the badge until the
+            // pull, and the HUD objective line carry the pull-the-lever instruction. Junction labels
+            // stay full ({WHO}: {ACTION}) - that split-info map IS the puzzle and lives nowhere else.
+            _context.AddWorldLabel(_lever, "LEVER", Vector3.up * 1.3f, 11, Color.white);
             _leverArt = MissionPropArt.AttachObject(_lever, FinalGameplayArt.ChaosLeverReady, 0.012f, 18, true);
             _lever.SetActive(false);
 
@@ -246,8 +248,6 @@ namespace CheddarAndCocoa.Game
             {
                 leverSr.color = _puzzle.Running ? new Color(0.5f, 0.85f, 0.55f) : new Color(0.85f, 0.55f, 0.3f);
                 MissionPropArt.SetSprite(_leverArt, _puzzle.Running ? FinalGameplayArt.ChaosLeverRunning : FinalGameplayArt.ChaosLeverReady);
-                if (_leverLabel != null)
-                    _leverLabel.text = _puzzle.Running ? "CASCADE RUNNING - COVER YOUR JUNCTIONS!" : "LEVER - PULL TO START THE CASCADE";
             }
             ActorSignalBadge.SetStationSignal(_lever, !_puzzle.Running && !_puzzle.Solved && !_failed);
 

@@ -25,8 +25,6 @@ namespace CheddarAndCocoa.Game
         private GameObject _toy;
         private MissionPropArtAttachment _gateArt;
         private MissionPropArtAttachment _toyArt;
-        private TextMesh _gateLabel;
-        private TextMesh _toyLabel;
         private Vector2 _holdZone;
         private Vector2 _crossZone;
         private int _snapsSeen;
@@ -170,8 +168,10 @@ namespace CheddarAndCocoa.Game
 
         private void BuildScene()
         {
-            _gate = NewMarker("GateCrashGate", GateIdleColor, "COCOA: HOLD THE GATE!", new Vector3(1.4f, 4f, 1f), out _gateLabel);
-            _toy = NewMarker("GateCrashToy", new Color(0.6f, 0.8f, 1f), "TOY - CHEDDAR SQUEEZE THROUGH!", Vector3.one * 1.2f, out _toyLabel);
+            // Identity-only close-range text: the badge alternation, held/snap sprites, and the
+            // HUD objective line carry who-does-what-now (couch-test-#4-era signal recipe).
+            _gate = NewMarker("GateCrashGate", GateIdleColor, "GATE", new Vector3(1.4f, 4f, 1f), out _);
+            _toy = NewMarker("GateCrashToy", new Color(0.6f, 0.8f, 1f), "TOY", Vector3.one * 1.2f, out _);
             _gateArt = MissionPropArt.AttachObject(_gate, FinalGameplayArt.GateCrashGateClosed, 0.013f, 18, true);
             _toyArt = MissionPropArt.AttachObject(_toy, FinalGameplayArt.GateCrashToyWaiting, 0.012f, 18, true);
         }
@@ -210,13 +210,11 @@ namespace CheddarAndCocoa.Game
                     MissionPropArt.SetSprite(_gateArt, FinalGameplayArt.GateCrashGateSnap);
                 else
                     MissionPropArt.SetSprite(_gateArt, _puzzle.Held ? FinalGameplayArt.GateCrashGateHeld : FinalGameplayArt.GateCrashGateClosed);
-                if (_gateLabel != null) _gateLabel.text = _puzzle.Held ? "GATE HELD - SQUEEZE THROUGH!" : "COCOA: HOLD THE GATE!";
             }
             if (_toy != null)
             {
                 _toy.transform.position = _crossZone;
                 MissionPropArt.SetSprite(_toyArt, _puzzle.Solved ? FinalGameplayArt.GateCrashToyClaimed : FinalGameplayArt.GateCrashToyWaiting);
-                if (_toyLabel != null) _toyLabel.text = $"TOY - SQUEEZE {Mathf.RoundToInt(_puzzle.CrossRatio * 100f)}%";
             }
         }
 

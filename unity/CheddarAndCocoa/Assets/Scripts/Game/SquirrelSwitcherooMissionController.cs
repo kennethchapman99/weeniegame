@@ -28,8 +28,6 @@ namespace CheddarAndCocoa.Game
         private GameObject _stash;
         private MissionPropArtAttachment _decoyArt;
         private MissionPropArtAttachment _stashArt;
-        private TextMesh _decoyLabel;
-        private TextMesh _stashLabel;
         private Vector2 _decoyZone;
         private Vector2 _stashZone;
         private int _backfiresSeen;
@@ -193,8 +191,10 @@ namespace CheddarAndCocoa.Game
 
         private void BuildScene()
         {
-            _decoy = NewMarker("SwitcherooDecoy", GuardingColor, "SQUIRREL - CHEDDAR FEINT THE DECOY!", new Vector3(1.6f, 3f, 1f), out _decoyLabel);
-            _stash = NewMarker("SwitcherooStash", new Color(0.6f, 0.8f, 1f), "STASH - COCOA RAID IT WHEN HE BITES!", Vector3.one * 1.2f, out _stashLabel);
+            // Identity-only close-range text: the badge alternation, guarded/chased/raided sprites,
+            // and the HUD objective line carry the feint/raid instruction and counters.
+            _decoy = NewMarker("SwitcherooDecoy", GuardingColor, "DECOY", new Vector3(1.6f, 3f, 1f), out _);
+            _stash = NewMarker("SwitcherooStash", new Color(0.6f, 0.8f, 1f), "STASH", Vector3.one * 1.2f, out _);
             _decoyArt = MissionPropArt.AttachObject(_decoy, FinalGameplayArt.SwitcherooDecoyGuarded, 0.012f, 18, true);
             _stashArt = MissionPropArt.AttachObject(_stash, FinalGameplayArt.SwitcherooStashGuarded, 0.012f, 18, true);
         }
@@ -234,7 +234,6 @@ namespace CheddarAndCocoa.Game
                     : _puzzle.Committed
                         ? FinalGameplayArt.SwitcherooDecoyChased
                         : FinalGameplayArt.SwitcherooDecoyGuarded);
-                if (_decoyLabel != null) _decoyLabel.text = _puzzle.Committed ? "SQUIRREL CHASING THE DECOY - RAID NOW!" : "SQUIRREL GUARDING THE STASH - FEINT IT!";
             }
             if (_stash != null)
             {
@@ -244,7 +243,6 @@ namespace CheddarAndCocoa.Game
                     : _puzzle.Committed
                         ? FinalGameplayArt.SwitcherooStashOpen
                         : FinalGameplayArt.SwitcherooStashGuarded);
-                if (_stashLabel != null) _stashLabel.text = $"STASH - RAIDS {_puzzle.Hits}/{HitsNeeded}";
             }
         }
 

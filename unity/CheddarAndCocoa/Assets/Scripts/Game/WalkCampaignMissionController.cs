@@ -32,7 +32,6 @@ namespace CheddarAndCocoa.Game
         private MissionPropArtAttachment _humanArt;
         private MissionPropArtAttachment _leashArt;
         private TextMesh _humanLabel;
-        private TextMesh _leashLabel;
         private Vector2 _doorZone;
         private Vector2 _leashZone;
         private int _misreadsSeen;
@@ -165,7 +164,7 @@ namespace CheddarAndCocoa.Game
                 _context.SetCue("The human's getting it - hold the door-stare and the leash together!");
                 _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "GETTING IT!");
                 _context.LogEvent("WalkGettingIt", "combo");
-                SetHumanState("HUMAN GETTING IT - HOLD THE MESSAGE!", HumanGettingItColor, 0.1f,
+                SetHumanState("HUMAN GETTING IT!", HumanGettingItColor, 0.1f,
                     new Color(0.78f, 1f, 0.78f, 1f), FinalGameplayArt.WalkCampaignHumanGettingIt);
             }
 
@@ -207,12 +206,14 @@ namespace CheddarAndCocoa.Game
 
         private void BuildScene()
         {
-            _human = NewMarker("WalkCampaignHuman", new Color(0.9f, 0.8f, 0.5f), "HUMAN - CONVINCE THEM TO WALK YOU!", new Vector3(1.8f, 3.4f, 1f), out _humanLabel);
-            _leash = NewMarker("WalkCampaignLeash", new Color(0.6f, 0.8f, 1f), "LEASH - CHEDDAR PRESENT IT!", Vector3.one * 1.2f, out _leashLabel);
+            // Identity/state-only close-range text: the per-half badge signals, confused/getting-it
+            // and waiting/presented sprites, and the HUD objective line carry the combo instruction.
+            _human = NewMarker("WalkCampaignHuman", new Color(0.9f, 0.8f, 0.5f), "HUMAN", new Vector3(1.8f, 3.4f, 1f), out _humanLabel);
+            _leash = NewMarker("WalkCampaignLeash", new Color(0.6f, 0.8f, 1f), "LEASH", Vector3.one * 1.2f, out _);
             _humanArt = MissionPropArt.AttachObject(_human, FinalGameplayArt.WalkCampaignHumanConfused, 0.013f, 18, true);
             _leashArt = MissionPropArt.AttachObject(_leash, FinalGameplayArt.WalkCampaignLeashWaiting, 0.012f, 18, true);
             _humanFeedback = _human.AddComponent<MissionActorFeedback>();
-            _humanFeedback.Init(_human.GetComponent<SpriteRenderer>(), "HUMAN CONFUSED - SEND ONE MESSAGE!", 0.03f, Vector3.forward * 10f);
+            _humanFeedback.Init(_human.GetComponent<SpriteRenderer>(), "HUMAN CONFUSED", 0.03f, Vector3.forward * 10f);
         }
 
         private GameObject NewMarker(string name, Color color, string label, Vector3 scale, out TextMesh worldLabel)
@@ -252,9 +253,7 @@ namespace CheddarAndCocoa.Game
                         new Color(1f, 0.58f, 0.52f, 1f), FinalGameplayArt.WalkCampaignHumanGaveUp);
                 else if (_context.Now() >= _humanReactionUntil)
                     SetHumanState(
-                        _puzzle.ExactMatch
-                            ? $"HUMAN GETTING IT - HOLD IT! ({Mathf.RoundToInt(_puzzle.Comprehension / ComprehendNeeded * 100f)}%)"
-                            : $"HUMAN CONFUSED - SEND ONE MESSAGE! (misreads {_puzzle.Misreads}/{MaxMisreads})",
+                        _puzzle.ExactMatch ? "HUMAN GETTING IT!" : "HUMAN CONFUSED",
                         _puzzle.ExactMatch ? HumanGettingItColor : HumanConfusedColor,
                         _puzzle.ExactMatch ? 0.09f : 0.03f,
                         _puzzle.ExactMatch ? new Color(0.78f, 1f, 0.78f, 1f) : Color.white,
@@ -263,8 +262,6 @@ namespace CheddarAndCocoa.Game
             if (_leash != null)
             {
                 _leash.transform.position = _leashZone;
-                if (_leashLabel != null)
-                    _leashLabel.text = (_puzzle.Active & SocialStimulus.PresentLeash) != 0 ? "LEASH PRESENTED!" : "LEASH - CHEDDAR PRESENT IT!";
                 if (_leashArt != null)
                 {
                     bool presented = (_puzzle.Active & SocialStimulus.PresentLeash) != 0;

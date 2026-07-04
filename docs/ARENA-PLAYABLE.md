@@ -592,7 +592,7 @@ This is the existing mission loop and remains the default when `ArenaScene` star
 4. Complete the **Rope/Tug** shared-object objective.
 5. Complete the authored **Squirrel Trap** twice. Pass one assigns Cheddar to bark-pressure the squirrel while Cocoa holds the marked escape gap; the redirect drops the targeted weenie, and only Cocoa can recover it. Pass two reverses the roles: Cocoa pressures while Cheddar holds the gap and recovers the drop.
 
-The HUD objective and dog-local arrows name the current pressure dog, route the partner to the visible **ESCAPE GAP - HOLD HERE** marker, and switch to **RECOVER DROP / PARTNER ONLY** after a redirect. Barking with the wrong dog or before the gap is held makes the squirrel take a comic fake route and loop back. If the pressure dog touches its own dropped weenie, the weenie bounces away with a **HOT POTATO! PARTNER ONLY!** cue; the drop remains live, so no trap mistake hard-fails the mission.
+The HUD objective and dog-local arrows name the current pressure dog, route the partner to the visible **ESCAPE GAP** marker (its hold instruction lives on the badge and HUD line), and switch to **RECOVER DROP / PARTNER ONLY** after a redirect. Barking with the wrong dog or before the gap is held makes the squirrel take a comic fake route and loop back. If the pressure dog touches its own dropped weenie, the weenie bounces away with a **HOT POTATO! PARTNER ONLY!** cue; the drop remains live, so no trap mistake hard-fails the mission.
 
 Unique scoring/events include **+50 WEENIE SAVED**, **+25 SQUIRREL SCARED**, **+300 PREDATOR YEETED**, **+250 PARTNER RESCUE**, **+200 TUG COMPLETE**, and **+500 LEVEL CLEAR** plus time bonus.
 
@@ -1108,6 +1108,21 @@ team must act next (two in a jammed Rube Goldberg: warning at the jam, command a
 per dog in Pee Break's split-role beats and Walk Campaign's combo message; all open covers in Eagle
 Shadow's hide phase), and the icon should hand off immediately when the objective moves or the
 station is held.
+
+With the badges covering every mission, the follow-up 2026-07-04 pass **retired the close-range
+instruction text the badges made redundant**. Station world labels are now identity-only nouns
+(GATE, TOY, DECOY, STASH, HUMAN, STEAK, LEASH, LEVER, SCENT POST, ESCAPE GAP, static DIG?) —
+who-does-what-now, progress percentages, and counters live exclusively on the badge handoffs, the
+state sprite swaps, and the HUD objective line, per the Finding 4 recipe (state = sprite, urgency =
+badge, text = one HUD line). Deliberately kept: The Great Escape station and Rube Goldberg junction
+`{WHO}: {ACTION}` maps (that split information IS those puzzles and appears nowhere else), Operation
+Pee Break's pairing-state text (NEEDS COCOA STARE etc. — unique needs-partner information, and the
+deep slice stays untouched ahead of the couch-test-#4 verdict), terminal gag states (STEAK GONE!,
+HUMAN GAVE UP - MIXED SIGNALS!, WALKIES!), and the short zone nouns HOW TO PLAY references verbatim
+(HIDE HERE, WEAK SPOT, HOLD CUTOFF, CHECKPOINT). Manual acceptance check: walk up to the Gate Crash
+gate, the Switcheroo decoy, or the Bone Detail scent post — the close-range text should read as a
+calm name tag while the bobbing icon, sprite state, and top HUD line tell you what to do; nothing
+in-world should shout a sentence at you.
 
 ## Generated audio/rumble checks
 
