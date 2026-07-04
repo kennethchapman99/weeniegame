@@ -364,6 +364,60 @@ namespace CheddarAndCocoa.Tests
                 "A held gap is the resolved state - the signal must drop while the dog stands in it.");
         }
 
+        [UnityTest]
+        public IEnumerator PeeBreak_BeatStations_SignalUntilTheirDogHoldsThem()
+        {
+            yield return Load(GameManager.MissionVariant.OperationPeeBreak);
+
+            var door = GameObject.Find("PeeBreakDoor");
+            var coach = GameObject.Find("PeeBreakCheddarCoach");
+            Assert.IsNotNull(door, "Pee Break should stage the door station.");
+            Assert.IsNotNull(coach, "Pee Break should stage Cheddar's watch pad.");
+
+            // Park both dogs far from every station so beat 1's jobs are all unheld.
+            _cheddar.transform.position = new Vector3(-20f, -10f, 0f);
+            _cocoa.transform.position = new Vector3(-22f, -10f, 0f);
+            yield return null;
+            yield return null;
+
+            Assert.IsTrue(StationSignaling(door),
+                "Beat 1's door-stare station must signal for Cocoa at any distance.");
+            Assert.That(StationIcon(door), Does.Contain("command"));
+            Assert.IsTrue(StationSignaling(coach),
+                "Beat 1's watch pad must signal for Cheddar at any distance.");
+
+            _cocoa.transform.position = door.transform.position;
+            yield return null;
+            yield return null;
+
+            Assert.IsFalse(StationSignaling(door),
+                "Cocoa holding the door stare resolves that station's signal.");
+            Assert.IsTrue(StationSignaling(coach),
+                "Cheddar's unheld watch pad must keep signalling independently.");
+        }
+
+        [UnityTest]
+        public IEnumerator LeashWalk_CommandSignalRidesTheActiveCheckpoint()
+        {
+            yield return Load(GameManager.MissionVariant.LeashWalk);
+
+            var first = GameObject.Find("LeashCheckpoint_0");
+            Assert.IsNotNull(first, "Leash Walk should stage its checkpoint route.");
+            Assert.IsTrue(StationSignaling(first),
+                "The route's current checkpoint must signal at distance.");
+            Assert.That(StationIcon(first), Does.Contain("command"));
+
+            _game.ForceReachCheckpoint();
+            yield return null;
+
+            var second = GameObject.Find("LeashCheckpoint_1");
+            Assert.IsNotNull(second, "The next checkpoint should be staged after the first is reached.");
+            Assert.IsFalse(StationSignaling(first),
+                "A reached checkpoint's signal must drop immediately.");
+            Assert.IsTrue(StationSignaling(second),
+                "The signal must walk the route with the dogs.");
+        }
+
         private static bool StationSignaling(GameObject marker)
         {
             var badge = marker != null ? marker.GetComponent<ActorSignalBadge>() : null;

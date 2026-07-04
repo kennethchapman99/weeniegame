@@ -671,6 +671,15 @@ namespace CheddarAndCocoa.Game
             bool cheddarAtHallway = DogAt(DogId.Cheddar, _hallwayPosition);
             bool cocoaAtCharger = DogAt(DogId.Cocoa, _chargerPosition);
             UpdateTeenPresentationState(cocoaAtDoor, cheddarAtLeash, cheddarAtHallway, cocoaAtCharger);
+            // Distance signal: each beat's required stations raise a command badge until their dog
+            // is actually holding the spot (held is the resolved state, like the escape gap).
+            ActorSignalBadge.SetStationSignal(_door,
+                !DoorOpen && (_beatIndex == 0 || _beatIndex == 1 || _beatIndex == 3) && !cocoaAtDoor);
+            ActorSignalBadge.SetStationSignal(_cheddarCoach, !DoorOpen && _beatIndex == 0 && !cheddarAtCoach);
+            ActorSignalBadge.SetStationSignal(_leash,
+                !DoorOpen && (_beatIndex == 1 || _beatIndex == 3) && !cheddarAtLeash);
+            ActorSignalBadge.SetStationSignal(_hallway, !DoorOpen && _beatIndex == 2 && !cheddarAtHallway);
+            ActorSignalBadge.SetStationSignal(_charger, !DoorOpen && _beatIndex == 2 && !cocoaAtCharger);
             _teenager.transform.position = TeenState == TeenPresentationState.StandingSuccess
                 ? _context.Bounds.center + new Vector2(5.8f, 4.8f)
                 : _context.Bounds.center + new Vector2(2f, 5.08f);

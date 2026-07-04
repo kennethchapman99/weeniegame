@@ -1086,10 +1086,14 @@ carries it while rolling, and a misfire swaps the jammed junction to the warning
 lever re-raises its re-pull command; The Bone Detail alternates the command badge between the scent
 post (while Cocoa owes a sniff) and the called mound (after the reveal); Squirrel Conspiracy's
 active hold-cutoff zone carries a command badge; and Backyard Rescue's escape gap carries a command
-badge that drops while the gap dog is actually standing in it. Manual acceptance check: from couch
+badge that drops while the gap dog is actually standing in it; Walkies on the Leash's current
+checkpoint carries a command badge that walks the route; and Operation Pee Break's beat stations
+(door stare, watch pad, leash, hallway block, charger) each raise a command badge during their beat
+that drops while their dog is actually holding the spot. Manual acceptance check: from couch
 distance with F1 off, each of these missions should show exactly one bobbing go-here icon over the
 place the team must act next (two in a jammed Rube Goldberg: warning at the jam, command at the
-lever), and the icon should hand off immediately when the objective moves.
+lever; one per dog in Pee Break's split-role beats), and the icon should hand off immediately when
+the objective moves or the station is held.
 
 ## Generated audio/rumble checks
 

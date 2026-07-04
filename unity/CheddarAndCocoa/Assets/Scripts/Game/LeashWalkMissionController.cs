@@ -45,6 +45,16 @@ namespace CheddarAndCocoa.Game
             _cleared = false;
             for (int i = 0; i < _markers.Length; i++) SetMarkerArt(i, FinalGameplayArt.LeashWalkCheckpointWaiting);
             SetMarkersActive(true);
+            UpdateCheckpointSignals();
+        }
+
+        /// <summary>Distance signal: a command badge rides the route's current checkpoint.</summary>
+        private void UpdateCheckpointSignals()
+        {
+            if (_markers == null) return;
+            int idx = _state.CheckpointIndex;
+            for (int i = 0; i < _markers.Length; i++)
+                ActorSignalBadge.SetStationSignal(_markers[i], !_cleared && !IsFailed && i == idx);
         }
 
         public void Tick(float deltaTime, float now)
@@ -135,6 +145,7 @@ namespace CheddarAndCocoa.Game
             {
                 _context.LogObjectiveChanged();
             }
+            UpdateCheckpointSignals();
         }
 
         private void RegisterSnap()
