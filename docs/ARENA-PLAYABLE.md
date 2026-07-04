@@ -1096,11 +1096,18 @@ while the sneak window is live; The Ol' Switcheroo signals the decoy until the s
 then the stash during the raid window; The Walk Campaign signals each half of the exact-combo
 message until its dog is sending it. Weenie Roundup's home bowl rides the actor pulse channel
 instead: a weenie in transit raises a `BRING IT NOW!` command badge over the bowl that drops on
-delivery or fumble. Manual acceptance check: from couch distance with F1 off, each of these
-missions should show exactly one bobbing go-here icon over the place the team must act next (two
-in a jammed Rube Goldberg: warning at the jam, command at the lever; one per dog in Pee Break's
-split-role beats and Walk Campaign's combo message), and the icon should hand off immediately when
-the objective moves or the station is held.
+delivery or fumble. The two predator-defense missions completed the roster (2026-07-04): Eagle
+Shadow Panic's cover pads each carry a command badge during the hide phase (the eagle actor itself
+carries the threat warning), a pad's badge drops while a dog is tucked inside its cover radius, and
+all pads go quiet once the snatch/rescue beat moves the urgency to the talons; Coyotes at the
+Fence's active weak spot carries a warning badge while the coyote is loose, flips to a command
+badge once it is bark-pinned (partner: fill dirt now), moves with the coyote after each repair or
+breach, and goes quiet for the united-bark final push. Manual acceptance check: from couch distance
+with F1 off, each of these missions should show exactly one bobbing go-here icon over the place the
+team must act next (two in a jammed Rube Goldberg: warning at the jam, command at the lever; one
+per dog in Pee Break's split-role beats and Walk Campaign's combo message; all open covers in Eagle
+Shadow's hide phase), and the icon should hand off immediately when the objective moves or the
+station is held.
 
 ## Generated audio/rumble checks
 

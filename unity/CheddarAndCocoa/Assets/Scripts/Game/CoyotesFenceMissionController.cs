@@ -69,6 +69,7 @@ namespace CheddarAndCocoa.Game
             _pressureHeld = false;
             _activeGapPosition = _gaps[0];
             SetGapMarkersActive(true);
+            UpdateGapSignals();
         }
 
         public void Tick(float deltaTime, float now)
@@ -198,6 +199,7 @@ namespace CheddarAndCocoa.Game
                     _context.SpawnWorldPop(predator.transform.position, "DRIVEN BACK!", new Color(1f, 0.85f, 0.3f));
                 _context.LogEvent("CoyoteDrivenBack", "bark pressure drove the coyote back");
                 if (predator != null) predator.transform.position = new Vector2(0f, _context.Bounds.yMax + 2f);
+                UpdateGapSignals();
                 _context.LogObjectiveChanged();
                 return;
             }
@@ -232,6 +234,7 @@ namespace CheddarAndCocoa.Game
                 _context.LogEvent("CoyoteFakeSnackResolved", "lure resolved by bark pressure");
             }
 
+            UpdateGapSignals();
             _context.LogObjectiveChanged();
         }
 
@@ -281,6 +284,7 @@ namespace CheddarAndCocoa.Game
                 _context.LogEvent("CoyoteFinalPressureReady", "final push ready");
             }
 
+            UpdateGapSignals();
             _context.LogObjectiveChanged();
         }
 
@@ -301,6 +305,7 @@ namespace CheddarAndCocoa.Game
             _context.RequestAudioCue(ArenaFeedbackCatalog.ThreatWarning);
             _context.RequestRumble("coyote_breach", 0.2f, 0.42f, 0.16f);
             _context.LogEvent("CoyoteBreach", $"breaches {_state.Breaches}/{MaxBreaches}");
+            UpdateGapSignals();
             if (!_state.TooManyBreaches(MaxBreaches)) _context.LogObjectiveChanged();
         }
 
@@ -340,6 +345,7 @@ namespace CheddarAndCocoa.Game
             _context.RequestAudioCue(ArenaFeedbackCatalog.TugRescueSuccess);
             _context.RequestRumble("coyote_yard_defended", 0.34f, 0.62f, 0.2f);
             _context.LogEvent("CoyoteYardDefended", "final push blocked");
+            UpdateGapSignals();
         }
 
         private void BuildGapMarkers()
@@ -359,6 +365,20 @@ namespace CheddarAndCocoa.Game
                 go.SetActive(false);
                 _gapMarkers[i] = go;
             }
+        }
+
+        // The coyote's target weak spot carries the distance signal: a warning skin while the
+        // coyote is loose (breach threat), flipping to a command once it is bark-pinned (partner:
+        // fill dirt now). The final united-bark push moves the objective off the fence, so every
+        // gap goes quiet along with complete/fail.
+        private void UpdateGapSignals()
+        {
+            if (_gapMarkers == null || _gapMarkers.Length == 0) return;
+            bool live = !_state.FinalPressureComplete && !IsFailed &&
+                !_state.ReadyForFinalPressure(RequiredRepairs);
+            int active = _state.ActiveGapIndex % _gapMarkers.Length;
+            for (int i = 0; i < _gapMarkers.Length; i++)
+                ActorSignalBadge.SetStationSignal(_gapMarkers[i], live && i == active, warning: !_pressureHeld);
         }
 
         private void SetGapMarkersActive(bool active)

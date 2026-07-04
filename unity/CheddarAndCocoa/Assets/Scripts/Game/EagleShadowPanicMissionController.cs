@@ -87,10 +87,12 @@ namespace CheddarAndCocoa.Game
             // Keep the snatch/rescue point inside the play band so the rescue beat is on-screen.
             _snatchPosition = new Vector2(0f, 6f);
             SetCoverMarkersActive(true);
+            UpdateCoverSignals();
         }
 
         public void Tick(float deltaTime, float now)
         {
+            UpdateCoverSignals();
             var predator = _context.PredatorObject;
             if (predator == null) return;
             // Rescue phase: the eagle has snatched Cheddar - drive the wiggle/pull timing instead of sweeping.
@@ -287,6 +289,7 @@ namespace CheddarAndCocoa.Game
                 StartSnatchRescue();
             }
 
+            UpdateCoverSignals();
             _context.LogObjectiveChanged();
         }
 
@@ -476,6 +479,33 @@ namespace CheddarAndCocoa.Game
                 MissionPropArt.AttachObject(go, FinalGameplayArt.EagleShadowCoverSafe, 0.012f, 18, true);
                 go.SetActive(false);
                 _coverMarkers[i] = go;
+            }
+        }
+
+        // During the hide phase every open cover pad signals at distance (the eagle actor carries
+        // the threat warning; the pads are go-here commands). A cover with a dog already tucked
+        // inside is resolved and drops its badge; the snatch/rescue and united-front beats move
+        // the urgency to the talon actor, so all covers go quiet.
+        private void UpdateCoverSignals()
+        {
+            if (_coverMarkers == null) return;
+            bool hidePhase = !_state.RescueObjectiveActive && !_state.RescueComplete && !IsFailed;
+            for (int i = 0; i < _coverMarkers.Length; i++)
+            {
+                bool occupied = false;
+                if (hidePhase && _context.Dogs != null)
+                {
+                    foreach (var dog in _context.Dogs)
+                    {
+                        if (dog == null) continue;
+                        if (Vector2.Distance(dog.transform.position, _coverZones[i]) < CoverRadius)
+                        {
+                            occupied = true;
+                            break;
+                        }
+                    }
+                }
+                ActorSignalBadge.SetStationSignal(_coverMarkers[i], hidePhase && !occupied);
             }
         }
 

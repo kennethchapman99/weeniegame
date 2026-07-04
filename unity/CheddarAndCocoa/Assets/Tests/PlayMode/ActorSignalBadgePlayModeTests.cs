@@ -547,6 +547,82 @@ namespace CheddarAndCocoa.Tests
                 "Delivering the weenie must drop the bowl's urgency signal.");
         }
 
+        [UnityTest]
+        public IEnumerator EagleShadow_CoverPads_SignalUntilADogTucksIn()
+        {
+            yield return Load(GameManager.MissionVariant.EagleShadowPanic);
+
+            var first = GameObject.Find("EagleCover_0");
+            var second = GameObject.Find("EagleCover_1");
+            Assert.IsNotNull(first, "Eagle Shadow Panic should stage its cover pads.");
+            Assert.IsNotNull(second);
+
+            // Park both dogs in the open, outside every cover radius.
+            _cheddar.transform.position = new Vector3(0f, -5f, 0f);
+            _cocoa.transform.position = new Vector3(3f, -5f, 0f);
+            yield return null;
+            yield return null;
+
+            Assert.IsTrue(StationSignaling(first),
+                "During the hide phase every open cover must signal at distance.");
+            Assert.That(StationIcon(first), Does.Contain("command"),
+                "A hide-here pad is a command moment; the eagle actor carries the threat warning.");
+            Assert.IsTrue(StationSignaling(second),
+                "All open covers are valid hides and must signal together.");
+
+            _cheddar.transform.position = first.transform.position;
+            yield return null;
+            yield return null;
+
+            Assert.IsFalse(StationSignaling(first),
+                "A cover with a dog tucked inside is resolved and must drop its signal.");
+            Assert.IsTrue(StationSignaling(second),
+                "The other open covers must keep signalling for the partner.");
+
+            _game.ForceEagleShadowSafeHide();
+            _game.ForceEagleShadowSafeHide(); // the second hide opens the snatch/rescue beat
+            yield return null;
+            yield return null;
+
+            Assert.IsFalse(StationSignaling(second),
+                "The snatch/rescue beat moves the urgency to the talons - covers must go quiet.");
+        }
+
+        [UnityTest]
+        public IEnumerator CoyotesFence_ActiveWeakSpot_WarnsThenCommandsWhenPinned()
+        {
+            yield return Load(GameManager.MissionVariant.CoyotesFence);
+
+            var first = GameObject.Find("FenceGap_0");
+            var second = GameObject.Find("FenceGap_1");
+            Assert.IsNotNull(first, "Coyotes at the Fence should stage its weak-spot markers.");
+            Assert.IsNotNull(second);
+            Assert.IsTrue(StationSignaling(first),
+                "The coyote's target weak spot must signal at distance.");
+            Assert.That(StationIcon(first), Does.Contain("warning"),
+                "An unpinned coyote closing on the gap reads as a threat warning.");
+            Assert.IsFalse(StationSignaling(second),
+                "Idle gaps are not urgent and must stay quiet.");
+
+            _game.ForceCoyoteBarkPressure(DogId.Cocoa);
+            yield return null;
+
+            Assert.IsTrue(StationSignaling(first),
+                "A pinned coyote keeps the active gap signalling for the partner's repair.");
+            Assert.That(StationIcon(first), Does.Contain("command"),
+                "A bark-pinned coyote flips the gap into the partner's fill-dirt command.");
+
+            _game.ForceCoyoteRepair(DogId.Cheddar);
+            yield return null;
+
+            Assert.IsFalse(StationSignaling(first),
+                "A filled weak spot is resolved and must drop its signal.");
+            Assert.IsTrue(StationSignaling(second),
+                "The signal must move with the coyote to the next active weak spot.");
+            Assert.That(StationIcon(second), Does.Contain("warning"),
+                "The fresh gap starts back in the loose-coyote threat state.");
+        }
+
         private static bool StationSignaling(GameObject marker)
         {
             var badge = marker != null ? marker.GetComponent<ActorSignalBadge>() : null;
