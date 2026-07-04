@@ -37,6 +37,24 @@ namespace CheddarAndCocoa.Game
             return badge;
         }
 
+        /// <summary>
+        /// Station-marker variant: markers have no MissionActorFeedback pulse channel, so mission
+        /// controllers raise/drop the distance signal directly when a marker becomes (or stops
+        /// being) the active objective. Command skin by default; warning for jam/threat states.
+        /// </summary>
+        public static void SetStationSignal(GameObject marker, bool active, bool warning = false)
+        {
+            if (marker == null) return;
+            if (!active)
+            {
+                var existing = marker.GetComponent<ActorSignalBadge>();
+                if (existing != null) existing.Hide();
+                return;
+            }
+
+            Attach(marker).Show(warning ? FinalGameplayArt.WorldLabelWarning : FinalGameplayArt.WorldLabelCommand);
+        }
+
         public void Apply(string label, float pulse)
         {
             EnsureIcon();
@@ -51,7 +69,13 @@ namespace CheddarAndCocoa.Game
             // back to the warning skin.
             if (path == FinalGameplayArt.WorldLabelBubble) path = FinalGameplayArt.WorldLabelWarning;
 
-            Sprite sprite = FinalGameplayArt.Load(path);
+            Show(path);
+        }
+
+        private void Show(string spritePath)
+        {
+            EnsureIcon();
+            Sprite sprite = FinalGameplayArt.Load(spritePath);
             if (sprite == null)
             {
                 Hide();

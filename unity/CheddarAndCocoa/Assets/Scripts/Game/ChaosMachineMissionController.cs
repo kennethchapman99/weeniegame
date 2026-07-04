@@ -249,6 +249,7 @@ namespace CheddarAndCocoa.Game
                 if (_leverLabel != null)
                     _leverLabel.text = _puzzle.Running ? "CASCADE RUNNING - COVER YOUR JUNCTIONS!" : "LEVER - PULL TO START THE CASCADE";
             }
+            ActorSignalBadge.SetStationSignal(_lever, !_puzzle.Running && !_puzzle.Solved && !_failed);
 
             if (_junctions == null) return;
             int active = Mathf.Clamp(_puzzle.Stage, 0, _junctions.Length - 1);
@@ -265,6 +266,10 @@ namespace CheddarAndCocoa.Game
                     : isActive && _puzzle.Running ? ownerTint
                     : new Color(0.3f, 0.3f, 0.34f);
                 if (_junctions[i].TryGetComponent<SpriteRenderer>(out var sr)) sr.color = shown;
+                // Distance signal: command over the junction the live cascade needs covered NOW;
+                // a jam flips it to the warning skin until the lever is re-pulled.
+                bool jammed = stalledHere && !_puzzle.Running;
+                ActorSignalBadge.SetStationSignal(_junctions[i], (isActive && _puzzle.Running) || jammed, jammed);
                 if (_junctionArt != null && _junctionArt[i] != null)
                     _junctionArt[i].SetTint(JunctionTint(fired, stalledHere, isActive, owner));
                 if (_junctionLabels != null && _junctionLabels[i] != null)

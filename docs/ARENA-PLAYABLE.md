@@ -1077,6 +1077,20 @@ snatched in Eagle Shadow and confirm the warning→command icon swap tracks the 
 in Car Ride lean hard to one side until the label flips to SPILL WARNING and confirm the badge
 appears over the car and drops after recovering.
 
+The 2026-07-04 pass extended the same distance signal to **station markers** (they have no
+`MissionActorFeedback` pulse channel, so mission controllers drive
+`ActorSignalBadge.SetStationSignal` directly when a marker becomes or stops being the active
+objective): The Great Escape's active chain station carries a command badge that follows the chain;
+The Rube Goldberg's lever carries a command badge until pulled, the live cascade's current junction
+carries it while rolling, and a misfire swaps the jammed junction to the warning skin while the
+lever re-raises its re-pull command; The Bone Detail alternates the command badge between the scent
+post (while Cocoa owes a sniff) and the called mound (after the reveal); Squirrel Conspiracy's
+active hold-cutoff zone carries a command badge; and Backyard Rescue's escape gap carries a command
+badge that drops while the gap dog is actually standing in it. Manual acceptance check: from couch
+distance with F1 off, each of these missions should show exactly one bobbing go-here icon over the
+place the team must act next (two in a jammed Rube Goldberg: warning at the jam, command at the
+lever), and the icon should hand off immediately when the objective moves.
+
 ## Generated audio/rumble checks
 
 The arena now has replaceable generated feedback slots in `ArenaFeedbackCatalog`, plus a light

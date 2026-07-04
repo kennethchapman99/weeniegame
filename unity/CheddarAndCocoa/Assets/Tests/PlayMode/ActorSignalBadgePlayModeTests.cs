@@ -242,6 +242,137 @@ namespace CheddarAndCocoa.Tests
                 "Recovering the lean must clear the urgency signal.");
         }
 
+        [UnityTest]
+        public IEnumerator GreatEscape_ActiveStation_CarriesTheDistanceSignal()
+        {
+            yield return Load(GameManager.MissionVariant.GreatEscape);
+
+            var first = GameObject.Find("EscapeStation_0");
+            var second = GameObject.Find("EscapeStation_1");
+            Assert.IsNotNull(first, "Great Escape should stage its contraption stations.");
+            Assert.IsNotNull(second);
+            Assert.IsTrue(StationSignaling(first),
+                "The chain's active station must carry a distance-readable signal.");
+            Assert.That(StationIcon(first), Does.Contain("command"),
+                "A go-here-now station is a command moment, not a threat warning.");
+            Assert.IsFalse(StationSignaling(second),
+                "Stations later in the chain are not urgent yet and must stay quiet.");
+
+            _game.ForceEscapeStep(ChainActor.Cocoa);
+            yield return null;
+
+            Assert.IsFalse(StationSignaling(first),
+                "A completed station's signal must drop the moment the chain advances.");
+            Assert.IsTrue(StationSignaling(second),
+                "The signal must follow the chain to the next active station.");
+        }
+
+        [UnityTest]
+        public IEnumerator ChaosMachine_DistanceSignalFollowsTheCascade()
+        {
+            yield return Load(GameManager.MissionVariant.ChaosMachine);
+
+            var lever = GameObject.Find("ChaosMachineLever");
+            var firstJunction = GameObject.Find("ChaosJunction_0");
+            Assert.IsNotNull(lever);
+            Assert.IsNotNull(firstJunction);
+            Assert.IsTrue(StationSignaling(lever),
+                "Before the pull, the lever is the act-now objective and must signal at distance.");
+            Assert.That(StationIcon(lever), Does.Contain("command"));
+            Assert.IsFalse(StationSignaling(firstJunction),
+                "Pre-pull junctions are pre-positioning spots, not act-now signals.");
+
+            _game.ForceChaosTrigger();
+            yield return null;
+
+            Assert.IsFalse(StationSignaling(lever),
+                "Once the cascade is rolling the lever's job is done.");
+            Assert.IsTrue(StationSignaling(firstJunction),
+                "The live cascade's current junction must signal its assist window at distance.");
+            Assert.That(StationIcon(firstJunction), Does.Contain("command"));
+
+            _game.ForceChaosAdvance(3.5f, assisting: false);
+            yield return null;
+
+            Assert.IsTrue(StationSignaling(firstJunction),
+                "A misfire must keep the jammed junction signalling.");
+            Assert.That(StationIcon(firstJunction), Does.Contain("warning"),
+                "A jam reads as a warning skin, not a calm command.");
+            Assert.IsTrue(StationSignaling(lever),
+                "The re-pull becomes the command once the machine jams.");
+        }
+
+        [UnityTest]
+        public IEnumerator BoneRelay_SignalMovesFromScentPostToCalledMound()
+        {
+            yield return Load(GameManager.MissionVariant.BoneRelay);
+
+            var post = GameObject.Find("ScentPost");
+            Assert.IsNotNull(post, "Bone Relay should stage its scent post.");
+            Assert.IsTrue(StationSignaling(post),
+                "While Cocoa owes a sniff, the scent post is the act-now objective.");
+            Assert.That(StationIcon(post), Does.Contain("command"));
+
+            _game.ForceBoneReveal();
+            yield return null;
+
+            int call = _game.BoneRelayPuzzle.RevealedTarget;
+            Assert.GreaterOrEqual(call, 0, "The reveal should call a real mound.");
+            var mound = GameObject.Find($"BoneMound_{call}");
+            Assert.IsNotNull(mound);
+            Assert.IsFalse(StationSignaling(post),
+                "The post's signal must hand off once the call is out.");
+            Assert.IsTrue(StationSignaling(mound),
+                "The called mound must carry the distance signal for Cheddar's dig.");
+        }
+
+        [UnityTest]
+        public IEnumerator SquirrelConspiracy_ActiveCutoff_CarriesTheDistanceSignal()
+        {
+            yield return Load(GameManager.MissionVariant.SquirrelConspiracy);
+
+            int route = _game.SquirrelConspiracyState.RouteIndex;
+            var marker = GameObject.Find($"SquirrelCutoff_{route}");
+            Assert.IsNotNull(marker, "The active cutoff marker should be staged and visible.");
+            Assert.IsTrue(StationSignaling(marker),
+                "The hold-cutoff zone must signal at distance while it is the active objective.");
+            Assert.That(StationIcon(marker), Does.Contain("command"));
+        }
+
+        [UnityTest]
+        public IEnumerator BackyardRescue_EscapeGap_SignalsUntilTheGapDogHoldsIt()
+        {
+            yield return Load();
+
+            var gap = GameObject.Find("BackyardSquirrelTrapEscapeGap");
+            Assert.IsNotNull(gap, "Backyard Rescue should stage the trap's escape gap.");
+
+            var holder = _game.BackyardTrapState.GapDog == DogId.Cheddar ? _cheddar : _cocoa;
+            holder.transform.position = Vector3.zero; // yard center, well outside the gap radius
+            yield return null;
+            yield return null;
+
+            Assert.IsTrue(StationSignaling(gap),
+                "An unheld escape gap must signal for its holder at any distance.");
+            Assert.That(StationIcon(gap), Does.Contain("command"));
+
+            holder.transform.position = _game.BackyardTrapGapPosition;
+            yield return null;
+            yield return null;
+
+            Assert.IsFalse(StationSignaling(gap),
+                "A held gap is the resolved state - the signal must drop while the dog stands in it.");
+        }
+
+        private static bool StationSignaling(GameObject marker)
+        {
+            var badge = marker != null ? marker.GetComponent<ActorSignalBadge>() : null;
+            return badge != null && badge.IsShowing;
+        }
+
+        private static string StationIcon(GameObject marker) =>
+            marker.GetComponent<ActorSignalBadge>().IconSpriteName;
+
         private IEnumerator Load(GameManager.MissionVariant variant = GameManager.MissionVariant.BackyardRescue)
         {
             yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);

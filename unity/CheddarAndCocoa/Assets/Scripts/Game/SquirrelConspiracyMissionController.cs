@@ -261,6 +261,7 @@ namespace CheddarAndCocoa.Game
             {
                 bool active = !_state.StashRevealed && i == _state.RouteIndex;
                 _cutoffMarkers[i].SetActive(active);
+                ActorSignalBadge.SetStationSignal(_cutoffMarkers[i], active);
                 if (active)
                     MissionPropArt.SetSprite(_cutoffMarkers[i].GetComponent<MissionPropArtAttachment>(), CutoffArtPath());
             }

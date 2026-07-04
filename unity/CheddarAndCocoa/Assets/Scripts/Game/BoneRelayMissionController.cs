@@ -224,7 +224,10 @@ namespace CheddarAndCocoa.Game
                 }
                 if (_moundLabels != null && _moundLabels[i] != null)
                     _moundLabels[i].text = isCall ? "DIG HERE!" : "DIG?";
+                ActorSignalBadge.SetStationSignal(_mounds[i], isCall);
             }
+            // The relay's distance signal alternates: post while Cocoa owes a sniff, called mound after.
+            ActorSignalBadge.SetStationSignal(_scentPost, !_puzzle.Known && !_puzzle.Solved && !_failed);
             if (_scentPostLabel != null)
                 _scentPostLabel.text = _puzzle.Known ? "SCENT POST - SHE'S CALLING IT!" : "SCENT POST - COCOA SNIFF HERE";
             if (_scentPost != null && _scentPost.TryGetComponent<SpriteRenderer>(out var psr))

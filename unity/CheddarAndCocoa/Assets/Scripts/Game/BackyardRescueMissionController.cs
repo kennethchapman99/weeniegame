@@ -430,6 +430,9 @@ namespace CheddarAndCocoa.Game
             if (_gapMarker == null) return;
             bool active = !_trapState.Complete;
             _gapMarker.SetActive(active);
+            // Distance signal drops while the gap dog is actually standing in it — held is the
+            // resolved state, an open gap is the act-now one.
+            ActorSignalBadge.SetStationSignal(_gapMarker, active && !IsGapHeld());
             if (active && _gapMarker.TryGetComponent<SpriteRenderer>(out var sr))
                 sr.color = IsGapHeld()
                     ? new Color(0.35f, 1f, 0.5f, 0.48f)

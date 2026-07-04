@@ -249,6 +249,7 @@ namespace CheddarAndCocoa.Game
                 Color ownerTint = owner == ChainActor.Cheddar ? new Color(0.95f, 0.72f, 0.3f) : new Color(0.55f, 0.78f, 1f);
                 Color shown = done ? new Color(0.3f, 0.55f, 0.32f) : (isActive ? ownerTint : new Color(0.3f, 0.3f, 0.34f));
                 if (_stations[i].TryGetComponent<SpriteRenderer>(out var sr)) sr.color = shown;
+                ActorSignalBadge.SetStationSignal(_stations[i], isActive);
                 string spritePath = SelectStationSprite(i, isActive, done, owner);
                 MissionPropArt.SetSprite(_stationArt != null && i < _stationArt.Length ? _stationArt[i] : null, spritePath);
                 if (_stationLabels != null && _stationLabels[i] != null)
