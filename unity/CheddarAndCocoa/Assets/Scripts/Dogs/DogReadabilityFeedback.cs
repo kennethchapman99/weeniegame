@@ -43,6 +43,7 @@ namespace CheddarAndCocoa.Dogs
         private SpriteRenderer _tail;
         private SpriteRenderer _marker;
         private SpriteRenderer _intentArrow;
+        private SpriteRenderer _waterBand;
         private SpriteRenderer _authoredPose;
         private TextMesh _label;
         private MeshRenderer _labelRenderer;
@@ -174,6 +175,46 @@ namespace CheddarAndCocoa.Dogs
             var next = ChoosePose();
             ApplyPose(next);
             AnimatePose(next);
+            TickWaterLook();
+        }
+
+        // --- Pool water read (couch test #4: "when a dog falls in they should look covered in
+        // water") — swimming dunks the art blue behind a translucent waterline band, and a dog
+        // stays visibly damp through the deck shake until the wet timer dries out. ---
+
+        public static readonly Color SwimArtTint = new Color(0.6f, 0.78f, 0.96f);
+        public static readonly Color WetArtTint = new Color(0.78f, 0.87f, 0.98f);
+
+        public bool WaterBandVisible => _waterBand != null && _waterBand.enabled;
+        public Color WaterArtTint => _authoredPose != null
+            ? _authoredPose.color
+            : _body != null ? _body.color : Color.white;
+
+        private void TickWaterLook()
+        {
+            bool swimming = _dog.Mode == MovementMode.Swimming;
+            bool damp = !swimming && (_dog.IsWet || _dog.Mode == MovementMode.Shaking);
+            Color tint = swimming ? SwimArtTint : damp ? WetArtTint : Color.white;
+            if (_authoredPose != null) _authoredPose.color = tint;
+            else if (_body != null) _body.color = _art.BodyColor * tint;
+
+            if (swimming && _waterBand == null)
+            {
+                var go = new GameObject("SwimWaterBand");
+                go.transform.SetParent(transform, false);
+                _waterBand = go.AddComponent<SpriteRenderer>();
+                _waterBand.sprite = PoolRuntimeArt.WaterBand();
+                _waterBand.color = new Color(0.55f, 0.82f, 1f, 0.85f);
+                _waterBand.sortingOrder = 31; // directly over the authored pose art (30)
+            }
+
+            if (_waterBand == null) return;
+            _waterBand.enabled = swimming;
+            if (!swimming) return;
+
+            float bob = Mathf.Sin(Time.time * 5.2f) * 0.035f;
+            _waterBand.transform.localPosition = new Vector3(0f, -0.34f + bob, -0.25f);
+            _waterBand.transform.localScale = new Vector3(1.05f, 0.72f, 1f);
         }
 
         private Pose ChoosePose()

@@ -128,7 +128,12 @@ accents:
   (`TickFlowInput` untouched). The right-hand detail panel keeps the large cover, badge, name, the
   one-line premise and grounded "HOW TO PLAY" readout (`MissionInstructionCatalog`), the
   per-mission replay challenge, and the readability gate, with Start/Highlight Couch Test buttons
-  (UGUI, wired to the same `GameManager` methods) pinned to the bottom. In-mission HUD, pause, end
+  (UGUI, wired to the same `GameManager` methods) pinned to the bottom. Couch test #4 (2026-07-04)
+  rebalanced the split: the grid gives up 100px to the detail panel (946/896), the detail cover
+  aspect-FITS its holder so the whole mission picture is visible (tiles keep aspect-fill), and the
+  description/HOW TO PLAY blocks TMP-auto-size into their rects (max 22pt, floor 13pt) so a 7-step
+  mission can never print over the challenge/readiness lines or the buttons again
+  (`Screen_DetailPanel_FitsLongStepListsAndShowsUncroppedCover`). In-mission HUD, pause, end
   cards, and session summary still draw through IMGUI `ArenaHud`. End cards echo the next replay
   target, or call out that the challenge was beaten on a flawless run. PlayMode coverage:
   `MissionSelectScreenPlayModeTests` (canvas/TMP setup, per-page tiles, paging, detail panel,
@@ -389,10 +394,24 @@ waterline, and each dog paddles in character (Cheddar `FRANTIC DOGGY-PADDLE` chu
 `STATELY PADDLE` glide, `DogMotionPersonality`). Bark still outranks the swim pose so a paddling
 dog can flash WOOF.
 
+Couch test #4 fixes (2026-07-04, live findings from Ken's sitting):
+
+1. **Water where the art shows water.** The plate used to be scaled so the *whole photo* (patio
+   border included) covered the water rect — dogs visibly standing on concrete were "swimming".
+   The sprite is now scaled so the photo's blue-water region (54.8% x 58.3% of the image,
+   `BackyardPoolZone.PhotoWaterFraction*`) equals the gameplay `WaterRect` exactly; the photo's
+   patio lands outside it as real dry deck.
+2. **Floaties are pool donuts.** The floaties were drawn with the BarkRing paw-print VFX sprite
+   and read as giant bark targets ("I don't know what this thing in the pool is"). They are now
+   procedurally drawn inner tubes (`PoolRuntimeArt.Donut` — colored tube, seam wedges, gloss arc).
+3. **Dogs look wet.** Swimming dunks the dog art pool-blue behind a translucent waterline band
+   (`DogReadabilityFeedback.TickWaterLook`); through the deck shake and the 4.5s wet timer the art
+   stays visibly damp, then dries back to full color.
+
 Covered by `BackyardPoolPlayModeTests` (pure geometry + swim/shake/wet transitions + indoor
 closure + bullet-step and highlight assertions + eagle depth pose + swim-pose/water-plate
-assertions) and the updated `BackyardEnvironmentPlayModeTests` /
-`BackyardArtEnhancerScenePlayModeTests` scenery assertions.
+assertions + the couch-test-#4 water-region/donut/wet-look contracts) and the updated
+`BackyardEnvironmentPlayModeTests` / `BackyardArtEnhancerScenePlayModeTests` scenery assertions.
 
 Manual acceptance check: open mission select — HOW TO PLAY reads as bullets with the squirrel
 warning shown in gold exactly as it appears in-game. Start Backyard Rescue — no name text floats

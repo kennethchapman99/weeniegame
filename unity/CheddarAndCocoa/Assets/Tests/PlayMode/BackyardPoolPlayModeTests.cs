@@ -199,12 +199,37 @@ namespace CheddarAndCocoa.Tests
             Assert.That(feedback.MotionPersonalityLabel, Does.Contain("PADDLE"),
                 "The swim personality should read as paddling.");
 
+            // Couch test #4: a swimming dog must LOOK in the water — dunked-blue art behind a
+            // visible waterline band.
+            Assert.IsTrue(feedback.WaterBandVisible,
+                "A swimming dog needs the translucent waterline band over its lower body.");
+            AssertTint(feedback.WaterArtTint, DogReadabilityFeedback.SwimArtTint,
+                "Swimming art should tint pool-blue.");
+
             // Stretch fix: the water plate is the photo-derived pool patio from the real yard.
             var waterPlate = GameObject.Find("PoolWater");
             Assert.IsNotNull(waterPlate, "The pool draws an authored water plate.");
-            Assert.That(waterPlate.GetComponent<SpriteRenderer>().sprite.name,
+            var plateRenderer = waterPlate.GetComponent<SpriteRenderer>();
+            Assert.That(plateRenderer.sprite.name,
                 Does.Contain("yard_photo_pool_patio"),
                 "The pool plate should be the yard_photo_pool_patio art, not the stretched pond sprite.");
+
+            // Couch test #4: the photo's BLUE WATER region (not the whole image with its patio
+            // border) must line up with the gameplay water rect, or dogs "swim" on dry concrete.
+            float plateWorldWidth = plateRenderer.sprite.bounds.size.x * waterPlate.transform.localScale.x;
+            float plateWorldHeight = plateRenderer.sprite.bounds.size.y * waterPlate.transform.localScale.y;
+            Assert.AreEqual(BackyardPoolZone.WaterRect.width,
+                plateWorldWidth * BackyardPoolZone.PhotoWaterFractionX, 0.4f,
+                "The photo's visible water must span exactly the gameplay water rect width.");
+            Assert.AreEqual(BackyardPoolZone.WaterRect.height,
+                plateWorldHeight * BackyardPoolZone.PhotoWaterFractionY, 0.4f,
+                "The photo's visible water must span exactly the gameplay water rect height.");
+
+            // Couch test #4: floaties are pool donuts, not the paw-print bark-ring VFX sprite.
+            var floater = GameObject.Find("PoolFloater_0");
+            Assert.IsNotNull(floater);
+            Assert.AreEqual("PoolDonutSprite", floater.GetComponent<SpriteRenderer>().sprite.name,
+                "Floaties must read as inner tubes, not bark targets.");
 
             // Reaching the deck edge roots the dog in a shake...
             dog.transform.position = new Vector2(BackyardPoolZone.WaterRect.xMax + 1.5f, openWater.y);
@@ -212,6 +237,10 @@ namespace CheddarAndCocoa.Tests
             yield return null;
             Assert.AreEqual(MovementMode.Shaking, dog.Mode,
                 "Climbing out at the deck edge must start the rooted shake.");
+            Assert.IsFalse(feedback.WaterBandVisible,
+                "The waterline band belongs to swimming, not the deck shake.");
+            AssertTint(feedback.WaterArtTint, DogReadabilityFeedback.WetArtTint,
+                "A dog mid-shake is still visibly damp.");
 
             // ...and once POOL.shake seconds elapse they are free again, but wet for a while.
             // (Headless deltaTime is tiny, so the timer is fast-forwarded via the Force* hook.)
@@ -220,6 +249,15 @@ namespace CheddarAndCocoa.Tests
             yield return null;
             Assert.AreEqual(MovementMode.Free, dog.Mode, "The shake must end on its own.");
             Assert.IsTrue(dog.IsWet, "A freshly dried dog carries the wet timer from the prototype.");
+            AssertTint(feedback.WaterArtTint, DogReadabilityFeedback.WetArtTint,
+                "A wet dog stays visibly damp until the wet timer dries.");
+        }
+
+        private static void AssertTint(Color actual, Color expected, string message)
+        {
+            Assert.AreEqual(expected.r, actual.r, 0.02f, message);
+            Assert.AreEqual(expected.g, actual.g, 0.02f, message);
+            Assert.AreEqual(expected.b, actual.b, 0.02f, message);
         }
 
         [UnityTest]

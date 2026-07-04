@@ -107,6 +107,30 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator Screen_DetailPanel_FitsLongStepListsAndShowsUncroppedCover()
+        {
+            yield return LoadArena();
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            var screen = Object.FindFirstObjectByType<MissionSelectScreen>();
+
+            // Couch test #4: Backyard Rescue's 7-step list overflowed its rect, printing over the
+            // challenge/readiness lines and the buttons, while the cover cropped to a sliver.
+            game.SelectMission(GameManager.MissionVariant.BackyardRescue);
+            yield return null;
+            Assert.IsTrue(screen.DetailTextFitsItsRects,
+                "The longest how-to list must auto-size into its rect, never over the rows below.");
+            Assert.IsTrue(screen.DetailCoverUncropped,
+                "The detail cover must aspect-fit so the whole mission picture is visible.");
+
+            // A short list stays fitting too (and gets the full-size font path).
+            game.SelectMission(GameManager.MissionVariant.GateCrash);
+            yield return null;
+            Assert.IsTrue(screen.DetailTextFitsItsRects);
+            Assert.IsTrue(screen.DetailCoverUncropped);
+        }
+
+        [UnityTest]
         public IEnumerator Screen_HidesDuringMissionsAndRefreshesOnReturn()
         {
             yield return LoadArena();

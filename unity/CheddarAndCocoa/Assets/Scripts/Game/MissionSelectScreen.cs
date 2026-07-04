@@ -23,15 +23,18 @@ namespace CheddarAndCocoa.Game
         public const float ReferenceWidth = 1920f;
         public const float ReferenceHeight = 1080f;
 
+        // Couch test #4: the grid's old 1046px share squeezed the detail pane until its text
+        // overlapped itself and the cover cropped — the split is now 946/896 and the detail text
+        // auto-sizes into its rects instead of overflowing them.
         private const float ContentTop = 170f;
         private const float ContentHeight = 892f;
         private const float GridX = 26f;
-        private const float GridWidth = 1046f;
+        private const float GridWidth = 946f;
         private const float TileGap = 14f;
         private const float PageLabelHeight = 30f;
-        private const float DetailX = 1098f;
-        private const float DetailWidth = 796f;
-        private const float DetailCoverHeight = 340f;
+        private const float DetailX = 998f;
+        private const float DetailWidth = 896f;
+        private const float DetailCoverHeight = 300f;
 
         private sealed class TileSlot
         {
@@ -88,6 +91,37 @@ namespace CheddarAndCocoa.Game
         public string DetailChallengeText => _detailChallenge != null ? _detailChallenge.text : string.Empty;
         public string DetailReadinessText => _detailReadiness != null ? _detailReadiness.text : string.Empty;
         public Sprite DetailCoverSprite => _detailCover != null ? _detailCover.sprite : null;
+
+        /// <summary>
+        /// Couch test #4 contract: the description and how-to blocks must render inside their own
+        /// rects (auto-sized), never spilling over the challenge/readiness lines and buttons.
+        /// </summary>
+        public bool DetailTextFitsItsRects
+        {
+            get
+            {
+                if (_detailDescription == null || _detailHowTo == null) return false;
+                return RenderedTextFits(_detailDescription) && RenderedTextFits(_detailHowTo);
+            }
+        }
+
+        private static bool RenderedTextFits(TextMeshProUGUI text)
+        {
+            // textBounds measures the actually rendered glyphs, i.e. after auto-size shrinking.
+            text.ForceMeshUpdate();
+            return text.textBounds.size.y <= text.rectTransform.sizeDelta.y + 0.5f;
+        }
+
+        /// <summary>Couch test #4 contract: the detail cover shows the whole image (aspect-fit).</summary>
+        public bool DetailCoverUncropped
+        {
+            get
+            {
+                if (_detailCover == null || _detailCover.sprite == null) return false;
+                Vector2 size = _detailCover.rectTransform.sizeDelta;
+                return size.x <= _detailCoverArea.x + 0.5f && size.y <= _detailCoverArea.y + 0.5f;
+            }
+        }
 
         public int ActiveTileCount
         {
@@ -290,10 +324,11 @@ namespace CheddarAndCocoa.Game
             Place(_detailMeta.rectTransform, x, y, innerWidth, 28f);
             y += 34f;
 
-            _detailDescription = NewText("DetailDescription", _canvasRoot.transform, 21f,
+            _detailDescription = NewText("DetailDescription", _canvasRoot.transform, 22f,
                 new Color(0.94f, 0.97f, 1f), TextAlignmentOptions.TopLeft);
-            Place(_detailDescription.rectTransform, x, y, innerWidth, 116f);
-            y += 122f;
+            Place(_detailDescription.rectTransform, x, y, innerWidth, 100f);
+            EnableShrinkToFit(_detailDescription, 22f);
+            y += 106f;
 
             TextMeshProUGUI howToHeader = NewText("HowToHeader", _canvasRoot.transform, 19f,
                 new Color(1f, 0.82f, 0.3f), TextAlignmentOptions.TopLeft, FontStyles.Bold);
@@ -307,9 +342,10 @@ namespace CheddarAndCocoa.Game
             float challengeY = readinessY - 28f;
             float howToHeight = Mathf.Max(80f, challengeY - 8f - y);
 
-            _detailHowTo = NewText("DetailHowTo", _canvasRoot.transform, 20f,
+            _detailHowTo = NewText("DetailHowTo", _canvasRoot.transform, 22f,
                 new Color(0.94f, 0.97f, 1f), TextAlignmentOptions.TopLeft);
             Place(_detailHowTo.rectTransform, x, y, innerWidth, howToHeight);
+            EnableShrinkToFit(_detailHowTo, 22f);
 
             _detailChallenge = NewText("DetailChallenge", _canvasRoot.transform, 18f,
                 new Color(0.9f, 0.95f, 1f), TextAlignmentOptions.TopLeft);
@@ -425,7 +461,7 @@ namespace CheddarAndCocoa.Game
             GameManager.MissionVariant variant = _game.SelectedMissionVariant;
             Color accent = ArenaHud.MissionBadgeColorFor(variant);
 
-            FitCover(_detailCover, CoverSpriteFor(variant), _detailCoverArea);
+            FitCoverContain(_detailCover, CoverSpriteFor(variant), _detailCoverArea);
             _detailAccent.color = accent;
             _detailBadgeBack.color = accent;
             _detailBadgeCode.text = ArenaHud.MissionBadgeCodeFor(variant);
@@ -459,6 +495,27 @@ namespace CheddarAndCocoa.Game
             cover.sprite = sprite;
             float scale = Mathf.Max(area.x / sprite.rect.width, area.y / sprite.rect.height);
             cover.rectTransform.sizeDelta = new Vector2(sprite.rect.width * scale, sprite.rect.height * scale);
+        }
+
+        // Aspect-fit: the whole image stays visible inside the holder (dark backing letterboxes
+        // the rest). Couch test #4: the detail cover was aspect-filled into a 2.3:1 strip that
+        // cropped the mission art down to a sliver.
+        private static void FitCoverContain(Image cover, Sprite sprite, Vector2 area)
+        {
+            cover.enabled = sprite != null;
+            if (sprite == null) return;
+            cover.sprite = sprite;
+            float scale = Mathf.Min(area.x / sprite.rect.width, area.y / sprite.rect.height);
+            cover.rectTransform.sizeDelta = new Vector2(sprite.rect.width * scale, sprite.rect.height * scale);
+        }
+
+        // TMP auto-size: long step lists shrink to fit their rect instead of overflowing into the
+        // challenge/readiness lines and buttons below.
+        private static void EnableShrinkToFit(TextMeshProUGUI text, float maxSize)
+        {
+            text.enableAutoSizing = true;
+            text.fontSizeMax = maxSize;
+            text.fontSizeMin = 13f;
         }
 
         private static void EnsureEventSystem()

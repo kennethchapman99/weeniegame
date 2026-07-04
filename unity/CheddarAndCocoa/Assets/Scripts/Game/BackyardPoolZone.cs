@@ -21,6 +21,11 @@ namespace CheddarAndCocoa.Game
         public const float ShakeSeconds = 0.9f;
         public const float WetSeconds = 4.5f;
 
+        // Fraction of yard_photo_pool_patio.png occupied by the blue water region (center
+        // row/column pixel scan). The plate is scaled so this region equals WaterRect.
+        public const float PhotoWaterFractionX = 0.548f;
+        public const float PhotoWaterFractionY = 0.583f;
+
         // Open-water rectangle in world units. Top-left quadrant of the 120x68 yard, sized so it
         // reads HUGE from the couch while every fixed mission staging point (claim zones, dig
         // spots, hide bushes, home bowl, weenie spots) stays on dry land.
@@ -181,22 +186,28 @@ namespace CheddarAndCocoa.Game
             _visualRoot = new GameObject("PoolVisuals").transform;
             _visualRoot.SetParent(transform);
 
-            // Water plate: the photo-derived pool-patio art from Ken and Sue's real yard (640x420,
-            // aspect ~1.52 vs the 34x23 water rect's ~1.48 — near-native, no visible stretch). The
-            // margin puts the art's patio border just outside the gameplay water rect as the deck
-            // lip. One-background rule: authored sprite, not a runtime rectangle. Sits above the
-            // painted plate (-8) and below every gameplay prop. Falls back to the pond art if the
-            // photo plate is missing.
+            // Water plate: the photo-derived pool-patio art from Ken and Sue's real yard. The BLUE
+            // WATER inside the photo is only part of the image (54.8% of its width, 58.3% of its
+            // height, centered — measured from the PNG's center row/column), so the sprite is
+            // scaled so that the VISIBLE WATER matches the gameplay WaterRect exactly and the
+            // photo's patio border lands outside it as real, dry deck. Couch test #4: scaling the
+            // whole image to the rect made dogs "swim" on visibly dry concrete. One-background
+            // rule: authored sprite, not a runtime rectangle. Sits above the painted plate (-8)
+            // and below every gameplay prop. The pond fallback is full-bleed water, so it maps to
+            // the rect 1:1.
             Sprite water = FinalGameplayArt.Load(FinalGameplayArt.EnvironmentPhotoPoolPatio);
+            bool photoPlate = water != null;
             if (water == null) water = FinalGameplayArt.Load(FinalGameplayArt.EnvironmentPond);
             if (water != null)
             {
+                float waterFractionX = photoPlate ? PhotoWaterFractionX : 1f;
+                float waterFractionY = photoPlate ? PhotoWaterFractionY : 1f;
                 var go = new GameObject("PoolWater");
                 go.transform.SetParent(_visualRoot);
                 go.transform.position = new Vector3(WaterRect.center.x, WaterRect.center.y, 0.1f);
                 go.transform.localScale = new Vector3(
-                    (WaterRect.width + 3.5f) / Mathf.Max(0.01f, water.bounds.size.x),
-                    (WaterRect.height + 3.5f) / Mathf.Max(0.01f, water.bounds.size.y),
+                    WaterRect.width / Mathf.Max(0.01f, waterFractionX * water.bounds.size.x),
+                    WaterRect.height / Mathf.Max(0.01f, waterFractionY * water.bounds.size.y),
                     1f);
                 var sr = go.AddComponent<SpriteRenderer>();
                 sr.sprite = water;
@@ -204,28 +215,29 @@ namespace CheddarAndCocoa.Game
                 sr.color = Color.white;
             }
 
-            // Floaties: authored ring art tinted like pool donuts. Dogs can stand on these.
+            // Floaties: pool-donut inner tubes dogs can stand on. Couch test #4: the BarkRing VFX
+            // sprite used here before read as a giant paw-print bark target, not a pool toy.
             Color[] tints =
             {
-                new Color(1f, 0.55f, 0.68f, 0.96f),  // pink donut
-                new Color(1f, 0.85f, 0.35f, 0.96f),  // yellow donut
-                new Color(0.45f, 0.9f, 0.85f, 0.96f) // teal donut
+                new Color(1f, 0.55f, 0.68f),  // pink donut
+                new Color(1f, 0.85f, 0.35f),  // yellow donut
+                new Color(0.45f, 0.9f, 0.85f) // teal donut
             };
-            Sprite ring = RuntimeArtSpriteFactory.Get(RuntimeArtSpriteFactory.RuntimeSpriteId.BarkRing);
             for (int i = 0; i < _floaters.Count; i++)
             {
+                Sprite donut = PoolRuntimeArt.Donut(tints[i % tints.Length]);
                 var go = new GameObject($"PoolFloater_{i}");
                 go.transform.SetParent(_visualRoot);
                 go.transform.position = new Vector3(_floaters[i].Center.x, _floaters[i].Center.y, 0.05f);
                 var sr = go.AddComponent<SpriteRenderer>();
-                sr.sprite = ring;
+                sr.sprite = donut;
                 sr.sortingOrder = -5;
-                sr.color = tints[i % tints.Length];
-                if (ring != null)
+                sr.color = Color.white;
+                if (donut != null)
                 {
                     go.transform.localScale = new Vector3(
-                        _floaters[i].Radii.x * 2f / Mathf.Max(0.01f, ring.bounds.size.x),
-                        _floaters[i].Radii.y * 2f / Mathf.Max(0.01f, ring.bounds.size.y),
+                        _floaters[i].Radii.x * 2f / Mathf.Max(0.01f, donut.bounds.size.x),
+                        _floaters[i].Radii.y * 2f / Mathf.Max(0.01f, donut.bounds.size.y),
                         1f);
                 }
                 _floaterVisuals.Add(go.transform);
