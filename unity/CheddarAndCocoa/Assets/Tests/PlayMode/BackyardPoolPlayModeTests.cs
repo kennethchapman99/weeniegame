@@ -139,6 +139,26 @@ namespace CheddarAndCocoa.Tests
             Assert.Greater(ThreatReadabilityAnimator.EagleDepthScale(-0.07f), 1f, "Low in the bob = closer = bigger.");
         }
 
+        // ---- Swim pose personality (pure) ----
+
+        [Test]
+        public void SwimPose_SubmergesBothDogsWithDistinctPaddles()
+        {
+            var cheddar = DogMotionPersonality.At(DogId.Cheddar, DogReadabilityFeedback.Pose.Swim,
+                time: 0.35f, speed01: 0.5f, zoomies: false);
+            var cocoa = DogMotionPersonality.At(DogId.Cocoa, DogReadabilityFeedback.Pose.Swim,
+                time: 0.35f, speed01: 0.5f, zoomies: false);
+
+            Assert.Less(cheddar.Scale.y, 0.75f, "A swimming dog reads mostly submerged, not full height.");
+            Assert.Less(cocoa.Scale.y, 0.75f);
+            Assert.Less(cheddar.VerticalOffset, 0f, "The art sinks toward the waterline.");
+            Assert.Less(cocoa.VerticalOffset, 0f);
+            Assert.AreEqual("FRANTIC DOGGY-PADDLE", cheddar.Signature,
+                "Cheddar churns - chaos puppy even in the water.");
+            Assert.AreEqual("STATELY PADDLE", cocoa.Signature,
+                "Cocoa glides - the queen does not splash.");
+        }
+
         // ---- Scene: swim / floatie / shake loop ----
 
         [UnityTest]
@@ -168,6 +188,23 @@ namespace CheddarAndCocoa.Tests
             yield return null;
             Assert.AreEqual(MovementMode.Swimming, dog.Mode,
                 "Falling into open water must flip the dog into the swimming mode.");
+
+            // Stretch fix: a swimming dog paddles instead of playing the dry-land run frames.
+            var feedback = dog.GetComponent<DogReadabilityFeedback>();
+            Assert.IsNotNull(feedback);
+            Assert.AreEqual(DogReadabilityFeedback.Pose.Swim, feedback.CurrentPose,
+                "Swimming dogs must show the paddle pose, not the run animation.");
+            Assert.AreEqual(-1, feedback.MotionFrameIndex,
+                "The dry-land frame strips must not drive a swimming dog.");
+            Assert.That(feedback.MotionPersonalityLabel, Does.Contain("PADDLE"),
+                "The swim personality should read as paddling.");
+
+            // Stretch fix: the water plate is the photo-derived pool patio from the real yard.
+            var waterPlate = GameObject.Find("PoolWater");
+            Assert.IsNotNull(waterPlate, "The pool draws an authored water plate.");
+            Assert.That(waterPlate.GetComponent<SpriteRenderer>().sprite.name,
+                Does.Contain("yard_photo_pool_patio"),
+                "The pool plate should be the yard_photo_pool_patio art, not the stretched pond sprite.");
 
             // Reaching the deck edge roots the dog in a shake...
             dog.transform.position = new Vector2(BackyardPoolZone.WaterRect.xMax + 1.5f, openWater.y);

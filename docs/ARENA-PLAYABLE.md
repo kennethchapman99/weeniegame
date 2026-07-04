@@ -365,14 +365,24 @@ The third couch feedback list reported seven items. All are addressed and tested
    the water — swimming out or scampering the floaties to fetch a floating weenie is the fantasy,
    not a bug.
 
+Stretch fixes from the same pass: the pool's water plate is the photo-derived
+`yard_photo_pool_patio` art from the real yard (640x420, near-native aspect for the 34x23 water
+rect) instead of the stretched pond sprite, and swimming dogs get a dedicated `Pose.Swim` — the
+dry-land run/idle frame strips disengage, the art squashes low in the water and sinks toward the
+waterline, and each dog paddles in character (Cheddar `FRANTIC DOGGY-PADDLE` churn vs Cocoa
+`STATELY PADDLE` glide, `DogMotionPersonality`). Bark still outranks the swim pose so a paddling
+dog can flash WOOF.
+
 Covered by `BackyardPoolPlayModeTests` (pure geometry + swim/shake/wet transitions + indoor
-closure + bullet-step and highlight assertions + eagle depth pose) and the updated
-`BackyardEnvironmentPlayModeTests` / `BackyardArtEnhancerScenePlayModeTests` scenery assertions.
+closure + bullet-step and highlight assertions + eagle depth pose + swim-pose/water-plate
+assertions) and the updated `BackyardEnvironmentPlayModeTests` /
+`BackyardArtEnhancerScenePlayModeTests` scenery assertions.
 
 Manual acceptance check: open mission select — HOW TO PLAY reads as bullets with the squirrel
 warning shown in gold exactly as it appears in-game. Start Backyard Rescue — no name text floats
-over the dogs; the top-left quadrant is dominated by the pool with three drifting floaties; run a
-dog across a floatie (slightly faster), walk off it (splash, dog visibly slows to a swim), swim to
+over the dogs; the top-left quadrant is dominated by the pool (the real pool-patio art, not a
+stretched pond); run a dog across a floatie (slightly faster), walk off it (splash, dog visibly
+slows to a swim and paddles low in the water instead of running), swim to
 any edge (dog roots and shakes with droplets, then steps clear). Confirm the sparkle-bone prop and
 snack-table/laundry art are gone from the yard during Backyard Rescue, then start Snack Heist /
 Sock Panic and confirm their district art returns. Trigger the eagle (Backyard Rescue predator

@@ -25,7 +25,8 @@ namespace CheddarAndCocoa.Dogs
             Stunned,
             Rescued,
             Proud,
-            Sad
+            Sad,
+            Swim
         }
 
         private DogController _dog;
@@ -181,6 +182,9 @@ namespace CheddarAndCocoa.Dogs
             if (_dog.Mode == MovementMode.Stunned) return Pose.Stunned;
             if (_dog.Mode == MovementMode.Tug) return Pose.Tug;
             if (Time.time < _barkUntil) return Pose.Bark;
+            // Couch test #3 stretch: paddling dogs must not play the dry-land run frames. Bark
+            // still wins above so a swimming dog can flash WOOF mid-paddle.
+            if (_dog.Mode == MovementMode.Swimming) return Pose.Swim;
             if (IsCarrying) return Pose.Carry;
 
             if (TryGetComponent<Rigidbody2D>(out var rb) && rb.linearVelocity.sqrMagnitude > 0.05f)
@@ -488,6 +492,7 @@ namespace CheddarAndCocoa.Dogs
             Pose.Rescued => "RESCUED!",
             Pose.Proud => "PROUD!",
             Pose.Sad => "SAD FLOP",
+            Pose.Swim => "PADDLE PADDLE",
             _ => pose.ToString()
         };
 

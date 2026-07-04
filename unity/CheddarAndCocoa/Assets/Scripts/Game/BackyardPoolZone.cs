@@ -181,10 +181,14 @@ namespace CheddarAndCocoa.Game
             _visualRoot = new GameObject("PoolVisuals").transform;
             _visualRoot.SetParent(transform);
 
-            // Water plate: authored pond art stretched to the huge water rect (one-background
-            // rule: authored sprite, not a runtime rectangle). Sits above the painted plate (-8)
-            // and below every gameplay prop.
-            Sprite water = FinalGameplayArt.Load(FinalGameplayArt.EnvironmentPond);
+            // Water plate: the photo-derived pool-patio art from Ken and Sue's real yard (640x420,
+            // aspect ~1.52 vs the 34x23 water rect's ~1.48 — near-native, no visible stretch). The
+            // margin puts the art's patio border just outside the gameplay water rect as the deck
+            // lip. One-background rule: authored sprite, not a runtime rectangle. Sits above the
+            // painted plate (-8) and below every gameplay prop. Falls back to the pond art if the
+            // photo plate is missing.
+            Sprite water = FinalGameplayArt.Load(FinalGameplayArt.EnvironmentPhotoPoolPatio);
+            if (water == null) water = FinalGameplayArt.Load(FinalGameplayArt.EnvironmentPond);
             if (water != null)
             {
                 var go = new GameObject("PoolWater");

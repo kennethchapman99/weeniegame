@@ -62,6 +62,11 @@ namespace CheddarAndCocoa.Dogs
                     return Make(1.05f, 0.88f, -7f, -0.035f, "DRAMATIC FLOP");
                 case DogReadabilityFeedback.Pose.Stunned:
                     return Make(0.94f, 0.84f, 12f + Wave(t, 9f) * 2f, -0.025f, "PUPPY SPINOUT");
+                case DogReadabilityFeedback.Pose.Swim:
+                    // Mostly submerged: squash the art low in the water and churn fast — all
+                    // splashing enthusiasm, barely any forward grace.
+                    return Make(1.04f, 0.6f + Mathf.Abs(Wave(t, 12f)) * 0.05f,
+                        Wave(t, 12f) * 5f, -0.24f + Wave(t, 12f) * 0.02f, "FRANTIC DOGGY-PADDLE");
                 default:
                     return Make(1f, 1f, 0f, 0f, "CHAOS-PUPPY");
             }
@@ -90,6 +95,10 @@ namespace CheddarAndCocoa.Dogs
                     return Make(1.1f, 0.9f, -3f, -0.025f, "DIGNIFIED SULK");
                 case DogReadabilityFeedback.Pose.Stunned:
                     return Make(1.04f, 0.88f, 7f + Wave(t, 5f), -0.02f, "RUFFLED QUEEN");
+                case DogReadabilityFeedback.Pose.Swim:
+                    // Chin up, slow certain strokes: the queen glides where the puppy churns.
+                    return Make(1.06f, 0.64f + Mathf.Abs(Wave(t, 4.5f)) * 0.03f,
+                        Wave(t, 4.5f) * 2f, -0.22f + Wave(t, 4.5f) * 0.015f, "STATELY PADDLE");
                 default:
                     return Make(1f, 1f, 0f, 0f, "VETERAN-QUEEN");
             }
