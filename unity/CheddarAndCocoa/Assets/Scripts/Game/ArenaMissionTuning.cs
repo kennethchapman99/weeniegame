@@ -21,6 +21,13 @@ namespace CheddarAndCocoa.Game
     {
         public float IntroPromptSeconds = 5f;
 
+        /// <summary>
+        /// Open-yard discovery beat after the briefing card drops and before the round clock and
+        /// threats start. Total lead-in freeze = IntroPromptSeconds + this; any bark/interact/grab
+        /// skips straight to GO.
+        /// </summary>
+        public float LeadInSniffSeconds = 2.5f;
+
         public int UnitedBarkScore = 100;
         public int PredatorDefendedScore = 300;
         public int RescueScore = 250;

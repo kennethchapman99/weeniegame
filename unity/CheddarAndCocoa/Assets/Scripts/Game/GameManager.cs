@@ -273,6 +273,22 @@ namespace CheddarAndCocoa.Game
         public int ColdReadQuestionCount { get; private set; }
         public int MissionReplayCount { get; private set; }
         public float MissionDurationSeconds => CurrentFlow == FlowState.MissionSelect ? 0f : Mathf.Clamp(roundDuration - TimeRemaining, 0f, roundDuration);
+
+        /// <summary>Test/dev seam: fixed lead-in length in seconds; null uses briefing + sniff tuning.</summary>
+        public static float? LeadInSecondsOverride;
+
+        /// <summary>True while the round is inside the frozen sniff-around discovery window.</summary>
+        public bool LeadInActive => _leadInRemaining > 0f && Phase == State.Playing;
+        public float LeadInRemaining => Mathf.Max(0f, _leadInRemaining);
+        public string LeadInCountdownLabel => LeadInActive
+            ? $"SNIFF AROUND! GO IN {Mathf.CeilToInt(_leadInRemaining)} - BARK TO GO NOW"
+            : string.Empty;
+
+        /// <summary>
+        /// Mission-facing clock: Time.time minus every second spent frozen in a lead-in, so
+        /// controller schedules anchored at StartMission hold still until the round actually GOes.
+        /// </summary>
+        public float MissionNow => Time.time - _missionClockOffset;
         public string FailPressureLabel => BuildFailPressureLabel();
         public string DogPositionsLabel => BuildDogPositionsLabel();
         public string PlaytestCountersLabel => $"Barks {BarksUsed} / missed interacts {FailedInteractions} / objective shifts {ObjectiveChangeCount} / cold-read ? {ColdReadQuestionCount} / duration {MissionDurationSeconds:0.0}s / replays {MissionReplayCount}";
@@ -383,6 +399,8 @@ namespace CheddarAndCocoa.Game
         private Treat _squirrelTarget;
         private bool _squirrelHasStarted;
         private float _introPromptUntil;
+        private float _leadInRemaining;
+        private float _missionClockOffset;
         private float _scorePopUntil;
         private float _teamBarkFeedbackUntil;
         private float _predatorTimer;
@@ -483,7 +501,7 @@ namespace CheddarAndCocoa.Game
             pancakeSquirrelPenalty: _tuning.PancakeSquirrelPenalty,
             panicMeter: _panic,
             random: () => _rng,
-            now: () => Time.time,
+            now: () => MissionNow,
             activeModifier: () => ActiveModifier,
             debugPresentationEnabled: () => PlaytestOverlayVisible,
             activeTreats: () => _treats,
@@ -512,6 +530,10 @@ namespace CheddarAndCocoa.Game
         public void OnTreatCollected(Treat treat, DogController dog)
         {
             if (!MissionActive() || treat == null) return;
+
+            // Scooping the first collectible mid-sniff counts as starting to play: end the freeze
+            // so the discovery window can't be farmed, then bank the grab normally.
+            if (_leadInRemaining > 0f) EndLeadIn($"{DogName(dog)} grabbed the first collectible");
 
             int collectorIndex = dog != null && dog.TryGetComponent<DogIdentity>(out var collectorIdentity)
                 ? IndexOfDog(collectorIdentity.Id)
@@ -1089,6 +1111,7 @@ namespace CheddarAndCocoa.Game
             _squirrelTarget = null;
             _squirrelHasStarted = false;
             _introPromptUntil = Time.time + _tuning.IntroPromptSeconds;
+            _leadInRemaining = Mathf.Max(0f, LeadInSecondsOverride ?? (_tuning.IntroPromptSeconds + _tuning.LeadInSniffSeconds));
             _squirrelTimer = SquirrelDelay();
             _predatorTimer = _mission.RequiresPredator ? _tuning.PredatorWarningAt : float.PositiveInfinity;
             _predatorTarget = -1;
@@ -1145,6 +1168,14 @@ namespace CheddarAndCocoa.Game
 
             MissionBanner = Time.time < _introPromptUntil ? MissionIntroPrompt : string.Empty;
 
+            // Sniff-around lead-in: the yard is visible and the dogs can roam, but the round
+            // clock, threats, and controller schedules hold still until the discovery beat ends.
+            if (_leadInRemaining > 0f)
+            {
+                TickLeadIn();
+                return;
+            }
+
             TimeRemaining -= Time.deltaTime;
             if (TimeRemaining <= 0f)
             {
@@ -1153,7 +1184,7 @@ namespace CheddarAndCocoa.Game
             }
 
             TickModifier();
-            if (_activeMissionController != null) _activeMissionController.Tick(Time.deltaTime, Time.time);
+            if (_activeMissionController != null) _activeMissionController.Tick(Time.deltaTime, MissionNow);
             else TickSquirrel();
             TickPredator();
             TickTugProximity();
@@ -1161,6 +1192,39 @@ namespace CheddarAndCocoa.Game
             UpdateObjectiveArrows();
             UpdateTravelAssists();
             UpdateInteractionRanges();
+            LogObjectiveIfChanged();
+        }
+
+        private void TickLeadIn()
+        {
+            _missionClockOffset += Time.deltaTime;
+            _leadInRemaining -= Time.deltaTime;
+            if (_leadInRemaining <= 0f)
+            {
+                EndLeadIn("sniff timer");
+                return;
+            }
+
+            // Discovery aids stay live so the look-around actually teaches the level.
+            UpdateObjectiveArrows();
+            UpdateTravelAssists();
+            UpdateInteractionRanges();
+            LogObjectiveIfChanged();
+        }
+
+        private void EndLeadIn(string reason)
+        {
+            _leadInRemaining = 0f;
+            // An early skip can land while the briefing card is still up; drop card and banner with it.
+            _introPromptUntil = Mathf.Min(_introPromptUntil, Time.time);
+            _nextZoomiesPulseAt = Time.time + 6f;
+            LastCue = $"GO! {MissionIntroPrompt}";
+            LastFeedback = FeedbackKind.Intro;
+            SetJuice(JuiceFeedbackKind.SuccessPop, "GO!");
+            RequestAudioCue(ArenaFeedbackCatalog.ScoreGain);
+            RequestRumble("lead_in_go", 0.14f, 0.3f, 0.14f);
+            foreach (var dog in _dogs) SpawnWorldPop(dog.transform.position, "GO!", new Color(1f, 0.86f, 0.32f));
+            LogPlaytestEvent("LeadIn", $"GO ({reason})");
             LogObjectiveIfChanged();
         }
 
@@ -1529,6 +1593,14 @@ namespace CheddarAndCocoa.Game
         {
             if (!MissionActive()) return;
 
+            // A deliberate interact during the sniff-around freeze means "we're ready" — start the
+            // round without charging a missed-interaction against the players.
+            if (_leadInRemaining > 0f)
+            {
+                EndLeadIn($"{dogId} interacted");
+                return;
+            }
+
             if (_activeMissionController is IMissionInteractionController interactionController &&
                 interactionController.HandleInteract(IndexOfDog(dogId)))
             {
@@ -1587,6 +1659,18 @@ namespace CheddarAndCocoa.Game
 
             int dogIndex = IndexOfDog(dogId);
             if (dogIndex < 0) return;
+
+            // "Bark when ready": during the sniff-around freeze a bark just starts the round.
+            if (_leadInRemaining > 0f)
+            {
+                BarksUsed++;
+                _lastBarks[dogIndex] = Time.time;
+                RequestAudioCue(ArenaFeedbackCatalog.Bark);
+                RequestRumble("bark", 0.08f, 0.18f, 0.08f);
+                LogPlaytestEvent("Bark", DogName(_dogs[dogIndex]));
+                EndLeadIn($"{DogName(_dogs[dogIndex])} barked ready");
+                return;
+            }
 
             BarksUsed++;
             CreditDog(dogIndex);
@@ -1701,6 +1785,7 @@ namespace CheddarAndCocoa.Game
 
         private void EndRound(bool clear)
         {
+            _leadInRemaining = 0f;
             Phase = clear ? State.LevelClear : State.GameOver;
             CurrentFlow = FlowState.EndScreen;
             Outcome = clear ? MissionOutcome.Clear : MissionOutcome.Failed;
@@ -2072,6 +2157,7 @@ namespace CheddarAndCocoa.Game
 
         private void ShowMissionSelect()
         {
+            _leadInRemaining = 0f;
             CurrentFlow = FlowState.MissionSelect;
             Phase = State.Intro;
             Outcome = MissionOutcome.InProgress;

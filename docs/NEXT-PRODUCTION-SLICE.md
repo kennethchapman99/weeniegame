@@ -208,6 +208,14 @@ tests #2 and #3 produced presentation feedback but no accept/reject verdict on t
    droplets, then steps out wet). The water is the real pool-patio art, not a stretched pond.
 7. Mission briefing + in-game HUD: opaque dark cards/bands, all text readable from the sofa.
 
+**Live-feedback additions landed mid-test (2026-07-04):** the couch-test-#4 sitting already
+produced fixes on `main` (pool water alignment, donut floaties, wet-dog tint, detail-panel fit —
+`799c277`) plus a pacing request: levels should open with a short discovery beat. That shipped as
+the sniff-around lead-in (see `docs/ARENA-PLAYABLE.md`): the round clock and all threat schedules
+hold still through the briefing card + a 2.5s open-yard countdown, and any bark/interact/grab
+skips straight to GO. Verify during the remaining sitting: timer frozen until GO, and a bark
+during the briefing card starts play instantly.
+
 **Half 2 — the actual gate:** play Operation Pee Break start to finish (it is the couch-test
 focus shortcut on the picker). Then call it, one of:
 

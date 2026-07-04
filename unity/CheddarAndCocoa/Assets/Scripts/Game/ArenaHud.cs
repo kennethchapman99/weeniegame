@@ -264,6 +264,12 @@ namespace CheddarAndCocoa.Game
                 GUI.Label(new Rect(0, 260, VirtualWidth, 34), _game.MissionBanner, _big);
             }
 
+            if (_game.LeadInActive && !_game.MissionBriefingVisible)
+            {
+                DrawTintedRect(new Rect(0f, 300f, VirtualWidth, 40f), new Color(0.02f, 0.05f, 0.06f, 0.6f));
+                GUI.Label(new Rect(0, 302, VirtualWidth, 34), _game.LeadInCountdownLabel, _big);
+            }
+
             if (_game.MissionBriefingVisible) DrawMissionBriefing();
 
         }
@@ -284,7 +290,9 @@ namespace CheddarAndCocoa.Game
             GUI.Label(layout.First, $"FIRST: {_game.ObjectiveLabel}", _hud);
             GUI.Label(layout.Roles, $"ROLES: {_game.MissionRoleHint}", _mid);
             GUI.Label(layout.Ownership, PlayerOwnershipLabel, _small);
-            GUI.Label(layout.Controls, $"Follow each dog's arrow  |  {PadControlsLabel}", _small);
+            GUI.Label(layout.Controls, _game.LeadInActive
+                ? $"Yard is paused for a look around — BARK when both players are ready  |  {PadControlsLabel}"
+                : $"Follow each dog's arrow  |  {PadControlsLabel}", _small);
         }
 
         private void DrawPauseMenu()

@@ -308,6 +308,31 @@ Final polish still needed:
 - Run the second human couch pass; latest automated evidence is `400/400` PlayMode tests passing on
   2026-07-01 after the generated P0 mission-state art pass.
 
+### Sniff-around lead-in pacing beat (2026-07-04)
+
+Couch test #4 feedback: levels started "hot" — the briefing card covered the yard for its first
+five seconds while timers and threats were already running underneath it. Every mission now opens
+with a frozen discovery window:
+
+- While the briefing card is up (`IntroPromptSeconds`, 5s) and for a short open-yard sniff beat
+  after it drops (`LeadInSniffSeconds`, 2.5s), the round clock, shared predator/squirrel pressure,
+  and the mission controller's schedule all hold still. Dogs can roam, swim, and read the yard;
+  objective arrows, travel assist, and range rings stay live as discovery aids.
+- The HUD shows `SNIFF AROUND! GO IN n - BARK TO GO NOW` once the card drops; the briefing card
+  itself carries a "Yard is paused for a look around" hint.
+- Any deliberate dog verb skips straight to GO: a bark (counted, no other effect), an interact
+  (no missed-interaction penalty), or scooping the first collectible (banks normally). GO fires a
+  juice pop, score-gain chirp, rumble, and a gold `GO!` world pop over each dog.
+- Controllers see a frozen mission clock (`GameManager.MissionNow` feeds `MissionContext.Now` and
+  `Tick`'s `now`), so schedules anchored in `StartMission` keep their full delays after GO.
+  `GameManager.LeadInSecondsOverride` is the test/dev seam (the PlayMode suite runs with it at 0;
+  `LeadInPlayModeTests` re-enables it to pin the contract).
+
+Manual acceptance check: start any mission — the timer must not move while the briefing card is up
+or during the sniff countdown, and the waiting squirrel/props should be visibly parked. Bark during
+the card: card drops instantly, `GO!` pops over both dogs, and the timer starts. Replay the mission
+and confirm an immediate bark gets you playing within a second.
+
 ### Couch test #2 readability + presentation fixes (2026-07-03)
 
 The second couch playtest reported five presentation defects. All are fixed and tested:
