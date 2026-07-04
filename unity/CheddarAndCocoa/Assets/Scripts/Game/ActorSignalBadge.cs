@@ -23,6 +23,7 @@ namespace CheddarAndCocoa.Game
 
         private SpriteRenderer _icon;
         private bool _showing;
+        private bool _stationSignal;
         private float _phase;
 
         public bool IsShowing => _showing && _icon != null && _icon.sprite != null;
@@ -48,11 +49,17 @@ namespace CheddarAndCocoa.Game
             if (!active)
             {
                 var existing = marker.GetComponent<ActorSignalBadge>();
-                if (existing != null) existing.Hide();
+                if (existing != null)
+                {
+                    existing._stationSignal = false;
+                    existing.Hide();
+                }
                 return;
             }
 
-            Attach(marker).Show(warning ? FinalGameplayArt.WorldLabelWarning : FinalGameplayArt.WorldLabelCommand);
+            var badge = Attach(marker);
+            badge._stationSignal = true;
+            badge.Show(warning ? FinalGameplayArt.WorldLabelWarning : FinalGameplayArt.WorldLabelCommand);
         }
 
         public void Apply(string label, float pulse)
@@ -60,7 +67,10 @@ namespace CheddarAndCocoa.Game
             EnsureIcon();
             if (pulse < UrgentPulseThreshold)
             {
-                Hide();
+                // A calm actor state must not silence an explicit station signal: markers like
+                // the puzzle humans carry both channels, and the station one is the controller's
+                // deliberate act-now call.
+                if (!_stationSignal) Hide();
                 return;
             }
 

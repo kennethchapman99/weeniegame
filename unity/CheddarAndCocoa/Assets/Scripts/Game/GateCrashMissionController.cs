@@ -197,6 +197,10 @@ namespace CheddarAndCocoa.Game
 
         private void UpdateLabels()
         {
+            // Distance signal alternates with the hold-release rhythm: gate until Cocoa braces
+            // it, toy while the squeeze window is open.
+            ActorSignalBadge.SetStationSignal(_gate, !_puzzle.Solved && !_failed && !_puzzle.Held);
+            ActorSignalBadge.SetStationSignal(_toy, !_puzzle.Solved && !_failed && _puzzle.Held);
             if (_gate != null)
             {
                 _gate.transform.position = _holdZone;

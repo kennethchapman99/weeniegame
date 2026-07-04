@@ -236,6 +236,11 @@ namespace CheddarAndCocoa.Game
 
         private void UpdateLabels()
         {
+            // Distance signal: each half of the exact-combo message signals until its dog is
+            // actually sending it (held is resolved, like the Pee Break beat stations).
+            bool live = !_puzzle.Solved && !_failed;
+            ActorSignalBadge.SetStationSignal(_human, live && (_puzzle.Active & SocialStimulus.DoorStare) == 0);
+            ActorSignalBadge.SetStationSignal(_leash, live && (_puzzle.Active & SocialStimulus.PresentLeash) == 0);
             if (_human != null)
             {
                 _human.transform.position = _doorZone;

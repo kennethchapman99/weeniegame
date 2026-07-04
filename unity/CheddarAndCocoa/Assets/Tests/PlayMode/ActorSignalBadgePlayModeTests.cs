@@ -418,6 +418,135 @@ namespace CheddarAndCocoa.Tests
                 "The signal must walk the route with the dogs.");
         }
 
+        [UnityTest]
+        public IEnumerator GateCrash_HoldReleaseRhythm_AlternatesStationSignals()
+        {
+            yield return Load(GameManager.MissionVariant.GateCrash);
+
+            var gate = GameObject.Find("GateCrashGate");
+            var toy = GameObject.Find("GateCrashToy");
+            Assert.IsNotNull(gate);
+            Assert.IsNotNull(toy);
+
+            _game.ForceGateHold(false);
+            Assert.IsTrue(StationSignaling(gate),
+                "An unbraced gate must signal for Cocoa at any distance.");
+            Assert.That(StationIcon(gate), Does.Contain("command"));
+            Assert.IsFalse(StationSignaling(toy),
+                "The toy is not urgent while the gate is shut.");
+
+            _game.ForceGateHold(true);
+            Assert.IsFalse(StationSignaling(gate),
+                "A braced gate is resolved - its signal must hand off.");
+            Assert.IsTrue(StationSignaling(toy),
+                "The open squeeze window must signal Cheddar's cross at distance.");
+        }
+
+        [UnityTest]
+        public IEnumerator TableStealth_SneakWindow_MovesSignalFromHumanToSteak()
+        {
+            yield return Load(GameManager.MissionVariant.TableStealth);
+
+            var human = GameObject.Find("TableStealthHuman");
+            var steak = GameObject.Find("TableStealthSteak");
+            Assert.IsNotNull(human);
+            Assert.IsNotNull(steak);
+
+            _game.ForceTableFlop(false);
+            Assert.IsTrue(StationSignaling(human),
+                "With no distraction running, Cocoa's flop station is the act-now objective.");
+            Assert.IsFalse(StationSignaling(steak),
+                "The steak must stay quiet while the human is watching the table.");
+
+            _game.ForceTableFlop(true);
+            Assert.IsFalse(StationSignaling(human),
+                "A running belly-flop resolves the distraction signal.");
+            Assert.IsTrue(StationSignaling(steak),
+                "The open sneak window must signal the steak at distance.");
+        }
+
+        [UnityTest]
+        public IEnumerator Switcheroo_CommitWindow_MovesSignalFromDecoyToStash()
+        {
+            yield return Load(GameManager.MissionVariant.SquirrelSwitcheroo);
+
+            var decoy = GameObject.Find("SwitcherooDecoy");
+            var stash = GameObject.Find("SwitcherooStash");
+            Assert.IsNotNull(decoy);
+            Assert.IsNotNull(stash);
+
+            _game.ForceSwitcherooBait(0.05f, false);
+            Assert.IsTrue(StationSignaling(decoy),
+                "A guarding squirrel means the decoy feint is the act-now objective.");
+            Assert.IsFalse(StationSignaling(stash),
+                "The stash must stay quiet while the squirrel guards it.");
+
+            _game.ForceSwitcherooBait(0.7f);
+            Assert.IsFalse(StationSignaling(decoy),
+                "A committed squirrel resolves the feint signal.");
+            Assert.IsTrue(StationSignaling(stash),
+                "The open raid window must signal the stash at distance.");
+        }
+
+        [UnityTest]
+        public IEnumerator WalkCampaign_MessageHalves_SignalUntilTheirDogSendsThem()
+        {
+            yield return Load(GameManager.MissionVariant.WalkCampaign);
+
+            var human = GameObject.Find("WalkCampaignHuman");
+            var leash = GameObject.Find("WalkCampaignLeash");
+            Assert.IsNotNull(human);
+            Assert.IsNotNull(leash);
+
+            // Park both dogs away from their message stations.
+            _cheddar.transform.position = new Vector3(-20f, -10f, 0f);
+            _cocoa.transform.position = new Vector3(-22f, -10f, 0f);
+            yield return null;
+            yield return null;
+
+            Assert.IsTrue(StationSignaling(human),
+                "Cocoa's unsent door stare must signal at distance.");
+            Assert.IsTrue(StationSignaling(leash),
+                "Cheddar's unpresented leash must signal at distance.");
+
+            _cheddar.transform.position = leash.transform.position;
+            yield return null;
+            yield return null;
+
+            Assert.IsFalse(StationSignaling(leash),
+                "Cheddar presenting the leash resolves that half of the message.");
+            Assert.IsTrue(StationSignaling(human),
+                "Cocoa's half must keep signalling independently.");
+        }
+
+        [UnityTest]
+        public IEnumerator WeenieRoundup_CarriedWeenie_RaisesBringItHomeSignal()
+        {
+            yield return Load(GameManager.MissionVariant.WeenieRoundup);
+
+            var bowl = GameObject.Find("HomeBowl");
+            Assert.IsNotNull(bowl, "Weenie Roundup should stage the home bowl.");
+            var feedback = bowl.GetComponent<MissionActorFeedback>();
+            Assert.IsNotNull(feedback);
+            Assert.IsFalse(feedback.SignalBadge.IsShowing,
+                "An idle bowl is a calm tally and must not raise the signal badge.");
+
+            _game.ForceWeeniePickup(DogId.Cheddar);
+            yield return null;
+
+            Assert.That(feedback.Label, Does.Contain("BRING IT"));
+            Assert.IsTrue(feedback.SignalBadge.IsShowing,
+                "A weenie in transit must signal the delivery target at distance.");
+            Assert.That(feedback.SignalBadge.IconSpriteName, Does.Contain("command"),
+                "Bring-it-home is a command moment, not a threat warning.");
+
+            _game.ForceWeenieDeliver(DogId.Cheddar);
+            yield return null;
+
+            Assert.IsFalse(feedback.SignalBadge.IsShowing,
+                "Delivering the weenie must drop the bowl's urgency signal.");
+        }
+
         private static bool StationSignaling(GameObject marker)
         {
             var badge = marker != null ? marker.GetComponent<ActorSignalBadge>() : null;

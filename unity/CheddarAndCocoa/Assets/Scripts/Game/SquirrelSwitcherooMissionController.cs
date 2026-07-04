@@ -220,6 +220,10 @@ namespace CheddarAndCocoa.Game
 
         private void UpdateLabels()
         {
+            // Distance signal alternates with the bait rhythm: decoy until the squirrel commits
+            // to the feint, stash while the raid window is open.
+            ActorSignalBadge.SetStationSignal(_decoy, !_puzzle.Solved && !_failed && !_puzzle.Committed);
+            ActorSignalBadge.SetStationSignal(_stash, !_puzzle.Solved && !_failed && _puzzle.Committed);
             if (_decoy != null)
             {
                 _decoy.transform.position = _decoyZone;

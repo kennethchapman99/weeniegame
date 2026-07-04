@@ -166,6 +166,7 @@ namespace CheddarAndCocoa.Game
             _context.RequestRumble("weenie_pickup", 0.12f, 0.22f, 0.1f);
             _context.LogEvent("WeeniePickup", $"loose {_state.Loose}");
             _context.LogObjectiveChanged();
+            UpdateBowlState();
         }
 
         private void Deliver(int dogIndex)
@@ -186,7 +187,7 @@ namespace CheddarAndCocoa.Game
             _context.AddScore(ScoreEventCatalog.WeenieDelivered.Points, ScoreEventCatalog.WeenieDelivered.Label);
             _context.SetFeedback(GameManager.FeedbackKind.LevelClear);
             _context.SetCue($"{DogName(dogIndex)} delivered a weenie to the bowl! ({_state.Delivered}/{RequiredDeliveries})");
-            _context.SetActorState(_bowl, $"HOME BOWL {_state.Delivered}/{RequiredDeliveries}", new Color(0.6f, 1f, 0.7f), 0.2f);
+            UpdateBowlState();
             _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, ScoreEventCatalog.WeenieDelivered.Label);
             _context.SpawnWorldPop(_bowlPosition, "DELIVERED!", new Color(0.55f, 1f, 0.45f));
             _context.RequestAudioCue(ArenaFeedbackCatalog.TugRescueSuccess);
@@ -225,6 +226,7 @@ namespace CheddarAndCocoa.Game
             _context.RequestRumble("weenie_fumble", 0.18f, 0.34f, 0.14f);
             _context.LogEvent("WeenieDropped", $"drops {_state.Drops}");
             _context.LogObjectiveChanged();
+            UpdateBowlState();
         }
 
         private void BuildActors()
@@ -280,5 +282,20 @@ namespace CheddarAndCocoa.Game
         private int FirstInactiveMarker() { for (int i = 0; i < _looseMarkers.Length; i++) if (!_looseMarkers[i].activeSelf) return i; return -1; }
         private bool IsAnyDogCarrying() { foreach (bool carrying in _dogCarrying) if (carrying) return true; return false; }
         private string DogName(int dogIndex) => _context.Dogs[dogIndex] != null ? _context.Dogs[dogIndex].name : "Dog";
+
+        /// <summary>
+        /// The bowl rides the actor pulse channel: while a weenie is in transit the delivery is
+        /// the act-now objective, so the NOW! state raises the distance badge over home.
+        /// </summary>
+        private void UpdateBowlState()
+        {
+            if (_bowl == null) return;
+            if (!IsComplete && IsAnyDogCarrying())
+                _context.SetActorState(_bowl, $"HOME BOWL {_state.Delivered}/{RequiredDeliveries} - BRING IT NOW!", new Color(1f, 0.85f, 0.35f), 0.3f);
+            else if (_state.Delivered > 0)
+                _context.SetActorState(_bowl, $"HOME BOWL {_state.Delivered}/{RequiredDeliveries}", new Color(0.6f, 1f, 0.7f), 0.2f);
+            else
+                _context.SetActorState(_bowl, $"HOME BOWL 0/{RequiredDeliveries}", new Color(0.85f, 0.85f, 0.9f), 0.1f);
+        }
     }
 }

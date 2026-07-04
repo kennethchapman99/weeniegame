@@ -1089,10 +1089,17 @@ active hold-cutoff zone carries a command badge; and Backyard Rescue's escape ga
 badge that drops while the gap dog is actually standing in it; Walkies on the Leash's current
 checkpoint carries a command badge that walks the route; and Operation Pee Break's beat stations
 (door stare, watch pad, leash, hallway block, charger) each raise a command badge during their beat
-that drops while their dog is actually holding the spot. Manual acceptance check: from couch
-distance with F1 off, each of these missions should show exactly one bobbing go-here icon over the
-place the team must act next (two in a jammed Rube Goldberg: warning at the jam, command at the
-lever; one per dog in Pee Break's split-role beats), and the icon should hand off immediately when
+that drops while their dog is actually holding the spot. The two-station bait/hold puzzles follow
+the same alternation: Gate Crash signals the gate until Cocoa braces it, then the toy while the
+squeeze window is open; Table Stealth signals the human until a distraction runs, then the steak
+while the sneak window is live; The Ol' Switcheroo signals the decoy until the squirrel commits,
+then the stash during the raid window; The Walk Campaign signals each half of the exact-combo
+message until its dog is sending it. Weenie Roundup's home bowl rides the actor pulse channel
+instead: a weenie in transit raises a `BRING IT NOW!` command badge over the bowl that drops on
+delivery or fumble. Manual acceptance check: from couch distance with F1 off, each of these
+missions should show exactly one bobbing go-here icon over the place the team must act next (two
+in a jammed Rube Goldberg: warning at the jam, command at the lever; one per dog in Pee Break's
+split-role beats and Walk Campaign's combo message), and the icon should hand off immediately when
 the objective moves or the station is held.
 
 ## Generated audio/rumble checks

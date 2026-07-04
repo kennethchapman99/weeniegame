@@ -223,6 +223,11 @@ namespace CheddarAndCocoa.Game
 
         private void UpdateLabels()
         {
+            // Distance signal alternates with the distraction rhythm: human until Cocoa opens a
+            // window, steak while the sneak window is live.
+            bool window = _puzzle.HumanDistracted || _puzzle.BellyFlopped;
+            ActorSignalBadge.SetStationSignal(_human, !_puzzle.Solved && !_failed && !window);
+            ActorSignalBadge.SetStationSignal(_steak, !_puzzle.Solved && !_failed && window);
             if (_human != null)
             {
                 _human.transform.position = _humanZone;
