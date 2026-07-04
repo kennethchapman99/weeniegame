@@ -186,6 +186,36 @@ that as a date-stamped warning, not a permanent metric or a line-count target.
    cannot substitute for it.
 7. Keep the mission roster frozen until that gate passes.
 
+## Couch test #4 runbook (the open acceptance gate, ready as of 2026-07-03)
+
+Status: sequence steps 1-5 are complete on `main` (all 22 missions run through
+`IMissionController` via `MissionControllerRegistry`; suite 428/428 green at `d096e4e`). Couch
+tests #2 and #3 produced presentation feedback but no accept/reject verdict on the deep slice, so
+**step 6 has never formally passed**. One sitting (Ken + Sue, two controllers) covers both halves:
+
+**Half 1 — verify the couch-test-#3 fixes (10 min):**
+
+1. Mission select: HOW TO PLAY reads as short bullets, with on-screen labels (e.g.
+   `SQUIRREL STEALING - BARK!`) shown in gold exactly as they appear in-game.
+2. Backyard Rescue: no CHEDDAR/COCOA name text floats over the dogs (WOOF! flash still fires).
+3. Backyard Rescue: no floating sparkle-bone fake collectible anywhere in the yard.
+4. Backyard Rescue: yard shows only the painted plate + real props (no snack-table/laundry art);
+   start Snack Heist / Sock Panic and confirm their district art returns.
+5. Eagle (Backyard Rescue predator warning or Eagle Shadow Panic): flaps its wing frames, banks
+   into climbs/dives, and swells/shrinks subtly with its glide — no balloon scale-pulse.
+6. Pool loop: run a dog across a drifting floatie (slightly faster) → step off (splash, dog slows
+   and paddles low in the water — not the run animation) → swim to any edge (rooted shake with
+   droplets, then steps out wet). The water is the real pool-patio art, not a stretched pond.
+7. Mission briefing + in-game HUD: opaque dark cards/bands, all text readable from the sofa.
+
+**Half 2 — the actual gate:** play Operation Pee Break start to finish (it is the couch-test
+focus shortcut on the picker). Then call it, one of:
+
+- **ACCEPTED** — record the date here and the roster/roadmap freeze lifts, or
+- **REJECTED** — list exactly what failed; that list becomes the next work queue.
+
+Verdict: _pending_.
+
 ## Architecture guardrails
 
 - `GameManager` owns orchestration, mission selection, session flow, and shared-service wiring.
