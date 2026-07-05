@@ -31,6 +31,13 @@ namespace CheddarAndCocoa.Game
         private bool _failed;
         private float _gateSnapReactionUntil;
 
+        // "Cheddar believes every closed door is a personal attack" - purely cosmetic, no
+        // mechanic effect. See docs/GAME-DESIGN-BIBLE.md's Running gags list.
+        private const float DoorOutrageCooldown = 8f;
+        private const float DoorOutrageRadius = 2.2f;
+        private float _nextDoorOutrageAt;
+        public int DoorOutrageCount { get; private set; }
+
         public GameManager.MissionVariant Variant => GameManager.MissionVariant.GateCrash;
         public bool IsComplete => _puzzle.Solved;
         public bool IsFailed => _failed;
@@ -67,6 +74,7 @@ namespace CheddarAndCocoa.Game
             _snapsSeen = 0;
             _failed = false;
             _gateSnapReactionUntil = 0f;
+            _nextDoorOutrageAt = _context.Now() + DoorOutrageCooldown;
             _holdZone = new Vector2(_context.Bounds.center.x - 10f, _context.Bounds.center.y);
             _crossZone = new Vector2(_context.Bounds.center.x + 10f, _context.Bounds.center.y);
             SetSceneActive(true);
@@ -91,6 +99,12 @@ namespace CheddarAndCocoa.Game
             HandleSnaps();
             if (_failed) return;
             UpdateLabels();
+
+            if (now >= _nextDoorOutrageAt)
+            {
+                _nextDoorOutrageAt = now + DoorOutrageCooldown;
+                TrySpawnDoorOutrage();
+            }
         }
 
         public bool HandleBark(int dogIndex) => false;
@@ -148,6 +162,28 @@ namespace CheddarAndCocoa.Game
             _puzzle.Advance(seconds);
             HandleSnaps();
             UpdateLabels();
+        }
+
+        /// <summary>Public so tests can trigger the gag directly instead of waiting out the cooldown.</summary>
+        public void TrySpawnDoorOutrage()
+        {
+            if (_puzzle.Solved || _failed || _puzzle.Held || _context.Dogs == null) return;
+            if (_context.Now() < _gateSnapReactionUntil) return; // don't step on the real snap reaction
+
+            int crosser = _context.IndexOfDog(DogId.Cheddar);
+            if (crosser < 0) return;
+
+            DogController cheddar = _context.Dogs[crosser];
+            if (cheddar == null || cheddar.Busy) return;
+
+            Vector2 pos = cheddar.transform.position;
+            if (Vector2.Distance(pos, _holdZone) > DoorOutrageRadius) return;
+            if (!cheddar.TryGetComponent<Rigidbody2D>(out var body) || body.linearVelocity.sqrMagnitude > 0.05f) return;
+
+            BackyardArtVfxPulse.Spawn(_holdZone, RuntimeArtSpriteFactory.RuntimeSpriteId.WarningAlert,
+                new Vector3(0.016f, 0.016f, 1f), 19, new Color(0.95f, 0.35f, 0.3f, 0.4f), 0.9f, -35f);
+            _context.SpawnWorldPop(_holdZone + Vector2.up * 0.6f, "HOW DARE YOU", new Color(1f, 0.5f, 0.35f));
+            DoorOutrageCount++;
         }
 
         private void HandleSnaps()

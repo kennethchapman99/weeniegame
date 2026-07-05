@@ -140,6 +140,29 @@ namespace CheddarAndCocoa.Tests
             }
         }
 
+        [UnityTest]
+        public IEnumerator GateCrash_DoorOutrageGag_FiresWhenCheddarIdlesAtTheClosedGateAndStaysQuietWhileHeld()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.GateCrash);
+            yield return null;
+
+            if (_cheddar.TryGetComponent<CheddarAndCocoa.Input.GamepadPlayerInput>(out var input)) input.enabled = false;
+            _cheddar.transform.position = _game.GateHoldZone;
+            if (_cheddar.TryGetComponent<Rigidbody2D>(out var body)) body.linearVelocity = Vector2.zero;
+            yield return null;
+
+            _game.GateCrashController.TrySpawnDoorOutrage();
+            Assert.AreEqual(1, _game.GateCrashController.DoorOutrageCount,
+                "Cheddar idling at the closed gate should fire the door-outrage gag.");
+
+            // While Cocoa is bracing the gate open, the gate is no longer a personal insult.
+            _game.ForceGateHold(true);
+            _game.GateCrashController.TrySpawnDoorOutrage();
+            Assert.AreEqual(1, _game.GateCrashController.DoorOutrageCount,
+                "The gag should stay quiet while the gate is actually held open.");
+        }
+
         private IEnumerator LoadArena()
         {
             _game = null; _cheddar = null; _cocoa = null;
