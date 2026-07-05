@@ -128,6 +128,41 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(ArenaFeedbackCatalog.ThreatWarning, _game.LastAudioCueRequested);
         }
 
+        [UnityTest]
+        public IEnumerator LeashWalk_IntelGatheredGag_FiresWhenOneDogScoutsAheadAloneAndStaysQuietWhenBothArrive()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.LeashWalk);
+            yield return null;
+
+            DogController cheddar = null, cocoa = null;
+            foreach (var id in Object.FindObjectsByType<DogIdentity>(FindObjectsSortMode.None))
+            {
+                if (id.Id == DogId.Cheddar) cheddar = id.GetComponent<DogController>();
+                if (id.Id == DogId.Cocoa) cocoa = id.GetComponent<DogController>();
+            }
+            Assert.IsNotNull(cheddar);
+            Assert.IsNotNull(cocoa);
+            if (cheddar.TryGetComponent<CheddarAndCocoa.Input.GamepadPlayerInput>(out var input)) input.enabled = false;
+
+            Vector2 checkpoint = _game.LeashWalkController.Checkpoints[0];
+            cheddar.transform.position = checkpoint;
+            if (cheddar.TryGetComponent<Rigidbody2D>(out var body)) body.linearVelocity = Vector2.zero;
+            cocoa.transform.position = checkpoint + Vector2.right * 5f; // within leash range, not near the checkpoint
+            yield return null;
+
+            _game.LeashWalkController.TrySpawnIntelGathered();
+            Assert.AreEqual(1, _game.LeashWalkController.IntelGatheredCount,
+                "One dog scouting the checkpoint alone should fire the intel-gathered gag.");
+
+            // Both dogs arriving together is just "we made it", not one dog scouting ahead.
+            cocoa.transform.position = checkpoint;
+            yield return null;
+            _game.LeashWalkController.TrySpawnIntelGathered();
+            Assert.AreEqual(1, _game.LeashWalkController.IntelGatheredCount,
+                "The gag should stay quiet once both dogs arrive at the checkpoint together.");
+        }
+
         private static bool HasWorldPop(string text)
         {
             foreach (var pop in Object.FindObjectsByType<MissionWorldPop>(FindObjectsSortMode.None))

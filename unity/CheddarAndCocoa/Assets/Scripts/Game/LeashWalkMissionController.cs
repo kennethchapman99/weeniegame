@@ -1,3 +1,4 @@
+using CheddarAndCocoa.Dogs;
 using UnityEngine;
 
 namespace CheddarAndCocoa.Game
@@ -9,12 +10,17 @@ namespace CheddarAndCocoa.Game
         private const int MaxSnaps = 4;
         private const float SnapCooldown = 1.5f;
 
+        // "Every walk is an intelligence-gathering mission" - purely cosmetic, no mechanic effect.
+        private const float IntelCooldown = 9f;
+
         private readonly LeashWalkMissionState _state = new();
         private MissionContext _context;
         private Vector2[] _checkpoints;
         private GameObject[] _markers;
         private float _nextSnapAt;
+        private float _nextIntelAt;
         private bool _cleared;
+        public int IntelGatheredCount { get; private set; }
 
         public GameManager.MissionVariant Variant => GameManager.MissionVariant.LeashWalk;
         public bool IsComplete => _cleared;
@@ -42,6 +48,7 @@ namespace CheddarAndCocoa.Game
         {
             _state.Configure(_checkpoints.Length);
             _nextSnapAt = 0f;
+            _nextIntelAt = _context.Now() + IntelCooldown;
             _cleared = false;
             for (int i = 0; i < _markers.Length; i++) SetMarkerArt(i, FinalGameplayArt.LeashWalkCheckpointWaiting);
             SetMarkersActive(true);
@@ -75,6 +82,12 @@ namespace CheddarAndCocoa.Game
                 bool aOn = Vector2.Distance(_context.Dogs[0].transform.position, _checkpoints[idx]) <= CheckpointRange;
                 bool bOn = Vector2.Distance(_context.Dogs[1].transform.position, _checkpoints[idx]) <= CheckpointRange;
                 if (aOn && bOn) RegisterCheckpointReached();
+            }
+
+            if (now >= _nextIntelAt)
+            {
+                _nextIntelAt = now + IntelCooldown;
+                TrySpawnIntelGathered();
             }
         }
 
@@ -112,6 +125,33 @@ namespace CheddarAndCocoa.Game
 
         public void ForceReachCheckpoint() => RegisterCheckpointReached();
         public void ForceLeashSnap() => RegisterSnap();
+
+        /// <summary>Public so tests can trigger the gag directly instead of waiting out the cooldown.</summary>
+        public void TrySpawnIntelGathered()
+        {
+            if (_cleared || IsFailed || _context.Dogs == null || _context.Dogs.Length < 2 || _checkpoints == null) return;
+
+            int idx = _state.CheckpointIndex;
+            if (idx < 0 || idx >= _checkpoints.Length) return;
+            Vector2 target = _checkpoints[idx];
+
+            DogController a = _context.Dogs[0];
+            DogController b = _context.Dogs[1];
+            bool aNear = Vector2.Distance(a.transform.position, target) <= CheckpointRange;
+            bool bNear = Vector2.Distance(b.transform.position, target) <= CheckpointRange;
+            // Both dogs there together is just "arrived at the checkpoint" - the joke is one dog
+            // scouting ahead alone while the other lags behind.
+            if (aNear == bNear) return;
+
+            DogController scout = aNear ? a : b;
+            if (scout.Busy) return;
+            if (!scout.TryGetComponent<Rigidbody2D>(out var body) || body.linearVelocity.sqrMagnitude > 0.05f) return;
+
+            BackyardArtVfxPulse.Spawn(scout.transform.position, RuntimeArtSpriteFactory.RuntimeSpriteId.SuccessPop,
+                new Vector3(0.014f, 0.014f, 1f), 19, new Color(0.55f, 0.75f, 0.5f, 0.35f), 1f, 20f);
+            _context.SpawnWorldPop((Vector2)scout.transform.position + Vector2.up * 0.6f, "INTEL GATHERED", new Color(0.6f, 0.85f, 0.55f));
+            IntelGatheredCount++;
+        }
 
         private void RegisterCheckpointReached()
         {
