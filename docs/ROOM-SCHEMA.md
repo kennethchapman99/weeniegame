@@ -1,5 +1,13 @@
 # Room / Map-Data Schema
 
+> **Status: HISTORICAL — FROZEN TYPESCRIPT PROTOTYPE, DO NOT IMPLEMENT.** This describes the
+> pre-Unity prototype's multi-room house-navigation system (`src/scenes/mapdef.ts` and friends).
+> The current Unity project has no equivalent - every mission builds its own flat, procedurally
+> generated scene inside `ArenaScene`, and Adventure mode's "locations" (Backyard, Front Yard,
+> House Interior, Neighborhood Park) are mission-selection groupings, not navigable rooms with
+> doors/stairs/nav-graphs. Preserve as a design reference only if a future Unity house-navigation
+> mission is ever authorized; do not treat this as current architecture.
+
 The seam that lets a new room — or your real house from a floor-plan — drop in as **data**, with
 its **art** swappable independently. Map data is gameplay truth (geometry, doors, stairs, zones,
 AI routing); painters are pure drawing. Neither knows about the other. Types live in

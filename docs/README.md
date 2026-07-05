@@ -43,7 +43,6 @@ not override the active sequence or authorize mission expansion:
 - [Animation State Catalog](ANIMATION-STATE-CATALOG.md),
   [Character Motion Pack](CHARACTER-MOTION-PACK.md),
   [Character Motion Generation](CHARACTER-MOTION-GENERATION.md), [Audio Direction](AUDIO-DIRECTION.md)
-- [Room Schema](ROOM-SCHEMA.md)
 
 ## DEFERRED
 
@@ -66,7 +65,8 @@ Keep these for provenance; do not follow them as current implementation instruct
 
 - [Co-op Vision](COOP-VISION.md), [Build Plan](BUILD-PLAN.md),
   [Unity Pivot Plan](UNITY-PIVOT-PLAN.md), [Unity First Playable](UNITY-FIRST-PLAYABLE.md),
-  [Unity Missions Port](UNITY-MISSIONS-PORT.md), [TypeScript Wrappers](WRAPPERS.md)
+  [Unity Missions Port](UNITY-MISSIONS-PORT.md), [TypeScript Wrappers](WRAPPERS.md),
+  [Room Schema](ROOM-SCHEMA.md)
 - [Agent Sprint 01](AGENT-SPRINT-01.md)
 - Completed Codex goals: [Squirrel Conspiracy](CODEX-GOAL-SQUIRREL-CONSPIRACY.md),
   [Eagle Shadow](CODEX-GOAL-EAGLE-SHADOW.md), [Coyotes Fence](CODEX-GOAL-COYOTES-FENCE.md)

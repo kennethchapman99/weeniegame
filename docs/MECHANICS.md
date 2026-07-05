@@ -1,6 +1,12 @@
 # Mechanics & Balance Reference
 
-These are the **playtested, simulation-validated** constants from the prototype. Port them into `config/balance.ts` as named values; do not re-derive or "improve" them without re-running the relevant sim. Values below are pulled directly from the prototype source.
+> **Status: OPERATIONAL REFERENCE.** The values below are frozen, playtested source data from the
+> TypeScript prototype's `src/config/balance.ts` (read-only, per `CLAUDE.md` - do not edit `src/`).
+> They're preserved here as known-good numbers to inform Unity's own tuning data (`DogTuning.cs`,
+> `ArenaMissionTuning.cs`) when porting or cross-checking a mechanic's feel; do not re-derive or
+> "improve" them without re-running the prototype's sim first.
+
+These are the **playtested, simulation-validated** constants from the prototype. Values below are pulled directly from the prototype source.
 
 ## World & frame
 
