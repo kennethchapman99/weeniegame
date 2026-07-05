@@ -1573,12 +1573,21 @@ namespace CheddarAndCocoa.Game
             return null;
         }
 
+        // Several controllers (SockPanic, SnackHeist, BackyardRescue's trap recovery) set a distinct
+        // reaction sprite on the treat itself (Decoy/Saved/Stashed) right before calling one of these -
+        // an immediate Destroy() would remove it from the scene before Unity ever rendered a frame with
+        // that sprite showing. Object.Destroy(obj, seconds) keeps it fully visible for a beat first.
+        // Disable the collider immediately so a dog re-entering the trigger during that window can't
+        // double-collect an already-resolved treat.
+        private const float CollectedTreatLingerSeconds = 0.5f;
+
         private void RecoverControllerCollectible(Treat treat)
         {
             if (treat == null) return;
             _breakfastRecovered++;
             _treats.Remove(treat);
-            Destroy(treat.gameObject);
+            if (treat.TryGetComponent<Collider2D>(out var collider)) collider.enabled = false;
+            Destroy(treat.gameObject, CollectedTreatLingerSeconds);
             SpawnTreat();
         }
 
@@ -1586,7 +1595,8 @@ namespace CheddarAndCocoa.Game
         {
             if (treat == null) return;
             _treats.Remove(treat);
-            Destroy(treat.gameObject);
+            if (treat.TryGetComponent<Collider2D>(out var collider)) collider.enabled = false;
+            Destroy(treat.gameObject, CollectedTreatLingerSeconds);
             SpawnTreat();
         }
 

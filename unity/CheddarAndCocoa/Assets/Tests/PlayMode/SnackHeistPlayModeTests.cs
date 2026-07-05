@@ -85,6 +85,40 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator SnackHeist_StashedSpriteLingersBeforeTreatDestroyed()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.SnackHeist);
+            yield return null;
+
+            var before = new System.Collections.Generic.List<Treat>(
+                Object.FindObjectsByType<Treat>(FindObjectsSortMode.None));
+            Assert.Greater(before.Count, 0);
+
+            _game.ForceCollectTreat();
+            yield return null;
+
+            Treat collected = null;
+            foreach (var treat in before)
+            {
+                if (treat == null) continue;
+                var art = treat.GetComponent<MissionPropArtAttachment>();
+                if (art != null && art.ResourcePath == FinalGameplayArt.SnackHeistPlateStashed) { collected = treat; break; }
+            }
+
+            Assert.IsNotNull(collected,
+                "Right after collection the treat must still exist and show its Stashed sprite - it " +
+                "must not already be destroyed in the same frame the sprite was set.");
+            Assert.IsTrue(collected.gameObject.activeInHierarchy);
+
+            yield return new WaitForSecondsRealtime(0.6f);
+            yield return null;
+
+            Assert.IsTrue(collected == null || !collected.gameObject.activeInHierarchy,
+                "The collected treat should be gone once its linger window passes.");
+        }
+
+        [UnityTest]
         public IEnumerator SnackHeist_UsesReadableTargetAndGuardLaneArt()
         {
             yield return LoadArena();
