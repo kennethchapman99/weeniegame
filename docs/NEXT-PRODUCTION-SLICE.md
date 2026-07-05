@@ -515,8 +515,19 @@ clear, matching the existing rumble intensity split) with zero mission-controlle
 Covered by `GateCrash_ClearAndFail_BothKickTheSharedCameraShake`. Suite green at `482/482`.
 
 Also flagged (not acted on - larger/more consequential than a single-file fix, spawned as separate
-review tasks): `Assets/Scripts/Game/CoopDistractSneakPuzzle.cs`/`CoopDistractSneakBeat.cs` and the
-whole `Assets/Scripts/Hazards/`, `Assets/Scripts/Interactions/`, `Assets/Scripts/Minigames/`,
-`Assets/Scripts/Objectives/` folders are confirmed-orphaned pre-`IMissionController`-migration
-scaffolding (zero references from any mission controller, `GameManager`, scene, or test - confirmed via
-exhaustive grep and `docs/UNITY-MISSIONS-PORT.md`'s own "historical, do not resume" banner).
+review tasks): the whole `Assets/Scripts/Hazards/`, `Assets/Scripts/Interactions/`,
+`Assets/Scripts/Minigames/`, `Assets/Scripts/Objectives/` folders are confirmed-orphaned
+pre-`IMissionController`-migration scaffolding (zero references from any mission controller,
+`GameManager`, scene, or test - confirmed via exhaustive grep and `docs/UNITY-MISSIONS-PORT.md`'s own
+"historical, do not resume" banner). Separately, all **10** `Coop*Beat.cs` MonoBehaviour driver classes
+(one per co-op puzzle primitive - `CoopHoldReleaseBeat`, `CoopBaitSwitchBeat`, etc.) are also confirmed
+dead: every mission controller drives its puzzle directly from its own `Tick()` instead of through the
+generic Beat wrapper, so each Beat class is referenced only by its own equally-dead test file (the
+underlying 9 `Coop*Puzzle.cs` primitives themselves are alive and actively used directly - only the
+`Beat` wrapper layer, plus the one exception `CoopDistractSneakPuzzle.cs`/`Beat.cs` pair which is dead
+in both forms, are the cleanup candidates).
+
+Follow-up: gave a **flawless** clear (0 mistakes) a bigger shake than a scrappy one - same
+fail-shakes-harder-than-clear asymmetry, since a flawless clear is objectively the best outcome and
+deserves more enthusiasm than a clear with a mid-run fumble. Covered by
+`GateCrash_FlawlessClear_ShakesHarderThanAScrappyClear`. Suite green at `483/483`.
