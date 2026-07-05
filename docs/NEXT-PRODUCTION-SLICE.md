@@ -589,3 +589,15 @@ constantly rattling. Updated the now-stale TODO comment to describe both call si
 loop's four snaps each add their own jolt on top of the end-of-round fail shake) and added
 `GateCrash_Snap_KicksAnImmediateShakeBeforeTheRoundEnds` to pin the new in-mission behavior. Suite green
 at `486/486`.
+
+### Predator-attack "yoinked" hit now kicks a camera shake too (2026-07-05)
+
+The old TODO named "hits/lands/predators" as the intended shake sources. `GateCrash`'s snap covered the
+"hits" case; `GameManager.StartPredatorAttack()` - the shared predator-grab sequence used by
+`BackyardRescue`, `CoyotesFence`, and `EagleShadowPanic` - is the actual "predators" case, and it
+already fires a score penalty, a "YOINKED!" world pop, and a rumble, but never shook the camera. Since
+this method already lives inside `GameManager` (unlike the mission-controller-only `MissionContext.
+RequestShake` plumbing GateCrash needed), this was a one-line `RequestShake(0.2f)` call alongside the
+existing `RequestRumble("predator_penalty", ...)`. Extended the existing predator-attack assertions in
+`BackyardMission_Objectives_Hazards_Tug_Clear_AndRestart` (`ArenaGameLoopPlayModeTests.cs`) to pin
+`ShakeRequestCount == 1` right after the hit. Suite green at `486/486`.
