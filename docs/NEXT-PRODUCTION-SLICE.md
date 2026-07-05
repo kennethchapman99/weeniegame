@@ -419,6 +419,13 @@ look: "every walk is an intelligence-gathering mission" (Leash Walk checkpoints)
 land" and "human legs are moving environmental hazards" (no current mission has a literal couch or
 walking-human hazard yet), "just one more nail" (no obvious mission fit yet).
 
+Shipped the Leash Walk one next: `LeashWalkMissionController.TrySpawnIntelGathered()` fires a cosmetic
+"INTEL GATHERED" pulse+pop when one dog is alone at the current checkpoint and the other is still
+lagging behind (both arriving together reads as "we made it", not scouting, so that case stays quiet).
+Same template again - cooldown timer initialized off the `0` default in `StartMission()`, public test
+hook, two-assertion test (`LeashWalk_IntelGatheredGag_FiresWhenOneDogScoutsAheadAloneAndStaysQuietWhenBothArrive`).
+Suite green at `474/474`. **Seven of twelve** running gags now implemented.
+
 ## Architecture guardrails
 
 - `GameManager` owns orchestration, mission selection, session flow, and shared-service wiring.
