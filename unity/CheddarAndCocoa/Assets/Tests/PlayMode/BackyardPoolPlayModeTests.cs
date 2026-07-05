@@ -288,12 +288,16 @@ namespace CheddarAndCocoa.Tests
 
             // Indoors the pool closes and any leftover water state resolves to Free.
             dog.SetMode(MovementMode.Swimming);
+            dog.SetWet(BackyardPoolZone.WetSeconds);
             game.StartMission(GameManager.MissionVariant.KitchenFoodFrenzy);
             yield return null;
             yield return null;
             Assert.IsFalse(pool.ActiveForCurrentMission, "Interior missions must not have an open pool.");
             Assert.AreEqual(MovementMode.Free, dog.Mode,
                 "Scene-state reset: leaving the yard dries the dogs off immediately.");
+            Assert.IsFalse(dog.IsWet,
+                "A leftover wet timer must not carry into a new round - a dog should not render damp " +
+                "in a mission with no pool at all.");
         }
 
         private static Vector2 FindOpenWaterPoint(BackyardPoolZone pool)

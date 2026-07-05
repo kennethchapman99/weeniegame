@@ -1123,6 +1123,7 @@ namespace CheddarAndCocoa.Game
                 _lastBarks[i] = float.NegativeInfinity;
                 _dogs[i].SetMode(MovementMode.Free);
                 _dogs[i].SetTravelAssist(false);
+                _dogs[i].ResetMissionOverlays();
                 if (DogFeedback[i] != null) DogFeedback[i].SetCarrying(false);
                 if (DogFeedback[i] != null) DogFeedback[i].ClearMissionPose();
                 _dogs[i].transform.position = _dogStarts[i];

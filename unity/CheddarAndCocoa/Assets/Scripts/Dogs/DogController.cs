@@ -83,6 +83,16 @@ namespace CheddarAndCocoa.Dogs
         public void SetOnFloater(bool onFloater) => OnFloater = onFloater;
         public void SetWet(float seconds) => _wetTimer = Mathf.Max(_wetTimer, seconds);
 
+        /// <summary>Mission-start/restart hook: overlays are timers, not modes, so SetMode(Free)
+        /// alone doesn't clear them — a dog could otherwise carry a wet tint into a new round
+        /// (even an indoor one with no pool).</summary>
+        public void ResetMissionOverlays()
+        {
+            Zoomies = false;
+            OnFloater = false;
+            _wetTimer = 0f;
+        }
+
         public float MaxSpeedUnitsPerSecond => CurrentSpeed();
         public float AccelerationUnitsPerSecond => tuning != null ? tuning.acceleration : 0f;
         public float DecelerationUnitsPerSecond => tuning != null ? tuning.deceleration : 0f;
