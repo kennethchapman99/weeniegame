@@ -155,6 +155,34 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual("cold_dig", _game.LastRumbleRequested);
         }
 
+        [UnityTest]
+        public IEnumerator ScentSearch_ReselectedBuriedSpot_ClearsStaleColdArtInsteadOfKeepingIt()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.ScentSearch);
+            yield return null;
+
+            var controller = _game.ScentSearchController;
+            _game.ForceScentDigWrong(DogId.Cheddar);
+            yield return null;
+
+            int coldSpot = -1;
+            for (int i = 0; i < _game.DigSpots.Length; i++)
+            {
+                if (controller.DigResourcePathAt(i).Contains("cold")) { coldSpot = i; break; }
+            }
+            Assert.GreaterOrEqual(coldSpot, 0, "The forced wrong dig should have left a spot showing the cold-scent art.");
+
+            int guard = 0;
+            while (controller.BuriedSpotIndex != coldSpot && guard++ < 500)
+                controller.ForceReselectBuriedSpot();
+            Assert.AreEqual(coldSpot, controller.BuriedSpotIndex,
+                "Guard exhausted trying to re-roll the buried spot onto the previously-cold one.");
+
+            Assert.That(controller.DigResourcePathAt(coldSpot), Does.Not.Contain("cold"),
+                "Re-picking a previously cold-dug spot as the new hiding place should clear its stale cold art.");
+        }
+
         private IEnumerator LoadArena()
         {
             _game = null;

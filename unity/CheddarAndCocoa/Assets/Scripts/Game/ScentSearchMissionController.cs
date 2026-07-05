@@ -120,6 +120,20 @@ namespace CheddarAndCocoa.Game
             }
         }
 
+        /// <summary>Test hook: which spot currently hides the bone.</summary>
+        public int BuriedSpotIndex => _buriedSpot;
+
+        /// <summary>Test hook: the resource path currently attached to dig marker <paramref name="index"/>.</summary>
+        public string DigResourcePathAt(int index)
+        {
+            if (_digMarkers == null || index < 0 || index >= _digMarkers.Length || _digMarkers[index] == null) return string.Empty;
+            var attachment = _digMarkers[index].GetComponent<MissionPropArtAttachment>();
+            return attachment != null ? attachment.ResourcePath : string.Empty;
+        }
+
+        /// <summary>Test hook: re-roll which active spot hides the bone (used to reproduce a re-pick landing on a previously-dug spot).</summary>
+        public void ForceReselectBuriedSpot() => ChooseBuriedSpot();
+
         private void Sniff(int dogIndex)
         {
             if (dogIndex < 0 || dogIndex >= _context.Dogs.Length || _buriedSpot < 0) return;
@@ -197,6 +211,10 @@ namespace CheddarAndCocoa.Game
             for (int i = 0; i < _digMarkers.Length; i++)
                 if (_digMarkers[i] != null && _digMarkers[i].activeSelf) active.Add(i);
             _buriedSpot = active.Count == 0 ? -1 : active[_context.Random().Next(active.Count)];
+            // A spot dug wrong earlier keeps showing its cold-scent art (helpful "already checked
+            // here" feedback) - but if that same spot gets re-picked as the new hiding place, it
+            // would keep reading as cold/already-checked even though the bone is now right there.
+            SetDigArt(_buriedSpot, FinalGameplayArt.ScentSearchDigUnknown);
         }
 
         private int NearestActiveDigSpot(Vector2 position)
