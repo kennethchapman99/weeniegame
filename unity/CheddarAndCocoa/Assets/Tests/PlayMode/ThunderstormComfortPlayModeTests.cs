@@ -111,6 +111,39 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator ThunderstormComfort_Bolt_FiresADistinctGagNotJustTheEndCard()
+        {
+            yield return LoadArena();
+            var game = _game;
+
+            game.StartMission(GameManager.MissionVariant.ThunderstormComfort);
+            yield return null;
+
+            // Dogs kept far apart: nothing drains panic, so repeated claps max it out and one bolts.
+            _cheddar.transform.position = new Vector3(-12f, 0f, 0f);
+            _cocoa.transform.position = new Vector3(12f, 0f, 0f);
+
+            int guard = 0;
+            while (game.Outcome == GameManager.MissionOutcome.InProgress && guard++ < 12)
+            {
+                game.ForceThunderclap();
+                yield return null;
+            }
+
+            Assert.AreEqual(GameManager.MissionOutcome.Failed, game.Outcome);
+            Assert.IsTrue(HasWorldPop("BOLTED"),
+                "The exact clap that maxes panic should read as its own world-space gag, not just a " +
+                "silent meter crossing 1.0 followed by the generic end card.");
+        }
+
+        private static bool HasWorldPop(string text)
+        {
+            foreach (var pop in Object.FindObjectsByType<MissionWorldPop>(FindObjectsSortMode.None))
+                if (pop.Label.Contains(text)) return true;
+            return false;
+        }
+
+        [UnityTest]
         public IEnumerator ThunderstormComfort_Replay_ResetsStormAndPanic()
         {
             yield return LoadArena();

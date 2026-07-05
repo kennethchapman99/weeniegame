@@ -30,3 +30,7 @@ unity/CheddarAndCocoa/.vsconfig
 
 # GameCI test artifacts produced by the workflow
 unity-test-artifacts/
+
+# Scratch scene the PlayMode test runner creates on each headless run (random-GUID name)
+unity/CheddarAndCocoa/Assets/InitTestScene*.unity
+unity/CheddarAndCocoa/Assets/InitTestScene*.unity.meta

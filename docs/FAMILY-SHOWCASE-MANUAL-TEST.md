@@ -199,6 +199,30 @@ Use fallbacks quickly. The goal is a great family session, not proving a point.
 | Any mission creates frustration instead of laughter | End the round from the end card or mission select. Ask which mission they want to replay. |
 | Build glitch or visual bug breaks the mood | Switch to showing the art-review contact sheet and explain it as a work-in-progress build; do not keep forcing play. |
 
+## Laugh Log
+
+Keep this running for the whole session — a phone note or scrap paper next to the couch, not a
+post-hoc reconstruction. The defect checklist below only catches what's broken; this catches what
+the game already got right, which is the rarer and more useful signal. Write down every laugh,
+surprise, gasp, or quotable line the instant it happens, for every mission, not only Operation Pee
+Break.
+
+| Time/mission | What happened | Who reacted | Quote (verbatim if you can catch it) |
+| --- | --- | --- | --- |
+| | | | |
+
+Rules:
+
+- Log it in the moment. Don't wait for the mission to end or the debrief to start — you will not
+  remember the exact line by then.
+- A laugh at Backyard Rescue counts exactly as much as one at the Pee Break finale. Log all of them.
+- Log surprises and near-misses too, not just laughs. "Wait, it did WHAT" is signal even before it's
+  funny.
+- Quote exactly. "He's such an idiot" and "Cheddar's an idiot right now" are different data points.
+- Note repeats. A moment that gets a reaction twice (same or different mission) outranks a one-off.
+- This log outranks the defect list when deciding what to build next. An unscripted laugh nobody
+  designed on purpose is the highest-value finding from the whole session.
+
 ## Observation Checklist
 
 Record short notes after each mission. Do not interrupt play unless the session is stuck.
@@ -263,6 +287,9 @@ Then write three lists:
 - **Fix before next family session:** blockers or vibe-killers only.
 - **Later:** art polish, extra missions, balance wish-list.
 
+Attach the laugh log. Re-read it before ranking Keep/Fix/Later — an entry with two independent
+laughs beats a hunch about what "should" be funny, and should move that moment/mission up the list.
+
 ## Completion Criteria
 
 The family showcase gate is ready to call successful when:
@@ -272,7 +299,8 @@ The family showcase gate is ready to call successful when:
 - the host used no more than one hint per Pee Break beat;
 - at least one funny failure was understood without a post-hoc explanation;
 - at least one player asked for a replay or another mission;
-- all critical confusion was recorded with mission, moment, and player quote.
+- all critical confusion was recorded with mission, moment, and player quote;
+- the laugh log was kept live during the session, not reconstructed afterward.
 
 If those are not true, do not call the deep-slice gate passed. Convert the smallest blocking findings
 into Unity-scoped fixes, keep PlayMode green, and rerun this runbook.

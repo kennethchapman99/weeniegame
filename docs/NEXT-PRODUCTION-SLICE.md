@@ -217,12 +217,45 @@ skips straight to GO. Verify during the remaining sitting: timer frozen until GO
 during the briefing card starts play instantly.
 
 **Half 2 — the actual gate:** play Operation Pee Break start to finish (it is the couch-test
-focus shortcut on the picker). Then call it, one of:
+focus shortcut on the picker). Keep the laugh log from `docs/FAMILY-SHOWCASE-MANUAL-TEST.md`
+running throughout — not just a defect list, every laugh/surprise/quote in the moment. Then call
+it, one of:
 
 - **ACCEPTED** — record the date here and the roster/roadmap freeze lifts, or
 - **REJECTED** — list exactly what failed; that list becomes the next work queue.
 
-Verdict: _pending_.
+Verdict: _pending_. Half 2 has not been played yet — this requires Ken + Sue on the couch with two
+controllers; it cannot be run or simulated from the terminal. Report back what happened (pass/fail
+on Pee Break end-to-end, plus the laugh log) and this line gets the date and verdict.
+
+### Roster-wide funny-failure audit (2026-07-05, provisional — done ahead of the Half 2 verdict)
+
+With the owner's explicit go-ahead to start this work before the couch-test-#4 gate closes: audited
+every controller-owned mission's `IsFailed` trip point for the depth bar's "funny failure everywhere"
+rule (`DESIGN-REVIEW-2026-06.md`). Most of the roster already clears it — GateCrash, TableStealth,
+CarRide, LeashWalk, Eagle Shadow Panic, Snack Heist, Squirrel Conspiracy, Coyotes Fence, and the
+squirrel-steal path all already fire a `SetJuice`/`SpawnWorldPop`/`RequestAudioCue` gag on the exact
+event that trips the fail cap, not just a silent counter increment. The one real gap was
+**Thunderstorm Comfort**: `PanicMeter.Maxed` was a passively-computed threshold with no broadcast
+anywhere, so a dog's panic could silently cross 1.0 and the only sign was the generic end card a
+beat later. Fixed in `ThunderstormComfortMissionController` (`CheckBolt()`): fires a one-shot
+"{DOG} BOLTED!" world-pop, cue, and audio the exact frame either pup's panic maxes, whether that
+happens from a thunderclap spike or passive drift while apart. Covered by
+`ThunderstormComfort_Bolt_FiresADistinctGagNotJustTheEndCard`; full suite green at `459/459`.
+
+Note for whoever does the next mission in this pass: the shared `EndRound(false)` juice
+(`"SAD FLOP REPLAY!"`) fires immediately after any controller's own fail-gag `SetJuice` call in the
+same frame (`Tick()` and `CheckClear()` run back-to-back), and `FinalJuiceEffect` only keeps one
+sprite-pop slot alive, so the controller's own juice sprite never actually renders — only its
+`SpawnWorldPop` text survives, since those are independent GameObjects. Test against `MissionWorldPop`
+(see `HasWorldPop` in `CarRidePlayModeTests.cs`), not `LastJuiceLabel`, or the assertion will flake
+against clobbering that's cosmetic, not a real bug. Fixing that clobbering itself would be a much
+bigger, roster-wide `EndRound`/`FinalJuiceEffect` change — out of scope for a per-mission pass.
+
+Deliberately did **not** touch the `EndRound`→end-card→Replay flow itself: Replay is already
+single-button and frame-instant (`R`/`Enter`/`Start`, no scene reload), confirmed by existing tests
+that assert `Phase == GameOver` one frame after a forced fail — so "fast re-entry" was already true
+roster-wide and didn't need rework.
 
 ## Architecture guardrails
 

@@ -16,6 +16,7 @@ namespace CheddarAndCocoa.Game
         private MissionPropArtAttachment _stormArt;
         private float _nextClapAt;
         private bool _cleared;
+        private bool _bolted;
 
         public GameManager.MissionVariant Variant => GameManager.MissionVariant.ThunderstormComfort;
         public bool IsComplete => _cleared;
@@ -58,6 +59,7 @@ namespace CheddarAndCocoa.Game
             _stormState.Configure(ClapGoal);
             _context.PanicMeter?.ResetMeter();
             _cleared = false;
+            _bolted = false;
             _nextClapAt = _context.Now() + ClapInterval;
             SetStormArt(FinalGameplayArt.ThunderstormCloudWaiting);
             if (_stormMarker != null) _stormMarker.SetActive(true);
@@ -76,6 +78,7 @@ namespace CheddarAndCocoa.Game
                 for (int i = 0; i < _context.DogFeedback.Length; i++)
                     if (_context.DogFeedback[i] != null) _context.DogFeedback[i].ShowComfort();
             }
+            CheckBolt();
             if (pm.Maxed != null) return;
 
             if (now >= _nextClapAt)
@@ -140,6 +143,7 @@ namespace CheddarAndCocoa.Game
             _context.RequestAudioCue(ArenaFeedbackCatalog.ThreatWarning);
             _context.RequestRumble("thunderclap", 0.3f, 0.55f, 0.2f);
             _context.SpawnWorldPop(new Vector2(0f, _context.Bounds.yMax - 2f), "BOOM!", new Color(0.8f, 0.85f, 1f));
+            CheckBolt();
             if (pm.Maxed != null) return;
 
             _stormState.SurviveClap();
@@ -155,6 +159,38 @@ namespace CheddarAndCocoa.Game
                 _cleared = true;
                 SetStormArt(FinalGameplayArt.ThunderstormStormCleared);
             }
+        }
+
+        /// <summary>
+        /// Fires the funny-failure gag exactly once, on the frame a pup's panic first maxes out.
+        /// Without this the bolt was invisible: panic silently crossed 1.0 and the only sign was
+        /// the generic end card a beat later.
+        /// </summary>
+        private void CheckBolt()
+        {
+            if (_bolted) return;
+            var pm = _context.PanicMeter;
+            var maxed = pm?.Maxed;
+            if (maxed == null) return;
+
+            _bolted = true;
+            DogId dog = maxed.Value;
+            string name = dog == DogId.Cheddar ? "Cheddar" : "Cocoa";
+            int idx = _context.IndexOfDog(dog);
+            Vector3 pos = _context.Dogs != null && idx >= 0 && idx < _context.Dogs.Length
+                ? _context.Dogs[idx].transform.position
+                : Vector3.zero;
+
+            SetStormArt(FinalGameplayArt.ThunderstormThunderclap);
+            for (int i = 0; i < _context.DogFeedback.Length; i++)
+                if (_context.DogFeedback[i] != null) _context.DogFeedback[i].ShowPanic();
+            _context.SetFeedback(GameManager.FeedbackKind.TugNeedsPartner);
+            _context.SetCue($"{name} maxed out on panic and bolted for cover - too far apart, too many claps!");
+            _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, $"{name.ToUpperInvariant()} BOLTED!");
+            _context.SpawnWorldPop(pos, $"{name.ToUpperInvariant()} BOLTED!", new Color(1f, 0.35f, 0.2f));
+            _context.RequestAudioCue(ArenaFeedbackCatalog.ThreatWarning);
+            _context.RequestRumble("panic_bolt", 0.2f, 0.48f, 0.2f);
+            _context.LogEvent("PanicBolt", name);
         }
 
         private void SetStormArt(string resourcePath)
