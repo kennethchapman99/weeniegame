@@ -1853,7 +1853,9 @@ namespace CheddarAndCocoa.Game
                 RequestAudioCue(ArenaFeedbackCatalog.StarAppear);
                 RequestAudioCue(ArenaFeedbackCatalog.MissionWin);
                 RequestRumble("mission_win", 0.42f, 0.68f, 0.24f);
-                RequestShake(0.18f);
+                // A flawless clear is the best outcome on offer; let the camera celebrate harder than
+                // a scrappy win, same asymmetry as the fail shake being bigger than a clean clear.
+                RequestShake(LastRoundFlawless ? 0.28f : 0.18f);
             }
             else
             {

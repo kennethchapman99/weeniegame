@@ -119,6 +119,35 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator GateCrash_FlawlessClear_ShakesHarderThanAScrappyClear()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.GateCrash);
+            yield return null;
+
+            // Scrappy clear: one snap first, then complete.
+            _game.ForceGateHold(true);
+            _game.ForceGateCross(0.4f);
+            _game.ForceGateHold(false); // snap
+            _game.ForceGateHold(true);
+            _game.ForceGateCross(1.0f);
+            Assert.AreEqual(GameManager.MissionOutcome.Clear, _game.Outcome);
+            Assert.IsFalse(_game.LastRoundFlawless, "A snap before completing should not count as flawless.");
+            float scrappyShake = _game.LastShakeMagnitude;
+
+            _game.Restart();
+            yield return null;
+
+            // Flawless clear: no snaps at all.
+            _game.ForceGateHold(true);
+            _game.ForceGateCross(1.0f);
+            Assert.AreEqual(GameManager.MissionOutcome.Clear, _game.Outcome);
+            Assert.IsTrue(_game.LastRoundFlawless);
+            Assert.Greater(_game.LastShakeMagnitude, scrappyShake,
+                "A flawless clear should shake the camera harder than a clear with a snap.");
+        }
+
+        [UnityTest]
         public IEnumerator GateCrash_Replay_ResetsThePuzzle()
         {
             yield return LoadArena();
