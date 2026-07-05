@@ -308,6 +308,12 @@ genuine two-dog interaction of the three, versus the other two being solo idle b
 in `FAMILY-SHOWCASE-MANUAL-TEST.md`'s Backyard Rescue watch-list for the next couch session. Suite
 green at `464/464`.
 
+Added a fourth gag later the same session: the treat-reverence pause (`TreatReverenceCount` —
+"dropped food has religious significance"; fires when a dog idles within 2 units of an uncollected
+treat, well outside the treat's own 0.6-unit trigger collider, so it can never interfere with real
+collection). Noted in the family-showcase watch-list alongside the other three. Suite green at
+`471/471`.
+
 While adding those gags, found a real pre-existing cross-mission bug in the same file:
 `BackyardRescueArtEnhancer.ReactToFeedback`/`ReactToScore` had no `ActiveMissionVariant` gate at all
 (unlike the new gags, which all correctly check it). Every mission shares
