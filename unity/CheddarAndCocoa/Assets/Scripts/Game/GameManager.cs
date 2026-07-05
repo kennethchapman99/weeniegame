@@ -1549,6 +1549,7 @@ namespace CheddarAndCocoa.Game
             SpawnWorldPop(_dogs[_grabbedDog].transform.position, "YOINKED!", new Color(1f, 0.2f, 0.2f));
             RequestAudioCue(ArenaFeedbackCatalog.ThreatWarning);
             RequestRumble("predator_penalty", 0.24f, 0.45f, 0.18f);
+            RequestShake(0.2f);
             LogPlaytestEvent("PredatorAttack", LastCue);
             LogObjectiveIfChanged();
         }

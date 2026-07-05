@@ -538,6 +538,7 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual("-150 PREDATOR HIT", game.LastScoreEventLabel);
             Assert.AreEqual("-150 PREDATOR HIT", game.LastScorePopLabel);
             Assert.AreEqual(GameManager.JuiceFeedbackKind.WarningMiss, game.LastJuiceFeedback);
+            Assert.AreEqual(1, game.ShakeRequestCount, "Getting yoinked should kick a cosmetic camera shake.");
             Assert.IsTrue(cheddar.Mode == MovementMode.Stunned || cocoa.Mode == MovementMode.Stunned);
             Assert.That(game.PredatorObject.GetComponent<MissionActorFeedback>().Label, Does.Contain("PARTNER BARK"));
             Assert.IsTrue(cheddarFeedback.CurrentPose == DogReadabilityFeedback.Pose.Stunned ||
