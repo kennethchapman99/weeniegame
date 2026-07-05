@@ -160,6 +160,51 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator ToyEnvyGag_FiresWhenBothDogsClaimTheRopeAndStaysQuietWithOnlyOneDogThere()
+        {
+            yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
+            yield return null;
+            yield return null;
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            Assert.IsNotNull(game);
+            game.StartMission(GameManager.MissionVariant.BackyardRescue);
+            yield return null;
+
+            var enhancer = Object.FindFirstObjectByType<BackyardRescueArtEnhancer>();
+            if (enhancer == null)
+            {
+                var go = new GameObject("BackyardRescueArtEnhancer_TestFallback");
+                enhancer = go.AddComponent<BackyardRescueArtEnhancer>();
+            }
+            enhancer.EnhanceNow();
+            yield return null;
+
+            var cheddar = GameObject.Find("Cheddar");
+            var cocoa = GameObject.Find("Cocoa");
+            Assert.IsNotNull(cheddar);
+            Assert.IsNotNull(cocoa);
+            Vector3 ropePos = game.RopeObject.transform.position;
+
+            // Only Cheddar near the rope: no rival, no envy.
+            cheddar.transform.position = ropePos + Vector3.left * 0.6f;
+            cocoa.transform.position = ropePos + Vector3.right * 20f;
+            yield return null;
+
+            enhancer.TrySpawnToyEnvy();
+            Assert.AreEqual(0, enhancer.ToyEnvyCount,
+                "A toy only one dog is near is not contested - envy needs a rival.");
+
+            // Both dogs claim it at once: the toy suddenly matters.
+            cocoa.transform.position = ropePos + Vector3.right * 0.6f;
+            yield return null;
+
+            enhancer.TrySpawnToyEnvy();
+            Assert.AreEqual(1, enhancer.ToyEnvyCount,
+                "Every toy becomes valuable only when the other dog wants it.");
+        }
+
+        [UnityTest]
         public IEnumerator BackyardThreatPresentation_UsesQuietReferenceArtGroundShadowsAndEagleMotion()
         {
             yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);

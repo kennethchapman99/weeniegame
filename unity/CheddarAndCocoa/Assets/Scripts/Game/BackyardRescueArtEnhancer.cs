@@ -16,9 +16,11 @@ namespace CheddarAndCocoa.Game
         private string _lastScoreLabel = string.Empty;
         private GameManager.FeedbackKind _lastFeedback;
         private float _nextAmbientAt;
+        private DogController _cheddar;
         private DogController _cocoa;
         private float _nextSunbeamCheckAt;
         private float _nextSquirrelMumbleAt;
+        private float _nextToyEnvyAt;
 
         public bool Enhanced { get; private set; }
         public int OverlayCount { get; private set; }
@@ -31,6 +33,10 @@ namespace CheddarAndCocoa.Game
         public int SunbeamClaimCount { get; private set; }
         // Running gag: "The squirrel has villain monologues nobody understands." Purely decorative.
         public int SquirrelMumbleCount { get; private set; }
+        // Running gag: "Every toy becomes valuable only when the other dog wants it." Purely
+        // decorative - fires only when both dogs claim the rope at once and neither is already
+        // in a real Tug interaction, so it never masks the actual co-op tug objective.
+        public int ToyEnvyCount { get; private set; }
         public string LastEnhancementSummary { get; private set; } = string.Empty;
         public bool BackyardThreatsHaveReadableShadows =>
             HasReadableShadow(_game != null ? _game.SquirrelObject : null, "CouchReadableSquirrelShadow") &&
@@ -121,6 +127,7 @@ namespace CheddarAndCocoa.Game
             _nextAmbientAt = Time.time + 2.5f;
             _nextSunbeamCheckAt = Time.time + 6f;
             _nextSquirrelMumbleAt = Time.time + 8f;
+            _nextToyEnvyAt = Time.time + 7f;
             LastEnhancementSummary = $"Art overlays active: {OverlayCount}, environment overlays: {EnvironmentArtOverlayCount}, building overlays: {BuildingArtOverlayCount}";
             _lastFeedback = _game.LastFeedback;
             _lastScoreLabel = _game.LastScoreEventLabel;
@@ -163,6 +170,13 @@ namespace CheddarAndCocoa.Game
                 _nextSquirrelMumbleAt = Time.time + 8f;
                 if (_game.ActiveMissionVariant == GameManager.MissionVariant.BackyardRescue)
                     TrySpawnSquirrelMumble();
+            }
+
+            if (Time.time >= _nextToyEnvyAt)
+            {
+                _nextToyEnvyAt = Time.time + 7f;
+                if (_game.ActiveMissionVariant == GameManager.MissionVariant.BackyardRescue)
+                    TrySpawnToyEnvy();
             }
         }
 
@@ -561,6 +575,44 @@ namespace CheddarAndCocoa.Game
             BackyardArtVfxPulse.Spawn(pos, RuntimeArtSpriteFactory.RuntimeSpriteId.BarkRing,
                 new Vector3(0.018f, 0.018f, 1f), 23, new Color(0.55f, 0.42f, 0.6f, 0.4f), 0.9f, 40f);
             SquirrelMumbleCount++;
+        }
+
+        /// <summary>Public so tests can trigger the gag directly instead of waiting out the 7s cooldown.</summary>
+        public void TrySpawnToyEnvy()
+        {
+            if (_game.RopeObject == null || !_game.RopeObject.activeSelf) return;
+
+            if (_cheddar == null)
+            {
+                var found = GameObject.Find("Cheddar");
+                if (found == null) return;
+                _cheddar = found.GetComponent<DogController>();
+                if (_cheddar == null) return;
+            }
+            if (_cocoa == null)
+            {
+                var found = GameObject.Find("Cocoa");
+                if (found == null) return;
+                _cocoa = found.GetComponent<DogController>();
+                if (_cocoa == null) return;
+            }
+
+            // Don't interrupt a real Tug interaction already in progress - this is flavor for the
+            // moment right before, not a substitute for the actual co-op objective.
+            if (_cheddar.Busy || _cocoa.Busy) return;
+
+            const float claimRadius = 3.5f;
+            Vector3 ropePos = _game.RopeObject.transform.position;
+            if (Vector2.Distance(_cheddar.transform.position, ropePos) > claimRadius) return;
+            if (Vector2.Distance(_cocoa.transform.position, ropePos) > claimRadius) return;
+
+            BackyardArtVfxPulse.Spawn(ropePos, RuntimeArtSpriteFactory.RuntimeSpriteId.SuccessPop,
+                new Vector3(0.022f, 0.022f, 1f), 22, new Color(1f, 0.55f, 0.25f, 0.4f), 0.8f, 25f);
+            if (_cheddar.TryGetComponent<DogReadabilityFeedback>(out var cheddarFeedback))
+                cheddarFeedback.ShowTug((Vector2)(ropePos - _cheddar.transform.position));
+            if (_cocoa.TryGetComponent<DogReadabilityFeedback>(out var cocoaFeedback))
+                cocoaFeedback.ShowTug((Vector2)(ropePos - _cocoa.transform.position));
+            ToyEnvyCount++;
         }
     }
 }
