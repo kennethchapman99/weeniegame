@@ -531,3 +531,13 @@ Follow-up: gave a **flawless** clear (0 mistakes) a bigger shake than a scrappy 
 fail-shakes-harder-than-clear asymmetry, since a flawless clear is objectively the best outcome and
 deserves more enthusiasm than a clear with a mid-run fumble. Covered by
 `GateCrash_FlawlessClear_ShakesHarderThanAScrappyClear`. Suite green at `483/483`.
+
+### Full build + smoke validation, not just editor PlayMode (2026-07-05)
+
+Beyond the headless editor PlayMode suite (483/483 through this point), also ran the actual packaged
+verification path: `./unity/build-dev.sh` produced a fresh macOS development build with every fix and
+gag from this pass included, and `./unity/smoke-player.sh` confirmed the packaged standalone player
+boots and initializes cleanly (no crash-on-startup). This exercises a different failure surface than
+editor tests - Safe Mode entry, build-time asset stripping, and player runtime init are all things the
+editor test runner doesn't catch. Executable SHA-256:
+`af3c32216057aefe2fa65894e3c0301873724e96ab7fdb2b6d53ce2de3f44680`.
