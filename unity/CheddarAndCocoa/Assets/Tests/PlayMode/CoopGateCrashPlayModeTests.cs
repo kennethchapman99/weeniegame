@@ -89,6 +89,36 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator GateCrash_ClearAndFail_BothKickTheSharedCameraShake()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.GateCrash);
+            yield return null;
+
+            Assert.AreEqual(0, _game.ShakeRequestCount, "No shake should fire mid-mission.");
+
+            _game.ForceGateHold(true);
+            _game.ForceGateCross(1.0f);
+            Assert.AreEqual(GameManager.MissionOutcome.Clear, _game.Outcome);
+            Assert.AreEqual(1, _game.ShakeRequestCount, "Mission clear should kick a cosmetic camera shake.");
+            float clearShake = _game.LastShakeMagnitude;
+            Assert.Greater(clearShake, 0f);
+
+            _game.Restart();
+            yield return null;
+            for (int i = 0; i < 4; i++)
+            {
+                _game.ForceGateHold(true);
+                _game.ForceGateCross(0.4f);
+                _game.ForceGateHold(false);
+            }
+            Assert.AreEqual(GameManager.MissionOutcome.Failed, _game.Outcome);
+            Assert.AreEqual(2, _game.ShakeRequestCount, "Mission fail should kick a second cosmetic camera shake.");
+            Assert.Greater(_game.LastShakeMagnitude, clearShake,
+                "A failed run should jolt the camera harder than a clean clear.");
+        }
+
+        [UnityTest]
         public IEnumerator GateCrash_Replay_ResetsThePuzzle()
         {
             yield return LoadArena();

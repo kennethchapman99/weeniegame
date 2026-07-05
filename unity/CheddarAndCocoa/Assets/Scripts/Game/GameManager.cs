@@ -303,6 +303,8 @@ namespace CheddarAndCocoa.Game
         public string LastAudioCueRequested { get; private set; } = string.Empty;
         public string LastAudioClipPlayed { get; private set; } = string.Empty;
         public string LastRumbleRequested { get; private set; } = string.Empty;
+        public float LastShakeMagnitude { get; private set; }
+        public int ShakeRequestCount { get; private set; }
         public int AudioCueRequestCount => _audioCueRequests.Count;
         public int RumbleRequestCount => _rumbleRequests.Count;
         public bool MusicLoopReady => _music != null && _music.clip != null && _music.loop;
@@ -342,6 +344,7 @@ namespace CheddarAndCocoa.Game
         private readonly Dictionary<string, AudioCueSlot> _audioSlots = ArenaFeedbackCatalog.BuildLookup();
         private readonly List<string> _audioCueRequests = new();
         private readonly List<string> _rumbleRequests = new();
+        private CheddarAndCocoa.CameraRig.SharedCameraController _camera;
         private MissionDefinition _mission;
         private GameObject _bunnyCameoObject;
         private readonly HerdingMissionState _emptyHerdingState = new HerdingMissionState();
@@ -467,6 +470,9 @@ namespace CheddarAndCocoa.Game
             HideInteractionRanges();
             ShowMissionSelect();
         }
+
+        /// <summary>Wires the shared couch camera so mission clear/fail can add a cosmetic screen shake.</summary>
+        public void SetSharedCamera(CheddarAndCocoa.CameraRig.SharedCameraController camera) => _camera = camera;
 
         private void ActivateMissionController(MissionVariant variant)
         {
@@ -1847,6 +1853,7 @@ namespace CheddarAndCocoa.Game
                 RequestAudioCue(ArenaFeedbackCatalog.StarAppear);
                 RequestAudioCue(ArenaFeedbackCatalog.MissionWin);
                 RequestRumble("mission_win", 0.42f, 0.68f, 0.24f);
+                RequestShake(0.18f);
             }
             else
             {
@@ -1861,6 +1868,7 @@ namespace CheddarAndCocoa.Game
                 SetJuice(JuiceFeedbackKind.WarningMiss, "SAD FLOP REPLAY!");
                 RequestAudioCue(ArenaFeedbackCatalog.MissionFail);
                 RequestRumble("mission_fail", 0.24f, 0.5f, 0.24f);
+                RequestShake(0.32f);
             }
             EndSummaryLabel = BuildOutcomeSummaryLabel();
 
@@ -3119,6 +3127,16 @@ namespace CheddarAndCocoa.Game
             pad.SetMotorSpeeds(lowFrequency, highFrequency);
             CancelInvoke(nameof(StopRumble));
             Invoke(nameof(StopRumble), Mathf.Max(0.01f, seconds));
+        }
+
+        /// <summary>Cosmetic camera kick, mirroring RequestRumble's controller kick - purely additive,
+        /// no effect if no camera is wired (e.g. ControllerTestScene).</summary>
+        private void RequestShake(float magnitude)
+        {
+            if (magnitude <= 0f) return;
+            LastShakeMagnitude = magnitude;
+            ShakeRequestCount++;
+            _camera?.AddShake(magnitude);
         }
 
         private void StopRumble()

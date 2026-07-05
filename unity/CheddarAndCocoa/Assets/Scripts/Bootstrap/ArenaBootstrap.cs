@@ -75,6 +75,7 @@ namespace CheddarAndCocoa.Bootstrap
                 new[] { cheddarDog, cocoaDog },
                 new[] { cheddar.GetComponent<GamepadPlayerInput>(), cocoa.GetComponent<GamepadPlayerInput>() },
                 _square, _ring, bounds, treatSeed);
+            game.SetSharedCamera(sharedCamera);
 
             // Origin's enhancers self-wire (Start coroutine / scene hook); just guarantee presence here.
             game.gameObject.AddComponent<BackyardRescueArtEnhancer>();
