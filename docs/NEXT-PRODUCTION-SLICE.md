@@ -503,3 +503,20 @@ stayed in sync throughout, one shared build with both the new audio system and t
 
 Broad roadmaps, backlog items, progression work, and additional mission ideas are deferred until
 the second couch-playtest gate passes.
+
+### Roster-wide screen shake wired up (2026-07-05)
+
+`SharedCameraController` has carried a fully-implemented, decaying screen-shake system since it was
+built (`AddShake`, consumed every `LateUpdate`), but nothing ever called it - `GameManager` held no
+reference to the camera at all. Wired `GameManager.SetSharedCamera()` (called once from
+`ArenaBootstrap` after `game.Init()`) and a `RequestShake()` helper into the single shared `EndRound()`
+path, so every mission's clear/fail gets a small cosmetic camera kick roster-wide (bigger on fail than
+clear, matching the existing rumble intensity split) with zero mission-controller changes needed.
+Covered by `GateCrash_ClearAndFail_BothKickTheSharedCameraShake`. Suite green at `482/482`.
+
+Also flagged (not acted on - larger/more consequential than a single-file fix, spawned as separate
+review tasks): `Assets/Scripts/Game/CoopDistractSneakPuzzle.cs`/`CoopDistractSneakBeat.cs` and the
+whole `Assets/Scripts/Hazards/`, `Assets/Scripts/Interactions/`, `Assets/Scripts/Minigames/`,
+`Assets/Scripts/Objectives/` folders are confirmed-orphaned pre-`IMissionController`-migration
+scaffolding (zero references from any mission controller, `GameManager`, scene, or test - confirmed via
+exhaustive grep and `docs/UNITY-MISSIONS-PORT.md`'s own "historical, do not resume" banner).
