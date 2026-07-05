@@ -136,6 +136,40 @@ namespace CheddarAndCocoa.Tests
                 "silent meter crossing 1.0 followed by the generic end card.");
         }
 
+        [UnityTest]
+        public IEnumerator ThunderstormComfort_Bolt_JuicePopSurvivesTheEndRoundClobber()
+        {
+            yield return LoadArena();
+            var game = _game;
+
+            game.StartMission(GameManager.MissionVariant.ThunderstormComfort);
+            yield return null;
+
+            _cheddar.transform.position = new Vector3(-12f, 0f, 0f);
+            _cocoa.transform.position = new Vector3(12f, 0f, 0f);
+
+            int guard = 0;
+            while (game.Outcome == GameManager.MissionOutcome.InProgress && guard++ < 12)
+            {
+                game.ForceThunderclap();
+                yield return null;
+            }
+
+            Assert.AreEqual(GameManager.MissionOutcome.Failed, game.Outcome);
+            Assert.GreaterOrEqual(CountLiveJuiceEffects(), 2,
+                "CheckBolt's own fail-gag pop and GameManager.EndRound's generic 'SAD FLOP REPLAY!' pop " +
+                "fire in the same Update; the bolt's pop must survive instead of being destroyed before " +
+                "it ever renders a frame.");
+        }
+
+        private static int CountLiveJuiceEffects()
+        {
+            int count = 0;
+            foreach (var renderer in Object.FindObjectsByType<SpriteRenderer>(FindObjectsSortMode.None))
+                if (renderer.gameObject.name.StartsWith(FinalJuiceEffect.EffectNamePrefix)) count++;
+            return count;
+        }
+
         private static bool HasWorldPop(string text)
         {
             foreach (var pop in Object.FindObjectsByType<MissionWorldPop>(FindObjectsSortMode.None))

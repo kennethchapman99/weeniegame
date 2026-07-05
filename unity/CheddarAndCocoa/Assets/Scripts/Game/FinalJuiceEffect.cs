@@ -10,6 +10,8 @@ namespace CheddarAndCocoa.Game
 
         private GameManager _game;
         private int _observedSequence;
+        private int _lastSpawnFrame = -1;
+        private int _sameFrameSpawnIndex;
 
         public int SpawnCount { get; private set; }
         public string LastSpawnedSpriteName { get; private set; } = string.Empty;
@@ -50,10 +52,27 @@ namespace CheddarAndCocoa.Game
 
             Sprite sprite = FinalGameplayArt.Load(path);
             if (sprite == null) return;
-            if (LastSpawnedObject != null) Destroy(LastSpawnedObject);
+
+            // A controller's own fail-gag SetJuice call and GameManager.EndRound's generic follow-up
+            // (e.g. "SAD FLOP REPLAY!") land in the same Update, one frame apart from each other in
+            // wall-clock terms but on the identical Time.frameCount. Destroying-on-replace there would
+            // kill the controller's pop before it ever rendered a frame, so only replace across frames;
+            // same-frame pops stack with a vertical offset instead.
+            int frame = Time.frameCount;
+            if (frame != _lastSpawnFrame)
+            {
+                if (LastSpawnedObject != null) Destroy(LastSpawnedObject);
+                _sameFrameSpawnIndex = 0;
+            }
+            else
+            {
+                _sameFrameSpawnIndex++;
+            }
+            _lastSpawnFrame = frame;
 
             var effect = new GameObject($"{EffectNamePrefix}{_observedSequence}");
-            effect.transform.position = FeedbackPosition(_game) + new Vector3(0.9f, 1.55f, 0f);
+            effect.transform.position = FeedbackPosition(_game) +
+                new Vector3(0.9f, 1.55f + _sameFrameSpawnIndex * 0.55f, 0f);
             float width = EffectWorldWidth(path);
             float scale = sprite.bounds.size.x > 0.001f ? width / sprite.bounds.size.x : 1f;
             effect.transform.localScale = Vector3.one * scale;
