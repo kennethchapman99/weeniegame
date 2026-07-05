@@ -722,7 +722,7 @@ In real-time play the hide phase is spatial: three labeled **HIDE HERE** cover z
 
 The deterministic test/pacing hooks are `ForceEagleShadowSafeHide()`, `ForceEagleShadowExposure()`, `ForceEagleShadowSweepPass()`, `ForceEagleShadowRescue(dog)`, and `ForceEagleShadowUnitedFront()` (`EagleCoverZones` exposes the cover positions); in normal play the final united-front phase also resolves through the existing huddled united-bark path.
 
-Manual check: press **5**, hide twice to open the rescue objective, interact near the toy to rescue it, then bring both dogs together and bark to complete the united front. Confirm the end summary says **Backyard Defenders**. Force three exposures and confirm fail/replay reset the threat-sweep counters.
+Manual check: press **5**, hide twice to open the rescue objective, interact near the toy to rescue it, then bring both dogs together and bark to complete the united front. Confirm the end summary says **Backyard Defenders**. Force three exposures and confirm fail/replay reset the threat-sweep counters, and that every cover zone visibly starts the new attempt back on its calm Safe art rather than still showing the last run's red Spotted sprite.
 
 ### Coyotes at the Fence
 
@@ -740,7 +740,7 @@ In real-time play the coyote physically prowls toward the active **WEAK SPOT** (
 
 The deterministic test/pacing hooks are `ForceCoyoteBarkPressure(dog)`, `ForceCoyoteRepair(dog)`, `ForceCoyoteBreach()`, `ForceCoyoteFakeSnack()`, `ForceCoyoteProwlReach()`, and `ForceCoyoteFinalBlock()` (`FenceGaps` exposes the gap positions); in normal play barking pins the coyote and the final push also resolves through the existing huddled united-bark path.
 
-Manual check: press **6**, bark to pin the coyote, then interact at the weak spot to fill it; repeat three times, then bring both dogs together and bark to block the final push. Confirm the end summary says **Fence Guardians**. Force three breaches and confirm fail/replay reset the patrol counters.
+Manual check: press **6**, bark to pin the coyote, then interact at the weak spot to fill it; repeat three times, then bring both dogs together and bark to block the final push. Confirm the end summary says **Fence Guardians**. Force three breaches and confirm fail/replay reset the patrol counters, and that every fence gap visibly starts the new attempt back on its neutral Open art rather than still showing the last run's repaired/breached sprite.
 
 ### Weenie Roundup
 
