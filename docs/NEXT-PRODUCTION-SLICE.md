@@ -560,3 +560,16 @@ nothing proved the actual scene bootstrap (`AdventureMapBootstrap` → `Adventur
 error when the scene really loads, unlike `ArenaScene` and `ControllerTestScene` which both already
 have scene-load tests. Added `AdventureMapScene_LoadsAndBuildsTheMapHudWithoutError`. Suite green at
 `484/484`.
+
+### Missing AdventureArenaProgressBridge coverage (2026-07-05)
+
+Cross-referencing every class in the Adventure meta-progression loop against `Assets/Tests/` found
+`AdventureArenaProgressBridge.cs` was the one piece with zero direct coverage of any kind - its
+neighbors (`AdventureMapController`, `AdventureProgressService`) are both well unit-tested via direct
+instantiation, but nothing proved the bridge itself actually starts a queued mission when a real Arena
+round is loaded, or records the result (attempts/clears/best score, location unlock state) back to
+progress afterward. Added `Bridge_StartsQueuedMissionAndRecordsClearResultToProgress`, which builds the
+bridge manually against `AdventureProgressService.CreateInMemoryForTests()` (bypassing the scene-load
+hook so the real save file is never touched), queues Car Ride for Front Yard - a real catalog pairing
+from `AdventureLocationCatalog`, not an arbitrary one - clears it via `ForceCarLurch()`, and asserts the
+bridge recorded the clear and left the always-unlocked Backyard unlocked. Suite green at `485/485`.
