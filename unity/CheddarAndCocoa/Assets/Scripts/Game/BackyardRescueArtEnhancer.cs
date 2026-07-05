@@ -137,15 +137,25 @@ namespace CheddarAndCocoa.Game
         {
             if (_game == null || !Enhanced) return;
 
+            // This enhancer's reactions are Backyard-Rescue-specific set dressing (rope/squirrel/
+            // predator sparkles) - without this gate, any mission's clear/fail/pickup feedback (every
+            // mission fires the shared FeedbackKind.LevelClear/GameOver, and "WEENIE"/"SNACK"/"SOCK"
+            // score labels are reused by Weenie Roundup/Snack Heist/Sock Panic/Blanket Catch) would
+            // spawn a sparkle at wherever the Backyard-only rope/squirrel/predator objects are
+            // currently sitting (inactive but not null, so their stale transform is still valid) - a
+            // stray pop with no relation to what the player actually just did. Still track the last-seen
+            // values every frame so switching back into Backyard Rescue later doesn't compare against a
+            // stale value from whatever mission played in between.
+            bool inBackyardRescue = _game.ActiveMissionVariant == GameManager.MissionVariant.BackyardRescue;
             if (_game.LastFeedback != _lastFeedback)
             {
-                ReactToFeedback(_game.LastFeedback);
+                if (inBackyardRescue) ReactToFeedback(_game.LastFeedback);
                 _lastFeedback = _game.LastFeedback;
             }
 
             if (_game.LastScoreEventLabel != _lastScoreLabel)
             {
-                ReactToScore(_game.LastScoreEventLabel);
+                if (inBackyardRescue) ReactToScore(_game.LastScoreEventLabel);
                 _lastScoreLabel = _game.LastScoreEventLabel;
             }
 

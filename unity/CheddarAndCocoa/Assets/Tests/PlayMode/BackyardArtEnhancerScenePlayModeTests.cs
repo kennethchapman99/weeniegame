@@ -205,6 +205,49 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator ReactToFeedbackAndScore_OnlyFireDuringBackyardRescueNotOtherMissions()
+        {
+            yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
+            yield return null;
+            yield return null;
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            Assert.IsNotNull(game);
+
+            var enhancer = Object.FindFirstObjectByType<BackyardRescueArtEnhancer>();
+            if (enhancer == null)
+            {
+                var go = new GameObject("BackyardRescueArtEnhancer_TestFallback");
+                enhancer = go.AddComponent<BackyardRescueArtEnhancer>();
+            }
+
+            // A different mission's shared GameOver feedback must not spawn the Backyard-only
+            // rope/squirrel/predator set-dressing sparkle at some unrelated, possibly stale position.
+            game.StartMission(GameManager.MissionVariant.KitchenFoodFrenzy);
+            yield return null;
+            enhancer.EnhanceNow();
+            yield return null;
+
+            int beforeOtherMission = enhancer.VfxSpawnCount;
+            game.ForceGameOver();
+            yield return null;
+
+            Assert.AreEqual(beforeOtherMission, enhancer.VfxSpawnCount,
+                "Kitchen Food Frenzy's GameOver must not trigger Backyard Rescue's rope/squirrel/" +
+                "predator sparkle - that set dressing belongs only to the mission it's named after.");
+
+            // The same feedback kind during Backyard Rescue itself should still react as designed.
+            game.StartMission(GameManager.MissionVariant.BackyardRescue);
+            yield return null;
+            int beforeBackyard = enhancer.VfxSpawnCount;
+            game.ForceGameOver();
+            yield return null;
+
+            Assert.Greater(enhancer.VfxSpawnCount, beforeBackyard,
+                "Backyard Rescue's own GameOver feedback should still spawn its set-dressing reaction.");
+        }
+
+        [UnityTest]
         public IEnumerator BackyardThreatPresentation_UsesQuietReferenceArtGroundShadowsAndEagleMotion()
         {
             yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
