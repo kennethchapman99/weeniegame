@@ -573,3 +573,19 @@ bridge manually against `AdventureProgressService.CreateInMemoryForTests()` (byp
 hook so the real save file is never touched), queues Car Ride for Front Yard - a real catalog pairing
 from `AdventureLocationCatalog`, not an arbitrary one - clears it via `ForceCarLurch()`, and asserts the
 bridge recorded the clear and left the always-unlocked Backyard unlocked. Suite green at `485/485`.
+
+### GateCrash snap now kicks an immediate camera shake (2026-07-05)
+
+`SharedCameraController.cs` carried a stale TODO: "route addShake() calls here from hits/lands/
+predators." The screen shake was wired only for mission clear/fail (`GameManager.EndRound`) - no single
+in-mission impact ever kicked it. Added `MissionContext.RequestShake` (a thin wrapper around
+`GameManager.RequestShake`, the same counters `ArenaHud`'s existing camera-shake tests already read) so
+mission controllers can request a small, immediate jolt for a single sharp impact without waiting for
+the round to end. Wired the first consumer into `GateCrashMissionController.HandleSnaps()`: the gate
+slamming shut now jolts the camera at `0.12` magnitude, distinctly smaller than the end-of-round
+clear/fail shakes (`0.18`-`0.32`) so a run with several snaps doesn't feel like the whole camera is
+constantly rattling. Updated the now-stale TODO comment to describe both call sites. Corrected
+`GateCrash_ClearAndFail_BothKickTheSharedCameraShake`'s expected shake count from `2` to `6` (the fail
+loop's four snaps each add their own jolt on top of the end-of-round fail shake) and added
+`GateCrash_Snap_KicksAnImmediateShakeBeforeTheRoundEnds` to pin the new in-mission behavior. Suite green
+at `486/486`.
