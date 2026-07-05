@@ -892,6 +892,22 @@ namespace CheddarAndCocoa.Game
                 MissionVariant.SquirrelConspiracy => "Challenge: crack the case with no fake-outs",
                 MissionVariant.EagleShadowPanic => "Challenge: no dog grabbed by the shadow",
                 MissionVariant.CoyotesFence => "Challenge: perfect fence defense",
+                MissionVariant.SnackHeist => "Challenge: stash it all, zero squirrel steals",
+                MissionVariant.SockPanic => "Challenge: 5-for-5 socks, no missed dives",
+                MissionVariant.WeenieRoundup => "Challenge: deliver all 5, no fumbles",
+                MissionVariant.ScentSearch => "Challenge: 3 bones, zero wrong digs",
+                MissionVariant.ThunderstormComfort => "Challenge: weather all 5 claps, calm the whole time",
+                MissionVariant.MarkTheYard => "Challenge: claim all 5 zones, no reclaims",
+                MissionVariant.LeashWalk => "Challenge: every checkpoint, zero leash snaps",
+                MissionVariant.CarRide => "Challenge: 6 lurches, zero spills",
+                MissionVariant.GateCrash => "Challenge: squeeze through without a single snap",
+                MissionVariant.TableStealth => "Challenge: sneak the steak, never spotted",
+                MissionVariant.SquirrelSwitcheroo => "Challenge: raid the stash, zero backfires",
+                MissionVariant.WalkCampaign => "Challenge: sell it first try, zero misreads",
+                MissionVariant.BoneRelay => "Challenge: 3 bones, no wasted digs",
+                MissionVariant.GreatEscape => "Challenge: break out without a single fumble",
+                MissionVariant.ChaosMachine => "Challenge: run the whole cascade, zero misfires",
+                MissionVariant.BlanketCatch => "Challenge: 5 catches, never rip the blanket",
                 _ => "Challenge: clear clean for FLAWLESS"
             };
         }

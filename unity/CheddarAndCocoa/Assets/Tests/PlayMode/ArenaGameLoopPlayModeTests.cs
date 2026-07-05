@@ -969,6 +969,13 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(480f, GameManager.BuildMissionDefinition(GameManager.MissionVariant.OperationPeeBreak).RoundSeconds);
             Assert.That(GameManager.MissionChallengeLabelFor(GameManager.MissionVariant.OperationPeeBreak), Does.Contain("0 misreads"));
 
+            for (int i = 0; i < game.MissionSelectOptionCount; i++)
+            {
+                var variant = game.MissionVariantAt(i);
+                Assert.AreNotEqual("Challenge: clear clean for FLAWLESS", GameManager.MissionChallengeLabelFor(variant),
+                    $"{variant} should have its own challenge line, not the generic fallback.");
+            }
+
             game.SelectMission(GameManager.MissionVariant.BackyardRescue);
             Assert.That(game.SelectedMissionChallengeLabel, Does.Contain("all weenies"));
             game.StartSelectedMission();
