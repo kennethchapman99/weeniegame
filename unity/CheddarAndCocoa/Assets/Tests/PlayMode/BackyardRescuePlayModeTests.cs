@@ -179,6 +179,8 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(GameManager.State.LevelClear, _game.Phase);
             Assert.AreEqual(GameManager.MissionOutcome.Clear, _game.Outcome);
             Assert.AreEqual("backyard_rescue", _game.RuntimeSnapshot.MissionId);
+            Assert.That(_game.EndSummaryLabel, Does.Contain("Backyard Secured"),
+                "A clean clear should read as a distinct, flavored outcome, not a generic fallback.");
         }
 
         private IEnumerator Load()

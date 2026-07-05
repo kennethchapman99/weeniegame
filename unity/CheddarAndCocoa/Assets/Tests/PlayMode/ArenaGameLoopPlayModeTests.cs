@@ -599,14 +599,15 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(1, game.SessionUniqueMissionsCompleted);
             Assert.That(game.ReplayPromptLabel, Does.Contain("replay"));
             Assert.AreEqual("Pawfect Yard", game.EndRank);
-            Assert.That(game.EndSummaryLabel, Does.Contain("Clear"));
+            Assert.That(game.EndSummaryLabel, Does.Contain("Backyard Secured"),
+                "Backyard Rescue now has a flavored OutcomeSummary instead of the generic Outcome fallback.");
             Assert.That(game.EndSummaryLabel, Does.Contain(game.Score.ToString()));
             Assert.That(game.EndSummaryLabel, Does.Contain(game.EndRank));
             Assert.That(game.EndReasonLabel, Does.Contain("Tiny legends"));
             Assert.That(game.ObjectiveLabel, Does.Contain("Backyard saved"));
             Assert.That(game.LastScoreEventLabel, Does.Contain("LEVEL CLEAR"));
             Assert.AreEqual(GameManager.FeedbackKind.LevelClear, game.LastFeedback);
-            Assert.IsTrue(LogContains(game, "MissionClear: Clear"));
+            Assert.IsTrue(LogContains(game, "MissionClear: Backyard Secured"));
             Assert.That(game.MissionBanner, Does.Contain("BACKYARD SAVED"));
             yield return null;
             Assert.AreEqual(DogReadabilityFeedback.Pose.Proud, cheddarFeedback.CurrentPose);
@@ -621,7 +622,8 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(-100, game.LastScoreDelta);
             Assert.AreEqual("-100 GAME OVER", game.LastScoreEventLabel);
             Assert.AreEqual("Needs More Bark", game.EndRank);
-            Assert.That(game.EndSummaryLabel, Does.Contain("Failed"));
+            Assert.That(game.EndSummaryLabel, Does.Contain("Still Defending"),
+                "Backyard Rescue can't actually IsFail; a forced game-over reads its OutcomeSummary as an incomplete round, not the generic Outcome fallback.");
             Assert.That(game.EndReasonLabel, Does.Contain("Needs more bark"));
             Assert.That(game.ObjectiveLabel, Does.Contain("Mission failed"));
             Assert.IsTrue(game.ReplayPromptVisible);
@@ -637,7 +639,7 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual("Mission Select", game.EndMissionSelectActionLabel);
             Assert.That(game.ReplayPromptLabel, Does.Contain("replay"));
             Assert.AreEqual(GameManager.FeedbackKind.GameOver, game.LastFeedback);
-            Assert.IsTrue(LogContains(game, "MissionFail: Failed"));
+            Assert.IsTrue(LogContains(game, "MissionFail: Still Defending"));
             Assert.That(game.MissionBanner, Does.Contain("MISSION FAILED"));
             yield return null;
             Assert.AreEqual(DogReadabilityFeedback.Pose.Sad, cheddarFeedback.CurrentPose);
@@ -697,7 +699,8 @@ namespace CheddarAndCocoa.Tests
 
             yield return ClearCollectOnlyMission(cheddar);
             Assert.AreEqual(GameManager.MissionOutcome.Clear, game.Outcome);
-            Assert.IsTrue(LogContains(game, "MissionClear: Clear"));
+            Assert.IsTrue(LogContains(game, "MissionClear: Stash Secured"),
+                "Snack Heist now has a flavored OutcomeSummary instead of the generic Outcome fallback.");
 
             game.Restart();
             yield return null;
@@ -715,7 +718,8 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(LogContains(game, "InteractionMiss: Cheddar"));
 
             game.ForceGameOver();
-            Assert.IsTrue(LogContains(game, "MissionFail: Failed"));
+            Assert.IsTrue(LogContains(game, "MissionFail: Still Guarding"),
+                "A forced game-over reads the controller's own IsFailed (still false, no squirrel steals happened here), not the generic Outcome fallback.");
             Assert.AreEqual(1, game.FailuresForMission(GameManager.MissionVariant.SnackHeist));
             Assert.That(game.MissionFailureSummaryLabel, Does.Contain("Snack Heist 1"));
 

@@ -108,6 +108,8 @@ namespace CheddarAndCocoa.Tests
             Assert.That(_game.MissionBanner, Does.Contain("KITCHEN CLEARED"));
             Assert.IsTrue(LogContains("KitchenCatch"));
             Assert.IsTrue(LogContains("KitchenFinaleStarted"));
+            Assert.That(_game.EndSummaryLabel, Does.Contain("Dinner Rush Survived"),
+                "A clean clear should read as a distinct, flavored outcome, not a generic fallback.");
         }
 
         [UnityTest]

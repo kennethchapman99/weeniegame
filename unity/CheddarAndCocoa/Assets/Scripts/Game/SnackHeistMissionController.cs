@@ -18,7 +18,8 @@ namespace CheddarAndCocoa.Game
         public bool IsComplete => Recovered >= _context.ObjectiveGoal;
         public bool IsFailed => Stolen >= _context.MaxStolenFood;
         public string FailReason => IsFailed ? "The squirrel union escaped with too many forbidden snacks." : null;
-        public string OutcomeSummary => null;
+        public string OutcomeSummary => IsComplete ? "Stash Secured"
+            : IsFailed ? "Squirrel Union Wins" : "Still Guarding";
         public string ObjectiveLabel => _squirrelTarget != null
             ? "Bark-guard the snack thief"
             : $"Stash snacks {Recovered}/{_context.ObjectiveGoal}";

@@ -39,7 +39,8 @@ namespace CheddarAndCocoa.Game
 
         public bool IsFailed => false;
         public string FailReason => null;
-        public string OutcomeSummary => null;
+        public string OutcomeSummary => IsComplete ? "Backyard Secured"
+            : _stolen > 0 ? "Squirrel Got Some" : "Still Defending";
         public int Collected => _collected;
         public int Stolen => _stolen;
         public BackyardSquirrelTrapState TrapState => _trapState;

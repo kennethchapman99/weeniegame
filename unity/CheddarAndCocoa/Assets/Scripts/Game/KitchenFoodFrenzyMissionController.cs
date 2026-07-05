@@ -46,7 +46,8 @@ namespace CheddarAndCocoa.Game
         public GameObject TelegraphObject => _telegraphMarker;
         public GameObject LandingWarningObject => _landingWarning;
         public Vector2 EntryTarget => (_counterPosition + _safeZonePosition) * 0.5f;
-        public string OutcomeSummary => null;
+        public string OutcomeSummary => _state.Complete ? "Dinner Rush Survived"
+            : _state.TotalFumbles > 0 ? "Kitchen Disaster" : "Still Cooking";
         public bool IsFailed => false;
         public string FailReason => null;
 

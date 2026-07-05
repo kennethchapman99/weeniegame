@@ -43,6 +43,8 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(goal, _game.BreakfastRecovered);
             Assert.AreEqual(GameManager.MissionOutcome.Clear, _game.Outcome);
             Assert.IsTrue(_game.RuntimeSnapshot.IsClear);
+            Assert.That(_game.EndSummaryLabel, Does.Contain("Stash Secured"),
+                "A clean clear should read as a distinct, flavored outcome, not a generic fallback.");
         }
 
         [UnityTest]

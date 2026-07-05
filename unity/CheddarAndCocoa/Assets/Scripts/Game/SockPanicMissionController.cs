@@ -19,7 +19,8 @@ namespace CheddarAndCocoa.Game
         public bool IsComplete => _state.SuccessfulDives >= _context.ObjectiveGoal;
         public bool IsFailed => false;
         public string FailReason => null;
-        public string OutcomeSummary => null;
+        public string OutcomeSummary => IsComplete ? "Socks Rescued"
+            : _state.Fumbles > 0 ? "Laundry Day Chaos" : "Still Diving";
         public Vector2 EntryTarget => _context != null ? _context.Bounds.center : Vector2.zero;
         public SockBasketMissionState State => _state;
         public GameObject BasketObject => _basket;
