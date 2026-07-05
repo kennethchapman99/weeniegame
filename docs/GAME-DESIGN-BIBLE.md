@@ -545,18 +545,32 @@ Use 1v1 minigames to break up co-op without changing the heart of the game.
 
 ## Running gags
 
-- Cheddar believes every closed door is a personal attack.
-- Cocoa has legal ownership of all sunbeams.
-- Every toy becomes valuable only when the other dog wants it.
-- Human legs are moving environmental hazards.
-- "Just one more nail" is final-boss dialogue.
-- The squirrel has villain monologues nobody understands.
-- Cleaning day is an enemy invasion.
-- The pool is both terrifying and fascinating.
-- The couch is sacred land.
-- Dropped food has religious significance.
-- Every walk is an intelligence-gathering mission.
-- A phone-absorbed teenager is an NPC with broken AI.
+Status as of 2026-07-05 — 7 of 12 shipped as small, purely cosmetic ambient flourishes (no scoring or
+mechanic effect), each on a cooldown so they read as personality, not noise. See
+`docs/NEXT-PRODUCTION-SLICE.md`'s running log for the exact commits.
+
+- Cheddar believes every closed door is a personal attack. **Implemented**: `GateCrashMissionController.TrySpawnDoorOutrage()`.
+- Cocoa has legal ownership of all sunbeams. **Implemented**: `BackyardRescueArtEnhancer.TrySpawnSunbeamClaim()`.
+- Every toy becomes valuable only when the other dog wants it. **Implemented**: `BackyardRescueArtEnhancer.TrySpawnToyEnvy()`.
+- Human legs are moving environmental hazards. Not yet — no current mission has an actual *moving*
+  human/teenager to dodge (Walk Campaign, Table Stealth, and Pee Break's teenager are all stationary
+  props at fixed zones). Would need a new mission or a rework of an existing human actor to fit; not
+  worth forcing onto a stationary prop.
+- "Just one more nail" is final-boss dialogue. Not yet — no obvious current-mission fit (would suit a
+  future home-repair/construction-themed mission).
+- The squirrel has villain monologues nobody understands. **Implemented**: `BackyardRescueArtEnhancer.TrySpawnSquirrelMumble()`.
+- Cleaning day is an enemy invasion. Deliberately deferred — a full new mission idea, not an ambient
+  gag; stays in the level-idea bank above until the roster unfreezes.
+- The pool is both terrifying and fascinating. **Implemented**: `BackyardRescueArtEnhancer.TrySpawnPoolFascination()`.
+- The couch is sacred land. Considered for Operation Pee Break (which has real, unused decorative couch
+  scenery) and declined: the teenager sits almost exactly on top of the couch's position, so a
+  couch-claim gag would be visually indistinguishable from a teenager-approach gag, and Pee Break is
+  the frozen couch-test-#4 acceptance-gate mission — not worth the risk there for a cosmetic flourish.
+- Dropped food has religious significance. **Implemented**: `BackyardRescueArtEnhancer.TrySpawnTreatReverence()`.
+- Every walk is an intelligence-gathering mission. **Implemented**: `LeashWalkMissionController.TrySpawnIntelGathered()`.
+- A phone-absorbed teenager is an NPC with broken AI. Already the core premise of Operation Pee Break
+  itself (the Teenager's `TeenPresentationState`/distraction logic *is* this joke) rather than needing a
+  separate ambient flourish on top of it.
 
 ## Current production priority
 
