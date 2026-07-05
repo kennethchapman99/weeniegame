@@ -243,14 +243,20 @@ beat later. Fixed in `ThunderstormComfortMissionController` (`CheckBolt()`): fir
 happens from a thunderclap spike or passive drift while apart. Covered by
 `ThunderstormComfort_Bolt_FiresADistinctGagNotJustTheEndCard`; full suite green at `459/459`.
 
-Note for whoever does the next mission in this pass: the shared `EndRound(false)` juice
-(`"SAD FLOP REPLAY!"`) fires immediately after any controller's own fail-gag `SetJuice` call in the
-same frame (`Tick()` and `CheckClear()` run back-to-back), and `FinalJuiceEffect` only keeps one
-sprite-pop slot alive, so the controller's own juice sprite never actually renders — only its
-`SpawnWorldPop` text survives, since those are independent GameObjects. Test against `MissionWorldPop`
-(see `HasWorldPop` in `CarRidePlayModeTests.cs`), not `LastJuiceLabel`, or the assertion will flake
-against clobbering that's cosmetic, not a real bug. Fixing that clobbering itself would be a much
-bigger, roster-wide `EndRound`/`FinalJuiceEffect` change — out of scope for a per-mission pass.
+**Update (2026-07-05, later the same day):** the clobbering described in the note below has since been
+fixed roster-wide — see "Roster-wide 'reaction sprite never actually rendered' bug class" further down.
+`FinalJuiceEffect.Spawn()` now only replaces the previous pop across frames; same-frame spawns (like a
+controller's own fail-gag pop immediately followed by `EndRound`'s generic "SAD FLOP REPLAY!") stack
+with a vertical offset instead of clobbering each other. Both sprites now actually render. The original
+note is kept below for history, but the "out of scope" caveat no longer applies - it shipped.
+
+Note for whoever does the next mission in this pass (historical, see update above): the shared
+`EndRound(false)` juice (`"SAD FLOP REPLAY!"`) fires immediately after any controller's own fail-gag
+`SetJuice` call in the same frame (`Tick()` and `CheckClear()` run back-to-back), and `FinalJuiceEffect`
+only kept one sprite-pop slot alive, so the controller's own juice sprite never actually rendered —
+only its `SpawnWorldPop` text survived, since those are independent GameObjects. Test against
+`MissionWorldPop` (see `HasWorldPop` in `CarRidePlayModeTests.cs`), not `LastJuiceLabel`, or the
+assertion will flake against clobbering that's cosmetic, not a real bug.
 
 Deliberately did **not** touch the `EndRound`→end-card→Replay flow itself: Replay is already
 single-button and frame-instant (`R`/`Enter`/`Start`, no scene reload), confirmed by existing tests
