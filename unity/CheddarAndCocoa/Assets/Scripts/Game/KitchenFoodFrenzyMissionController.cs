@@ -35,6 +35,7 @@ namespace CheddarAndCocoa.Game
         private float _floorY;
         private float _dropX;
         private float _telegraphUntil;
+        private float _foodHideAt;
 
         public GameManager.MissionVariant Variant => GameManager.MissionVariant.KitchenFoodFrenzy;
         public bool IsComplete => _state.Complete;
@@ -77,6 +78,7 @@ namespace CheddarAndCocoa.Game
         {
             _state.Reset();
             _telegraphUntil = 0f;
+            _foodHideAt = 0f;
             _counterPosition = new Vector2(_context.Bounds.center.x, _context.Bounds.center.y + 8f);
             _safeZonePosition = new Vector2(_context.Bounds.center.x, _context.Bounds.center.y - 5f);
             _floorY = _context.Bounds.center.y - 7f;
@@ -93,6 +95,12 @@ namespace CheddarAndCocoa.Game
             {
                 UpdateMarkers(now);
                 return;
+            }
+
+            if (_foodHideAt > 0f && now >= _foodHideAt)
+            {
+                _foodHideAt = 0f;
+                if (_foodObject != null) _foodObject.SetActive(false);
             }
 
             if (_state.TelegraphActive)
@@ -383,7 +391,7 @@ namespace CheddarAndCocoa.Game
                     _context.RequestRumble("kitchen_splat", 0.2f, 0.42f, 0.14f);
                     if (dogIndex >= 0 && _context.DogFeedback[dogIndex] != null) _context.DogFeedback[dogIndex].ShowPanic();
                     MissionPropArt.SetSprite(_foodArt, FinalGameplayArt.KitchenFoodSplat);
-                    HideFood();
+                    HideFoodAfterSplat();
                     _context.LogEvent("KitchenUnsafe", "off bowl");
                     break;
                 case KitchenFoodFrenzyMissionState.CatchResult.WrongCatcher:
@@ -429,7 +437,7 @@ namespace CheddarAndCocoa.Game
                 MissionPropArt.SetSprite(_foodArt, FinalGameplayArt.KitchenFoodSplat);
                 _context.LogEvent("KitchenMiss", "good food dropped");
             }
-            HideFood();
+            HideFoodAfterSplat();
             UpdateMarkers(_context.Now());
             _context.LogObjectiveChanged();
         }
@@ -438,9 +446,23 @@ namespace CheddarAndCocoa.Game
 
         private void HideFood()
         {
+            _foodHideAt = 0f;
             if (_foodObject != null) _foodObject.SetActive(false);
             if (_telegraphMarker != null) _telegraphMarker.SetActive(false);
             if (_landingWarning != null) _landingWarning.SetActive(false);
+            if (_state.Complete || !_state.DropActive) MissionPropArt.SetSprite(_counterArt, FinalGameplayArt.KitchenCounterReady);
+        }
+
+        /// <summary>
+        /// The splat sprite was set on _foodArt right before this call; hiding _foodObject in the same
+        /// frame meant Unity never actually rendered the splat before it vanished. Keep the food object
+        /// active for a brief linger so the splat is readable, then hide it via the Tick()-driven timer.
+        /// </summary>
+        private void HideFoodAfterSplat(float lingerSeconds = 0.5f)
+        {
+            if (_telegraphMarker != null) _telegraphMarker.SetActive(false);
+            if (_landingWarning != null) _landingWarning.SetActive(false);
+            _foodHideAt = _context.Now() + lingerSeconds;
             if (_state.Complete || !_state.DropActive) MissionPropArt.SetSprite(_counterArt, FinalGameplayArt.KitchenCounterReady);
         }
     }

@@ -111,6 +111,33 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator KitchenFrenzy_SplatSpriteLingersBeforeFoodHides()
+        {
+            yield return LoadKitchen();
+
+            _game.ForceKitchenDrop(KitchenFoodFrenzyMissionState.FoodKind.Bad);
+            Assert.IsTrue(_game.KitchenFoodObject.activeSelf);
+
+            _game.ForceKitchenLetFall(); // dodged-bad: sets the splat sprite
+
+            // The splat sprite change and hiding the food object used to happen in the same frame, so
+            // the splat never actually rendered - the food just vanished. It must stay visible for a
+            // beat first.
+            Assert.IsTrue(_game.KitchenFoodObject.activeSelf,
+                "The splat sprite must render for at least one visible moment before the food hides.");
+            var foodArt = _game.KitchenFoodObject.GetComponent<MissionPropArtAttachment>();
+            Assert.IsNotNull(foodArt);
+            Assert.IsTrue(foodArt.HasRuntimeSprite);
+            Assert.AreEqual("kitchen_food_splat", foodArt.RuntimeSpriteName);
+
+            yield return new WaitForSecondsRealtime(0.6f);
+            yield return null;
+
+            Assert.IsFalse(_game.KitchenFoodObject.activeSelf,
+                "The splat must still hide itself once its linger window passes.");
+        }
+
+        [UnityTest]
         public IEnumerator KitchenFrenzy_ReplayResetsFoodAndComboState()
         {
             yield return LoadKitchen();
