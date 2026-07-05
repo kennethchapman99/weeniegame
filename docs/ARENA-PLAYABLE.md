@@ -300,7 +300,20 @@ Still placeholder or deliberately deferred:
 
 Final polish still needed:
 
-- Replace duplicate rescued/proud and rope tug/complete source poses when distinct art exists.
+- ~~Replace duplicate rescued/proud and rope tug/complete source poses when distinct art exists.~~
+  Investigated 2026-07-05: the rope pair was a real, currently-visible bug — `export_arena_final.py`
+  cropped the identical box for `rope_tug.png`/`rope_complete.png` (props.png only has one rope
+  illustration), so `BackyardRescueArtEnhancer.CompleteTug`'s overlay swap to `RopeComplete` on tug
+  clear had zero visual effect. Fixed via `tools/art/generate_rope_complete_variant.py`, which derives
+  a golden-tinted/sparkle variant from the exported `rope_tug.png`; the export script no longer
+  (re-)exports an identical `rope_complete.png`. Covered by
+  `RopeTugAndRopeComplete_AreVisuallyDistinct`. The dog rescued/proud pair is a genuine source-file
+  duplicate too (same crop box in the export table), but is **not** currently visible: `ApplyPose`
+  assigns that static single-image fallback and then immediately calls `AnimateAuthoredMotion` in the
+  same call, which overrides it with the real directional Motion-frame art — and distinct Motion art
+  for Rescued vs Proud already exists (`export_character_outcomes.py`, sourced from a real
+  `{dog}_outcomes_east_v01.png` sheet with four distinct clips). Left as-is; only worth revisiting if
+  that static fallback path is ever reached in a context that skips `AnimateAuthoredMotion`.
 - Replace generated motion-derived dog/threat frames with final animation-ready sprites and replace
   remaining generated environment districts.
 - Run a two-player television readability pass; the automated 1920x1080 local/full-yard/action

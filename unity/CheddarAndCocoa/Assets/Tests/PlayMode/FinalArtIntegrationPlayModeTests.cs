@@ -132,6 +132,23 @@ namespace CheddarAndCocoa.Tests
         }
 
         [Test]
+        public void RopeTugAndRopeComplete_AreVisuallyDistinct()
+        {
+            // BackyardRescueArtEnhancer swaps the rope overlay from RopeToy to RopeComplete on tug
+            // clear (CompleteTug -> SetOverlaySprite(_ropeOverlay, RuntimeSpriteId.RopeComplete)). The
+            // export table crops both from the same box on props.png (only one rope illustration
+            // exists on that sheet), so they were byte-identical and the payoff had no visible prop
+            // change. generate_rope_complete_variant.py derives a distinct golden/sparkle variant.
+            Sprite tug = FinalGameplayArt.Load(FinalGameplayArt.RopeTug);
+            Sprite complete = FinalGameplayArt.Load(FinalGameplayArt.RopeComplete);
+            Assert.IsNotNull(tug);
+            Assert.IsNotNull(complete);
+            Assert.AreNotEqual(tug.texture.imageContentsHash, complete.texture.imageContentsHash,
+                "The rope must visibly change when the tug objective completes, not reuse the exact " +
+                "same sprite as the in-progress tug toy.");
+        }
+
+        [Test]
         public void FinalJuiceEffect_MapsGameplayFeedbackToDistinctReadableSprites()
         {
             Assert.AreEqual(FinalGameplayArt.PickupSparkle,

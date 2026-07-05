@@ -61,7 +61,10 @@ EXPORTS = (
     # Mission props.
     Export("props.png", "Props/Mission/weenie_collectible.png", (20, 65, 550, 500)),
     Export("props.png", "Props/Mission/rope_tug.png", (0, 520, 440, 1045)),
-    Export("props.png", "Props/Mission/rope_complete.png", (0, 520, 440, 1045)),
+    # rope_complete.png is NOT exported here on purpose: props.png only has one rope illustration,
+    # so cropping the same box produced a byte-identical duplicate and the tug-complete payoff had
+    # no visible prop change. Run tools/art/generate_rope_complete_variant.py after this script to
+    # (re)derive a distinct golden/sparkle variant from the rope_tug.png this export just wrote.
     Export("props.png", "Props/Mission/dog_bowl.png", (720, 540, 1120, 1020)),
     # Backyard props: 4 x 3 sheet.
     Export("backyard props.png", "Props/Backyard/grass_patch.png", (0, 20, 470, 320)),
