@@ -308,6 +308,21 @@ genuine two-dog interaction of the three, versus the other two being solo idle b
 in `FAMILY-SHOWCASE-MANUAL-TEST.md`'s Backyard Rescue watch-list for the next couch session. Suite
 green at `464/464`.
 
+While adding those gags, found a real pre-existing cross-mission bug in the same file:
+`BackyardRescueArtEnhancer.ReactToFeedback`/`ReactToScore` had no `ActiveMissionVariant` gate at all
+(unlike the new gags, which all correctly check it). Every mission shares
+`FeedbackKind.LevelClear`/`GameOver` (set in every `EndRound` call), and `"WEENIE"`/`"SNACK"`/`"SOCK"`
+score labels are reused by Weenie Roundup, Snack Heist, Sock Panic, and Blanket Catch — so every one of
+those missions' clear/fail/pickup moments was spawning a Backyard-only rope/squirrel/predator sparkle
+at wherever those inactive-but-not-null objects happened to be sitting, with no relation to what the
+player actually just did. Gated both reactions to `BackyardRescue` while still tracking last-seen
+feedback/score values every frame (so switching back into Backyard Rescue later doesn't compare against
+a stale value from an intervening mission). Checked the only other 3 files touching
+`LastFeedback`/`LastScoreEventLabel`/`OnJuiceFeedback` (`ArenaHud`, `FinalJuiceEffect`, `GameManager`)
+and confirmed this was isolated to this one file; also confirmed `ArenaWowSetDressing` (the actually
+roster-wide wow layer) is correctly per-mission-scoped already, not the same bug. Covered by
+`ReactToFeedbackAndScore_OnlyFireDuringBackyardRescueNotOtherMissions`. Suite green at `465/465`.
+
 ## Architecture guardrails
 
 - `GameManager` owns orchestration, mission selection, session flow, and shared-service wiring.
