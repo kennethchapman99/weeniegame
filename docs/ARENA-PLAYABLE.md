@@ -1006,7 +1006,7 @@ Mission flow controls:
 - During a run: **Escape** or gamepad **Start** pauses. The pause card can resume, return safely to
   mission select, or quit the packaged player; pausing freezes mission time and dog input.
 - End screen: **R / Enter / Start / South** replays; **N / Right Arrow / Right Shoulder / D-pad Right** advances; **M / Escape / East / D-pad Left** returns to mission select.
-- Session Summary: **Enter**, **Space**, **Start**, **South**, or **Right Shoulder** continues to the next unfinished mission; **M**, **Escape**, or gamepad **East** returns to mission select. Finishing the current roster changes Continue to an explicit **Victory Lap** that wraps to mission one; **New Session** clears all local results.
+- Session Summary: **Enter**, **Space**, **Start**, **South**, or **Right Shoulder** continues to the next unfinished mission; **M**, **Escape**, or gamepad **East** returns to mission select. Actually clearing every mission in the current roster (not just attempting each one) changes Continue to an explicit **Victory Lap** that wraps to mission one; **New Session** clears all local results.
 - Playtest Mode: click the bottom-left **Playtest Mode: On/Off** button or press **F1** / **`**. It toggles a compact top-right diagnostics overlay and does not pause or block normal play.
 - Placeholder feedback toggles: **F2** toggles authored audio cues; **F3** toggles gamepad rumble requests. Both default to on.
 
@@ -1204,6 +1204,21 @@ Manual audio check:
 - Complete rescue/tug or clear a mission. Confirm the success/win cue is brighter than the penalty cue.
 - Use Replay, Next Mission, and Mission Select. Confirm a small UI blip plays.
 - Press **F2** and repeat bark/collect. Confirm normal gameplay continues while authored audio is muted.
+
+### Camera shake checks (2026-07-05)
+
+`SharedCameraController.AddShake()` kicks a brief cosmetic jolt via `GameManager.RequestShake` (mission
+clear/fail in `EndRound`) and via `MissionContext.RequestShake` (a mission controller's own in-round
+impact). Manual check:
+
+- Clear any mission. Confirm a light camera shake plays under the end card; clear it with zero mistakes
+  and confirm the shake reads noticeably stronger (flawless) than a scrappy clear.
+- Fail any mission. Confirm the shake reads stronger than either clear variant.
+- Play Gate Crash and let the gate snap shut on Cheddar mid-squeeze. Confirm a small, immediate shake
+  fires right at the snap - separate from and smaller than the later end-of-round shake - and that
+  several snaps in one run don't feel like the camera is constantly rattling.
+- Force the shared predator to grab a dog (Backyard Rescue, Coyotes Fence, or Eagle Shadow Panic).
+  Confirm the "YOINKED!" moment also kicks an immediate shake, not just the rumble/score-penalty juice.
 
 ### Dog-local action audio tuning (2026-06-20)
 
