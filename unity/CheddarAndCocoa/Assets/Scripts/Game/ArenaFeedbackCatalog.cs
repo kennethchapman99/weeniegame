@@ -17,6 +17,19 @@ namespace CheddarAndCocoa.Game
         public const string MissionWin = "mission_win";
         public const string MissionFail = "mission_fail";
         public const string UiReplayNextSelect = "ui_replay_next_select";
+        public const string UiMenuFocus = "ui_menu_focus";
+        public const string UiButtonConfirm = "ui_button_confirm";
+        public const string UiMenuOpen = "ui_menu_open";
+        public const string UiMenuClose = "ui_menu_close";
+        public const string UiButtonDisabled = "ui_button_disabled";
+        public const string StarAppear = "star_appear";
+        public const string AccelerationSkid = "acceleration_skid";
+        public const string EatingGulp = "eating_gulp";
+        public const string SquirrelChatter = "squirrel_chatter";
+        public const string SquirrelEscapeLaugh = "squirrel_escape_laugh";
+        public const string SquirrelStunned = "squirrel_stunned";
+        public const string BunnyHop = "bunny_hop";
+        public const string ToySqueak = "toy_squeak";
         public const string ThreatWarning = "threat_warning";
         public const string BackyardMusicLoop = "backyard_music_loop";
 
@@ -46,6 +59,19 @@ namespace CheddarAndCocoa.Game
             new AudioCueSlot(MissionWin, GeneratedSfxKind.VictoryFanfare, 720f, 0.48f, 0.24f, 1.05f, 0.06f),
             new AudioCueSlot(MissionFail, GeneratedSfxKind.FailureSigh, 260f, 0.38f, 0.19f, -0.78f, 0.22f),
             new AudioCueSlot(UiReplayNextSelect, GeneratedSfxKind.UiBlip, 820f, 0.11f, 0.12f, 0.42f, 0.04f),
+            new AudioCueSlot(UiMenuFocus, GeneratedSfxKind.UiBlip, 760f, 0.08f, 0.1f, 0.26f, 0.03f),
+            new AudioCueSlot(UiButtonConfirm, GeneratedSfxKind.UiBlip, 940f, 0.12f, 0.14f, 0.34f, 0.03f),
+            new AudioCueSlot(UiMenuOpen, GeneratedSfxKind.UiBlip, 680f, 0.14f, 0.13f, 0.58f, 0.04f),
+            new AudioCueSlot(UiMenuClose, GeneratedSfxKind.UiBlip, 520f, 0.12f, 0.12f, -0.32f, 0.04f),
+            new AudioCueSlot(UiButtonDisabled, GeneratedSfxKind.PenaltyThunk, 160f, 0.12f, 0.13f, -0.22f, 0.2f),
+            new AudioCueSlot(StarAppear, GeneratedSfxKind.ScoreSparkle, 1100f, 0.22f, 0.16f, 0.82f, 0.05f),
+            new AudioCueSlot(AccelerationSkid, GeneratedSfxKind.ThreatRattle, 300f, 0.18f, 0.13f, -0.42f, 0.34f),
+            new AudioCueSlot(EatingGulp, GeneratedSfxKind.CrunchCollect, 560f, 0.16f, 0.18f, -0.18f, 0.18f),
+            new AudioCueSlot(SquirrelChatter, GeneratedSfxKind.SquirrelAlarm, 430f, 0.16f, 0.16f, 0.7f, 0.32f),
+            new AudioCueSlot(SquirrelEscapeLaugh, GeneratedSfxKind.SquirrelAlarm, 520f, 0.22f, 0.17f, 0.88f, 0.26f),
+            new AudioCueSlot(SquirrelStunned, GeneratedSfxKind.PenaltyThunk, 220f, 0.18f, 0.16f, -0.46f, 0.18f),
+            new AudioCueSlot(BunnyHop, GeneratedSfxKind.TeamSuccess, 840f, 0.13f, 0.13f, 0.72f, 0.04f),
+            new AudioCueSlot(ToySqueak, GeneratedSfxKind.TeamSuccess, 1250f, 0.11f, 0.13f, 0.4f, 0.02f),
             new AudioCueSlot(ThreatWarning, GeneratedSfxKind.ThreatRattle, 230f, 0.28f, 0.21f, -0.12f, 0.58f)
         };
 

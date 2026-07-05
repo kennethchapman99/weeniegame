@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using CheddarAndCocoa.Game;
 using UnityEngine;
 
 namespace CheddarAndCocoa.Dogs
@@ -199,6 +200,9 @@ namespace CheddarAndCocoa.Dogs
         private readonly List<Voice> _voices = new List<Voice>(VoiceLimit);
         private readonly Dictionary<int, float> _nextAllowedAt = new Dictionary<int, float>();
         private readonly Dictionary<int, AudioClip> _clips = new Dictionary<int, AudioClip>();
+        private readonly Dictionary<int, AudioClip[]> _clipBanks = new Dictionary<int, AudioClip[]>();
+        private readonly HashSet<AudioClip> _generatedClips = new HashSet<AudioClip>();
+        private readonly Dictionary<int, int> _bankIndices = new Dictionary<int, int>();
         private DogActionFeedback _feedback;
         private DogIdentity _identity;
 
@@ -206,6 +210,7 @@ namespace CheddarAndCocoa.Dogs
         public int TotalCuesRejected { get; private set; }
         public int PeakVoiceCount { get; private set; }
         public string LastCueSignature { get; private set; } = string.Empty;
+        public string LastCueClipName { get; private set; } = string.Empty;
         public DogFeedbackAction LastCueAction { get; private set; }
         public DogFeedbackPhase LastCuePhase { get; private set; } = DogFeedbackPhase.Idle;
 
@@ -250,7 +255,7 @@ namespace CheddarAndCocoa.Dogs
             voice.Source.pitch = 1f;
             voice.Source.loop = sustain;
             voice.Source.Play();
-            voice.BusyUntil = sustain ? float.PositiveInfinity : now + style.Duration;
+            voice.BusyUntil = sustain ? float.PositiveInfinity : now + Mathf.Max(style.Duration, clip != null ? clip.length : 0f);
             voice.Sustaining = sustain;
             voice.Action = action;
             _nextAllowedAt[key] = now + style.Cooldown;
@@ -258,6 +263,7 @@ namespace CheddarAndCocoa.Dogs
             TotalCuesPlayed++;
             LastCueAction = action;
             LastCuePhase = phase;
+            LastCueClipName = clip != null ? clip.name : string.Empty;
             LastCueSignature = style.Signature;
             PeakVoiceCount = Mathf.Max(PeakVoiceCount, ActiveVoiceCount(now));
             return true;
@@ -283,7 +289,7 @@ namespace CheddarAndCocoa.Dogs
             if (_feedback != null) _feedback.PhaseChanged -= OnPhaseChanged;
             foreach (AudioClip clip in _clips.Values)
             {
-                if (clip != null) Destroy(clip);
+                if (clip != null && _generatedClips.Contains(clip)) Destroy(clip);
             }
         }
 
@@ -332,6 +338,8 @@ namespace CheddarAndCocoa.Dogs
             DogProceduralCueStyle style)
         {
             int key = CueKey(action, phase);
+            AudioClip bankedClip = NextAuthoredClip(key, action, phase);
+            if (bankedClip != null) return bankedClip;
             if (_clips.TryGetValue(key, out AudioClip existing) && existing != null) return existing;
 
             int sampleCount = Mathf.Max(1, Mathf.CeilToInt(style.Duration * SampleRate));
@@ -355,7 +363,32 @@ namespace CheddarAndCocoa.Dogs
             AudioClip clip = AudioClip.Create(clipName, sampleCount, 1, SampleRate, false);
             clip.SetData(samples, 0);
             _clips[key] = clip;
+            _generatedClips.Add(clip);
             return clip;
+        }
+
+        private AudioClip NextAuthoredClip(int key, DogFeedbackAction action, DogFeedbackPhase phase)
+        {
+            if (action != DogFeedbackAction.Bark || phase != DogFeedbackPhase.Impact) return null;
+            if (!_clipBanks.TryGetValue(key, out var bank))
+            {
+                var paths = AuthoredAudioCatalog.DogBarkBankFor(_identity.Id);
+                var clips = new List<AudioClip>(paths.Count);
+                foreach (string path in paths)
+                {
+                    AudioClip clip = Resources.Load<AudioClip>(path);
+                    if (clip != null) clips.Add(clip);
+                }
+
+                bank = clips.ToArray();
+                _clipBanks[key] = bank;
+            }
+
+            if (bank.Length == 0) return null;
+            _bankIndices.TryGetValue(key, out int index);
+            AudioClip next = bank[Mathf.Abs(index) % bank.Length];
+            _bankIndices[key] = index + 1;
+            return next;
         }
 
         private static int CueKey(DogFeedbackAction action, DogFeedbackPhase phase) =>

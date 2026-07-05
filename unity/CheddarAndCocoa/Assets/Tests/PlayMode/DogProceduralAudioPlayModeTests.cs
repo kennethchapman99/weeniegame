@@ -3,6 +3,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 using CheddarAndCocoa.Dogs;
+using CheddarAndCocoa.Game;
 
 namespace CheddarAndCocoa.Tests
 {
@@ -34,6 +35,35 @@ namespace CheddarAndCocoa.Tests
             Assert.AreNotEqual(cheddar.Harmonic, cocoa.Harmonic);
             Assert.Greater(cheddar.Duration, 0f);
             Assert.Greater(cocoa.Duration, 0f);
+        }
+
+        [Test]
+        public void AuthoredBarkBanks_AreImportedForBothDogs()
+        {
+            foreach (string path in AuthoredAudioCatalog.CheddarBarks)
+            {
+                Assert.IsNotNull(Resources.Load<AudioClip>(path), $"Missing Cheddar bark clip at {path}.");
+            }
+
+            foreach (string path in AuthoredAudioCatalog.CocoaBarks)
+            {
+                Assert.IsNotNull(Resources.Load<AudioClip>(path), $"Missing Cocoa bark clip at {path}.");
+            }
+        }
+
+        [Test]
+        public void BarkImpact_UsesDogSpecificAuthoredBankBeforeProceduralFallback()
+        {
+            DogProceduralAudio cheddar = MakeAudio(DogId.Cheddar, out _);
+            DogProceduralAudio cocoa = MakeAudio(DogId.Cocoa, out _);
+
+            Assert.IsTrue(cheddar.TryPlayPhaseCue(DogFeedbackAction.Bark, DogFeedbackPhase.Impact, 10f));
+            Assert.IsTrue(cocoa.TryPlayPhaseCue(DogFeedbackAction.Bark, DogFeedbackPhase.Impact, 10f));
+
+            StringAssert.StartsWith("p0_cheddar_bark_", cheddar.LastCueClipName);
+            StringAssert.StartsWith("p0_cocoa_bark_", cocoa.LastCueClipName);
+            Assert.That(cheddar.LastCueClipName, Does.Not.Contain("Procedural"));
+            Assert.That(cocoa.LastCueClipName, Does.Not.Contain("Procedural"));
         }
 
         [UnityTest]

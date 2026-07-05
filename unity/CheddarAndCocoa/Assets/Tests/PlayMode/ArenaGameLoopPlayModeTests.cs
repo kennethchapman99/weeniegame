@@ -92,6 +92,19 @@ namespace CheddarAndCocoa.Tests
                 ArenaFeedbackCatalog.MissionWin,
                 ArenaFeedbackCatalog.MissionFail,
                 ArenaFeedbackCatalog.UiReplayNextSelect,
+                ArenaFeedbackCatalog.UiMenuFocus,
+                ArenaFeedbackCatalog.UiButtonConfirm,
+                ArenaFeedbackCatalog.UiMenuOpen,
+                ArenaFeedbackCatalog.UiMenuClose,
+                ArenaFeedbackCatalog.UiButtonDisabled,
+                ArenaFeedbackCatalog.StarAppear,
+                ArenaFeedbackCatalog.AccelerationSkid,
+                ArenaFeedbackCatalog.EatingGulp,
+                ArenaFeedbackCatalog.SquirrelChatter,
+                ArenaFeedbackCatalog.SquirrelEscapeLaugh,
+                ArenaFeedbackCatalog.SquirrelStunned,
+                ArenaFeedbackCatalog.BunnyHop,
+                ArenaFeedbackCatalog.ToySqueak,
                 ArenaFeedbackCatalog.ThreatWarning
             };
 
@@ -125,6 +138,35 @@ namespace CheddarAndCocoa.Tests
                 ArenaFeedbackCatalog.BuildLookup()[ArenaFeedbackCatalog.Bark].Kind);
             Assert.AreEqual(ArenaFeedbackCatalog.GeneratedSfxKind.VictoryFanfare,
                 ArenaFeedbackCatalog.BuildLookup()[ArenaFeedbackCatalog.MissionWin].Kind);
+        }
+
+        [Test]
+        public void AuthoredAudioCatalog_ImportsEveryNamedClip_AndMapsEveryCue()
+        {
+            var imported = new HashSet<string>();
+            var referenced = new HashSet<string>();
+            foreach (string path in AuthoredAudioCatalog.AllClipResourcePaths)
+            {
+                Assert.IsTrue(imported.Add(path), $"Duplicate authored audio path {path}.");
+                Assert.IsNotNull(Resources.Load<AudioClip>(path), $"Missing authored audio resource at {path}.");
+            }
+
+            foreach (var cue in ArenaFeedbackCatalog.RequiredAudioCues)
+            {
+                var bank = AuthoredAudioCatalog.CueBankFor(cue.Name);
+                Assert.Greater(bank.Count, 0, $"Cue {cue.Name} must map to at least one authored clip.");
+                foreach (string path in bank)
+                {
+                    referenced.Add(path);
+                    Assert.IsTrue(AuthoredAudioCatalog.IsKnownClipPath(path),
+                        $"Cue {cue.Name} maps unknown authored audio path {path}.");
+                    Assert.IsNotNull(Resources.Load<AudioClip>(path),
+                        $"Cue {cue.Name} references missing authored audio resource {path}.");
+                }
+            }
+
+            foreach (string path in imported)
+                Assert.IsTrue(referenced.Contains(path), $"Imported authored audio path {path} is not wired to a cue bank.");
         }
 
         [UnityTest]
@@ -750,18 +792,29 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(game.RumbleEnabled);
             Assert.IsTrue(game.MusicLoopReady, "The arena should configure a looping music bed.");
             Assert.IsFalse(game.MusicMuted);
+            foreach (var cue in ArenaFeedbackCatalog.RequiredAudioCues)
+            {
+                Assert.Greater(game.AuthoredAudioClipCount(cue.Name), 0,
+                    $"Arena cue {cue.Name} should use imported authored audio before generated fallback.");
+            }
 
             game.StartMission(GameManager.MissionVariant.SnackHeist);
             yield return null;
+            AssertHasAudioCue(game, ArenaFeedbackCatalog.UiButtonConfirm);
+            AssertHasAudioCue(game, ArenaFeedbackCatalog.UiMenuClose);
+            AssertHasAudioCue(game, ArenaFeedbackCatalog.BunnyHop);
+            StringAssert.StartsWith("p2_bunny_hop_boing", game.LastAudioClipPlayed);
             game.ClearFeedbackRequests();
             cheddar.Bark();
             AssertHasAudioCue(game, ArenaFeedbackCatalog.Bark);
+            StringAssert.StartsWith("p0_cheddar_bark_", game.LastAudioClipPlayed);
             AssertHasRumble(game, "bark");
 
             game.ClearFeedbackRequests();
             FirstTreat().CollectBy(cheddar);
             yield return null;
             AssertHasAudioCue(game, ArenaFeedbackCatalog.ScoreGain);
+            AssertHasAudioCue(game, ArenaFeedbackCatalog.EatingGulp);
             AssertHasAudioCue(game, ArenaFeedbackCatalog.SnackSockCollect);
 
             game.ClearFeedbackRequests();
@@ -769,6 +822,8 @@ namespace CheddarAndCocoa.Tests
             ForceOneSquirrelSteal(game);
             yield return WaitForStolenFood(game, stolenBefore + 1);
             AssertHasAudioCue(game, ArenaFeedbackCatalog.ScorePenalty);
+            AssertHasAudioCue(game, ArenaFeedbackCatalog.SquirrelChatter);
+            AssertHasAudioCue(game, ArenaFeedbackCatalog.SquirrelEscapeLaugh);
             AssertHasAudioCue(game, ArenaFeedbackCatalog.SquirrelStealMiss);
             AssertHasRumble(game, "squirrel_penalty");
 
@@ -781,6 +836,7 @@ namespace CheddarAndCocoa.Tests
             cheddar.Bark();
             cocoa.Bark();
             yield return null;
+            AssertHasAudioCue(game, ArenaFeedbackCatalog.ToySqueak);
             AssertHasAudioCue(game, ArenaFeedbackCatalog.TugRescueSuccess);
             AssertHasRumble(game, "rescue_success");
 
@@ -789,6 +845,7 @@ namespace CheddarAndCocoa.Tests
             game.ClearFeedbackRequests();
             yield return ClearCollectOnlyMission(cheddar);
             Assert.AreEqual(GameManager.MissionOutcome.Clear, game.Outcome);
+            AssertHasAudioCue(game, ArenaFeedbackCatalog.StarAppear);
             AssertHasAudioCue(game, ArenaFeedbackCatalog.MissionWin);
             AssertHasRumble(game, "mission_win");
 
@@ -801,7 +858,7 @@ namespace CheddarAndCocoa.Tests
 
             game.ClearFeedbackRequests();
             game.Restart();
-            AssertHasAudioCue(game, ArenaFeedbackCatalog.UiReplayNextSelect);
+            AssertHasAudioCue(game, ArenaFeedbackCatalog.UiButtonConfirm);
 
             game.ClearFeedbackRequests();
             game.SetAudioEnabled(false);

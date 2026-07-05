@@ -1008,7 +1008,7 @@ Mission flow controls:
 - End screen: **R / Enter / Start / South** replays; **N / Right Arrow / Right Shoulder / D-pad Right** advances; **M / Escape / East / D-pad Left** returns to mission select.
 - Session Summary: **Enter**, **Space**, **Start**, **South**, or **Right Shoulder** continues to the next unfinished mission; **M**, **Escape**, or gamepad **East** returns to mission select. Finishing the current roster changes Continue to an explicit **Victory Lap** that wraps to mission one; **New Session** clears all local results.
 - Playtest Mode: click the bottom-left **Playtest Mode: On/Off** button or press **F1** / **`**. It toggles a compact top-right diagnostics overlay and does not pause or block normal play.
-- Placeholder feedback toggles: **F2** toggles generated audio cues; **F3** toggles gamepad rumble requests. Both default to on.
+- Placeholder feedback toggles: **F2** toggles authored audio cues; **F3** toggles gamepad rumble requests. Both default to on.
 
 ## First playtest protocol
 
@@ -1181,18 +1181,20 @@ gate, the Switcheroo decoy, or the Bone Detail scent post — the close-range te
 calm name tag while the bobbing icon, sprite state, and top HUD line tell you what to do; nothing
 in-world should shout a sentence at you.
 
-## Generated audio/rumble checks
+## Authored audio/rumble checks
 
-The arena now has replaceable generated feedback slots in `ArenaFeedbackCatalog`, plus a light
-looping procedural backyard music bed that follows the F2 audio toggle. Event cues now use named
-generated dog-life SFX profiles for bark, team success, crunch collect, squirrel alarm, score
-sparkle, penalty thunk, victory fanfare, failure sigh, UI blip, and threat rattle. They are no
-longer one generic tone/noise generator, but authored bark recordings, final mixing, and final
-haptics are still required.
+The arena now has replaceable feedback slots in `ArenaFeedbackCatalog`, plus a light looping
+procedural backyard music bed that follows the F2 audio toggle. Event cues first load imported
+authored MP3 banks from `Assets/Audio/Resources/AuthoredSfx/` through `AuthoredAudioCatalog`: bark,
+team success, collect/gulp, squirrel chatter/escape/stunned, score gain, penalty, win/star, fail,
+UI focus/confirm/open/close/disabled, acceleration skid, bunny hop, toy squeak, and threat cues all
+use named files from the couch-test audio folder before falling back to generated procedural SFX.
+Cheddar/Cocoa bark impacts also use their own dog-local bark banks.
 
-Automated evidence: the generated-SFX catalog profile check passed at `1/1`, the event-driven audio
-and rumble request check passed at `1/1`, and the full PlayMode suite passed at `400/400` on
-2026-07-01 after the generated P0 mission-state art pass.
+Automated evidence: authored audio catalog coverage now asserts every imported MP3 loads and is
+reachable from a runtime cue bank; dog-local bark coverage asserts Cheddar and Cocoa use their
+identity-specific MP3 banks. Event-driven audio and rumble checks still verify cue requests,
+toggles, and music muting.
 
 Manual audio check:
 
@@ -1201,14 +1203,14 @@ Manual audio check:
 - Let the squirrel steal or force a fail. Confirm a lower warning/penalty cue plays.
 - Complete rescue/tug or clear a mission. Confirm the success/win cue is brighter than the penalty cue.
 - Use Replay, Next Mission, and Mission Select. Confirm a small UI blip plays.
-- Press **F2** and repeat bark/collect. Confirm normal gameplay continues while generated audio is muted.
+- Press **F2** and repeat bark/collect. Confirm normal gameplay continues while authored audio is muted.
 
 ### Dog-local action audio tuning (2026-06-20)
 
-The Backyard dog-local procedural layer was checked separately from the arena-wide placeholder cues.
+The Backyard dog-local action layer was checked separately from the arena-wide cue slots.
 The repeatable two-player check drives Cheddar and Cocoa at the same time, verifies their action
 signatures, and exercises bark over an active carry bed. It is an in-engine mix/concurrency check;
-the final authored-SFX pass still needs a physical two-person television listening session.
+the authored-SFX pass still needs a physical two-person television listening session for final mix.
 
 Concrete findings and resulting profile changes:
 
@@ -1527,8 +1529,8 @@ Use this after any placeholder-art, authored-art, or sprite import change:
   arrows are generated couch-test assets. They are intentionally readable and easy to delete once
   authored sprites/animation exist.
 - The squirrel and predator use intentionally simple movement/state rules so the PlayMode tests remain deterministic.
-- The intro, bark, squirrel, predator, tug, clear, fail, score-pop, and objective feedback are still text/scale/generated-audio driven; they are designed to be replaced by authored animation/SFX later.
-- Audio cues are generated procedural SFX clips from named dog-life slots, and rumble is a simple best-effort gamepad pulse. Neither is mixed, balanced, platform-tuned, or authored final feedback.
+- The intro, bark, squirrel, predator, tug, clear, fail, score-pop, and objective feedback are still text/scale/couch-test-audio driven; they are designed to be replaced by final authored animation and mix later.
+- Audio cues now use imported authored MP3 banks from named dog-life slots with generated fallback, and rumble is a simple best-effort gamepad pulse. Neither is balanced, platform-tuned, or final feedback.
 - `ForceSquirrelStealAttempt()` exists as a deterministic PlayMode test hook and is not intended as a player-facing control.
 - Scoring is intentionally flat and session-local only. There is no save file, leaderboard, unlock economy, or persistent progression yet.
 - The end rank is based only on final score and clear/fail state; it does not yet account for style, dog-specific contributions, or advanced co-op medals.
