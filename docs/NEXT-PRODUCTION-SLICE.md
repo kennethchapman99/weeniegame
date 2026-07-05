@@ -477,6 +477,21 @@ calling `SetCoverArt(FinalGameplayArt.EagleShadowCoverSafe)` in `StartMission()`
 `GameManager.EagleCoverArtResourcePath()` test hooks. Covered by
 `EagleShadowPanic_Replay_ResetsCoverArtInsteadOfStartingAlreadySpotted`.
 
+### Scent Search: re-picked dig spot kept stale cold art (2026-07-05)
+
+`ChooseBuriedSpot()` picks a random active dig spot as the new hiding place but never reset its art.
+A spot dug wrong keeps a cold-scent sprite as useful "already checked here" feedback - correct, until
+that same spot is randomly re-picked as the new hiding place, where it then misleadingly kept reading
+as cold/empty even though the bone was now there. Fixed by resetting the newly-chosen spot's art to
+`ScentSearchDigUnknown` inside `ChooseBuriedSpot()`. Added `BuriedSpotIndex`/`DigResourcePathAt()`/
+`ForceReselectBuriedSpot()` test hooks. Covered by
+`ScentSearch_ReselectedBuriedSpot_ClearsStaleColdArtInsteadOfKeepingIt`. Suite green at `481/481`.
+
+Also noteworthy: mid-session another concurrent process (codex, confirmed by the owner) landed
+`7f9c81b Wire authored audio cues into Unity arena` directly on `main` in this same working directory.
+Pushed immediately alongside this session's own commits with no conflicts - `main` and `origin/main`
+stayed in sync throughout, one shared build with both the new audio system and this session's fixes.
+
 ## Architecture guardrails
 
 - `GameManager` owns orchestration, mission selection, session flow, and shared-service wiring.
