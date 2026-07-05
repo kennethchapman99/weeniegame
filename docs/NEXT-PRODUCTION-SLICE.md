@@ -550,3 +550,13 @@ opportunity for stripping/config issues to surface, and it came back clean). Rel
 SHA-256: `1a70a90431c49d49212b569d07cff55e4958a0006e2406b8b7a55ba7720d2adb`. Both the dev and release
 build paths are now confirmed green alongside the editor PlayMode suite for this session's cumulative
 work.
+
+### Missing AdventureMapScene load smoke test (2026-07-05)
+
+`AdventureMapScene.unity` was the only scene listed in `EditorBuildSettings.asset` that no PlayMode
+test ever loaded by name - `AdventureProgressService`/`AdventureMapController` are well covered via
+direct instantiation (`AdventureMapControllerPlayModeTests`, `AdventureProgressionPlayModeTests`), but
+nothing proved the actual scene bootstrap (`AdventureMapBootstrap` → `AdventureMapHud`) builds without
+error when the scene really loads, unlike `ArenaScene` and `ControllerTestScene` which both already
+have scene-load tests. Added `AdventureMapScene_LoadsAndBuildsTheMapHudWithoutError`. Suite green at
+`484/484`.
