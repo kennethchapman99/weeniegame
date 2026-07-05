@@ -536,7 +536,8 @@ namespace CheddarAndCocoa.Game
             recoverCollectible: RecoverControllerCollectible,
             replaceCollectible: ReplaceControllerCollectible,
             setActorState: SetActorState,
-            pulse: Pulse);
+            pulse: Pulse,
+            requestShake: RequestShake);
 
         public void OnTreatCollected(Treat treat, DogController dog)
         {

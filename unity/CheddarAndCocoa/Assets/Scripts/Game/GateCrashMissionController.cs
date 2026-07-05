@@ -198,6 +198,7 @@ namespace CheddarAndCocoa.Game
             _context.SetCue($"The gate snapped shut! ({_puzzle.Snaps}/{MaxSnaps}) Cocoa has to brace it.");
             _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "GATE SNAP!");
             _context.SpawnWorldPop(_crossZone, "SNAP!", new Color(1f, 0.35f, 0.2f));
+            _context.RequestShake(0.12f);
             _context.LogEvent("GateSnap", $"{_puzzle.Snaps}/{MaxSnaps}");
             if (_puzzle.Snaps >= MaxSnaps) _failed = true;
         }

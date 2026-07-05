@@ -113,7 +113,9 @@ namespace CheddarAndCocoa.Tests
                 _game.ForceGateHold(false);
             }
             Assert.AreEqual(GameManager.MissionOutcome.Failed, _game.Outcome);
-            Assert.AreEqual(2, _game.ShakeRequestCount, "Mission fail should kick a second cosmetic camera shake.");
+            // 1 (clear) + 4 (one snap-jolt per snap in the loop above) + 1 (the fail-end shake).
+            Assert.AreEqual(6, _game.ShakeRequestCount,
+                "Mission fail should kick its own end-of-round shake on top of each snap's jolt.");
             Assert.Greater(_game.LastShakeMagnitude, clearShake,
                 "A failed run should jolt the camera harder than a clean clear.");
         }
@@ -197,6 +199,28 @@ namespace CheddarAndCocoa.Tests
                 yield return null;
                 Assert.GreaterOrEqual(_game.GateCrashPuzzle.Snaps, 1, "Cocoa leaving mid-squeeze snaps the gate.");
             }
+        }
+
+        [UnityTest]
+        public IEnumerator GateCrash_Snap_KicksAnImmediateShakeBeforeTheRoundEnds()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.GateCrash);
+            yield return null;
+
+            Assert.AreEqual(0, _game.ShakeRequestCount, "No shake should fire before anything happens.");
+
+            _game.ForceGateHold(true);
+            _game.ForceGateCross(0.4f);
+            _game.ForceGateHold(false); // one snap, mission still in progress (max is 4)
+
+            Assert.AreEqual(1, _game.GateCrashPuzzle.Snaps);
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome,
+                "One snap should not end the round.");
+            Assert.AreEqual(1, _game.ShakeRequestCount,
+                "The snap itself should kick a small shake, independent of the end-of-round shake.");
+            Assert.Less(_game.LastShakeMagnitude, 0.18f,
+                "The in-mission snap jolt should read smaller than the end-of-round shakes.");
         }
 
         [UnityTest]

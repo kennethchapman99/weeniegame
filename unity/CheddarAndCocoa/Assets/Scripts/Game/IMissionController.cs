@@ -112,6 +112,8 @@ namespace CheddarAndCocoa.Game
         public Action<Treat> ReplaceCollectible { get; }
         public Action<GameObject, string, Color, float> SetActorState { get; }
         public Action<GameObject, float> Pulse { get; }
+        /// <summary>Cosmetic shared-camera jolt for a single sharp in-mission impact (a snap, a fumble).</summary>
+        public Action<float> RequestShake { get; }
 
         public MissionContext(
             DogController[] dogs,
@@ -159,7 +161,8 @@ namespace CheddarAndCocoa.Game
             Action<Treat> recoverCollectible,
             Action<Treat> replaceCollectible,
             Action<GameObject, string, Color, float> setActorState,
-            Action<GameObject, float> pulse)
+            Action<GameObject, float> pulse,
+            Action<float> requestShake)
         {
             Dogs = dogs ?? throw new ArgumentNullException(nameof(dogs));
             DogFeedback = dogFeedback ?? throw new ArgumentNullException(nameof(dogFeedback));
@@ -210,6 +213,7 @@ namespace CheddarAndCocoa.Game
             ReplaceCollectible = replaceCollectible ?? throw new ArgumentNullException(nameof(replaceCollectible));
             SetActorState = setActorState ?? throw new ArgumentNullException(nameof(setActorState));
             Pulse = pulse ?? throw new ArgumentNullException(nameof(pulse));
+            RequestShake = requestShake ?? throw new ArgumentNullException(nameof(requestShake));
         }
 
         public int IndexOfDog(DogId dogId)

@@ -91,7 +91,9 @@ namespace CheddarAndCocoa.CameraRig
             transform.position = Vector3.Lerp(transform.position, target, 1f - Mathf.Exp(-followLerp * dt));
             _cam.orthographicSize = Mathf.Lerp(_cam.orthographicSize, targetSize, 1f - Mathf.Exp(-zoomLerp * dt));
 
-            // Screen shake (decays). TODO: route addShake() calls here from hits/lands/predators.
+            // Screen shake (decays). GameManager.EndRound kicks it on mission clear/fail; mission
+            // controllers can also kick a smaller jolt for a single sharp impact via
+            // MissionContext.RequestShake (e.g. GateCrash's snap).
             if (_shake > 0.01f)
             {
                 transform.position += (Vector3)(Random.insideUnitCircle * _shake);
