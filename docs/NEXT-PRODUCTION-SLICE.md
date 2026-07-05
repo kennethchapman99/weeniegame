@@ -469,6 +469,14 @@ touched it in the new attempt. Fixed by resetting every gap back to `CoyotesFenc
 `CoyotesFence_Replay_ResetsGapArtInsteadOfLeavingStaleBreachedOrRepairedSprites`. Suite green at
 `476/476`.
 
+The same sweep found the identical bug in **Eagle Shadow Panic**: `StartMission()` reset round state
+but never reset the cover zones' promoted Safe/Spotted sprite, so a replay after an exposure could
+open already showing the red Spotted art on every cover zone until the next sweep resolved. Fixed by
+calling `SetCoverArt(FinalGameplayArt.EagleShadowCoverSafe)` in `StartMission()`. Added
+`EagleShadowPanicMissionController.CoverResourcePathAt()` +
+`GameManager.EagleCoverArtResourcePath()` test hooks. Covered by
+`EagleShadowPanic_Replay_ResetsCoverArtInsteadOfStartingAlreadySpotted`.
+
 ## Architecture guardrails
 
 - `GameManager` owns orchestration, mission selection, session flow, and shared-service wiring.
