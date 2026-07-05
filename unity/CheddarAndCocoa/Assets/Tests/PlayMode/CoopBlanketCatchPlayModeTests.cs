@@ -139,6 +139,43 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator Blanket_CaughtSpriteLingersBeforeItemRespawns()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.BlanketCatch);
+            yield return null;
+
+            _cheddar.GetComponent<CheddarAndCocoa.Input.GamepadPlayerInput>().enabled = false;
+            _cocoa.GetComponent<CheddarAndCocoa.Input.GamepadPlayerInput>().enabled = false;
+
+            var fallingItem = GameObject.Find("FallingSnack");
+            Assert.IsNotNull(fallingItem);
+            float itemX = fallingItem.transform.position.x;
+            float y = _game.BlanketCatchY;
+            _cheddar.transform.position = new Vector3(itemX - 4f, y, 0f);
+            _cocoa.transform.position = new Vector3(itemX + 4f, y, 0f);
+            if (_cheddar.TryGetComponent<Rigidbody2D>(out var cheddarBody)) cheddarBody.linearVelocity = Vector2.zero;
+            if (_cocoa.TryGetComponent<Rigidbody2D>(out var cocoaBody)) cocoaBody.linearVelocity = Vector2.zero;
+
+            yield return new WaitForSecondsRealtime(2.6f); // let the snack fall from SpawnY to CatchLineY
+
+            Assert.Greater(_game.BlanketPuzzle.Caught, 0,
+                "Positioning under the falling snack in a taut, centered span should catch it.");
+            var fallingArt = fallingItem.GetComponent<MissionPropArtAttachment>();
+            Assert.IsNotNull(fallingArt);
+            Assert.IsTrue(fallingArt.HasRuntimeSprite);
+            Assert.AreEqual("blanket_snack_caught", fallingArt.RuntimeSpriteName,
+                "Right after a catch the item must still show its Caught sprite, not already be reset " +
+                "to the falling sprite in the same frame.");
+
+            yield return new WaitForSecondsRealtime(0.7f);
+            yield return null;
+
+            Assert.AreNotEqual("blanket_snack_caught", fallingArt.RuntimeSpriteName,
+                "The caught sprite should give way to the next falling item after its linger window.");
+        }
+
+        [UnityTest]
         public IEnumerator Blanket_PositionDriven_SpacingDrivesTheSpanBand()
         {
             yield return LoadArena();

@@ -13,6 +13,7 @@ namespace CheddarAndCocoa.Game
         private const float CatchLineY = -6f;
         private const float SpawnY = 11f;
         private const float FallSpeed = 7f;
+        private const float FallingReactionSeconds = 0.6f;
 
         private readonly CoopStretchSpanPuzzle _puzzle = new();
         private MissionContext _context;
@@ -25,6 +26,7 @@ namespace CheddarAndCocoa.Game
         private float _itemY;
         private string _fallingOverrideArt;
         private float _fallingOverrideUntil;
+        private float _respawnAt;
         private int _caughtSeen;
         private int _missedSeen;
         private int _ripsSeen;
@@ -65,6 +67,7 @@ namespace CheddarAndCocoa.Game
             _ripsSeen = 0;
             _fallingOverrideArt = null;
             _fallingOverrideUntil = 0f;
+            _respawnAt = 0f;
             _failed = false;
             SetSceneActive(true);
             SpawnItem();
@@ -86,13 +89,29 @@ namespace CheddarAndCocoa.Game
                 if (_failed) return;
             }
 
+            if (_respawnAt > 0f)
+            {
+                // Hold the resolved item at the catch line showing its Caught/Splat reaction sprite -
+                // SpawnItem() (which resets the sprite and position) used to run in the same frame as
+                // HandleProgress(), so the reaction sprite never actually rendered before being
+                // overwritten. Falling/catch logic below must stay paused meanwhile, or the still-below-
+                // CatchLineY item re-triggers TryCatch every frame until the window elapses.
+                if (now >= _respawnAt)
+                {
+                    _respawnAt = 0f;
+                    SpawnItem();
+                }
+                UpdateVisuals();
+                return;
+            }
+
             _itemY -= FallSpeed * deltaTime;
             if (_itemY <= CatchLineY)
             {
                 _puzzle.TryCatch(_itemX);
                 HandleProgress();
                 if (_failed || _puzzle.Solved) return;
-                SpawnItem();
+                _respawnAt = _context.Now() + FallingReactionSeconds;
             }
             UpdateVisuals();
         }
@@ -159,7 +178,7 @@ namespace CheddarAndCocoa.Game
                 _context.SetCue($"Nice catch! The blanket snagged the snack. ({_puzzle.Caught}/{CatchesNeeded})");
                 _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "CAUGHT!");
                 _context.SpawnWorldPop(new Vector2(_itemX, CatchLineY), "CAUGHT!", new Color(0.5f, 0.95f, 0.55f));
-                ShowFallingReaction(FinalGameplayArt.BlanketSnackCaught, 0.6f);
+                ShowFallingReaction(FinalGameplayArt.BlanketSnackCaught, FallingReactionSeconds);
                 _context.LogEvent("BlanketCatch", $"{_puzzle.Caught}/{CatchesNeeded}");
             }
             if (_puzzle.Missed > _missedSeen)
@@ -172,7 +191,7 @@ namespace CheddarAndCocoa.Game
                 _context.SetCue(cue);
                 _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "MISSED!");
                 _context.SpawnWorldPop(new Vector2(_itemX, CatchLineY), "SPLAT!", new Color(0.85f, 0.5f, 0.3f));
-                ShowFallingReaction(FinalGameplayArt.BlanketSnackSplat, 0.6f);
+                ShowFallingReaction(FinalGameplayArt.BlanketSnackSplat, FallingReactionSeconds);
                 _context.LogEvent("BlanketMiss", $"{_puzzle.Missed}");
             }
         }
