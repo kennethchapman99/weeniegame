@@ -175,6 +175,35 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(1, game.CoyotesFenceState.Breaches);
         }
 
+        [UnityTest]
+        public IEnumerator CoyotesFence_Replay_ResetsGapArtInsteadOfLeavingStaleBreachedOrRepairedSprites()
+        {
+            yield return LoadArena();
+            var game = _game;
+
+            game.StartMission(GameManager.MissionVariant.CoyotesFence);
+            yield return null;
+
+            game.ForceCoyoteBarkPressure(DogId.Cocoa);
+            game.ForceCoyoteRepair(DogId.Cheddar); // gap 0 -> repaired art
+            yield return null;
+            game.ForceCoyoteBreach(); // gap 1 -> breached art
+            yield return null;
+
+            Assert.That(game.CoyoteGapArtResourcePath(0), Does.Contain("repaired"),
+                "Sanity check: repairing a gap should promote its repaired art.");
+            Assert.That(game.CoyoteGapArtResourcePath(1), Does.Contain("breached"),
+                "Sanity check: breaching a gap should promote its breached art.");
+
+            game.Restart();
+            yield return null;
+
+            Assert.That(game.CoyoteGapArtResourcePath(0), Does.Not.Contain("repaired"),
+                "A fresh attempt should not start with gap 0 already showing last run's repaired art.");
+            Assert.That(game.CoyoteGapArtResourcePath(1), Does.Not.Contain("breached"),
+                "A fresh attempt should not start with gap 1 already showing last run's breached art.");
+        }
+
         private IEnumerator LoadArena()
         {
             _game = null;

@@ -69,6 +69,11 @@ namespace CheddarAndCocoa.Game
             _pressureHeld = false;
             _activeGapPosition = _gaps[0];
             SetGapMarkersActive(true);
+            // A previous attempt can leave gaps showing stale Breached/Repaired art; every sibling
+            // multi-marker mission (Leash Walk's checkpoints, Bone Relay's mounds) resets its marker
+            // art on StartMission, so a fresh Coyotes Fence attempt shouldn't start with gaps that
+            // look already resolved from the last run.
+            for (int i = 0; i < _gapMarkers.Length; i++) SetGapArt(i, FinalGameplayArt.CoyotesFenceGapOpen);
             UpdateGapSignals();
         }
 
@@ -182,6 +187,14 @@ namespace CheddarAndCocoa.Game
 
         /// <summary>Test hook: resolve the coyote reaching the active gap at current pressure.</summary>
         public void ForceProwlReach() => EvaluateReach();
+
+        /// <summary>Test hook: the resource path currently attached to gap marker <paramref name="index"/>.</summary>
+        public string GapResourcePathAt(int index)
+        {
+            if (_gapMarkers == null || index < 0 || index >= _gapMarkers.Length || _gapMarkers[index] == null) return string.Empty;
+            var attachment = _gapMarkers[index].GetComponent<MissionPropArtAttachment>();
+            return attachment != null ? attachment.ResourcePath : string.Empty;
+        }
 
         // The coyote prowls toward the active weak spot. If the dogs are holding bark pressure when
         // it arrives, it is driven off; otherwise it breaches the gap.

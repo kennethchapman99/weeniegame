@@ -84,6 +84,7 @@ namespace CheddarAndCocoa.Game
         public PatrolDefenseMissionState CoyotesFenceState => CoyotesFenceController?.State ?? _emptyPatrolState;
         public Vector2[] EagleCoverZones => EagleShadowController?.CoverZones ?? EagleShadowPanicMissionController.ComputeCoverZones(_bounds);
         public Vector2[] FenceGaps => CoyotesFenceController?.Gaps ?? CoyotesFenceMissionController.ComputeFenceGaps(_bounds);
+        public string CoyoteGapArtResourcePath(int index) => CoyotesFenceController?.GapResourcePathAt(index) ?? string.Empty;
         public WeenieRoundupMissionController WeenieRoundupController => _activeMissionController as WeenieRoundupMissionController;
         public CarryRoundupMissionState WeenieRoundupState => WeenieRoundupController?.State ?? _emptyCarryState;
         public Vector2 BowlPosition => WeenieRoundupController?.BowlPosition ?? _bounds.center;
