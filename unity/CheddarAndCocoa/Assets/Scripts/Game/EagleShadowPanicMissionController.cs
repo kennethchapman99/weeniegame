@@ -87,6 +87,9 @@ namespace CheddarAndCocoa.Game
             // Keep the snatch/rescue point inside the play band so the rescue beat is on-screen.
             _snatchPosition = new Vector2(0f, 6f);
             SetCoverMarkersActive(true);
+            // A previous attempt can leave every cover zone showing the last sweep's Safe/Spotted
+            // art; reset to Safe so a fresh attempt doesn't open already looking exposed.
+            SetCoverArt(FinalGameplayArt.EagleShadowCoverSafe);
             UpdateCoverSignals();
         }
 
@@ -221,6 +224,14 @@ namespace CheddarAndCocoa.Game
 
         /// <summary>Test hook: evaluate one shadow sweep pass at the current positions.</summary>
         public void ForceSweepPass() => EvaluateSweep();
+
+        /// <summary>Test hook: the resource path currently attached to cover marker <paramref name="index"/>.</summary>
+        public string CoverResourcePathAt(int index)
+        {
+            if (_coverMarkers == null || index < 0 || index >= _coverMarkers.Length || _coverMarkers[index] == null) return string.Empty;
+            var attachment = _coverMarkers[index].GetComponent<MissionPropArtAttachment>();
+            return attachment != null ? attachment.ResourcePath : string.Empty;
+        }
 
         /// <summary>Test hook: the snatched dog wiggles to crack the grip open.</summary>
         public void ForceWiggle()

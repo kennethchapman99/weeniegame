@@ -244,6 +244,27 @@ namespace CheddarAndCocoa.Tests
                 "The squirrel's own body should be back at full opacity once the overlay clears.");
         }
 
+        [UnityTest]
+        public IEnumerator EagleShadowPanic_Replay_ResetsCoverArtInsteadOfStartingAlreadySpotted()
+        {
+            yield return LoadArena();
+            var game = _game;
+
+            game.StartMission(GameManager.MissionVariant.EagleShadowPanic);
+            yield return null;
+            game.ForceEagleShadowExposure();
+            yield return null;
+
+            Assert.That(game.EagleCoverArtResourcePath(0), Does.Contain("spotted"),
+                "Sanity check: an exposure should paint every cover zone with the Spotted art.");
+
+            game.Restart();
+            yield return null;
+
+            Assert.That(game.EagleCoverArtResourcePath(0), Does.Not.Contain("spotted"),
+                "A fresh attempt should not open with cover already showing last run's Spotted art.");
+        }
+
         private IEnumerator LoadArena()
         {
             _game = null;
