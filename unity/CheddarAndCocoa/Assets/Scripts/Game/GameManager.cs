@@ -257,7 +257,8 @@ namespace CheddarAndCocoa.Game
         public int SessionStarsEarned { get; private set; }
         public int SessionFlawlessClears { get; private set; }
         public int SessionUniqueMissionsCompleted { get; private set; }
-        public bool SessionAllMissionsCompleted => SessionUniqueMissionsCompleted >= MissionOrder.Length;
+        public int SessionUniqueMissionsCleared { get; private set; }
+        public bool SessionAllMissionsCompleted => SessionUniqueMissionsCleared >= MissionOrder.Length;
         public bool SessionSummaryReady => SessionUniqueMissionsCompleted >= 3 &&
             SessionUniqueMissionsCompleted / 3 > _lastSummaryMilestoneShown;
         public string SessionContinueActionLabel => SessionAllMissionsCompleted ? "Victory Lap" : "Continue Session";
@@ -702,6 +703,7 @@ namespace CheddarAndCocoa.Game
             SessionStarsEarned = 0;
             SessionFlawlessClears = 0;
             SessionUniqueMissionsCompleted = 0;
+            SessionUniqueMissionsCleared = 0;
             _lastSummaryMilestoneShown = 0;
             _sessionRanks.Clear();
             System.Array.Clear(_sessionCompletedMissions, 0, _sessionCompletedMissions.Length);
@@ -2291,6 +2293,7 @@ namespace CheddarAndCocoa.Game
             }
             if (Outcome == MissionOutcome.Failed && missionIndex >= 0) _sessionFailuresByMission[missionIndex]++;
             SessionUniqueMissionsCompleted = CountCompletedMissions();
+            SessionUniqueMissionsCleared = CountClearedMissions();
             _sessionRanks.Add($"{_mission.Name}: {EndRank}");
             UpdateSessionSummaryLabel();
         }
@@ -2336,7 +2339,7 @@ namespace CheddarAndCocoa.Game
             string lead = SessionAllMissionsCompleted
                 ? "Backyard legends! Cheddar + Cocoa finished every mission."
                 : "Session Summary:";
-            SessionSummaryLabel = $"{lead} {SessionMissionsPlayed} missions played, {SessionTotalScore} score, {SessionStarsEarned} stars, {SessionFlawlessClears} flawless, {SessionUniqueMissionsCompleted}/{MissionOrder.Length} finished.";
+            SessionSummaryLabel = $"{lead} {SessionMissionsPlayed} missions played, {SessionTotalScore} score, {SessionStarsEarned} stars, {SessionFlawlessClears} flawless, {SessionUniqueMissionsCleared}/{MissionOrder.Length} finished.";
             if (_sessionRanks.Count == 0)
             {
                 SessionRanksEarnedLabel = "Recent ranks: none yet.";
@@ -2358,6 +2361,16 @@ namespace CheddarAndCocoa.Game
             for (int i = 0; i < _sessionCompletedMissions.Length; i++)
             {
                 if (_sessionCompletedMissions[i]) count++;
+            }
+            return count;
+        }
+
+        private int CountClearedMissions()
+        {
+            int count = 0;
+            for (int i = 0; i < _sessionClearedMissions.Length; i++)
+            {
+                if (_sessionClearedMissions[i]) count++;
             }
             return count;
         }

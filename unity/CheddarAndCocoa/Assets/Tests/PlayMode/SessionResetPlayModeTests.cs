@@ -41,6 +41,7 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(0, game.SessionStarsEarned);
             Assert.AreEqual(0, game.SessionFlawlessClears);
             Assert.AreEqual(0, game.SessionUniqueMissionsCompleted);
+            Assert.AreEqual(0, game.SessionUniqueMissionsCleared);
             Assert.AreEqual(0, game.FailuresForMission(GameManager.MissionVariant.MarkTheYard));
             Assert.AreEqual(0, game.BestScoreForMission(GameManager.MissionVariant.MarkTheYard));
             Assert.AreEqual("NEW", game.MissionSelectStatusFor(GameManager.MissionVariant.MarkTheYard));
@@ -90,7 +91,7 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
-        public IEnumerator CompleteFullMissionSession_OffersExplicitVictoryLap()
+        public IEnumerator FailingEveryMission_DoesNotOfferVictoryLap()
         {
             yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
             yield return null;
@@ -105,16 +106,51 @@ namespace CheddarAndCocoa.Tests
                 game.ForceGameOver();
             }
 
-            Assert.IsTrue(game.SessionAllMissionsCompleted);
-            Assert.AreEqual(game.MissionSelectOptionCount, game.SessionUniqueMissionsCompleted);
-            Assert.AreEqual("Victory Lap", game.SessionContinueActionLabel);
-            Assert.That(game.SessionSummaryLabel, Does.StartWith("Backyard legends! Cheddar + Cocoa"));
+            Assert.AreEqual(game.MissionSelectOptionCount, game.SessionUniqueMissionsCompleted,
+                "Every mission was attempted once.");
+            Assert.AreEqual(0, game.SessionUniqueMissionsCleared,
+                "Nothing was actually cleared - every attempt was a forced failure.");
+            Assert.IsFalse(game.SessionAllMissionsCompleted,
+                "Failing every mission in the roster should not be treated as completing the session.");
+            Assert.AreEqual("Continue Session", game.SessionContinueActionLabel);
+            Assert.That(game.SessionSummaryLabel, Does.Not.Contain("Backyard legends"),
+                "A session of nothing but failures is not a legendary victory lap.");
 
+            // ContinueSession's "wrap to the first unattempted-feeling mission" routing is unaffected
+            // by the clear-vs-attempt fix above - it's still driven by attempt tracking, so it should
+            // still cycle back to the first mission once every mission has been attempted at least once.
             game.ShowSessionSummary();
             game.ContinueSession();
             Assert.AreEqual(GameManager.MissionVariant.BackyardRescue, game.ActiveMissionVariant,
-                "A victory lap should wrap cleanly to the first mission.");
+                "Once every mission has been attempted, Continue should still wrap cleanly to the first.");
             Assert.AreEqual(GameManager.FlowState.Playing, game.CurrentFlow);
+        }
+
+        [UnityTest]
+        public IEnumerator SessionUniqueMissionsCleared_OnlyCountsActualClearsNotAttempts()
+        {
+            yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
+            yield return null;
+            yield return null;
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            Assert.IsNotNull(game);
+
+            game.StartMission(GameManager.MissionVariant.MarkTheYard);
+            yield return null;
+            game.ForceGameOver();
+            yield return null;
+
+            game.StartMission(GameManager.MissionVariant.GateCrash);
+            yield return null;
+            game.ForceGateHold(true);
+            game.ForceGateCross(1.0f);
+            Assert.AreEqual(GameManager.MissionOutcome.Clear, game.Outcome);
+            yield return null;
+
+            Assert.AreEqual(2, game.SessionUniqueMissionsCompleted, "Both missions were attempted.");
+            Assert.AreEqual(1, game.SessionUniqueMissionsCleared,
+                "Only Gate Crash was actually cleared - Mark the Yard was a forced failure.");
         }
     }
 }
