@@ -541,3 +541,12 @@ boots and initializes cleanly (no crash-on-startup). This exercises a different 
 editor tests - Safe Mode entry, build-time asset stripping, and player runtime init are all things the
 editor test runner doesn't catch. Executable SHA-256:
 `af3c32216057aefe2fa65894e3c0301873724e96ab7fdb2b6d53ce2de3f44680`.
+
+Followed up with the full release-candidate gate: `./unity/build-release.sh` produced
+`CheddarAndCocoa-Demo.app`, its `Info.plist` matches expected values (name "Cheddar and Cocoa",
+identifier `com.kennethchapman.cheddarandcocoa`, version `0.1.0`), and `./unity/smoke-player.sh`
+confirmed clean startup on the release configuration too (a different build path than dev - separate
+opportunity for stripping/config issues to surface, and it came back clean). Release executable
+SHA-256: `1a70a90431c49d49212b569d07cff55e4958a0006e2406b8b7a55ba7720d2adb`. Both the dev and release
+build paths are now confirmed green alongside the editor PlayMode suite for this session's cumulative
+work.
