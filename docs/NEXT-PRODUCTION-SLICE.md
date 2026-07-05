@@ -455,6 +455,20 @@ that wants its own overlay lays it down fresh via its existing `Init()`/`SetSpri
 also re-shows the overlay, undoing an earlier clear). Covered by
 `EagleShadowPanic_TalonGripOverlay_DoesNotBleedIntoTheNextMission`. Suite green at `475/475`.
 
+### Coyotes Fence gap art not resetting on replay (2026-07-05)
+
+While in the neighborhood of the shared-actor overlay fix, checked whether `CoyotesFenceMissionController`'s
+own controller-owned gap markers had the analogous bug within a single mission's replay loop, since its
+`StartMission()` didn't reset marker art the way every other multi-marker mission does (`LeashWalkMissionController`
+resets every checkpoint back to `LeashWalkCheckpointWaiting`, `BoneRelayMissionController` calls
+`ClearMoundOverrides()`). It didn't - `StartMission()` reset all round state (repairs, breaches, active
+gap index) but left each gap's promoted sprite exactly as the previous attempt left it. A replay could
+start with a gap still showing last run's green "repaired" or red "breached" art before the player had
+touched it in the new attempt. Fixed by resetting every gap back to `CoyotesFenceGapOpen` in
+`StartMission()`. Covered by
+`CoyotesFence_Replay_ResetsGapArtInsteadOfLeavingStaleBreachedOrRepairedSprites`. Suite green at
+`476/476`.
+
 ## Architecture guardrails
 
 - `GameManager` owns orchestration, mission selection, session flow, and shared-service wiring.
