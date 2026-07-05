@@ -215,6 +215,35 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(1, game.EagleShadowPanicState.Exposures);
         }
 
+        [UnityTest]
+        public IEnumerator EagleShadowPanic_TalonGripOverlay_DoesNotBleedIntoTheNextMission()
+        {
+            yield return LoadArena();
+            var game = _game;
+
+            game.StartMission(GameManager.MissionVariant.EagleShadowPanic);
+            yield return null;
+            game.ForceEagleShadowSafeHide();
+            game.ForceEagleShadowSafeHide();
+            yield return null;
+
+            var attachment = game.SquirrelObject.GetComponent<MissionPropArtAttachment>();
+            Assert.IsNotNull(attachment,
+                "The snatch/rescue beat should have promoted a talon-grip overlay onto the squirrel actor.");
+            Assert.IsNotEmpty(attachment.ResourcePath);
+
+            game.StartMission(GameManager.MissionVariant.BackyardRescue);
+            yield return null;
+
+            Assert.IsEmpty(attachment.ResourcePath,
+                "Switching missions should clear the squirrel's leftover talon-grip overlay, not leave " +
+                "Eagle Shadow Panic's art on a completely different mission's squirrel.");
+            var fallback = MissionPropArt.FindFallbackRenderer(game.SquirrelObject);
+            Assert.IsNotNull(fallback);
+            Assert.AreEqual(1f, fallback.color.a, 0.001f,
+                "The squirrel's own body should be back at full opacity once the overlay clears.");
+        }
+
         private IEnumerator LoadArena()
         {
             _game = null;

@@ -60,7 +60,29 @@ namespace CheddarAndCocoa.Game
             if (_overlay == null) _overlay = gameObject.AddComponent<ArtSpriteOverlay>();
             _baseTint = tint;
             _overlay.Init(sprite, localPosition, localScale, sortingOrder, tint, shadow);
+            _overlay.SetVisible(true); // undo any earlier ClearOverride() hide - Init means "show this now"
             return true;
+        }
+
+        /// <summary>
+        /// Removes the promoted overlay and restores the actor's own generated art at full opacity.
+        /// Call this on any shared, mission-crossing actor (squirrel/predator) at the start of every
+        /// mission - otherwise a sprite one mission promoted (e.g. Eagle Shadow Panic's talon grip)
+        /// stays visible, and its dimmed fallback body stays dimmed, in whatever unrelated mission
+        /// reuses that actor next.
+        /// </summary>
+        public void ClearOverride()
+        {
+            ResourcePath = string.Empty;
+            if (_overlay != null) _overlay.SetVisible(false);
+            _fallbackMaxAlpha = 1f;
+            var renderer = MissionPropArt.FindFallbackRenderer(gameObject);
+            if (renderer != null)
+            {
+                var color = renderer.color;
+                color.a = 1f;
+                renderer.color = color;
+            }
         }
 
         public bool SetResource(string resourcePath)

@@ -1135,6 +1135,14 @@ namespace CheddarAndCocoa.Game
             ClearTreats();
             for (int i = 0; i < treatCount; i++) SpawnTreat();
 
+            // Squirrel and Predator are shared actors reused across many missions. A mission that
+            // promotes a mission-prop overlay onto one of them (e.g. Eagle Shadow Panic's talon grip,
+            // Coyotes Fence's pinned-gap post) leaves that sprite - and the dimmed fallback body under
+            // it - in place until something else overwrites it. Clear both every mission start so a
+            // fresh mission never inherits a stale overlay from whatever last used the actor.
+            ClearSharedActorOverride(SquirrelObject);
+            ClearSharedActorOverride(PredatorObject);
+
             // Park the waiting squirrel on a visible perch just inside the close camera instead of the
             // far yard corner, so players actually see the threat the HUD/arrows reference. It is still
             // far enough from the dog spawns (+/-10,0) to not be in instant bark range.
@@ -2874,6 +2882,12 @@ namespace CheddarAndCocoa.Game
         private void PlaceObject(GameObject go, Vector2 position)
         {
             if (go != null) go.transform.position = position;
+        }
+
+        private static void ClearSharedActorOverride(GameObject actor)
+        {
+            if (actor != null && actor.TryGetComponent<MissionPropArtAttachment>(out var attachment))
+                attachment.ClearOverride();
         }
 
         private string DogName(DogController dog)
