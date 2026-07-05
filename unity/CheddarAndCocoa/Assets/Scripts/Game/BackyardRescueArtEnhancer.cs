@@ -21,6 +21,7 @@ namespace CheddarAndCocoa.Game
         private float _nextSunbeamCheckAt;
         private float _nextSquirrelMumbleAt;
         private float _nextToyEnvyAt;
+        private float _nextTreatReverenceAt;
 
         public bool Enhanced { get; private set; }
         public int OverlayCount { get; private set; }
@@ -37,6 +38,9 @@ namespace CheddarAndCocoa.Game
         // decorative - fires only when both dogs claim the rope at once and neither is already
         // in a real Tug interaction, so it never masks the actual co-op tug objective.
         public int ToyEnvyCount { get; private set; }
+        // Running gag: "Dropped food has religious significance." Purely decorative - fires only
+        // when a dog is idle right next to an uncollected treat, never interferes with pickup.
+        public int TreatReverenceCount { get; private set; }
         public string LastEnhancementSummary { get; private set; } = string.Empty;
         public bool BackyardThreatsHaveReadableShadows =>
             HasReadableShadow(_game != null ? _game.SquirrelObject : null, "CouchReadableSquirrelShadow") &&
@@ -128,6 +132,7 @@ namespace CheddarAndCocoa.Game
             _nextSunbeamCheckAt = Time.time + 6f;
             _nextSquirrelMumbleAt = Time.time + 8f;
             _nextToyEnvyAt = Time.time + 7f;
+            _nextTreatReverenceAt = Time.time + 9f;
             LastEnhancementSummary = $"Art overlays active: {OverlayCount}, environment overlays: {EnvironmentArtOverlayCount}, building overlays: {BuildingArtOverlayCount}";
             _lastFeedback = _game.LastFeedback;
             _lastScoreLabel = _game.LastScoreEventLabel;
@@ -187,6 +192,13 @@ namespace CheddarAndCocoa.Game
                 _nextToyEnvyAt = Time.time + 7f;
                 if (_game.ActiveMissionVariant == GameManager.MissionVariant.BackyardRescue)
                     TrySpawnToyEnvy();
+            }
+
+            if (Time.time >= _nextTreatReverenceAt)
+            {
+                _nextTreatReverenceAt = Time.time + 9f;
+                if (_game.ActiveMissionVariant == GameManager.MissionVariant.BackyardRescue)
+                    TrySpawnTreatReverence();
             }
         }
 
@@ -623,6 +635,50 @@ namespace CheddarAndCocoa.Game
             if (_cocoa.TryGetComponent<DogReadabilityFeedback>(out var cocoaFeedback))
                 cocoaFeedback.ShowTug((Vector2)(ropePos - _cocoa.transform.position));
             ToyEnvyCount++;
+        }
+
+        /// <summary>Public so tests can trigger the gag directly instead of waiting out the 9s cooldown.</summary>
+        public void TrySpawnTreatReverence()
+        {
+            if (_cheddar == null)
+            {
+                var found = GameObject.Find("Cheddar");
+                if (found == null) return;
+                _cheddar = found.GetComponent<DogController>();
+                if (_cheddar == null) return;
+            }
+            if (_cocoa == null)
+            {
+                var found = GameObject.Find("Cocoa");
+                if (found == null) return;
+                _cocoa = found.GetComponent<DogController>();
+                if (_cocoa == null) return;
+            }
+
+            const float reverenceRadius = 2f;
+            Treat nearestTreat = null;
+            DogController reverentDog = null;
+            float bestDistance = float.PositiveInfinity;
+            foreach (var treat in FindObjectsByType<Treat>(FindObjectsSortMode.None))
+            {
+                if (treat == null || !treat.gameObject.activeInHierarchy) continue;
+                foreach (var dog in new[] { _cheddar, _cocoa })
+                {
+                    if (dog == null) continue;
+                    float distance = Vector2.Distance(dog.transform.position, treat.transform.position);
+                    if (distance < bestDistance) { bestDistance = distance; nearestTreat = treat; reverentDog = dog; }
+                }
+            }
+            if (nearestTreat == null || reverentDog == null || bestDistance > reverenceRadius) return;
+
+            // Only a quiet, stationary dog gets the reverent pause - not one mid-chase or mid-Tug.
+            if (reverentDog.Busy) return;
+            if (!reverentDog.TryGetComponent<Rigidbody2D>(out var body) || body.linearVelocity.sqrMagnitude > 0.05f) return;
+
+            BackyardArtVfxPulse.Spawn(nearestTreat.transform.position, RuntimeArtSpriteFactory.RuntimeSpriteId.SuccessPop,
+                new Vector3(0.02f, 0.02f, 1f), 20, new Color(1f, 0.92f, 0.6f, 0.35f), 1.2f, 15f);
+            if (reverentDog.TryGetComponent<DogReadabilityFeedback>(out var feedback)) feedback.ShowProudBrief();
+            TreatReverenceCount++;
         }
     }
 }

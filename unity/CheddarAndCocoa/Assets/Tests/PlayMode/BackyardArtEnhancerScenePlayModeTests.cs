@@ -205,6 +205,55 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator TreatReverenceGag_FiresWhenIdleNearATreatAndStaysQuietWhenFar()
+        {
+            yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
+            yield return null;
+            yield return null;
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            Assert.IsNotNull(game);
+            game.StartMission(GameManager.MissionVariant.BackyardRescue);
+            yield return null;
+
+            var enhancer = Object.FindFirstObjectByType<BackyardRescueArtEnhancer>();
+            if (enhancer == null)
+            {
+                var go = new GameObject("BackyardRescueArtEnhancer_TestFallback");
+                enhancer = go.AddComponent<BackyardRescueArtEnhancer>();
+            }
+            enhancer.EnhanceNow();
+            yield return null;
+
+            var treat = Object.FindFirstObjectByType<Treat>();
+            Assert.IsNotNull(treat);
+            var cheddar = GameObject.Find("Cheddar");
+            Assert.IsNotNull(cheddar);
+            cheddar.GetComponent<CheddarAndCocoa.Input.GamepadPlayerInput>().enabled = false;
+            var body = cheddar.GetComponent<Rigidbody2D>();
+
+            // Far from every treat: the reverent pause stays quiet.
+            cheddar.transform.position = treat.transform.position + Vector3.right * 20f;
+            if (body != null) body.linearVelocity = Vector2.zero;
+            yield return null;
+
+            enhancer.TrySpawnTreatReverence();
+            Assert.AreEqual(0, enhancer.TreatReverenceCount,
+                "No dog is idle near an uncollected treat - the gag should stay quiet.");
+
+            // Idle right next to (not overlapping - the treat's own trigger collider is only 0.6
+            // units, and this must not accidentally collect it) a treat: dropped food has religious
+            // significance.
+            cheddar.transform.position = treat.transform.position + Vector3.right * 1.2f;
+            if (body != null) body.linearVelocity = Vector2.zero;
+            yield return null;
+
+            enhancer.TrySpawnTreatReverence();
+            Assert.AreEqual(1, enhancer.TreatReverenceCount,
+                "An idle dog right next to dropped food should pause in reverence.");
+        }
+
+        [UnityTest]
         public IEnumerator ReactToFeedbackAndScore_OnlyFireDuringBackyardRescueNotOtherMissions()
         {
             yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
