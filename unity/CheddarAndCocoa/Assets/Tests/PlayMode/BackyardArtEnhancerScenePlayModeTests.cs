@@ -254,6 +254,53 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator PoolFascinationGag_FiresAtTheWatersEdgeAndStaysQuietAwayFromIt()
+        {
+            yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
+            yield return null;
+            yield return null;
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            Assert.IsNotNull(game);
+            game.StartMission(GameManager.MissionVariant.BackyardRescue);
+            yield return null;
+
+            var enhancer = Object.FindFirstObjectByType<BackyardRescueArtEnhancer>();
+            if (enhancer == null)
+            {
+                var go = new GameObject("BackyardRescueArtEnhancer_TestFallback");
+                enhancer = go.AddComponent<BackyardRescueArtEnhancer>();
+            }
+            enhancer.EnhanceNow();
+            yield return null;
+
+            var cheddar = GameObject.Find("Cheddar");
+            Assert.IsNotNull(cheddar);
+            cheddar.GetComponent<CheddarAndCocoa.Input.GamepadPlayerInput>().enabled = false;
+            var body = cheddar.GetComponent<Rigidbody2D>();
+
+            // Far from the pool entirely: no fascination.
+            cheddar.transform.position = new Vector3(50f, 50f, 0f);
+            if (body != null) body.linearVelocity = Vector2.zero;
+            yield return null;
+
+            enhancer.TrySpawnPoolFascination();
+            Assert.AreEqual(0, enhancer.PoolFascinationCount,
+                "Nowhere near the water - the pool gag should stay quiet.");
+
+            // Idle right at the water's edge (just outside the rect, not actually swimming):
+            // the pool is both terrifying and fascinating.
+            Rect water = BackyardPoolZone.WaterRect;
+            cheddar.transform.position = new Vector3(water.xMax + 1f, water.center.y, 0f);
+            if (body != null) body.linearVelocity = Vector2.zero;
+            yield return null;
+
+            enhancer.TrySpawnPoolFascination();
+            Assert.AreEqual(1, enhancer.PoolFascinationCount,
+                "An idle dog right at the water's edge should get the terrified-but-fascinated flinch.");
+        }
+
+        [UnityTest]
         public IEnumerator ReactToFeedbackAndScore_OnlyFireDuringBackyardRescueNotOtherMissions()
         {
             yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);

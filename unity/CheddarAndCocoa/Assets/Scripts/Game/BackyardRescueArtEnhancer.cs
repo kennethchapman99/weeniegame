@@ -22,6 +22,7 @@ namespace CheddarAndCocoa.Game
         private float _nextSquirrelMumbleAt;
         private float _nextToyEnvyAt;
         private float _nextTreatReverenceAt;
+        private float _nextPoolFascinationAt;
 
         public bool Enhanced { get; private set; }
         public int OverlayCount { get; private set; }
@@ -41,6 +42,9 @@ namespace CheddarAndCocoa.Game
         // Running gag: "Dropped food has religious significance." Purely decorative - fires only
         // when a dog is idle right next to an uncollected treat, never interferes with pickup.
         public int TreatReverenceCount { get; private set; }
+        // Running gag: "The pool is both terrifying and fascinating." Purely decorative - fires
+        // only when a dog is idle right at the water's edge, not swimming or on a floatie.
+        public int PoolFascinationCount { get; private set; }
         public string LastEnhancementSummary { get; private set; } = string.Empty;
         public bool BackyardThreatsHaveReadableShadows =>
             HasReadableShadow(_game != null ? _game.SquirrelObject : null, "CouchReadableSquirrelShadow") &&
@@ -133,6 +137,7 @@ namespace CheddarAndCocoa.Game
             _nextSquirrelMumbleAt = Time.time + 8f;
             _nextToyEnvyAt = Time.time + 7f;
             _nextTreatReverenceAt = Time.time + 9f;
+            _nextPoolFascinationAt = Time.time + 10f;
             LastEnhancementSummary = $"Art overlays active: {OverlayCount}, environment overlays: {EnvironmentArtOverlayCount}, building overlays: {BuildingArtOverlayCount}";
             _lastFeedback = _game.LastFeedback;
             _lastScoreLabel = _game.LastScoreEventLabel;
@@ -199,6 +204,13 @@ namespace CheddarAndCocoa.Game
                 _nextTreatReverenceAt = Time.time + 9f;
                 if (_game.ActiveMissionVariant == GameManager.MissionVariant.BackyardRescue)
                     TrySpawnTreatReverence();
+            }
+
+            if (Time.time >= _nextPoolFascinationAt)
+            {
+                _nextPoolFascinationAt = Time.time + 10f;
+                if (_game.ActiveMissionVariant == GameManager.MissionVariant.BackyardRescue)
+                    TrySpawnPoolFascination();
             }
         }
 
@@ -679,6 +691,50 @@ namespace CheddarAndCocoa.Game
                 new Vector3(0.02f, 0.02f, 1f), 20, new Color(1f, 0.92f, 0.6f, 0.35f), 1.2f, 15f);
             if (reverentDog.TryGetComponent<DogReadabilityFeedback>(out var feedback)) feedback.ShowProudBrief();
             TreatReverenceCount++;
+        }
+
+        /// <summary>Public so tests can trigger the gag directly instead of waiting out the 10s cooldown.</summary>
+        public void TrySpawnPoolFascination()
+        {
+            if (_cheddar == null)
+            {
+                var found = GameObject.Find("Cheddar");
+                if (found == null) return;
+                _cheddar = found.GetComponent<DogController>();
+                if (_cheddar == null) return;
+            }
+            if (_cocoa == null)
+            {
+                var found = GameObject.Find("Cocoa");
+                if (found == null) return;
+                _cocoa = found.GetComponent<DogController>();
+                if (_cocoa == null) return;
+            }
+
+            const float edgeBand = 2.5f;
+            Rect water = BackyardPoolZone.WaterRect;
+            foreach (var dog in new[] { _cheddar, _cocoa })
+            {
+                if (dog == null) continue;
+                Vector2 pos = dog.transform.position;
+                // Already swimming/drying off, or actually in the water - that's a different beat,
+                // not "standing at the edge working up the nerve".
+                if (dog.Mode == MovementMode.Swimming || dog.Mode == MovementMode.Shaking) continue;
+                if (BackyardPoolZone.InPoolRect(pos)) continue;
+                if (dog.Busy) continue;
+
+                float dx = Mathf.Max(water.xMin - pos.x, Mathf.Max(pos.x - water.xMax, 0f));
+                float dy = Mathf.Max(water.yMin - pos.y, Mathf.Max(pos.y - water.yMax, 0f));
+                if (Mathf.Sqrt(dx * dx + dy * dy) > edgeBand) continue;
+
+                if (!dog.TryGetComponent<Rigidbody2D>(out var body) || body.linearVelocity.sqrMagnitude > 0.05f) continue;
+
+                BackyardArtVfxPulse.Spawn(pos, RuntimeArtSpriteFactory.RuntimeSpriteId.WarningAlert,
+                    new Vector3(0.016f, 0.016f, 1f), 19, new Color(0.5f, 0.75f, 1f, 0.32f), 0.9f, 35f);
+                if (dog.TryGetComponent<DogReadabilityFeedback>(out var feedback)) feedback.ShowPanic();
+                PoolFascinationCount++;
+                return;
+            }
         }
     }
 }
