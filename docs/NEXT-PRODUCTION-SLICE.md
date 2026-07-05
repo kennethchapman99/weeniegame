@@ -401,6 +401,24 @@ assertions that checked the old generic fallback text — two of which are only 
 game-over that bypasses the controller's own `IsFailed`, so they correctly read as an in-progress
 flavor ("Still Defending"/"Still Guarding") rather than a fail phrase. Suite green at `470/470`.
 
+### Running-gag flourishes continue past Backyard Rescue (2026-07-05)
+
+Two more of `GAME-DESIGN-BIBLE.md`'s 12 Running gags shipped after the Backyard Rescue set of five:
+the treat-reverence pause ("dropped food has religious significance") and the pool-edge flinch ("the
+pool is both terrifying and fascinating"), both in `BackyardRescueArtEnhancer`. Then a sixth gag moved
+to a *different* mission for the first time: **Gate Crash**'s `TrySpawnDoorOutrage()` ("Cheddar
+believes every closed door is a personal attack") lives directly in
+`GateCrashMissionController` rather than a shared enhancer, since Gate Crash has no standalone art
+enhancer of its own — Cheddar idling within 2.2 units of the closed, unbraced gate fires a cosmetic
+warning-pulse + "HOW DARE YOU" world-pop, gated off whenever the gate is actually held open or mid-snap
+reaction. Purely cosmetic, no scoring/mechanic effect, same template as the Backyard Rescue gags (timer
+field initialized in `StartMission()`, public `TrySpawnX()` test hook, two-assertion test). Covered by
+`GateCrash_DoorOutrageGag_FiresWhenCheddarIdlesAtTheClosedGateAndStaysQuietWhileHeld`. Suite green at
+`473/473`. Six of twelve running gags now implemented; remaining candidates worth a similar per-mission
+look: "every walk is an intelligence-gathering mission" (Leash Walk checkpoints), "the couch is sacred
+land" and "human legs are moving environmental hazards" (no current mission has a literal couch or
+walking-human hazard yet), "just one more nail" (no obvious mission fit yet).
+
 ## Architecture guardrails
 
 - `GameManager` owns orchestration, mission selection, session flow, and shared-service wiring.
