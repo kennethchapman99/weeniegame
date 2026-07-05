@@ -432,6 +432,29 @@ Same template again - cooldown timer initialized off the `0` default in `StartMi
 hook, two-assertion test (`LeashWalk_IntelGatheredGag_FiresWhenOneDogScoutsAheadAloneAndStaysQuietWhenBothArrive`).
 Suite green at `474/474`. **Seven of twelve** running gags now implemented.
 
+### Stale mission-prop overlays bleeding across missions on shared actors (2026-07-05)
+
+Found by asking: for any mission that promotes a `MissionPropArtAttachment` overlay onto one of the
+*shared* actors (Squirrel, Predator - reused across most of the 22-mission roster, not recreated per
+mission), does anything ever undo that overlay when a different mission reuses the same actor? It did
+not. Eagle Shadow Panic's talon-grip sprite (set on the squirrel object during the snatch/rescue beat)
+and Coyotes Fence's pinned-gap post sprite (set on the predator object) both dim that actor's generated
+fallback body to ~10-14% alpha so the overlay reads as the primary art, via
+`MissionPropArtAttachment.CapFallbackAlpha`. Nothing in the codebase ever raised that cap back up or
+hid the overlay - `ApplyFallbackAlphaCap` only ever lowers alpha, never restores it. Since the overlay's
+`GameObject` lives directly on the shared actor and is never destroyed between missions, playing Eagle
+Shadow Panic (or Coyotes Fence) even once and then switching to *any other* squirrel/predator-using
+mission left that leftover sprite (and the dimmed body under it) visible for the rest of the session -
+including a replay of the *same* mission (Coyotes Fence restarting already showing a previously-pinned
+gap before the player re-pins anything).
+
+Fixed at the root: added `MissionPropArtAttachment.ClearOverride()` (hides the overlay, restores full
+fallback alpha) and wired it into `GameManager.StartMission()`'s shared per-round reset for
+`SquirrelObject` and `PredatorObject` - every mission now starts both actors clean, and any controller
+that wants its own overlay lays it down fresh via its existing `Init()`/`SetSprite()` calls (which now
+also re-shows the overlay, undoing an earlier clear). Covered by
+`EagleShadowPanic_TalonGripOverlay_DoesNotBleedIntoTheNextMission`. Suite green at `475/475`.
+
 ## Architecture guardrails
 
 - `GameManager` owns orchestration, mission selection, session flow, and shared-service wiring.
