@@ -283,6 +283,28 @@ other per-dog overlay fields, `MissionScopedScenery`'s live per-frame mission-va
 no further instances — `RequestAudioCue`/`SpawnWorldPop`/`ClearMissionPose`/score fields already reset
 or layer correctly.
 
+Also closed the `ARENA-PLAYABLE.md` "duplicate rescued/proud and rope tug/complete source poses" note:
+`rope_tug.png`/`rope_complete.png` were byte-identical (confirmed via `md5`) because
+`export_arena_final.py` cropped the same box for both — `BackyardRescueArtEnhancer.CompleteTug`'s
+overlay swap to `RopeComplete` on tug clear had zero visible effect. Fixed with a new
+`tools/art/generate_rope_complete_variant.py` (golden tint + sparkle overlay derived from the exported
+`rope_tug.png`), and removed the redundant crop from the export table so a future re-run can't recreate
+the duplicate. Covered by `RopeTugAndRopeComplete_AreVisuallyDistinct`. Ran the same duplicate-hash scan
+(`find .../ArenaFinal -iname "*.png" | xargs md5 | sort | uniq -d`) across the *entire* generated-art
+tree and found only two other duplicate groups, both confirmed intentional aliases in the generator
+scripts (not bugs) — so rope was the only real "same slot needs to visibly change state" gap in the
+whole library. The dog `_proud`/`_rescued` duplicate is real too but never visible in practice
+(`ApplyPose` immediately overrides it with genuinely distinct Motion-frame art from
+`export_character_outcomes.py`), so left alone.
+
+Also added two running gags from `GAME-DESIGN-BIBLE.md`'s list that were named but never built, both
+in `BackyardRescueArtEnhancer` (same purely-decorative risk profile as the existing untested ambient
+leaf pop — no scoring or mechanic changes): Cocoa's sunbeam-ownership pose beat (`SunbeamClaimCount`)
+and the squirrel's villain-monologue mumble (`SquirrelMumbleCount`, explicitly gated off whenever
+`ActorSignalBadge.IsShowing` so it never competes with the real steal-warning signal). Noted both in
+`FAMILY-SHOWCASE-MANUAL-TEST.md`'s Backyard Rescue watch-list for the next couch session. Suite green
+at `463/463`.
+
 ## Architecture guardrails
 
 - `GameManager` owns orchestration, mission selection, session flow, and shared-service wiring.
