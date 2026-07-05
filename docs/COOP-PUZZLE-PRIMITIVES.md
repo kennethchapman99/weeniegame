@@ -36,7 +36,12 @@ All primitives are **pure logic** (no `MonoBehaviour`), in `CheddarAndCocoa.Game
 | `CoopSocialManipulationPuzzle` | #9 social manipulation | A human reads an **exact combination** of stimuli (door-stare, present-leash, …) drawn from **both** dogs — neither can send the message alone | Wrong/incomplete combo builds `Confusion` (faster with an off-message stimulus); maxed → the human **Misreads** (brings the wrong thing) and resets |
 | `CoopBaitSwitchPuzzle` | #4 bait-and-switch + #7 readable deception | **Commitment + overbait hold**: the baiter feints an enemy onto a decoy; the striker's snatch lands anywhere in the **Committed** band (threshold→full), so the baiter commits then feathers rather than pinning, and the striker reads the window | Under-bait = **Whiff** (enemy still guarding); *holding* the pin at full past the overbait tolerance → enemy wises up / Cheddar takes his own bait = **Backfire** (window snaps shut) |
 
-Each primitive also ships a `MonoBehaviour` **driver** that turns it into an in-scene beat:
+Each primitive also ships a `MonoBehaviour` **driver** that turns it into an in-scene beat. **None of
+these driver classes are currently used** - every migrated mission controller holds its primitive
+instance directly (e.g. `GateCrashMissionController` owns a `CoopHoldReleasePuzzle` field and calls
+`Configure`/`Advance` itself) rather than going through the matching `Beat` wrapper. They're orphaned,
+not wired into any controller or scene, and are a pending cleanup decision rather than an active
+integration path - do not treat the list below as "the way controllers currently do it":
 
 - `CoopHoldReleaseBeat` — continuous proximity (anchor in hold zone, crosser in cross corridor).
 - `CoopDistractSneakBeat` — continuous proximity (distractor in enemy zone, sneaker in lane).
