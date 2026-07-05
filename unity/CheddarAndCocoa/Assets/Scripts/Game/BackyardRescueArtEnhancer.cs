@@ -18,6 +18,7 @@ namespace CheddarAndCocoa.Game
         private float _nextAmbientAt;
         private DogController _cocoa;
         private float _nextSunbeamCheckAt;
+        private float _nextSquirrelMumbleAt;
 
         public bool Enhanced { get; private set; }
         public int OverlayCount { get; private set; }
@@ -28,6 +29,8 @@ namespace CheddarAndCocoa.Game
         // Running gag from the design bible: "Cocoa has legal ownership of all sunbeams." Purely
         // decorative - same risk profile as the ambient leaf pop, no gameplay effect.
         public int SunbeamClaimCount { get; private set; }
+        // Running gag: "The squirrel has villain monologues nobody understands." Purely decorative.
+        public int SquirrelMumbleCount { get; private set; }
         public string LastEnhancementSummary { get; private set; } = string.Empty;
         public bool BackyardThreatsHaveReadableShadows =>
             HasReadableShadow(_game != null ? _game.SquirrelObject : null, "CouchReadableSquirrelShadow") &&
@@ -117,6 +120,7 @@ namespace CheddarAndCocoa.Game
             Enhanced = true;
             _nextAmbientAt = Time.time + 2.5f;
             _nextSunbeamCheckAt = Time.time + 6f;
+            _nextSquirrelMumbleAt = Time.time + 8f;
             LastEnhancementSummary = $"Art overlays active: {OverlayCount}, environment overlays: {EnvironmentArtOverlayCount}, building overlays: {BuildingArtOverlayCount}";
             _lastFeedback = _game.LastFeedback;
             _lastScoreLabel = _game.LastScoreEventLabel;
@@ -152,6 +156,13 @@ namespace CheddarAndCocoa.Game
                 _nextSunbeamCheckAt = Time.time + 6f;
                 if (_game.ActiveMissionVariant == GameManager.MissionVariant.BackyardRescue)
                     TrySpawnSunbeamClaim();
+            }
+
+            if (Time.time >= _nextSquirrelMumbleAt)
+            {
+                _nextSquirrelMumbleAt = Time.time + 8f;
+                if (_game.ActiveMissionVariant == GameManager.MissionVariant.BackyardRescue)
+                    TrySpawnSquirrelMumble();
             }
         }
 
@@ -535,6 +546,21 @@ namespace CheddarAndCocoa.Game
                 new Vector3(0.03f, 0.03f, 1f), 21, new Color(1f, 0.92f, 0.55f, 0.4f), 1.1f, 20f);
             if (_cocoa.TryGetComponent<DogReadabilityFeedback>(out var feedback)) feedback.ShowProudBrief();
             SunbeamClaimCount++;
+        }
+
+        /// <summary>Public so tests can trigger the gag directly instead of waiting out the 8s cooldown.</summary>
+        public void TrySpawnSquirrelMumble()
+        {
+            var squirrel = _game.SquirrelObject;
+            if (squirrel == null || !squirrel.activeSelf) return;
+
+            // Never compete with the real gameplay-relevant urgency badge (e.g. an active steal).
+            if (squirrel.TryGetComponent<ActorSignalBadge>(out var badge) && badge.IsShowing) return;
+
+            Vector3 pos = squirrel.transform.position + Vector3.up * 1.1f;
+            BackyardArtVfxPulse.Spawn(pos, RuntimeArtSpriteFactory.RuntimeSpriteId.BarkRing,
+                new Vector3(0.018f, 0.018f, 1f), 23, new Color(0.55f, 0.42f, 0.6f, 0.4f), 0.9f, 40f);
+            SquirrelMumbleCount++;
         }
     }
 }

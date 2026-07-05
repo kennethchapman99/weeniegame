@@ -127,6 +127,39 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator SquirrelMumbleGag_FiresWhenCalmAndStaysQuietDuringRealStealWarning()
+        {
+            yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
+            yield return null;
+            yield return null;
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            Assert.IsNotNull(game);
+            game.StartMission(GameManager.MissionVariant.BackyardRescue);
+            yield return null;
+
+            var enhancer = Object.FindFirstObjectByType<BackyardRescueArtEnhancer>();
+            if (enhancer == null)
+            {
+                var go = new GameObject("BackyardRescueArtEnhancer_TestFallback");
+                enhancer = go.AddComponent<BackyardRescueArtEnhancer>();
+            }
+            enhancer.EnhanceNow();
+            yield return null;
+
+            enhancer.TrySpawnSquirrelMumble();
+            Assert.AreEqual(1, enhancer.SquirrelMumbleCount,
+                "A calm, waiting squirrel should get its unintelligible villain monologue.");
+
+            game.ForceSquirrelStealAttempt();
+            yield return null;
+
+            enhancer.TrySpawnSquirrelMumble();
+            Assert.AreEqual(1, enhancer.SquirrelMumbleCount,
+                "The mumble gag must not compete with the real steal-warning signal badge.");
+        }
+
+        [UnityTest]
         public IEnumerator BackyardThreatPresentation_UsesQuietReferenceArtGroundShadowsAndEagleMotion()
         {
             yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
