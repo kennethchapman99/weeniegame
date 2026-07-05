@@ -601,3 +601,24 @@ RequestShake` plumbing GateCrash needed), this was a one-line `RequestShake(0.2f
 existing `RequestRumble("predator_penalty", ...)`. Extended the existing predator-attack assertions in
 `BackyardMission_Objectives_Hazards_Tug_Clear_AndRestart` (`ArenaGameLoopPlayModeTests.cs`) to pin
 `ShakeRequestCount == 1` right after the hit. Suite green at `486/486`.
+
+### Victory Lap / "Backyard legends!" no longer fires on a session of failures (2026-07-05)
+
+`SessionAllMissionsCompleted` - which gates the "Victory Lap" continue-button label and the "Backyard
+legends! Cheddar + Cocoa finished every mission." session-summary headline - was driven by
+`SessionUniqueMissionsCompleted`, a count of missions *attempted* at least once regardless of outcome.
+A player who failed every single mission in the roster would still be told they were legends who
+finished everything. The existing test proved it: `CompleteFullMissionSession_OffersExplicitVictoryLap`
+force-failed every mission via `ForceGameOver()` and asserted the victory messaging fired anyway.
+
+Added `SessionUniqueMissionsCleared`, tracked from the existing `_sessionClearedMissions` array (already
+correctly populated only on a real `Outcome.Clear`, previously used only for the mission-select tile's
+CLEARED/RETRY status text). `SessionAllMissionsCompleted` and the summary's "X/Y finished" readout now
+key off the cleared count. Left `SessionUniqueMissionsCompleted` alone for its other, correctly-"attempt"
+-based uses: the mission-select "X/Y tried" label and `NextUnfinishedMissionIndex`'s routing (picking
+which mission "Continue"/"Next" should jump to isn't a victory claim, so attempt-tracking is still right
+there). Replaced the misleading test with `FailingEveryMission_DoesNotOfferVictoryLap` (proves failing
+the whole roster does NOT trigger the victory messaging, while the attempt-based "Continue" routing
+still wraps to the first mission) and added `SessionUniqueMissionsCleared_OnlyCountsActualClearsNotAttempts`
+(a mixed fail+real-clear case, using Gate Crash's existing hold+cross clear sequence). Suite green at
+`487/487`.
