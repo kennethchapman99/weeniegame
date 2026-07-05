@@ -323,6 +323,20 @@ and confirmed this was isolated to this one file; also confirmed `ArenaWowSetDre
 roster-wide wow layer) is correctly per-mission-scoped already, not the same bug. Covered by
 `ReactToFeedbackAndScore_OnlyFireDuringBackyardRescueNotOtherMissions`. Suite green at `465/465`.
 
+Applying the same "does this timed reaction actually expire" lens roster-wide: `BoneRelayMissionController`'s
+mound Found/Wrong sprite override (`_moundOverrideArt`) had no expiry at all, unlike the identical
+pattern already correct in `GreatEscapeMissionController`/`ChaosMachineMissionController`
+(`_stationOverrideUntil`), `BlanketCatchMissionController` (`_fallingOverrideUntil`), and
+`SquirrelSwitcherooMissionController`/`GateCrashMissionController`/`TableStealthMissionController`/
+`WalkCampaignMissionController`/`MarkTheYardMissionController` (their own `*ReactionUntil` fields, all
+verified correctly set/reset/checked). Simulated `CoopScentRelayPuzzle`'s LCG target sequence across
+2000 seeds and confirmed BoneRelay's fixed 4-mound/3-find configuration happens to never repeat a
+mound index within one round (an incidental property of the RNG constants mod 4, not a documented
+guarantee) — so this wasn't currently causing a visible bug, but it was the one sibling controller not
+defending against a re-called mound getting stuck on a stale "already dug" sprite. Brought it in line
+with the same timed-override pattern. Covered by `Bone_MoundOverrideExpiresInsteadOfStayingStuck`.
+Suite green at `466/466`.
+
 ## Architecture guardrails
 
 - `GameManager` owns orchestration, mission selection, session flow, and shared-service wiring.
