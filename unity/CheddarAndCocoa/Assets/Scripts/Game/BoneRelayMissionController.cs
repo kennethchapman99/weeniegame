@@ -22,6 +22,7 @@ namespace CheddarAndCocoa.Game
         private GameObject[] _mounds;
         private MissionPropArtAttachment[] _moundArt;
         private string[] _moundOverrideArt;
+        private float[] _moundOverrideUntil;
         private int _lastActedMound = -1;
         private int _diggerInside = -1;
         private int _findsSeen;
@@ -213,7 +214,10 @@ namespace CheddarAndCocoa.Game
                     sr.color = isCall ? MoundCallColor : MoundIdleColor;
                 if (_moundArt != null && _moundArt[i] != null)
                 {
-                    string overridePath = _moundOverrideArt != null ? _moundOverrideArt[i] : null;
+                    string overridePath = _moundOverrideArt != null && !string.IsNullOrEmpty(_moundOverrideArt[i])
+                        && _context.Now() < _moundOverrideUntil[i]
+                        ? _moundOverrideArt[i]
+                        : null;
                     MissionPropArt.SetSprite(_moundArt[i], !string.IsNullOrEmpty(overridePath)
                         ? overridePath
                         : isCall
@@ -238,6 +242,7 @@ namespace CheddarAndCocoa.Game
             _mounds = new GameObject[MoundSpots.Length];
             _moundArt = new MissionPropArtAttachment[MoundSpots.Length];
             _moundOverrideArt = new string[MoundSpots.Length];
+            _moundOverrideUntil = new float[MoundSpots.Length];
             for (int i = 0; i < MoundSpots.Length; i++)
             {
                 var go = new GameObject($"BoneMound_{i}");
@@ -276,13 +281,24 @@ namespace CheddarAndCocoa.Game
         private void ClearMoundOverrides()
         {
             if (_moundOverrideArt == null) return;
-            for (int i = 0; i < _moundOverrideArt.Length; i++) _moundOverrideArt[i] = null;
+            for (int i = 0; i < _moundOverrideArt.Length; i++)
+            {
+                _moundOverrideArt[i] = null;
+                _moundOverrideUntil[i] = 0f;
+            }
         }
 
-        private void SetMoundOverride(int index, string resourcePath)
+        /// <summary>
+        /// Timed, not permanent: the puzzle's random target sequence can call the same mound again
+        /// for a later find, and a stale "FOUND!"/"WRONG!" override would then hide the current call
+        /// (badge/tint would say "dig here", but the sprite would still say "already dug"). Matches
+        /// the same timed-override pattern used in GreatEscape/ChaosMachine's station reactions.
+        /// </summary>
+        private void SetMoundOverride(int index, string resourcePath, float seconds = 1f)
         {
             if (_moundOverrideArt == null || index < 0 || index >= _moundOverrideArt.Length) return;
             _moundOverrideArt[index] = resourcePath;
+            _moundOverrideUntil[index] = _context.Now() + seconds;
         }
 
         private Transform FindNearestActiveMound(int dogIndex)

@@ -144,6 +144,33 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator Bone_MoundOverrideExpiresInsteadOfStayingStuck()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.BoneRelay);
+            yield return null;
+
+            _game.ForceBoneReveal();
+            int correct = _game.BoneRelayPuzzle.CorrectTarget;
+            _game.ForceBoneDig(correct);
+
+            var moundObj = GameObject.Find($"BoneMound_{correct}");
+            Assert.IsNotNull(moundObj);
+            var art = moundObj.GetComponent<MissionPropArtAttachment>();
+            Assert.IsNotNull(art);
+            Assert.AreEqual(FinalGameplayArt.BoneRelayMoundFound, art.ResourcePath,
+                "Right after a correct dig the mound should show its Found celebration sprite.");
+
+            yield return new WaitForSecondsRealtime(1.1f);
+            yield return null; // let the normal per-frame Tick refresh visuals
+
+            Assert.AreNotEqual(FinalGameplayArt.BoneRelayMoundFound, art.ResourcePath,
+                "The Found override must expire on its own - a stale 'already found' sprite must not " +
+                "linger and potentially mask a later call to the same mound (the puzzle's random " +
+                "sequence can call the same mound again for a later find).");
+        }
+
+        [UnityTest]
         public IEnumerator Bone_PositionDriven_ReadAtPostThenDigTheCall()
         {
             yield return LoadArena();
