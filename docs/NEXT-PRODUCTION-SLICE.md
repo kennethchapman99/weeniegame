@@ -375,6 +375,21 @@ Checked for any remaining instance by grepping every `Destroy(` call across `Gam
 its own) where an immediate destroy is correct. This bug class is now closed roster-wide. Suite green
 at `469/469`.
 
+### End-card flavor-text gap (2026-07-05)
+
+Four missions (`BackyardRescueMissionController`, `SnackHeistMissionController`,
+`KitchenFoodFrenzyMissionController`, `SockPanicMissionController`) returned `null` for
+`OutcomeSummary`, so their end cards fell back to the generic `Outcome.ToString()`
+(`"Clear"`/`"Failed"`) instead of a distinct 2-4 word flavor phrase like all 18 other missions get from
+`MissionOutcomeSummaryBuilder`. Added inline summaries in the same tone: Backyard Rescue ("Backyard
+Secured" / "Squirrel Got Some" / "Still Defending"), Snack Heist ("Stash Secured" / "Squirrel Union
+Wins" / "Still Guarding"), Kitchen ("Dinner Rush Survived" / "Kitchen Disaster" / "Still Cooking"), Sock
+Panic ("Socks Rescued" / "Laundry Day Chaos" / "Still Diving"). Added a new `SockPanicPlayModeTests.cs`
+(this mission had no dedicated test file at all) and fixed 4 now-stale `ArenaGameLoopPlayModeTests.cs`
+assertions that checked the old generic fallback text — two of which are only reachable via a forced
+game-over that bypasses the controller's own `IsFailed`, so they correctly read as an in-progress
+flavor ("Still Defending"/"Still Guarding") rather than a fail phrase. Suite green at `470/470`.
+
 ## Architecture guardrails
 
 - `GameManager` owns orchestration, mission selection, session flow, and shared-service wiring.
