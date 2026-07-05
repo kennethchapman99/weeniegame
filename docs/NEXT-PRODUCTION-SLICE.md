@@ -314,6 +314,11 @@ treat, well outside the treat's own 0.6-unit trigger collider, so it can never i
 collection). Noted in the family-showcase watch-list alongside the other three. Suite green at
 `471/471`.
 
+And a fifth: the pool-fascination flinch (`PoolFascinationCount` — "the pool is both terrifying and
+fascinating"; fires when a dog idles right at `BackyardPoolZone.WaterRect`'s edge while not already
+`Swimming`/`Shaking` or inside the rect, so it never competes with the real pool mechanics). Suite
+green at `472/472`.
+
 While adding those gags, found a real pre-existing cross-mission bug in the same file:
 `BackyardRescueArtEnhancer.ReactToFeedback`/`ReactToScore` had no `ActiveMissionVariant` gate at all
 (unlike the new gags, which all correctly check it). Every mission shares
