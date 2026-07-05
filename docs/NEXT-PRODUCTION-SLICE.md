@@ -257,6 +257,32 @@ single-button and frame-instant (`R`/`Enter`/`Start`, no scene reload), confirme
 that assert `Phase == GameOver` one frame after a forced fail — so "fast re-entry" was already true
 roster-wide and didn't need rework.
 
+### Follow-up polish pass (2026-07-05, continued autonomously per owner's "keep polishing" directive)
+
+Picked up the note above: fixed the roster-wide `FinalJuiceEffect` same-frame clobbering bug instead
+of leaving it deferred. Same-frame `SetJuice` calls (a controller's own fail/success gag immediately
+followed by `EndRound`'s generic `"SAD FLOP REPLAY!"`/`"... POP!"`) now stack with a small vertical
+offset instead of the second call destroying the first before Unity ever renders it — so every
+mission's own gag sprite actually shows, not just its `SpawnWorldPop` text. Cross-frame spawns still
+replace as before (no clutter buildup). One test added
+(`ThunderstormComfort_Bolt_JuicePopSurvivesTheEndRoundClobber`, reusing the bolt scenario since it's
+exactly this double-`SetJuice` same-frame case). Suite green at `460/460`.
+
+Also fixed a real "scene state reset" gap named by CLAUDE.md's hard-rule list but not actually covered:
+`GameManager`'s mission-start dog reset (`SetMode(Free)`/`SetTravelAssist(false)`/etc.) never cleared
+`DogController`'s wet-timer overlay (or `Zoomies`/`OnFloater`), so a dog wet from the backyard pool
+could carry the wet tint into a brand-new round — even an indoor mission with no pool at all, since
+the timer just counts down on its own schedule regardless of what mission is active. Added
+`DogController.ResetMissionOverlays()` and call it alongside the other per-dog resets in `StartMission`.
+Extended `PoolZone_DogOnFloater_StaysDryAndPoolClosesIndoors` to set the dog wet before switching to
+Kitchen and assert `IsWet` is false after. Suite green at `460/460` (test count unchanged — extended an
+existing test rather than adding a new one).
+
+Audited for the same class of bug elsewhere (other single-slot "last write wins" feedback channels,
+other per-dog overlay fields, `MissionScopedScenery`'s live per-frame mission-variant check) and found
+no further instances — `RequestAudioCue`/`SpawnWorldPop`/`ClearMissionPose`/score fields already reset
+or layer correctly.
+
 ## Architecture guardrails
 
 - `GameManager` owns orchestration, mission selection, session flow, and shared-service wiring.
