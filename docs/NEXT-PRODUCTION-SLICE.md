@@ -337,6 +337,44 @@ defending against a re-called mound getting stuck on a stale "already dug" sprit
 with the same timed-override pattern. Covered by `Bone_MoundOverrideExpiresInsteadOfStayingStuck`.
 Suite green at `466/466`.
 
+### Roster-wide "reaction sprite never actually rendered" bug class (2026-07-05)
+
+Found by asking a new question of the same shape: does a controller's reaction sprite survive long
+enough to actually be drawn, or does something hide/destroy/overwrite the same object in the same
+synchronous call before Unity renders that frame? This turned up **four** real instances, all fixed:
+
+1. **Kitchen Falling Food Frenzy**: `ResolveCatch`'s `UnsafeLanding` case and `ResolveLetFall`'s
+   `DodgedBad`/`MissedGood` cases set `_foodArt` to `KitchenFoodSplat` immediately followed by
+   `HideFood()` (`_foodObject.SetActive(false)`) in the same `Tick()` — the falling food just vanished
+   instead of visibly splatting. Fixed with `HideFoodAfterSplat()`, a `_foodHideAt` timer checked at
+   the top of `Tick()`. Covered by `KitchenFrenzy_SplatSpriteLingersBeforeFoodHides`.
+2. **Blanket Catch**: `Tick()` called `HandleProgress()` (sets the Caught/Splat reaction sprite) then
+   immediately `SpawnItem()` in the same call, which reset the sprite and repositioned the item back to
+   the top before it ever rendered. Trickier than Kitchen's fix: naively delaying `SpawnItem()` would
+   leave `_itemY` at/below `CatchLineY`, re-triggering `TryCatch` every frame until respawn. Added a
+   `_respawnAt` timer that short-circuits the whole fall/catch block while a reaction is lingering, so
+   the resolved item just holds still at the catch line. Covered by
+   `Blanket_CaughtSpriteLingersBeforeItemRespawns` (drives a real fall through `Tick()`, since the
+   `ForceBlanketCatch` test hook doesn't exercise this code path at all).
+3. **Sock Panic / Snack Heist / Backyard Rescue's trap recovery**: all three set a reaction sprite
+   directly on a `Treat` (Decoy/Saved/Stashed/Stolen) immediately before calling
+   `_context.RecoverCollectible`/`ReplaceCollectible(treat)` — which called `Destroy(treat.gameObject)`
+   synchronously. Unity defers actual destruction until after `Update()` but still before that frame
+   renders, so none of those sprites ever appeared. Fixed at the root instead of patching three
+   controllers separately: `GameManager.RecoverControllerCollectible`/`ReplaceControllerCollectible`
+   now disable the treat's `Collider2D` immediately (so a dog re-entering the trigger during the linger
+   can't double-collect an already-resolved treat) and call `Destroy(obj, 0.5f)` instead of an
+   immediate `Destroy()`. This one fix retroactively covers every current and future call site,
+   confirmed by checking `SnackHeistMissionController.StealTarget`'s "Stolen" sprite case (same
+   `ReplaceCollectible` call, now automatically correct with no extra changes needed). Covered by
+   `SnackHeist_StashedSpriteLingersBeforeTreatDestroyed`.
+
+Checked for any remaining instance by grepping every `Destroy(` call across `GameManager.cs` and every
+`*MissionController.cs` — the only other call sites are bulk-cleanup paths (`ClearTreats()`,
+`Cleanup()`'s level-area teardown, the generic squirrel-steal-a-treat path with no reaction sprite of
+its own) where an immediate destroy is correct. This bug class is now closed roster-wide. Suite green
+at `469/469`.
+
 ## Architecture guardrails
 
 - `GameManager` owns orchestration, mission selection, session flow, and shared-service wiring.
