@@ -3,6 +3,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
+using CheddarAndCocoa.Dogs;
 using CheddarAndCocoa.Game;
 
 namespace CheddarAndCocoa.Tests
@@ -78,6 +79,51 @@ namespace CheddarAndCocoa.Tests
                 "The painted yard plate should cover the full yard height.");
             Assert.IsTrue(enhancer.PaintedPlateIsSoleYardBackground,
                 "No placeholder rectangle may stay visible where the painted plate provides authored art.");
+        }
+
+        [UnityTest]
+        public IEnumerator CocoaSunbeamGag_FiresWhenIdleAndStaysQuietWhenMoving()
+        {
+            yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
+            yield return null;
+            yield return null;
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            Assert.IsNotNull(game);
+            game.StartMission(GameManager.MissionVariant.BackyardRescue);
+            yield return null;
+
+            var enhancer = Object.FindFirstObjectByType<BackyardRescueArtEnhancer>();
+            if (enhancer == null)
+            {
+                var go = new GameObject("BackyardRescueArtEnhancer_TestFallback");
+                enhancer = go.AddComponent<BackyardRescueArtEnhancer>();
+            }
+            enhancer.EnhanceNow();
+            yield return null;
+
+            var cocoa = GameObject.Find("Cocoa");
+            Assert.IsNotNull(cocoa);
+            // Disable input so nothing decelerates the directly-set velocity back toward zero before
+            // the assertion below runs (matches the pattern in FinalArtIntegrationPlayModeTests).
+            cocoa.GetComponent<CheddarAndCocoa.Input.GamepadPlayerInput>().enabled = false;
+            var body = cocoa.GetComponent<Rigidbody2D>();
+            body.linearVelocity = Vector2.right * 5f;
+            yield return null;
+
+            enhancer.TrySpawnSunbeamClaim();
+            Assert.AreEqual(0, enhancer.SunbeamClaimCount,
+                "Cocoa should not claim a sunbeam while she is running - this is a stationary personality beat.");
+
+            body.linearVelocity = Vector2.zero;
+            yield return null;
+
+            enhancer.TrySpawnSunbeamClaim();
+            Assert.AreEqual(1, enhancer.SunbeamClaimCount,
+                "Cocoa has legal ownership of all sunbeams - an idle beat should trigger the gag.");
+            Assert.AreEqual(DogReadabilityFeedback.Pose.Proud,
+                cocoa.GetComponent<DogReadabilityFeedback>().CurrentPose,
+                "Claiming a sunbeam should read as a proud personality moment.");
         }
 
         [UnityTest]

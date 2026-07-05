@@ -16,6 +16,8 @@ namespace CheddarAndCocoa.Game
         private string _lastScoreLabel = string.Empty;
         private GameManager.FeedbackKind _lastFeedback;
         private float _nextAmbientAt;
+        private DogController _cocoa;
+        private float _nextSunbeamCheckAt;
 
         public bool Enhanced { get; private set; }
         public int OverlayCount { get; private set; }
@@ -23,6 +25,9 @@ namespace CheddarAndCocoa.Game
         public int BuildingArtOverlayCount { get; private set; }
         public bool UsesNoDogPaintedBackyardPlate { get; private set; }
         public int VfxSpawnCount { get; private set; }
+        // Running gag from the design bible: "Cocoa has legal ownership of all sunbeams." Purely
+        // decorative - same risk profile as the ambient leaf pop, no gameplay effect.
+        public int SunbeamClaimCount { get; private set; }
         public string LastEnhancementSummary { get; private set; } = string.Empty;
         public bool BackyardThreatsHaveReadableShadows =>
             HasReadableShadow(_game != null ? _game.SquirrelObject : null, "CouchReadableSquirrelShadow") &&
@@ -110,6 +115,8 @@ namespace CheddarAndCocoa.Game
             AddGeneratedBuildingPropArt();
 
             Enhanced = true;
+            _nextAmbientAt = Time.time + 2.5f;
+            _nextSunbeamCheckAt = Time.time + 6f;
             LastEnhancementSummary = $"Art overlays active: {OverlayCount}, environment overlays: {EnvironmentArtOverlayCount}, building overlays: {BuildingArtOverlayCount}";
             _lastFeedback = _game.LastFeedback;
             _lastScoreLabel = _game.LastScoreEventLabel;
@@ -138,6 +145,13 @@ namespace CheddarAndCocoa.Game
                 _nextAmbientAt = Time.time + 2.5f;
                 if (_game.ActiveMissionVariant == GameManager.MissionVariant.BackyardRescue)
                     SpawnAmbientLeafPop();
+            }
+
+            if (Time.time >= _nextSunbeamCheckAt)
+            {
+                _nextSunbeamCheckAt = Time.time + 6f;
+                if (_game.ActiveMissionVariant == GameManager.MissionVariant.BackyardRescue)
+                    TrySpawnSunbeamClaim();
             }
         }
 
@@ -501,6 +515,26 @@ namespace CheddarAndCocoa.Game
             Vector3 pos = new Vector3(Mathf.Sin(Time.time * 0.71f) * 22f, Mathf.Cos(Time.time * 0.53f) * 12f, 0f);
             BackyardArtVfxPulse.Spawn(pos, RuntimeArtSpriteFactory.RuntimeSpriteId.PickupSparkle, new Vector3(0.025f, 0.025f, 1f), 6, new Color(0.75f, 1f, 0.55f, 0.35f), 0.8f, 30f);
             VfxSpawnCount++;
+        }
+
+        /// <summary>Public so tests can trigger the gag directly instead of waiting out the 6s cooldown.</summary>
+        public void TrySpawnSunbeamClaim()
+        {
+            if (_cocoa == null)
+            {
+                var found = GameObject.Find("Cocoa");
+                if (found == null) return;
+                _cocoa = found.GetComponent<DogController>();
+                if (_cocoa == null) return;
+            }
+
+            if (_cocoa.Busy) return;
+            if (!_cocoa.TryGetComponent<Rigidbody2D>(out var body) || body.linearVelocity.sqrMagnitude > 0.05f) return;
+
+            BackyardArtVfxPulse.Spawn(_cocoa.transform.position, RuntimeArtSpriteFactory.RuntimeSpriteId.SuccessPop,
+                new Vector3(0.03f, 0.03f, 1f), 21, new Color(1f, 0.92f, 0.55f, 0.4f), 1.1f, 20f);
+            if (_cocoa.TryGetComponent<DogReadabilityFeedback>(out var feedback)) feedback.ShowProudBrief();
+            SunbeamClaimCount++;
         }
     }
 }
