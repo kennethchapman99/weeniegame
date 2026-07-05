@@ -622,3 +622,16 @@ the whole roster does NOT trigger the victory messaging, while the attempt-based
 still wraps to the first mission) and added `SessionUniqueMissionsCleared_OnlyCountsActualClearsNotAttempts`
 (a mixed fail+real-clear case, using Gate Crash's existing hold+cross clear sequence). Suite green at
 `487/487`.
+
+### Per-mission challenge flavor text for the remaining 16 missions (2026-07-05)
+
+`GameManager.MissionChallengeLabelFor` (the "Challenge:" line on the mission-select detail panel) only
+had bespoke copy for 6 of 22 missions; the rest fell back to a generic "Challenge: clear clean for
+FLAWLESS" line. Added specific text for the other 16, each matched to that mission's actual
+fail-condition mechanics from `MissionInstructionCatalog`/each controller's own constants: Snack Heist's
+steal limit, Sock Panic's dive count, Weenie Roundup's fumbles, Scent Search's wrong digs, Thunderstorm
+Comfort's claps, Mark the Yard's reclaims, Leash Walk's snaps, Car Ride's spills, Gate Crash's snaps,
+Table Stealth's spotted state, Squirrel Switcheroo's backfires, Walk Campaign's misreads, Bone Relay's
+wasted digs, Great Escape's fumbles, Chaos Machine's misfires, Blanket Catch's rips. Added a completeness
+test asserting every mission variant now returns its own line rather than the generic fallback. Suite
+green at `487/487`.
