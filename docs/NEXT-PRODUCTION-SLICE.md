@@ -297,13 +297,16 @@ whole library. The dog `_proud`/`_rescued` duplicate is real too but never visib
 (`ApplyPose` immediately overrides it with genuinely distinct Motion-frame art from
 `export_character_outcomes.py`), so left alone.
 
-Also added two running gags from `GAME-DESIGN-BIBLE.md`'s list that were named but never built, both
+Also added three running gags from `GAME-DESIGN-BIBLE.md`'s list that were named but never built, all
 in `BackyardRescueArtEnhancer` (same purely-decorative risk profile as the existing untested ambient
-leaf pop — no scoring or mechanic changes): Cocoa's sunbeam-ownership pose beat (`SunbeamClaimCount`)
-and the squirrel's villain-monologue mumble (`SquirrelMumbleCount`, explicitly gated off whenever
-`ActorSignalBadge.IsShowing` so it never competes with the real steal-warning signal). Noted both in
-`FAMILY-SHOWCASE-MANUAL-TEST.md`'s Backyard Rescue watch-list for the next couch session. Suite green
-at `463/463`.
+leaf pop — no scoring or mechanic changes): Cocoa's sunbeam-ownership pose beat (`SunbeamClaimCount`),
+the squirrel's villain-monologue mumble (`SquirrelMumbleCount`, explicitly gated off whenever
+`ActorSignalBadge.IsShowing` so it never competes with the real steal-warning signal), and the toy-envy
+tug tell (`ToyEnvyCount` — fires only when both dogs claim the rope at once and neither is already
+`Busy` in a real Tug interaction, so it never masks the actual co-op tug objective; this is the one
+genuine two-dog interaction of the three, versus the other two being solo idle beats). Noted all three
+in `FAMILY-SHOWCASE-MANUAL-TEST.md`'s Backyard Rescue watch-list for the next couch session. Suite
+green at `464/464`.
 
 ## Architecture guardrails
 

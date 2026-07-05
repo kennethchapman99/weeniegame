@@ -114,11 +114,13 @@ What to watch:
 - Do they use bark without being told a second time?
 - Do they call out squirrel, predator, rope, or rescue moments?
 - Does the camera keep both dogs understandable from couch distance?
-- Two new small personality beats (2026-07-05, purely ambient, no gameplay effect): Cocoa gets a
+- Three new small personality beats (2026-07-05, purely ambient, no gameplay effect): Cocoa gets a
   brief glow-and-proud-pose when she's stood still for a few seconds ("she owns that sunbeam now"),
-  and the squirrel occasionally gets a quiet muttering pulse when it isn't actively stealing (its
-  unintelligible villain monologue). Log it in the Laugh Log if anyone notices or comments on either
-  - that reaction is the actual signal for whether these tiny touches are worth building more of.
+  the squirrel occasionally gets a quiet muttering pulse when it isn't actively stealing (its
+  unintelligible villain monologue), and if both dogs happen to be near the rope toy at the same
+  moment they both flash a "want it now" tug tell (the toy only matters once it's contested). Log
+  it in the Laugh Log if anyone notices or comments on any of these - that reaction is the actual
+  signal for whether these tiny touches are worth building more of.
 
 Good host intervention:
 
