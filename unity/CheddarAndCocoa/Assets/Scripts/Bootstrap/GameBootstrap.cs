@@ -7,10 +7,11 @@ using CheddarAndCocoa.CameraRig;
 namespace CheddarAndCocoa.Bootstrap
 {
     /// <summary>
-    /// Builds the entire ControllerTestScene from code on Play — floor + bounds, a shared camera,
+    /// Builds a complete controller test rig from code on Play — floor + bounds, a shared camera,
     /// and two controller-driven placeholder dogs (Cheddar = P1/pad0, Cocoa = P2/pad1) + a debug
-    /// HUD. Everything is generated at runtime (no art/prefab/scene-object dependencies), so the
-    /// scene file is just one GameObject carrying this component. Deliberately boring + solid:
+    /// HUD. Everything is generated at runtime (no art/prefab/scene-object dependencies), so one
+    /// GameObject carrying this component is all it takes — today that's how the PlayMode tests
+    /// spin it up (the old ControllerTestScene wrapper is retired). Deliberately boring + solid:
     /// the point is to prove two local controllers move two dogs independently.
     ///
     /// This is bootstrap scaffolding for the first playable, NOT the real game-flow architecture.

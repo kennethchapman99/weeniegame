@@ -13,8 +13,8 @@ namespace CheddarAndCocoa.Tests
 {
     /// <summary>
     /// Automated runtime proof of the "first playable" acceptance criteria — WITHOUT physical
-    /// controllers or a human pressing Play. It spins up the real <see cref="GameBootstrap"/> (the
-    /// exact thing the ControllerTestScene runs), injects TWO VIRTUAL gamepads through the Input
+    /// controllers or a human pressing Play. It spins up the real <see cref="GameBootstrap"/>
+    /// (the retired ControllerTestScene's rig, now code-only), injects TWO VIRTUAL gamepads through the Input
     /// System test fixture, and asserts:
     ///   1. each pad drives ITS OWN dog (Cheddar=pad0, Cocoa=pad1) — they move in opposite
     ///      directions, i.e. independently, not as one rig;

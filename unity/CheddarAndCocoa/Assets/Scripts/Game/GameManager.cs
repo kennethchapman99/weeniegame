@@ -3163,7 +3163,7 @@ namespace CheddarAndCocoa.Game
         }
 
         /// <summary>Cosmetic camera kick, mirroring RequestRumble's controller kick - purely additive,
-        /// no effect if no camera is wired (e.g. ControllerTestScene).</summary>
+        /// no effect if no camera is wired.</summary>
         private void RequestShake(float magnitude)
         {
             if (magnitude <= 0f) return;
