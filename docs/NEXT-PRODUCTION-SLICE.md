@@ -659,3 +659,15 @@ verified batch, plus the ControllerTestScene retirement:
   `GameBootstrap` (its code-built rig) stays as the live fixture for `ControllerCoopPlayModeTests`.
 
 Suite green at `490/490`.
+
+### Unreachable Pawfect ranks fixed roster-wide (2026-07-10)
+
+Follow-up audit on the rank-tuning batch found four missions whose top rank an honest run could
+never earn: Gate Crash and Table Stealth score only through penalties (their entire ceiling is the
+shared clear package — 500 clear + 200 flawless + 5/s time bonus = 1050 on an instant clear, vs. a
+Pawfect of 1200), and Chaos Machine / Great Escape needed their multi-station chains finished in
+~24–27 seconds. Retuned all four with the same derive-from-achievable-range method (Gate Crash and
+Table Stealth to 900/650, Chaos Machine to 1100/800, Great Escape to 1200/900) and added a
+roster-wide guard test (`EveryMission_PawfectRank_IsReachableByAnExcellentHonestRun`) asserting every
+mission's Pawfect/Hero sit at or below a flawless clear that banks every guaranteed event with 60% of
+the round remaining. The test fails on the old numbers. Suite green at `491/491`.
