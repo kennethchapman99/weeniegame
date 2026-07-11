@@ -35,6 +35,8 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(GameManager.MissionOutcome.Clear, _game.Outcome);
             Assert.That(_game.EndSummaryLabel, Does.Contain("Socks Rescued"),
                 "A clean clear should read as a distinct, flavored outcome, not a generic fallback.");
+            Assert.AreNotEqual("MVP: awaiting dog heroics", _game.MvpLabel,
+                "A sock dive should credit the diving dog toward the MVP stat, not just whoever last barked.");
         }
 
         private IEnumerator LoadArena()

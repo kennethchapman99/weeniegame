@@ -73,6 +73,8 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(GameManager.MissionOutcome.Clear, _game.Outcome);
             Assert.IsTrue(_game.RuntimeSnapshot.IsClear);
             Assert.That(_game.EndSummaryLabel, Does.Contain("Switcheroo Pulled"));
+            Assert.AreNotEqual("MVP: awaiting dog heroics", _game.MvpLabel,
+                "A successful stash raid should credit the raiding dog toward the MVP stat.");
         }
 
         [UnityTest]

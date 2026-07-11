@@ -195,6 +195,10 @@ namespace CheddarAndCocoa.Game
             if (_puzzle.Solved)
             {
                 _context.AddScore(ScoreEventCatalog.WalkConned.Points, ScoreEventCatalog.WalkConned.Label);
+                int cheddar = _context.IndexOfDog(DogId.Cheddar);
+                int cocoa = _context.IndexOfDog(DogId.Cocoa);
+                if (cheddar >= 0) _context.CreditDog(cheddar);
+                if (cocoa >= 0) _context.CreditDog(cocoa);
                 _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "WALKIES!");
                 if (_human != null) _context.SpawnWorldPop(_human.transform.position, "WALKIES!", new Color(0.5f, 0.9f, 0.55f));
                 _context.LogEvent("WalkConned", "solved");

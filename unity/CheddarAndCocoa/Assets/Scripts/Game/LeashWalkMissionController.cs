@@ -165,6 +165,9 @@ namespace CheddarAndCocoa.Game
             }
 
             _context.AddScore(ScoreEventCatalog.CheckpointReached.Points, ScoreEventCatalog.CheckpointReached.Label);
+            if (_context.Dogs != null)
+                for (int i = 0; i < _context.Dogs.Length; i++)
+                    _context.CreditDog(i);
             _context.SetFeedback(GameManager.FeedbackKind.UnitedBark);
             _context.SetCue($"Checkpoint reached together! ({_state.Reached}/{_state.RequiredCheckpoints}) Stay close.");
             _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, ScoreEventCatalog.CheckpointReached.Label);

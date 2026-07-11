@@ -279,6 +279,113 @@ namespace CheddarAndCocoa.Game
             SurvivorScore = 300
         };
 
+        // 3 stash raids at StashFound (300) each = 900 core, same per-hit weight as
+        // SquirrelConspiracy's stash payoff - mirrors CoyotesFence's tier.
+        public MissionBalance SquirrelSwitcheroo = new MissionBalance
+        {
+            RoundSeconds = 75f,
+            SpawnedItemCount = 0,
+            ItemGoal = 1,
+            ItemScore = 0,
+            MaxStolenFood = 3,
+            SquirrelPenalty = 50,
+            SquirrelScareScore = 25,
+            PawfectScore = 1600,
+            HeroScore = 1100,
+            SurvivorScore = 350
+        };
+
+        // One HumanGettingIt (120) + one WalkConned (500) core payoff - mirrors ScentSearch/MarkTheYard's tier.
+        public MissionBalance WalkCampaign = new MissionBalance
+        {
+            RoundSeconds = 70f,
+            SpawnedItemCount = 0,
+            ItemGoal = 1,
+            ItemScore = 0,
+            MaxStolenFood = 3,
+            SquirrelPenalty = 50,
+            SquirrelScareScore = 25,
+            PawfectScore = 1400,
+            HeroScore = 950,
+            SurvivorScore = 300
+        };
+
+        // 3 BoneFound (175) hits = 525 core - same sniff-and-find family as ScentSearch, same tier.
+        public MissionBalance BoneRelay = new MissionBalance
+        {
+            RoundSeconds = 80f,
+            SpawnedItemCount = 0,
+            ItemGoal = 1,
+            ItemScore = 0,
+            MaxStolenFood = 3,
+            SquirrelPenalty = 50,
+            SquirrelScareScore = 25,
+            PawfectScore = 1400,
+            HeroScore = 950,
+            SurvivorScore = 300
+        };
+
+        // 4 ContraptionStep (90) hand-offs = 360 core - mirrors LeashWalk/CarRide's chain-traversal tier.
+        public MissionBalance GreatEscape = new MissionBalance
+        {
+            RoundSeconds = 75f,
+            SpawnedItemCount = 0,
+            ItemGoal = 1,
+            ItemScore = 0,
+            MaxStolenFood = 3,
+            SquirrelPenalty = 50,
+            SquirrelScareScore = 25,
+            PawfectScore = 1300,
+            HeroScore = 900,
+            SurvivorScore = 300
+        };
+
+        // 3 tight-window ContraptionStep (90) junctions = 270 core - mirrors GateCrash/TableStealth's tier.
+        public MissionBalance ChaosMachine = new MissionBalance
+        {
+            RoundSeconds = 70f,
+            SpawnedItemCount = 0,
+            ItemGoal = 1,
+            ItemScore = 0,
+            MaxStolenFood = 3,
+            SquirrelPenalty = 50,
+            SquirrelScareScore = 25,
+            PawfectScore = 1200,
+            HeroScore = 850,
+            SurvivorScore = 300
+        };
+
+        // 5 catches at WeenieDelivered (150) each = 750 core - mirrors CoyotesFence/Backyard's tier.
+        public MissionBalance BlanketCatch = new MissionBalance
+        {
+            RoundSeconds = 75f,
+            SpawnedItemCount = 0,
+            ItemGoal = 1,
+            ItemScore = 0,
+            MaxStolenFood = 3,
+            SquirrelPenalty = 50,
+            SquirrelScareScore = 25,
+            PawfectScore = 1600,
+            HeroScore = 1100,
+            SurvivorScore = 350
+        };
+
+        // Combo-scored dinner rush (5 catches, escalating +25/combo) already lands in this range;
+        // kept close to its former Backyard-inherited numbers, now explicit instead of accidental.
+        public MissionBalance KitchenFoodFrenzy = new MissionBalance
+        {
+            RoundSeconds = 90f,
+            SpawnedItemCount = 0,
+            ItemGoal = 0,
+            ItemScore = 0,
+            MaxStolenFood = 3,
+            SquirrelPenalty = 50,
+            SquirrelScareScore = 25,
+            PawfectScore = 1600,
+            HeroScore = 1100,
+            SurvivorScore = 350
+        };
+
         public static ArenaMissionTuning CreateDefault() => new ArenaMissionTuning();
 
         public MissionBalance BalanceFor(GameManager.MissionVariant variant)
@@ -298,6 +405,13 @@ namespace CheddarAndCocoa.Game
                 GameManager.MissionVariant.CarRide => CarRide,
                 GameManager.MissionVariant.GateCrash => GateCrash,
                 GameManager.MissionVariant.TableStealth => TableStealth,
+                GameManager.MissionVariant.SquirrelSwitcheroo => SquirrelSwitcheroo,
+                GameManager.MissionVariant.WalkCampaign => WalkCampaign,
+                GameManager.MissionVariant.BoneRelay => BoneRelay,
+                GameManager.MissionVariant.GreatEscape => GreatEscape,
+                GameManager.MissionVariant.ChaosMachine => ChaosMachine,
+                GameManager.MissionVariant.BlanketCatch => BlanketCatch,
+                GameManager.MissionVariant.KitchenFoodFrenzy => KitchenFoodFrenzy,
                 _ => BackyardRescue
             };
         }

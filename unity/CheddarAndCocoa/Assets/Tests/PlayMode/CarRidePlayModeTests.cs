@@ -61,6 +61,8 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(GameManager.MissionOutcome.Clear, game.Outcome);
             Assert.IsTrue(game.RuntimeSnapshot.IsClear);
             Assert.That(game.EndSummaryLabel, Does.Contain("Smooth Riders"));
+            Assert.AreNotEqual("MVP: awaiting dog heroics", game.MvpLabel,
+                "Steadying lurches together should credit both dogs toward the MVP stat.");
         }
 
         [UnityTest]

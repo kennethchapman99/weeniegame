@@ -59,6 +59,8 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(GameManager.MissionOutcome.Clear, game.Outcome);
             Assert.IsTrue(game.RuntimeSnapshot.IsClear);
             Assert.That(game.EndSummaryLabel, Does.Contain("Best Walk Ever"));
+            Assert.AreNotEqual("MVP: awaiting dog heroics", game.MvpLabel,
+                "Reaching checkpoints together should credit both dogs toward the MVP stat.");
         }
 
         [UnityTest]

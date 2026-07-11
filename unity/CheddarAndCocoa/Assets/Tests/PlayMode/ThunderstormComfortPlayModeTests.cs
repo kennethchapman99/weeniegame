@@ -203,6 +203,36 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator ThunderstormComfort_Snapshot_ReportsExposedClapsAsMistakes()
+        {
+            yield return LoadArena();
+            var game = _game;
+
+            game.StartMission(GameManager.MissionVariant.ThunderstormComfort);
+            yield return null;
+
+            Assert.AreEqual(0, game.RuntimeSnapshot.Mistakes);
+
+            // Apart for the first clap (a mistake), then huddled for the rest so the round can still clear.
+            _cheddar.transform.position = new Vector3(-12f, 0f, 0f);
+            _cocoa.transform.position = new Vector3(12f, 0f, 0f);
+            game.ForceThunderclap();
+            yield return null;
+
+            Assert.AreEqual(1, game.RuntimeSnapshot.Mistakes,
+                "A thunderclap that lands while the dogs are apart should be reported as a mistake, not silently show 0.");
+
+            _cheddar.transform.position = Vector3.zero;
+            _cocoa.transform.position = Vector3.zero;
+            game.ForceComfortStep(2f);
+            game.ForceThunderclap();
+            yield return null;
+
+            Assert.AreEqual(1, game.RuntimeSnapshot.Mistakes,
+                "A clap weathered while huddled together should not add another mistake.");
+        }
+
+        [UnityTest]
         public IEnumerator ThunderstormComfort_Thunderclap_MakesDogsFlinch()
         {
             yield return LoadArena();

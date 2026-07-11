@@ -168,6 +168,7 @@ namespace CheddarAndCocoa.Game
             {
                 _findsSeen = _puzzle.Finds;
                 _context.AddScore(ScoreEventCatalog.BoneFound.Points, ScoreEventCatalog.BoneFound.Label);
+                if (digger >= 0) _context.CreditDog(digger);
                 _context.SetFeedback(GameManager.FeedbackKind.SquirrelScared);
                 _context.SetCue($"Cocoa called it, Cheddar dug it up! ({_puzzle.Finds}/{FindsNeeded})");
                 _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "BONE!");

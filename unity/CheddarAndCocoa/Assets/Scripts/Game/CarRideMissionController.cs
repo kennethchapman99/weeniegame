@@ -156,6 +156,9 @@ namespace CheddarAndCocoa.Game
             _state.SurviveLurch();
             SetCarArt(_balance >= 0f ? FinalGameplayArt.CarRideLurchRight : FinalGameplayArt.CarRideLurchLeft);
             _context.AddScore(ScoreEventCatalog.LurchSteadied.Points, ScoreEventCatalog.LurchSteadied.Label);
+            if (_context.Dogs != null)
+                for (int i = 0; i < _context.Dogs.Length; i++)
+                    _context.CreditDog(i);
             _context.SetFeedback(GameManager.FeedbackKind.UnitedBark);
             _context.SetCue($"Steadied the lurch! ({_state.LurchesSurvived}/{_state.RequiredLurches}) Lean to balance.");
             _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, ScoreEventCatalog.LurchSteadied.Label);

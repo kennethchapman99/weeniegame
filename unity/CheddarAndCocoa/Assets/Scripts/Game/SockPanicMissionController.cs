@@ -92,6 +92,7 @@ namespace CheddarAndCocoa.Game
             _exposedSock = null;
             SetBasketClosed("LAUNDRY BASKET - TIP AGAIN!");
             _context.AddScore(ScoreEventCatalog.SockDive.Points, ScoreEventCatalog.SockDive.Label);
+            if (dogIndex >= 0) _context.CreditDog(dogIndex);
             string scoreLabel = $"+{ScoreEventCatalog.SockDive.Points} {ScoreEventCatalog.SockDive.Label}";
             _context.SetCue($"{DogName(dogIndex)} recovered a dramatic sock!");
             _context.Pulse(dogIndex >= 0 && dogIndex < _context.Dogs.Length ? _context.Dogs[dogIndex].gameObject : null, 1.2f);

@@ -95,5 +95,43 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(0, s.ClapsSurvived);
             Assert.IsFalse(s.ReadyToClear());
         }
+
+        [Test]
+        public void ArenaMissionTuning_BalanceFor_NeverSilentlyFallsThroughToBackyardRescue()
+        {
+            // BalanceFor's switch defaults unrecognized variants to BackyardRescue's tuning. That
+            // default exists for BackyardRescue itself; any other variant hitting it is a mission
+            // that was never given its own MissionBalance and is silently inheriting the wrong
+            // round length / rank thresholds.
+            var tuning = ArenaMissionTuning.CreateDefault();
+            foreach (GameManager.MissionVariant variant in System.Enum.GetValues(typeof(GameManager.MissionVariant)))
+            {
+                if (variant == GameManager.MissionVariant.BackyardRescue) continue;
+                if (variant == GameManager.MissionVariant.OperationPeeBreak) continue; // builds its own balance directly, never calls BalanceFor
+
+                var balance = tuning.BalanceFor(variant);
+                Assert.AreNotSame(tuning.BackyardRescue, balance,
+                    $"{variant} has no explicit MissionBalance entry in ArenaMissionTuning and is silently inheriting BackyardRescue's tuning.");
+            }
+        }
+
+        [Test]
+        public void Thunderstorm_TracksExposedClapsAsMistakes()
+        {
+            var s = new ThunderstormMissionState();
+            s.Configure(3);
+            Assert.AreEqual(0, s.ExposedClaps);
+
+            s.RegisterExposedClap();
+            s.SurviveClap();
+            s.RegisterExposedClap();
+            Assert.AreEqual(2, s.ExposedClaps, "A clap that lands while the pair isn't huddled should count as a mistake.");
+
+            s.Reset();
+            Assert.AreEqual(0, s.ExposedClaps);
+
+            s.Configure(3);
+            Assert.AreEqual(0, s.ExposedClaps, "Configure should also clear stale mistakes from a previous attempt.");
+        }
     }
 }

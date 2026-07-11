@@ -67,6 +67,8 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(GameManager.MissionOutcome.Clear, _game.Outcome);
             Assert.IsTrue(_game.RuntimeSnapshot.IsClear);
             Assert.That(_game.EndSummaryLabel, Does.Contain("Steak Sneaked"));
+            Assert.AreNotEqual("MVP: awaiting dog heroics", _game.MvpLabel,
+                "Distracting and sneaking should credit both dogs toward the MVP stat.");
         }
 
         [UnityTest]

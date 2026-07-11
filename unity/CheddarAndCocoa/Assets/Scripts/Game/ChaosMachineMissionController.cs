@@ -175,6 +175,9 @@ namespace CheddarAndCocoa.Game
         {
             if (_puzzle.Stage > _stageSeen)
             {
+                ChainActor completedBy = Owners[Mathf.Clamp(_stageSeen, 0, Owners.Length - 1)];
+                int actorIndex = _context.IndexOfDog(completedBy == ChainActor.Cheddar ? DogId.Cheddar : DogId.Cocoa);
+                if (actorIndex >= 0) _context.CreditDog(actorIndex);
                 _stageSeen = _puzzle.Stage;
                 _context.AddScore(ScoreEventCatalog.ContraptionStep.Points, "CASCADE ROLLED");
                 _context.SetFeedback(GameManager.FeedbackKind.SquirrelScared);

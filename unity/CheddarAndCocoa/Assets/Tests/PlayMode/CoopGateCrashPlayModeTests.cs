@@ -66,6 +66,8 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(GameManager.MissionOutcome.Clear, _game.Outcome);
             Assert.IsTrue(_game.RuntimeSnapshot.IsClear);
             Assert.That(_game.EndSummaryLabel, Does.Contain("Squeezed Through"));
+            Assert.AreNotEqual("MVP: awaiting dog heroics", _game.MvpLabel,
+                "Holding the gate and squeezing through should credit both dogs toward the MVP stat.");
         }
 
         [UnityTest]

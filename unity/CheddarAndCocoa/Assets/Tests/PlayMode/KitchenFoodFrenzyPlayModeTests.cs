@@ -106,6 +106,8 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(GameManager.MissionOutcome.Clear, _game.Outcome);
             Assert.AreEqual(GameManager.FlowState.EndScreen, _game.CurrentFlow);
             Assert.That(_game.MissionBanner, Does.Contain("KITCHEN CLEARED"));
+            Assert.AreNotEqual("MVP: awaiting dog heroics", _game.MvpLabel,
+                "Catching food in the bowl should credit the catching dog toward the MVP stat.");
             Assert.IsTrue(LogContains("KitchenCatch"));
             Assert.IsTrue(LogContains("KitchenFinaleStarted"));
             Assert.That(_game.EndSummaryLabel, Does.Contain("Dinner Rush Survived"),

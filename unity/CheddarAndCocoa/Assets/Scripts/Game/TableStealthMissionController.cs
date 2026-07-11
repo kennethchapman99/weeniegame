@@ -41,6 +41,7 @@ namespace CheddarAndCocoa.Game
         private Vector2 _humanZone;
         private Vector2 _stealZone;
         private int _exposuresSeen;
+        private bool _creditedSolve;
         private bool _failed;
         private float _humanReactionUntil;
 
@@ -79,6 +80,7 @@ namespace CheddarAndCocoa.Game
             _puzzle.Configure(SneakNeeded, AttentionThreshold, AttentionDecay,
                 BurpSpike, BurpCooldown, FlopRise, FlopStamina);
             _exposuresSeen = 0;
+            _creditedSolve = false;
             _failed = false;
             _humanReactionUntil = 0f;
             _humanZone = new Vector2(_context.Bounds.center.x - 10f, _context.Bounds.center.y);
@@ -169,6 +171,15 @@ namespace CheddarAndCocoa.Game
 
         private void HandleExposures()
         {
+            if (_puzzle.Solved && !_creditedSolve)
+            {
+                _creditedSolve = true;
+                int distractor = _context.IndexOfDog(DogId.Cocoa);
+                int sneaker = _context.IndexOfDog(DogId.Cheddar);
+                if (distractor >= 0) _context.CreditDog(distractor);
+                if (sneaker >= 0) _context.CreditDog(sneaker);
+            }
+
             if (_puzzle.Exposures <= _exposuresSeen) return;
 
             _exposuresSeen = _puzzle.Exposures;

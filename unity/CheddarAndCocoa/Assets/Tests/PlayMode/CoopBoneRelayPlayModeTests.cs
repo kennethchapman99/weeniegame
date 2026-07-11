@@ -73,6 +73,8 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(GameManager.MissionOutcome.Clear, _game.Outcome);
             Assert.IsTrue(_game.RuntimeSnapshot.IsClear);
             Assert.That(_game.EndSummaryLabel, Does.Contain("Bones Recovered"));
+            Assert.AreNotEqual("MVP: awaiting dog heroics", _game.MvpLabel,
+                "Digging up a called bone should credit the digging dog toward the MVP stat.");
         }
 
         [UnityTest]

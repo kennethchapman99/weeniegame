@@ -28,6 +28,7 @@ namespace CheddarAndCocoa.Game
         private Vector2 _holdZone;
         private Vector2 _crossZone;
         private int _snapsSeen;
+        private bool _creditedSolve;
         private bool _failed;
         private float _gateSnapReactionUntil;
 
@@ -72,6 +73,7 @@ namespace CheddarAndCocoa.Game
         {
             _puzzle.Configure(CrossNeeded, HoldWindow);
             _snapsSeen = 0;
+            _creditedSolve = false;
             _failed = false;
             _gateSnapReactionUntil = 0f;
             _nextDoorOutrageAt = _context.Now() + DoorOutrageCooldown;
@@ -188,6 +190,15 @@ namespace CheddarAndCocoa.Game
 
         private void HandleSnaps()
         {
+            if (_puzzle.Solved && !_creditedSolve)
+            {
+                _creditedSolve = true;
+                int anchor = _context.IndexOfDog(DogId.Cocoa);
+                int crosser = _context.IndexOfDog(DogId.Cheddar);
+                if (anchor >= 0) _context.CreditDog(anchor);
+                if (crosser >= 0) _context.CreditDog(crosser);
+            }
+
             if (_puzzle.Snaps <= _snapsSeen) return;
 
             _snapsSeen = _puzzle.Snaps;

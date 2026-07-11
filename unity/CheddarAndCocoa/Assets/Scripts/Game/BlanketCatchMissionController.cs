@@ -174,6 +174,9 @@ namespace CheddarAndCocoa.Game
             {
                 _caughtSeen = _puzzle.Caught;
                 _context.AddScore(ScoreEventCatalog.WeenieDelivered.Points, "SNACK CAUGHT");
+                if (_context.Dogs != null)
+                    for (int i = 0; i < _context.Dogs.Length; i++)
+                        _context.CreditDog(i);
                 _context.SetFeedback(GameManager.FeedbackKind.SquirrelScared);
                 _context.SetCue($"Nice catch! The blanket snagged the snack. ({_puzzle.Caught}/{CatchesNeeded})");
                 _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "CAUGHT!");

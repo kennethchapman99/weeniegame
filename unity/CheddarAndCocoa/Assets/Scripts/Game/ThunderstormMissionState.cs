@@ -11,19 +11,26 @@ namespace CheddarAndCocoa.Game
         public int RequiredClaps { get; private set; }
         public int ClapsSurvived { get; private set; }
 
+        /// <summary>Claps that landed while the pair wasn't huddled together - a missed comfort beat.</summary>
+        public int ExposedClaps { get; private set; }
+
         public bool ReadyToClear() => RequiredClaps > 0 && ClapsSurvived >= RequiredClaps;
 
         public void Configure(int requiredClaps)
         {
             RequiredClaps = requiredClaps < 1 ? 1 : requiredClaps;
             ClapsSurvived = 0;
+            ExposedClaps = 0;
         }
 
         public void SurviveClap() => ClapsSurvived++;
 
+        public void RegisterExposedClap() => ExposedClaps++;
+
         public void Reset()
         {
             ClapsSurvived = 0;
+            ExposedClaps = 0;
         }
     }
 }

@@ -351,6 +351,7 @@ namespace CheddarAndCocoa.Game
                 case KitchenFoodFrenzyMissionState.CatchResult.Caught:
                     int combo = _state.Combo;
                     _context.AddScore(70 + 25 * Mathf.Max(0, combo - 1), combo > 1 ? $"FOOD COMBO x{combo}" : "FOOD CAUGHT");
+                    if (dogIndex >= 0) _context.CreditDog(dogIndex);
                     _context.SetFeedback(GameManager.FeedbackKind.SquirrelScared);
                     _context.SetCue($"Cocoa floored it into the bowl! Combo x{combo}.");
                     _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, combo > 1 ? $"YUM! COMBO x{combo}" : "YUM! SAFE BOWL");

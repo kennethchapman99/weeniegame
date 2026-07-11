@@ -115,7 +115,7 @@ namespace CheddarAndCocoa.Game
         }
 
         public MissionRuntimeSnapshot CreateSnapshot(int score, float timeRemaining, GameManager.MissionOutcome outcome) =>
-            new("thunderstorm_comfort", score, timeRemaining, _stormState.ClapsSurvived, ClapGoal, 0,
+            new("thunderstorm_comfort", score, timeRemaining, _stormState.ClapsSurvived, ClapGoal, _stormState.ExposedClaps,
                 outcome == GameManager.MissionOutcome.Clear, outcome == GameManager.MissionOutcome.Failed);
 
         public void ForceThunderclap() => ApplyThunderclap();
@@ -135,6 +135,9 @@ namespace CheddarAndCocoa.Game
         {
             var pm = _context.PanicMeter;
             if (pm == null) return;
+            bool huddling = _context.Dogs != null && _context.Dogs.Length >= 2
+                && Vector2.Distance(_context.Dogs[0].transform.position, _context.Dogs[1].transform.position) <= pm.CuddleRadius;
+            if (!huddling) _stormState.RegisterExposedClap();
             pm.AddSpike(DogId.Cheddar, CheddarSpike);
             pm.AddSpike(DogId.Cocoa, CocoaSpike);
             SetStormArt(FinalGameplayArt.ThunderstormThunderclap);
@@ -147,6 +150,9 @@ namespace CheddarAndCocoa.Game
             if (pm.Maxed != null) return;
 
             _stormState.SurviveClap();
+            if (_context.Dogs != null)
+                for (int i = 0; i < _context.Dogs.Length; i++)
+                    _context.CreditDog(i);
             _context.AddScore(ScoreEventCatalog.StormWeathered.Points, ScoreEventCatalog.StormWeathered.Label);
             _context.SetFeedback(GameManager.FeedbackKind.PredatorHuddle);
             _context.SetCue($"Thunderclap weathered! ({_stormState.ClapsSurvived}/{ClapGoal}) Keep huddling.");

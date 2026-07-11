@@ -165,6 +165,8 @@ namespace CheddarAndCocoa.Game
             {
                 _hitsSeen = _puzzle.Hits;
                 _context.AddScore(ScoreEventCatalog.StashFound.Points, "STASH RAIDED");
+                int striker = _context.IndexOfDog(DogId.Cocoa);
+                if (striker >= 0) _context.CreditDog(striker);
                 _context.SetFeedback(GameManager.FeedbackKind.SquirrelScared);
                 _context.SetCue($"Cocoa snatched from the stash while the squirrel chased the decoy! ({_puzzle.Hits}/{HitsNeeded})");
                 _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "SWITCHEROO!");
