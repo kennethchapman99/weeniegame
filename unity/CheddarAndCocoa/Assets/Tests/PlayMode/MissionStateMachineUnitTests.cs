@@ -133,5 +133,78 @@ namespace CheddarAndCocoa.Tests
             s.Configure(3);
             Assert.AreEqual(0, s.ExposedClaps, "Configure should also clear stale mistakes from a previous attempt.");
         }
+
+        /// <summary>
+        /// The guaranteed mission-specific score of a clean clear (required per-step events plus any
+        /// completion event), deliberately conservative - optional extras like sniff bonuses, onion
+        /// dodges, squirrel scares, and united barks are excluded. Counts mirror each controller's
+        /// own goal constants; if a mission's pacing or scoring changes, update its line here.
+        /// </summary>
+        private static int GuaranteedClearPayoff(GameManager.MissionVariant variant) => variant switch
+        {
+            // Item missions score through ItemScore * ItemGoal (handled by the caller); their
+            // controller-specific extras below are only what a clear *guarantees* on top.
+            GameManager.MissionVariant.BackyardRescue => 0,
+            GameManager.MissionVariant.SnackHeist => 0,
+            GameManager.MissionVariant.SockPanic => ScoreEventCatalog.BasketTipped.Points + ScoreEventCatalog.SockDive.Points,
+            GameManager.MissionVariant.SquirrelConspiracy => ScoreEventCatalog.GoodHerd.Points * 4
+                + ScoreEventCatalog.DoubleBarkBlock.Points + ScoreEventCatalog.StashFound.Points
+                + ScoreEventCatalog.ConspiracyCracked.Points,
+            GameManager.MissionVariant.EagleShadowPanic => ScoreEventCatalog.SafeHide.Points * 2 // RequiredHides
+                + ScoreEventCatalog.UnitedFront.Points + 500, // SHADOW PANIC CLEAR
+            GameManager.MissionVariant.CoyotesFence => ScoreEventCatalog.FenceHeld.Points * 3 // RequiredRepairs
+                + ScoreEventCatalog.DirtFilled.Points * 3 + ScoreEventCatalog.YardDefended.Points,
+            GameManager.MissionVariant.WeenieRoundup => (ScoreEventCatalog.WeeniePickup.Points + ScoreEventCatalog.WeenieDelivered.Points) * 5 // RequiredDeliveries
+                + ScoreEventCatalog.RoundupComplete.Points,
+            GameManager.MissionVariant.ScentSearch => ScoreEventCatalog.BoneFound.Points * 3 // RequiredFinds
+                + ScoreEventCatalog.ScentSearchComplete.Points,
+            GameManager.MissionVariant.ThunderstormComfort => ScoreEventCatalog.StormWeathered.Points * 5 // ClapGoal
+                + ScoreEventCatalog.StormCleared.Points,
+            GameManager.MissionVariant.MarkTheYard => ScoreEventCatalog.ZoneClaimed.Points * 4 // conservative zone count
+                + ScoreEventCatalog.YardMarked.Points,
+            GameManager.MissionVariant.LeashWalk => ScoreEventCatalog.CheckpointReached.Points * 3 // conservative checkpoint count
+                + ScoreEventCatalog.WalkComplete.Points,
+            GameManager.MissionVariant.CarRide => ScoreEventCatalog.LurchSteadied.Points * 5 // RequiredLurches
+                + ScoreEventCatalog.RideComplete.Points,
+            GameManager.MissionVariant.GateCrash => 0,     // penalties only - the clear package is the whole ceiling
+            GameManager.MissionVariant.TableStealth => 0,  // penalties only - the clear package is the whole ceiling
+            GameManager.MissionVariant.SquirrelSwitcheroo => ScoreEventCatalog.StashFound.Points * 3, // HitsNeeded
+            GameManager.MissionVariant.WalkCampaign => ScoreEventCatalog.HumanGettingIt.Points + ScoreEventCatalog.WalkConned.Points,
+            GameManager.MissionVariant.BoneRelay => ScoreEventCatalog.BoneFound.Points * 3, // FindsNeeded
+            GameManager.MissionVariant.GreatEscape => ScoreEventCatalog.ContraptionStep.Points * 4, // Owners.Length
+            GameManager.MissionVariant.ChaosMachine => ScoreEventCatalog.ContraptionStep.Points * 3, // JunctionSpots.Length
+            GameManager.MissionVariant.BlanketCatch => ScoreEventCatalog.WeenieDelivered.Points * 5, // CatchesNeeded
+            // Full 5-catch combo chain (70+95+120+145+170) plus the dinner-rush start bonus.
+            GameManager.MissionVariant.KitchenFoodFrenzy => 600 + 100,
+            _ => 0
+        };
+
+        [Test]
+        public void EveryMission_PawfectRank_IsReachableByAnExcellentHonestRun()
+        {
+            // An "excellent honest run" = a flawless clear that banks every guaranteed
+            // mission-specific event and still has 60% of the round on the clock. If Pawfect sits
+            // above that, the top rank is only reachable through degenerate play (united-bark
+            // farming) or not at all - which is exactly the bug GateCrash shipped with (Pawfect
+            // 1200 against a hard ceiling of 1050).
+            var tuning = ArenaMissionTuning.CreateDefault();
+            foreach (GameManager.MissionVariant variant in System.Enum.GetValues(typeof(GameManager.MissionVariant)))
+            {
+                if (variant == GameManager.MissionVariant.OperationPeeBreak) continue; // builds its own balance directly, never calls BalanceFor
+
+                var mission = GameManager.BuildMissionDefinition(variant);
+                int excellentRun = mission.ItemScore * mission.ItemGoal
+                    + GuaranteedClearPayoff(variant)
+                    + (mission.RequiresPredator ? tuning.PredatorDefendedScore : 0)
+                    + (mission.RequiresTug ? tuning.TugScore : 0)
+                    + tuning.ClearScore + tuning.FlawlessBonus
+                    + (int)(0.6f * mission.RoundSeconds) * tuning.TimeBonusMultiplier;
+
+                Assert.GreaterOrEqual(excellentRun, mission.PawfectScore,
+                    $"{mission.Name}: Pawfect ({mission.PawfectScore}) is above what an excellent honest run can score ({excellentRun}).");
+                Assert.GreaterOrEqual(excellentRun, mission.HeroScore,
+                    $"{mission.Name}: Hero ({mission.HeroScore}) is above what an excellent honest run can score ({excellentRun}).");
+            }
+        }
     }
 }

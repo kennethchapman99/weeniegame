@@ -251,6 +251,10 @@ namespace CheddarAndCocoa.Game
             SurvivorScore = 300
         };
 
+        // No positive mission-specific scoring (only the -75 snap penalty), so the whole ceiling is
+        // the shared clear package: Clear 500 + Flawless 200 + 5/s time bonus. Pawfect 900 = a
+        // flawless clear with ~40s of the 70s round left; the old 1200 exceeded even an instant
+        // flawless clear (1050) and was unreachable.
         public MissionBalance GateCrash = new MissionBalance
         {
             RoundSeconds = 70f,
@@ -260,11 +264,13 @@ namespace CheddarAndCocoa.Game
             MaxStolenFood = 3,
             SquirrelPenalty = 50,
             SquirrelScareScore = 25,
-            PawfectScore = 1200,
-            HeroScore = 850,
+            PawfectScore = 900,
+            HeroScore = 650,
             SurvivorScore = 300
         };
 
+        // Same shape as GateCrash: no positive mission-specific scoring (only the -75 spotted
+        // penalty), so the clear package is the whole ceiling - the old 1200 was unreachable.
         public MissionBalance TableStealth = new MissionBalance
         {
             RoundSeconds = 70f,
@@ -274,8 +280,8 @@ namespace CheddarAndCocoa.Game
             MaxStolenFood = 3,
             SquirrelPenalty = 50,
             SquirrelScareScore = 25,
-            PawfectScore = 1200,
-            HeroScore = 850,
+            PawfectScore = 900,
+            HeroScore = 650,
             SurvivorScore = 300
         };
 
@@ -325,7 +331,9 @@ namespace CheddarAndCocoa.Game
             SurvivorScore = 300
         };
 
-        // 4 ContraptionStep (90) hand-offs = 360 core - mirrors LeashWalk/CarRide's chain-traversal tier.
+        // 4 ContraptionStep (90) hand-offs = 360 core + the 700 clear package. Pawfect 1200 = a
+        // flawless chain finished with ~28s of the 75s round left; 1300 would have required
+        // finishing all four stations in under ~27s.
         public MissionBalance GreatEscape = new MissionBalance
         {
             RoundSeconds = 75f,
@@ -335,12 +343,14 @@ namespace CheddarAndCocoa.Game
             MaxStolenFood = 3,
             SquirrelPenalty = 50,
             SquirrelScareScore = 25,
-            PawfectScore = 1300,
+            PawfectScore = 1200,
             HeroScore = 900,
             SurvivorScore = 300
         };
 
-        // 3 tight-window ContraptionStep (90) junctions = 270 core - mirrors GateCrash/TableStealth's tier.
+        // 3 tight-window ContraptionStep (90) junctions = 270 core + the 700 clear package.
+        // Pawfect 1100 = a flawless cascade finished with ~26s of the 70s round left; 1200 would
+        // have required all three timing windows inside ~24s.
         public MissionBalance ChaosMachine = new MissionBalance
         {
             RoundSeconds = 70f,
@@ -350,8 +360,8 @@ namespace CheddarAndCocoa.Game
             MaxStolenFood = 3,
             SquirrelPenalty = 50,
             SquirrelScareScore = 25,
-            PawfectScore = 1200,
-            HeroScore = 850,
+            PawfectScore = 1100,
+            HeroScore = 800,
             SurvivorScore = 300
         };
 
