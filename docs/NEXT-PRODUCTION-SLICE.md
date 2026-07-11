@@ -635,3 +635,27 @@ Table Stealth's spotted state, Squirrel Switcheroo's backfires, Walk Campaign's 
 wasted digs, Great Escape's fumbles, Chaos Machine's misfires, Blanket Catch's rips. Added a completeness
 test asserting every mission variant now returns its own line rather than the generic fallback. Suite
 green at `487/487`.
+
+### Roster-wide rank tuning, real mistake counts, and MVP credit (2026-07-10)
+
+Landed the three "wired for some missions but not others" gaps flagged in the 2026-07-05 audit as one
+verified batch, plus the ControllerTestScene retirement:
+
+- **Per-mission rank tuning**: the 7 missions that silently inherited Backyard Rescue's
+  `RoundSeconds`/Pawfect/Hero/Survivor thresholds through `BalanceFor`'s default arm (Kitchen Food
+  Frenzy, Squirrel Switcheroo, Walk Campaign, Chaos Machine, Great Escape, Bone Relay, Blanket Catch)
+  now have explicit `MissionBalance` entries in `ArenaMissionTuning`, each derived from that mission's
+  actual achievable score range with the tier reasoning documented inline. A regression test
+  (`ArenaMissionTuning_BalanceFor_NeverSilentlyFallsThroughToBackyardRescue`) fails if any future
+  variant lands in the default arm. These numbers are a considered starting point for the next couch
+  test, not final balance — expect to retune after real play.
+- **Thunderstorm Comfort mistakes**: the one mission that hardcoded `Mistakes = 0` in its snapshot now
+  counts `ExposedClaps` (a clap landing while the pair is outside cuddle range), so surviving a scrappy
+  storm no longer reads as FLAWLESS.
+- **MVP credit**: the 13 missions that never called `CreditDog` (and therefore always showed "MVP:
+  awaiting dog heroics") now credit per action at the same granularity as the existing 9 — acting dog
+  for solo beats, both dogs for genuinely shared beats, stage owner for chain/role-split puzzles.
+- **ControllerTestScene retired**: never reachable in real game flow and never loaded by any test;
+  `GameBootstrap` (its code-built rig) stays as the live fixture for `ControllerCoopPlayModeTests`.
+
+Suite green at `490/490`.

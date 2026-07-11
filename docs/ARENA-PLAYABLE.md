@@ -795,7 +795,7 @@ Readable differences:
 
 The deterministic test/pacing hooks are `ForceThunderclap()` and `ForceComfortStep(seconds)` (`Panic` and `ThunderstormState` expose the live values); in normal play claps fire on a timer and `PanicMeter.Step` drains panic while the dogs are within cuddle range.
 
-Manual check: press **9**, keep both dogs close together, and ride out the claps; confirm panic falls while huddled and rises when split, and that five weathered claps clear with **Weathered The Storm**.
+Manual check: press **9**, keep both dogs close together, and ride out the claps; confirm panic falls while huddled and rises when split, and that five weathered claps clear with **Weathered The Storm**. A clap that lands while the dogs are apart now counts as a mistake (`ExposedClaps`), so a clear with every clap huddled should show **FLAWLESS** and a clear that survived a split clap should not.
 
 ### Mark the Yard
 
@@ -1371,9 +1371,14 @@ Ranks are deterministic and intentionally funny. Thresholds are mission-specific
 - **Sock Panic**: Pawfect Yard `800+`, Backyard Heroes `600+`, Snack Survivors `200+`.
 - **Needs More Bark** — any score below the mission's survivor threshold.
 
+Every mission variant now carries its own explicit thresholds in `ArenaMissionTuning` (2026-07-10:
+the last 7 that silently inherited Backyard Rescue's numbers got entries derived from their actual
+achievable score ranges, guarded by a fall-through regression test). Treat the new numbers as a
+starting point — the next couch test is the real calibration pass.
+
 LevelClear displays a 1-3 star rating based on final score, the center banner reads **BACKYARD SAVED! [rank]**, and both dogs hold a **PROUD!** pose. GameOver displays **MISSION FAILED! [rank]**, applies the game-over penalty, and both dogs hold a **SAD FLOP** pose. The end card includes `Outcome: Score - Rank`, one short funny `EndReasonLabel`, the last score swing, stars, session totals, and Replay / Next Mission / Mission Select actions.
 
-Manual score/replay readability check: during both clear and fail, confirm the final dog poses are still visible behind/around the end card, the score swing label remains signed and cause-first, the funny rank and reason line are readable, and Replay / Next Mission / Mission Select are all usable without a mouse.
+Manual score/replay readability check: during both clear and fail, confirm the final dog poses are still visible behind/around the end card, the score swing label remains signed and cause-first, the funny rank and reason line are readable, and Replay / Next Mission / Mission Select are all usable without a mouse. The MVP line should name Cheddar or Cocoa after any run with at least one successful beat in every mission — "MVP: awaiting dog heroics" on a scoring run means that mission's `CreditDog` wiring regressed (all 22 missions credit per action as of 2026-07-10).
 
 ## Non-developer playtest script
 
