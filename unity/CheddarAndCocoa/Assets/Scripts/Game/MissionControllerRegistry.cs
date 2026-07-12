@@ -93,6 +93,9 @@ namespace CheddarAndCocoa.Game
                 [GameManager.MissionVariant.CoyotesFence] = new Registration(
                     () => new CoyotesFenceMissionController(),
                     MissionCatalog.BuildCoyotesFenceDefinition),
+                [GameManager.MissionVariant.BabyBirdBedlam] = new Registration(
+                    () => new BabyBirdBedlamMissionController(),
+                    MissionCatalog.BuildBabyBirdBedlamDefinition),
             };
 
         public static IEnumerable<GameManager.MissionVariant> RegisteredVariants => Registrations.Keys;

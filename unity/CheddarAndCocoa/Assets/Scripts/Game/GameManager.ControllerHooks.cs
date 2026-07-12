@@ -98,5 +98,42 @@ namespace CheddarAndCocoa.Game
             if (MissionActive()) BlanketCatchController?.ForceBlanketCatch(itemX);
             CheckClear();
         }
+
+        public void ForceChickLand(float x)
+        {
+            if (MissionActive()) BabyBirdBedlamController?.ForceChickLand(x);
+        }
+
+        public void ForceChickGrab()
+        {
+            if (MissionActive()) BabyBirdBedlamController?.ForceChickGrab();
+        }
+
+        public void ForceChickShake()
+        {
+            if (MissionActive()) BabyBirdBedlamController?.ForceChickShake();
+            CheckClear();
+        }
+
+        public void ForceParentDive()
+        {
+            if (MissionActive()) BabyBirdBedlamController?.ForceParentDive();
+        }
+
+        public void ForceParentRepel()
+        {
+            if (MissionActive()) BabyBirdBedlamController?.ForceParentRepel();
+        }
+
+        public void ForceDiveAdvance(float seconds)
+        {
+            if (MissionActive()) BabyBirdBedlamController?.ForceDiveAdvance(seconds);
+            CheckClear();
+        }
+
+        public void ForceChickAirlift()
+        {
+            if (MissionActive()) BabyBirdBedlamController?.ForceChickAirlift();
+        }
     }
 }

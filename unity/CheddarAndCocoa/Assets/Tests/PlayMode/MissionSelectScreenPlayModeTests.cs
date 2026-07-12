@@ -78,16 +78,16 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(screen.TileIsSelectedAt(0), "The selected mission's tile should highlight.");
             Assert.IsFalse(screen.TileIsSelectedAt(1));
 
-            // Operation Pee Break is the last mission (index 21) -> page 1, slot 9 of a short page.
+            // Operation Pee Break sits on page 1, in the short page of remainders.
             game.SelectMission(GameManager.MissionVariant.OperationPeeBreak);
             yield return null;
+            int peeBreakSlot = game.SelectedMissionIndex - GameManager.MissionSelectTilesPerPage;
             Assert.AreEqual(1, game.SelectedMissionPage);
             Assert.That(screen.PageLabelText, Does.StartWith("Page 2/2"));
             Assert.AreEqual(game.MissionSelectOptionCount - GameManager.MissionSelectTilesPerPage,
                 screen.ActiveTileCount, "The short last page should only show the remaining missions.");
-            Assert.AreEqual(GameManager.MissionVariant.OperationPeeBreak,
-                screen.TileVariantAt(21 - GameManager.MissionSelectTilesPerPage));
-            Assert.IsTrue(screen.TileIsSelectedAt(21 - GameManager.MissionSelectTilesPerPage));
+            Assert.AreEqual(GameManager.MissionVariant.OperationPeeBreak, screen.TileVariantAt(peeBreakSlot));
+            Assert.IsTrue(screen.TileIsSelectedAt(peeBreakSlot));
 
             Assert.That(screen.DetailNameText, Does.Contain(game.SelectedMissionName));
             Assert.AreEqual(MissionInstructionCatalog.DescriptionFor(GameManager.MissionVariant.OperationPeeBreak),

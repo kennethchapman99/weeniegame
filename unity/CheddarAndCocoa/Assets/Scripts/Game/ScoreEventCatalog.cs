@@ -53,5 +53,12 @@ namespace CheddarAndCocoa.Game
 
         public static readonly ProductionScoreEvent ContraptionStep = new("CONTRAPTION STEP", 90, true);
         public static readonly ProductionScoreEvent ContraptionFumble = new("CONTRAPTION FUMBLE", -40);
+
+        public static readonly ProductionScoreEvent ChickNabbed = new("CHICK NABBED", 25);
+        public static readonly ProductionScoreEvent ChickGulped = new("CHICK GULPED", 150, true);
+        public static readonly ProductionScoreEvent ParentRepelled = new("PARENT REPELLED", 125, true);
+        public static readonly ProductionScoreEvent ParentPeck = new("PECKED", -50);
+        public static readonly ProductionScoreEvent ChickAirlifted = new("CHICK AIRLIFTED", -25);
+        public static readonly ProductionScoreEvent NestFeastComplete = new("NEST FEAST COMPLETE", 500, true);
     }
 }

@@ -160,6 +160,11 @@ namespace CheddarAndCocoa.Game
                 case GameManager.MissionVariant.OperationPeeBreak:
                     _game.ForcePeeBreakAdvance(SocialStimulus.DoorStare, 1f);
                     break;
+                case GameManager.MissionVariant.BabyBirdBedlam:
+                    _game.ForceChickLand(0f);
+                    _game.ForceChickGrab();
+                    _game.ForceParentDive();
+                    break;
             }
         }
 
@@ -246,6 +251,10 @@ namespace CheddarAndCocoa.Game
                         _game.ForcePeeBreakAdvance(peeBreak.Required, 2.6f);
                         _game.ForcePeeBreakAdvance(peeBreak.Required, 2.3f);
                     }
+                    break;
+                case GameManager.MissionVariant.BabyBirdBedlam:
+                    _game.ForceParentRepel();
+                    for (int shake = 0; shake < 3; shake++) _game.ForceChickShake();
                     break;
             }
         }

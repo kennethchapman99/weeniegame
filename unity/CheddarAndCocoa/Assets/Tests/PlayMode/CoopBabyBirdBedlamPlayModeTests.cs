@@ -1,0 +1,264 @@
+using System.Collections;
+using NUnit.Framework;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.TestTools;
+using CheddarAndCocoa.Dogs;
+using CheddarAndCocoa.Game;
+
+namespace CheddarAndCocoa.Tests
+{
+    /// <summary>
+    /// Baby Bird Bedlam wires the Feast-and-Fend co-op puzzle into the real mission flow: chicks
+    /// drop from the nest, Cheddar grabs and shake-gulps each one while defenseless, and Cocoa must
+    /// bark-repel the parent birds' dives before they peck. Three pecks fail the round; four gulped
+    /// chicks clear it.
+    /// </summary>
+    public sealed class CoopBabyBirdBedlamPlayModeTests
+    {
+        private GameManager _game;
+        private DogController _cheddar;
+        private DogController _cocoa;
+
+        [UnityTest]
+        public IEnumerator Bedlam_RunsThroughDedicatedController()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.BabyBirdBedlam);
+            yield return null;
+
+            Assert.IsInstanceOf<BabyBirdBedlamMissionController>(
+                _game.ActiveMissionController,
+                "Baby Bird Bedlam must run entirely through its own IMissionController.");
+            Assert.AreEqual(GameManager.MissionVariant.BabyBirdBedlam, _game.ActiveMissionController.Variant);
+            Assert.AreSame(_game.BabyBirdBedlamController.Puzzle, _game.FeastGuardPuzzle);
+        }
+
+        [UnityTest]
+        public IEnumerator Bedlam_AppearsInMissionSelectRotation()
+        {
+            yield return LoadArena();
+            Assert.AreEqual(23, _game.MissionSelectOptionCount);
+
+            bool found = false;
+            for (int i = 0; i < _game.MissionSelectOptionCount; i++)
+            {
+                if (_game.SelectedMissionVariant == GameManager.MissionVariant.BabyBirdBedlam) { found = true; break; }
+                _game.SelectNextMission();
+                yield return null;
+            }
+            Assert.IsTrue(found, "Baby Bird Bedlam should be reachable from mission select.");
+            Assert.AreEqual("Baby Bird Bedlam", _game.SelectedMissionName);
+        }
+
+        [UnityTest]
+        public IEnumerator Bedlam_ClearPath_GrabShakeGulpFourChicks()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.BabyBirdBedlam);
+            yield return null;
+
+            Assert.AreEqual("baby_bird_bedlam", _game.RuntimeSnapshot.MissionId);
+            int needed = _game.FeastGuardPuzzle.ChicksNeeded;
+            int shakes = _game.FeastGuardPuzzle.ShakesNeeded;
+
+            for (int chick = 0; chick < needed; chick++)
+            {
+                _game.ForceChickLand(0f);
+                Assert.AreEqual(CoopFeastGuardPuzzle.ChickState.Grounded, _game.FeastGuardPuzzle.Chick);
+                _game.ForceChickGrab();
+                Assert.AreEqual(CoopFeastGuardPuzzle.ChickState.Held, _game.FeastGuardPuzzle.Chick);
+                for (int s = 0; s < shakes; s++) _game.ForceChickShake();
+            }
+
+            Assert.IsTrue(_game.FeastGuardPuzzle.Solved);
+            Assert.AreEqual(needed, _game.FeastGuardPuzzle.ChicksEaten);
+            Assert.AreEqual(0, _game.FeastGuardPuzzle.Mistakes);
+            Assert.AreEqual(GameManager.MissionOutcome.Clear, _game.Outcome);
+            Assert.IsTrue(_game.RuntimeSnapshot.IsClear);
+            Assert.That(_game.EndSummaryLabel, Does.Contain("Nest Feast"));
+            Assert.AreNotEqual("MVP: awaiting dog heroics", _game.MvpLabel,
+                "Gulping chicks should credit Cheddar toward the MVP stat.");
+        }
+
+        [UnityTest]
+        public IEnumerator Bedlam_DefendPath_RepelledDiveNeverPecks()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.BabyBirdBedlam);
+            yield return null;
+
+            _game.ForceChickLand(0f);
+            _game.ForceChickGrab();
+            _game.ForceParentDive();
+            Assert.IsTrue(_game.FeastGuardPuzzle.DiveActive);
+
+            _game.ForceParentRepel();
+            Assert.IsFalse(_game.FeastGuardPuzzle.DiveActive);
+            Assert.AreEqual(1, _game.FeastGuardPuzzle.Repels);
+            Assert.AreEqual(0, _game.FeastGuardPuzzle.Pecks);
+            Assert.AreEqual(CoopFeastGuardPuzzle.ChickState.Held, _game.FeastGuardPuzzle.Chick,
+                "A repelled dive should leave Cheddar still working on his chick.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
+        }
+
+        [UnityTest]
+        public IEnumerator Bedlam_PeckPath_ExpiredDiveDropsTheChick()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.BabyBirdBedlam);
+            yield return null;
+
+            _game.ForceChickLand(0f);
+            _game.ForceChickGrab();
+            _game.ForceChickShake();
+            _game.ForceParentDive();
+            _game.ForceDiveAdvance(5f);
+
+            Assert.AreEqual(1, _game.FeastGuardPuzzle.Pecks);
+            Assert.AreEqual(CoopFeastGuardPuzzle.ChickState.None, _game.FeastGuardPuzzle.Chick,
+                "The pecked-loose chick escapes back to the nest.");
+            Assert.AreEqual(0, _game.FeastGuardPuzzle.ChicksEaten);
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome,
+                "One peck stings but does not end the mission.");
+        }
+
+        [UnityTest]
+        public IEnumerator Bedlam_GulpMidDive_CancelsTheDive()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.BabyBirdBedlam);
+            yield return null;
+
+            int shakes = _game.FeastGuardPuzzle.ShakesNeeded;
+            _game.ForceChickLand(0f);
+            _game.ForceChickGrab();
+            for (int s = 0; s < shakes - 1; s++) _game.ForceChickShake();
+            _game.ForceParentDive();
+            Assert.IsTrue(_game.FeastGuardPuzzle.DiveActive);
+
+            _game.ForceChickShake(); // the gulp
+            Assert.AreEqual(1, _game.FeastGuardPuzzle.ChicksEaten);
+            Assert.IsFalse(_game.FeastGuardPuzzle.DiveActive,
+                "Swallowing the chick mid-dive leaves the parent nothing to save.");
+            _game.ForceDiveAdvance(5f);
+            Assert.AreEqual(0, _game.FeastGuardPuzzle.Pecks);
+        }
+
+        [UnityTest]
+        public IEnumerator Bedlam_FailPath_ThreePecksEndTheFeast()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.BabyBirdBedlam);
+            yield return null;
+
+            for (int i = 0; i < _game.FeastGuardPuzzle.MaxPecks; i++)
+            {
+                _game.ForceChickLand(0f);
+                _game.ForceChickGrab();
+                _game.ForceParentDive();
+                _game.ForceDiveAdvance(5f);
+            }
+
+            Assert.AreEqual(3, _game.FeastGuardPuzzle.Pecks);
+            Assert.AreEqual(GameManager.MissionOutcome.Failed, _game.Outcome);
+            Assert.AreEqual(GameManager.State.GameOver, _game.Phase);
+            Assert.That(_game.EndSummaryLabel, Does.Contain("Pecked Out Of The Yard"));
+            Assert.That(_game.EndReasonLabel, Does.Contain("peck"),
+                "The fail overlay should explain the pecks in dog-life terms.");
+        }
+
+        [UnityTest]
+        public IEnumerator Bedlam_AirliftPath_UnclaimedChickCountsAsAMistake()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.BabyBirdBedlam);
+            yield return null;
+
+            _game.ForceChickLand(0f);
+            _game.ForceChickAirlift();
+
+            Assert.AreEqual(1, _game.FeastGuardPuzzle.Airlifts);
+            Assert.AreEqual(1, _game.FeastGuardPuzzle.Mistakes);
+            Assert.AreEqual(CoopFeastGuardPuzzle.ChickState.None, _game.FeastGuardPuzzle.Chick);
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
+        }
+
+        [UnityTest]
+        public IEnumerator Bedlam_Replay_ResetsThePuzzle()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.BabyBirdBedlam);
+            yield return null;
+
+            _game.ForceChickLand(0f);
+            _game.ForceChickGrab();
+            _game.ForceParentDive();
+            _game.ForceDiveAdvance(5f); // a peck
+            Assert.Greater(_game.FeastGuardPuzzle.Pecks, 0);
+
+            _game.Restart();
+            yield return null;
+
+            Assert.AreEqual(GameManager.MissionVariant.BabyBirdBedlam, _game.ActiveMissionVariant);
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
+            Assert.AreEqual(0, _game.Score);
+            Assert.AreEqual(0, _game.FeastGuardPuzzle.ChicksEaten);
+            Assert.AreEqual(0, _game.FeastGuardPuzzle.Pecks);
+            Assert.AreEqual(CoopFeastGuardPuzzle.ChickState.None, _game.FeastGuardPuzzle.Chick);
+            Assert.AreEqual(1, _game.MissionReplayCount);
+        }
+
+        [UnityTest]
+        public IEnumerator Bedlam_PositionDriven_ChickFallsAndCheddarGrabsIt()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.BabyBirdBedlam);
+            yield return null;
+
+            _cheddar.GetComponent<CheddarAndCocoa.Input.GamepadPlayerInput>().enabled = false;
+            _cocoa.GetComponent<CheddarAndCocoa.Input.GamepadPlayerInput>().enabled = false;
+
+            // Let the first scheduled chick drop and fall all the way to the ground.
+            float deadline = Time.time + 8f;
+            while (Time.time < deadline
+                   && _game.FeastGuardPuzzle.Chick != CoopFeastGuardPuzzle.ChickState.Grounded)
+                yield return null;
+            Assert.AreEqual(CoopFeastGuardPuzzle.ChickState.Grounded, _game.FeastGuardPuzzle.Chick,
+                "A chick should tumble out of the nest and land on its own within the opening seconds.");
+
+            var chick = GameObject.Find("BedlamChick");
+            Assert.IsNotNull(chick);
+            Assert.IsTrue(chick.activeSelf, "The landed chick should be visible and labeled.");
+
+            // Park Cheddar on the chick and grab it through the controller's interact surface.
+            // The internal dog index isn't exposed, so try both: Cocoa's press is role-locked to a
+            // harmless "guard the sky" fumble and only Cheddar's press can grab.
+            _cheddar.transform.position = chick.transform.position;
+            if (_cheddar.TryGetComponent<Rigidbody2D>(out var body)) body.linearVelocity = Vector2.zero;
+            yield return null;
+            IMissionInteractionController controller = _game.BabyBirdBedlamController;
+            controller.HandleInteract(0);
+            controller.HandleInteract(1);
+            Assert.AreEqual(CoopFeastGuardPuzzle.ChickState.Held, _game.FeastGuardPuzzle.Chick,
+                "Cheddar interacting on top of the grounded chick should grab it.");
+        }
+
+        private IEnumerator LoadArena()
+        {
+            _game = null; _cheddar = null; _cocoa = null;
+            yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
+            yield return null;
+            yield return null;
+            _game = Object.FindFirstObjectByType<GameManager>();
+            foreach (var id in Object.FindObjectsByType<DogIdentity>(FindObjectsSortMode.None))
+            {
+                if (id.Id == DogId.Cheddar) _cheddar = id.GetComponent<DogController>();
+                if (id.Id == DogId.Cocoa) _cocoa = id.GetComponent<DogController>();
+            }
+            Assert.IsNotNull(_game);
+            Assert.IsNotNull(_cheddar);
+            Assert.IsNotNull(_cocoa);
+        }
+    }
+}

@@ -40,7 +40,11 @@ namespace CheddarAndCocoa.Game
             MissionVariant.ChaosMachine,
             MissionVariant.BlanketCatch,
             MissionVariant.KitchenFoodFrenzy,
-            MissionVariant.OperationPeeBreak
+            MissionVariant.OperationPeeBreak,
+            // Appended last: MissionSeedGenerator folds the selection index into each mission's
+            // stable seed, so inserting mid-order would silently reshuffle every later mission's
+            // deterministic round modifier (and their rehearsal tests).
+            MissionVariant.BabyBirdBedlam
         };
 
         [Header("Mission selection")]
@@ -151,6 +155,8 @@ namespace CheddarAndCocoa.Game
         public BlanketCatchMissionController BlanketCatchController => _activeMissionController as BlanketCatchMissionController;
         public CoopStretchSpanPuzzle BlanketPuzzle => BlanketCatchController?.Puzzle ?? _emptyBlanketPuzzle;
         public float BlanketCatchY => BlanketCatchController?.CatchY ?? -6f;
+        public BabyBirdBedlamMissionController BabyBirdBedlamController => _activeMissionController as BabyBirdBedlamMissionController;
+        public CoopFeastGuardPuzzle FeastGuardPuzzle => BabyBirdBedlamController?.Puzzle ?? _emptyFeastGuardPuzzle;
         public MissionRuntimeSnapshot RuntimeSnapshot => BuildRuntimeSnapshot();
         public int CurrentMissionSeed => _missionSeed;
         public DemoReadinessResult DemoReadiness => DemoReadinessGate.Evaluate(DemoReadinessGate.RequiredForBackyardDemo);
@@ -392,6 +398,7 @@ namespace CheddarAndCocoa.Game
         private readonly CoopSequenceChainPuzzle _emptyEscapePuzzle = new CoopSequenceChainPuzzle();
         private readonly CoopChaosMachinePuzzle _emptyChaosJunctionPuzzle = new CoopChaosMachinePuzzle();
         private readonly CoopStretchSpanPuzzle _emptyBlanketPuzzle = new CoopStretchSpanPuzzle();
+        private readonly CoopFeastGuardPuzzle _emptyFeastGuardPuzzle = new CoopFeastGuardPuzzle();
         private readonly CoopScentRelayPuzzle _emptyBoneRelayPuzzle = new CoopScentRelayPuzzle();
         // Mark the Yard now lives in MarkTheYardMissionController; this empty state backs the
         // compatibility accessor when the mission is not the active controller.
@@ -908,6 +915,7 @@ namespace CheddarAndCocoa.Game
                 MissionVariant.GreatEscape => "Challenge: break out without a single fumble",
                 MissionVariant.ChaosMachine => "Challenge: run the whole cascade, zero misfires",
                 MissionVariant.BlanketCatch => "Challenge: 5 catches, never rip the blanket",
+                MissionVariant.BabyBirdBedlam => "Challenge: eat all 4 chicks, zero pecks",
                 _ => "Challenge: clear clean for FLAWLESS"
             };
         }

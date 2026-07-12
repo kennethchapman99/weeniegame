@@ -5,9 +5,10 @@
 > `GameManager` branches.
 
 `unity/CheddarAndCocoa/Assets/Scenes/ArenaScene.unity` is now a co-op proving ground instead of a
-flat treat loop. As of 2026-06-21, the arena exposes 22 mission variants. A cold start opens a
-generated in-scene mission select; Kitchen Falling Food Frenzy and Operation Pee Break run through
-the controller boundary.
+flat treat loop. As of 2026-07-12, the arena exposes 23 mission variants (Baby Bird Bedlam joined
+the roster by owner request, appended last in the selector so existing missions keep their stable
+seeds). A cold start opens a generated in-scene mission select; every mission runs through the
+controller boundary.
 
 For current global character art direction, read `docs/ART-DIRECTION.md`. Backyard Mission is the
 playable proof of that direction, not the only place the direction applies. For future external
@@ -957,6 +958,35 @@ Together they verify the couch-readiness surfaces from cold read through the liv
   sustained united-bark read opens the door, the controller shows the sunbeam plus grass/hydrant/
   sparkle payoff before end-screen cleanup, the end card names the Pawfect/0-misread replay target or
   beaten challenge, and replay resets the door, bladder, phone, misreads, arrows, and world labels.
+
+### Baby Bird Bedlam
+
+Baby Bird Bedlam (2026-07-12, owner-requested) is the roster's Feast-and-Fend slice: chicks tumble
+out of the big oak nest and the dogs' prey drive takes over. Roles are hard-locked to keep the
+Cheddar/Cocoa identity split honest. **Cheddar is the feaster** - he grabs each landed chick
+(Tug/Rescue near the `GRAB IT!` marker) and shakes it down (`Tug/Rescue x3`, the last shake is a
+cartoon `GULP!`). While his mouth is full he cannot defend himself. **Cocoa is air defense** - when
+`PARENT BIRD DIVE - SNATCH INBOUND!` flashes on the parent-bird actor (the shared predator actor with
+eagle motion art), she must get under the diving parent and **bark** inside its dive window to repel
+it. An un-repelled dive lands a `PECKED!` hit: Cheddar drops the chick, it flutters home, and three
+pecks fail the run. A grounded chick nobody grabs for 8 seconds is `AIRLIFTED!` back to the nest (a
+score/mistake sting, not a fail). Eating 4 chicks clears the mission; gulping the final shake mid-dive
+cancels the dive with nothing left to save. Scoring: `CHICK NABBED` +25, `CHICK GULPED` +150 (credits
+Cheddar), `PARENT REPELLED` +125 (credits Cocoa), `PECKED` -50, `CHICK AIRLIFTED` -25,
+`NEST FEAST COMPLETE` +500. Deterministic logic lives in `CoopFeastGuardPuzzle`
+(grab/shake/dive/repel/airlift lifecycle) behind `BabyBirdBedlamMissionController`; the mission-select
+tile is a generated placeholder from `tools/art/generate_baby_bird_bedlam_tile.py`.
+
+Manual acceptance check: select **Baby Bird Bedlam** with two local players. Confirm the nest, first
+falling chick, and `THE NEST` label read cold; Cheddar's arrow points at the nest, then the falling
+chick (`CHICK INCOMING`), then the grounded chick (`GRAB THE CHICK`), while Cocoa's arrow tracks
+Cheddar (`GUARD THE SKY` / `GUARD THE FEAST`). Grab a chick and confirm each shake pops `SHAKE!` with
+rumble and the third pops `GULP!` with the eating audio cue. Let a dive land once: confirm the
+`DIVING!`/`PECKED!` reads, the camera jolt, and that the chick despawns and a fresh one drops. Repel a
+dive with Cocoa's bark in range and confirm `REPELLED!` plus the parent retreating to the perch.
+Ignore a grounded chick for 8 seconds and confirm the `AIRLIFTED!` gag. Fail with three pecks and
+confirm the end card reads **Pecked Out Of The Yard** with the dive-bomb fail reason; clear and
+confirm **Nest Feast** (or **Nest Feast, No Feathers Lost** flawless) plus MVP credit naming a dog.
 
 Latest automated verification: Unity 6000.0.65f1 batch PlayMode run passed `400/400` tests on
 2026-07-01 after the generated P0 mission-state art pass. The targeted presentation

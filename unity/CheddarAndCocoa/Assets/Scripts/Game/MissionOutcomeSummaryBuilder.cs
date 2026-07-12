@@ -175,6 +175,20 @@ namespace CheddarAndCocoa.Game
             return "Working The Span";
         }
 
+        public static string BuildFeastGuardSummary(CoopFeastGuardPuzzle state)
+        {
+            if (state.Solved)
+                return state.Pecks == 0 ? "Nest Feast, No Feathers Lost" : "Nest Feast";
+
+            if (state.Overrun)
+                return "Pecked Out Of The Yard";
+
+            if (state.ChicksEaten > 0)
+                return "Feathers Everywhere";
+
+            return "Circling The Nest";
+        }
+
         public static string BuildPatrolSummary(PatrolDefenseMissionState state)
         {
             if (state.FinalPressureComplete)

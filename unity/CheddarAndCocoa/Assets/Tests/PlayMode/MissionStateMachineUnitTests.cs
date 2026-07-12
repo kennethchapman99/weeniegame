@@ -174,6 +174,8 @@ namespace CheddarAndCocoa.Tests
             GameManager.MissionVariant.GreatEscape => ScoreEventCatalog.ContraptionStep.Points * 4, // Owners.Length
             GameManager.MissionVariant.ChaosMachine => ScoreEventCatalog.ContraptionStep.Points * 3, // JunctionSpots.Length
             GameManager.MissionVariant.BlanketCatch => ScoreEventCatalog.WeenieDelivered.Points * 5, // CatchesNeeded
+            GameManager.MissionVariant.BabyBirdBedlam => (ScoreEventCatalog.ChickNabbed.Points + ScoreEventCatalog.ChickGulped.Points) * 4 // ChicksNeeded
+                + ScoreEventCatalog.NestFeastComplete.Points,
             // Full 5-catch combo chain (70+95+120+145+170) plus the dinner-rush start bonus.
             GameManager.MissionVariant.KitchenFoodFrenzy => 600 + 100,
             _ => 0

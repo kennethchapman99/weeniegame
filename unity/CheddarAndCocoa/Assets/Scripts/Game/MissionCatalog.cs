@@ -79,6 +79,8 @@ namespace CheddarAndCocoa.Game
                     return new MissionPresentationProfile("Cheddar pops food loose; Cocoa reads the warning circle and catches gold.", "Bark + catch relay", "Counter, bowl, warning circle, and dinner-rush callouts", dogs, ReadabilityRequirement.WarningVisible);
                 case GameManager.MissionVariant.OperationPeeBreak:
                     return new MissionPresentationProfile("Cocoa stares, Cheddar carries/blocks, then both unite-bark the door open.", "Social manipulation", "Couch, phone, leash, charger, door, and relief payoff", dogs, ReadabilityRequirement.WarningVisible);
+                case GameManager.MissionVariant.BabyBirdBedlam:
+                    return new MissionPresentationProfile("Cheddar grabs and shake-gulps each chick; Cocoa bark-repels the diving parents.", "Feast + fend", "Oak nest, falling chicks, and parent dive lane", threats, ReadabilityRequirement.WarningVisible);
                 default:
                     return new MissionPresentationProfile("Cheddar and Cocoa use their shared dog verbs together.", "Co-op dog mission", "Readable greybox arena with objective markers", dogs);
             }
@@ -782,6 +784,68 @@ namespace CheddarAndCocoa.Game
                 ItemColor = new Color(0.95f, 0.8f, 0.4f),
                 ItemAccentColor = new Color(0.5f, 0.85f, 0.55f),
                 ItemSecondaryColor = new Color(0.4f, 0.3f, 0.15f),
+                ItemPopColor = new Color(0.5f, 0.95f, 0.55f)
+            };
+        }
+
+        internal static GameManager.MissionDefinition BuildBabyBirdBedlamDefinition(ArenaMissionTuning tuning)
+        {
+            const GameManager.MissionVariant variant = GameManager.MissionVariant.BabyBirdBedlam;
+            var balance = tuning.BalanceFor(variant);
+            return new GameManager.MissionDefinition
+            {
+                Variant = variant,
+                Name = "Baby Bird Bedlam",
+                IntroPrompt = "Chicks are tumbling out of the big oak nest and the dogs' prey drive has taken the wheel! Cheddar grabs each fallen chick and shake-shake-shakes it down in one cartoon gulp - but while his mouth is full, the furious parent birds DIVE. Only Cocoa's bark can drive a dive off before it pecks. Three pecks and the parents win the yard.",
+                ReadyScoreLabel = "READY FOR THE FEAST",
+                ItemRootName = "Chick",
+                ItemObjectName = "Chick",
+                ItemWorldLabel = "Grab!",
+                ItemArrowLabel = "CHICK",
+                ItemCollectCueNoun = "a gulped chick",
+                CollectObjectiveFormat = "Eat the fallen chicks {0}/{1}",
+                CollectedScoreLabel = "CHICK GULPED",
+                ItemScore = balance.ItemScore,
+                SpawnedItemCount = balance.SpawnedItemCount,
+                ItemGoal = balance.ItemGoal,
+                RoundSeconds = balance.RoundSeconds,
+                PawfectScore = balance.PawfectScore,
+                HeroScore = balance.HeroScore,
+                SurvivorScore = balance.SurvivorScore,
+                UsesSquirrel = false,
+                RequiresPredator = false,
+                RequiresTug = false,
+                MaxStolenFood = balance.MaxStolenFood,
+                SquirrelPenalty = balance.SquirrelPenalty,
+                SquirrelScareScore = balance.SquirrelScareScore,
+                SquirrelObjectiveText = "Eat the chicks / repel the parents",
+                SquirrelStealingCue = "A parent bird is diving - Cocoa, bark it off!",
+                SquirrelStoleCue = "Pecked - the chick fluttered back to the nest.",
+                SquirrelStealScoreLabel = "PECKED",
+                SquirrelScareScoreLabel = "PARENT REPELLED",
+                SquirrelStealingActorLabel = "PARENT BIRD",
+                SquirrelDroppedActorLabel = "REPELLED",
+                SquirrelStoleActorLabel = "PECKED",
+                SquirrelMissPopLabel = "PECKED!",
+                SquirrelStealJuiceLabel = "PECKED!",
+                SquirrelScareJuiceLabel = "REPELLED!",
+                TugObjectiveText = "Shake the chick down together",
+                WaitingObjectiveText = "Watch the nest for the next falling chick",
+                ClearObjectiveText = "Feast complete - replay Baby Bird Bedlam",
+                ClearBannerPrefix = "BURP!",
+                ClearScoreLabel = "BABY BIRD BEDLAM CLEAR",
+                ReplayPrompt = "Press R / Enter / Start to replay Baby Bird Bedlam",
+                FailObjectiveText = "Mission failed - replay Baby Bird Bedlam",
+                GenericFailReason = "The parent birds still own the sky over the nest.",
+                TimeFailReason = "The nest ran dry before the dogs finished their feast.",
+                StolenFailReason = "Three pecks landed and the parents drove the dogs off.",
+                PredatorFailReason = "The parent birds are the predators here, and they know it.",
+                PawfectClearReason = "Cheddar gulped every chick and Cocoa never let a single dive land.",
+                HeroClearReason = "They cleared the nest with only a peck or two of feathers lost.",
+                BasicClearReason = "They got the feast down, even if the parents got their licks in.",
+                ItemColor = new Color(1f, 0.9f, 0.35f),
+                ItemAccentColor = new Color(1f, 0.75f, 0.2f),
+                ItemSecondaryColor = new Color(0.55f, 0.4f, 0.2f),
                 ItemPopColor = new Color(0.5f, 0.95f, 0.55f)
             };
         }

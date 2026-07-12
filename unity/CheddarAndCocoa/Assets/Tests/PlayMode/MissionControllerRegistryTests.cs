@@ -46,7 +46,8 @@ namespace CheddarAndCocoa.Game.Tests
                     GameManager.MissionVariant.SnackHeist,
                     GameManager.MissionVariant.BackyardRescue,
                     GameManager.MissionVariant.EagleShadowPanic,
-                    GameManager.MissionVariant.CoyotesFence
+                    GameManager.MissionVariant.CoyotesFence,
+                    GameManager.MissionVariant.BabyBirdBedlam
                 },
                 seen,
                 "Only explicitly migrated missions belong in the controller registry.");

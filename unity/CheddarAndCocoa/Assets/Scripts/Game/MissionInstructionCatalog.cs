@@ -56,6 +56,8 @@ namespace CheddarAndCocoa.Game
                     return "It's raining food in the kitchen. Cheddar knocks items loose from the counter while Cocoa catches the good stuff and dodges the bad.";
                 case GameManager.MissionVariant.OperationPeeBreak:
                     return "The Teenager is glued to the phone and somebody really needs to go outside. Cheddar and Cocoa escalate through four signal beats to finally get that door open.";
+                case GameManager.MissionVariant.BabyBirdBedlam:
+                    return "Chicks are tumbling out of the big oak nest and dinner is falling from the sky. Cheddar shake-gulps each one down while Cocoa bark-repels the furious parent birds dive-bombing the feast.";
                 default:
                     return string.Empty;
             }
@@ -227,6 +229,14 @@ namespace CheddarAndCocoa.Game
                         "Too close together and it sags (slack); too far apart and it RIPS - find the taut middle band.",
                         "Keep the blanket's midpoint under the falling snack.",
                         "Rip the blanket too many times and the mission fails."
+                    };
+                case GameManager.MissionVariant.BabyBirdBedlam:
+                    return new[]
+                    {
+                        "Chicks drop from THE NEST - Cheddar runs to the GRAB IT! marker and grabs the chick (Tug/Rescue) before the parents airlift it back.",
+                        "Cheddar then shakes it down (Tug/Rescue x3) - the last shake is the GULP. He can't defend himself while shaking.",
+                        "When PARENT BIRD DIVE flashes, Cocoa gets under the diving parent and BARKS to repel it.",
+                        "An un-repelled dive PECKS Cheddar and the chick escapes - three pecks fail the mission. Eat 4 chicks to clear."
                     };
                 case GameManager.MissionVariant.KitchenFoodFrenzy:
                     return new[]

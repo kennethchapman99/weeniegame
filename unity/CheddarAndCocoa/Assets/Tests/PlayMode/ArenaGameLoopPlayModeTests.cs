@@ -299,7 +299,7 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(game);
             Assert.IsTrue(game.MissionSelectVisible);
             Assert.AreEqual(GameManager.FlowState.MissionSelect, game.CurrentFlow);
-            Assert.AreEqual(22, game.MissionSelectOptionCount);
+            Assert.AreEqual(23, game.MissionSelectOptionCount);
             Assert.AreEqual(GameManager.MissionVariant.BackyardRescue, game.SelectedMissionVariant);
             Assert.AreEqual("Backyard Rescue", game.SelectedMissionName);
             Assert.That(game.SelectedMissionReadinessLabel, Does.Contain("Readability gate: READY"));
@@ -920,7 +920,7 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(game.MissionSelectVisible);
 
             // The selector renders as a paged picture-tile grid (row-major, 4 columns x 3 rows per
-            // page: page 0 holds indices 0-11, page 1 holds 12-21). Directional navigation must
+            // page: page 0 holds indices 0-11, page 1 holds 12-22). Directional navigation must
             // match that visible grid: vertical steps wrap within the current page's column, and
             // horizontal steps walk the tile order linearly so the page flips at page edges.
             game.SelectMission(GameManager.MissionVariant.BackyardRescue); // page 0, top-left (index 0)
@@ -944,7 +944,7 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(1, game.SelectedMissionPage);
             game.SelectMission(GameManager.MissionVariant.BlanketCatch); // index 19: page 1, row 1, col 3
             game.SelectMissionBelow();
-            Assert.AreEqual(GameManager.MissionVariant.OperationPeeBreak, game.SelectedMissionVariant, // clamps to index 21
+            Assert.AreEqual(GameManager.MissionVariant.BabyBirdBedlam, game.SelectedMissionVariant, // clamps to index 22
                 "Stepping into the missing corner of the short last page should clamp to the final mission.");
             Assert.AreEqual(2, game.MissionSelectPageCount);
             game.SelectCouchTestFocusMission();
@@ -1029,7 +1029,7 @@ namespace CheddarAndCocoa.Tests
 
             Assert.AreEqual(GameManager.FlowState.MissionSelect, game.CurrentFlow);
             Assert.IsTrue(game.MissionSelectVisible);
-            Assert.AreEqual(22, game.MissionSelectOptionCount);
+            Assert.AreEqual(23, game.MissionSelectOptionCount);
             Assert.That(game.ObjectiveLabel, Does.Contain("Choose a mission"));
             Assert.IsTrue(LogContains(game, "MissionSelect: Backyard Rescue"));
 

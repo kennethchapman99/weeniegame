@@ -380,6 +380,24 @@ namespace CheddarAndCocoa.Game
             SurvivorScore = 350
         };
 
+        // 4 chick cycles at ChickNabbed (25) + ChickGulped (150) plus the NestFeastComplete 500
+        // = 1200 guaranteed core; parent repels (125, dive-dependent) stack on top. Pawfect 1800
+        // sits under the 2170 flawless-clear ceiling (1200 + 700 clear package + 270 time bonus)
+        // but demands clean, quick play; Hero 1300 needs the full feast banked.
+        public MissionBalance BabyBirdBedlam = new MissionBalance
+        {
+            RoundSeconds = 90f,
+            SpawnedItemCount = 0,
+            ItemGoal = 4,
+            ItemScore = 0,
+            MaxStolenFood = 3,
+            SquirrelPenalty = 50,
+            SquirrelScareScore = 25,
+            PawfectScore = 1800,
+            HeroScore = 1300,
+            SurvivorScore = 350
+        };
+
         // Combo-scored dinner rush (5 catches, escalating +25/combo) already lands in this range;
         // kept close to its former Backyard-inherited numbers, now explicit instead of accidental.
         public MissionBalance KitchenFoodFrenzy = new MissionBalance
@@ -422,6 +440,7 @@ namespace CheddarAndCocoa.Game
                 GameManager.MissionVariant.ChaosMachine => ChaosMachine,
                 GameManager.MissionVariant.BlanketCatch => BlanketCatch,
                 GameManager.MissionVariant.KitchenFoodFrenzy => KitchenFoodFrenzy,
+                GameManager.MissionVariant.BabyBirdBedlam => BabyBirdBedlam,
                 _ => BackyardRescue
             };
         }
