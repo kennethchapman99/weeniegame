@@ -374,9 +374,8 @@ smallest tested version: make the button do something real now, skip the cuddle-
   jump had).
 
 Not yet ported (tracked as further follow-up, not needed for the button to be real): cuddle-spot/dog-
-couch steal-on-win (no such system exists in this arena yet), dust VFX, and the lunge-toward-target
-motion when just out of range (the prototype nudges the attacker's velocity toward the defender on a
-near-miss; here a near-miss is a plain whiff).
+couch steal-on-win — no such system exists in this arena yet, so there's nothing to steal. Dust VFX
+and the near-miss lunge landed in the next entry below.
 
 ### Gamepad proof for all four action buttons, plus a first-level control legend (2026-07-13)
 
@@ -412,6 +411,35 @@ mission in `MissionOrder`) now shows an on-screen button-prompt legend at the bo
 Covered by `ActionTutorialPlayModeTests` (legend visible only for Backyard Rescue, each flag latches
 independently including a whiffed wrestle, legend retires once all four are learned, and restarting
 the mission re-arms it) plus the three new gamepad tests above.
+
+### Wrestle dust VFX and the near-miss lunge (2026-07-13)
+
+The two smaller follow-ups flagged when wrestle first landed (a plain whiff felt like a dead button,
+and a resolved flip had no impact VFX):
+
+- **Dust burst on resolution**: `DogFeedbackAction` gains a `Wrestle` case (`DogActionFeedback.cs`),
+  styled like every other action pair — Cheddar's is a fast, wide "SCRAMBLE DUST" burst, Cocoa's a
+  heavier, shorter "GRAPPLE DUST" puff — and reuses the existing per-dog particle/sprite pipeline
+  (`ChaosSpark`/`QueenGlint`), no new art needed. `GameManager.OnDogWrestled` triggers it on **both**
+  dogs (winner and loser) right after the stun/knockback/damp calls, since both dogs are within
+  `wrestleRange` (1.8 units) at the moment of impact — a burst from each dog's own position reads as
+  one shared dust-up. The existing `FLIP!`/`REVERSAL!` world-pop text at the midpoint is unchanged;
+  this just adds the visual scuffle underneath it.
+- **Near-miss lunge**: a whiff (just out of `wrestleRange`) now calls
+  `DogController.ApplyWrestleLunge(towardSibling)` — a one-shot velocity kick at the new
+  `DogTuning.wrestleLungeSpeed` (9.8 units/sec, preserving the prototype's near-1:1
+  `lungeSpeed:knockback` ratio rather than deriving from base speed). This does **not** need a new
+  movement mode or override window: the dog stays in `Free` mode, and `Tick()`'s existing
+  `MoveTowards`-based velocity resolution already rate-limits how fast player input pulls the
+  velocity back, so the kick is visibly a forward dart before it settles — the same mechanism that
+  already smooths ordinary acceleration/deceleration, not a new one.
+
+The only remaining unported wrestle piece is cuddle-spot/couch steal-on-win, which stays blocked on
+this arena not having that system yet (noted above). Covered by
+`Wrestle_ResolvesWhenDogsAreClose_EmitsDustParticlesOnBothDogs`,
+`Wrestle_WhiffsWhenDogsAreFarApart_LungesAttackerTowardDefender`, and a new
+`DogFeedbackAction.Wrestle` case added to `Profiles_PreserveDistinctCheddarAndCocoaIdentity`. Suite
+green at `529/529`.
 
 ### Sniff-around lead-in pacing beat (2026-07-04)
 

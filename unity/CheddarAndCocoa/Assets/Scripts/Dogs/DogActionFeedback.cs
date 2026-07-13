@@ -13,7 +13,8 @@ namespace CheddarAndCocoa.Dogs
         Carry,
         Rescue,
         Zoomies,
-        Jump
+        Jump,
+        Wrestle
     }
 
     public enum DogFeedbackPhase
@@ -111,6 +112,16 @@ namespace CheddarAndCocoa.Dogs
                         cheddar ? new Vector2(1.1f, 0.86f) : new Vector2(1.06f, 0.9f),
                         cheddar ? 6f : 2f, cheddar ? 6 : 4, 0f, primary, secondary,
                         cheddar ? "CHEDDAR POPCORN HOP" : "COCOA QUEEN BOUND");
+                case DogFeedbackAction.Wrestle:
+                    // The dust-up itself: a quick scramble burst on impact, no sustain phase (the
+                    // stun/knockback that follows is DogController/DogReadabilityFeedback's job, not
+                    // this juice sequencer's). Cheddar scrambles fast and wide; Cocoa's grapple is a
+                    // heavier, shorter-lived puff - same asymmetry as every other action pair.
+                    return new DogActionFeedbackStyle(cheddar ? 0.03f : 0.05f, 0.1f, cheddar ? 0.22f : 0.28f,
+                        cheddar ? new Vector2(1.1f, 0.9f) : new Vector2(1.08f, 0.92f),
+                        cheddar ? new Vector2(0.8f, 1.25f) : new Vector2(0.88f, 1.15f),
+                        cheddar ? 14f : 8f, cheddar ? 10 : 8, 0f, primary, secondary,
+                        cheddar ? "CHEDDAR SCRAMBLE DUST" : "COCOA GRAPPLE DUST");
                 default:
                     return new DogActionFeedbackStyle(0f, 0f, 0f, Vector2.one, Vector2.one,
                         0f, 0, 0f, primary, secondary, "IDLE");
@@ -166,7 +177,8 @@ namespace CheddarAndCocoa.Dogs
 
         public void Trigger(DogFeedbackAction action)
         {
-            if (action != DogFeedbackAction.Bark && action != DogFeedbackAction.Rescue && action != DogFeedbackAction.Jump) return;
+            if (action != DogFeedbackAction.Bark && action != DogFeedbackAction.Rescue &&
+                action != DogFeedbackAction.Jump && action != DogFeedbackAction.Wrestle) return;
             Begin(action, true);
         }
 

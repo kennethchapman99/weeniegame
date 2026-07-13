@@ -115,6 +115,65 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator Wrestle_ResolvesWhenDogsAreClose_EmitsDustParticlesOnBothDogs()
+        {
+            yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
+            yield return null;
+            yield return null;
+
+            var (cheddar, cocoa, game) = SetUpDogs();
+            yield return null;
+
+            cheddar.transform.position = Vector3.zero;
+            cocoa.transform.position = new Vector3(0.3f, 0f, 0f);
+
+            var cheddarFeedback = game.DogFeedback[0].ActionFeedback;
+            var cocoaFeedback = game.DogFeedback[1].ActionFeedback;
+            int cheddarParticlesBefore = cheddarFeedback.TotalParticlesEmitted;
+            int cocoaParticlesBefore = cocoaFeedback.TotalParticlesEmitted;
+
+            cheddar.Wrestle();
+
+            // DogReadabilityFeedback.Update() ticks _actionFeedback on its own every real frame; the
+            // wrestle style's anticipation phase is a few frames long before EmitImpactParticles fires,
+            // so just wait real frames rather than double-driving Tick() ourselves.
+            float guard = 0f;
+            while (guard < 1f &&
+                   (cheddarFeedback.TotalParticlesEmitted == cheddarParticlesBefore ||
+                    cocoaFeedback.TotalParticlesEmitted == cocoaParticlesBefore))
+            {
+                guard += Time.deltaTime;
+                yield return null;
+            }
+
+            Assert.Greater(cheddarFeedback.TotalParticlesEmitted, cheddarParticlesBefore,
+                "The attacker should get a dust burst when a wrestle resolves, win or lose.");
+            Assert.Greater(cocoaFeedback.TotalParticlesEmitted, cocoaParticlesBefore,
+                "The defender should get a dust burst too - the flip happens to both dogs.");
+        }
+
+        [UnityTest]
+        public IEnumerator Wrestle_WhiffsWhenDogsAreFarApart_LungesAttackerTowardDefender()
+        {
+            yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
+            yield return null;
+            yield return null;
+
+            var (cheddar, cocoa, _) = SetUpDogs();
+            yield return null;
+
+            cheddar.transform.position = Vector3.zero;
+            cocoa.transform.position = new Vector3(10f, 0f, 0f); // far outside wrestleRange, same direction as +X
+
+            cheddar.Wrestle();
+
+            Assert.Greater(cheddar.CurrentVelocity.x, 0f,
+                "A whiff should lunge the attacker toward the sibling instead of leaving it dead still.");
+            Assert.AreEqual(cheddar.WrestleLungeSpeed, cheddar.CurrentVelocity.magnitude, 0.01f,
+                "The lunge should be a clean one-shot kick at the tuned lunge speed.");
+        }
+
+        [UnityTest]
         public IEnumerator Wrestle_IsConsumedFromMoveIntent()
         {
             yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);

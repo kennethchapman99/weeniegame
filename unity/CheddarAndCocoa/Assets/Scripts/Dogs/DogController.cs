@@ -91,6 +91,7 @@ namespace CheddarAndCocoa.Dogs
         public float WrestleImmuneBlockedCooldownSeconds => tuning != null ? tuning.wrestleImmuneBlockedCooldown : 0.6f;
         public float WrestleKnockbackSpeed => tuning != null ? tuning.wrestleKnockback : 10f;
         public float WrestleWinnerDamp => tuning != null ? tuning.wrestleWinnerDamp : 0.2f;
+        public float WrestleLungeSpeed => tuning != null ? tuning.wrestleLungeSpeed : 9.8f;
 
         // Pool overlays/ratios ported from the frozen TS build (config/balance.ts SPEED + POOL):
         // water 1.6 vs free 4.4, floater 4.9 vs free 4.4. The pool zone component owns splash,
@@ -231,6 +232,17 @@ namespace CheddarAndCocoa.Dogs
         /// <summary>Called by GameManager on the winning dog: a brief velocity damp on the flip,
         /// matching the prototype's winnerDamp.</summary>
         public void DampVelocity(float factor) => _body.linearVelocity *= factor;
+
+        /// <summary>Called by GameManager when a wrestle whiffs just out of range: a one-shot velocity
+        /// kick toward the sibling, matching the prototype's near-miss lunge (src/systems/wrestle.ts).
+        /// Free mode's own Tick() steers it back toward player input on the next frames via the
+        /// existing MoveTowards response, so this only needs to set the initial velocity - no new
+        /// mode or override window required.</summary>
+        public void ApplyWrestleLunge(Vector2 towardSibling)
+        {
+            if (towardSibling.sqrMagnitude < 0.0001f) return;
+            _body.linearVelocity = towardSibling.normalized * WrestleLungeSpeed;
+        }
 
         // Cosmetic only: decay the bark squash-stretch. Logic stays in Tick (logic/render split).
         private void Update()

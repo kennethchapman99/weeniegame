@@ -1823,9 +1823,9 @@ namespace CheddarAndCocoa.Game
         /// <summary>Resolves a wrestle attempt against the attacker's sibling: range/immunity gates
         /// (mirrors the prototype's canWrestle/doWrestle in src/systems/wrestle.ts), then an
         /// asymmetric reversal-odds roll (Cocoa 0.78 / Cheddar 0.70 attacker win chance) that stuns
-        /// and knocks back the loser. No spot/couch steal or dust VFX yet - those need a cuddle-spot
-        /// system this arena doesn't have, tracked as a follow-up alongside the rest of the wrestle
-        /// polish in docs/ARENA-PLAYABLE.md.</summary>
+        /// and knocks back the loser, and a dust burst on both dogs at the point of impact. Still no
+        /// spot/couch steal-on-win - that needs a cuddle-spot system this arena doesn't have, tracked
+        /// as the one remaining follow-up in docs/ARENA-PLAYABLE.md.</summary>
         private void OnDogWrestled(DogId dogId)
         {
             if (!MissionActive()) return;
@@ -1857,6 +1857,9 @@ namespace CheddarAndCocoa.Game
 
             if (Vector2.Distance(attacker.transform.position, defender.transform.position) > attacker.WrestleRange)
             {
+                // Just out of range: lunge toward the sibling instead of a silent no-op, matching the
+                // prototype's near-miss nudge - a whiff should still read as a real attempt.
+                attacker.ApplyWrestleLunge(defender.transform.position - attacker.transform.position);
                 attacker.ApplyWrestleCooldown(attacker.WrestleWhiffCooldownSeconds);
                 return;
             }
@@ -1871,6 +1874,9 @@ namespace CheddarAndCocoa.Game
             knockDir.Normalize();
             loser.ApplyWrestleStun(loser.WrestleLoserStunSeconds, knockDir * loser.WrestleKnockbackSpeed);
             winner.DampVelocity(winner.WrestleWinnerDamp);
+
+            if (DogFeedback[dogIndex] != null) DogFeedback[dogIndex].ActionFeedback?.Trigger(DogFeedbackAction.Wrestle);
+            if (DogFeedback[partnerIndex] != null) DogFeedback[partnerIndex].ActionFeedback?.Trigger(DogFeedbackAction.Wrestle);
 
             LastFeedback = FeedbackKind.WrestleFlip;
             LastCue = attackerWins

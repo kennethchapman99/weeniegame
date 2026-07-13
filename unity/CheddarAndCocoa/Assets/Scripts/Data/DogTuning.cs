@@ -82,6 +82,10 @@ namespace CheddarAndCocoa.Data
         public float wrestleKnockback = 10f;
         [Tooltip("Winner's velocity damping multiplier right after a flip. Prototype: 0.2.")]
         [Range(0f, 1f)] public float wrestleWinnerDamp = 0.2f;
+        [Tooltip("Attacker's one-shot lunge speed on a just-out-of-range whiff, world units/sec. " +
+            "Prototype lungeSpeed:knockback ratio is 8:8.2 (almost 1:1) - kept close to wrestleKnockback " +
+            "rather than derived from baseSpeed, preserving that ratio instead.")]
+        public float wrestleLungeSpeed = 9.8f;
 
         [Header("Jump (prototype JUMP)")]
         [Tooltip("Arc duration. Prototype: 0.5s. Dodge predators when height>0.3 at the strike.")]
