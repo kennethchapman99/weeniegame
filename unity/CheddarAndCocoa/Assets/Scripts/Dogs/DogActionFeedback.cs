@@ -12,7 +12,8 @@ namespace CheddarAndCocoa.Dogs
         Tug,
         Carry,
         Rescue,
-        Zoomies
+        Zoomies,
+        Jump
     }
 
     public enum DogFeedbackPhase
@@ -102,6 +103,14 @@ namespace CheddarAndCocoa.Dogs
                         cheddar ? new Vector2(0.82f, 1.3f) : new Vector2(1.16f, 1.04f),
                         cheddar ? 11f : 3f, cheddar ? 9 : 6, cheddar ? 0.055f : 0.085f, primary, secondary,
                         cheddar ? "CHEDDAR ZOOMIE COMETS" : "COCOA TURBO RIBBONS");
+                case DogFeedbackAction.Jump:
+                    // Cheddar: quick popcorn hop. Cocoa: a slower, deliberate bound - same asymmetry
+                    // as every other action pair (chaos puppy vs. controlled queen).
+                    return new DogActionFeedbackStyle(cheddar ? 0.05f : 0.09f, cheddar ? 0.16f : 0.24f, cheddar ? 0.1f : 0.16f,
+                        cheddar ? new Vector2(0.88f, 1.14f) : new Vector2(0.92f, 1.1f),
+                        cheddar ? new Vector2(1.1f, 0.86f) : new Vector2(1.06f, 0.9f),
+                        cheddar ? 6f : 2f, cheddar ? 6 : 4, 0f, primary, secondary,
+                        cheddar ? "CHEDDAR POPCORN HOP" : "COCOA QUEEN BOUND");
                 default:
                     return new DogActionFeedbackStyle(0f, 0f, 0f, Vector2.one, Vector2.one,
                         0f, 0, 0f, primary, secondary, "IDLE");
@@ -157,7 +166,7 @@ namespace CheddarAndCocoa.Dogs
 
         public void Trigger(DogFeedbackAction action)
         {
-            if (action != DogFeedbackAction.Bark && action != DogFeedbackAction.Rescue) return;
+            if (action != DogFeedbackAction.Bark && action != DogFeedbackAction.Rescue && action != DogFeedbackAction.Jump) return;
             Begin(action, true);
         }
 

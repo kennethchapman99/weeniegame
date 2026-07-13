@@ -26,7 +26,8 @@ namespace CheddarAndCocoa.Dogs
             Rescued,
             Proud,
             Sad,
-            Swim
+            Swim,
+            Jump
         }
 
         private DogController _dog;
@@ -110,6 +111,7 @@ namespace CheddarAndCocoa.Dogs
             if (_showcasePolish == null) _showcasePolish = gameObject.AddComponent<DogShowcasePolish>();
             _showcasePolish.Begin();
             _dog.OnBark += OnBark;
+            _dog.OnJump += OnJump;
             ApplyPose(Pose.Idle);
         }
 
@@ -146,7 +148,11 @@ namespace CheddarAndCocoa.Dogs
 
         private void OnDestroy()
         {
-            if (_dog != null) _dog.OnBark -= OnBark;
+            if (_dog != null)
+            {
+                _dog.OnBark -= OnBark;
+                _dog.OnJump -= OnJump;
+            }
         }
 
         private void OnBark(DogId _)
@@ -155,6 +161,8 @@ namespace CheddarAndCocoa.Dogs
             _barkUntil = Time.time + 0.35f;
             _actionFeedback?.Trigger(DogFeedbackAction.Bark);
         }
+
+        private void OnJump(DogId _) => _actionFeedback?.Trigger(DogFeedbackAction.Jump);
 
         private void ForcePose(Pose pose, float seconds)
         {
@@ -223,6 +231,7 @@ namespace CheddarAndCocoa.Dogs
             if (_dog.Mode == MovementMode.Stunned) return Pose.Stunned;
             if (_dog.Mode == MovementMode.Tug) return Pose.Tug;
             if (Time.time < _barkUntil) return Pose.Bark;
+            if (_dog.IsJumping) return Pose.Jump;
             // Couch test #3 stretch: paddling dogs must not play the dry-land run frames. Bark
             // still wins above so a swimming dog can flash WOOF mid-paddle.
             if (_dog.Mode == MovementMode.Swimming) return Pose.Swim;
@@ -257,6 +266,7 @@ namespace CheddarAndCocoa.Dogs
                     Pose.Sad => new Color(0.72f, 0.82f, 1f),
                     Pose.Tug => new Color(1f, 0.85f, 0.35f),
                     Pose.Carry => new Color(1f, 0.78f, 0.3f),
+                    Pose.Jump => new Color(0.85f, 0.65f, 1f),
                     _ => Color.white
                 };
             }
@@ -413,8 +423,9 @@ namespace CheddarAndCocoa.Dogs
                 authoredBase.z);
             _authoredPose.transform.localRotation = Quaternion.Euler(0f, 0f,
                 personality.RotationDegrees + actionRotation);
+            float jumpArc = _dog != null ? _dog.JumpHeight01 * 0.4f : 0f;
             _authoredPose.transform.localPosition = new Vector3(actionOffset.x,
-                -0.12f + personality.VerticalOffset + actionOffset.y, -0.2f);
+                -0.12f + personality.VerticalOffset + actionOffset.y + jumpArc, -0.2f);
         }
 
         private void TickMovementJuice(Vector2 velocity, float runFeedbackSpeed)
@@ -534,6 +545,7 @@ namespace CheddarAndCocoa.Dogs
             Pose.Proud => "PROUD!",
             Pose.Sad => "SAD FLOP",
             Pose.Swim => "PADDLE PADDLE",
+            Pose.Jump => "HOP!",
             _ => pose.ToString()
         };
 

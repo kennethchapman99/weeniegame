@@ -315,12 +315,68 @@ Final polish still needed:
   for Rescued vs Proud already exists (`export_character_outcomes.py`, sourced from a real
   `{dog}_outcomes_east_v01.png` sheet with four distinct clips). Left as-is; only worth revisiting if
   that static fallback path is ever reached in a context that skips `AnimateAuthoredMotion`.
+- ~~Fix the rope tug overlay rendering as a barely-visible speck instead of the final art.~~ Couch
+  report 2026-07-12: "the rope isn't using our nice visual asset." `BackyardRescueArtEnhancer`'s
+  overlay used a leftover local scale of `0.035` on a ~1.7-unit-unscaled `rope_tug.png`, rendering it
+  at ~`0.06` world units next to the `1.47`-wide generated placeholder it was meant to replace — so
+  players only ever saw the placeholder bars. Rescaled to `0.88` so the illustrated rope spans the
+  same footprint as the two-dog tug marker. Covered by
+  `RopeOverlay_RendersAtALegibleSizeNotATinySpeck`.
 - Replace generated motion-derived dog/threat frames with final animation-ready sprites and replace
   remaining generated environment districts.
 - Run a two-player television readability pass; the automated 1920x1080 local/full-yard/action
   capture gate verifies composition but cannot judge player attention.
 - Run the second human couch pass; latest automated evidence is `400/400` PlayMode tests passing on
   2026-07-01 after the generated P0 mission-state art pass.
+
+### Jump wired up as a real contextual action (2026-07-12)
+
+Couch report: "there's only a bark action - we need a contextual action button that can do things
+like jump, eat, shake, etc." Investigation found jump (gamepad B) was read into
+`DogController.MoveIntent` every frame but never consumed by `Tick` — a fully dead button, same
+class of bug as the rope-art fix above. Interact (Y) already does real work when a mission target is
+in range (e.g. Backyard Rescue's rope tug); jump is now the real always-available fallback verb:
+
+- `DogController.Jump()` starts a `tuning.jumpDuration` arc (`JumpHeight01`, `sin(pi * t/duration)`),
+  gated the same way wrestle/tug/interact are (no-op while `Busy`, i.e. Stunned/Swimming/Shaking/
+  Transit/Tug). `Tick` now resolves `intent.jump` every frame alongside bark/interact.
+- `DogReadabilityFeedback` gets a `Pose.Jump` (`"HOP!"`), and `DogActionFeedback` gets a `Jump` case
+  in its per-dog personality table — Cheddar a quick popcorn hop, Cocoa a slower deliberate bound,
+  matching every other action's Cheddar-chaos/Cocoa-control asymmetry.
+- Keyboard fallback: P1 Left-Shift, P2 Right-Ctrl (previously jump had no keyboard binding at all).
+
+Covered by `JumpActionPlayModeTests` (arc ramps and lands, blocked while Busy, consumed from
+`MoveIntent`) and the `Jump` case added to `Profiles_PreserveDistinctCheddarAndCocoaIdentity`.
+
+### Wrestle wired up as a real minimal verb (2026-07-13)
+
+The A-button had the identical dead-input bug as jump (`intent.wrestle` read every frame, never
+consumed) — `docs/BUILD-PLAN.md`/`docs/MECHANICS.md` describe a full lunge/flip minigame (reversal
+odds, knockback, spot-steal, dust VFX), so it wasn't a one-line fix like jump was. Owner chose the
+smallest tested version: make the button do something real now, skip the cuddle-spot/couch steal
+(this arena doesn't have that system) and the dust VFX for later.
+
+- `DogController.Wrestle()` gates on its own eligibility (`Busy`, on-cooldown) and fires `OnWrestle`;
+  it only knows about itself, not its sibling, so `GameManager.OnDogWrestled` resolves the actual
+  attempt — mirrors the prototype's `canWrestle`/`doWrestle` split in `src/systems/wrestle.ts`.
+- Gates ported from the prototype: defender `Busy` (mid-tug/swim/stun/transit) or belly-rub `Immune`
+  blocks the flip; out of `DogTuning.wrestleRange` (1.8 world units, tuned alongside
+  `RescueBarkRange`/`TugInteractDistance` rather than a literal conversion of the prototype's 95px)
+  whiffs. Any resolved/whiffed/blocked attempt sets a per-dog cooldown on the attacker
+  (`ApplyWrestleCooldown`) so the button can't be spammed.
+- The actual flip: an asymmetric reversal-odds coin flip using the attacker's own
+  `wrestleWinChance` (Cocoa 0.78 / Cheddar 0.70, already authored in `ArenaBootstrap`) decides the
+  winner; the loser gets `DogController.ApplyWrestleStun` (a timed `Stunned` mode that self-expires,
+  unlike the predator-grab stun which needs a rescue bark) plus a knockback away from the winner, and
+  the winner's velocity is damped on the flip.
+- No new readability pose needed — `Stunned` already renders via the existing `Pose.Stunned` path.
+- Keyboard fallback: P1 Q, P2 Right-Alt (previously wrestle had no keyboard binding at all, same gap
+  jump had).
+
+Not yet ported (tracked as further follow-up, not needed for the button to be real): cuddle-spot/dog-
+couch steal-on-win (no such system exists in this arena yet), dust VFX, and the lunge-toward-target
+motion when just out of range (the prototype nudges the attacker's velocity toward the defender on a
+near-miss; here a near-miss is a plain whiff).
 
 ### Sniff-around lead-in pacing beat (2026-07-04)
 
@@ -1018,16 +1074,16 @@ Outdoor level scale is now a production contract: dogs should remain at or below
 
 The round can end in **LevelClear** or **GameOver**, and either result can be restarted. Current pacing is hand-tuned for a first two-player playtest: `90 / 70 / 55` second mission timers, a 5-second mission intro banner, delayed first squirrel pressure, an ~25-second predator telegraph in Backyard Rescue, and a short but readable tug charge so both players have to stay committed for a moment.
 
-The opening HUD banner says: **Cheddar + Cocoa must protect the weenies together.** The mission briefing and live HUD also state **P1 Cheddar: WASD + Space/E** and **P2 Cocoa: Arrows + Enter/Right Shift**, with the shared pad reminder **left stick / X-West bark / Y-North interact**. For the first few seconds, the squirrel is labeled **Squirrel: WAITING**, the predator is **Predator: OFFSCREEN**, and the rope is **Rope/Tug - BOTH DOGS**. This is intentional: players should first read their spawn, dog identity, first weenie arrows, and shared fantasy before the first threat competes for attention.
+The opening HUD banner says: **Cheddar + Cocoa must protect the weenies together.** The mission briefing and live HUD also state **P1 Cheddar: WASD + Space/E/L-Shift/Q** and **P2 Cocoa: Arrows + Enter/Right Shift/Right Ctrl/Right Alt**, with the shared pad reminder **left stick / X-West bark / Y-North interact / B-East jump / A-South wrestle**. For the first few seconds, the squirrel is labeled **Squirrel: WAITING**, the predator is **Predator: OFFSCREEN**, and the rope is **Rope/Tug - BOTH DOGS**. This is intentional: players should first read their spawn, dog identity, first weenie arrows, and shared fantasy before the first threat competes for attention.
 
 The end loop is intentionally simple: players see current score, the latest score swing, a short reason line, session totals, and Replay / Next Mission / Mission Select actions. Score deltas now appear both as a brief HUD pop and as small world text near the action so cause/effect is easier to read during chaos. The exposed deterministic state includes `CurrentFlow`, `MissionSelectVisible`, `SelectedMissionVariant`, `Score`, `LastScoreDelta`, `LastScoreEventLabel`, `LastScorePopLabel`, `ScorePopVisible`, `ObjectiveLabel`, `Outcome`, `EndRank`, `EndSummaryLabel`, `EndReasonLabel`, `ReplayPromptVisible`, `EndReplayAvailable`, `EndNextMissionAvailable`, `EndMissionSelectAvailable`, `SessionMissionsPlayed`, `SessionTotalScore`, `SessionStarsEarned`, `SessionUniqueMissionsCompleted`, `SessionSummaryLabel`, `LastJuiceFeedback`, and `LastJuiceLabel`.
 
 ## Controls
 
-| Player | Dog | Controller | Keyboard | Bark | Interact |
-| --- | --- | --- | --- | --- | --- |
-| P1 | Cheddar | Gamepad slot 0 | WASD | Space / X button | E / Y button |
-| P2 | Cocoa | Gamepad slot 1 | Arrow keys | Enter / X button | Right Shift / Y button |
+| Player | Dog | Controller | Keyboard | Bark | Interact | Jump | Wrestle |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| P1 | Cheddar | Gamepad slot 0 | WASD | Space / X button | E / Y button | Left Shift / B button | Q / A button |
+| P2 | Cocoa | Gamepad slot 1 | Arrow keys | Enter / X button | Right Shift / Y button | Right Ctrl / B button | Right Alt / A button |
 
 Mission flow controls:
 

@@ -25,6 +25,7 @@ namespace CheddarAndCocoa.Game
             PartnerRescue,
             TugNeedsPartner,
             TugTogether,
+            WrestleFlip,
             LevelClear,
             GameOver
         }

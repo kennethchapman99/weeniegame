@@ -42,11 +42,12 @@ namespace CheddarAndCocoa.Bootstrap
             if (_cam == null) return;
 
             // Always-visible couch co-op legend (top-left).
-            GUI.Label(new Rect(12, 10, 520, 120),
+            GUI.Label(new Rect(12, 10, 520, 150),
                 "Cheddar & Cocoa — Couch Co-op Controls\n" +
                 $"P1  CHEDDAR  (golden)  ·  pad {_a.slot}: {PadStatus(_a.slot)}\n" +
                 $"P2  COCOA    (brown)   ·  pad {_b.slot}: {PadStatus(_b.slot)}\n" +
-                "Stick/keys: move   ·   X/Space/Enter: bark   ·   Y/E/Right Shift: interact",
+                "Stick/keys: move   ·   X/Space/Enter: bark   ·   Y/E/Right Shift: interact\n" +
+                "B/L-Shift/Right Ctrl: jump   ·   A/Q/Right Alt: wrestle",
                 _legend);
 
             // Couch feedback: no persistent name tag over the dogs — the authored dog art carries

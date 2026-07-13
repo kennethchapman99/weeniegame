@@ -454,6 +454,7 @@ namespace CheddarAndCocoa.Game
                 _dogStarts[i] = dogs[i].transform.position;
                 dogs[i].OnBark += OnDogBarked;
                 dogs[i].OnInteract += OnDogInteracted;
+                dogs[i].OnWrestle += OnDogWrestled;
                 dogs[i].TryGetComponent(out DogReadabilityFeedback dogFeedback);
                 dogs[i].TryGetComponent(out ObjectiveArrowFeedback objectiveArrow);
                 DogFeedback[i] = dogFeedback;
@@ -1798,6 +1799,69 @@ namespace CheddarAndCocoa.Game
                 unitedBarkListener.OnUnitedBark();
                 CheckClear();
             }
+        }
+
+        /// <summary>Resolves a wrestle attempt against the attacker's sibling: range/immunity gates
+        /// (mirrors the prototype's canWrestle/doWrestle in src/systems/wrestle.ts), then an
+        /// asymmetric reversal-odds roll (Cocoa 0.78 / Cheddar 0.70 attacker win chance) that stuns
+        /// and knocks back the loser. No spot/couch steal or dust VFX yet - those need a cuddle-spot
+        /// system this arena doesn't have, tracked as a follow-up alongside the rest of the wrestle
+        /// polish in docs/ARENA-PLAYABLE.md.</summary>
+        private void OnDogWrestled(DogId dogId)
+        {
+            if (!MissionActive()) return;
+
+            int dogIndex = IndexOfDog(dogId);
+            if (dogIndex < 0 || _dogs.Length < 2) return;
+            int partnerIndex = dogIndex == 0 ? 1 : 0;
+
+            var attacker = _dogs[dogIndex];
+            var defender = _dogs[partnerIndex];
+            if (attacker == null || defender == null) return;
+
+            // Defender mid-tug/swim/stunned/transit: nothing to wrestle right now, same as the
+            // prototype's canWrestle gate on both sides.
+            if (defender.Busy)
+            {
+                attacker.ApplyWrestleCooldown(defender.WrestleWhiffCooldownSeconds);
+                return;
+            }
+
+            if (defender.Immune)
+            {
+                attacker.ApplyWrestleCooldown(attacker.WrestleImmuneBlockedCooldownSeconds);
+                LastCue = $"{DogName(defender)} is too cozy to flip!";
+                LogPlaytestEvent("WrestleBlocked", LastCue);
+                return;
+            }
+
+            if (Vector2.Distance(attacker.transform.position, defender.transform.position) > attacker.WrestleRange)
+            {
+                attacker.ApplyWrestleCooldown(attacker.WrestleWhiffCooldownSeconds);
+                return;
+            }
+
+            attacker.ApplyWrestleCooldown(attacker.WrestleCooldownSeconds);
+            bool attackerWins = _rng.NextDouble() < attacker.WrestleWinChance;
+            var winner = attackerWins ? attacker : defender;
+            var loser = attackerWins ? defender : attacker;
+
+            Vector2 knockDir = (Vector2)loser.transform.position - (Vector2)winner.transform.position;
+            if (knockDir.sqrMagnitude < 0.0001f) knockDir = Vector2.right;
+            knockDir.Normalize();
+            loser.ApplyWrestleStun(loser.WrestleLoserStunSeconds, knockDir * loser.WrestleKnockbackSpeed);
+            winner.DampVelocity(winner.WrestleWinnerDamp);
+
+            LastFeedback = FeedbackKind.WrestleFlip;
+            LastCue = attackerWins
+                ? $"{DogName(winner)} flipped {DogName(loser)}!"
+                : $"{DogName(loser)} tried to flip {DogName(winner)} - REVERSAL!";
+            SetJuice(JuiceFeedbackKind.WarningMiss, attackerWins ? $"{DogName(winner).ToUpperInvariant()} FLIPPED THEM!" : "REVERSAL!");
+            SpawnWorldPop((winner.transform.position + loser.transform.position) * 0.5f,
+                attackerWins ? "FLIP!" : "REVERSAL!", new Color(1f, 0.65f, 0.35f));
+            RequestAudioCue(ArenaFeedbackCatalog.SquirrelStunned);
+            RequestRumble("wrestle", 0.22f, 0.4f, 0.16f);
+            LogPlaytestEvent("Wrestle", LastCue);
         }
 
         private void ScareSquirrel(float seconds, string cue, bool awardScore)
@@ -3196,6 +3260,7 @@ namespace CheddarAndCocoa.Game
                 if (dog == null) continue;
                 dog.OnBark -= OnDogBarked;
                 dog.OnInteract -= OnDogInteracted;
+                dog.OnWrestle -= OnDogWrestled;
             }
         }
     }

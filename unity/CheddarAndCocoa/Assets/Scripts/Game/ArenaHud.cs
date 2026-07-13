@@ -24,8 +24,8 @@ namespace CheddarAndCocoa.Game
         private GUIStyle _hud, _big, _mid, _small, _overlay, _briefing, _resultHeadline, _resultSubtitle, _resultBody, _resultHint, _resultButton;
         private Texture2D _uiKitTexture;
         private Sprite _hudPanelFrame, _hudMissionTile, _hudMissionTileSelected, _hudBadgeFrame, _hudButtonPrimary, _hudOverlayPanel;
-        public const string PlayerOwnershipLabel = "P1 Cheddar: WASD + Space/E  |  P2 Cocoa: Arrows + Enter/Right Shift";
-        public const string PadControlsLabel = "Pads: left stick moves  |  X / West barks  |  Y / North interacts";
+        public const string PlayerOwnershipLabel = "P1 Cheddar: WASD + Space/E/L-Shift/Q  |  P2 Cocoa: Arrows + Enter/Right Shift/Right Ctrl/Right Alt";
+        public const string PadControlsLabel = "Pads: left stick moves  |  X / West barks  |  Y / North interacts  |  B / East jumps  |  A / South wrestles";
         public const int ResultHeadlineFontSize = 54;
         public const int ResultSubtitleFontSize = 32;
         public const int ResultBodyFontSize = 26;

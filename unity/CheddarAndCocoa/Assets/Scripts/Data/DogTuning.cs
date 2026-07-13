@@ -67,8 +67,21 @@ namespace CheddarAndCocoa.Data
         [Range(0f, 1f)] public float wrestleWinChance = 0.70f;
         [Tooltip("Loser stun seconds. Prototype: 1.35.")]
         public float wrestleLoserStun = 1.35f;
-        [Tooltip("Engage range. Prototype: 95.")]
-        public float wrestleRange = 95f;
+        [Tooltip("Engage range in world units - tuned alongside RescueBarkRange/TugInteractDistance " +
+            "rather than a literal conversion of the prototype's 95px (that px scale doesn't map " +
+            "1:1 onto this larger outdoor arena).")]
+        public float wrestleRange = 1.8f;
+        [Tooltip("Full cooldown after a resolved wrestle (win or lose). Prototype: 2.6s.")]
+        public float wrestleCooldown = 2.6f;
+        [Tooltip("Short cooldown after whiffing out of range. Prototype: 0.5s.")]
+        public float wrestleWhiffCooldown = 0.5f;
+        [Tooltip("Cooldown when the target was belly-rub immune. Prototype: 0.6s.")]
+        public float wrestleImmuneBlockedCooldown = 0.6f;
+        [Tooltip("Loser knockback speed, world units/sec - roughly 1.6x base run speed for a snappy " +
+            "shove, matching the prototype's knockback:baseSpeed ratio.")]
+        public float wrestleKnockback = 10f;
+        [Tooltip("Winner's velocity damping multiplier right after a flip. Prototype: 0.2.")]
+        [Range(0f, 1f)] public float wrestleWinnerDamp = 0.2f;
 
         [Header("Jump (prototype JUMP)")]
         [Tooltip("Arc duration. Prototype: 0.5s. Dodge predators when height>0.3 at the strike.")]

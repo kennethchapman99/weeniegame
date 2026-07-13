@@ -60,6 +60,11 @@ namespace CheddarAndCocoa.Dogs
         public event System.Action<DogId> OnBark;
         /// <summary>Fired on the grab/interact button (placeholder until interactions are wired).</summary>
         public event System.Action<DogId> OnInteract;
+        /// <summary>Fired on the jump button (feedback/audio layers subscribe for the hop pop).</summary>
+        public event System.Action<DogId> OnJump;
+        /// <summary>Fired on the wrestle button; GameManager resolves the cross-dog range/immunity/
+        /// reversal-odds roll (this controller only knows about itself, not its sibling).</summary>
+        public event System.Action<DogId> OnWrestle;
 
         private Vector3 _baseScale = Vector3.one;
         private float _barkPop; // cosmetic squash-stretch timer after a bark
@@ -71,7 +76,21 @@ namespace CheddarAndCocoa.Dogs
         private float _zoomiesUntil;
         public bool Immune { get; private set; }   // belly-rub power-up — blocks wrestle/predator
         private float _wetTimer;                    // dryT: slick render + AI avoids floaties
-        private float _jumpT;                       // 0..jumpDuration; height = sin(pi * t/dur)
+        private float _jumpT;                       // counts down from jumpDuration to 0 while jumping
+        public bool IsJumping => _jumpT > 0f;
+        public float JumpHeight01 { get; private set; } // 0..1 arc height, sin(pi * elapsed/duration)
+        private float _wrestleStunT;                 // counts down from wrestleLoserStun to 0 while flipped
+        public bool IsWrestleStunned => _wrestleStunT > 0f;
+        private float _wrestleCooldownUntil;          // Time.time the next wrestle attempt is allowed
+        public bool WrestleOnCooldown => Time.time < _wrestleCooldownUntil;
+        public float WrestleWinChance => tuning != null ? tuning.wrestleWinChance : 0.5f;
+        public float WrestleRange => tuning != null ? tuning.wrestleRange : 1.8f;
+        public float WrestleLoserStunSeconds => tuning != null ? tuning.wrestleLoserStun : 1.35f;
+        public float WrestleCooldownSeconds => tuning != null ? tuning.wrestleCooldown : 2.6f;
+        public float WrestleWhiffCooldownSeconds => tuning != null ? tuning.wrestleWhiffCooldown : 0.5f;
+        public float WrestleImmuneBlockedCooldownSeconds => tuning != null ? tuning.wrestleImmuneBlockedCooldown : 0.6f;
+        public float WrestleKnockbackSpeed => tuning != null ? tuning.wrestleKnockback : 10f;
+        public float WrestleWinnerDamp => tuning != null ? tuning.wrestleWinnerDamp : 0.2f;
 
         // Pool overlays/ratios ported from the frozen TS build (config/balance.ts SPEED + POOL):
         // water 1.6 vs free 4.4, floater 4.9 vs free 4.4. The pool zone component owns splash,
@@ -91,6 +110,8 @@ namespace CheddarAndCocoa.Dogs
             Zoomies = false;
             OnFloater = false;
             _wetTimer = 0f;
+            _wrestleStunT = 0f;
+            _wrestleCooldownUntil = 0f;
         }
 
         public float MaxSpeedUnitsPerSecond => CurrentSpeed();
@@ -119,6 +140,8 @@ namespace CheddarAndCocoa.Dogs
             // Action buttons resolve even while moving (bark/interact are not blocked by Free).
             if (intent.bark) Bark();
             if (intent.interact) Interact();
+            if (intent.jump) Jump();
+            if (intent.wrestle) Wrestle();
 
             if (Mode == MovementMode.Swimming)
             {
@@ -149,9 +172,6 @@ namespace CheddarAndCocoa.Dogs
                 nextVelocity = Vector2.zero;
 
             _body.linearVelocity = nextVelocity;
-
-            // TODO: jump arc (B): _jumpT ramps over tuning.jumpDuration; expose Height for the
-            // renderer + predator dodge check (height > 0.3 at the strike).
         }
 
         /// <summary>Bark: the core verb. For the first playable this logs + pops the sprite + fires
@@ -170,6 +190,47 @@ namespace CheddarAndCocoa.Dogs
             Debug.Log($"[{_identity.Id}] interact (grab placeholder)");
             OnInteract?.Invoke(_identity.Id);
         }
+
+        /// <summary>Jump: a short arc hop, the default contextual-action fallback when nothing else
+        /// is in range. No-ops mid-jump or while Busy (Shaking/Stunned/Tug/Transit are rooted).
+        /// Height ramps via <see cref="JumpHeight01"/> in <see cref="UpdateOverlays"/> for the
+        /// renderer, and will gate a predator dodge once threats check it (prototype JUMP:
+        /// height > 0.3 at the strike).</summary>
+        public void Jump()
+        {
+            if (Busy || IsJumping) return;
+            _jumpT = tuning != null ? Mathf.Max(0.0001f, tuning.jumpDuration) : 0.5f;
+            Debug.Log($"[{_identity.Id}] HOP!");
+            OnJump?.Invoke(_identity.Id);
+        }
+
+        /// <summary>Wrestle: lunge for a nearby sibling. This controller only knows about itself, so
+        /// it just gates on its own eligibility (not mid-jump-worthy busy state, not on cooldown) and
+        /// fires the event; GameManager resolves range/immunity/reversal-odds against the sibling and
+        /// calls back into <see cref="ApplyWrestleStun"/>/<see cref="ApplyWrestleCooldown"/>.</summary>
+        public void Wrestle()
+        {
+            if (Busy || WrestleOnCooldown) return;
+            Debug.Log($"[{_identity.Id}] WRESTLE!");
+            OnWrestle?.Invoke(_identity.Id);
+        }
+
+        /// <summary>Called by GameManager after resolving a wrestle attempt (win, lose, whiff, or
+        /// blocked) so the next attempt from this dog waits out the right cooldown.</summary>
+        public void ApplyWrestleCooldown(float seconds) => _wrestleCooldownUntil = Time.time + Mathf.Max(0f, seconds);
+
+        /// <summary>Called by GameManager on the losing dog: root it in a timed stun (auto-recovers,
+        /// unlike the predator-grab stun which needs a rescue bark) and launch the knockback.</summary>
+        public void ApplyWrestleStun(float seconds, Vector2 knockbackVelocity)
+        {
+            Mode = MovementMode.Stunned;
+            _wrestleStunT = Mathf.Max(0.0001f, seconds);
+            _body.linearVelocity = knockbackVelocity;
+        }
+
+        /// <summary>Called by GameManager on the winning dog: a brief velocity damp on the flip,
+        /// matching the prototype's winnerDamp.</summary>
+        public void DampVelocity(float factor) => _body.linearVelocity *= factor;
 
         // Cosmetic only: decay the bark squash-stretch. Logic stays in Tick (logic/render split).
         private void Update()
@@ -211,6 +272,27 @@ namespace CheddarAndCocoa.Dogs
         {
             if (Zoomies && Time.time >= _zoomiesUntil) Zoomies = false;
             if (_wetTimer > 0f) _wetTimer = Mathf.Max(0f, _wetTimer - dt);
+
+            if (_jumpT > 0f)
+            {
+                float duration = tuning != null ? Mathf.Max(0.0001f, tuning.jumpDuration) : 0.5f;
+                _jumpT = Mathf.Max(0f, _jumpT - dt);
+                // Snap the landing frame to exactly 0 rather than Sin(PI), which floats a tiny
+                // nonzero value (~-8.7e-8) instead of a clean touchdown.
+                JumpHeight01 = _jumpT <= 0f ? 0f : Mathf.Sin(Mathf.PI * (1f - _jumpT / duration));
+            }
+            else
+            {
+                JumpHeight01 = 0f;
+            }
+
+            if (_wrestleStunT > 0f)
+            {
+                _wrestleStunT = Mathf.Max(0f, _wrestleStunT - dt);
+                // A wrestle stun self-expires (unlike the predator-grab stun, which needs a rescue
+                // bark) - only clear the mode if nothing else re-stunned/re-modes the dog meanwhile.
+                if (_wrestleStunT <= 0f && Mode == MovementMode.Stunned) Mode = MovementMode.Free;
+            }
         }
 
         /// <summary>Hot-streak turbo. Hook this from the scoring system (prototype: 3 scores / 8s).</summary>

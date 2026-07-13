@@ -535,5 +535,38 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual("Food heist stage", wow.MissionMotifName);
             Assert.AreNotEqual(peeAccent, wow.MissionAccentColor);
         }
+
+        [UnityTest]
+        public IEnumerator RopeOverlay_RendersAtALegibleSizeNotATinySpeck()
+        {
+            // Couch report: "the rope isn't using our nice visual asset" - the overlay was scaled to
+            // ~0.06 world units (a speck) next to the ~1.47-wide generated placeholder it should
+            // replace, so players only ever saw the placeholder bars. Guard against that regressing.
+            yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
+            yield return null;
+            yield return null;
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            Assert.IsNotNull(game);
+            game.StartMission(GameManager.MissionVariant.BackyardRescue);
+            yield return null;
+
+            var enhancer = Object.FindFirstObjectByType<BackyardRescueArtEnhancer>();
+            if (enhancer == null)
+            {
+                var go = new GameObject("BackyardRescueArtEnhancer_TestFallback");
+                enhancer = go.AddComponent<BackyardRescueArtEnhancer>();
+            }
+            enhancer.EnhanceNow();
+            yield return null;
+
+            var overlay = game.RopeObject.GetComponent<ArtSpriteOverlay>();
+            Assert.IsNotNull(overlay, "The rope should carry a promoted art overlay.");
+            Assert.IsTrue(overlay.HasRuntimeSprite, "The rope overlay should have the final rope_tug art loaded.");
+
+            var overlayRenderer = game.RopeObject.transform.Find("ActualArtOverlay").GetComponent<SpriteRenderer>();
+            Assert.GreaterOrEqual(overlayRenderer.bounds.size.x, 1f,
+                "The rope art must render at least as wide as the two-dog tug marker it covers, not a barely-visible speck.");
+        }
     }
 }

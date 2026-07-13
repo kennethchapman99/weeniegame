@@ -22,8 +22,10 @@ namespace CheddarAndCocoa.Input
     [RequireComponent(typeof(DogIdentity))]
     public sealed class GamepadPlayerInput : MonoBehaviour
     {
-        /// <summary>Keyboard fallback layouts so the game is playable with no controllers. P1 = WASD +
-        /// Space (bark); P2 = arrow keys + Enter/Right-Shift (bark). <see cref="None"/> = controller only.</summary>
+        /// <summary>Keyboard fallback layouts so the game is playable with no controllers. P1 = WASD,
+        /// Space (bark), E (interact), Left-Shift (jump), Q (wrestle); P2 = arrow keys, Enter (bark),
+        /// Right-Shift (interact), Right-Ctrl (jump), Right-Alt (wrestle). <see cref="None"/> =
+        /// controller only.</summary>
         public enum KeyboardScheme { None, WasdSpace, ArrowsEnter }
 
         [SerializeField, Range(0f, 0.9f)] private float deadzone = 0.25f; // default mirrors balance.ts INPUT.gamepadDeadzone
@@ -82,12 +84,16 @@ namespace CheddarAndCocoa.Input
                     move += ReadKeys(kb.aKey, kb.dKey, kb.sKey, kb.wKey);
                     bark |= kb.spaceKey.wasPressedThisFrame;
                     interact |= kb.eKey.wasPressedThisFrame;
+                    jump |= kb.leftShiftKey.wasPressedThisFrame;
+                    wrestle |= kb.qKey.wasPressedThisFrame;
                 }
                 else // ArrowsEnter
                 {
                     move += ReadKeys(kb.leftArrowKey, kb.rightArrowKey, kb.downArrowKey, kb.upArrowKey);
                     bark |= kb.enterKey.wasPressedThisFrame;
                     interact |= kb.rightShiftKey.wasPressedThisFrame;
+                    jump |= kb.rightCtrlKey.wasPressedThisFrame;
+                    wrestle |= kb.rightAltKey.wasPressedThisFrame;
                 }
             }
 

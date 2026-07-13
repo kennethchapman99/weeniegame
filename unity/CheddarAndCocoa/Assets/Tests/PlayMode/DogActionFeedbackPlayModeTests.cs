@@ -22,6 +22,7 @@ namespace CheddarAndCocoa.Tests
         [TestCase(DogFeedbackAction.Carry)]
         [TestCase(DogFeedbackAction.Rescue)]
         [TestCase(DogFeedbackAction.Zoomies)]
+        [TestCase(DogFeedbackAction.Jump)]
         public void Profiles_PreserveDistinctCheddarAndCocoaIdentity(DogFeedbackAction action)
         {
             DogActionFeedbackStyle cheddar = DogActionFeedbackProfile.For(DogId.Cheddar, action);

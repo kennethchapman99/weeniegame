@@ -127,7 +127,12 @@ namespace CheddarAndCocoa.Game
             AddReadableGroundShadow(_game.PredatorObject, "CouchReadableEagleShadow",
                 new Vector3(0f, -1.42f, 0.07f), new Vector3(1.95f, 0.25f, 1f), 5, 0.2f);
 
-            _ropeOverlay = AddOverlay(_game.RopeObject, RuntimeArtSpriteFactory.RuntimeSpriteId.RopeToy, new Vector3(0f, 0f, -0.32f), new Vector3(0.035f, 0.035f, 1f), 32, new Color(1f, 1f, 1f, 0.92f));
+            // Local scale 0.035 rendered rope_tug.png (1.7 unscaled units at 256ppu) at ~0.06 world
+            // units - a near-invisible speck next to the generated placeholder bars it's meant to
+            // replace (PlaceholderBody alone is 1.47 wide). Couch report: "the rope isn't using our
+            // nice visual asset" - because nobody could actually see it. Scale so the illustrated
+            // rope reads at the same span as the two-dog tug marker it covers.
+            _ropeOverlay = AddOverlay(_game.RopeObject, RuntimeArtSpriteFactory.RuntimeSpriteId.RopeToy, new Vector3(0f, 0f, -0.32f), new Vector3(0.88f, 0.88f, 1f), 32, new Color(1f, 1f, 1f, 0.92f));
             AddGeneratedEnvironmentPropArt();
             AddGeneratedBuildingPropArt();
 
