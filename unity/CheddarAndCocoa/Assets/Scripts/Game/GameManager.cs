@@ -281,6 +281,18 @@ namespace CheddarAndCocoa.Game
         public int ObjectiveChangeCount { get; private set; }
         public int ColdReadQuestionCount { get; private set; }
         public int MissionReplayCount { get; private set; }
+
+        // First-level (Backyard Rescue) button-prompt tutorial: each flag latches true the first
+        // time EITHER dog performs that action this mission, so the HUD legend can fade a row out
+        // once the team has demonstrably learned it. Resets whenever Backyard Rescue (re)starts.
+        public bool TutorialBarkDone { get; private set; }
+        public bool TutorialInteractDone { get; private set; }
+        public bool TutorialJumpDone { get; private set; }
+        public bool TutorialWrestleDone { get; private set; }
+        public bool ShowActionTutorial =>
+            ActiveMissionVariant == MissionVariant.BackyardRescue &&
+            MissionActive() &&
+            !(TutorialBarkDone && TutorialInteractDone && TutorialJumpDone && TutorialWrestleDone);
         public float MissionDurationSeconds => CurrentFlow == FlowState.MissionSelect ? 0f : Mathf.Clamp(roundDuration - TimeRemaining, 0f, roundDuration);
 
         /// <summary>Test/dev seam: fixed lead-in length in seconds; null uses briefing + sniff tuning.</summary>
@@ -455,6 +467,7 @@ namespace CheddarAndCocoa.Game
                 dogs[i].OnBark += OnDogBarked;
                 dogs[i].OnInteract += OnDogInteracted;
                 dogs[i].OnWrestle += OnDogWrestled;
+                dogs[i].OnJump += OnDogJumped;
                 dogs[i].TryGetComponent(out DogReadabilityFeedback dogFeedback);
                 dogs[i].TryGetComponent(out ObjectiveArrowFeedback objectiveArrow);
                 DogFeedback[i] = dogFeedback;
@@ -1145,6 +1158,10 @@ namespace CheddarAndCocoa.Game
             BarksUsed = 0;
             FailedInteractions = 0;
             ObjectiveChangeCount = 0;
+            TutorialBarkDone = false;
+            TutorialInteractDone = false;
+            TutorialJumpDone = false;
+            TutorialWrestleDone = false;
 
             if (!_reuseMissionSeedOnNextBegin)
                 _missionSeed = MissionSeedGenerator.StableSeed(_mission.Variant.ToString(), SessionMissionsPlayed, _selectedMissionIndex);
@@ -1667,6 +1684,7 @@ namespace CheddarAndCocoa.Game
         private void OnDogInteracted(DogId dogId)
         {
             if (!MissionActive()) return;
+            TutorialInteractDone = true;
 
             // A deliberate interact during the sniff-around freeze means "we're ready" — start the
             // round without charging a missed-interaction against the players.
@@ -1732,6 +1750,7 @@ namespace CheddarAndCocoa.Game
         private void OnDogBarked(DogId dogId)
         {
             if (!MissionActive()) return;
+            TutorialBarkDone = true;
 
             int dogIndex = IndexOfDog(dogId);
             if (dogIndex < 0) return;
@@ -1810,6 +1829,7 @@ namespace CheddarAndCocoa.Game
         private void OnDogWrestled(DogId dogId)
         {
             if (!MissionActive()) return;
+            TutorialWrestleDone = true;
 
             int dogIndex = IndexOfDog(dogId);
             if (dogIndex < 0 || _dogs.Length < 2) return;
@@ -1862,6 +1882,15 @@ namespace CheddarAndCocoa.Game
             RequestAudioCue(ArenaFeedbackCatalog.SquirrelStunned);
             RequestRumble("wrestle", 0.22f, 0.4f, 0.16f);
             LogPlaytestEvent("Wrestle", LastCue);
+        }
+
+        /// <summary>Jump has no gameplay resolution here (DogController.Jump already ran the arc
+        /// hop) - this only latches the button-prompt tutorial flag so the HUD legend can retire
+        /// the JUMP row once it's been demonstrated.</summary>
+        private void OnDogJumped(DogId dogId)
+        {
+            if (!MissionActive()) return;
+            TutorialJumpDone = true;
         }
 
         private void ScareSquirrel(float seconds, string cue, bool awardScore)
@@ -2331,6 +2360,10 @@ namespace CheddarAndCocoa.Game
             BarksUsed = 0;
             FailedInteractions = 0;
             ObjectiveChangeCount = 0;
+            TutorialBarkDone = false;
+            TutorialInteractDone = false;
+            TutorialJumpDone = false;
+            TutorialWrestleDone = false;
             _scorePopUntil = 0f;
             _squirrelTarget = null;
             _grabbedDog = -1;
@@ -3261,6 +3294,7 @@ namespace CheddarAndCocoa.Game
                 dog.OnBark -= OnDogBarked;
                 dog.OnInteract -= OnDogInteracted;
                 dog.OnWrestle -= OnDogWrestled;
+                dog.OnJump -= OnDogJumped;
             }
         }
     }

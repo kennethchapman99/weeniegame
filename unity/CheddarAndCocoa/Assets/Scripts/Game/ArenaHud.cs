@@ -22,9 +22,10 @@ namespace CheddarAndCocoa.Game
         private GameManager _game;
         private float _uiScale = 1f;
         private GUIStyle _hud, _big, _mid, _small, _overlay, _briefing, _resultHeadline, _resultSubtitle, _resultBody, _resultHint, _resultButton;
+        private GUIStyle _promptGlyph, _promptText;
         private Texture2D _uiKitTexture;
         private Sprite _hudPanelFrame, _hudMissionTile, _hudMissionTileSelected, _hudBadgeFrame, _hudButtonPrimary, _hudOverlayPanel;
-        public const string PlayerOwnershipLabel = "P1 Cheddar: WASD + Space/E/L-Shift/Q  |  P2 Cocoa: Arrows + Enter/Right Shift/Right Ctrl/Right Alt";
+        public const string PlayerOwnershipLabel = "P1 Cheddar: WASD move, Space bark, E interact, L-Shift jump, Q wrestle  |  P2 Cocoa: Arrows move, Enter bark, R-Shift interact, R-Ctrl jump, R-Alt wrestle";
         public const string PadControlsLabel = "Pads: left stick moves  |  X / West barks  |  Y / North interacts  |  B / East jumps  |  A / South wrestles";
         public const int ResultHeadlineFontSize = 54;
         public const int ResultSubtitleFontSize = 32;
@@ -271,7 +272,62 @@ namespace CheddarAndCocoa.Game
             }
 
             if (_game.MissionBriefingVisible) DrawMissionBriefing();
+            if (_game.ShowActionTutorial) DrawActionTutorial();
+        }
 
+        // Xbox-style button colors so the glyph reads instantly against any placeholder art.
+        private static readonly Color GlyphBark = new Color(0.16f, 0.55f, 0.95f, 0.95f);      // X
+        private static readonly Color GlyphInteract = new Color(0.95f, 0.78f, 0.12f, 0.95f);  // Y
+        private static readonly Color GlyphJump = new Color(0.85f, 0.2f, 0.2f, 0.95f);        // B
+        private static readonly Color GlyphWrestle = new Color(0.28f, 0.72f, 0.32f, 0.95f);   // A
+        private static readonly Color CheddarAccent = new Color(1f, 0.62f, 0.12f, 0.95f);
+        private static readonly Color CocoaAccent = new Color(0.12f, 0.95f, 0.88f, 0.95f);
+
+        /// <summary>First-level (Backyard Rescue) on-screen control legend: a colored glyph per
+        /// action button (matching Xbox ABXY colors) paired with both players' keyboard fallback
+        /// keys, so couch testers don't have to read a wall of text to find bark/interact/jump/
+        /// wrestle. Each row dims once <see cref="GameManager.ShowActionTutorial"/>'s underlying
+        /// flag shows the team has actually used that action, and the whole legend disappears once
+        /// all four have been demonstrated.</summary>
+        private void DrawActionTutorial()
+        {
+            float w = Mathf.Min(880f, VirtualWidth - 24f);
+            float rowH = 46f;
+            float h = rowH * 2f + 10f;
+            var box = new Rect((VirtualWidth - w) * 0.5f, VirtualHeight - h - 12f, w, h);
+            DrawHudOverlay(box);
+            DrawTintedRect(box, new Color(0.015f, 0.025f, 0.03f, 0.85f));
+
+            float colW = (box.width - 12f) / 4f;
+            float p1Y = box.y + 3f;
+            float p2Y = box.y + rowH + 5f;
+
+            DrawTintedRect(new Rect(box.x, p1Y, 4f, rowH - 6f), CheddarAccent);
+            DrawActionPrompt(new Rect(box.x + 10f + 0 * colW, p1Y, colW, rowH - 6f), "X", GlyphBark, "BARK", "SPACE", _game.TutorialBarkDone);
+            DrawActionPrompt(new Rect(box.x + 10f + 1 * colW, p1Y, colW, rowH - 6f), "Y", GlyphInteract, "INTERACT", "E", _game.TutorialInteractDone);
+            DrawActionPrompt(new Rect(box.x + 10f + 2 * colW, p1Y, colW, rowH - 6f), "B", GlyphJump, "JUMP", "L-SHIFT", _game.TutorialJumpDone);
+            DrawActionPrompt(new Rect(box.x + 10f + 3 * colW, p1Y, colW, rowH - 6f), "A", GlyphWrestle, "WRESTLE", "Q", _game.TutorialWrestleDone);
+
+            DrawTintedRect(new Rect(box.x, p2Y, 4f, rowH - 6f), CocoaAccent);
+            DrawActionPrompt(new Rect(box.x + 10f + 0 * colW, p2Y, colW, rowH - 6f), "X", GlyphBark, "BARK", "ENTER", _game.TutorialBarkDone);
+            DrawActionPrompt(new Rect(box.x + 10f + 1 * colW, p2Y, colW, rowH - 6f), "Y", GlyphInteract, "INTERACT", "R-SHIFT", _game.TutorialInteractDone);
+            DrawActionPrompt(new Rect(box.x + 10f + 2 * colW, p2Y, colW, rowH - 6f), "B", GlyphJump, "JUMP", "R-CTRL", _game.TutorialJumpDone);
+            DrawActionPrompt(new Rect(box.x + 10f + 3 * colW, p2Y, colW, rowH - 6f), "A", GlyphWrestle, "WRESTLE", "R-ALT", _game.TutorialWrestleDone);
+        }
+
+        private void DrawActionPrompt(Rect cell, string glyphLetter, Color glyphColor, string actionName, string keyLabel, bool done)
+        {
+            float alpha = done ? 0.3f : 1f;
+            float glyphSize = Mathf.Min(30f, cell.height);
+            var glyphRect = new Rect(cell.x, cell.y + (cell.height - glyphSize) * 0.5f, glyphSize, glyphSize);
+            DrawTintedRect(glyphRect, new Color(glyphColor.r, glyphColor.g, glyphColor.b, glyphColor.a * alpha));
+
+            Color previous = GUI.color;
+            GUI.color = new Color(1f, 1f, 1f, alpha);
+            GUI.Label(glyphRect, glyphLetter, _promptGlyph);
+            var textRect = new Rect(glyphRect.xMax + 6f, cell.y, cell.width - glyphSize - 6f, cell.height);
+            GUI.Label(textRect, done ? $"OK {actionName}\n{keyLabel}" : $"{actionName}\n{keyLabel}", _promptText);
+            GUI.color = previous;
         }
 
         private void DrawMissionBriefing()
@@ -562,6 +618,11 @@ namespace CheddarAndCocoa.Game
             _resultHint = new GUIStyle(GUI.skin.label) { fontSize = ResultHintFontSize, alignment = TextAnchor.MiddleCenter };
             _resultHint.normal.textColor = new Color(0.78f, 0.88f, 0.92f);
             _resultHint.wordWrap = true;
+            _promptGlyph = new GUIStyle(GUI.skin.label) { fontSize = 18, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
+            _promptGlyph.normal.textColor = Color.white;
+            _promptText = new GUIStyle(GUI.skin.label) { fontSize = 13, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleLeft };
+            _promptText.normal.textColor = new Color(0.95f, 0.98f, 1f);
+            _promptText.wordWrap = false;
         }
 
         private void LoadGeneratedHudSkin()

@@ -378,6 +378,41 @@ couch steal-on-win (no such system exists in this arena yet), dust VFX, and the 
 motion when just out of range (the prototype nudges the attacker's velocity toward the defender on a
 near-miss; here a near-miss is a plain whiff).
 
+### Gamepad proof for all four action buttons, plus a first-level control legend (2026-07-13)
+
+Jump and wrestle were only proven end-to-end for keyboard/direct-`Tick()` input (see the two entries
+above); the only *virtual gamepad* proof in the suite was movement (both pads) and bark (X/buttonWest)
+in `ControllerCoopPlayModeTests`. That left jump (B/buttonEast), wrestle (A/buttonSouth), and interact
+(Y/buttonNorth) unverified on an actual controller path — the same class of gap that let jump/wrestle
+sit dead for a release. `ControllerCoopPlayModeTests` now adds
+`Gamepad_JumpButton_MakesTheDogJump`, `Gamepad_InteractButton_FiresOnInteract`, and
+`Gamepad_WrestleButton_FiresOnWrestle`, each injecting a virtual `Gamepad` button press through the
+real `GamepadPlayerInput` → `DogController` path (same pattern as the existing bark test). All four
+action buttons now have real controller-press proof, not just keyboard or direct-intent tests.
+
+Separately, there was "no final tutorial" (a known rough edge below) — new players had to piece
+together bark/interact/jump/wrestle from a small always-on text line. Backyard Rescue (the first
+mission in `MissionOrder`) now shows an on-screen button-prompt legend at the bottom of the HUD:
+
+- Four Xbox-colored glyphs (X blue/bark, Y yellow/interact, B red/jump, A green/wrestle) rendered as
+  two rows — P1 Cheddar (orange accent bar) and P2 Cocoa (cyan accent bar) — each paired with that
+  player's keyboard fallback key, so a couch tester never has to translate "West button" into "which
+  key do I press."
+- `GameManager.TutorialBarkDone/InteractDone/JumpDone/WrestleDone` latch true the first time EITHER
+  dog fires that action's event this mission (regardless of whether the action itself whiffs — a
+  wrestle attempt that's out of range still proves the player found the button). `ShowActionTutorial`
+  gates on `ActiveMissionVariant == BackyardRescue` and hides the legend once all four are learned;
+  restarting Backyard Rescue re-arms it. `ArenaHud.DrawActionTutorial` dims a row (and prefixes it
+  `OK`) once its flag flips, so the legend visibly shrinks as the team learns the controls instead of
+  popping the whole thing away at once.
+- `ArenaHud.PlayerOwnershipLabel` (the always-on HUD/briefing keyboard line) now names each action
+  explicitly (`WASD move, Space bark, E interact, L-Shift jump, Q wrestle`) instead of a bare key list
+  the player had to match against action order by position.
+
+Covered by `ActionTutorialPlayModeTests` (legend visible only for Backyard Rescue, each flag latches
+independently including a whiffed wrestle, legend retires once all four are learned, and restarting
+the mission re-arms it) plus the three new gamepad tests above.
+
 ### Sniff-around lead-in pacing beat (2026-07-04)
 
 Couch test #4 feedback: levels started "hot" — the briefing card covered the yard for its first

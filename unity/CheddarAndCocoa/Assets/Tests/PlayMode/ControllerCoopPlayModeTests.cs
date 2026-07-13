@@ -202,5 +202,111 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(cheddarInteracted, "P1 keyboard interact should be E.");
             Assert.IsTrue(cocoaInteracted, "P2 keyboard interact should be Right Shift.");
         }
+
+        /// <summary>Jump (B/buttonEast) and wrestle (A/buttonSouth) were dead buttons until the
+        /// 2026-07-13 wiring pass — this closes the same gap the bark test above already covers for
+        /// X/buttonWest, so all four action buttons have real virtual-gamepad proof, not just
+        /// keyboard or direct DogController.Tick() calls.</summary>
+        [UnityTest]
+        public IEnumerator Gamepad_JumpButton_MakesTheDogJump()
+        {
+            foreach (var go in Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None))
+                Object.Destroy(go);
+            yield return null;
+
+            var pad0 = InputSystem.AddDevice<Gamepad>();
+            InputSystem.AddDevice<Gamepad>(); // pad1, so Cheddar stays bound to slot 0
+            var boot = new GameObject("Boot").AddComponent<GameBootstrap>();
+            yield return null;
+            yield return null;
+
+            DogController cheddar = null;
+            foreach (var id in Object.FindObjectsByType<DogIdentity>(FindObjectsSortMode.None))
+                if (id.Id == DogId.Cheddar) cheddar = id.GetComponent<DogController>();
+            Assert.IsNotNull(cheddar);
+
+            for (int i = 0; i < 12 && !cheddar.IsJumping; i++)
+            {
+                InputSystem.QueueStateEvent(pad0, new GamepadState());
+                yield return null;
+                InputSystem.QueueStateEvent(pad0, new GamepadState().WithButton(GamepadButton.East)); // B down
+                yield return null;
+            }
+
+            Assert.IsTrue(cheddar.IsJumping,
+                "Jump input (pad0 B / buttonEast) did not start a hop (DogController.IsJumping stayed false).");
+
+            Object.Destroy(boot.gameObject);
+        }
+
+        [UnityTest]
+        public IEnumerator Gamepad_InteractButton_FiresOnInteract()
+        {
+            foreach (var go in Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None))
+                Object.Destroy(go);
+            yield return null;
+
+            var pad0 = InputSystem.AddDevice<Gamepad>();
+            InputSystem.AddDevice<Gamepad>();
+            var boot = new GameObject("Boot").AddComponent<GameBootstrap>();
+            yield return null;
+            yield return null;
+
+            DogController cheddar = null;
+            foreach (var id in Object.FindObjectsByType<DogIdentity>(FindObjectsSortMode.None))
+                if (id.Id == DogId.Cheddar) cheddar = id.GetComponent<DogController>();
+            Assert.IsNotNull(cheddar);
+
+            bool cheddarInteracted = false;
+            cheddar.OnInteract += _ => cheddarInteracted = true;
+
+            for (int i = 0; i < 12 && !cheddarInteracted; i++)
+            {
+                InputSystem.QueueStateEvent(pad0, new GamepadState());
+                yield return null;
+                InputSystem.QueueStateEvent(pad0, new GamepadState().WithButton(GamepadButton.North)); // Y down
+                yield return null;
+            }
+
+            Assert.IsTrue(cheddarInteracted,
+                "Interact input (pad0 Y / buttonNorth) did not fire OnInteract.");
+
+            Object.Destroy(boot.gameObject);
+        }
+
+        [UnityTest]
+        public IEnumerator Gamepad_WrestleButton_FiresOnWrestle()
+        {
+            foreach (var go in Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None))
+                Object.Destroy(go);
+            yield return null;
+
+            var pad0 = InputSystem.AddDevice<Gamepad>();
+            InputSystem.AddDevice<Gamepad>();
+            var boot = new GameObject("Boot").AddComponent<GameBootstrap>();
+            yield return null;
+            yield return null;
+
+            DogController cheddar = null;
+            foreach (var id in Object.FindObjectsByType<DogIdentity>(FindObjectsSortMode.None))
+                if (id.Id == DogId.Cheddar) cheddar = id.GetComponent<DogController>();
+            Assert.IsNotNull(cheddar);
+
+            bool cheddarWrestled = false;
+            cheddar.OnWrestle += _ => cheddarWrestled = true;
+
+            for (int i = 0; i < 12 && !cheddarWrestled; i++)
+            {
+                InputSystem.QueueStateEvent(pad0, new GamepadState());
+                yield return null;
+                InputSystem.QueueStateEvent(pad0, new GamepadState().WithButton(GamepadButton.South)); // A down
+                yield return null;
+            }
+
+            Assert.IsTrue(cheddarWrestled,
+                "Wrestle input (pad0 A / buttonSouth) did not fire OnWrestle.");
+
+            Object.Destroy(boot.gameObject);
+        }
     }
 }
