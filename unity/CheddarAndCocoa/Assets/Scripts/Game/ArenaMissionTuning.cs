@@ -237,17 +237,19 @@ namespace CheddarAndCocoa.Game
             SurvivorScore = 300
         };
 
+        // Ride pacing: 7 road events at ~5-7.5s each is ~45s of ride; 90s leaves honest time
+        // bonus on a clean run. Pawfect assumes near-clean events plus most brake braces banked.
         public MissionBalance CarRide = new MissionBalance
         {
-            RoundSeconds = 75f,
+            RoundSeconds = 90f,
             SpawnedItemCount = 0,
-            ItemGoal = 5,
+            ItemGoal = 7,
             ItemScore = 0,
             MaxStolenFood = 3,
             SquirrelPenalty = 50,
             SquirrelScareScore = 25,
-            PawfectScore = 1300,
-            HeroScore = 900,
+            PawfectScore = 1600,
+            HeroScore = 1100,
             SurvivorScore = 300
         };
 

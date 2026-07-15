@@ -202,7 +202,7 @@ accents:
   redirects, Snack Heist target/guard-lane reads, Sock Panic basket/sock states, Squirrel
   Conspiracy cutoff fakeouts, Eagle talon/cover states, Coyote fence states, Weenie Roundup cargo,
   Scent Search hot/cold/found patches, Thunderstorm comfort cues, Mark the Yard zone/squirrel
-  states, Leash Walk checkpoints, Car Ride lurch/spill states, Gate Crash gate/toy states, Table
+  states, Leash Walk checkpoints, Car Ride backseat set (driver, cooler, toy bin), Gate Crash gate/toy states, Table
   Stealth human/steak states, Switcheroo decoy/stash states, Walk Campaign human/leash states, Bone
   Relay scent/mound states, Great Escape station states, Blanket Catch blanket/snack states, Kitchen
   counter/bowl/food states, and Chaos Machine lever states. These remain couch-test generated art;
@@ -265,13 +265,13 @@ accents:
   now gives the towel-drop, basket-tip, and toy-launch stations distinct generated prop art while
   preserving controller-owned markers, owner labels, objective targets, cascade timing, and stall
   recovery behavior.
-- Generated Level Area Prop Pack now promotes 4 deterministic transparent cartoon area sprites under
-  `Assets/Art/Resources/ArenaFinal/Props/LevelAreas/`, with the contact sheet and source notes
-  retained in `Assets/Art/ReferenceOnly/GeneratedLevelAreas/`. Kitchen Falling Food Frenzy now
-  stages an indoor tile/counter area behind the controller-owned counter and safe bowl, and Car Ride
-  Balance now stages a car cabin plus narrow balance lane so the counter-lean play space reads
-  constrained instead of like the generic backyard. The level-area roots now use sprite-backed safe
-  bowl, car-window/lurch, and spill-hazard preview accents instead of runtime white-square strips.
+- Generated Level Area Prop Pack promotes deterministic transparent cartoon area sprites under
+  `Assets/Art/Resources/ArenaFinal/Props/LevelAreas/` (Kitchen) and
+  `Assets/Art/Resources/ArenaFinal/Props/CarRide/` (backseat set), with contact sheets retained in
+  `Assets/Art/ReferenceOnly/`. Kitchen Falling Food Frenzy stages an indoor tile/counter area
+  behind the controller-owned counter and safe bowl, and Car Ride Chaos stages a full backseat set
+  (cabin shell, bench lane, sprite-masked scrolling windshield scenery) that covers the camera
+  frame entirely, so nothing reads like the generic backyard. The whole set tilts during turns.
   These are decorative mission-owned roots with no colliders.
 
 Still placeholder or deliberately deferred:
@@ -285,7 +285,7 @@ Still placeholder or deliberately deferred:
   patio, back-door, route, snack, laundry, threat, scent, leash, fence, lawn, pond, shade-tree,
   garden, picnic, sandbox, stepping-stone, house facade, back porch, yard shed, objective-arrow,
   bark-range, tug-range, rescue-range, Kitchen falling-food telegraph, Kitchen landing-warning,
-  Chaos Machine junction station, Kitchen indoor area, Car Ride cabin/balance lane, HUD
+  Chaos Machine junction station, Kitchen indoor area, Car Ride backseat cabin set, HUD
   panel/tile/badge/button, mission world-label bubble/ribbon/warning/burst, and dog-local
   paw-trail/polish cues now have generated cartoon sprite overlays, but
   debug/readiness text affordances are still not final UI or environment art.
@@ -955,26 +955,29 @@ Checkpoint success now gives both dogs a brief proud pose alongside the score po
 produces a midpoint `LEASH SNAP!` warning, threat cue, rumble, and synchronized worried flinch before
 normal walking resumes.
 
-### Car Ride Balance
+### Car Ride Chaos
 
-Car Ride Balance is a **vehicle-balance** mission using `CarBalanceMissionState` — the twelfth mission (arrow-select), and the one that completes coverage of every mechanic module in the design library. The dogs ride in the back of a car that lurches side to side; the live tilt runs from fully-left (-1) to fully-right (+1), and the dogs lean it by which side of centre they stand on. To stay level they must sit opposite the current tilt. Ride out six lurches without tipping (four spills fails the drive).
+Car Ride Chaos is the **vehicle** mission using `CarRideMissionState` — the twelfth mission (arrow-select), redesigned (2026-07-14) from the old average-position balance meter into a proper backseat stage. The dogs ride the rear bench home through a scripted ride of **seven road events** (turns and brake slams). The whole cabin set — shell, bench, and a sprite-masked scrolling windshield scenery strip — replaces the backyard for this mission, and the set visibly **tilts** while the car corners.
+
+The three verbs:
+
+- **Turns** (telegraphed `LEFT/RIGHT TURN AHEAD`): the cabin tilts and everything slides toward the outside of the turn. Cheddar slides hardest (chaos-puppy multiplier 1.25×), Cocoa least (0.85×). Getting pinned against the downhill door mid-turn is a **DOOR SQUISH!** tumble.
+- **Sliding junk**: the loose **COOLER** and **TOY BIN** slide across the bench faster than any dog. A grounded dog in their path takes a **BONK!** tumble (with knockback stun); a **jumping** dog clears them with a `CLEAN HOP!` credit.
+- **Brakes** (telegraphed `BRAKES AHEAD - BRACE (INTERACT)!`): each dog must press interact to plant (`COCOA PLANTS!` / `CHEDDAR HUNKERS!`). Braced dogs bank **BRACED** points at the stop; unbraced dogs are `FLUNG FORWARD!` into a tumble. Bracing also plants a dog against turn slides — but claws don't stop a sliding cooler, so jump those.
+
+Co-op layer: a **united bark** during cruise/telegraph makes the driver ease off the gas for the next event (gentler tilt, slower junk), once per event. Five tumbles fails the ride; a clean event pops **SMOOTH!** with the proud pack pose, and finishing all seven banks **RIDE COMPLETE**.
 
 Readable differences:
 
-- No squirrel/predator loop; it's continuous balance management under periodic lurches.
-- The car indicator shows the current tilt direction and percentage; the objective reads LEVEL / tipping LEFT / tipping RIGHT.
-- Unique scoring/events include **STEADIED**, **SPILL** (penalty), and **RIDE COMPLETE**.
-- Clear banner: **MADE IT HOME!**; end summary reads **Smooth Riders** on a clear, **Car Sick** when the car spilled.
+- No squirrel/predator loop; the dashboard **driver actor** telegraphs every event through its signal badge (calm `cruising` label between events, warning badge during telegraphs).
+- Unique scoring/events: **SMOOTH!** (clean event), **BRACED** (per dog per brake), **TUMBLE** (penalty), **RIDE COMPLETE**.
+- Clear banner: **MADE IT HOME!**; summaries read **Smooth Riders** (clean clear), **Home With Bruises** (clear with tumbles), **Car Sick** (failed).
 
-The deterministic test/pacing hooks are `ForceCarLurch()` and `ForceCarSpill()` (`CarBalance` exposes the live tilt); in normal play lurches fire on a timer and the dogs' average side leans the car.
+Deterministic test hooks: `ForceCarEventSurvived()` / `ForceCarTumble(dog)` on GameManager, plus controller-level `ForceBeginRoadEvent(kind)`, `ForceResolveRoadEvent()`, `ForceBrace(dog)`, and `ForceTurnSlide(dt, kind)` (headless frame time can't accumulate slide distance, so slide/bonk/squish physics are tested through fixed-dt slide steps).
 
-Manual check: arrow to Car Ride Balance, and as the car tilts one way, move both dogs to the opposite side to bring it level; ride out six lurches to clear with **Smooth Riders**.
+Manual check: arrow to Car Ride Chaos and confirm (1) the backyard is fully covered by the cabin set and the windshield scenery scrolls, (2) a telegraphed turn tilts the cabin and slides both dogs and the junk — with Cheddar visibly outsliding Cocoa, (3) jumping over the sweeping cooler avoids the bonk, (4) bracing on the brake telegraph pops `BRACED!` while an unbraced dog gets flung into the front seats, and (5) a united bark mid-cruise draws the `easing up` driver response and a gentler next event.
 
-Each survived lurch now produces a shared `STEADIED!` pop, success cue, rumble, and proud pack pose.
-A spill produces `CAR SPILL!`, a threat cue, stronger rumble, and synchronized worried flinch so the
-cause of lost balance reads before the next lurch.
-
-> **Mechanic-module coverage:** with Car Ride Balance, all nine `ProductionMechanicModule` values (Herding, ThreatSweep, PatrolDefense, SharedObject, TerritoryControl, ScentSearch, RhythmPanic, VehicleBalance, LeashPhysics) now have at least one playable, tested mission.
+> **Mechanic-module coverage:** with Car Ride Chaos, all nine `ProductionMechanicModule` values (Herding, ThreatSweep, PatrolDefense, SharedObject, TerritoryControl, ScentSearch, RhythmPanic, VehicleBalance, LeashPhysics) keep at least one playable, tested mission.
 
 ### Kitchen Falling Food Frenzy
 

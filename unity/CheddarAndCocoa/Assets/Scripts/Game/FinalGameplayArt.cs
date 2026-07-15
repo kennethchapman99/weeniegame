@@ -172,10 +172,12 @@ namespace CheddarAndCocoa.Game
         public const string LeashWalkCheckpointWaiting = Root + "/Props/LeashWalk/leash_walk_checkpoint_waiting";
         public const string LeashWalkCheckpointReached = Root + "/Props/LeashWalk/leash_walk_checkpoint_reached";
         public const string LeashWalkSnapWarning = Root + "/Props/LeashWalk/leash_walk_snap_warning";
-        public const string CarRideLevel = Root + "/Props/CarRide/car_ride_level";
-        public const string CarRideLurchLeft = Root + "/Props/CarRide/car_ride_lurch_left";
-        public const string CarRideLurchRight = Root + "/Props/CarRide/car_ride_lurch_right";
-        public const string CarRideSpill = Root + "/Props/CarRide/car_ride_spill";
+        public const string BackseatCabinShell = Root + "/Props/CarRide/backseat_cabin_shell";
+        public const string BackseatBench = Root + "/Props/CarRide/backseat_bench";
+        public const string BackseatWindshieldScenery = Root + "/Props/CarRide/backseat_windshield_scenery";
+        public const string CarDashboardDriver = Root + "/Props/CarRide/car_dashboard_driver";
+        public const string SeatCooler = Root + "/Props/CarRide/seat_cooler";
+        public const string SeatToyBin = Root + "/Props/CarRide/seat_toy_bin";
         public const string GateCrashGateClosed = Root + "/Props/GateCrash/gate_crash_gate_closed";
         public const string GateCrashGateHeld = Root + "/Props/GateCrash/gate_crash_gate_held";
         public const string GateCrashGateSnap = Root + "/Props/GateCrash/gate_crash_gate_snap";
@@ -236,8 +238,6 @@ namespace CheddarAndCocoa.Game
         public const string EnvironmentPhotoHouseDeck = Root + "/Props/Environment/yard_photo_house_deck";
         public const string LevelAreaKitchenFloor = Root + "/Props/LevelAreas/kitchen_floor_area";
         public const string LevelAreaKitchenCounters = Root + "/Props/LevelAreas/kitchen_counter_wall";
-        public const string LevelAreaCarInterior = Root + "/Props/LevelAreas/car_interior_cabin";
-        public const string LevelAreaCarBalanceLane = Root + "/Props/LevelAreas/car_balance_lane";
         public const string BuildingHomeExterior = Root + "/Props/Buildings/home_exterior_facade";
         public const string BuildingBackPorchEntry = Root + "/Props/Buildings/back_porch_entry";
         public const string BuildingYardShedStorage = Root + "/Props/Buildings/yard_shed_storage";
@@ -283,8 +283,7 @@ namespace CheddarAndCocoa.Game
 
         public static readonly string[] LevelAreaPropPack =
         {
-            LevelAreaKitchenFloor, LevelAreaKitchenCounters,
-            LevelAreaCarInterior, LevelAreaCarBalanceLane
+            LevelAreaKitchenFloor, LevelAreaKitchenCounters
         };
 
         public static readonly string[] HudSkinPack =
@@ -372,7 +371,8 @@ namespace CheddarAndCocoa.Game
         public static readonly string[] HomeTripP0Pack =
         {
             LeashWalkCheckpointWaiting, LeashWalkCheckpointReached, LeashWalkSnapWarning,
-            CarRideLevel, CarRideLurchLeft, CarRideLurchRight, CarRideSpill,
+            BackseatCabinShell, BackseatBench, BackseatWindshieldScenery,
+            CarDashboardDriver, SeatCooler, SeatToyBin,
             GateCrashGateClosed, GateCrashGateHeld, GateCrashGateSnap,
             GateCrashToyWaiting, GateCrashToyClaimed,
             TableStealthHumanWatching, TableStealthHumanDistracted,

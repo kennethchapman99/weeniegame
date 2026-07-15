@@ -42,7 +42,7 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(GameManager.MissionVariant.CarRide, game.ActiveMissionVariant,
                 "The bridge should have started the queued mission once GameManager was found.");
 
-            for (int i = 0; i < 6; i++) game.ForceCarLurch(); // CarBalanceMissionState.RequiredLurches
+            for (int i = 0; i < 7; i++) game.ForceCarEventSurvived(); // CarRideMissionState.RequiredEvents
             Assert.AreEqual(GameManager.MissionOutcome.Clear, game.Outcome);
 
             // WatchForMissionEnd polls once per frame; give it a couple of ticks to observe the end

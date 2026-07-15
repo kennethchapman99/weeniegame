@@ -161,7 +161,7 @@ namespace CheddarAndCocoa.Game
                 case GameManager.MissionVariant.ThunderstormComfort: return "Thunderstorm Comfort";
                 case GameManager.MissionVariant.MarkTheYard: return "Mark the Yard";
                 case GameManager.MissionVariant.LeashWalk: return "Walkies on the Leash";
-                case GameManager.MissionVariant.CarRide: return "Car Ride Balance";
+                case GameManager.MissionVariant.CarRide: return "Car Ride Chaos";
                 default: return mission.ToString();
             }
         }

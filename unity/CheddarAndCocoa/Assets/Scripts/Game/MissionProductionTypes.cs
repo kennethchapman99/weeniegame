@@ -146,12 +146,12 @@ namespace CheddarAndCocoa.Game
 
         public static readonly ProductionMissionSpec CarRide = new(
             "car_ride",
-            "Car Ride Balance",
+            "Car Ride Chaos",
             ProductionMissionPack.RoadTrip,
             ProductionMechanicModule.VehicleBalance,
-            "Lean to opposite sides to keep the lurching car level all the way home.",
-            "Ride out every lurch without tipping the car too many times.",
-            "The car tips over too many times, or the timer expires.");
+            "Ride the tilting back seat home: fight turn slides, jump sliding junk, brace for brakes.",
+            "Ride out every road event without tumbling too many times.",
+            "The dogs tumble too many times, or the timer expires.");
 
         public static readonly ProductionMissionSpec CoyotesFence = new(
             "coyotes_fence",

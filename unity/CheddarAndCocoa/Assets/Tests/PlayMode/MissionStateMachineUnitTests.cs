@@ -164,7 +164,8 @@ namespace CheddarAndCocoa.Tests
                 + ScoreEventCatalog.YardMarked.Points,
             GameManager.MissionVariant.LeashWalk => ScoreEventCatalog.CheckpointReached.Points * 3 // conservative checkpoint count
                 + ScoreEventCatalog.WalkComplete.Points,
-            GameManager.MissionVariant.CarRide => ScoreEventCatalog.LurchSteadied.Points * 5 // RequiredLurches
+            GameManager.MissionVariant.CarRide => ScoreEventCatalog.RoadEventCleared.Points * 7 // RideScript.Length
+                + ScoreEventCatalog.BraceHeld.Points * 2 * 3 // both dogs braced through 3 brakes
                 + ScoreEventCatalog.RideComplete.Points,
             GameManager.MissionVariant.GateCrash => 0,     // penalties only - the clear package is the whole ceiling
             GameManager.MissionVariant.TableStealth => 0,  // penalties only - the clear package is the whole ceiling

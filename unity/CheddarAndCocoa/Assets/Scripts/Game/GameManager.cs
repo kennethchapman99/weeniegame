@@ -102,8 +102,7 @@ namespace CheddarAndCocoa.Game
         public Vector2[] TerritoryZones => MarkTheYardMissionController.ComputeZones(_bounds);
         public Vector2[] LeashCheckpoints => LeashWalkMissionController.ComputeCheckpoints(_bounds);
         public CarRideMissionController CarRideController => _activeMissionController as CarRideMissionController;
-        public CarBalanceMissionState CarRideState => CarRideController?.State ?? _emptyCarState;
-        public float CarBalance => CarRideController?.Balance ?? 0f;
+        public CarRideMissionState CarRideState => CarRideController?.State ?? _emptyCarState;
         public SockPanicMissionController SockPanicController => _activeMissionController as SockPanicMissionController;
         public SockBasketMissionState SockPanicState => SockPanicController?.State ?? _emptySockBasketState;
         public BackyardRescueMissionController BackyardRescueController => _activeMissionController as BackyardRescueMissionController;
@@ -382,7 +381,7 @@ namespace CheddarAndCocoa.Game
         private readonly ScentSearchMissionState _emptyScentState = new ScentSearchMissionState();
         private PanicMeter _panic;
         private int[] _dogContribution;
-        private readonly CarBalanceMissionState _emptyCarState = new CarBalanceMissionState();
+        private readonly CarRideMissionState _emptyCarState = new CarRideMissionState();
         // Gate Crash (Hold-and-Release co-op puzzle): Cocoa anchors the gate, Cheddar squeezes through.
         // Gate Crash now lives in GateCrashMissionController; this empty puzzle backs the compatibility
         // accessor when the mission is not the active controller.
@@ -920,7 +919,7 @@ namespace CheddarAndCocoa.Game
                 MissionVariant.ThunderstormComfort => "Challenge: weather all 5 claps, calm the whole time",
                 MissionVariant.MarkTheYard => "Challenge: claim all 5 zones, no reclaims",
                 MissionVariant.LeashWalk => "Challenge: every checkpoint, zero leash snaps",
-                MissionVariant.CarRide => "Challenge: 6 lurches, zero spills",
+                MissionVariant.CarRide => "Challenge: ride all 7 road events, zero tumbles",
                 MissionVariant.GateCrash => "Challenge: squeeze through without a single snap",
                 MissionVariant.TableStealth => "Challenge: sneak the steak, never spotted",
                 MissionVariant.SquirrelSwitcheroo => "Challenge: raid the stash, zero backfires",
@@ -1490,24 +1489,20 @@ namespace CheddarAndCocoa.Game
             CheckClear();
         }
 
-        // --- Car Ride Balance (vehicle lean) ---
+        // --- Car Ride Chaos (backseat road events) ---
 
-        public void ForceCarLurch()
+        /// <summary>Test hook: bank one clean road event (turn or brake ridden out).</summary>
+        public void ForceCarEventSurvived()
         {
-            if (MissionActive()) CarRideController?.ForceLurch();
+            if (MissionActive()) CarRideController?.ForceEventSurvived();
             CheckClear();
         }
 
-        public void ForceCarSpill()
+        /// <summary>Test hook: one dog tumbles (bonk/squish/fling equivalent).</summary>
+        public void ForceCarTumble(int dogIndex = 0)
         {
-            if (MissionActive()) CarRideController?.ForceSpill();
+            if (MissionActive()) CarRideController?.ForceTumble(dogIndex);
             CheckClear();
-        }
-
-        /// <summary>Test hook: set the car tilt directly (headless deltaTime can't accumulate lean).</summary>
-        public void ForceCarBalance(float balance)
-        {
-            if (MissionActive()) CarRideController?.ForceBalance(balance);
         }
 
         /// <summary>Test hook: the snatched dog wiggles to crack the grip open.</summary>

@@ -127,7 +127,7 @@ namespace CheddarAndCocoa.Game
                     _game.ForceReachCheckpoint();
                     break;
                 case GameManager.MissionVariant.CarRide:
-                    _game.ForceCarLurch();
+                    _game.ForceCarEventSurvived();
                     break;
                 case GameManager.MissionVariant.GateCrash:
                     _game.ForceGateHold(true);
@@ -212,7 +212,7 @@ namespace CheddarAndCocoa.Game
                     _game.ForceReachCheckpoint();
                     break;
                 case GameManager.MissionVariant.CarRide:
-                    _game.ForceCarSpill();
+                    _game.ForceCarTumble();
                     break;
                 case GameManager.MissionVariant.GateCrash:
                     _game.ForceGateHold(true);

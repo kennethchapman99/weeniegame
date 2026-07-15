@@ -35,7 +35,7 @@ namespace CheddarAndCocoa.Game
                 case GameManager.MissionVariant.LeashWalk:
                     return "Cheddar and Cocoa share a single leash for a proper neighborhood walk, staying close enough that it never snaps taut as they hit every checkpoint.";
                 case GameManager.MissionVariant.CarRide:
-                    return "The dogs are along for an exciting, lurching car ride. Cheddar and Cocoa lean opposite the tilt to keep the back seat level all the way home.";
+                    return "The dogs are riding the back seat home. Every turn tilts the cabin and sends pups, cooler, and toy bin sliding - and when the brakes slam, only a well-planted dog stays off the floor.";
                 case GameManager.MissionVariant.GateCrash:
                     return "Cheddar and Cocoa spot a heavy gate standing between them and a toy on the other side. One braces it open while the other squeezes through before it slams shut.";
                 case GameManager.MissionVariant.TableStealth:
@@ -167,9 +167,10 @@ namespace CheddarAndCocoa.Game
                 case GameManager.MissionVariant.CarRide:
                     return new[]
                     {
-                        "The car cabin tilts as it lurches.",
-                        "Watch the car indicator and move both dogs to the side opposite the current tilt to bring it level (LEVEL / tipping LEFT / tipping RIGHT).",
-                        "Ride out 6 lurches without tipping; 4 spills fails the drive."
+                        "Watch the driver: the dashboard telegraphs every TURN and BRAKE before it hits.",
+                        "Turns tilt the cabin and slide dogs and seat junk sideways - fight the slide, and jump over the cooler and toy bin as they sweep past.",
+                        "When BRAKES flash, press interact to brace before the stop or you're flung into the front seats.",
+                        "Ride out all 7 road events; 5 tumbles fails the drive. Bark together and the driver eases up."
                     };
                 case GameManager.MissionVariant.GateCrash:
                     return new[]

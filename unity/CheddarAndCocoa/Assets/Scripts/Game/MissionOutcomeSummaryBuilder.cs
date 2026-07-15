@@ -76,12 +76,12 @@ namespace CheddarAndCocoa.Game
             return "Still Walking";
         }
 
-        public static string BuildCarBalanceSummary(CarBalanceMissionState state)
+        public static string BuildCarRideSummary(CarRideMissionState state)
         {
             if (state.ReadyToClear())
-                return "Smooth Riders";
+                return state.Tumbles == 0 ? "Smooth Riders" : "Home With Bruises";
 
-            if (state.Spills > 0)
+            if (state.Tumbles > 0)
                 return "Car Sick";
 
             return "Still Riding";

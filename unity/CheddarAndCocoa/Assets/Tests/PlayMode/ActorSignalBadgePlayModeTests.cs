@@ -216,30 +216,33 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
-        public IEnumerator CarRide_NearSpillTilt_RaisesWarningSignal()
+        public IEnumerator CarRide_DriverTelegraph_RaisesWarningSignal()
         {
             yield return Load(GameManager.MissionVariant.CarRide);
 
-            var car = GameObject.Find("Car Ride Balance Vehicle");
-            Assert.IsNotNull(car, "Car Ride should stage its balance vehicle actor.");
-            var feedback = car.GetComponent<MissionActorFeedback>();
+            var driver = GameObject.Find("Car Ride Driver");
+            Assert.IsNotNull(driver, "Car Ride should stage its dashboard driver actor.");
+            var feedback = driver.GetComponent<MissionActorFeedback>();
             Assert.IsNotNull(feedback);
             Assert.IsFalse(feedback.SignalBadge.IsShowing,
-                "A level car is a calm balance readout and must not raise the signal badge.");
+                "A cruising driver is a calm readout and must not raise the signal badge.");
 
-            _game.ForceCarBalance(0.85f);
+            var controller = (CarRideMissionController)_game.ActiveMissionController;
+            controller.ForceBeginRoadEvent(CarRideMissionController.RoadEventKind.Brake);
 
-            Assert.That(feedback.Label, Does.Contain("SPILL WARNING"));
+            Assert.That(feedback.Label, Does.Contain("BRAKES AHEAD"));
             Assert.IsTrue(feedback.SignalBadge.IsShowing,
-                "A near-spill tilt must raise the distance signal before the meter maxes out.");
+                "A brake telegraph must raise the distance signal before the slam lands.");
             Assert.That(feedback.SignalBadge.IconSpriteName, Does.Contain("warning"),
-                "An imminent spill classifies as a warning skin.");
+                "An incoming brake classifies as a warning skin.");
 
-            _game.ForceCarBalance(0.2f);
+            controller.ForceBrace(0);
+            controller.ForceBrace(1);
+            controller.ForceResolveRoadEvent();
 
-            Assert.That(feedback.Label, Does.Contain("CAR TILT"));
+            Assert.That(feedback.Label, Does.Contain("cruising"));
             Assert.IsFalse(feedback.SignalBadge.IsShowing,
-                "Recovering the lean must clear the urgency signal.");
+                "Riding out the event must return the driver to a calm signal.");
         }
 
         [UnityTest]

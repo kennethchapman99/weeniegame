@@ -87,7 +87,7 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(1, game.LeashWalkState.Snaps);
             game.StartMission(GameManager.MissionVariant.CarRide);
             Assert.AreEqual(0, game.LeashWalkState.Snaps);
-            Assert.AreEqual(0, game.CarRideState.Spills);
+            Assert.AreEqual(0, game.CarRideState.Tumbles);
         }
 
         [UnityTest]

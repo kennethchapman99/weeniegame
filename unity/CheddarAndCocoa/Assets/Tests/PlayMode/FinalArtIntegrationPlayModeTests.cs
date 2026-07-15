@@ -475,13 +475,9 @@ namespace CheddarAndCocoa.Tests
 
             game.StartMission(GameManager.MissionVariant.CarRide);
             yield return new WaitForSeconds(0.1f);
-            AssertMissionProp("Car Ride Balance Vehicle", FinalGameplayArt.CarRideLevel);
-            game.ForceCarLurch();
-            yield return null;
-            AssertMissionProp("Car Ride Balance Vehicle", FinalGameplayArt.CarRideLurchRight);
-            game.ForceCarSpill();
-            yield return null;
-            AssertMissionProp("Car Ride Balance Vehicle", FinalGameplayArt.CarRideSpill);
+            AssertMissionProp("Car Ride Driver", FinalGameplayArt.CarDashboardDriver);
+            AssertPlainSpriteObject("SeatObstacle_Cooler", "seat_cooler");
+            AssertPlainSpriteObject("SeatObstacle_ToyBin", "seat_toy_bin");
 
             game.StartMission(GameManager.MissionVariant.GateCrash);
             yield return new WaitForSeconds(0.1f);
@@ -609,10 +605,10 @@ namespace CheddarAndCocoa.Tests
             yield return new WaitForSeconds(0.1f);
             var car = GameObject.Find(MissionLevelAreaArt.CarRideRootName);
             Assert.IsNotNull(car, "Car Ride should install a constrained car-interior level area.");
-            AssertLevelAreaPlate(car, "CarInteriorCabinPlate", "car_interior_cabin", expectedMaxSortingOrder: -4);
-            AssertLevelAreaPlate(car, "CarBalanceLanePlate", "car_balance_lane", expectedMaxSortingOrder: -2);
-            AssertLevelAreaPlate(car, "CarWindowMotionCuePlate", "car_ride_lurch_left", expectedMaxSortingOrder: -3);
-            AssertLevelAreaPlate(car, "CarSpillHazardPreviewPlate", "car_ride_spill", expectedMaxSortingOrder: -1);
+            AssertLevelAreaPlate(car, "BackseatCabinShellPlate", "backseat_cabin_shell", expectedMaxSortingOrder: -8);
+            AssertLevelAreaPlate(car, "BackseatBenchPlate", "backseat_bench", expectedMaxSortingOrder: -6);
+            AssertLevelAreaPlate(car, "BackseatWindshieldScroller/BackseatWindshieldSceneryPlate_1",
+                "backseat_windshield_scenery", expectedMaxSortingOrder: -7);
             AssertLevelAreaHasNoPrimitiveSquareMarkers(car);
             Assert.IsNull(GameObject.Find(MissionLevelAreaArt.KitchenRootName),
                 "Switching to Car Ride should clean up the Kitchen area.");
@@ -641,6 +637,16 @@ namespace CheddarAndCocoa.Tests
                 return;
             }
             Assert.Fail($"No active mission prop uses generated prop art {expectedResourcePath}.");
+        }
+
+        private static void AssertPlainSpriteObject(string objectName, string expectedSpriteName)
+        {
+            var go = GameObject.Find(objectName);
+            Assert.IsNotNull(go, $"Missing active sprite object {objectName}.");
+            var renderer = go.GetComponent<SpriteRenderer>();
+            Assert.IsNotNull(renderer, $"{objectName} should render a sprite.");
+            Assert.IsNotNull(renderer.sprite, $"{objectName} should load generated art.");
+            Assert.AreEqual(expectedSpriteName, renderer.sprite.name);
         }
 
         private static void AssertMissionProp(string objectName, string expectedResourcePath)

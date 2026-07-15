@@ -35,8 +35,9 @@ namespace CheddarAndCocoa.Game
         public static readonly ProductionScoreEvent LeashSnap = new("LEASH SNAP", -45);
         public static readonly ProductionScoreEvent WalkComplete = new("WALK COMPLETE", 500, true);
 
-        public static readonly ProductionScoreEvent LurchSteadied = new("STEADIED", 110, true);
-        public static readonly ProductionScoreEvent CarSpill = new("SPILL", -45);
+        public static readonly ProductionScoreEvent RoadEventCleared = new("SMOOTH!", 110, true);
+        public static readonly ProductionScoreEvent BraceHeld = new("BRACED", 90, true);
+        public static readonly ProductionScoreEvent CarTumble = new("TUMBLE", -45);
         public static readonly ProductionScoreEvent RideComplete = new("RIDE COMPLETE", 500, true);
 
         public static readonly ProductionScoreEvent FenceHeld = new("FENCE HELD", 100, true);

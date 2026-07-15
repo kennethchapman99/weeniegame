@@ -1,95 +1,220 @@
+using CheddarAndCocoa.Dogs;
 using UnityEngine;
 
 namespace CheddarAndCocoa.Game
 {
-    public sealed class CarRideMissionController : IMissionController
+    /// <summary>
+    /// Car Ride Chaos: Cheddar and Cocoa ride the back bench home while the driver takes turns
+    /// and hits the brakes. Turns tilt the whole cabin and slide the dogs plus the loose seat
+    /// junk (cooler, toy bin) toward the outside of the turn — fight the slide or brace, and
+    /// jump the junk as it sweeps across the bench. A brake telegraph demands a brace (interact)
+    /// before the stop or the dog is flung into the front seats. Tumbles add up; too many fails
+    /// the ride. A united bark makes the driver ease up on the next road event.
+    ///
+    /// Cheddar is light chaos-puppy cargo and slides hardest; Cocoa plants like a veteran and
+    /// slides least — she holds the line while he does the acrobatics.
+    /// </summary>
+    public sealed class CarRideMissionController : IMissionController, IMissionInteractionController, IMissionUnitedBarkListener
     {
-        private const int RequiredLurches = 6;
-        private const int MaxSpills = 4;
-        private const float LurchInterval = 4f;
-        // Tilt fraction where the calm balance readout becomes an urgent spill warning.
-        private const float SpillWarningBalance = 0.7f;
+        public enum RoadEventKind { TurnLeft, TurnRight, Brake }
+        private enum Phase { Cruise, Telegraph, Turning, BrakeSettle }
 
-        private readonly CarBalanceMissionState _state = new();
+        private const int MaxTumbles = 5;
+        private const float CruiseSeconds = 2.6f;
+        private const float TelegraphSeconds = 1.6f;
+        private const float TurnSeconds = 3.2f;
+        private const float BrakeSettleSeconds = 0.9f;
+        private const float BraceSeconds = 1.8f;
+        private const float DogSlideSpeed = 3.4f;
+        private const float ObstacleSlideSpeed = 6.8f;
+        private const float CheddarSlideMultiplier = 1.25f;
+        private const float CocoaSlideMultiplier = 0.85f;
+        private const float CabinTiltDegrees = 5.5f;
+        private const float EasedIntensity = 0.55f;
+        private const float SeatHalfWidth = 16f;
+        private const float SeatTopOffset = 2.6f;
+        private const float SeatBottomOffset = 5.8f;
+        private const float DoorSquishMargin = 0.9f;
+        private const float ObstacleBonkRadius = 1.6f;
+
+        /// <summary>The whole ride home, in order. Length defines the clear requirement.</summary>
+        private static readonly RoadEventKind[] RideScript =
+        {
+            RoadEventKind.TurnRight, RoadEventKind.Brake, RoadEventKind.TurnLeft,
+            RoadEventKind.TurnRight, RoadEventKind.Brake, RoadEventKind.TurnLeft,
+            RoadEventKind.Brake
+        };
+
+        private readonly CarRideMissionState _state = new();
         private MissionContext _context;
-        private GameObject _car;
+        private GameObject _dashboard;
         private MissionLevelAreaArt _levelAreaArt;
-        private float _balance;
-        private int _lurchDirection;
-        private float _nextLurchAt;
+        private readonly GameObject[] _obstacles = new GameObject[2];
+        private static readonly string[] ObstacleLabels = { "COOLER", "TOY BIN" };
+
+        private Phase _phase;
+        private float _phaseEndsAt;
+        private RoadEventKind _currentEvent;
+        private int _eventTumbles;
+        private bool _driverEased;
+        private float _visualTilt;
+        private float _sceneryScroll;
+        private readonly float[] _bracedUntil = new float[2];
+        private readonly bool[] _doorSquished = new bool[2];
+        private readonly bool[,] _obstacleBonked = new bool[2, 2];
+        private readonly bool[,] _obstacleHopped = new bool[2, 2];
 
         public GameManager.MissionVariant Variant => GameManager.MissionVariant.CarRide;
         public bool IsComplete => _state.ReadyToClear();
-        public bool IsFailed => _state.TooManySpills(MaxSpills);
-        public string FailReason => IsFailed ? "The car tipped over too many times on the way home." : null;
-        public string OutcomeSummary => MissionOutcomeSummaryBuilder.BuildCarBalanceSummary(_state);
+        public bool IsFailed => _state.TooManyTumbles(MaxTumbles);
+        public string FailReason => IsFailed ? "The backseat crew got tossed around one tumble too many." : null;
+        public string OutcomeSummary => MissionOutcomeSummaryBuilder.BuildCarRideSummary(_state);
         public Vector2 EntryTarget => _context != null ? _context.Bounds.center : Vector2.zero;
-        public CarBalanceMissionState State => _state;
-        public float Balance => _balance;
+        public CarRideMissionState State => _state;
+        public RoadEventKind CurrentRoadEvent => _currentEvent;
+        public bool IsTelegraphing => _phase == Phase.Telegraph;
+        public bool IsTurning => _phase == Phase.Turning;
+        public bool DriverEased => _driverEased;
+        public bool IsDogBraced(int dogIndex) => BraceActive(dogIndex, _context.Now());
 
         public string ObjectiveLabel
         {
             get
             {
-                string tilt = Mathf.Abs(_balance) < 0.15f ? "LEVEL" : (_balance > 0f ? "tipping RIGHT" : "tipping LEFT");
-                return $"Lean to keep the car level ({tilt}): steadied {_state.LurchesSurvived}/{_state.RequiredLurches}, spills {_state.Spills}/{MaxSpills}";
+                string beat = _phase switch
+                {
+                    Phase.Telegraph when _currentEvent == RoadEventKind.Brake => "BRAKES AHEAD - brace!",
+                    Phase.Telegraph => "turn ahead - hold on!",
+                    Phase.Turning => "sliding - jump the junk!",
+                    _ => "watch the driver",
+                };
+                return $"Ride home ({beat}): road events {_state.EventsResolved}/{_state.RequiredEvents}, tumbles {_state.Tumbles}/{MaxTumbles}";
             }
         }
 
         public void Initialize(MissionContext context)
         {
             _context = context;
-            _car = _context.CreateActor(ArenaArtCatalog.ActorKind.Predator);
-            _car.name = "Car Ride Balance Vehicle";
-            MissionPropArt.AttachObject(_car, FinalGameplayArt.CarRideLevel, 0.013f, 18, true);
-            _car.SetActive(false);
+            _dashboard = _context.CreateActor(ArenaArtCatalog.ActorKind.Predator);
+            _dashboard.name = "Car Ride Driver";
+            MissionPropArt.AttachObject(_dashboard, FinalGameplayArt.CarDashboardDriver, 0.016f, 18, false);
+            _dashboard.SetActive(false);
+
+            string[] obstacleArt = { FinalGameplayArt.SeatCooler, FinalGameplayArt.SeatToyBin };
+            string[] obstacleNames = { "SeatObstacle_Cooler", "SeatObstacle_ToyBin" };
+            for (int i = 0; i < _obstacles.Length; i++)
+            {
+                _obstacles[i] = BuildObstacle(obstacleNames[i], obstacleArt[i], ObstacleLabels[i]);
+                _obstacles[i].SetActive(false);
+            }
         }
 
         public void StartMission()
         {
-            _state.Configure(RequiredLurches);
-            _balance = 0f;
-            _lurchDirection = 1;
-            _nextLurchAt = _context.Now() + LurchInterval;
-            _car.transform.position = new Vector2(0f, _context.Bounds.yMax - 1.5f);
-            _levelAreaArt = MissionLevelAreaArt.CreateCarRideArea(_context.Bounds, _car.transform.position);
-            _car.SetActive(true);
-            SetCarArt(FinalGameplayArt.CarRideLevel);
-            _context.SetActorState(_car, "CAR - LEAN TO KEEP IT LEVEL!", new Color(0.5f, 0.4f, 0.3f), 0.12f);
+            _state.Configure(RideScript.Length);
+            _phase = Phase.Cruise;
+            _phaseEndsAt = _context.Now() + CruiseSeconds;
+            _currentEvent = RideScript[0];
+            _eventTumbles = 0;
+            _driverEased = false;
+            _visualTilt = 0f;
+            _sceneryScroll = 0f;
+            for (int i = 0; i < 2; i++)
+            {
+                _bracedUntil[i] = 0f;
+                _doorSquished[i] = false;
+            }
+            ClearEventLatches();
+
+            Vector2 center = _context.Bounds.center;
+            _levelAreaArt = MissionLevelAreaArt.CreateCarRideArea(_context.Bounds);
+            _dashboard.transform.position = center + Vector2.up * 8.6f;
+            _dashboard.SetActive(true);
+            _obstacles[0].transform.position = center + new Vector2(-5.5f, -1.3f);
+            _obstacles[1].transform.position = center + new Vector2(5.5f, -1.3f);
+            foreach (var obstacle in _obstacles)
+                if (obstacle != null) obstacle.SetActive(true);
+
+            SetDriverCalm();
         }
 
         public void Tick(float deltaTime, float now)
         {
             if (IsComplete || IsFailed) return;
 
-            float averageX = 0f;
-            if (_context.Dogs != null && _context.Dogs.Length > 0)
+            switch (_phase)
             {
-                foreach (var dog in _context.Dogs)
-                    if (dog != null) averageX += dog.transform.position.x;
-                averageX /= _context.Dogs.Length;
+                case Phase.Cruise:
+                    UpdatePresentation(deltaTime, 0f);
+                    if (now >= _phaseEndsAt) BeginTelegraph(now, RideScript[_state.EventsResolved % RideScript.Length]);
+                    break;
+                case Phase.Telegraph:
+                    UpdatePresentation(deltaTime, 0f);
+                    if (now < _phaseEndsAt) break;
+                    if (_currentEvent == RoadEventKind.Brake)
+                    {
+                        FireBrake(now);
+                    }
+                    else
+                    {
+                        _phase = Phase.Turning;
+                        _phaseEndsAt = now + TurnSeconds;
+                        _context.SetActorState(_dashboard, "DRIVER: TURNING - HOLD ON!", DriverTint, 0.3f);
+                    }
+                    break;
+                case Phase.Turning:
+                    TickTurn(deltaTime, now);
+                    break;
+                case Phase.BrakeSettle:
+                    UpdatePresentation(deltaTime, 0f);
+                    if (now >= _phaseEndsAt) ResolveEvent(now);
+                    break;
             }
-            float lean = Mathf.Clamp(averageX / 8f, -1f, 1f);
-            _balance = Mathf.Clamp(_balance + (lean * 0.6f + _lurchDirection * 0.04f) * deltaTime, -1.4f, 1.4f);
-            UpdateBalanceSignal();
 
-            if (Mathf.Abs(_balance) >= 1f)
-            {
-                RegisterSpill();
-                return;
-            }
-            if (now >= _nextLurchAt)
-            {
-                _nextLurchAt = now + LurchInterval;
-                ApplyLurch();
-            }
+            ClampDogsToSeat();
         }
 
         public bool HandleBark(int dogIndex) => false;
 
+        /// <summary>Interact = brace: plant claws so turns can't slide you and brakes can't fling
+        /// you. It doesn't stop a sliding cooler - jump for that.</summary>
+        public bool HandleInteract(int dogIndex)
+        {
+            if (IsComplete || IsFailed || dogIndex < 0 || dogIndex >= 2) return false;
+            float now = _context.Now();
+            bool alreadyBraced = BraceActive(dogIndex, now);
+            _bracedUntil[dogIndex] = now + BraceSeconds;
+            if (!alreadyBraced)
+            {
+                var dog = _context.Dogs[dogIndex];
+                if (dog != null)
+                {
+                    bool isCocoa = dog.TryGetComponent<DogIdentity>(out var identity) && identity.Id == DogId.Cocoa;
+                    _context.SpawnWorldPop(dog.transform.position,
+                        isCocoa ? "COCOA PLANTS!" : "CHEDDAR HUNKERS!", new Color(0.65f, 0.85f, 1f));
+                    _context.Pulse(dog.gameObject, 0.14f);
+                }
+                _context.LogEvent("CarBrace", dogIndex.ToString());
+            }
+            return true;
+        }
+
+        /// <summary>United bark = "hey, easy back there!" The driver eases off for the next event.</summary>
+        public void OnUnitedBark()
+        {
+            if (IsComplete || IsFailed || _driverEased) return;
+            if (_phase != Phase.Cruise && _phase != Phase.Telegraph) return;
+            _driverEased = true;
+            _context.SetCue("The driver hears the barking and eases off the gas!");
+            _context.SetActorState(_dashboard, "DRIVER: okay, okay - easing up!", DriverTint, 0.12f);
+            _context.LogEvent("CarDriverEased", _state.EventsResolved.ToString());
+        }
+
         public void Cleanup()
         {
-            if (_car != null) _car.SetActive(false);
+            if (_dashboard != null) _dashboard.SetActive(false);
+            foreach (var obstacle in _obstacles)
+                if (obstacle != null) obstacle.SetActive(false);
             if (_levelAreaArt != null)
             {
                 Object.Destroy(_levelAreaArt.gameObject);
@@ -100,9 +225,9 @@ namespace CheddarAndCocoa.Game
         public void StageDogsForEntry()
         {
             if (_context.Dogs == null || _context.Dogs.Length < 2) return;
-            Vector2 staging = _context.Bounds.center + Vector2.down * 7f;
-            _context.Dogs[0].transform.position = staging + Vector2.left * 1.5f;
-            _context.Dogs[1].transform.position = staging + Vector2.right * 1.5f;
+            Vector2 bench = _context.Bounds.center + Vector2.down * 1.3f;
+            _context.Dogs[0].transform.position = bench + Vector2.left * 2.5f;
+            _context.Dogs[1].transform.position = bench + Vector2.right * 2.5f;
             foreach (var dog in _context.Dogs)
                 if (dog != null && dog.TryGetComponent<Rigidbody2D>(out var rb)) rb.linearVelocity = Vector2.zero;
         }
@@ -116,91 +241,350 @@ namespace CheddarAndCocoa.Game
         }
 
         public MissionRuntimeSnapshot CreateSnapshot(int score, float timeRemaining, GameManager.MissionOutcome outcome) =>
-            new("car_ride", score, timeRemaining, _state.LurchesSurvived, _state.RequiredLurches, _state.Spills,
+            new("car_ride", score, timeRemaining, _state.EventsResolved, _state.RequiredEvents, _state.Tumbles,
                 outcome == GameManager.MissionOutcome.Clear, outcome == GameManager.MissionOutcome.Failed);
 
-        public void ForceLurch() => ApplyLurch();
-        public void ForceSpill() => RegisterSpill();
+        // ---------------------------------------------------------------- test hooks
+        /// <summary>Test hook: telegraph a specific road event now (headless time never reaches
+        /// the scripted schedule).</summary>
+        public void ForceBeginRoadEvent(RoadEventKind kind) => BeginTelegraph(_context.Now(), kind);
 
-        /// <summary>Test hook: set the tilt directly; headless deltaTime is too small to lean there.</summary>
-        public void ForceBalance(float balance)
-        {
-            _balance = Mathf.Clamp(balance, -1.4f, 1.4f);
-            UpdateBalanceSignal();
-        }
-
-        private void UpdateBalanceSignal()
-        {
-            int percent = Mathf.RoundToInt(Mathf.Abs(_balance) * 100f);
-            // Past the warning tilt the state pulses in the urgency channel (0.26+) so the
-            // distance badge tells both dogs a spill is imminent before the meter maxes out.
-            bool nearSpill = Mathf.Abs(_balance) >= SpillWarningBalance;
-            _context.SetActorState(_car,
-                nearSpill
-                    ? $"SPILL WARNING {percent}% - LEAN {(_balance >= 0f ? "LEFT" : "RIGHT")}!"
-                    : $"CAR TILT {(_balance >= 0f ? "RIGHT" : "LEFT")} {percent}% - LEAN!",
-                new Color(0.5f, 0.4f, 0.3f), nearSpill ? 0.3f : 0.12f);
-        }
-
-        private void ApplyLurch()
+        /// <summary>Test hook: resolve the telegraphed/current event now. Brakes evaluate braces
+        /// exactly like the live path, so an unbraced forced brake still tumbles both dogs.</summary>
+        public void ForceResolveRoadEvent()
         {
             if (IsComplete || IsFailed) return;
-            _balance += _lurchDirection * 0.4f;
-            _lurchDirection = -_lurchDirection;
-            if (Mathf.Abs(_balance) >= 1f)
+            float now = _context.Now();
+            if (_phase == Phase.Telegraph && _currentEvent == RoadEventKind.Brake)
             {
-                RegisterSpill();
+                FireBrake(now);
+                ResolveEvent(now);
+                return;
+            }
+            if (_phase == Phase.Telegraph) _phase = Phase.Turning;
+            ResolveEvent(now);
+        }
+
+        /// <summary>Test hook: bank one clean road event (the old ForceLurch equivalent).</summary>
+        public void ForceEventSurvived()
+        {
+            if (IsComplete || IsFailed) return;
+            _currentEvent = RoadEventKind.TurnLeft;
+            _eventTumbles = 0;
+            _phase = Phase.Turning;
+            ResolveEvent(_context.Now());
+        }
+
+        /// <summary>Test hook: run one turn-slide step at full intensity with a real dt, since
+        /// headless frame time is too small to accumulate slide distance.</summary>
+        public void ForceTurnSlide(float deltaTime, RoadEventKind kind = RoadEventKind.TurnRight)
+        {
+            if (IsComplete || IsFailed || kind == RoadEventKind.Brake) return;
+            if (_phase != Phase.Turning || _currentEvent != kind)
+            {
+                _currentEvent = kind;
+                _phase = Phase.Turning;
+                _phaseEndsAt = _context.Now() + TurnSeconds;
+            }
+            RunTurnSlide(deltaTime, _driverEased ? EasedIntensity : 1f);
+            ClampDogsToSeat();
+        }
+
+        public void ForceBrace(int dogIndex) => HandleInteract(dogIndex);
+        public void ForceTumble(int dogIndex) => Tumble(dogIndex, "TUMBLE!", Vector2.up * 4f);
+        public int DogIndexOf(DogId dogId) => _context.IndexOfDog(dogId);
+
+        // ---------------------------------------------------------------- internals
+        private static readonly Color DriverTint = new(0.45f, 0.42f, 0.4f);
+
+        private void BeginTelegraph(float now, RoadEventKind kind)
+        {
+            if (IsComplete || IsFailed) return;
+            _currentEvent = kind;
+            _eventTumbles = 0;
+            _phase = Phase.Telegraph;
+            _phaseEndsAt = now + TelegraphSeconds;
+            ClearEventLatches();
+            for (int i = 0; i < 2; i++) _doorSquished[i] = false;
+
+            string warning = kind switch
+            {
+                RoadEventKind.TurnLeft => "LEFT TURN AHEAD - HOLD ON!",
+                RoadEventKind.TurnRight => "RIGHT TURN AHEAD - HOLD ON!",
+                _ => "BRAKES AHEAD - BRACE (INTERACT)!",
+            };
+            _context.SetActorState(_dashboard, $"DRIVER: {warning}", DriverTint, 0.3f);
+            _context.SetCue(kind == RoadEventKind.Brake
+                ? "Brakes ahead! Both dogs brace (interact) before the stop!"
+                : "Turn ahead! Fight the slide and jump the junk as it sweeps past!");
+            _context.RequestRumble("car_telegraph", 0.12f, 0.2f, 0.12f);
+            _context.LogEvent("CarTelegraph", kind.ToString());
+            _context.LogObjectiveChanged();
+        }
+
+        private void TickTurn(float deltaTime, float now)
+        {
+            float progress = Mathf.Clamp01(1f - (_phaseEndsAt - now) / TurnSeconds);
+            float intensity = Mathf.Sin(Mathf.PI * progress) * (_driverEased ? EasedIntensity : 1f);
+            RunTurnSlide(deltaTime, intensity);
+            if (now >= _phaseEndsAt) ResolveEvent(now);
+        }
+
+        /// <summary>One slide step: tilt the cabin, slide unbraced dogs and the seat junk toward
+        /// the outside of the turn, then resolve door squishes and junk bonks.</summary>
+        private void RunTurnSlide(float deltaTime, float intensity)
+        {
+            int slideDir = _currentEvent == RoadEventKind.TurnLeft ? 1 : -1;
+            UpdatePresentation(deltaTime, slideDir * intensity);
+
+            float now = _context.Now();
+            Rect seat = SeatRect();
+            for (int i = 0; i < 2; i++)
+            {
+                var dog = _context.Dogs != null && i < _context.Dogs.Length ? _context.Dogs[i] : null;
+                if (dog == null) continue;
+                bool braced = BraceActive(i, now);
+                if (!braced && !dog.IsJumping)
+                {
+                    float multiplier = dog.TryGetComponent<DogIdentity>(out var identity) && identity.Id == DogId.Cheddar
+                        ? CheddarSlideMultiplier
+                        : CocoaSlideMultiplier;
+                    dog.transform.position += Vector3.right * (slideDir * DogSlideSpeed * multiplier * intensity * deltaTime);
+                }
+
+                // Pinned against the downhill door at real slide force = a squish tumble.
+                float doorEdge = slideDir > 0 ? seat.xMax : seat.xMin;
+                bool atDoor = Mathf.Abs(dog.transform.position.x - doorEdge) <= DoorSquishMargin;
+                if (!braced && !_doorSquished[i] && intensity > 0.45f && atDoor)
+                {
+                    _doorSquished[i] = true;
+                    Tumble(i, "DOOR SQUISH!", new Vector2(-slideDir * 5f, 1.5f));
+                }
+            }
+
+            for (int o = 0; o < _obstacles.Length; o++)
+            {
+                var obstacle = _obstacles[o];
+                if (obstacle == null) continue;
+                Vector3 pos = obstacle.transform.position;
+                pos.x = Mathf.Clamp(pos.x + slideDir * ObstacleSlideSpeed * intensity * deltaTime,
+                    seat.xMin + 1.1f, seat.xMax - 1.1f);
+                obstacle.transform.position = pos;
+
+                if (intensity <= 0.25f) continue;
+                for (int i = 0; i < 2; i++)
+                {
+                    var dog = _context.Dogs != null && i < _context.Dogs.Length ? _context.Dogs[i] : null;
+                    if (dog == null) continue;
+                    Vector2 delta = dog.transform.position - obstacle.transform.position;
+                    if (Mathf.Abs(delta.x) > ObstacleBonkRadius || Mathf.Abs(delta.y) > ObstacleBonkRadius) continue;
+
+                    if (dog.IsJumping)
+                    {
+                        if (_obstacleHopped[o, i]) continue;
+                        _obstacleHopped[o, i] = true;
+                        _context.SpawnWorldPop(dog.transform.position + Vector3.up * 0.8f, "CLEAN HOP!",
+                            new Color(0.55f, 1f, 0.7f));
+                        _context.CreditDog(i);
+                        _context.LogEvent("CarCleanHop", $"{ObstacleLabels[o]} dog{i}");
+                    }
+                    else if (!_obstacleBonked[o, i])
+                    {
+                        _obstacleBonked[o, i] = true;
+                        Tumble(i, $"{ObstacleLabels[o]} BONK!", new Vector2(slideDir * 6f, 1.2f));
+                    }
+                }
+            }
+        }
+
+        private void FireBrake(float now)
+        {
+            _context.SetActorState(_dashboard, "DRIVER: SCREEECH!", DriverTint, 0.3f);
+            _context.RequestShake(0.3f);
+            _context.RequestRumble("car_brake", 0.3f, 0.55f, 0.2f);
+            _context.RequestAudioCue(ArenaFeedbackCatalog.ThreatWarning);
+
+            // Everything loose lurches toward the front seats, dogs included if unbraced.
+            Rect seat = SeatRect();
+            foreach (var obstacle in _obstacles)
+            {
+                if (obstacle == null) continue;
+                Vector3 pos = obstacle.transform.position;
+                pos.y = Mathf.Min(pos.y + 1.6f, seat.yMax - 0.6f);
+                obstacle.transform.position = pos;
+            }
+
+            for (int i = 0; i < 2; i++)
+            {
+                var dog = _context.Dogs != null && i < _context.Dogs.Length ? _context.Dogs[i] : null;
+                if (dog == null) continue;
+                if (BraceActive(i, now))
+                {
+                    _context.AddScore(ScoreEventCatalog.BraceHeld.Points, ScoreEventCatalog.BraceHeld.Label);
+                    _context.CreditDog(i);
+                    _context.SpawnWorldPop(dog.transform.position, "BRACED!", new Color(0.65f, 0.85f, 1f));
+                    if (_context.DogFeedback != null && i < _context.DogFeedback.Length && _context.DogFeedback[i] != null)
+                        _context.DogFeedback[i].ShowProudBrief();
+                }
+                else
+                {
+                    Tumble(i, "FLUNG FORWARD!", new Vector2(Random.Range(-1.2f, 1.2f), 7.5f));
+                }
+            }
+
+            _phase = Phase.BrakeSettle;
+            _phaseEndsAt = now + BrakeSettleSeconds;
+        }
+
+        private void ResolveEvent(float now)
+        {
+            if (IsComplete || IsFailed) return;
+            _state.ResolveEvent();
+            _driverEased = false;
+            ClearEventLatches();
+
+            if (_eventTumbles == 0)
+            {
+                _context.AddScore(ScoreEventCatalog.RoadEventCleared.Points, ScoreEventCatalog.RoadEventCleared.Label);
+                if (_context.Dogs != null)
+                    for (int i = 0; i < _context.Dogs.Length; i++)
+                        _context.CreditDog(i);
+                _context.SetFeedback(GameManager.FeedbackKind.UnitedBark);
+                _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, ScoreEventCatalog.RoadEventCleared.Label);
+                _context.SpawnWorldPop(DogMidpoint(), "SMOOTH!", new Color(0.55f, 1f, 0.7f));
+                foreach (var feedback in _context.DogFeedback)
+                    if (feedback != null) feedback.ShowProudBrief();
+                _context.RequestAudioCue(ArenaFeedbackCatalog.TugRescueSuccess);
+                _context.RequestRumble("car_smooth", 0.18f, 0.36f, 0.12f);
+                _context.SetCue($"Rode it out clean! ({_state.EventsResolved}/{_state.RequiredEvents})");
+            }
+            else
+            {
+                _context.SetCue($"Rough one - {_eventTumbles} tumble{(_eventTumbles == 1 ? "" : "s")}. ({_state.EventsResolved}/{_state.RequiredEvents})");
+            }
+            _context.LogEvent("CarRoadEventResolved", $"{_state.EventsResolved}/{_state.RequiredEvents}");
+
+            if (IsComplete)
+            {
+                _context.AddScore(ScoreEventCatalog.RideComplete.Points, ScoreEventCatalog.RideComplete.Label);
+                _context.SetActorState(_dashboard, "DRIVER: we're home!", DriverTint, 0.12f);
+                _context.SpawnWorldPop(DogMidpoint() + Vector2.up * 1.2f, "WE'RE HOME!", new Color(1f, 0.9f, 0.4f));
                 return;
             }
 
-            _state.SurviveLurch();
-            SetCarArt(_balance >= 0f ? FinalGameplayArt.CarRideLurchRight : FinalGameplayArt.CarRideLurchLeft);
-            _context.AddScore(ScoreEventCatalog.LurchSteadied.Points, ScoreEventCatalog.LurchSteadied.Label);
-            if (_context.Dogs != null)
-                for (int i = 0; i < _context.Dogs.Length; i++)
-                    _context.CreditDog(i);
-            _context.SetFeedback(GameManager.FeedbackKind.UnitedBark);
-            _context.SetCue($"Steadied the lurch! ({_state.LurchesSurvived}/{_state.RequiredLurches}) Lean to balance.");
-            _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, ScoreEventCatalog.LurchSteadied.Label);
-            _context.SpawnWorldPop(DogMidpoint(), "STEADIED!", new Color(0.55f, 1f, 0.7f));
-            foreach (var feedback in _context.DogFeedback)
-                if (feedback != null) feedback.ShowProudBrief();
-            _context.RequestAudioCue(ArenaFeedbackCatalog.TugRescueSuccess);
-            _context.RequestRumble("car_lurch", 0.18f, 0.36f, 0.12f);
-            _context.LogEvent("CarSteadied", $"{_state.LurchesSurvived}/{_state.RequiredLurches}");
-            if (IsComplete)
-                _context.AddScore(ScoreEventCatalog.RideComplete.Points, ScoreEventCatalog.RideComplete.Label);
-            else
-                _context.LogObjectiveChanged();
+            _phase = Phase.Cruise;
+            _phaseEndsAt = now + CruiseSeconds;
+            SetDriverCalm();
+            _context.LogObjectiveChanged();
         }
 
-        private void RegisterSpill()
+        private void Tumble(int dogIndex, string popText, Vector2 fling)
         {
             if (IsComplete || IsFailed) return;
-            _state.Spill();
-            _balance = 0f;
-            SetCarArt(FinalGameplayArt.CarRideSpill);
-            _context.AddScore(ScoreEventCatalog.CarSpill.Points, ScoreEventCatalog.CarSpill.Label);
+            _eventTumbles++;
+            _state.Tumble();
+            _bracedUntil[dogIndex] = 0f;
+            _context.AddScore(ScoreEventCatalog.CarTumble.Points, ScoreEventCatalog.CarTumble.Label);
             _context.SetFeedback(GameManager.FeedbackKind.SquirrelStoleFood);
-            _context.SetCue($"The car tipped and everyone spilled! ({_state.Spills}/{MaxSpills}) Lean the other way next time.");
-            _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, ScoreEventCatalog.CarSpill.Label);
-            _context.SpawnWorldPop(DogMidpoint(), "CAR SPILL!", new Color(1f, 0.38f, 0.22f));
-            foreach (var feedback in _context.DogFeedback)
-                if (feedback != null) feedback.ShowPanic();
+            _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, ScoreEventCatalog.CarTumble.Label);
+
+            var dog = _context.Dogs != null && dogIndex < _context.Dogs.Length ? _context.Dogs[dogIndex] : null;
+            if (dog != null)
+            {
+                _context.SpawnWorldPop(dog.transform.position, popText, new Color(1f, 0.38f, 0.22f));
+                dog.ApplyWrestleStun(0.85f, fling);
+            }
+            if (_context.DogFeedback != null && dogIndex < _context.DogFeedback.Length && _context.DogFeedback[dogIndex] != null)
+                _context.DogFeedback[dogIndex].ShowPanic();
+
             _context.RequestAudioCue(ArenaFeedbackCatalog.ThreatWarning);
-            _context.RequestRumble("car_spill", 0.22f, 0.45f, 0.16f);
-            _context.LogEvent("CarSpill", $"{_state.Spills}/{MaxSpills}");
+            _context.RequestRumble("car_tumble", 0.22f, 0.45f, 0.16f);
+            _context.RequestShake(0.18f);
+            _context.LogEvent("CarTumble", $"{popText} {_state.Tumbles}/{MaxTumbles}");
             if (!IsFailed) _context.LogObjectiveChanged();
         }
 
+        /// <summary>Cosmetic layer: ease the cabin roll toward the current slide force and keep
+        /// the windshield scenery rolling past (faster mid-event).</summary>
+        private void UpdatePresentation(float deltaTime, float signedIntensity)
+        {
+            if (_levelAreaArt == null) return;
+            _visualTilt = Mathf.Lerp(_visualTilt, -signedIntensity * CabinTiltDegrees, Mathf.Clamp01(6f * deltaTime));
+            _levelAreaArt.transform.rotation = Quaternion.Euler(0f, 0f, _visualTilt);
+
+            var scenery = _levelAreaArt.WindshieldScenery;
+            if (scenery == null) return;
+            float speed = 2.2f + Mathf.Abs(signedIntensity) * 4.5f;
+            _sceneryScroll -= speed * deltaTime;
+            if (_sceneryScroll <= -MissionLevelAreaArt.SceneryWrapDistance)
+                _sceneryScroll += MissionLevelAreaArt.SceneryWrapDistance;
+            var local = scenery.localPosition;
+            local.x = _sceneryScroll;
+            scenery.localPosition = local;
+        }
+
+        private void ClampDogsToSeat()
+        {
+            if (_context.Dogs == null) return;
+            Rect seat = SeatRect();
+            foreach (var dog in _context.Dogs)
+            {
+                if (dog == null) continue;
+                Vector3 pos = dog.transform.position;
+                pos.x = Mathf.Clamp(pos.x, seat.xMin, seat.xMax);
+                pos.y = Mathf.Clamp(pos.y, seat.yMin, seat.yMax);
+                dog.transform.position = pos;
+            }
+        }
+
+        private Rect SeatRect()
+        {
+            Vector2 center = _context.Bounds.center;
+            return new Rect(center.x - SeatHalfWidth, center.y - SeatBottomOffset,
+                SeatHalfWidth * 2f, SeatBottomOffset + SeatTopOffset);
+        }
+
+        private bool BraceActive(int dogIndex, float now)
+        {
+            if (dogIndex < 0 || dogIndex >= _bracedUntil.Length) return false;
+            if (now >= _bracedUntil[dogIndex]) return false;
+            var dog = _context.Dogs != null && dogIndex < _context.Dogs.Length ? _context.Dogs[dogIndex] : null;
+            return dog == null || !dog.IsJumping; // airborne dogs have nothing planted
+        }
+
+        private void SetDriverCalm() =>
+            _context.SetActorState(_dashboard, "DRIVER: cruising - watch the mirror", DriverTint, 0.12f);
+
+        private void ClearEventLatches()
+        {
+            for (int o = 0; o < 2; o++)
+                for (int i = 0; i < 2; i++)
+                {
+                    _obstacleBonked[o, i] = false;
+                    _obstacleHopped[o, i] = false;
+                }
+        }
+
         private Vector2 DogMidpoint() => _context.Dogs != null && _context.Dogs.Length >= 2
-            ? (_context.Dogs[0].transform.position + _context.Dogs[1].transform.position) * 0.5f
+            ? (Vector2)((_context.Dogs[0].transform.position + _context.Dogs[1].transform.position) * 0.5f)
             : _context.Bounds.center;
 
-        private void SetCarArt(string resourcePath)
+        private GameObject BuildObstacle(string name, string resourcePath, string label)
         {
-            if (_car == null) return;
-            MissionPropArt.SetSprite(_car.GetComponent<MissionPropArtAttachment>(), resourcePath);
+            var go = new GameObject(name);
+            var renderer = go.AddComponent<SpriteRenderer>();
+            Sprite sprite = FinalGameplayArt.Load(resourcePath);
+            renderer.sprite = sprite;
+            renderer.sortingOrder = 16;
+            if (sprite != null)
+            {
+                const float worldSize = 2.5f;
+                go.transform.localScale = new Vector3(
+                    worldSize / Mathf.Max(0.01f, sprite.bounds.size.x),
+                    worldSize / Mathf.Max(0.01f, sprite.bounds.size.y), 1f);
+            }
+            _context.AddWorldLabel(go, label, new Vector3(0f, 1.7f, -0.1f), 34, Color.white);
+            return go;
         }
     }
 }

@@ -66,11 +66,11 @@ namespace CheddarAndCocoa.Tests
             _game.StartMission(GameManager.MissionVariant.CarRide);
             yield return null;
             AssertActive(ArenaArtCatalog.LaundryBasketObjectName, false);
-            AssertActive("Car Ride Balance Vehicle", true);
+            AssertActive("Car Ride Driver", true);
 
             _game.StartMission(GameManager.MissionVariant.ScentSearch);
             yield return null;
-            AssertActive("Car Ride Balance Vehicle", false);
+            AssertActive("Car Ride Driver", false);
             AssertPrefixActive("DigSpot_", expectedCount: 6, active: true);
 
             _game.StartMission(GameManager.MissionVariant.WeenieRoundup);
