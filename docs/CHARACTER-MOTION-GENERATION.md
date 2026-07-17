@@ -53,3 +53,12 @@ Directional idle uses the same SE/NE and S/N board contract. `export_character_i
 The outcome boards use a 4x2 contract: stunned pair, rescued pair, proud pair, sad pair. `export_character_outcomes.py` promotes 16 east-facing frames for west mirroring. Cheddar's outcomes bounce and overreact; Cocoa's remain controlled and queenly. Detached stars/motion marks were explicitly removed before extraction so gameplay VFX stay authoritative.
 
 The carry strips are prop-free 2x1 east-facing loops. `export_character_carry.py` promotes four frames while the existing dog-mounted weenie marker remains authoritative. Carry is persistent gameplay state: pickup begins it after the brief celebration, delivery/drop ends it, and mission restart clears it deterministically.
+
+The V02 carry-direction boards extend that persistent state toward the camera and away from it. The
+built-in image-generation workflow produced one 4x2 board per dog using the approved east carry,
+diagonal idle, and straight idle boards as identity/camera references. Visual review accepted the
+south and north two-frame pairs and rejected the diagonal row because its angles remained too close
+to profile. `export_character_carry_straights.py` therefore promotes only eight trustworthy 512x384
+alpha frames. This is deliberate partial promotion: vertical travel now keeps the carried pose,
+while diagonal travel retains the established east-facing fallback instead of shipping ambiguous
+direction art.

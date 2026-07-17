@@ -195,7 +195,7 @@ namespace CheddarAndCocoa.Tests
                          CharacterMotionArt.Facing8.S, CharacterMotionArt.Facing8.N })
             foreach (int frame in new[] { 0, 1, 2, 3 })
                 Assert.IsNotNull(CharacterMotionArt.Load(dog, CharacterMotionArt.Clip.Run, facing, frame));
-            Assert.AreEqual("cocoa_idle", CharacterMotionArt.LoadOrFallback(DogId.Cocoa,
+            Assert.AreEqual("cocoa_carry_n_01", CharacterMotionArt.LoadOrFallback(DogId.Cocoa,
                 CharacterMotionArt.Clip.Carry, CharacterMotionArt.Facing8.N, 1).name);
 
             Assert.AreEqual(0, CharacterMotionArt.FrameAtTime(DogId.Cheddar, CharacterMotionArt.Clip.Idle, 0f));
