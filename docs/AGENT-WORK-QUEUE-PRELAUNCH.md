@@ -30,7 +30,7 @@
 
 | ID | Task | Status |
 |---|---|---|
-| P0.1 | Baseline after Codex lands | OPEN |
+| P0.1 | Baseline after Codex lands | DONE (2026-07-17, see below) |
 | G1.1 | Stall detector + escalation ladder core | OPEN |
 | G1.2 | Tier 1–3 signal wiring | OPEN |
 | G1.3 | Role-turn beacon | OPEN |
@@ -66,6 +66,40 @@ PlayMode suite and record the count here. Build dev player, run smoke, run the a
 and skim the contact sheet for regressions.
 **Done when:** suite count and build hashes recorded in the status board row; no work items — this
 task produces evidence only. If the tree is dirty, this task is BLOCKED and nothing else may start.
+
+**Done (2026-07-17):** Codex's finishing pass was found sitting uncommitted in the working tree
+(291 files) rather than landed on `main` as this task assumed. Reviewed it — full manual read of
+every doc diff plus 8+ of the largest mission controllers, and a 5-angle/8-finder independent code
+review (line-by-line, removed-behavior, cross-file, reuse/simplification/efficiency,
+altitude/conventions) — before committing, per the "stop and report, don't build on or revert"
+preflight rule; reporting here since the finding was "review and land it," not "something is
+broken."
+
+- Landed in three commits on `main`: `8c96898` (fixed `run-playmode-tests.sh`/`build-release.sh`,
+  which still hardcoded a `6000.0.*` editor search after the project's `6000.4.2f1` bump — they
+  would have silently run the stale 6000.0.65f1 editor), `ef8948e` (this queue + the production
+  plan, written before Codex's pass landed), `50fa09a` (Codex's redesign), `6d93135` (fixed a real
+  gap the independent review found: six controllers' `DogIdAt` helpers and two call sites
+  dereferenced `_context.Dogs` before confirming it was non-null).
+- Every other candidate the review raised (HerdingMissionState control-counting change, Eagle
+  Shadow's shadow-column removal, CarRide/Kitchen sortingOrder sign difference, mission-seed
+  decoupling from selector position) traced back to an intentional, tested, already-documented
+  design decision — confirmed against the matching PlayMode test or doc passage, not just Codex's
+  say-so.
+- Full PlayMode suite: **571/571 passed, 0 skipped**, ~60s (`unity/playmode-results.xml`, SHA-256
+  `441875a019491d3772f775de93b2b0439fc43a49bf8b7e6e4727b09184655935`, 2026-07-17 17:41 EDT).
+- Dev player rebuilt at HEAD (`6d93135`): `unity/builds/dev/CheddarAndCocoa-Arena.app`, executable
+  SHA-256 `c562662c8b5005c9d286fe7be86ecc9da335854eb490c0e95b57dcfab2435262`. Startup smoke passed.
+- Art-review capture ran clean: 69/69 expected frames written, no exceptions in the run log. **Not
+  visually inspected** — this sandbox has no GPU/display, so `-nographics` batchmode produces flat
+  placeholder-colored frames (confirmed: single unique color per frame) instead of real renders.
+  The next agent or the couch-test machine needs to run the capture with a real display attached to
+  actually eyeball the contact sheet.
+- 8 untracked media files at the repo root (2026-07-14 couch-test recordings) were left alone at
+  the owner's request — not part of this baseline, not blocking.
+
+Everything above is upstream of G1.1: the tree is clean, tests are green, and the current `main` is
+the correct base for the guidance-ladder work.
 
 ---
 
