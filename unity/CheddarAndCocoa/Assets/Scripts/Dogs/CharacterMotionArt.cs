@@ -34,6 +34,7 @@ namespace CheddarAndCocoa.Dogs
                 case DogReadabilityFeedback.Pose.Run: clip = Clip.Run; return true;
                 case DogReadabilityFeedback.Pose.Bark: clip = Clip.Bark; return true;
                 case DogReadabilityFeedback.Pose.Tug: clip = Clip.Tug; return true;
+                case DogReadabilityFeedback.Pose.Dig: clip = Clip.Dig; return true;
                 case DogReadabilityFeedback.Pose.Carry: clip = Clip.Carry; return true;
                 case DogReadabilityFeedback.Pose.Stunned: clip = Clip.Stunned; return true;
                 case DogReadabilityFeedback.Pose.Rescued: clip = Clip.Rescued; return true;
@@ -51,6 +52,7 @@ namespace CheddarAndCocoa.Dogs
                 Clip.Run => dog == DogId.Cheddar ? 10f : 8.5f,
                 Clip.Bark => 11f,
                 Clip.Tug => dog == DogId.Cheddar ? 9f : 7f,
+                Clip.Dig => dog == DogId.Cheddar ? 10f : 8f,
                 Clip.Carry => dog == DogId.Cheddar ? 5f : 4f,
                 Clip.Stunned => 6f,
                 Clip.Rescued => dog == DogId.Cheddar ? 6f : 4.5f,
@@ -94,6 +96,7 @@ namespace CheddarAndCocoa.Dogs
             Clip.Run => DogReadabilityFeedback.Pose.Run,
             Clip.Bark => DogReadabilityFeedback.Pose.Bark,
             Clip.Tug => DogReadabilityFeedback.Pose.Tug,
+            Clip.Dig => DogReadabilityFeedback.Pose.Dig,
             Clip.Carry => DogReadabilityFeedback.Pose.Carry,
             Clip.Stunned => DogReadabilityFeedback.Pose.Stunned,
             Clip.Rescued => DogReadabilityFeedback.Pose.Rescued,

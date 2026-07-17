@@ -173,7 +173,7 @@ namespace CheddarAndCocoa.Game
                 _digMarkers[spotIndex].SetActive(false);
                 _context.CreditDog(dogIndex);
                 if (dogIndex < _context.DogFeedback.Length && _context.DogFeedback[dogIndex] != null)
-                    _context.DogFeedback[dogIndex].ShowProudBrief();
+                    _context.DogFeedback[dogIndex].ShowDig();
                 _context.AddScore(ScoreEventCatalog.BoneFound.Points, ScoreEventCatalog.BoneFound.Label);
                 _context.SetFeedback(GameManager.FeedbackKind.PartnerRescue);
                 _context.SetCue($"{DogName(dogIndex)} dug up a buried bone! ({_state.Found}/{RequiredFinds})");
@@ -196,7 +196,7 @@ namespace CheddarAndCocoa.Game
                 _context.SetCue($"{DogName(dogIndex)} dug a cold hole - nothing here ({_state.WastedDigs}/{MaxWastedDigs}).");
                 _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, ScoreEventCatalog.ColdDig.Label);
                 if (dogIndex < _context.DogFeedback.Length && _context.DogFeedback[dogIndex] != null)
-                    _context.DogFeedback[dogIndex].ShowPanic();
+                    _context.DogFeedback[dogIndex].ShowDig();
                 _context.SpawnWorldPop(_digSpots[spotIndex], "COLD!", new Color(0.6f, 0.75f, 1f));
                 _context.RequestAudioCue(ArenaFeedbackCatalog.ThreatWarning);
                 _context.RequestRumble("cold_dig", 0.14f, 0.28f, 0.12f);

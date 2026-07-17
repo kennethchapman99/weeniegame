@@ -62,3 +62,10 @@ to profile. `export_character_carry_straights.py` therefore promotes only eight 
 alpha frames. This is deliberate partial promotion: vertical travel now keeps the carried pose,
 while diagonal travel retains the established east-facing fallback instead of shipping ambiguous
 direction art.
+
+The dig boards use a 4x2 east/south contract: nose-low anticipation, alternating forepaw rakes,
+then a readable recovery. Cheddar's loop is gleeful and overcommitted; Cocoa's is planted and
+methodical. Both boards are deliberately prop-free—Scent Search's live mound, bone, and dirt feedback
+remain authoritative. `export_character_dig.py` promotes 16 frames, runtime mirrors east for west,
+and `DogReadabilityFeedback.ShowDig` now makes successful and cold digs display the authored loop
+before returning to normal locomotion.

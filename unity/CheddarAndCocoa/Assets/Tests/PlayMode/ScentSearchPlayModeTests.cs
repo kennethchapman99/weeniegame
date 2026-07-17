@@ -119,7 +119,7 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
-        public IEnumerator ScentSearch_DiggingUpABone_ShowsAProudPose()
+        public IEnumerator ScentSearch_DiggingUpABone_ShowsTheAuthoredDigLoop()
         {
             yield return LoadArena();
             var game = _game;
@@ -131,14 +131,14 @@ namespace CheddarAndCocoa.Tests
             yield return null;
 
             Assert.AreEqual(1, game.ScentSearchState.Found);
-            Assert.AreEqual(DogReadabilityFeedback.Pose.Proud, game.DogFeedback[0].CurrentPose,
-                "Digging up a bone should show a proud pose.");
-            Assert.That(game.DogFeedback[0].AuthoredPoseSpriteName, Does.Contain("cheddar_proud_e_"));
-            Assert.AreEqual("Proud", game.DogFeedback[0].MotionClipLabel);
+            Assert.AreEqual(DogReadabilityFeedback.Pose.Dig, game.DogFeedback[0].CurrentPose,
+                "Digging up a bone should show the authored dirt-flinging motion.");
+            Assert.That(game.DogFeedback[0].AuthoredPoseSpriteName, Does.Contain("cheddar_dig_e_"));
+            Assert.AreEqual("Dig", game.DogFeedback[0].MotionClipLabel);
         }
 
         [UnityTest]
-        public IEnumerator ScentSearch_ColdDig_ShowsWorriedWarningFeedback()
+        public IEnumerator ScentSearch_ColdDig_ShowsDigMotionWithWarningFeedback()
         {
             yield return LoadArena();
             _game.StartMission(GameManager.MissionVariant.ScentSearch);
@@ -148,9 +148,9 @@ namespace CheddarAndCocoa.Tests
             yield return null;
 
             Assert.AreEqual(1, _game.ScentSearchState.WastedDigs);
-            Assert.AreEqual(DogReadabilityFeedback.Pose.Sad, _game.DogFeedback[0].CurrentPose);
-            Assert.That(_game.DogFeedback[0].AuthoredPoseSpriteName, Does.Contain("cheddar_sad_e_"));
-            Assert.AreEqual("Sad", _game.DogFeedback[0].MotionClipLabel);
+            Assert.AreEqual(DogReadabilityFeedback.Pose.Dig, _game.DogFeedback[0].CurrentPose);
+            Assert.That(_game.DogFeedback[0].AuthoredPoseSpriteName, Does.Contain("cheddar_dig_e_"));
+            Assert.AreEqual("Dig", _game.DogFeedback[0].MotionClipLabel);
             Assert.AreEqual(ArenaFeedbackCatalog.ThreatWarning, _game.LastAudioCueRequested);
             Assert.AreEqual("cold_dig", _game.LastRumbleRequested);
         }

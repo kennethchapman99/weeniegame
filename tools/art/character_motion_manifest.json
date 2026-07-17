@@ -30,7 +30,9 @@
     "cheddar_carry_east_v01.png",
     "cocoa_carry_east_v01.png",
     "cheddar_carry_directions_v02.png",
-    "cocoa_carry_directions_v02.png"
+    "cocoa_carry_directions_v02.png",
+    "cheddar_dig_east_south_v01.png",
+    "cocoa_dig_east_south_v01.png"
   ],
   "clips": [
     { "name": "idle", "directions": "all", "frames": 4, "priority": "A" },

@@ -21,6 +21,7 @@ namespace CheddarAndCocoa.Dogs
             Run,
             Bark,
             Tug,
+            Dig,
             Carry,
             Stunned,
             Rescued,
@@ -116,6 +117,7 @@ namespace CheddarAndCocoa.Dogs
         }
 
         public void ShowTug() => ForcePose(Pose.Tug, 0.25f);
+        public void ShowDig() => ForcePose(Pose.Dig, 0.55f);
         /// <summary>
         /// Tug while facing <paramref name="faceDir"/> so two dogs flanking a rope visibly lean into it
         /// from opposite sides (a readable tug-of-war silhouette) instead of holding stale travel facing.
@@ -265,6 +267,7 @@ namespace CheddarAndCocoa.Dogs
                     Pose.Proud => new Color(1f, 0.96f, 0.35f),
                     Pose.Sad => new Color(0.72f, 0.82f, 1f),
                     Pose.Tug => new Color(1f, 0.85f, 0.35f),
+                    Pose.Dig => new Color(0.92f, 0.68f, 0.34f),
                     Pose.Carry => new Color(1f, 0.78f, 0.3f),
                     Pose.Jump => new Color(0.85f, 0.65f, 1f),
                     _ => Color.white
@@ -539,6 +542,7 @@ namespace CheddarAndCocoa.Dogs
             Pose.Run => _dog != null && _dog.TravelAssist ? "TRAIL SPRINT" : _art.RunPoseLabel,
             Pose.Bark => "WOOF!",
             Pose.Tug => "TUG!",
+            Pose.Dig => "DIG DIG DIG!",
             Pose.Carry => "CARRY!",
             Pose.Stunned => "STUNNED",
             Pose.Rescued => "RESCUED!",
