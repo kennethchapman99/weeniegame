@@ -6,11 +6,15 @@
 ## Locked preflight evidence
 
 - Player: `unity/builds/dev/CheddarAndCocoa-Arena.app`
-- Player executable built: 2026-07-14 18:30:34 EDT
-- Player executable SHA-256: `92d7de25879caa9bb0d8b26b7672939a04f11cbaf188ded9099a7e0041133ff5`
+- Player executable built: 2026-07-16 23:00:19 EDT with Unity 6000.4.2f1
+- Player executable SHA-256: `d2913eb6722256ddedd688c02ccea1099883f25f6aedb7b1346b7b6100c5ccbd`
 - Packaged explainer SHA-256: `280de2f463f2f64d337937a16673c549a970e99a6d1c2bb3774a05b34d002e63`
-- Full PlayMode result: 542/542 passed, 2026-07-14 18:29:18 EDT
-- PlayMode result SHA-256: `dced7b378f2ac3edf63291defabe9c3e1969f4dcc4ff66e98c212caeba65d962`
+- Full PlayMode result: 565/565 passed, 0 skipped, 2026-07-16 22:57:50 EDT
+- PlayMode result: `unity/playmode-final-polish-results.xml`
+- PlayMode result SHA-256: `05ba95aaa2d77f95d7ea35316f7d64076efa252f9e7fadb5729cf92ca477f009`
+- Packaged-player startup smoke: passed after this rebuild
+- Packaged visual QA: the valid **BLADDER URGENCY** frames remain unobscured; affected explainer
+  shots replace the baked misspelling with **TEENAGER COMPREHENSION**.
 - Human players: pending
 - Physical controllers: pending
 - Shared display / couch distance: pending

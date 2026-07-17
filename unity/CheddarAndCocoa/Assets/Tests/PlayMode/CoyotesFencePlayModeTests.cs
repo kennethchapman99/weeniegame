@@ -50,7 +50,8 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(GameManager.MissionVariant.CoyotesFence, game.ActiveMissionVariant);
             Assert.AreEqual("Coyotes at the Fence", game.ActiveMissionName);
             Assert.AreEqual("coyotes_fence", game.RuntimeSnapshot.MissionId);
-            Assert.That(game.ObjectiveLabel, Does.Contain("Patrol fence gap"));
+            Assert.That(game.ObjectiveLabel, Does.Contain("Cocoa: BARK-pin"));
+            Assert.That(game.ObjectiveLabel, Does.Contain("Cheddar: fill dirt"));
 
             // Repair without partner bark pressure should be rejected (no progress).
             game.ForceCoyoteRepair(DogId.Cheddar);
@@ -73,10 +74,61 @@ namespace CheddarAndCocoa.Tests
             yield return null;
 
             Assert.IsTrue(game.CoyotesFenceState.FinalPressureComplete);
+            var controller = (CoyotesFenceMissionController)game.ActiveMissionController;
+            Assert.IsTrue(controller.IsPresentingSuccessfulOutcome,
+                "The final block should hold a live coyote-retreat payoff before the end screen.");
+            controller.ForceFinishSuccessPresentation();
+            yield return null;
             Assert.AreEqual(GameManager.MissionOutcome.Clear, game.Outcome);
             Assert.AreEqual(GameManager.FlowState.EndScreen, game.CurrentFlow);
             Assert.IsTrue(game.RuntimeSnapshot.IsClear);
             Assert.That(game.EndSummaryLabel, Does.Contain("Fence Guardians"));
+        }
+
+        [UnityTest]
+        public IEnumerator CoyotesFence_CocoaPinsInRangeAndCheddarRepairsBeforeTheOpeningCloses()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.CoyotesFence);
+            yield return null;
+
+            var controller = (CoyotesFenceMissionController)_game.ActiveMissionController;
+            _cheddar.transform.position = _game.PredatorObject.transform.position;
+            _cheddar.Bark();
+            yield return null;
+            Assert.IsFalse(controller.PressureHeld,
+                "Cheddar cannot replace Cocoa's steady fence-pin role.");
+
+            _cocoa.transform.position = _game.PredatorObject.transform.position + Vector3.right * 20f;
+            _cocoa.Bark();
+            yield return null;
+            Assert.IsFalse(controller.PressureHeld,
+                "A bark across the yard must not pin the coyote.");
+
+            _cocoa.transform.position = _game.PredatorObject.transform.position;
+            _cocoa.Bark();
+            yield return null;
+            Assert.IsTrue(controller.PressureHeld);
+
+            Vector2 weakSpot = _game.FenceGaps[_game.CoyotesFenceState.ActiveGapIndex];
+            _cocoa.transform.position = weakSpot;
+            _cocoa.Interact();
+            yield return null;
+            Assert.AreEqual(0, _game.CoyotesFenceState.GapsRepaired,
+                "Cocoa cannot abandon her pin and complete Cheddar's dirt-fill role herself.");
+
+            _cheddar.transform.position = weakSpot;
+            _cheddar.Interact();
+            yield return null;
+            Assert.AreEqual(1, _game.CoyotesFenceState.GapsRepaired);
+
+            _game.ForceCoyoteBarkPressure(DogId.Cocoa);
+            Assert.IsTrue(controller.PressureHeld);
+            controller.ForcePressureTimeout();
+            Assert.IsFalse(controller.PressureHeld);
+            _game.ForceCoyoteRepair(DogId.Cheddar);
+            Assert.AreEqual(1, _game.CoyotesFenceState.GapsRepaired,
+                "Cheddar must recover by waiting for Cocoa to repin after the opening closes.");
         }
 
         [UnityTest]

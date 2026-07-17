@@ -127,7 +127,12 @@ namespace CheddarAndCocoa.Game
                     _game.ForceReachCheckpoint();
                     break;
                 case GameManager.MissionVariant.CarRide:
-                    _game.ForceCarEventSurvived();
+                    var carRide = _game.CarRideController;
+                    if (carRide != null)
+                    {
+                        carRide.ForceBeginRoadEvent(CarRideMissionController.RoadEventKind.TurnRight);
+                        carRide.ForceTurnSlide(1f, CarRideMissionController.RoadEventKind.TurnRight);
+                    }
                     break;
                 case GameManager.MissionVariant.GateCrash:
                     _game.ForceGateHold(true);

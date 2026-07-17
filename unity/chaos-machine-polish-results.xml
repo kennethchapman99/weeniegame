@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="9" result="Passed" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-07-16 23:05:26Z" end-time="2026-07-16 23:05:27Z" duration="1.0894941">
+  <test-suite type="TestSuite" id="1662" name="Cheddar and Cocoa" fullname="Cheddar and Cocoa" runstate="Runnable" testcasecount="564" result="Passed" start-time="2026-07-16 23:05:26Z" end-time="2026-07-16 23:05:27Z" duration="1.089494" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="SetUpFixture" id="1001" name="CheddarAndCocoa.Tests.PlayMode.dll" fullname="PlayModeGlobalTestSetup" classname="PlayModeGlobalTestSetup" runstate="Runnable" testcasecount="564" result="Passed" start-time="2026-07-16 23:05:26Z" end-time="2026-07-16 23:05:27Z" duration="1.081984" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="91850" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1655" name="CheddarAndCocoa" fullname="CheddarAndCocoa" runstate="Runnable" testcasecount="564" result="Passed" start-time="2026-07-16 23:05:26Z" end-time="2026-07-16 23:05:27Z" duration="1.073640" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1658" name="Tests" fullname="CheddarAndCocoa.Tests" runstate="Runnable" testcasecount="562" result="Passed" start-time="2026-07-16 23:05:26Z" end-time="2026-07-16 23:05:27Z" duration="1.069088" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1215" name="CoopChaosMachinePlayModeTests" fullname="CheddarAndCocoa.Tests.CoopChaosMachinePlayModeTests" classname="CheddarAndCocoa.Tests.CoopChaosMachinePlayModeTests" runstate="Runnable" testcasecount="9" result="Passed" start-time="2026-07-16 23:05:26Z" end-time="2026-07-16 23:05:27Z" duration="1.060805" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1216" name="Chaos_AppearsInMissionSelectRotation" fullname="CheddarAndCocoa.Tests.CoopChaosMachinePlayModeTests.Chaos_AppearsInMissionSelectRotation" methodname="Chaos_AppearsInMissionSelectRotation" classname="CheddarAndCocoa.Tests.CoopChaosMachinePlayModeTests" runstate="Runnable" seed="364570474" result="Passed" start-time="2026-07-16 23:05:26Z" end-time="2026-07-16 23:05:26Z" duration="0.609804" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1219" name="Chaos_ClearPath_LeverThenAssistEveryJunction" fullname="CheddarAndCocoa.Tests.CoopChaosMachinePlayModeTests.Chaos_ClearPath_LeverThenAssistEveryJunction" methodname="Chaos_ClearPath_LeverThenAssistEveryJunction" classname="CheddarAndCocoa.Tests.CoopChaosMachinePlayModeTests" runstate="Runnable" seed="90743538" result="Passed" start-time="2026-07-16 23:05:26Z" end-time="2026-07-16 23:05:27Z" duration="0.093743" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1222" name="Chaos_FailPath_TooManyMisfires" fullname="CheddarAndCocoa.Tests.CoopChaosMachinePlayModeTests.Chaos_FailPath_TooManyMisfires" methodname="Chaos_FailPath_TooManyMisfires" classname="CheddarAndCocoa.Tests.CoopChaosMachinePlayModeTests" runstate="Runnable" seed="730458215" result="Passed" start-time="2026-07-16 23:05:27Z" end-time="2026-07-16 23:05:27Z" duration="0.060170" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1218" name="Chaos_JunctionsUseDistinctGeneratedActionProps" fullname="CheddarAndCocoa.Tests.CoopChaosMachinePlayModeTests.Chaos_JunctionsUseDistinctGeneratedActionProps" methodname="Chaos_JunctionsUseDistinctGeneratedActionProps" classname="CheddarAndCocoa.Tests.CoopChaosMachinePlayModeTests" runstate="Runnable" seed="1687290608" result="Passed" start-time="2026-07-16 23:05:27Z" end-time="2026-07-16 23:05:27Z" duration="0.049287" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1220" name="Chaos_MissedWindow_MisfiresAndStalls" fullname="CheddarAndCocoa.Tests.CoopChaosMachinePlayModeTests.Chaos_MissedWindow_MisfiresAndStalls" methodname="Chaos_MissedWindow_MisfiresAndStalls" classname="CheddarAndCocoa.Tests.CoopChaosMachinePlayModeTests" runstate="Runnable" seed="1128749811" result="Passed" start-time="2026-07-16 23:05:27Z" end-time="2026-07-16 23:05:27Z" duration="0.046673" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1224" name="Chaos_PositionDriven_LeverAndJunctionsRequireOwnerInteract" fullname="CheddarAndCocoa.Tests.CoopChaosMachinePlayModeTests.Chaos_PositionDriven_LeverAndJunctionsRequireOwnerInteract" methodname="Chaos_PositionDriven_LeverAndJunctionsRequireOwnerInteract" classname="CheddarAndCocoa.Tests.CoopChaosMachinePlayModeTests" runstate="Runnable" seed="1537254063" result="Passed" start-time="2026-07-16 23:05:27Z" end-time="2026-07-16 23:05:27Z" duration="0.055326" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[Cheddar] interact (grab placeholder)
+[Cheddar] interact (grab placeholder)
+[Cocoa] interact (grab placeholder)
+]]></output>
+            </test-case>
+            <test-case id="1223" name="Chaos_Replay_ResetsThePuzzle" fullname="CheddarAndCocoa.Tests.CoopChaosMachinePlayModeTests.Chaos_Replay_ResetsThePuzzle" methodname="Chaos_Replay_ResetsThePuzzle" classname="CheddarAndCocoa.Tests.CoopChaosMachinePlayModeTests" runstate="Runnable" seed="241169889" result="Passed" start-time="2026-07-16 23:05:27Z" end-time="2026-07-16 23:05:27Z" duration="0.045956" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1221" name="Chaos_RePull_ResumesFromTheStall" fullname="CheddarAndCocoa.Tests.CoopChaosMachinePlayModeTests.Chaos_RePull_ResumesFromTheStall" methodname="Chaos_RePull_ResumesFromTheStall" classname="CheddarAndCocoa.Tests.CoopChaosMachinePlayModeTests" runstate="Runnable" seed="2057503785" result="Passed" start-time="2026-07-16 23:05:27Z" end-time="2026-07-16 23:05:27Z" duration="0.046766" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1217" name="Chaos_RunsThroughDedicatedController" fullname="CheddarAndCocoa.Tests.CoopChaosMachinePlayModeTests.Chaos_RunsThroughDedicatedController" methodname="Chaos_RunsThroughDedicatedController" classname="CheddarAndCocoa.Tests.CoopChaosMachinePlayModeTests" runstate="Runnable" seed="1534975920" result="Passed" start-time="2026-07-16 23:05:27Z" end-time="2026-07-16 23:05:27Z" duration="0.044541" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: /Users/kchapman/Weeniegame/unity/chaos-machine-polish-results.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

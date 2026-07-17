@@ -39,7 +39,7 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
-        public IEnumerator ScentSearch_ClearPath_SniffAndDigUpEveryBone()
+        public IEnumerator ScentSearch_ClearPath_CocoaCallsAndCheddarDigsEveryBone_WithLivePayoff()
         {
             yield return LoadArena();
             var game = _game;
@@ -50,24 +50,78 @@ namespace CheddarAndCocoa.Tests
             Assert.IsInstanceOf<ScentSearchMissionController>(game.ActiveMissionController,
                 "Scent Search must run entirely through its own IMissionController.");
             Assert.AreEqual("scent_search", game.RuntimeSnapshot.MissionId);
-            Assert.That(game.ObjectiveLabel, Does.Contain("Sniff"));
+            Assert.That(game.ObjectiveLabel, Does.Contain("Cocoa"));
             int required = game.RuntimeSnapshot.ObjectiveGoal;
             Assert.Greater(required, 0);
 
-            int guard = 0;
-            while (game.Outcome == GameManager.MissionOutcome.InProgress && guard++ < 30)
+            var controller = (ScentSearchMissionController)game.ActiveMissionController;
+            for (int i = 0; i < required; i++)
             {
-                game.ForceScentSniff(DogId.Cheddar);
-                game.ForceScentDigCorrect(DogId.Cheddar);
+                int buried = controller.BuriedSpotIndex;
+                _cocoa.transform.position = controller.DigSpots[buried];
+                game.ForceScentSniff(DogId.Cocoa);
+                Assert.AreEqual(buried, controller.CalledSpotIndex,
+                    "Cocoa's red-hot bark should create Cheddar's exact digging opening.");
+
+                _cheddar.transform.position = controller.DigSpots[buried];
+                _cheddar.Interact();
                 yield return null;
             }
 
             Assert.AreEqual(required, game.ScentSearchState.Found);
             Assert.AreEqual(0, game.ScentSearchState.WastedDigs);
             Assert.Greater(game.ScentSearchState.Sniffs, 0);
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, game.Outcome,
+                "The uncovered cache should remain live briefly before the end screen.");
+            Assert.IsTrue(controller.IsPresentingSuccessfulOutcome);
+
+            controller.ForceFinishSuccessPresentation();
+            yield return null;
+
             Assert.AreEqual(GameManager.MissionOutcome.Clear, game.Outcome);
             Assert.IsTrue(game.RuntimeSnapshot.IsClear);
             Assert.That(game.EndSummaryLabel, Does.Contain("Master Sniffers"));
+        }
+
+        [UnityTest]
+        public IEnumerator ScentSearch_RolesRequireCocoaCallThenCheddarDig_WithoutPunishingMisreads()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.ScentSearch);
+            yield return null;
+
+            var controller = (ScentSearchMissionController)_game.ActiveMissionController;
+            int buried = controller.BuriedSpotIndex;
+            Vector2 mound = controller.DigSpots[buried];
+
+            _cheddar.transform.position = mound;
+            _game.ForceScentSniff(DogId.Cheddar);
+            Assert.AreEqual(-1, controller.CalledSpotIndex,
+                "Cheddar's excited directional sniff must not replace Cocoa's exact tracking call.");
+            Assert.That(_game.LastCue, Does.Contain("Cocoa"));
+
+            _cheddar.Interact();
+            yield return null;
+            Assert.AreEqual(0, _game.ScentSearchState.Found);
+            Assert.AreEqual(0, _game.ScentSearchState.WastedDigs,
+                "A premature role attempt should coach the handoff instead of spending a cold-dig life.");
+
+            _cocoa.transform.position = mound;
+            _game.ForceScentSniff(DogId.Cocoa);
+            Assert.AreEqual(buried, controller.CalledSpotIndex);
+            Assert.AreEqual(DogReadabilityFeedback.Pose.Proud, _game.DogFeedback[1].CurrentPose);
+
+            _cocoa.Interact();
+            yield return null;
+            Assert.AreEqual(0, _game.ScentSearchState.Found,
+                "Cocoa owns the precise call, not the dirt-flinging dig.");
+            Assert.AreEqual(0, _game.ScentSearchState.WastedDigs);
+
+            _cheddar.Interact();
+            yield return null;
+            Assert.AreEqual(1, _game.ScentSearchState.Found);
+            Assert.AreEqual(-1, controller.CalledSpotIndex,
+                "Each newly buried bone should require a fresh Cocoa tracking call.");
         }
 
         [UnityTest]
@@ -115,6 +169,7 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(0, game.ScentSearchState.Found);
             Assert.AreEqual(0, game.ScentSearchState.WastedDigs);
             Assert.AreEqual(0, game.ScentSearchState.Sniffs);
+            Assert.AreEqual(-1, game.ScentSearchController.CalledSpotIndex);
             Assert.AreEqual(1, game.MissionReplayCount);
         }
 

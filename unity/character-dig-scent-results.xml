@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="8" result="Passed" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-07-17 20:50:21Z" end-time="2026-07-17 20:50:22Z" duration="0.8284117">
+  <test-suite type="TestSuite" id="1673" name="Cheddar and Cocoa" fullname="Cheddar and Cocoa" runstate="Runnable" testcasecount="571" result="Passed" start-time="2026-07-17 20:50:21Z" end-time="2026-07-17 20:50:22Z" duration="0.828412" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="SetUpFixture" id="1001" name="CheddarAndCocoa.Tests.PlayMode.dll" fullname="PlayModeGlobalTestSetup" classname="PlayModeGlobalTestSetup" runstate="Runnable" testcasecount="571" result="Passed" start-time="2026-07-17 20:50:21Z" end-time="2026-07-17 20:50:22Z" duration="0.816997" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="25445" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1666" name="CheddarAndCocoa" fullname="CheddarAndCocoa" runstate="Runnable" testcasecount="571" result="Passed" start-time="2026-07-17 20:50:21Z" end-time="2026-07-17 20:50:22Z" duration="0.810298" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1669" name="Tests" fullname="CheddarAndCocoa.Tests" runstate="Runnable" testcasecount="569" result="Passed" start-time="2026-07-17 20:50:21Z" end-time="2026-07-17 20:50:22Z" duration="0.805175" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1587" name="ScentSearchPlayModeTests" fullname="CheddarAndCocoa.Tests.ScentSearchPlayModeTests" classname="CheddarAndCocoa.Tests.ScentSearchPlayModeTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-07-17 20:50:21Z" end-time="2026-07-17 20:50:22Z" duration="0.798313" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1588" name="ScentSearch_AppearsInMissionSelectRotation" fullname="CheddarAndCocoa.Tests.ScentSearchPlayModeTests.ScentSearch_AppearsInMissionSelectRotation" methodname="ScentSearch_AppearsInMissionSelectRotation" classname="CheddarAndCocoa.Tests.ScentSearchPlayModeTests" runstate="Runnable" seed="79112535" result="Passed" start-time="2026-07-17 20:50:21Z" end-time="2026-07-17 20:50:21Z" duration="0.451715" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1589" name="ScentSearch_ClearPath_CocoaCallsAndCheddarDigsEveryBone_WithLivePayoff" fullname="CheddarAndCocoa.Tests.ScentSearchPlayModeTests.ScentSearch_ClearPath_CocoaCallsAndCheddarDigsEveryBone_WithLivePayoff" methodname="ScentSearch_ClearPath_CocoaCallsAndCheddarDigsEveryBone_WithLivePayoff" classname="CheddarAndCocoa.Tests.ScentSearchPlayModeTests" runstate="Runnable" seed="1784560603" result="Passed" start-time="2026-07-17 20:50:21Z" end-time="2026-07-17 20:50:21Z" duration="0.080697" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[Cheddar] interact (grab placeholder)
+[Cheddar] interact (grab placeholder)
+[Cheddar] interact (grab placeholder)
+]]></output>
+            </test-case>
+            <test-case id="1594" name="ScentSearch_ColdDig_ShowsDigMotionWithWarningFeedback" fullname="CheddarAndCocoa.Tests.ScentSearchPlayModeTests.ScentSearch_ColdDig_ShowsDigMotionWithWarningFeedback" methodname="ScentSearch_ColdDig_ShowsDigMotionWithWarningFeedback" classname="CheddarAndCocoa.Tests.ScentSearchPlayModeTests" runstate="Runnable" seed="516325954" result="Passed" start-time="2026-07-17 20:50:21Z" end-time="2026-07-17 20:50:21Z" duration="0.041172" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1593" name="ScentSearch_DiggingUpABone_ShowsTheAuthoredDigLoop" fullname="CheddarAndCocoa.Tests.ScentSearchPlayModeTests.ScentSearch_DiggingUpABone_ShowsTheAuthoredDigLoop" methodname="ScentSearch_DiggingUpABone_ShowsTheAuthoredDigLoop" classname="CheddarAndCocoa.Tests.ScentSearchPlayModeTests" runstate="Runnable" seed="251025998" result="Passed" start-time="2026-07-17 20:50:21Z" end-time="2026-07-17 20:50:21Z" duration="0.037629" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1591" name="ScentSearch_FailPath_TooManyColdDigsEndMission" fullname="CheddarAndCocoa.Tests.ScentSearchPlayModeTests.ScentSearch_FailPath_TooManyColdDigsEndMission" methodname="ScentSearch_FailPath_TooManyColdDigsEndMission" classname="CheddarAndCocoa.Tests.ScentSearchPlayModeTests" runstate="Runnable" seed="1255531848" result="Passed" start-time="2026-07-17 20:50:21Z" end-time="2026-07-17 20:50:21Z" duration="0.051203" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1592" name="ScentSearch_Replay_ResetsScentRuntimeState" fullname="CheddarAndCocoa.Tests.ScentSearchPlayModeTests.ScentSearch_Replay_ResetsScentRuntimeState" methodname="ScentSearch_Replay_ResetsScentRuntimeState" classname="CheddarAndCocoa.Tests.ScentSearchPlayModeTests" runstate="Runnable" seed="1654979838" result="Passed" start-time="2026-07-17 20:50:21Z" end-time="2026-07-17 20:50:21Z" duration="0.040984" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1595" name="ScentSearch_ReselectedBuriedSpot_ClearsStaleColdArtInsteadOfKeepingIt" fullname="CheddarAndCocoa.Tests.ScentSearchPlayModeTests.ScentSearch_ReselectedBuriedSpot_ClearsStaleColdArtInsteadOfKeepingIt" methodname="ScentSearch_ReselectedBuriedSpot_ClearsStaleColdArtInsteadOfKeepingIt" classname="CheddarAndCocoa.Tests.ScentSearchPlayModeTests" runstate="Runnable" seed="562670985" result="Passed" start-time="2026-07-17 20:50:21Z" end-time="2026-07-17 20:50:21Z" duration="0.041841" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1590" name="ScentSearch_RolesRequireCocoaCallThenCheddarDig_WithoutPunishingMisreads" fullname="CheddarAndCocoa.Tests.ScentSearchPlayModeTests.ScentSearch_RolesRequireCocoaCallThenCheddarDig_WithoutPunishingMisreads" methodname="ScentSearch_RolesRequireCocoaCallThenCheddarDig_WithoutPunishingMisreads" classname="CheddarAndCocoa.Tests.ScentSearchPlayModeTests" runstate="Runnable" seed="1448519834" result="Passed" start-time="2026-07-17 20:50:21Z" end-time="2026-07-17 20:50:22Z" duration="0.045879" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[Cheddar] interact (grab placeholder)
+[Cocoa] interact (grab placeholder)
+[Cheddar] interact (grab placeholder)
+Saving results to: /Users/kchapman/Weeniegame/unity/character-dig-scent-results.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

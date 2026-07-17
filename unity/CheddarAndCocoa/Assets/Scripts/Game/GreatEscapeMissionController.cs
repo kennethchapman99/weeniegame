@@ -9,11 +9,13 @@ namespace CheddarAndCocoa.Game
     /// wrong order is a harmless fumble; dawdling eases the chain back a step; too many botches fail
     /// the breakout.
     /// </summary>
-    public sealed class GreatEscapeMissionController : IMissionController
+    public sealed class GreatEscapeMissionController : IMissionController, IMissionInteractionController,
+        IMissionSuccessPresentationController
     {
         private const float StationRange = 3f;
         private const float SettleTime = 7f; // dawdle this long and the contraption eases back a step.
         private const int MaxWasted = 6;     // fumbles + settles before the breakout falls apart.
+        private const float SuccessHoldSeconds = 1.15f;
 
         private static readonly ChainActor[] Owners = { ChainActor.Cocoa, ChainActor.Cheddar, ChainActor.Cocoa, ChainActor.Cheddar };
         private static readonly Vector2[] Spots = { new(-13f, 7f), new(-5f, -7f), new(6f, 7f), new(14f, -6f) };
@@ -26,14 +28,16 @@ namespace CheddarAndCocoa.Game
         private MissionPropArtAttachment[] _stationArt;
         private string[] _stationOverrideArt;
         private float[] _stationOverrideUntil;
-        private int _dogInside = -1;
         private int _stepSeen;
+        private int _creditedStepsMask;
         private int _fumblesSeen;
         private int _settlesSeen;
         private bool _failed;
+        private bool _completionPresented;
+        private float _successHoldRemaining;
 
         public GameManager.MissionVariant Variant => GameManager.MissionVariant.GreatEscape;
-        public bool IsComplete => _puzzle.Solved;
+        public bool IsComplete => _puzzle.Solved && _successHoldRemaining <= 0f;
         public bool IsFailed => _failed;
         public string FailReason => _failed
             ? "They botched the contraption too many times - the gate never opened and the breakout fizzled."
@@ -44,11 +48,15 @@ namespace CheddarAndCocoa.Game
         public ChainActor StationOwner(int index) => index >= 0 && index < Owners.Length ? Owners[index] : ChainActor.Either;
         public Vector2 EntryTarget => _context.Bounds.center;
         public string OutcomeSummary => MissionOutcomeSummaryBuilder.BuildGreatEscapeSummary(_puzzle);
+        public bool IsPresentingSuccessfulOutcome => _puzzle.Solved && _successHoldRemaining > 0f;
+        public float SuccessHoldRemaining => _successHoldRemaining;
 
         public string ObjectiveLabel
         {
             get
             {
+                if (IsPresentingSuccessfulOutcome)
+                    return "BREAKOUT! Cocoa built the opening and Cheddar burst through the final gap!";
                 int wasted = _puzzle.Fumbles + _puzzle.Settles;
                 int active = Mathf.Clamp(_puzzle.Step, 0, Actions.Length - 1);
                 string who = _puzzle.NextOwner == ChainActor.Cheddar ? "Cheddar" : "Cocoa";
@@ -66,11 +74,13 @@ namespace CheddarAndCocoa.Game
         public void StartMission()
         {
             _puzzle.Configure(Owners, SettleTime);
-            _dogInside = -1;
             _stepSeen = 0;
+            _creditedStepsMask = 0;
             _fumblesSeen = 0;
             _settlesSeen = 0;
             _failed = false;
+            _completionPresented = false;
+            _successHoldRemaining = 0f;
             ClearStationOverrides();
             SetSceneActive(true);
             UpdateVisuals();
@@ -78,29 +88,18 @@ namespace CheddarAndCocoa.Game
 
         public void Tick(float deltaTime, float now)
         {
-            if (_puzzle.Solved || _failed || _stations == null || _context.Dogs == null) return;
+            if (_failed || _stations == null || _context.Dogs == null) return;
+
+            if (_puzzle.Solved)
+            {
+                _successHoldRemaining = Mathf.Max(0f, _successHoldRemaining - deltaTime);
+                UpdateVisuals();
+                return;
+            }
 
             int cheddar = _context.IndexOfDog(DogId.Cheddar);
             int cocoa = _context.IndexOfDog(DogId.Cocoa);
             if (cheddar < 0 || cocoa < 0) return;
-
-            int active = Mathf.Clamp(_puzzle.Step, 0, Spots.Length - 1);
-            Vector2 station = Spots[active];
-            ChainActor owner = _puzzle.NextOwner;
-
-            bool cheddarThere = Vector2.Distance(_context.Dogs[cheddar].transform.position, station) <= StationRange;
-            bool cocoaThere = Vector2.Distance(_context.Dogs[cocoa].transform.position, station) <= StationRange;
-
-            // Prefer the owner if present at the active station; a wrong-dog visit registers as a fumble.
-            int insideDog = -1;
-            ChainActor insideActor = ChainActor.Either;
-            if (owner == ChainActor.Cheddar && cheddarThere) { insideDog = cheddar; insideActor = ChainActor.Cheddar; }
-            else if (owner == ChainActor.Cocoa && cocoaThere) { insideDog = cocoa; insideActor = ChainActor.Cocoa; }
-            else if (cheddarThere) { insideDog = cheddar; insideActor = ChainActor.Cheddar; }
-            else if (cocoaThere) { insideDog = cocoa; insideActor = ChainActor.Cocoa; }
-
-            if (insideDog >= 0 && insideDog != _dogInside) _puzzle.TryStep(insideActor);
-            _dogInside = insideDog;
 
             _puzzle.Advance(deltaTime);
 
@@ -110,6 +109,27 @@ namespace CheddarAndCocoa.Game
         }
 
         public bool HandleBark(int dogIndex) => false;
+
+        public bool HandleInteract(int dogIndex)
+        {
+            if (_puzzle.Solved || _failed || _context.Dogs == null || dogIndex < 0 || dogIndex >= _context.Dogs.Length)
+                return false;
+
+            int active = Mathf.Clamp(_puzzle.Step, 0, Spots.Length - 1);
+            if (Vector2.Distance(_context.Dogs[dogIndex].transform.position, Spots[active]) > StationRange)
+            {
+                string who = _puzzle.NextOwner == ChainActor.Cheddar ? "Cheddar" : "Cocoa";
+                _context.SetCue($"{who} must reach the glowing station and Interact for the next contraption step.");
+                _context.SpawnWorldPop(_context.Dogs[dogIndex].transform.position + Vector3.up, "INTERACT AT GLOW", new Color(1f, 0.72f, 0.3f));
+                return true;
+            }
+
+            ChainActor actor = DogIdAt(dogIndex) == DogId.Cheddar ? ChainActor.Cheddar : ChainActor.Cocoa;
+            _puzzle.TryStep(actor);
+            HandleProgress();
+            if (!_failed) UpdateVisuals();
+            return true;
+        }
 
         public void Cleanup() => SetSceneActive(false);
 
@@ -137,7 +157,7 @@ namespace CheddarAndCocoa.Game
             ChainActor owner = _puzzle.NextOwner;
             bool isOwner = (owner == ChainActor.Cheddar && _context.IndexOfDog(DogId.Cheddar) == dogIndex)
                 || (owner == ChainActor.Cocoa && _context.IndexOfDog(DogId.Cocoa) == dogIndex);
-            copy = isOwner ? "YOUR STEP" : "LET PARTNER GO";
+            copy = isOwner ? "INTERACT: YOUR STEP" : "LET PARTNER INTERACT";
             hideDistance = StationRange;
             return target != null;
         }
@@ -162,20 +182,29 @@ namespace CheddarAndCocoa.Game
             if (!_failed) UpdateVisuals();
         }
 
+        public void ForceFinishSuccessPresentation() => _successHoldRemaining = 0f;
+
         private void HandleProgress()
         {
             if (_puzzle.Step > _stepSeen)
             {
-                ChainActor completedBy = Owners[Mathf.Clamp(_stepSeen, 0, Owners.Length - 1)];
-                int actorIndex = _context.IndexOfDog(completedBy == ChainActor.Cheddar ? DogId.Cheddar : DogId.Cocoa);
-                if (actorIndex >= 0) _context.CreditDog(actorIndex);
-                _stepSeen = _puzzle.Step;
-                _context.AddScore(ScoreEventCatalog.ContraptionStep.Points, ScoreEventCatalog.ContraptionStep.Label);
-                _context.SetFeedback(GameManager.FeedbackKind.SquirrelScared);
-                _context.SetCue($"Clunk! The contraption advanced. ({_puzzle.Step}/{_puzzle.StepCount})");
-                _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "CLUNK!");
                 int doneStep = Mathf.Clamp(_puzzle.Step - 1, 0, Spots.Length - 1);
+                ChainActor completedBy = Owners[doneStep];
+                int stepBit = 1 << doneStep;
+                if ((_creditedStepsMask & stepBit) == 0)
+                {
+                    _creditedStepsMask |= stepBit;
+                    int actorIndex = _context.IndexOfDog(completedBy == ChainActor.Cheddar ? DogId.Cheddar : DogId.Cocoa);
+                    if (actorIndex >= 0) _context.CreditDog(actorIndex);
+                    _context.AddScore(ScoreEventCatalog.ContraptionStep.Points, ScoreEventCatalog.ContraptionStep.Label);
+                }
+                _stepSeen = _puzzle.Step;
+                _context.SetFeedback(GameManager.FeedbackKind.SquirrelScared);
+                _context.SetCue($"{Actions[doneStep]} - CLUNK! The contraption advanced. ({_puzzle.Step}/{_puzzle.StepCount})");
+                _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "CLUNK!");
                 _context.SpawnWorldPop(Spots[doneStep], "CLUNK!", new Color(0.6f, 0.85f, 0.95f));
+                _context.RequestAudioCue(ArenaFeedbackCatalog.SnackSockCollect);
+                _context.RequestRumble("escape_step", 0.1f, 0.24f, 0.1f);
                 _context.LogEvent("EscapeStep", $"{_puzzle.Step}/{_puzzle.StepCount}");
             }
 
@@ -185,23 +214,41 @@ namespace CheddarAndCocoa.Game
                 _fumblesSeen = _puzzle.Fumbles;
                 wasted = true;
                 ShowStationReaction(Mathf.Clamp(_puzzle.Step, 0, Spots.Length - 1), FinalGameplayArt.GreatEscapeStationFumble, 0.55f);
-                _context.SetCue("Wrong dog or wrong order - nothing budged.");
+                string who = _puzzle.NextOwner == ChainActor.Cheddar ? "Cheddar" : "Cocoa";
+                _context.SetCue($"Wrong dog - CLANK! Nothing budged. {who} must Interact at the glowing station.");
+                _context.SpawnWorldPop(Spots[Mathf.Clamp(_puzzle.Step, 0, Spots.Length - 1)], "WRONG PAWS!", new Color(1f, 0.5f, 0.25f));
             }
             if (_puzzle.Settles > _settlesSeen)
             {
                 _settlesSeen = _puzzle.Settles;
                 wasted = true;
+                _stepSeen = _puzzle.Step;
                 ShowStationReaction(Mathf.Clamp(_puzzle.Step, 0, Spots.Length - 1), FinalGameplayArt.GreatEscapeStationSettle, 0.7f);
                 _context.SetCue("Too slow - the contraption eased back a step. Keep pace!");
+                _context.SpawnWorldPop(Spots[Mathf.Clamp(_puzzle.Step, 0, Spots.Length - 1)], "SLID BACK!", new Color(1f, 0.62f, 0.28f));
             }
             if (wasted)
             {
                 _context.AddScore(ScoreEventCatalog.ContraptionFumble.Points, ScoreEventCatalog.ContraptionFumble.Label);
                 _context.SetFeedback(GameManager.FeedbackKind.SquirrelStoleFood);
                 _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "CLANK!");
+                _context.RequestAudioCue(ArenaFeedbackCatalog.ThreatWarning);
+                _context.RequestRumble("escape_clank", 0.16f, 0.34f, 0.12f);
                 int totalWasted = _puzzle.Fumbles + _puzzle.Settles;
                 _context.LogEvent("EscapeWaste", $"{totalWasted}/{MaxWasted}");
                 if (totalWasted >= MaxWasted) _failed = true;
+            }
+
+            if (_puzzle.Solved && !_completionPresented)
+            {
+                _completionPresented = true;
+                _successHoldRemaining = SuccessHoldSeconds;
+                _context.SetCue("BREAKOUT! Cocoa built the opening and Cheddar burst through the final gap!");
+                _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "GREAT ESCAPE!");
+                _context.SpawnWorldPop(Spots[Spots.Length - 1], "FREE DOGS!", new Color(1f, 0.86f, 0.3f));
+                _context.RequestAudioCue(ArenaFeedbackCatalog.MissionWin);
+                _context.RequestRumble("great_escape_payoff", 0.3f, 0.55f, 0.2f);
+                _context.LogEvent("GreatEscapePayoff", "Breakout complete; holding live-world success beat");
             }
         }
 
@@ -296,5 +343,13 @@ namespace CheddarAndCocoa.Game
         private Vector2 ClampInsideBounds(Vector2 point, float margin) => new(
             Mathf.Clamp(point.x, _context.Bounds.xMin + margin, _context.Bounds.xMax - margin),
             Mathf.Clamp(point.y, _context.Bounds.yMin + margin, _context.Bounds.yMax - margin));
+
+        private DogId DogIdAt(int dogIndex)
+        {
+            if (_context.Dogs == null || dogIndex < 0 || dogIndex >= _context.Dogs.Length || _context.Dogs[dogIndex] == null)
+                return DogId.Cheddar;
+            var identity = _context.Dogs[dogIndex].GetComponent<DogIdentity>();
+            return identity != null ? identity.Id : DogId.Cheddar;
+        }
     }
 }

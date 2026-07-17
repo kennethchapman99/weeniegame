@@ -3,13 +3,15 @@ using UnityEngine;
 
 namespace CheddarAndCocoa.Game
 {
-    public sealed class SquirrelConspiracyMissionController : IMissionController, IMissionInteractionController
+    public sealed class SquirrelConspiracyMissionController : IMissionController, IMissionInteractionController,
+        IMissionSuccessPresentationController
     {
         private const int RequiredControls = 4;
         private const int MaxTaunts = 3;
         private const float CutoffRadius = 3f;
         private const float StashInteractRange = 2f;
         private const float RouteResetSeconds = 5.5f;
+        private const float SuccessHoldSeconds = 1.15f;
 
         private readonly HerdingMissionState _state = new();
         private MissionContext _context;
@@ -19,17 +21,21 @@ namespace CheddarAndCocoa.Game
         private Vector2 _stashPosition;
         private float _routeTimer;
         private float _fakeoutUntil;
+        private float _successHoldRemaining;
 
         public GameManager.MissionVariant Variant => GameManager.MissionVariant.SquirrelConspiracy;
-        public bool IsComplete => _state.StashFound;
+        public bool IsComplete => _state.StashFound && _successHoldRemaining <= 0f;
+        public bool IsPresentingSuccessfulOutcome => _state.StashFound && _successHoldRemaining > 0f;
         public bool IsFailed => _state.TooManyTaunts(MaxTaunts);
         public string FailReason => IsFailed
             ? "The squirrel taunted the dogs into a full backyard misinformation spiral."
             : null;
         public string OutcomeSummary => MissionOutcomeSummaryBuilder.BuildSquirrelSummary(_state);
-        public string ObjectiveLabel => _state.StashRevealed
-            ? "Sniff the revealed stash and interact"
-            : $"Herd squirrel route {_state.RouteIndex + 1}/{RequiredControls}: controls {_state.ControlCount}/{RequiredControls}, taunts {_state.Taunts}/{MaxTaunts}";
+        public string ObjectiveLabel => IsPresentingSuccessfulOutcome
+            ? "Conspiracy cracked! Cheddar guards the culprit while Cocoa inspects the evidence."
+            : _state.StashRevealed
+                ? "Cocoa: reach the revealed stash and Interact. Cheddar: guard the squirrel."
+                : $"Cheddar: BARK herd. Cocoa: HOLD cutoff. Route {_state.RouteIndex + 1}/{RequiredControls}, controls {_state.ControlCount}/{RequiredControls}, taunts {_state.Taunts}/{MaxTaunts}";
         public Vector2 EntryTarget => _route != null && _route.Length > 0 ? _route[0] : Vector2.zero;
         public HerdingMissionState State => _state;
         public Vector2[] RouteNodes => _route != null ? (Vector2[])_route.Clone() : System.Array.Empty<Vector2>();
@@ -66,6 +72,7 @@ namespace CheddarAndCocoa.Game
             _state.Reset();
             _routeTimer = RouteResetSeconds;
             _fakeoutUntil = 0f;
+            _successHoldRemaining = 0f;
             _context.SquirrelObject.transform.position = _route[0];
             _context.SquirrelObject.SetActive(true);
             _context.SetActorState(_context.SquirrelObject, "SQUIRREL CONSPIRACY ROUTE 1", new Color(0.55f, 0.32f, 0.12f), 0.06f);
@@ -75,6 +82,11 @@ namespace CheddarAndCocoa.Game
         public void Tick(float deltaTime, float now)
         {
             if (_context.SquirrelObject == null) return;
+            if (_state.StashFound)
+            {
+                _successHoldRemaining = Mathf.Max(0f, _successHoldRemaining - deltaTime);
+                return;
+            }
             UpdateCutoffMarkers();
             _routeTimer -= deltaTime;
             Vector2 target = _state.StashRevealed ? _stashPosition : _route[_state.RouteIndex];
@@ -88,6 +100,12 @@ namespace CheddarAndCocoa.Game
         public bool HandleBark(int dogIndex)
         {
             if (dogIndex < 0 || dogIndex >= _context.Dogs.Length || _state.StashFound) return false;
+            if (_context.IndexOfDog(DogId.Cheddar) != dogIndex)
+            {
+                _context.MarkFailedInteraction(DogId.Cocoa, "Cocoa owns the cutoff; Cheddar pressures the squirrel");
+                _context.SetCue("Cocoa's job is the glowing cutoff - Cheddar must BARK the squirrel into it.");
+                return false;
+            }
             float distance = Vector2.Distance(_context.Dogs[dogIndex].transform.position, _context.SquirrelObject.transform.position);
             if (distance > _context.SingleBarkSquirrelRange)
             {
@@ -104,20 +122,35 @@ namespace CheddarAndCocoa.Game
             }
 
             bool cutoff = IsPartnerHoldingCutoff(dogIndex);
-            var scoreEvent = cutoff ? ScoreEventCatalog.Cutoff : ScoreEventCatalog.GoodHerd;
-            if (cutoff) _state.AddCutoff(); else _state.AddHerd();
+            if (!cutoff)
+            {
+                _state.AddHerd();
+                _context.SetFeedback(GameManager.FeedbackKind.TugNeedsPartner);
+                _context.SetCue("Cheddar pushed the squirrel, but it escaped - Cocoa must HOLD the glowing cutoff first!");
+                _context.SetActorState(_context.SquirrelObject, "HERDED - NEEDS COCOA CUTOFF!", new Color(0.9f, 0.58f, 0.16f), 0.24f);
+                _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "NEEDS CUTOFF!");
+                _context.SpawnWorldPop(_context.SquirrelObject.transform.position, "COCOA: HOLD CUTOFF!", new Color(1f, 0.66f, 0.22f));
+                _context.LogEvent("SquirrelHerdEscaped", $"solo herds {_state.Herds}; controls {_state.ControlCount}/{RequiredControls}");
+                _context.LogObjectiveChanged();
+                return true;
+            }
+
+            var scoreEvent = ScoreEventCatalog.Cutoff;
+            _state.AddCutoff();
             _state.AdvanceRoute(_route.Length);
             UpdateCutoffMarkers();
             _routeTimer = RouteResetSeconds;
             _context.CreditDog(dogIndex);
             _context.AddScore(scoreEvent.Points, scoreEvent.Label);
             _context.SetFeedback(GameManager.FeedbackKind.SquirrelScared);
-            _context.SetCue(cutoff ? "Perfect cutoff! The squirrel route is collapsing." : "Good herd! The squirrel conspiracy is losing ground.");
-            _context.SetActorState(_context.SquirrelObject, $"ROUTE {_state.RouteIndex + 1} / CONTROLS {_state.ControlCount}/{RequiredControls}", new Color(0.85f, 0.55f, 0.12f), cutoff ? 0.28f : 0.16f);
+            int cocoa = _context.IndexOfDog(DogId.Cocoa);
+            if (cocoa >= 0) _context.CreditDog(cocoa);
+            _context.SetCue("Perfect handoff! Cheddar herded the squirrel into Cocoa's cutoff.");
+            _context.SetActorState(_context.SquirrelObject, $"ROUTE {_state.RouteIndex + 1} / CONTROLS {_state.ControlCount}/{RequiredControls}", new Color(0.85f, 0.55f, 0.12f), 0.28f);
             _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, scoreEvent.Label);
-            _context.SpawnWorldPop(_context.SquirrelObject.transform.position, cutoff ? "CUTOFF!" : "HERD!", new Color(1f, 0.9f, 0.25f));
+            _context.SpawnWorldPop(_context.SquirrelObject.transform.position, "CUTOFF!", new Color(1f, 0.9f, 0.25f));
             _context.RequestAudioCue(ArenaFeedbackCatalog.TugRescueSuccess);
-            _context.LogEvent(cutoff ? "SquirrelCutoff" : "SquirrelHerd", $"controls {_state.ControlCount}/{RequiredControls}");
+            _context.LogEvent("SquirrelCutoff", $"controls {_state.ControlCount}/{RequiredControls}");
 
             if (_state.ReadyForStash(RequiredControls))
             {
@@ -162,12 +195,11 @@ namespace CheddarAndCocoa.Game
             if (_state.StashRevealed)
             {
                 target = _context.SquirrelObject.transform;
-                copy = "CRACK STASH";
+                copy = _context.IndexOfDog(DogId.Cocoa) == dogIndex ? "INTERACT STASH" : "GUARD SQUIRREL";
                 return true;
             }
 
-            int herder = ClosestDogIndex(_context.SquirrelObject.transform.position);
-            if (dogIndex == herder)
+            if (_context.IndexOfDog(DogId.Cheddar) == dogIndex)
             {
                 target = _context.SquirrelObject.transform;
                 copy = "BARK HERD";
@@ -189,11 +221,18 @@ namespace CheddarAndCocoa.Game
         public void ForceHerd(DogId dogId) => HandleBark(_context.IndexOfDog(dogId));
         public void ForceTaunt() => RegisterTaunt();
         public void ForceFindStash(DogId dogId) => TryFindStash(_context.IndexOfDog(dogId), true);
+        public void ForceFinishSuccessPresentation() => _successHoldRemaining = 0f;
 
         private bool TryFindStash(int dogIndex, bool force)
         {
             if (dogIndex < 0 || dogIndex >= _context.Dogs.Length) return false;
             DogId dogId = _context.Dogs[dogIndex].GetComponent<DogIdentity>().Id;
+            if (dogId != DogId.Cocoa)
+            {
+                _context.MarkFailedInteraction(dogId, "Cocoa reads the evidence; Cheddar guards the squirrel");
+                _context.SetCue("Cheddar found the evidence but cannot stop vibrating - Cocoa must Interact with the stash.");
+                return true;
+            }
             if (!_state.StashRevealed)
             {
                 _context.MarkFailedInteraction(dogId, "stash is not revealed yet");
@@ -206,6 +245,7 @@ namespace CheddarAndCocoa.Game
             }
 
             _state.FindStash();
+            _successHoldRemaining = SuccessHoldSeconds;
             SetMissionProp(_context.SquirrelObject, FinalGameplayArt.SquirrelConspiracyStashCracked, 0.013f, 31);
             _context.CreditDog(dogIndex);
             _context.AddScore(ScoreEventCatalog.StashFound.Points, ScoreEventCatalog.StashFound.Label);
@@ -214,6 +254,10 @@ namespace CheddarAndCocoa.Game
             _context.SetActorState(_context.SquirrelObject, "CONSPIRACY CRACKED!", new Color(0.3f, 1f, 0.35f), 0.12f);
             _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "STASH FOUND!");
             _context.SpawnWorldPop(_stashPosition, "STASH FOUND!", new Color(0.5f, 1f, 0.45f));
+            foreach (var feedback in _context.DogFeedback)
+                if (feedback != null) feedback.ShowProudBrief();
+            _context.RequestAudioCue(ArenaFeedbackCatalog.TugRescueSuccess);
+            _context.RequestRumble("conspiracy_cracked", 0.2f, 0.45f, 0.16f);
             _context.LogEvent("SquirrelStashFound", "The conspiracy is cracked.");
             return true;
         }
@@ -303,17 +347,5 @@ namespace CheddarAndCocoa.Game
             MissionPropArt.AttachObject(go, resourcePath, scale, sortingOrder, true);
         }
 
-        private int ClosestDogIndex(Vector2 position)
-        {
-            int best = 0;
-            float bestDistance = float.PositiveInfinity;
-            for (int i = 0; i < _context.Dogs.Length; i++)
-            {
-                if (_context.Dogs[i] == null) continue;
-                float distance = Vector2.Distance(_context.Dogs[i].transform.position, position);
-                if (distance < bestDistance) { best = i; bestDistance = distance; }
-            }
-            return best;
-        }
     }
 }

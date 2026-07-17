@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Passed" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-07-16 11:52:13Z" end-time="2026-07-16 11:52:15Z" duration="2.1382377">
+  <test-suite type="TestSuite" id="1647" name="Cheddar and Cocoa" fullname="Cheddar and Cocoa" runstate="Runnable" testcasecount="549" result="Passed" start-time="2026-07-16 11:52:13Z" end-time="2026-07-16 11:52:15Z" duration="2.138238" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="SetUpFixture" id="1001" name="CheddarAndCocoa.Tests.PlayMode.dll" fullname="PlayModeGlobalTestSetup" classname="PlayModeGlobalTestSetup" runstate="Runnable" testcasecount="549" result="Passed" start-time="2026-07-16 11:52:13Z" end-time="2026-07-16 11:52:15Z" duration="2.129313" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="87738" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1640" name="CheddarAndCocoa" fullname="CheddarAndCocoa" runstate="Runnable" testcasecount="549" result="Passed" start-time="2026-07-16 11:52:13Z" end-time="2026-07-16 11:52:15Z" duration="2.124369" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1643" name="Tests" fullname="CheddarAndCocoa.Tests" runstate="Runnable" testcasecount="547" result="Passed" start-time="2026-07-16 11:52:13Z" end-time="2026-07-16 11:52:15Z" duration="2.120173" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1038" name="AdventureArenaProgressBridgePlayModeTests" fullname="CheddarAndCocoa.Tests.AdventureArenaProgressBridgePlayModeTests" classname="CheddarAndCocoa.Tests.AdventureArenaProgressBridgePlayModeTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-07-16 11:52:13Z" end-time="2026-07-16 11:52:15Z" duration="2.111738" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1039" name="Bridge_StartsQueuedMissionAndRecordsClearResultToProgress" fullname="CheddarAndCocoa.Tests.AdventureArenaProgressBridgePlayModeTests.Bridge_StartsQueuedMissionAndRecordsClearResultToProgress" methodname="Bridge_StartsQueuedMissionAndRecordsClearResultToProgress" classname="CheddarAndCocoa.Tests.AdventureArenaProgressBridgePlayModeTests" runstate="Runnable" seed="535358046" result="Passed" start-time="2026-07-16 11:52:13Z" end-time="2026-07-16 11:52:15Z" duration="2.105961" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Adventure progress recorded: front_yard/CarRide score 2420, stars 3, saved=False
+Saving results to: /Users/kchapman/Weeniegame/unity/adventure-bridge-results.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

@@ -74,6 +74,7 @@ namespace CheddarAndCocoa.Game
     public interface IMissionOpeningPresentationController
     {
         bool IsPresentingOpening { get; }
+        string OpeningOverlayLabel { get; }
         void TickOpeningPresentation(float unscaledDeltaTime);
         void SkipOpeningPresentation();
     }

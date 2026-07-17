@@ -120,30 +120,41 @@ not an architecture acceptance criterion.
 - `IMissionController` gained `OutcomeSummary` (controller-owned end-of-round phrase, null to defer
   to the shared default) and `MissionContext` gained `CreditDog` so controllers can drive the MVP
   tally without reaching into `GameManager`.
-- `GateCrashMissionController` is the first extracted mission with a non-timeout failure. The
+- `GateCrashMissionController` owns the deliberate Cocoa Interact anchor, continuous hold-range
+  validation, Cheddar crossing progress, snap/re-anchor recovery, role coaching, live rescued-toy
+  payoff, feedback, cleanup, snapshot, and deterministic force hooks. It is also the first extracted
+  mission with a non-timeout failure. The
   contract gained `IsFailed` and `FailReason`: `CheckClear` now ends the round on either
   `IsComplete` or `IsFailed`, and `EndReasonFor` prefers a non-empty controller `FailReason` (with
-  `FailReason` returning null on a plain timeout so the shared `TimeFailReason` still applies). The
-  controller owns its gate/toy markers, hold/squeeze proximity ticking, snap handling, objective
-  copy, arrow targets, snapshot, and the `ForceGateHold`/`ForceGateCross` hooks.
-- `TableStealthMissionController` reuses the same pattern for the human-distraction puzzle: it owns
-  the human/steak markers, flop+sneak proximity ticking, exposure handling (its `IsFailed`/
-  `FailReason` fire at the exposure cap), objective copy, snapshot, and the `ForceTableFlop`/
+  `FailReason` returning null on a plain timeout so the shared `TimeFailReason` still applies).
+- `TableStealthMissionController` owns the human/steak markers, Cocoa's deliberate Interact-flop,
+  Cheddar's live Bark-burp alternate route, route-specific partner sneaking, continuous flop-range
+  validation, exposure handling and feedback (its `IsFailed`/`FailReason` fire at the exposure cap),
+  objective copy, held live-world success presentation, cleanup, snapshot, and the `ForceTableFlop`/
   `ForceTableBurp`/`ForceTableSneak` hooks.
-- `SquirrelSwitcherooMissionController` owns the bait/raid puzzle: decoy/stash markers, the
-  feint-commitment + one-strike-per-window ticking, raid/backfire handling (backfire-cap fail via
-  `IsFailed`/`FailReason`), objective copy, snapshot, and the `ForceSwitcherooBait`/
+- `SquirrelSwitcherooMissionController` owns the bait/raid puzzle: decoy/stash markers, Cheddar's
+  deliberate Bark-feint and range release, commitment ticking, Cocoa's deliberate one-Interact-per-
+  window raid, guarded-whiff and backfire feedback (backfire-cap fail via `IsFailed`/`FailReason`),
+  dual role credit, held live-world success presentation, objective copy, cleanup, snapshot, and the `ForceSwitcherooBait`/
   `ForceSwitcherooStrike` hooks.
-- `WalkCampaignMissionController` owns the social-manipulation puzzle: human/leash markers, the
-  both-stations comprehension ticking, getting-it/misread handling (misread-cap fail), objective
-  copy, snapshot, and the `ForceWalkCampaign` hook.
+- `WalkCampaignMissionController` owns the social-manipulation puzzle: human/leash markers, Cocoa's
+  deliberate Interact-stare and Cheddar's deliberate Interact-presentation, continuous station-hold
+  validation, both-signal comprehension ticking, specific wrong-item misread feedback (misread-cap
+  fail), human/leash state acting, held live-world WALKIES presentation, objective copy, cleanup,
+  snapshot, and the `ForceWalkCampaign` hook.
 - `GreatEscapeMissionController` owns the sequence-chain contraption puzzle: four controller-owned
-  station GameObjects with alternating ownership (Cocoa → Cheddar → Cocoa → Cheddar), proximity
-  ticking that assigns the correct actor per approach, settle-back on dawdle, and a botch-cap fail
-  when fumbles + settles reaches 6 (`IsFailed`/`FailReason`). The controller owns `ComputeZones`
-  logic in its static arrays; `GameManager.EscapeStationSpot`/`EscapeStationOwner` compat accessors
+  station GameObjects with alternating ownership (Cocoa → Cheddar → Cocoa → Cheddar), owner-only
+  Interact routing and range coaching, named action feedback, first-completion credit/scoring,
+  responsive settle-back redo handling, held breakout presentation, and a botch-cap fail when
+  fumbles + settles reaches 6 (`IsFailed`/`FailReason`). The controller owns `ComputeZones` logic in
+  its static arrays; `GameManager.EscapeStationSpot`/`EscapeStationOwner` compat accessors
   delegate to the controller. The `ForceEscapeStep`/`ForceEscapeIdle` hooks follow the same
   `MissionActive` + `CheckClear` pattern as the other migrated missions.
+- `ChaosMachineMissionController` owns Cheddar's deliberate lever Interact, the running junction
+  timer, owner-only junction Interacts, partner pre-position targets, distinct towel/basket/toy
+  cause-and-effect props, wrong-role coaching, exact-stage jam/re-pull recovery, stall-cap failure,
+  first-pass credit/scoring, held live-world toy-launch presentation, cleanup, snapshot, and the
+  deterministic trigger/advance hooks.
 - `LeashWalkMissionController` owns checkpoint geometry and markers, tether-distance ticking,
   checkpoint progression, snap-cap failure, objective targeting, leash-safe entry staging, cleanup,
   snapshot, and the deterministic `ForceReachCheckpoint`/`ForceLeashSnap` hooks. `GameManager`
@@ -154,25 +165,33 @@ not an architecture acceptance criterion.
   interfaces let `GameManager` forward shared interact and `Treat` events without SockPanic branches;
   the context supplies generic actor creation and collectible-pool services.
 - `CarRideMissionController` owns the generated car actor lifecycle, live balance and counter-lean
-  ticking, timed lurches, spill-cap failure, readable dog/vehicle feedback, entry staging, cleanup,
-  snapshot, and deterministic lurch/spill hooks. The shared predator actor is no longer repurposed as
-  mission-specific car state.
+  ticking, timed lurches, Cocoa-anchor/Cheddar-tuck brake sequencing, partner-hold validation,
+  tumble-cap failure and recovery, united-bark easing, held arrival presentation, readable dog/
+  vehicle feedback, entry staging, cleanup, snapshot, and deterministic lurch/brace/tumble hooks.
+  The shared predator actor is no longer repurposed as mission-specific car state.
 - `ScentSearchMissionController` owns dig-spot geometry and markers, seeded buried-spot selection,
-  bark-to-sniff heat cues, interact-to-dig handling, cold-dig failure, scoring/credit/feedback,
-  objective targeting, entry staging, cleanup, snapshot, and deterministic sniff/correct-dig/
-  wrong-dig hooks. `GameManager` retains only compatibility accessors and force-hook forwarding.
+  Cheddar's broad directional sniff, Cocoa's precise heat search and mound call, Cheddar-only dig
+  handling, recoverable role coaching, cold-dig failure, held cache presentation, scoring/credit/
+  feedback, objective targeting, entry staging, cleanup, snapshot, and deterministic sniff/correct-
+  dig/wrong-dig hooks. `GameManager` retains only compatibility accessors and force-hook forwarding.
+- `ThunderstormComfortMissionController` owns clap scheduling, Cocoa-first/Cheddar-answer bark
+  sequencing, huddle validation, comfort-window consumption, asymmetric panic spikes, exposed-clap
+  recovery, bolt failure, held storm-passed presentation, pressure HUD data, objective targeting,
+  cleanup, snapshot, and deterministic thunder/comfort hooks. `GameManager` only forwards shared
+  bark input and exposes compatibility state.
 - `WeenieRoundupMissionController` owns loose/carry marker and bowl lifecycles, proximity pickup and
-  delivery ticking, per-dog cargo state and carry poses, fumble/drop recovery, scoring/credit/
-  feedback, objective targeting, entry staging, cleanup, snapshot, and deterministic pickup/
-  delivery/drop hooks.
+  delivery ticking, per-dog cargo state and carry poses, the Cocoa-steady/Cheddar-carry jumbo beat,
+  separation and explicit fumble/drop recovery, held success presentation, scoring/credit/feedback,
+  objective targeting, entry staging, cleanup, snapshot, and deterministic pickup/delivery/drop hooks.
 - `SquirrelConspiracyMissionController` owns route and cutoff geometry, herding/taunt/stash state,
   cutoff-marker lifecycle, bark and interact handling, clear/fail outcome, objective targeting,
   entry staging, snapshot, and deterministic hooks. `MissionContext` exposes the existing shared
   squirrel actor plus only its movement speed and bark range so scene/test compatibility can remain
   intact without exposing `GameManager`; the mission definition moved into `MissionCatalog`.
-- `SnackHeistMissionController` owns collectible recovery/steal counters, squirrel target selection
-  and movement timing, bark defense, collectible input handling, clear/fail state, objective copy,
-  snapshot, and the deterministic steal hook. `MissionContext` exposes read-only access to the
+- `SnackHeistMissionController` owns Cheddar-only snack collection, Cocoa-only active-heist defense,
+  the required guard-before-final-stash gate, wrong-role recovery, collectible recovery/steal
+  counters, squirrel target selection and movement timing, held success presentation, clear/fail
+  state, objective copy, snapshot, and deterministic steal hooks. `MissionContext` exposes read-only access to the
   active treat pool plus a replace-collectible callback; `GameManager.BreakfastRecovered` and
   `StolenFood` remain thin compatibility accessors backed by the active controller.
 - Cross-mission lifecycle coverage now switches through Sock Panic, Car Ride, Scent Search, Weenie

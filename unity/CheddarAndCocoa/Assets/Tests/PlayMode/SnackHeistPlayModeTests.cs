@@ -3,6 +3,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
+using CheddarAndCocoa.Dogs;
 using CheddarAndCocoa.Game;
 
 namespace CheddarAndCocoa.Tests
@@ -33,14 +34,48 @@ namespace CheddarAndCocoa.Tests
             int goal = _game.RuntimeSnapshot.ObjectiveGoal;
             Assert.Greater(goal, 0);
 
+            var cheddar = FindDog(DogId.Cheddar);
+            var cocoa = FindDog(DogId.Cocoa);
+            Assert.IsNotNull(cheddar);
+            Assert.IsNotNull(cocoa);
+
+            Treat first = FirstTreat();
+            first.CollectBy(cocoa);
+            Assert.AreEqual(0, _game.BreakfastRecovered,
+                "Cocoa should leave Cheddar's snack theft intact and get a recoverable role cue.");
+            Assert.That(_game.LastCue, Does.Contain("audits"));
+
+            first.CollectBy(cheddar);
+            yield return null;
+            Assert.AreEqual(1, _game.BreakfastRecovered);
+            Assert.That(_game.ObjectiveLabel, Does.Contain("Cocoa: bark-guard"));
+
+            cheddar.transform.position = _game.SquirrelObject.transform.position;
+            Assert.IsTrue(_game.SnackHeistController.HandleBark(0));
+            Assert.AreEqual(0, _game.SnackHeistController.GuardBarks,
+                "Cheddar's mouth-full bark must not solve Cocoa's guard role.");
+
+            cocoa.transform.position = _game.SquirrelObject.transform.position;
+            Assert.IsTrue(_game.SnackHeistController.HandleBark(1));
+            Assert.AreEqual(1, _game.SnackHeistController.GuardBarks);
+
             int guard = 0;
-            while (_game.Outcome == GameManager.MissionOutcome.InProgress && guard++ < 40)
+            while (_game.BreakfastRecovered < goal && guard++ < 40)
             {
                 _game.ForceCollectTreat();
                 yield return null;
             }
 
             Assert.AreEqual(goal, _game.BreakfastRecovered);
+            Assert.IsTrue(_game.SnackHeistController.IsPresentingSuccessfulOutcome,
+                "The final stash should get a readable in-world payoff before the end card.");
+            float clearWait = 0f;
+            while (_game.Outcome == GameManager.MissionOutcome.InProgress && clearWait < 2f)
+            {
+                clearWait += Time.unscaledDeltaTime;
+                yield return null;
+            }
+            Assert.IsFalse(_game.SnackHeistController.IsPresentingSuccessfulOutcome);
             Assert.AreEqual(GameManager.MissionOutcome.Clear, _game.Outcome);
             Assert.IsTrue(_game.RuntimeSnapshot.IsClear);
             Assert.That(_game.EndSummaryLabel, Does.Contain("Stash Secured"),
@@ -142,6 +177,20 @@ namespace CheddarAndCocoa.Tests
             yield return null;
             _game = Object.FindFirstObjectByType<GameManager>();
             Assert.IsNotNull(_game);
+        }
+
+        private static DogController FindDog(DogId id)
+        {
+            foreach (var dog in Object.FindObjectsByType<DogController>(FindObjectsSortMode.None))
+                if (dog.TryGetComponent<DogIdentity>(out var identity) && identity.Id == id) return dog;
+            return null;
+        }
+
+        private static Treat FirstTreat()
+        {
+            foreach (var treat in Object.FindObjectsByType<Treat>(FindObjectsSortMode.None))
+                if (treat != null && treat.gameObject.activeInHierarchy) return treat;
+            return null;
         }
 
         private static void AssertTreatArt(string expectedResourcePath)

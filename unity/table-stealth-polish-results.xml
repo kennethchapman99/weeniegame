@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="8" result="Passed" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-07-16 22:47:20Z" end-time="2026-07-16 22:47:21Z" duration="1.0279095">
+  <test-suite type="TestSuite" id="1661" name="Cheddar and Cocoa" fullname="Cheddar and Cocoa" runstate="Runnable" testcasecount="563" result="Passed" start-time="2026-07-16 22:47:20Z" end-time="2026-07-16 22:47:21Z" duration="1.027910" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="SetUpFixture" id="1001" name="CheddarAndCocoa.Tests.PlayMode.dll" fullname="PlayModeGlobalTestSetup" classname="PlayModeGlobalTestSetup" runstate="Runnable" testcasecount="563" result="Passed" start-time="2026-07-16 22:47:20Z" end-time="2026-07-16 22:47:21Z" duration="1.018236" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="73615" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1654" name="CheddarAndCocoa" fullname="CheddarAndCocoa" runstate="Runnable" testcasecount="563" result="Passed" start-time="2026-07-16 22:47:20Z" end-time="2026-07-16 22:47:21Z" duration="1.010952" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1657" name="Tests" fullname="CheddarAndCocoa.Tests" runstate="Runnable" testcasecount="561" result="Passed" start-time="2026-07-16 22:47:20Z" end-time="2026-07-16 22:47:21Z" duration="1.004979" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1363" name="CoopTableStealthPlayModeTests" fullname="CheddarAndCocoa.Tests.CoopTableStealthPlayModeTests" classname="CheddarAndCocoa.Tests.CoopTableStealthPlayModeTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-07-16 22:47:20Z" end-time="2026-07-16 22:47:21Z" duration="0.995173" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1364" name="TableStealth_AppearsInMissionSelectRotation" fullname="CheddarAndCocoa.Tests.CoopTableStealthPlayModeTests.TableStealth_AppearsInMissionSelectRotation" methodname="TableStealth_AppearsInMissionSelectRotation" classname="CheddarAndCocoa.Tests.CoopTableStealthPlayModeTests" runstate="Runnable" seed="1645787512" result="Passed" start-time="2026-07-16 22:47:20Z" end-time="2026-07-16 22:47:20Z" duration="0.521542" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1371" name="TableStealth_CheddarBarkBurp_OpensShortSneakWindowForCocoa" fullname="CheddarAndCocoa.Tests.CoopTableStealthPlayModeTests.TableStealth_CheddarBarkBurp_OpensShortSneakWindowForCocoa" methodname="TableStealth_CheddarBarkBurp_OpensShortSneakWindowForCocoa" classname="CheddarAndCocoa.Tests.CoopTableStealthPlayModeTests" runstate="Runnable" seed="600381302" result="Passed" start-time="2026-07-16 22:47:20Z" end-time="2026-07-16 22:47:21Z" duration="0.077180" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[Cheddar] WOOF!
+]]></output>
+            </test-case>
+            <test-case id="1366" name="TableStealth_ClearPath_DistractThenSneakTheSteak" fullname="CheddarAndCocoa.Tests.CoopTableStealthPlayModeTests.TableStealth_ClearPath_DistractThenSneakTheSteak" methodname="TableStealth_ClearPath_DistractThenSneakTheSteak" classname="CheddarAndCocoa.Tests.CoopTableStealthPlayModeTests" runstate="Runnable" seed="1005639258" result="Passed" start-time="2026-07-16 22:47:21Z" end-time="2026-07-16 22:47:21Z" duration="0.049728" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1367" name="TableStealth_FailPath_SpottedTooManyTimes" fullname="CheddarAndCocoa.Tests.CoopTableStealthPlayModeTests.TableStealth_FailPath_SpottedTooManyTimes" methodname="TableStealth_FailPath_SpottedTooManyTimes" classname="CheddarAndCocoa.Tests.CoopTableStealthPlayModeTests" runstate="Runnable" seed="1358129612" result="Passed" start-time="2026-07-16 22:47:21Z" end-time="2026-07-16 22:47:21Z" duration="0.055086" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1368" name="TableStealth_HumanActorStatesShowDistractionSpottingAndOutcome" fullname="CheddarAndCocoa.Tests.CoopTableStealthPlayModeTests.TableStealth_HumanActorStatesShowDistractionSpottingAndOutcome" methodname="TableStealth_HumanActorStatesShowDistractionSpottingAndOutcome" classname="CheddarAndCocoa.Tests.CoopTableStealthPlayModeTests" runstate="Runnable" seed="925613083" result="Passed" start-time="2026-07-16 22:47:21Z" end-time="2026-07-16 22:47:21Z" duration="0.045729" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1370" name="TableStealth_PositionDriven_CocoaMustInteractFlop_ThenLeavingExposes" fullname="CheddarAndCocoa.Tests.CoopTableStealthPlayModeTests.TableStealth_PositionDriven_CocoaMustInteractFlop_ThenLeavingExposes" methodname="TableStealth_PositionDriven_CocoaMustInteractFlop_ThenLeavingExposes" classname="CheddarAndCocoa.Tests.CoopTableStealthPlayModeTests" runstate="Runnable" seed="1530218974" result="Passed" start-time="2026-07-16 22:47:21Z" end-time="2026-07-16 22:47:21Z" duration="0.154226" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[Cocoa] interact (grab placeholder)
+]]></output>
+            </test-case>
+            <test-case id="1369" name="TableStealth_Replay_ResetsThePuzzle" fullname="CheddarAndCocoa.Tests.CoopTableStealthPlayModeTests.TableStealth_Replay_ResetsThePuzzle" methodname="TableStealth_Replay_ResetsThePuzzle" classname="CheddarAndCocoa.Tests.CoopTableStealthPlayModeTests" runstate="Runnable" seed="707968938" result="Passed" start-time="2026-07-16 22:47:21Z" end-time="2026-07-16 22:47:21Z" duration="0.040848" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1365" name="TableStealth_RunsThroughDedicatedController" fullname="CheddarAndCocoa.Tests.CoopTableStealthPlayModeTests.TableStealth_RunsThroughDedicatedController" methodname="TableStealth_RunsThroughDedicatedController" classname="CheddarAndCocoa.Tests.CoopTableStealthPlayModeTests" runstate="Runnable" seed="454896598" result="Passed" start-time="2026-07-16 22:47:21Z" end-time="2026-07-16 22:47:21Z" duration="0.041242" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: /Users/kchapman/Weeniegame/unity/table-stealth-polish-results.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

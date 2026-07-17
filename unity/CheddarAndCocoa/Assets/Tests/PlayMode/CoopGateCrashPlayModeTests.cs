@@ -63,6 +63,12 @@ namespace CheddarAndCocoa.Tests
             _game.ForceGateCross(1.0f);    // Cheddar squeezes through (cross needs 0.8s)
 
             Assert.IsTrue(_game.GateCrashPuzzle.Solved);
+            Assert.IsInstanceOf<IMissionSuccessPresentationController>(_game.GateCrashController);
+            Assert.IsTrue(_game.GateCrashController.IsPresentingSuccessfulOutcome,
+                "The claimed toy should remain visible before the result card appears.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
+            Assert.That(_game.ObjectiveLabel, Does.Contain("Toy rescued"));
+            _game.ForceGateSuccessPresentationComplete();
             Assert.AreEqual(GameManager.MissionOutcome.Clear, _game.Outcome);
             Assert.IsTrue(_game.RuntimeSnapshot.IsClear);
             Assert.That(_game.EndSummaryLabel, Does.Contain("Squeezed Through"));
@@ -101,6 +107,7 @@ namespace CheddarAndCocoa.Tests
 
             _game.ForceGateHold(true);
             _game.ForceGateCross(1.0f);
+            _game.ForceGateSuccessPresentationComplete();
             Assert.AreEqual(GameManager.MissionOutcome.Clear, _game.Outcome);
             Assert.AreEqual(1, _game.ShakeRequestCount, "Mission clear should kick a cosmetic camera shake.");
             float clearShake = _game.LastShakeMagnitude;
@@ -135,6 +142,7 @@ namespace CheddarAndCocoa.Tests
             _game.ForceGateHold(false); // snap
             _game.ForceGateHold(true);
             _game.ForceGateCross(1.0f);
+            _game.ForceGateSuccessPresentationComplete();
             Assert.AreEqual(GameManager.MissionOutcome.Clear, _game.Outcome);
             Assert.IsFalse(_game.LastRoundFlawless, "A snap before completing should not count as flawless.");
             float scrappyShake = _game.LastShakeMagnitude;
@@ -145,6 +153,7 @@ namespace CheddarAndCocoa.Tests
             // Flawless clear: no snaps at all.
             _game.ForceGateHold(true);
             _game.ForceGateCross(1.0f);
+            _game.ForceGateSuccessPresentationComplete();
             Assert.AreEqual(GameManager.MissionOutcome.Clear, _game.Outcome);
             Assert.IsTrue(_game.LastRoundFlawless);
             Assert.Greater(_game.LastShakeMagnitude, scrappyShake,
@@ -174,15 +183,38 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
-        public IEnumerator GateCrash_PositionDriven_HoldingLetsTheCrosserProgress_LeavingSnaps()
+        public IEnumerator GateCrash_CocoaMustDeliberatelyAnchor_ThenHoldingLetsCheddarProgress_AndLeavingSnaps()
         {
             yield return LoadArena();
             _game.StartMission(GameManager.MissionVariant.GateCrash);
             yield return null;
 
-            // Cocoa stands in the hold zone, Cheddar in the cross corridor: the squeeze progresses.
+            _cheddar.transform.position = _game.GateHoldZone;
+            _cheddar.Interact();
+            Assert.IsFalse(_game.GateCrashController.AnchorEngaged,
+                "Cheddar owns the squeeze route and cannot replace Cocoa's anchor role.");
+            Assert.That(_game.LastCue, Does.Contain("Cocoa"));
+
+            _cocoa.transform.position = _game.ArenaBounds.center;
+            _cocoa.Interact();
+            Assert.IsFalse(_game.GateCrashController.AnchorEngaged,
+                "Cocoa must physically reach the gate before engaging the anchor.");
+
+            // Proximity alone is not the co-op action: Cocoa must deliberately engage the anchor.
             _cocoa.transform.position = _game.GateHoldZone;
             _cheddar.transform.position = _game.GateCrossZone;
+            yield return null;
+            yield return null;
+            Assert.IsFalse(_game.GateCrashController.AnchorEngaged);
+            Assert.IsFalse(_game.GateCrashPuzzle.Held);
+            Assert.AreEqual(0f, _game.GateCrashPuzzle.CrossProgress,
+                "Standing on the gate marker must not silently perform Cocoa's anchor action.");
+
+            _cocoa.Interact();
+            Assert.IsTrue(_game.GateCrashController.AnchorEngaged);
+            Assert.IsTrue(_game.GateCrashPuzzle.Held);
+            Assert.IsTrue(HasWorldPop("COCOA ANCHORED"));
+
             for (int i = 0; i < 8; i++)
             {
                 _cocoa.transform.position = _game.GateHoldZone;
@@ -200,6 +232,8 @@ namespace CheddarAndCocoa.Tests
                 yield return null;
                 yield return null;
                 Assert.GreaterOrEqual(_game.GateCrashPuzzle.Snaps, 1, "Cocoa leaving mid-squeeze snaps the gate.");
+                Assert.IsFalse(_game.GateCrashController.AnchorEngaged,
+                    "After a snap, Cocoa must deliberately re-engage instead of auto-opening on return.");
             }
         }
 
@@ -263,6 +297,13 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(_game);
             Assert.IsNotNull(_cheddar);
             Assert.IsNotNull(_cocoa);
+        }
+
+        private static bool HasWorldPop(string text)
+        {
+            foreach (var pop in Object.FindObjectsByType<MissionWorldPop>(FindObjectsSortMode.None))
+                if (pop.Label.Contains(text)) return true;
+            return false;
         }
     }
 }

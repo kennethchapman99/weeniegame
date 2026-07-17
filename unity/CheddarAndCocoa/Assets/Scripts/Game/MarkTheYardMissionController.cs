@@ -5,16 +5,21 @@ namespace CheddarAndCocoa.Game
 {
     /// <summary>
     /// Controller-owned territory-control mission. Cheddar and Cocoa claim every yard zone by
-    /// standing in it while a controller-owned squirrel prowls toward claimed zones and re-marks
-    /// them, forcing the pair to split up and hold the whole yard at once.
+    /// entering a zone and deliberately marking it with Interact while a controller-owned squirrel
+    /// prowls toward claimed zones. Cocoa's bark drives the thief off, creating a route-runner /
+    /// yard-defender handoff instead of passive contact claiming.
     /// </summary>
-    public sealed class MarkTheYardMissionController : IMissionController
+    public sealed class MarkTheYardMissionController : IMissionController, IMissionInteractionController,
+        IMissionSuccessPresentationController
     {
         private const float ZoneClaimRange = 2.4f;
         private const float ReclaimInitialDelay = 4f;   // matches the legacy ZoneReclaimInterval.
         private const float ReclaimRepeatDelay = 1.5f;
         private const float SquirrelSpeed = 1.9f * 0.8f; // matches SquirrelMoveSpeed * 0.8f.
         private const float SquirrelReactionSeconds = 0.45f;
+        private const float SquirrelBarkRange = 6f;
+        private const float BarkDefenseDelay = 3.5f;
+        private const float SuccessHoldSeconds = 1.15f;
 
         private static readonly Color UnclaimedColor = new(0.5f, 0.5f, 0.55f, 0.4f);
         private static readonly Color ClaimedColor = new(0.3f, 0.8f, 0.4f, 0.55f);
@@ -30,17 +35,25 @@ namespace CheddarAndCocoa.Game
         private MissionPropArtAttachment _squirrelArt;
         private float _nextReclaimAt;
         private float _squirrelReactionUntil;
+        private float _successHoldRemaining;
+        private int _squirrelRepels;
 
         public GameManager.MissionVariant Variant => GameManager.MissionVariant.MarkTheYard;
-        public bool IsComplete => _state.AllClaimed;
+        public bool IsComplete => _state.AllClaimed && _successHoldRemaining <= 0f;
+        public bool IsPresentingSuccessfulOutcome => _state.AllClaimed && _successHoldRemaining > 0f;
+        public int SquirrelRepels => _squirrelRepels;
+        public Vector2 ZoneSpot(int index) => _zones != null && index >= 0 && index < _zones.Length
+            ? _zones[index]
+            : Vector2.zero;
         public TerritoryMissionState State => _state;
         public Vector2 EntryTarget => _zones != null && _zones.Length > 0 ? _zones[_zones.Length - 1] : _context.Bounds.center;
         public string OutcomeSummary => MissionOutcomeSummaryBuilder.BuildTerritorySummary(_state);
         public bool IsFailed => false;
         public string FailReason => null;
 
-        public string ObjectiveLabel =>
-            $"Claim and hold every zone at once: {_state.Claimed}/{_state.ZoneCount} marked (squirrel steals back {_state.Reclaims})";
+        public string ObjectiveLabel => IsPresentingSuccessfulOutcome
+            ? "Yard claimed! Cheddar and Cocoa hold the line while the squirrel retreats."
+            : $"Cheddar: Interact to mark zones. Cocoa: BARK the squirrel away. {_state.Claimed}/{_state.ZoneCount} marked (steals {_state.Reclaims})";
 
         /// <summary>Single source of truth for zone geometry, shared with GameManager's compat accessor.</summary>
         public static Vector2[] ComputeZones(Rect bounds)
@@ -64,6 +77,8 @@ namespace CheddarAndCocoa.Game
             _state.Configure(_zones.Length);
             _nextReclaimAt = _context.Now() + ReclaimInitialDelay;
             _squirrelReactionUntil = 0f;
+            _successHoldRemaining = 0f;
+            _squirrelRepels = 0;
             for (int i = 0; i < _zoneMarkers.Length; i++)
             {
                 if (_zoneMarkers[i] != null)
@@ -85,12 +100,12 @@ namespace CheddarAndCocoa.Game
 
         public void Tick(float deltaTime, float now)
         {
-            if (_state.AllClaimed || _context.Dogs == null || _zoneClaimed == null) return;
-
-            for (int d = 0; d < _context.Dogs.Length; d++)
-                for (int z = 0; z < _zones.Length; z++)
-                    if (!_zoneClaimed[z] && Vector2.Distance(_context.Dogs[d].transform.position, _zones[z]) <= ZoneClaimRange)
-                        ClaimZone(d, z);
+            if (_state.AllClaimed)
+            {
+                _successHoldRemaining = Mathf.Max(0f, _successHoldRemaining - deltaTime);
+                return;
+            }
+            if (_context.Dogs == null || _zoneClaimed == null) return;
 
             // The squirrel prowls toward the nearest claimed zone and re-marks it on arrival, so
             // players can see the threat coming and race to defend rather than getting teleport-sniped.
@@ -115,7 +130,45 @@ namespace CheddarAndCocoa.Game
             }
         }
 
-        public bool HandleBark(int dogIndex) => false;
+        public bool HandleBark(int dogIndex)
+        {
+            if (_state.AllClaimed || _squirrel == null || !_squirrel.activeSelf) return false;
+            if (_context.IndexOfDog(DogId.Cocoa) != dogIndex || _state.Claimed <= 0) return false;
+
+            Vector2 cocoaPos = _context.Dogs[dogIndex].transform.position;
+            if (Vector2.Distance(cocoaPos, _squirrel.transform.position) > SquirrelBarkRange)
+            {
+                _context.MarkFailedInteraction(DogId.Cocoa, "Get closer to the stealing squirrel before barking.");
+                _context.SetCue("Cocoa sees the thief - close the gap, then BARK it away from the marked zones.");
+                return false;
+            }
+
+            _squirrelRepels++;
+            _squirrelReactionUntil = _context.Now() + SquirrelReactionSeconds;
+            _nextReclaimAt = _context.Now() + BarkDefenseDelay;
+            _squirrel.transform.position = new Vector2(0f, _context.Bounds.yMax - 2f);
+            SetSquirrelState("COCOA BARKED THE SQUIRREL OFF!", new Color(0.55f, 0.3f, 0.12f, 0.65f), 0.12f,
+                FinalGameplayArt.MarkYardSquirrelWatch);
+            _context.CreditDog(dogIndex);
+            _context.SetFeedback(GameManager.FeedbackKind.SquirrelScared);
+            _context.SetCue("Cocoa defended the marks - Cheddar, use the opening to claim another zone!");
+            _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "BARKED OFF!");
+            _context.SpawnWorldPop(cocoaPos + Vector2.up, "YARD QUEEN!", new Color(0.65f, 0.9f, 1f));
+            _context.RequestAudioCue(ArenaFeedbackCatalog.SquirrelStunned);
+            _context.RequestRumble("mark_yard_repel", 0.16f, 0.34f, 0.12f);
+            _context.LogEvent("MarkYardSquirrelRepelled", $"repels {_squirrelRepels}");
+            return true;
+        }
+
+        public bool HandleInteract(int dogIndex)
+        {
+            if (_state.AllClaimed || dogIndex < 0 || _context.Dogs == null || dogIndex >= _context.Dogs.Length)
+                return false;
+            int zone = FindUnclaimedZoneInRange(_context.Dogs[dogIndex].transform.position);
+            if (zone < 0) return false;
+            ClaimZone(dogIndex, zone);
+            return true;
+        }
 
         public void Cleanup()
         {
@@ -144,9 +197,11 @@ namespace CheddarAndCocoa.Game
 
         public bool TryGetObjectiveTarget(int dogIndex, out Transform target, out string copy, out float hideDistance)
         {
-            target = FindNearestUnclaimedZone(_context.Dogs[dogIndex].transform.position);
-            copy = "MARK ZONE";
-            hideDistance = 1.4f;
+            bool cocoaDefense = _context.IndexOfDog(DogId.Cocoa) == dogIndex && _state.Claimed > 0 &&
+                                _squirrel != null && _squirrel.activeSelf;
+            target = cocoaDefense ? _squirrel.transform : FindNearestUnclaimedZone(_context.Dogs[dogIndex].transform.position);
+            copy = cocoaDefense ? "BARK SQUIRREL" : "INTERACT TO MARK";
+            hideDistance = cocoaDefense ? SquirrelBarkRange : ZoneClaimRange;
             return target != null;
         }
 
@@ -164,6 +219,18 @@ namespace CheddarAndCocoa.Game
 
         /// <summary>Deterministic hook: the squirrel re-marks its nearest claimed zone.</summary>
         public void ForceSquirrelReclaim() => ReclaimZone();
+
+        public bool ForceMarkInteraction(DogId dogId, int zoneIndex)
+        {
+            int dogIndex = _context.IndexOfDog(dogId);
+            if (dogIndex < 0 || zoneIndex < 0 || zoneIndex >= _zones.Length) return false;
+            _context.Dogs[dogIndex].transform.position = _zones[zoneIndex];
+            return HandleInteract(dogIndex);
+        }
+
+        public bool ForceDefenseBark(DogId dogId) => HandleBark(_context.IndexOfDog(dogId));
+
+        public void ForceFinishSuccessPresentation() => _successHoldRemaining = 0f;
 
         private void ClaimZone(int dogIndex, int zoneIndex)
         {
@@ -184,7 +251,11 @@ namespace CheddarAndCocoa.Game
             _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, ScoreEventCatalog.ZoneClaimed.Label);
             _context.RequestAudioCue(ArenaFeedbackCatalog.SnackSockCollect);
             _context.LogEvent("ZoneClaimed", $"{_state.Claimed}/{_state.ZoneCount}");
-            if (_state.AllClaimed) _context.AddScore(ScoreEventCatalog.YardMarked.Points, ScoreEventCatalog.YardMarked.Label);
+            if (_state.AllClaimed)
+            {
+                _context.AddScore(ScoreEventCatalog.YardMarked.Points, ScoreEventCatalog.YardMarked.Label);
+                CompleteYardClaim();
+            }
             else _context.LogObjectiveChanged();
         }
 
@@ -239,6 +310,38 @@ namespace CheddarAndCocoa.Game
                 nearestDistance = distance;
             }
             return nearest;
+        }
+
+        private int FindUnclaimedZoneInRange(Vector2 position)
+        {
+            if (_zones == null || _zoneClaimed == null) return -1;
+            int nearest = -1;
+            float nearestDistance = ZoneClaimRange;
+            for (int i = 0; i < _zones.Length; i++)
+            {
+                if (_zoneClaimed[i]) continue;
+                float distance = Vector2.Distance(position, _zones[i]);
+                if (distance > nearestDistance) continue;
+                nearest = i;
+                nearestDistance = distance;
+            }
+            return nearest;
+        }
+
+        private void CompleteYardClaim()
+        {
+            _successHoldRemaining = SuccessHoldSeconds;
+            _squirrelReactionUntil = float.PositiveInfinity;
+            SetSquirrelState("SQUIRREL RETREATS - THE YARD IS YOURS!", new Color(0.45f, 0.32f, 0.2f, 0.55f), 0.08f,
+                FinalGameplayArt.MarkYardSquirrelWatch);
+            _context.SetFeedback(GameManager.FeedbackKind.LevelClear);
+            _context.SetCue("Every mark held! Cheddar owns the route and Cocoa rules the fence line.");
+            _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "YARD IS OURS!");
+            _context.SpawnWorldPop(_context.Bounds.center + Vector2.up, "ALL MARKED!", new Color(1f, 0.85f, 0.3f));
+            _context.RequestAudioCue(ArenaFeedbackCatalog.MissionWin);
+            _context.RequestRumble("mark_yard_complete", 0.28f, 0.55f, 0.2f);
+            _context.LogEvent("MarkYardComplete", "Holding live-world territory payoff");
+            _context.LogObjectiveChanged();
         }
 
         private void BuildScene()

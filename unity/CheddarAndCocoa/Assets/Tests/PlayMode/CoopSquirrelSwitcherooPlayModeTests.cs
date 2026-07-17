@@ -70,6 +70,11 @@ namespace CheddarAndCocoa.Tests
 
             Assert.IsTrue(_game.SwitcherooPuzzle.Solved);
             Assert.AreEqual(3, _game.SwitcherooPuzzle.Hits);
+            Assert.IsInstanceOf<IMissionSuccessPresentationController>(_game.SquirrelSwitcherooController);
+            Assert.IsTrue(_game.SquirrelSwitcherooController.IsPresentingSuccessfulOutcome);
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
+            Assert.That(_game.ObjectiveLabel, Does.Contain("Stash cracked"));
+            _game.ForceSwitcherooSuccessPresentationComplete();
             Assert.AreEqual(GameManager.MissionOutcome.Clear, _game.Outcome);
             Assert.IsTrue(_game.RuntimeSnapshot.IsClear);
             Assert.That(_game.EndSummaryLabel, Does.Contain("Switcheroo Pulled"));
@@ -131,7 +136,7 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
-        public IEnumerator Switcheroo_PositionDriven_BaiterRaisesCommitment_LeavingDecaysIt()
+        public IEnumerator Switcheroo_PositionDriven_CheddarMustBarkToBait_ThenLeavingDecaysIt()
         {
             yield return LoadArena();
             _game.StartMission(GameManager.MissionVariant.SquirrelSwitcheroo);
@@ -139,7 +144,17 @@ namespace CheddarAndCocoa.Tests
 
             var cheddarBody = _cheddar.GetComponent<Rigidbody2D>();
 
-            // Cheddar feints at the decoy: the squirrel's commitment to the decoy rises while he is there.
+            _cheddar.transform.position = _game.SwitcherooDecoyZone;
+            if (cheddarBody != null) cheddarBody.linearVelocity = Vector2.zero;
+            yield return null;
+            Assert.AreEqual(0f, _game.SwitcherooPuzzle.Commitment,
+                "Standing at the decoy alone must not silently perform Cheddar's bait verb.");
+
+            _cheddar.Bark();
+            yield return null;
+            Assert.IsTrue(_game.SquirrelSwitcherooController.BaitEngaged);
+
+            // Cheddar's deliberate bark-feint raises commitment while he stays by the decoy.
             for (int i = 0; i < 30; i++)
             {
                 _cheddar.transform.position = _game.SwitcherooDecoyZone;
@@ -147,7 +162,7 @@ namespace CheddarAndCocoa.Tests
                 yield return null;
             }
             float raised = _game.SwitcherooPuzzle.Commitment;
-            Assert.Greater(raised, 0f, "Standing at the decoy should raise the squirrel's commitment.");
+            Assert.Greater(raised, 0f, "Barking at the decoy should raise the squirrel's commitment.");
 
             // Cheddar backs off the decoy: commitment to the decoy decays back down.
             for (int i = 0; i < 60; i++)
@@ -158,6 +173,34 @@ namespace CheddarAndCocoa.Tests
             }
             Assert.Less(_game.SwitcherooPuzzle.Commitment, raised,
                 "Leaving the decoy should let the squirrel's commitment decay.");
+            Assert.IsFalse(_game.SquirrelSwitcherooController.BaitEngaged,
+                "Leaving must release the feint so a new bait requires another Bark.");
+        }
+
+        [UnityTest]
+        public IEnumerator Switcheroo_CocoaMustInteractAtStash_DuringCommittedWindow()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.SquirrelSwitcheroo);
+            yield return null;
+
+            _game.ForceSwitcherooBait(0.7f);
+            Assert.IsTrue(_game.SwitcherooPuzzle.Committed);
+
+            _cocoa.transform.position = _game.SwitcherooStashZone;
+            yield return null;
+            Assert.AreEqual(0, _game.SwitcherooPuzzle.Hits,
+                "Proximity alone must not silently raid the stash.");
+
+            _cocoa.Interact();
+            yield return null;
+            Assert.AreEqual(1, _game.SwitcherooPuzzle.Hits);
+            Assert.That(_game.LastCue, Does.Contain("Cocoa snatched"));
+
+            _cocoa.Interact();
+            yield return null;
+            Assert.AreEqual(1, _game.SwitcherooPuzzle.Hits,
+                "The same chase window can only fund one deliberate raid.");
         }
 
         private IEnumerator LoadArena()

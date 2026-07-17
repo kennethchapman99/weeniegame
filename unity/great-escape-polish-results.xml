@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="8" result="Passed" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-07-16 23:01:31Z" end-time="2026-07-16 23:01:32Z" duration="1.0116185">
+  <test-suite type="TestSuite" id="1662" name="Cheddar and Cocoa" fullname="Cheddar and Cocoa" runstate="Runnable" testcasecount="564" result="Passed" start-time="2026-07-16 23:01:31Z" end-time="2026-07-16 23:01:32Z" duration="1.011619" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="SetUpFixture" id="1001" name="CheddarAndCocoa.Tests.PlayMode.dll" fullname="PlayModeGlobalTestSetup" classname="PlayModeGlobalTestSetup" runstate="Runnable" testcasecount="564" result="Passed" start-time="2026-07-16 23:01:31Z" end-time="2026-07-16 23:01:32Z" duration="1.005528" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="88560" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1655" name="CheddarAndCocoa" fullname="CheddarAndCocoa" runstate="Runnable" testcasecount="564" result="Passed" start-time="2026-07-16 23:01:31Z" end-time="2026-07-16 23:01:32Z" duration="1.000484" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1658" name="Tests" fullname="CheddarAndCocoa.Tests" runstate="Runnable" testcasecount="562" result="Passed" start-time="2026-07-16 23:01:31Z" end-time="2026-07-16 23:01:32Z" duration="0.996821" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1264" name="CoopGreatEscapePlayModeTests" fullname="CheddarAndCocoa.Tests.CoopGreatEscapePlayModeTests" classname="CheddarAndCocoa.Tests.CoopGreatEscapePlayModeTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-07-16 23:01:31Z" end-time="2026-07-16 23:01:32Z" duration="0.990189" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1265" name="Escape_AppearsInMissionSelectRotation" fullname="CheddarAndCocoa.Tests.CoopGreatEscapePlayModeTests.Escape_AppearsInMissionSelectRotation" methodname="Escape_AppearsInMissionSelectRotation" classname="CheddarAndCocoa.Tests.CoopGreatEscapePlayModeTests" runstate="Runnable" seed="1765659177" result="Passed" start-time="2026-07-16 23:01:31Z" end-time="2026-07-16 23:01:32Z" duration="0.640068" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1267" name="Escape_ClearPath_RunTheChainInOrder" fullname="CheddarAndCocoa.Tests.CoopGreatEscapePlayModeTests.Escape_ClearPath_RunTheChainInOrder" methodname="Escape_ClearPath_RunTheChainInOrder" classname="CheddarAndCocoa.Tests.CoopGreatEscapePlayModeTests" runstate="Runnable" seed="947868903" result="Passed" start-time="2026-07-16 23:01:32Z" end-time="2026-07-16 23:01:32Z" duration="0.075717" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1269" name="Escape_Dawdling_EasesTheChainBack" fullname="CheddarAndCocoa.Tests.CoopGreatEscapePlayModeTests.Escape_Dawdling_EasesTheChainBack" methodname="Escape_Dawdling_EasesTheChainBack" classname="CheddarAndCocoa.Tests.CoopGreatEscapePlayModeTests" runstate="Runnable" seed="405393627" result="Passed" start-time="2026-07-16 23:01:32Z" end-time="2026-07-16 23:01:32Z" duration="0.046689" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1270" name="Escape_FailPath_TooManyBotches" fullname="CheddarAndCocoa.Tests.CoopGreatEscapePlayModeTests.Escape_FailPath_TooManyBotches" methodname="Escape_FailPath_TooManyBotches" classname="CheddarAndCocoa.Tests.CoopGreatEscapePlayModeTests" runstate="Runnable" seed="2002684867" result="Passed" start-time="2026-07-16 23:01:32Z" end-time="2026-07-16 23:01:32Z" duration="0.050727" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1272" name="Escape_PositionDriven_OwnerMustInteractAtActiveStation" fullname="CheddarAndCocoa.Tests.CoopGreatEscapePlayModeTests.Escape_PositionDriven_OwnerMustInteractAtActiveStation" methodname="Escape_PositionDriven_OwnerMustInteractAtActiveStation" classname="CheddarAndCocoa.Tests.CoopGreatEscapePlayModeTests" runstate="Runnable" seed="1729674831" result="Passed" start-time="2026-07-16 23:01:32Z" end-time="2026-07-16 23:01:32Z" duration="0.046087" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[Cheddar] interact (grab placeholder)
+[Cocoa] interact (grab placeholder)
+]]></output>
+            </test-case>
+            <test-case id="1271" name="Escape_Replay_ResetsThePuzzle" fullname="CheddarAndCocoa.Tests.CoopGreatEscapePlayModeTests.Escape_Replay_ResetsThePuzzle" methodname="Escape_Replay_ResetsThePuzzle" classname="CheddarAndCocoa.Tests.CoopGreatEscapePlayModeTests" runstate="Runnable" seed="1873560002" result="Passed" start-time="2026-07-16 23:01:32Z" end-time="2026-07-16 23:01:32Z" duration="0.041726" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1266" name="Escape_RunsThroughDedicatedController" fullname="CheddarAndCocoa.Tests.CoopGreatEscapePlayModeTests.Escape_RunsThroughDedicatedController" methodname="Escape_RunsThroughDedicatedController" classname="CheddarAndCocoa.Tests.CoopGreatEscapePlayModeTests" runstate="Runnable" seed="1817903890" result="Passed" start-time="2026-07-16 23:01:32Z" end-time="2026-07-16 23:01:32Z" duration="0.042908" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1268" name="Escape_WrongDog_IsAHarmlessFumble" fullname="CheddarAndCocoa.Tests.CoopGreatEscapePlayModeTests.Escape_WrongDog_IsAHarmlessFumble" methodname="Escape_WrongDog_IsAHarmlessFumble" classname="CheddarAndCocoa.Tests.CoopGreatEscapePlayModeTests" runstate="Runnable" seed="1462930909" result="Passed" start-time="2026-07-16 23:01:32Z" end-time="2026-07-16 23:01:32Z" duration="0.040982" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: /Users/kchapman/Weeniegame/unity/great-escape-polish-results.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

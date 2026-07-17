@@ -66,6 +66,11 @@ namespace CheddarAndCocoa.Tests
 
             Assert.IsTrue(_game.GreatEscapePuzzle.Solved);
             Assert.AreEqual(0, _game.GreatEscapePuzzle.Fumbles + _game.GreatEscapePuzzle.Settles);
+            Assert.IsInstanceOf<IMissionSuccessPresentationController>(_game.GreatEscapeController);
+            Assert.IsTrue(_game.GreatEscapeController.IsPresentingSuccessfulOutcome);
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
+            Assert.That(_game.ObjectiveLabel, Does.Contain("BREAKOUT"));
+            _game.ForceEscapeSuccessPresentationComplete();
             Assert.AreEqual(GameManager.MissionOutcome.Clear, _game.Outcome);
             Assert.IsTrue(_game.RuntimeSnapshot.IsClear);
             Assert.That(_game.EndSummaryLabel, Does.Contain("Jailbreak"));
@@ -103,6 +108,11 @@ namespace CheddarAndCocoa.Tests
 
             Assert.AreEqual(0, _game.GreatEscapePuzzle.Step);
             Assert.AreEqual(1, _game.GreatEscapePuzzle.Settles);
+            _game.ForceEscapeStep(_game.GreatEscapePuzzle.NextOwner);
+            Assert.AreEqual(1, _game.GreatEscapePuzzle.Step,
+                "A settled-back station must respond and advance when correctly repeated.");
+            Assert.That(_game.LastCue, Does.Contain("CLUNK"),
+                "Repeating a settled step should still acknowledge the successful action.");
             Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
         }
 
@@ -145,7 +155,7 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
-        public IEnumerator Escape_PositionDriven_OwnerAtStationAdvancesTheChain()
+        public IEnumerator Escape_PositionDriven_OwnerMustInteractAtActiveStation()
         {
             yield return LoadArena();
             _game.StartMission(GameManager.MissionVariant.GreatEscape);
@@ -168,7 +178,23 @@ namespace CheddarAndCocoa.Tests
                 yield return null;
             }
 
-            Assert.GreaterOrEqual(_game.GreatEscapePuzzle.Step, 1, "The owning dog at the active station should advance the chain.");
+            Assert.AreEqual(0, _game.GreatEscapePuzzle.Step,
+                "Proximity alone must not silently perform a contraption action.");
+
+            otherDog.transform.position = station;
+            ownerDog.transform.position = new Vector3(station.x - 40f, station.y, 0f);
+            otherDog.Interact();
+            yield return null;
+            Assert.AreEqual(0, _game.GreatEscapePuzzle.Step);
+            Assert.AreEqual(1, _game.GreatEscapePuzzle.Fumbles,
+                "A deliberate wrong-dog Interact should produce the readable harmless fumble.");
+
+            ownerDog.transform.position = station;
+            otherDog.transform.position = new Vector3(station.x - 40f, station.y, 0f);
+            ownerDog.Interact();
+            yield return null;
+            Assert.AreEqual(1, _game.GreatEscapePuzzle.Step,
+                "The owning dog's Interact at the active station should advance the chain.");
         }
 
         private IEnumerator LoadArena()

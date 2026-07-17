@@ -4,7 +4,8 @@ using UnityEngine;
 namespace CheddarAndCocoa.Game
 {
     /// <summary>Complete runtime ownership for Kitchen Falling Food Frenzy.</summary>
-    public sealed class KitchenFoodFrenzyMissionController : IMissionController
+    public sealed class KitchenFoodFrenzyMissionController : IMissionController,
+        IMissionSuccessPresentationController
     {
         private const float CounterRadius = 3.6f;
         private const float SafeZoneRadius = 3.0f;
@@ -13,6 +14,7 @@ namespace CheddarAndCocoa.Game
         private const float FinaleFallSpeed = 6.2f;
         private const float TelegraphSeconds = 1.25f;
         private const float FinaleTelegraphSeconds = 0.65f;
+        private const float SuccessHoldSeconds = 1.15f;
 
         private static readonly Color GoodColor = new(1f, 0.85f, 0.4f);
         private static readonly Color BadColor = new(0.7f, 0.4f, 0.85f);
@@ -36,9 +38,12 @@ namespace CheddarAndCocoa.Game
         private float _dropX;
         private float _telegraphUntil;
         private float _foodHideAt;
+        private float _successHoldRemaining;
 
         public GameManager.MissionVariant Variant => GameManager.MissionVariant.KitchenFoodFrenzy;
-        public bool IsComplete => _state.Complete;
+        public bool IsComplete => _state.Complete && _successHoldRemaining <= 0f;
+        public bool IsPresentingSuccessfulOutcome => _state.Complete && _successHoldRemaining > 0f;
+        public float SuccessHoldRemaining => _successHoldRemaining;
         public KitchenFoodFrenzyMissionState State => _state;
         public Vector2 CounterPosition => _counterPosition;
         public Vector2 SafeZonePosition => _safeZonePosition;
@@ -55,6 +60,7 @@ namespace CheddarAndCocoa.Game
         {
             get
             {
+                if (IsPresentingSuccessfulOutcome) return "Dinner saved! Cheddar called it - Cocoa caught it!";
                 if (_state.Complete) return "Kitchen cleared - replay Kitchen Falling Food Frenzy";
                 string step = _state.DropActive
                     ? "Cocoa: catch GOLD in the SAFE BOWL; clear PURPLE and let it splat"
@@ -80,6 +86,7 @@ namespace CheddarAndCocoa.Game
             _state.Reset();
             _telegraphUntil = 0f;
             _foodHideAt = 0f;
+            _successHoldRemaining = 0f;
             _counterPosition = new Vector2(_context.Bounds.center.x, _context.Bounds.center.y + 8f);
             _safeZonePosition = new Vector2(_context.Bounds.center.x, _context.Bounds.center.y - 5f);
             _floorY = _context.Bounds.center.y - 7f;
@@ -94,6 +101,7 @@ namespace CheddarAndCocoa.Game
         {
             if (_state.Complete)
             {
+                _successHoldRemaining = Mathf.Max(0f, _successHoldRemaining - deltaTime);
                 UpdateMarkers(now);
                 return;
             }
@@ -213,6 +221,9 @@ namespace CheddarAndCocoa.Game
         public void ForceReleaseTelegraph() => ReleaseTelegraph();
         public void ForceCatch(DogId dog, bool intoSafeZone) => ResolveCatch(dog, intoSafeZone);
         public void ForceLetFall() => ResolveLetFall();
+
+        /// <summary>Deterministic seam for advancing past the live dinner-saved payoff.</summary>
+        public void ForceFinishSuccessPresentation() => _successHoldRemaining = 0f;
 
         private void BuildScene()
         {
@@ -370,6 +381,16 @@ namespace CheddarAndCocoa.Game
                         _context.SpawnWorldPop(_context.Bounds.center, "DINNER RUSH!", new Color(1f, 0.72f, 0.25f));
                         _context.RequestRumble("dinner_rush", 0.28f, 0.5f, 0.2f);
                         _context.LogEvent("KitchenFinaleStarted", "GOOD / BAD / GOOD");
+                    }
+                    if (_state.Complete)
+                    {
+                        _successHoldRemaining = SuccessHoldSeconds;
+                        _context.SetCue("Dinner saved! Cheddar called every drop and Cocoa caught the feast!");
+                        _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "DINNER SAVED!");
+                        _context.SpawnWorldPop(_safeZonePosition, "DINNER SAVED!", new Color(1f, 0.86f, 0.28f));
+                        _context.RequestAudioCue(ArenaFeedbackCatalog.MissionWin);
+                        _context.RequestRumble("kitchen_payoff", 0.3f, 0.55f, 0.2f);
+                        _context.LogEvent("KitchenPayoff", "Dinner saved; holding live-world success beat");
                     }
                     break;
                 case KitchenFoodFrenzyMissionState.CatchResult.GrossOut:

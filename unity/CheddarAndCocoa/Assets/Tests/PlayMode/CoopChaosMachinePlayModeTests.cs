@@ -80,6 +80,11 @@ namespace CheddarAndCocoa.Tests
 
             Assert.IsTrue(_game.ChaosMachinePuzzle.Solved);
             Assert.AreEqual(0, _game.ChaosMachinePuzzle.Stalls);
+            Assert.IsInstanceOf<IMissionSuccessPresentationController>(_game.ChaosMachineController);
+            Assert.IsTrue(_game.ChaosMachineController.IsPresentingSuccessfulOutcome);
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
+            Assert.That(_game.ObjectiveLabel, Does.Contain("CHAOS COMPLETE"));
+            _game.ForceChaosSuccessPresentationComplete();
             Assert.AreEqual(GameManager.MissionOutcome.Clear, _game.Outcome);
             Assert.IsTrue(_game.RuntimeSnapshot.IsClear);
             Assert.That(_game.EndSummaryLabel, Does.Contain("Cascade Complete"));
@@ -163,7 +168,7 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
-        public IEnumerator Chaos_PositionDriven_LeverPullThenJunctionAssist()
+        public IEnumerator Chaos_PositionDriven_LeverAndJunctionsRequireOwnerInteract()
         {
             yield return LoadArena();
             _game.StartMission(GameManager.MissionVariant.ChaosMachine);
@@ -172,7 +177,7 @@ namespace CheddarAndCocoa.Tests
             var cheddarBody = _cheddar.GetComponent<Rigidbody2D>();
             var cocoaBody = _cocoa.GetComponent<Rigidbody2D>();
 
-            // A dog at the lever pulls it and the cascade goes live.
+            // Proximity alone cannot pull the lever.
             for (int i = 0; i < 6; i++)
             {
                 _cheddar.transform.position = _game.ChaosLeverZone;
@@ -181,9 +186,15 @@ namespace CheddarAndCocoa.Tests
                 if (cocoaBody != null) cocoaBody.linearVelocity = Vector2.zero;
                 yield return null;
             }
-            Assert.IsTrue(_game.ChaosMachinePuzzle.Running, "A dog at the lever should start the cascade.");
+            Assert.IsFalse(_game.ChaosMachinePuzzle.Running,
+                "Standing at the lever must not silently start the cascade.");
 
-            // The first junction's owner covers it; the cascade rolls through.
+            _cheddar.Interact();
+            yield return null;
+            Assert.IsTrue(_game.ChaosMachinePuzzle.Running,
+                "Cheddar's Interact at the lever should start the cascade.");
+
+            // The first junction also waits for its named owner's explicit Interact.
             ChainActor owner = _game.ChaosJunctionOwner(0);
             DogController ownerDog = owner == ChainActor.Cheddar ? _cheddar : _cocoa;
             DogController otherDog = owner == ChainActor.Cheddar ? _cocoa : _cheddar;
@@ -195,7 +206,22 @@ namespace CheddarAndCocoa.Tests
                 if (cocoaBody != null) cocoaBody.linearVelocity = Vector2.zero;
                 yield return null;
             }
-            Assert.GreaterOrEqual(_game.ChaosMachinePuzzle.Stage, 1, "The owner covering the live junction should roll the cascade on.");
+            Assert.AreEqual(0, _game.ChaosMachinePuzzle.Stage,
+                "Standing at the live junction must not silently fire its action.");
+
+            otherDog.transform.position = _game.ChaosJunctionSpot(0);
+            ownerDog.transform.position = new Vector3(_game.ChaosJunctionSpot(0).x - 40f, _game.ChaosJunctionSpot(0).y, 0f);
+            otherDog.Interact();
+            yield return null;
+            Assert.AreEqual(0, _game.ChaosMachinePuzzle.Stage,
+                "Wrong-paws Interact should coach without firing the junction.");
+
+            ownerDog.transform.position = _game.ChaosJunctionSpot(0);
+            otherDog.transform.position = new Vector3(_game.ChaosJunctionSpot(0).x - 40f, _game.ChaosJunctionSpot(0).y, 0f);
+            ownerDog.Interact();
+            yield return null;
+            Assert.AreEqual(1, _game.ChaosMachinePuzzle.Stage,
+                "The named owner's Interact should roll the cascade onward.");
         }
 
         private IEnumerator LoadArena()

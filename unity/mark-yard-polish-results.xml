@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="9" result="Passed" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-07-16 21:40:32Z" end-time="2026-07-16 21:40:34Z" duration="1.4081742">
+  <test-suite type="TestSuite" id="1653" name="Cheddar and Cocoa" fullname="Cheddar and Cocoa" runstate="Runnable" testcasecount="555" result="Passed" start-time="2026-07-16 21:40:32Z" end-time="2026-07-16 21:40:34Z" duration="1.408174" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="SetUpFixture" id="1001" name="CheddarAndCocoa.Tests.PlayMode.dll" fullname="PlayModeGlobalTestSetup" classname="PlayModeGlobalTestSetup" runstate="Runnable" testcasecount="555" result="Passed" start-time="2026-07-16 21:40:32Z" end-time="2026-07-16 21:40:34Z" duration="1.398100" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="19778" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1646" name="CheddarAndCocoa" fullname="CheddarAndCocoa" runstate="Runnable" testcasecount="555" result="Passed" start-time="2026-07-16 21:40:32Z" end-time="2026-07-16 21:40:34Z" duration="1.391377" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1649" name="Tests" fullname="CheddarAndCocoa.Tests" runstate="Runnable" testcasecount="553" result="Passed" start-time="2026-07-16 21:40:32Z" end-time="2026-07-16 21:40:34Z" duration="1.386079" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1491" name="MarkTheYardPlayModeTests" fullname="CheddarAndCocoa.Tests.MarkTheYardPlayModeTests" classname="CheddarAndCocoa.Tests.MarkTheYardPlayModeTests" runstate="Runnable" testcasecount="9" result="Passed" start-time="2026-07-16 21:40:32Z" end-time="2026-07-16 21:40:34Z" duration="1.377956" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1492" name="MarkTheYard_AppearsInMissionSelectRotation" fullname="CheddarAndCocoa.Tests.MarkTheYardPlayModeTests.MarkTheYard_AppearsInMissionSelectRotation" methodname="MarkTheYard_AppearsInMissionSelectRotation" classname="CheddarAndCocoa.Tests.MarkTheYardPlayModeTests" runstate="Runnable" seed="995195984" result="Passed" start-time="2026-07-16 21:40:32Z" end-time="2026-07-16 21:40:33Z" duration="0.519963" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1494" name="MarkTheYard_ClearPath_ClaimEveryZone" fullname="CheddarAndCocoa.Tests.MarkTheYardPlayModeTests.MarkTheYard_ClearPath_ClaimEveryZone" methodname="MarkTheYard_ClearPath_ClaimEveryZone" classname="CheddarAndCocoa.Tests.MarkTheYardPlayModeTests" runstate="Runnable" seed="28267188" result="Passed" start-time="2026-07-16 21:40:33Z" end-time="2026-07-16 21:40:33Z" duration="0.085967" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1500" name="MarkTheYard_CocoaLeadership_UsesQueenRivalryCopy" fullname="CheddarAndCocoa.Tests.MarkTheYardPlayModeTests.MarkTheYard_CocoaLeadership_UsesQueenRivalryCopy" methodname="MarkTheYard_CocoaLeadership_UsesQueenRivalryCopy" classname="CheddarAndCocoa.Tests.MarkTheYardPlayModeTests" runstate="Runnable" seed="965382721" result="Passed" start-time="2026-07-16 21:40:33Z" end-time="2026-07-16 21:40:33Z" duration="0.044514" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1499" name="MarkTheYard_FirstClear_RecordsSessionBestButNotANewBest" fullname="CheddarAndCocoa.Tests.MarkTheYardPlayModeTests.MarkTheYard_FirstClear_RecordsSessionBestButNotANewBest" methodname="MarkTheYard_FirstClear_RecordsSessionBestButNotANewBest" classname="CheddarAndCocoa.Tests.MarkTheYardPlayModeTests" runstate="Runnable" seed="396873512" result="Passed" start-time="2026-07-16 21:40:33Z" end-time="2026-07-16 21:40:33Z" duration="0.042936" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1498" name="MarkTheYard_Replay_ResetsTerritoryState" fullname="CheddarAndCocoa.Tests.MarkTheYardPlayModeTests.MarkTheYard_Replay_ResetsTerritoryState" methodname="MarkTheYard_Replay_ResetsTerritoryState" classname="CheddarAndCocoa.Tests.MarkTheYardPlayModeTests" runstate="Runnable" seed="1138801409" result="Passed" start-time="2026-07-16 21:40:33Z" end-time="2026-07-16 21:40:33Z" duration="0.056128" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1495" name="MarkTheYard_RequiresInteractToMark_AndCocoaBarkDefendsTheOpening" fullname="CheddarAndCocoa.Tests.MarkTheYardPlayModeTests.MarkTheYard_RequiresInteractToMark_AndCocoaBarkDefendsTheOpening" methodname="MarkTheYard_RequiresInteractToMark_AndCocoaBarkDefendsTheOpening" classname="CheddarAndCocoa.Tests.MarkTheYardPlayModeTests" runstate="Runnable" seed="992450971" result="Passed" start-time="2026-07-16 21:40:33Z" end-time="2026-07-16 21:40:33Z" duration="0.048223" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1493" name="MarkTheYard_RunsThroughDedicatedController" fullname="CheddarAndCocoa.Tests.MarkTheYardPlayModeTests.MarkTheYard_RunsThroughDedicatedController" methodname="MarkTheYard_RunsThroughDedicatedController" classname="CheddarAndCocoa.Tests.MarkTheYardPlayModeTests" runstate="Runnable" seed="267598104" result="Passed" start-time="2026-07-16 21:40:33Z" end-time="2026-07-16 21:40:33Z" duration="0.041440" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1496" name="MarkTheYard_SquirrelReclaim_StealsAClaimedZone" fullname="CheddarAndCocoa.Tests.MarkTheYardPlayModeTests.MarkTheYard_SquirrelReclaim_StealsAClaimedZone" methodname="MarkTheYard_SquirrelReclaim_StealsAClaimedZone" classname="CheddarAndCocoa.Tests.MarkTheYardPlayModeTests" runstate="Runnable" seed="431850958" result="Passed" start-time="2026-07-16 21:40:33Z" end-time="2026-07-16 21:40:33Z" duration="0.043551" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1497" name="MarkTheYard_SquirrelUsesReadableGeneratedActorStates" fullname="CheddarAndCocoa.Tests.MarkTheYardPlayModeTests.MarkTheYard_SquirrelUsesReadableGeneratedActorStates" methodname="MarkTheYard_SquirrelUsesReadableGeneratedActorStates" classname="CheddarAndCocoa.Tests.MarkTheYardPlayModeTests" runstate="Runnable" seed="1029690459" result="Passed" start-time="2026-07-16 21:40:33Z" end-time="2026-07-16 21:40:34Z" duration="0.488839" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: /Users/kchapman/Weeniegame/unity/mark-yard-polish-results.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

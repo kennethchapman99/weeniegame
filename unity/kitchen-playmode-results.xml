@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="6" result="Passed" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-07-16 11:46:59Z" end-time="2026-07-16 11:47:00Z" duration="1.5439463">
+  <test-suite type="TestSuite" id="1647" name="Cheddar and Cocoa" fullname="Cheddar and Cocoa" runstate="Runnable" testcasecount="549" result="Passed" start-time="2026-07-16 11:46:59Z" end-time="2026-07-16 11:47:00Z" duration="1.543946" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="SetUpFixture" id="1001" name="CheddarAndCocoa.Tests.PlayMode.dll" fullname="PlayModeGlobalTestSetup" classname="PlayModeGlobalTestSetup" runstate="Runnable" testcasecount="549" result="Passed" start-time="2026-07-16 11:46:59Z" end-time="2026-07-16 11:47:00Z" duration="1.534107" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="81841" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1640" name="CheddarAndCocoa" fullname="CheddarAndCocoa" runstate="Runnable" testcasecount="549" result="Passed" start-time="2026-07-16 11:46:59Z" end-time="2026-07-16 11:47:00Z" duration="1.524545" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1643" name="Tests" fullname="CheddarAndCocoa.Tests" runstate="Runnable" testcasecount="547" result="Passed" start-time="2026-07-16 11:46:59Z" end-time="2026-07-16 11:47:00Z" duration="1.518166" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1465" name="KitchenFoodFrenzyPlayModeTests" fullname="CheddarAndCocoa.Tests.KitchenFoodFrenzyPlayModeTests" classname="CheddarAndCocoa.Tests.KitchenFoodFrenzyPlayModeTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-07-16 11:46:59Z" end-time="2026-07-16 11:47:00Z" duration="1.508544" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1467" name="KitchenFrenzy_BarkKnockHasReadablePreDropTelegraph" fullname="CheddarAndCocoa.Tests.KitchenFoodFrenzyPlayModeTests.KitchenFrenzy_BarkKnockHasReadablePreDropTelegraph" methodname="KitchenFrenzy_BarkKnockHasReadablePreDropTelegraph" classname="CheddarAndCocoa.Tests.KitchenFoodFrenzyPlayModeTests" runstate="Runnable" seed="1548611029" result="Passed" start-time="2026-07-16 11:46:59Z" end-time="2026-07-16 11:46:59Z" duration="0.607585" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1466" name="KitchenFrenzy_IsSelectableAndBuildsReadableRoleStations" fullname="CheddarAndCocoa.Tests.KitchenFoodFrenzyPlayModeTests.KitchenFrenzy_IsSelectableAndBuildsReadableRoleStations" methodname="KitchenFrenzy_IsSelectableAndBuildsReadableRoleStations" classname="CheddarAndCocoa.Tests.KitchenFoodFrenzyPlayModeTests" runstate="Runnable" seed="1648650269" result="Passed" start-time="2026-07-16 11:46:59Z" end-time="2026-07-16 11:46:59Z" duration="0.053387" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1470" name="KitchenFrenzy_ReplayResetsFoodAndComboState" fullname="CheddarAndCocoa.Tests.KitchenFoodFrenzyPlayModeTests.KitchenFrenzy_ReplayResetsFoodAndComboState" methodname="KitchenFrenzy_ReplayResetsFoodAndComboState" classname="CheddarAndCocoa.Tests.KitchenFoodFrenzyPlayModeTests" runstate="Runnable" seed="84215907" result="Passed" start-time="2026-07-16 11:46:59Z" end-time="2026-07-16 11:46:59Z" duration="0.056537" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1468" name="KitchenFrenzy_RoleFailuresFoodTypesAndClearPathAreDeterministic" fullname="CheddarAndCocoa.Tests.KitchenFoodFrenzyPlayModeTests.KitchenFrenzy_RoleFailuresFoodTypesAndClearPathAreDeterministic" methodname="KitchenFrenzy_RoleFailuresFoodTypesAndClearPathAreDeterministic" classname="CheddarAndCocoa.Tests.KitchenFoodFrenzyPlayModeTests" runstate="Runnable" seed="1885527409" result="Passed" start-time="2026-07-16 11:46:59Z" end-time="2026-07-16 11:46:59Z" duration="0.079435" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1469" name="KitchenFrenzy_SplatSpriteLingersBeforeFoodHides" fullname="CheddarAndCocoa.Tests.KitchenFoodFrenzyPlayModeTests.KitchenFrenzy_SplatSpriteLingersBeforeFoodHides" methodname="KitchenFrenzy_SplatSpriteLingersBeforeFoodHides" classname="CheddarAndCocoa.Tests.KitchenFoodFrenzyPlayModeTests" runstate="Runnable" seed="1519846974" result="Passed" start-time="2026-07-16 11:46:59Z" end-time="2026-07-16 11:47:00Z" duration="0.652952" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1471" name="KitchenFrenzy_SwitchingMissionCleansOwnedActorsAndController" fullname="CheddarAndCocoa.Tests.KitchenFoodFrenzyPlayModeTests.KitchenFrenzy_SwitchingMissionCleansOwnedActorsAndController" methodname="KitchenFrenzy_SwitchingMissionCleansOwnedActorsAndController" classname="CheddarAndCocoa.Tests.KitchenFoodFrenzyPlayModeTests" runstate="Runnable" seed="1895510719" result="Passed" start-time="2026-07-16 11:47:00Z" end-time="2026-07-16 11:47:00Z" duration="0.052313" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: /Users/kchapman/Weeniegame/unity/kitchen-playmode-results.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Passed" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-07-16 22:58:05Z" end-time="2026-07-16 22:58:06Z" duration="0.5213654">
+  <test-suite type="TestSuite" id="1662" name="Cheddar and Cocoa" fullname="Cheddar and Cocoa" runstate="Runnable" testcasecount="564" result="Passed" start-time="2026-07-16 22:58:05Z" end-time="2026-07-16 22:58:06Z" duration="0.521365" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="SetUpFixture" id="1001" name="CheddarAndCocoa.Tests.PlayMode.dll" fullname="PlayModeGlobalTestSetup" classname="PlayModeGlobalTestSetup" runstate="Runnable" testcasecount="564" result="Passed" start-time="2026-07-16 22:58:05Z" end-time="2026-07-16 22:58:06Z" duration="0.515023" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="85203" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1655" name="CheddarAndCocoa" fullname="CheddarAndCocoa" runstate="Runnable" testcasecount="564" result="Passed" start-time="2026-07-16 22:58:05Z" end-time="2026-07-16 22:58:06Z" duration="0.511893" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1658" name="Tests" fullname="CheddarAndCocoa.Tests" runstate="Runnable" testcasecount="562" result="Passed" start-time="2026-07-16 22:58:05Z" end-time="2026-07-16 22:58:06Z" duration="0.510121" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1014" name="ActorSignalBadgePlayModeTests" fullname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests" classname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests" runstate="Runnable" testcasecount="23" result="Passed" start-time="2026-07-16 22:58:05Z" end-time="2026-07-16 22:58:06Z" duration="0.500633" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1032" name="WalkCampaign_MessageHalves_SignalUntilTheirDogSendsThem" fullname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests.WalkCampaign_MessageHalves_SignalUntilTheirDogSendsThem" methodname="WalkCampaign_MessageHalves_SignalUntilTheirDogSendsThem" classname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests" runstate="Runnable" seed="206081518" result="Passed" start-time="2026-07-16 22:58:05Z" end-time="2026-07-16 22:58:06Z" duration="0.495394" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[Cheddar] interact (grab placeholder)
+Saving results to: /Users/kchapman/Weeniegame/unity/walk-signal-results.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

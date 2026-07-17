@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="9" result="Passed" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-07-16 21:30:31Z" end-time="2026-07-16 21:30:37Z" duration="5.9784134">
+  <test-suite type="TestSuite" id="1651" name="Cheddar and Cocoa" fullname="Cheddar and Cocoa" runstate="Runnable" testcasecount="553" result="Passed" start-time="2026-07-16 21:30:31Z" end-time="2026-07-16 21:30:37Z" duration="5.978413" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="SetUpFixture" id="1001" name="CheddarAndCocoa.Tests.PlayMode.dll" fullname="PlayModeGlobalTestSetup" classname="PlayModeGlobalTestSetup" runstate="Runnable" testcasecount="553" result="Passed" start-time="2026-07-16 21:30:31Z" end-time="2026-07-16 21:30:37Z" duration="5.970975" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="9863" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1644" name="CheddarAndCocoa" fullname="CheddarAndCocoa" runstate="Runnable" testcasecount="553" result="Passed" start-time="2026-07-16 21:30:31Z" end-time="2026-07-16 21:30:37Z" duration="5.967026" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1647" name="Tests" fullname="CheddarAndCocoa.Tests" runstate="Runnable" testcasecount="551" result="Passed" start-time="2026-07-16 21:30:31Z" end-time="2026-07-16 21:30:37Z" duration="5.963510" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1190" name="CoopBlanketCatchPlayModeTests" fullname="CheddarAndCocoa.Tests.CoopBlanketCatchPlayModeTests" classname="CheddarAndCocoa.Tests.CoopBlanketCatchPlayModeTests" runstate="Runnable" testcasecount="9" result="Passed" start-time="2026-07-16 21:30:31Z" end-time="2026-07-16 21:30:37Z" duration="5.956477" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1192" name="Blanket_AppearsInMissionSelectRotation" fullname="CheddarAndCocoa.Tests.CoopBlanketCatchPlayModeTests.Blanket_AppearsInMissionSelectRotation" methodname="Blanket_AppearsInMissionSelectRotation" classname="CheddarAndCocoa.Tests.CoopBlanketCatchPlayModeTests" runstate="Runnable" seed="1622989500" result="Passed" start-time="2026-07-16 21:30:31Z" end-time="2026-07-16 21:30:33Z" duration="2.130175" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1198" name="Blanket_CaughtSpriteLingersBeforeItemRespawns" fullname="CheddarAndCocoa.Tests.CoopBlanketCatchPlayModeTests.Blanket_CaughtSpriteLingersBeforeItemRespawns" methodname="Blanket_CaughtSpriteLingersBeforeItemRespawns" classname="CheddarAndCocoa.Tests.CoopBlanketCatchPlayModeTests" runstate="Runnable" seed="401381823" result="Passed" start-time="2026-07-16 21:30:33Z" end-time="2026-07-16 21:30:36Z" duration="3.370818" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1193" name="Blanket_ClearPath_TautAndCenteredCatchesEnough" fullname="CheddarAndCocoa.Tests.CoopBlanketCatchPlayModeTests.Blanket_ClearPath_TautAndCenteredCatchesEnough" methodname="Blanket_ClearPath_TautAndCenteredCatchesEnough" classname="CheddarAndCocoa.Tests.CoopBlanketCatchPlayModeTests" runstate="Runnable" seed="1656991968" result="Passed" start-time="2026-07-16 21:30:36Z" end-time="2026-07-16 21:30:36Z" duration="0.098312" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1194" name="Blanket_CocoaBarkCallsEachDrop_OnlyAfterTheTeamMakesTheBlanketTaut" fullname="CheddarAndCocoa.Tests.CoopBlanketCatchPlayModeTests.Blanket_CocoaBarkCallsEachDrop_OnlyAfterTheTeamMakesTheBlanketTaut" methodname="Blanket_CocoaBarkCallsEachDrop_OnlyAfterTheTeamMakesTheBlanketTaut" classname="CheddarAndCocoa.Tests.CoopBlanketCatchPlayModeTests" runstate="Runnable" seed="1741397758" result="Passed" start-time="2026-07-16 21:30:36Z" end-time="2026-07-16 21:30:36Z" duration="0.064257" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1196" name="Blanket_FailPath_TooManyRips" fullname="CheddarAndCocoa.Tests.CoopBlanketCatchPlayModeTests.Blanket_FailPath_TooManyRips" methodname="Blanket_FailPath_TooManyRips" classname="CheddarAndCocoa.Tests.CoopBlanketCatchPlayModeTests" runstate="Runnable" seed="552324642" result="Passed" start-time="2026-07-16 21:30:36Z" end-time="2026-07-16 21:30:36Z" duration="0.085543" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1199" name="Blanket_PositionDriven_SpacingDrivesTheSpanBand" fullname="CheddarAndCocoa.Tests.CoopBlanketCatchPlayModeTests.Blanket_PositionDriven_SpacingDrivesTheSpanBand" methodname="Blanket_PositionDriven_SpacingDrivesTheSpanBand" classname="CheddarAndCocoa.Tests.CoopBlanketCatchPlayModeTests" runstate="Runnable" seed="199921748" result="Passed" start-time="2026-07-16 21:30:36Z" end-time="2026-07-16 21:30:36Z" duration="0.063730" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1197" name="Blanket_Replay_ResetsThePuzzle" fullname="CheddarAndCocoa.Tests.CoopBlanketCatchPlayModeTests.Blanket_Replay_ResetsThePuzzle" methodname="Blanket_Replay_ResetsThePuzzle" classname="CheddarAndCocoa.Tests.CoopBlanketCatchPlayModeTests" runstate="Runnable" seed="1084197694" result="Passed" start-time="2026-07-16 21:30:36Z" end-time="2026-07-16 21:30:36Z" duration="0.046365" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1191" name="Blanket_RunsThroughDedicatedController" fullname="CheddarAndCocoa.Tests.CoopBlanketCatchPlayModeTests.Blanket_RunsThroughDedicatedController" methodname="Blanket_RunsThroughDedicatedController" classname="CheddarAndCocoa.Tests.CoopBlanketCatchPlayModeTests" runstate="Runnable" seed="435824023" result="Passed" start-time="2026-07-16 21:30:36Z" end-time="2026-07-16 21:30:36Z" duration="0.042634" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1195" name="Blanket_SlackOrOffCenter_Misses" fullname="CheddarAndCocoa.Tests.CoopBlanketCatchPlayModeTests.Blanket_SlackOrOffCenter_Misses" methodname="Blanket_SlackOrOffCenter_Misses" classname="CheddarAndCocoa.Tests.CoopBlanketCatchPlayModeTests" runstate="Runnable" seed="97548204" result="Passed" start-time="2026-07-16 21:30:36Z" end-time="2026-07-16 21:30:37Z" duration="0.048752" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: /Users/kchapman/Weeniegame/unity/blanket-catch-polish-results.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

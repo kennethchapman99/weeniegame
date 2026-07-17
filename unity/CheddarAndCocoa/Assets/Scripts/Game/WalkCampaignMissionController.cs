@@ -9,13 +9,15 @@ namespace CheddarAndCocoa.Game
     /// leash - and holding it. Covering only one (or wandering off) confuses the human; too many misreads
     /// end the run.
     /// </summary>
-    public sealed class WalkCampaignMissionController : IMissionController, IMissionPressureHud
+    public sealed class WalkCampaignMissionController : IMissionController, IMissionInteractionController,
+        IMissionPressureHud, IMissionSuccessPresentationController
     {
         private const float StationRange = 3.5f;
         private const float ComprehendNeeded = 2.5f; // both dogs hold the combo this long -> walk earned.
         private const float ConfusionMax = 3f;       // incomplete combo this long -> the human misreads.
         private const int MaxMisreads = 3;
         private const float HumanReactionSeconds = 0.65f;
+        private const float SuccessHoldSeconds = 1.15f;
         private const SocialStimulus RequiredMessage = SocialStimulus.DoorStare | SocialStimulus.PresentLeash;
 
         private static readonly Color HumanConfusedColor = new(0.9f, 0.8f, 0.5f);
@@ -36,11 +38,15 @@ namespace CheddarAndCocoa.Game
         private Vector2 _leashZone;
         private int _misreadsSeen;
         private bool _gettingItScored;
+        private bool _creditedSolve;
         private bool _failed;
+        private bool _doorStareEngaged;
+        private bool _leashPresented;
         private float _humanReactionUntil;
+        private float _successHoldRemaining;
 
         public GameManager.MissionVariant Variant => GameManager.MissionVariant.WalkCampaign;
-        public bool IsComplete => _puzzle.Solved;
+        public bool IsComplete => _puzzle.Solved && _successHoldRemaining <= 0f;
         public bool IsFailed => _failed;
         public string FailReason => _failed
             ? "Too many mixed signals - the human gave up and brought the wrong thing one time too many."
@@ -51,13 +57,19 @@ namespace CheddarAndCocoa.Game
         public Vector2 EntryTarget => _context.Bounds.center;
         public string OutcomeSummary => MissionOutcomeSummaryBuilder.BuildWalkCampaignSummary(_puzzle);
         public string PressureLabel => "HUMAN GETS IT";
-        public bool PressureVisible => true;
+        public bool PressureVisible => !_puzzle.Solved;
         public float PressureNormalized => Mathf.Clamp01(_puzzle.Comprehension / ComprehendNeeded);
         public Color PressureColor => Color.Lerp(HumanConfusedColor, HumanGettingItColor, PressureNormalized);
+        public bool IsPresentingSuccessfulOutcome => _puzzle.Solved && _successHoldRemaining > 0f;
+        public float SuccessHoldRemaining => _successHoldRemaining;
+        public bool DoorStareEngaged => _doorStareEngaged;
+        public bool LeashPresented => _leashPresented;
 
-        public string ObjectiveLabel => _puzzle.ExactMatch
-            ? $"Hold it together! Cocoa stares; Cheddar presents the leash (misreads {_puzzle.Misreads}/{MaxMisreads})"
-            : $"Send ONE message: Cocoa stare at the door AND Cheddar present the leash at once (confused {_puzzle.Misreads}/{MaxMisreads})";
+        public string ObjectiveLabel => IsPresentingSuccessfulOutcome
+            ? "WALKIES! Cocoa held the stare and Cheddar made the leash impossible to ignore!"
+            : _puzzle.ExactMatch
+                ? $"Hold it together! Cocoa stays staring; Cheddar keeps presenting the leash (misreads {_puzzle.Misreads}/{MaxMisreads})"
+                : $"Send ONE message: Cocoa Interact-stares at the door AND Cheddar Interact-presents the leash (confused {_puzzle.Misreads}/{MaxMisreads})";
 
         public void Initialize(MissionContext context)
         {
@@ -71,8 +83,12 @@ namespace CheddarAndCocoa.Game
             _puzzle.Configure(RequiredMessage, ComprehendNeeded, ConfusionMax);
             _misreadsSeen = 0;
             _gettingItScored = false;
+            _creditedSolve = false;
             _failed = false;
+            _doorStareEngaged = false;
+            _leashPresented = false;
             _humanReactionUntil = 0f;
+            _successHoldRemaining = 0f;
             _doorZone = new Vector2(_context.Bounds.center.x - 6f, _context.Bounds.center.y - 6f);
             _leashZone = new Vector2(_context.Bounds.center.x + 11f, _context.Bounds.center.y + 3f);
             SetSceneActive(true);
@@ -83,18 +99,39 @@ namespace CheddarAndCocoa.Game
 
         public void Tick(float deltaTime, float now)
         {
-            if (_puzzle.Solved || _failed || _context.Dogs == null) return;
+            if (_failed || _context.Dogs == null) return;
+
+            if (_puzzle.Solved)
+            {
+                _successHoldRemaining = Mathf.Max(0f, _successHoldRemaining - deltaTime);
+                UpdateLabels();
+                return;
+            }
 
             int cheddar = _context.IndexOfDog(DogId.Cheddar);
             int cocoa = _context.IndexOfDog(DogId.Cocoa);
             if (cheddar < 0 || cocoa < 0) return;
 
-            // The message is built from positions: Cocoa stares down the door, Cheddar presents the leash.
-            // Neither stimulus alone reads, so both dogs must hold their stations at the same time.
+            bool cocoaAtDoor = Vector2.Distance(_context.Dogs[cocoa].transform.position, _doorZone) <= StationRange;
+            bool cheddarAtLeash = Vector2.Distance(_context.Dogs[cheddar].transform.position, _leashZone) <= StationRange;
+            if (_doorStareEngaged && !cocoaAtDoor)
+            {
+                _doorStareEngaged = false;
+                _context.SetCue("Cocoa broke the door-stare - return and Interact to send that half again.");
+                _context.LogEvent("WalkDoorStareReleased", "Cocoa left station");
+            }
+            if (_leashPresented && !cheddarAtLeash)
+            {
+                _leashPresented = false;
+                _context.SetCue("Cheddar dropped the leash presentation - return and Interact to send that half again.");
+                _context.LogEvent("WalkLeashReleased", "Cheddar left station");
+            }
+
+            // Both signals are deliberate poses and both must stay held at once.
             SocialStimulus active = SocialStimulus.None;
-            if (Vector2.Distance(_context.Dogs[cocoa].transform.position, _doorZone) <= StationRange)
+            if (_doorStareEngaged && cocoaAtDoor)
                 active |= SocialStimulus.DoorStare;
-            if (Vector2.Distance(_context.Dogs[cheddar].transform.position, _leashZone) <= StationRange)
+            if (_leashPresented && cheddarAtLeash)
                 active |= SocialStimulus.PresentLeash;
             _puzzle.SetActiveSet(active);
             _puzzle.Advance(deltaTime);
@@ -105,6 +142,49 @@ namespace CheddarAndCocoa.Game
         }
 
         public bool HandleBark(int dogIndex) => false;
+
+        public bool HandleInteract(int dogIndex)
+        {
+            if (_puzzle.Solved || _failed || _context.Dogs == null || dogIndex < 0 || dogIndex >= _context.Dogs.Length)
+                return false;
+
+            DogId dog = DogIdAt(dogIndex);
+            if (dog == DogId.Cocoa)
+            {
+                if (Vector2.Distance(_context.Dogs[dogIndex].transform.position, _doorZone) > StationRange)
+                {
+                    _context.SetCue("Cocoa must reach the door before she can Interact into the serious stare.");
+                    _context.SpawnWorldPop(_context.Dogs[dogIndex].transform.position + Vector3.up, "INTERACT AT DOOR", new Color(0.35f, 0.9f, 0.8f));
+                    return true;
+                }
+                _doorStareEngaged = true;
+                _context.SetCue("Cocoa has the human pinned with the door-stare! Cheddar, present the leash.");
+                _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "THE STARE!");
+                _context.SpawnWorldPop(_doorZone, "WALK. NOW.", new Color(0.35f, 0.9f, 0.8f));
+                _context.RequestRumble("walk_door_stare", 0.08f, 0.18f, 0.08f);
+                _context.LogEvent("WalkDoorStare", "Cocoa engaged");
+            }
+            else
+            {
+                if (Vector2.Distance(_context.Dogs[dogIndex].transform.position, _leashZone) > StationRange)
+                {
+                    _context.SetCue("Cheddar must reach the leash before he can Interact to shove it into view.");
+                    _context.SpawnWorldPop(_context.Dogs[dogIndex].transform.position + Vector3.up, "INTERACT AT LEASH", new Color(1f, 0.72f, 0.3f));
+                    return true;
+                }
+                _leashPresented = true;
+                _context.SetCue("Cheddar is presenting the leash with zero subtlety! Cocoa, hold the door-stare.");
+                _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "LEASH DELIVERY!");
+                _context.SpawnWorldPop(_leashZone, "THIS LEASH!", new Color(1f, 0.72f, 0.3f));
+                _context.RequestRumble("walk_leash_present", 0.08f, 0.18f, 0.08f);
+                _context.LogEvent("WalkLeashPresented", "Cheddar engaged");
+            }
+
+            UpdateActiveSetFromEngagement();
+            HandleProgress();
+            UpdateLabels();
+            return true;
+        }
 
         public void Cleanup() => SetSceneActive(false);
 
@@ -131,12 +211,12 @@ namespace CheddarAndCocoa.Game
             if (_context.IndexOfDog(DogId.Cocoa) == dogIndex)
             {
                 target = _human != null ? _human.transform : null;
-                copy = "STARE AT THE DOOR";
+                copy = _doorStareEngaged ? "HOLD THE STARE" : "INTERACT TO STARE";
             }
             else
             {
                 target = _leash != null ? _leash.transform : null;
-                copy = "PRESENT THE LEASH";
+                copy = _leashPresented ? "KEEP PRESENTING" : "INTERACT WITH LEASH";
             }
             return target != null;
         }
@@ -157,6 +237,8 @@ namespace CheddarAndCocoa.Game
             UpdateLabels();
         }
 
+        public void ForceFinishSuccessPresentation() => _successHoldRemaining = 0f;
+
         private void HandleProgress()
         {
             // First moment the combo clicks: reward reading the room together.
@@ -167,6 +249,8 @@ namespace CheddarAndCocoa.Game
                 _context.SetFeedback(GameManager.FeedbackKind.Intro);
                 _context.SetCue("The human's getting it - hold the door-stare and the leash together!");
                 _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "GETTING IT!");
+                _context.RequestAudioCue(ArenaFeedbackCatalog.SnackSockCollect);
+                _context.RequestRumble("walk_getting_it", 0.1f, 0.22f, 0.1f);
                 _context.LogEvent("WalkGettingIt", "combo");
                 SetHumanState("HUMAN GETTING IT!", HumanGettingItColor, 0.1f,
                     new Color(0.78f, 1f, 0.78f, 1f), FinalGameplayArt.WalkCampaignHumanGettingIt);
@@ -178,9 +262,12 @@ namespace CheddarAndCocoa.Game
                 _gettingItScored = false; // earn the "getting it" pop again on the next clean combo
                 _context.AddScore(ScoreEventCatalog.HumanMisread.Points, ScoreEventCatalog.HumanMisread.Label);
                 _context.SetFeedback(GameManager.FeedbackKind.SquirrelStoleFood);
-                _context.SetCue($"Mixed signals! The human brought the wrong thing. ({_puzzle.Misreads}/{MaxMisreads})");
+                string wrongThing = WrongThingForMisread(_puzzle.Misreads);
+                _context.SetCue($"Mixed signals! The human brought {wrongThing}. ({_puzzle.Misreads}/{MaxMisreads})");
                 _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "CONFUSED!");
-                if (_human != null) _context.SpawnWorldPop(_human.transform.position, "WRONG THING!", new Color(0.95f, 0.6f, 0.25f));
+                if (_human != null) _context.SpawnWorldPop(_human.transform.position, wrongThing.ToUpperInvariant(), new Color(0.95f, 0.6f, 0.25f));
+                _context.RequestAudioCue(ArenaFeedbackCatalog.ThreatWarning);
+                _context.RequestRumble("walk_misread", 0.16f, 0.34f, 0.12f);
                 _context.LogEvent("WalkMisread", $"{_puzzle.Misreads}/{MaxMisreads}");
                 if (_puzzle.Misreads >= MaxMisreads)
                 {
@@ -196,8 +283,10 @@ namespace CheddarAndCocoa.Game
                 }
             }
 
-            if (_puzzle.Solved)
+            if (_puzzle.Solved && !_creditedSolve)
             {
+                _creditedSolve = true;
+                _successHoldRemaining = SuccessHoldSeconds;
                 _context.AddScore(ScoreEventCatalog.WalkConned.Points, ScoreEventCatalog.WalkConned.Label);
                 int cheddar = _context.IndexOfDog(DogId.Cheddar);
                 int cocoa = _context.IndexOfDog(DogId.Cocoa);
@@ -205,6 +294,8 @@ namespace CheddarAndCocoa.Game
                 if (cocoa >= 0) _context.CreditDog(cocoa);
                 _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "WALKIES!");
                 if (_human != null) _context.SpawnWorldPop(_human.transform.position, "WALKIES!", new Color(0.5f, 0.9f, 0.55f));
+                _context.RequestAudioCue(ArenaFeedbackCatalog.MissionWin);
+                _context.RequestRumble("walkies_payoff", 0.3f, 0.55f, 0.2f);
                 _context.LogEvent("WalkConned", "solved");
                 SetHumanState("HUMAN GRABBED THE LEASH - WALKIES!", HumanSuccessColor, 0.14f,
                     new Color(0.75f, 1f, 0.78f, 1f), FinalGameplayArt.WalkCampaignHumanWalkies);
@@ -297,5 +388,28 @@ namespace CheddarAndCocoa.Game
         private Vector2 ClampInsideBounds(Vector2 point, float margin) => new(
             Mathf.Clamp(point.x, _context.Bounds.xMin + margin, _context.Bounds.xMax - margin),
             Mathf.Clamp(point.y, _context.Bounds.yMin + margin, _context.Bounds.yMax - margin));
+
+        private void UpdateActiveSetFromEngagement()
+        {
+            SocialStimulus active = SocialStimulus.None;
+            if (_doorStareEngaged) active |= SocialStimulus.DoorStare;
+            if (_leashPresented) active |= SocialStimulus.PresentLeash;
+            _puzzle.SetActiveSet(active);
+        }
+
+        private static string WrongThingForMisread(int misread) => misread switch
+        {
+            1 => "the food bowl",
+            2 => "a bath towel",
+            _ => "the vacuum"
+        };
+
+        private DogId DogIdAt(int dogIndex)
+        {
+            if (_context.Dogs == null || dogIndex < 0 || dogIndex >= _context.Dogs.Length || _context.Dogs[dogIndex] == null)
+                return DogId.Cheddar;
+            var identity = _context.Dogs[dogIndex].GetComponent<DogIdentity>();
+            return identity != null ? identity.Id : DogId.Cheddar;
+        }
     }
 }

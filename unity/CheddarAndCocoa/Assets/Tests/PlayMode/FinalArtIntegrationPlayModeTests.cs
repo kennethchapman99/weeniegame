@@ -177,6 +177,33 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNull(ArenaArtReviewCapture.OutputDirectoryFromArgs(new[] { "player", "--unrelated" }));
         }
 
+        [UnityTest]
+        public IEnumerator ObjectiveGuidance_UsesShortScentBreadcrumbsWithoutRevealingTheWholeRoute()
+        {
+            ObjectiveArrowFeedback.SetDebugTextVisible(false);
+            var dog = new GameObject("ScentGuidanceDog");
+            var target = new GameObject("ScentGuidanceTarget");
+            target.transform.position = Vector3.right * 12f;
+
+            var guidance = dog.AddComponent<ObjectiveArrowFeedback>();
+            guidance.Init(new Color(0.95f, 0.72f, 0.25f));
+            guidance.PointAt(target.transform, "FOLLOW THE SCENT", 1.2f);
+            yield return null;
+
+            Assert.IsTrue(guidance.UsesGeneratedScentArt);
+            Assert.AreEqual(ObjectiveArrowFeedback.ScentBreadcrumbSlots, guidance.VisibleScentBreadcrumbCount,
+                "Far objectives should show only the fixed short breadcrumb hint, never a full route line.");
+            Assert.IsFalse(guidance.TextVisible, "Normal couch play should keep route copy in the debug overlay.");
+
+            target.transform.position = Vector3.right;
+            yield return null;
+            Assert.AreEqual(0, guidance.VisibleScentBreadcrumbCount,
+                "Breadcrumbs should clear once the dog reaches the interaction area.");
+
+            Object.Destroy(dog);
+            Object.Destroy(target);
+        }
+
         [Test]
         public void CharacterMotionArt_BuildsStableDirectionalPathsAndFallsBackSafely()
         {
@@ -605,10 +632,15 @@ namespace CheddarAndCocoa.Tests
             yield return new WaitForSeconds(0.1f);
             var car = GameObject.Find(MissionLevelAreaArt.CarRideRootName);
             Assert.IsNotNull(car, "Car Ride should install a constrained car-interior level area.");
-            AssertLevelAreaPlate(car, "BackseatCabinShellPlate", "backseat_cabin_shell", expectedMaxSortingOrder: -8);
-            AssertLevelAreaPlate(car, "BackseatBenchPlate", "backseat_bench", expectedMaxSortingOrder: -6);
+            AssertLevelAreaPlate(car, "BackseatCabinShellPlate", "backseat_cabin_shell", expectedMaxSortingOrder: 4);
+            AssertLevelAreaPlate(car, "BackseatBenchPlate", "backseat_bench", expectedMaxSortingOrder: 6);
             AssertLevelAreaPlate(car, "BackseatWindshieldScroller/BackseatWindshieldSceneryPlate_1",
-                "backseat_windshield_scenery", expectedMaxSortingOrder: -7);
+                "backseat_windshield_scenery", expectedMaxSortingOrder: 5);
+            var backyardPlate = GameObject.Find("ActualNoDogBackyardPlate");
+            Assert.IsNotNull(backyardPlate);
+            Assert.Greater(car.transform.Find("BackseatCabinShellPlate").GetComponent<SpriteRenderer>().sortingOrder,
+                backyardPlate.GetComponent<SpriteRenderer>().sortingOrder,
+                "The opaque car cabin must cover the shared backyard plate instead of leaking yard around the bench.");
             AssertLevelAreaHasNoPrimitiveSquareMarkers(car);
             Assert.IsNull(GameObject.Find(MissionLevelAreaArt.KitchenRootName),
                 "Switching to Car Ride should clean up the Kitchen area.");

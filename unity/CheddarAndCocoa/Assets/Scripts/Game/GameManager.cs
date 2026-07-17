@@ -32,6 +32,13 @@ namespace CheddarAndCocoa.Game
 
         private static readonly MissionVariant[] MissionOrder =
         {
+            // Showcase order follows the strongest current couch-ready slices. Keep the first five
+            // intentional: they receive the most cold-start traffic and are the owner's quality bar.
+            MissionVariant.OperationPeeBreak,
+            MissionVariant.KitchenFoodFrenzy,
+            MissionVariant.CarRide,
+            MissionVariant.BabyBirdBedlam,
+            MissionVariant.GateCrash,
             MissionVariant.BackyardRescue,
             MissionVariant.SnackHeist,
             MissionVariant.SockPanic,
@@ -43,25 +50,17 @@ namespace CheddarAndCocoa.Game
             MissionVariant.ThunderstormComfort,
             MissionVariant.MarkTheYard,
             MissionVariant.LeashWalk,
-            MissionVariant.CarRide,
-            MissionVariant.GateCrash,
             MissionVariant.TableStealth,
             MissionVariant.SquirrelSwitcheroo,
             MissionVariant.WalkCampaign,
             MissionVariant.BoneRelay,
             MissionVariant.GreatEscape,
             MissionVariant.ChaosMachine,
-            MissionVariant.BlanketCatch,
-            MissionVariant.KitchenFoodFrenzy,
-            MissionVariant.OperationPeeBreak,
-            // Appended last: MissionSeedGenerator folds the selection index into each mission's
-            // stable seed, so inserting mid-order would silently reshuffle every later mission's
-            // deterministic round modifier (and their rehearsal tests).
-            MissionVariant.BabyBirdBedlam
+            MissionVariant.BlanketCatch
         };
 
         [Header("Mission selection")]
-        [SerializeField] private MissionVariant startingMission = MissionVariant.BackyardRescue;
+        [SerializeField] private MissionVariant startingMission = MissionVariant.OperationPeeBreak;
 
         private readonly ArenaMissionTuning _tuning = ArenaMissionTuning.CreateDefault();
         private readonly PlaytestEventLog _playtestLog = new PlaytestEventLog();
@@ -1252,7 +1251,10 @@ namespace CheddarAndCocoa.Game
             ResetActionTutorialProgress();
 
             if (!_reuseMissionSeedOnNextBegin)
-                _missionSeed = MissionSeedGenerator.StableSeed(_mission.Variant.ToString(), SessionMissionsPlayed, _selectedMissionIndex);
+                // Mission order is presentation, not tuning. Use the enum's stable identity so a
+                // quality-driven selector reorder cannot silently change deterministic modifiers.
+                _missionSeed = MissionSeedGenerator.StableSeed(
+                    _mission.Variant.ToString(), SessionMissionsPlayed, (int)_mission.Variant);
             _reuseMissionSeedOnNextBegin = false;
             _rng = new System.Random(_missionSeed);
             ActiveModifier = (RoundModifier)_rng.Next(0, 3);

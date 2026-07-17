@@ -68,22 +68,58 @@ namespace CheddarAndCocoa.Tests
             yield return null;
 
             Assert.AreEqual("mark_the_yard", game.RuntimeSnapshot.MissionId);
-            Assert.That(game.ObjectiveLabel, Does.Contain("Claim"));
+            Assert.That(game.ObjectiveLabel, Does.Contain("Interact to mark"));
             int zones = game.RuntimeSnapshot.ObjectiveGoal;
             Assert.Greater(zones, 0);
 
             int guard = 0;
-            while (game.Outcome == GameManager.MissionOutcome.InProgress && guard++ < 40)
+            while (!game.MarkTheYardState.AllClaimed && guard++ < 40)
             {
                 game.ForceClaimZone(DogId.Cheddar);
                 yield return null;
             }
 
             Assert.IsTrue(game.MarkTheYardState.AllClaimed);
+            Assert.IsTrue(game.MarkTheYardController.IsPresentingSuccessfulOutcome);
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, game.Outcome);
+
+            game.ForceMarkYardSuccessPresentationComplete();
+
             Assert.AreEqual(GameManager.MissionOutcome.Clear, game.Outcome);
             Assert.IsTrue(game.RuntimeSnapshot.IsClear);
             Assert.That(game.EndSummaryLabel, Does.Contain("Yard Is Ours"));
             Assert.That(game.MvpLabel, Does.Contain("Cheddar"), "Cheddar claimed every zone, so should be MVP.");
+        }
+
+        [UnityTest]
+        public IEnumerator MarkTheYard_RequiresInteractToMark_AndCocoaBarkDefendsTheOpening()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.MarkTheYard);
+            yield return null;
+
+            Vector2 firstZone = _game.MarkTheYardController.ZoneSpot(0);
+            _cheddar.transform.position = firstZone;
+            if (_cheddar.TryGetComponent<Rigidbody2D>(out var body)) body.linearVelocity = Vector2.zero;
+            for (int i = 0; i < 4; i++) yield return null;
+
+            Assert.AreEqual(0, _game.MarkTheYardState.Claimed,
+                "Entering a zone should prepare the mark, not silently claim it without a dog action.");
+            Assert.IsTrue(_game.ForceMarkInteraction(DogId.Cheddar, 0));
+            Assert.AreEqual(1, _game.MarkTheYardState.Claimed);
+
+            var squirrel = GameObject.Find("MarkTheYardSquirrel");
+            Assert.IsNotNull(squirrel);
+            _cocoa.transform.position = firstZone;
+            squirrel.transform.position = firstZone + Vector2.right;
+
+            Assert.IsFalse(_game.ForceMarkYardDefenseBark(DogId.Cheddar),
+                "Cheddar owns the route/mark role; Cocoa's queen bark owns squirrel defense.");
+            Assert.IsTrue(_game.ForceMarkYardDefenseBark(DogId.Cocoa));
+            Assert.AreEqual(1, _game.MarkTheYardController.SquirrelRepels);
+            Assert.Greater(Vector2.Distance(squirrel.transform.position, firstZone), 6f,
+                "Cocoa's bark should visibly push the reclaim threat away and create time for another mark.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
         }
 
         [UnityTest]
@@ -187,11 +223,13 @@ namespace CheddarAndCocoa.Tests
             yield return null;
 
             int guard = 0;
-            while (game.Outcome == GameManager.MissionOutcome.InProgress && guard++ < 40)
+            while (!game.MarkTheYardState.AllClaimed && guard++ < 40)
             {
                 game.ForceClaimZone(DogId.Cheddar);
                 yield return null;
             }
+
+            game.ForceMarkYardSuccessPresentationComplete();
 
             Assert.AreEqual(GameManager.MissionOutcome.Clear, game.Outcome);
             Assert.AreEqual(game.Score, game.BestScoreForMission(GameManager.MissionVariant.MarkTheYard));
@@ -210,11 +248,13 @@ namespace CheddarAndCocoa.Tests
             yield return null;
 
             int guard = 0;
-            while (_game.Outcome == GameManager.MissionOutcome.InProgress && guard++ < 40)
+            while (!_game.MarkTheYardState.AllClaimed && guard++ < 40)
             {
                 _game.ForceClaimZone(DogId.Cocoa);
                 yield return null;
             }
+
+            _game.ForceMarkYardSuccessPresentationComplete();
 
             Assert.That(_game.MvpLabel, Does.Contain("Cocoa"));
             Assert.That(_game.MvpLabel, Does.Contain("Queen of the Yard"));

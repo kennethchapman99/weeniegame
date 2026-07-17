@@ -15,7 +15,7 @@ namespace CheddarAndCocoa.Game
     /// slides least — she holds the line while he does the acrobatics.
     /// </summary>
     public sealed class CarRideMissionController : IMissionController, IMissionInteractionController,
-        IMissionUnitedBarkListener, IMissionPressureHud
+        IMissionUnitedBarkListener, IMissionPressureHud, IMissionSuccessPresentationController
     {
         public enum RoadEventKind { TurnLeft, TurnRight, Brake }
         private enum Phase { Cruise, Telegraph, Turning, BrakeSettle }
@@ -37,6 +37,8 @@ namespace CheddarAndCocoa.Game
         private const float SeatBottomOffset = 5.8f;
         private const float DoorSquishMargin = 0.9f;
         private const float ObstacleBonkRadius = 1.6f;
+        private const float PartnerBraceRange = 3.4f;
+        private const float SuccessHoldSeconds = 1.15f;
 
         /// <summary>The whole ride home, in order. Length defines the clear requirement.</summary>
         private static readonly RoadEventKind[] RideScript =
@@ -58,15 +60,19 @@ namespace CheddarAndCocoa.Game
         private RoadEventKind _currentEvent;
         private int _eventTumbles;
         private bool _driverEased;
+        private bool _cheddarTuckedForBrake;
         private float _visualTilt;
         private float _sceneryScroll;
+        private float _successHoldRemaining;
         private readonly float[] _bracedUntil = new float[2];
         private readonly bool[] _doorSquished = new bool[2];
         private readonly bool[,] _obstacleBonked = new bool[2, 2];
         private readonly bool[,] _obstacleHopped = new bool[2, 2];
 
         public GameManager.MissionVariant Variant => GameManager.MissionVariant.CarRide;
-        public bool IsComplete => _state.ReadyToClear();
+        public bool IsComplete => _state.ReadyToClear() && _successHoldRemaining <= 0f;
+        public bool IsPresentingSuccessfulOutcome => _state.ReadyToClear() && _successHoldRemaining > 0f;
+        public float SuccessHoldRemaining => _successHoldRemaining;
         public bool IsFailed => _state.TooManyTumbles(MaxTumbles);
         public string FailReason => IsFailed ? "The backseat crew got tossed around one tumble too many." : null;
         public string OutcomeSummary => MissionOutcomeSummaryBuilder.BuildCarRideSummary(_state);
@@ -76,9 +82,10 @@ namespace CheddarAndCocoa.Game
         public bool IsTelegraphing => _phase == Phase.Telegraph;
         public bool IsTurning => _phase == Phase.Turning;
         public bool DriverEased => _driverEased;
+        public bool CheddarTuckedForBrake => _cheddarTuckedForBrake;
         public bool IsDogBraced(int dogIndex) => BraceActive(dogIndex, _context.Now());
         public string PressureLabel => "SLIDE FORCE";
-        public bool PressureVisible => true;
+        public bool PressureVisible => !IsPresentingSuccessfulOutcome;
         public float PressureNormalized => Mathf.Clamp01(Mathf.Abs(_visualTilt) / CabinTiltDegrees);
         public Color PressureColor => Color.Lerp(
             new Color(0.35f, 0.92f, 0.62f),
@@ -89,9 +96,12 @@ namespace CheddarAndCocoa.Game
         {
             get
             {
+                if (IsPresentingSuccessfulOutcome)
+                    return "We're home! Cocoa held the line - Cheddar survived the backseat rodeo!";
                 string beat = _phase switch
                 {
-                    Phase.Telegraph when _currentEvent == RoadEventKind.Brake => "BRAKES AHEAD - brace!",
+                    Phase.Telegraph when _currentEvent == RoadEventKind.Brake && !_cheddarTuckedForBrake => "BRAKES AHEAD - Cocoa brace, Cheddar tuck!",
+                    Phase.Telegraph when _currentEvent == RoadEventKind.Brake => "BRAKE TEAM READY - hold together!",
                     Phase.Telegraph => "turn ahead - hold on!",
                     Phase.Turning => "sliding - jump the junk!",
                     _ => "watch the driver",
@@ -125,8 +135,10 @@ namespace CheddarAndCocoa.Game
             _currentEvent = RideScript[0];
             _eventTumbles = 0;
             _driverEased = false;
+            _cheddarTuckedForBrake = false;
             _visualTilt = 0f;
             _sceneryScroll = 0f;
+            _successHoldRemaining = 0f;
             for (int i = 0; i < 2; i++)
             {
                 _bracedUntil[i] = 0f;
@@ -148,7 +160,13 @@ namespace CheddarAndCocoa.Game
 
         public void Tick(float deltaTime, float now)
         {
-            if (IsComplete || IsFailed) return;
+            if (_state.ReadyToClear())
+            {
+                _successHoldRemaining = Mathf.Max(0f, _successHoldRemaining - deltaTime);
+                UpdatePresentation(deltaTime, 0f);
+                return;
+            }
+            if (_state.ReadyToClear() || IsFailed) return;
 
             switch (_phase)
             {
@@ -188,7 +206,61 @@ namespace CheddarAndCocoa.Game
         /// you. It doesn't stop a sliding cooler - jump for that.</summary>
         public bool HandleInteract(int dogIndex)
         {
-            if (IsComplete || IsFailed || dogIndex < 0 || dogIndex >= 2) return false;
+            if (_state.ReadyToClear() || IsFailed || dogIndex < 0 || dogIndex >= 2) return false;
+            if (_phase == Phase.Telegraph && _currentEvent == RoadEventKind.Brake
+                && dogIndex >= 0 && dogIndex < _context.Dogs.Length)
+                return HandleBrakeBrace(dogIndex);
+
+            SetBrace(dogIndex);
+            return true;
+        }
+
+        private bool HandleBrakeBrace(int dogIndex)
+        {
+            DogId dogId = DogIdAt(dogIndex);
+            int cocoa = _context.IndexOfDog(DogId.Cocoa);
+            int cheddar = _context.IndexOfDog(DogId.Cheddar);
+            float now = _context.Now();
+
+            if (dogId == DogId.Cocoa)
+            {
+                SetBrace(dogIndex);
+                _context.SetCue("Cocoa planted like an anchor - Cheddar, get beside her and Interact to tuck in!");
+                _context.SetActorState(_dashboard, "DRIVER: BRAKES - CHEDDAR TUCK BEHIND COCOA!", DriverTint, 0.3f);
+                _context.LogObjectiveChanged();
+                return true;
+            }
+
+            if (cocoa < 0 || !BraceActive(cocoa, now))
+            {
+                _context.MarkFailedInteraction(dogId, "Cocoa must plant first so Cheddar has an anchor");
+                _context.SetCue("Cheddar cannot brace that chaos-body alone - Cocoa must Interact and plant first!");
+                return true;
+            }
+
+            if (cheddar < 0 || Vector2.Distance(_context.Dogs[cheddar].transform.position,
+                    _context.Dogs[cocoa].transform.position) > PartnerBraceRange)
+            {
+                _context.MarkFailedInteraction(dogId, "get beside planted Cocoa before tucking in");
+                _context.SetCue("Cocoa is planted, but Cheddar is too far away - get beside her and Interact!");
+                return true;
+            }
+
+            SetBrace(dogIndex);
+            _cheddarTuckedForBrake = true;
+            _context.CreditDog(cocoa);
+            _context.CreditDog(cheddar);
+            _context.SetCue("Cheddar tucked behind Cocoa's planted stance - hold together for the brake!");
+            _context.SetActorState(_dashboard, "DRIVER: BRAKE TEAM READY!", DriverTint, 0.22f);
+            _context.SpawnWorldPop(DogMidpoint(), "TUCKED SAFE!", new Color(0.55f, 1f, 0.72f));
+            _context.RequestRumble("car_brace_team", 0.12f, 0.28f, 0.1f);
+            _context.LogEvent("CarBrakeTeamReady", _state.EventsResolved.ToString());
+            _context.LogObjectiveChanged();
+            return true;
+        }
+
+        private void SetBrace(int dogIndex)
+        {
             float now = _context.Now();
             bool alreadyBraced = BraceActive(dogIndex, now);
             _bracedUntil[dogIndex] = now + BraceSeconds;
@@ -204,13 +276,12 @@ namespace CheddarAndCocoa.Game
                 }
                 _context.LogEvent("CarBrace", dogIndex.ToString());
             }
-            return true;
         }
 
         /// <summary>United bark = "hey, easy back there!" The driver eases off for the next event.</summary>
         public void OnUnitedBark()
         {
-            if (IsComplete || IsFailed || _driverEased) return;
+            if (_state.ReadyToClear() || IsFailed || _driverEased) return;
             if (_phase != Phase.Cruise && _phase != Phase.Telegraph) return;
             _driverEased = true;
             _context.SetCue("The driver hears the barking and eases off the gas!");
@@ -242,6 +313,18 @@ namespace CheddarAndCocoa.Game
 
         public bool TryGetObjectiveTarget(int dogIndex, out Transform target, out string copy, out float hideDistance)
         {
+            if (_phase == Phase.Telegraph && _currentEvent == RoadEventKind.Brake
+                && dogIndex >= 0 && dogIndex < _context.Dogs.Length)
+            {
+                bool isCocoa = DogIdAt(dogIndex) == DogId.Cocoa;
+                int cocoa = _context.IndexOfDog(DogId.Cocoa);
+                target = isCocoa
+                    ? _dashboard.transform
+                    : cocoa >= 0 ? _context.Dogs[cocoa].transform : _dashboard.transform;
+                copy = isCocoa ? "BRACE FIRST" : "TUCK BEHIND COCOA";
+                hideDistance = isCocoa ? 1.4f : PartnerBraceRange;
+                return target != null;
+            }
             target = null;
             copy = string.Empty;
             hideDistance = 1.4f;
@@ -261,7 +344,7 @@ namespace CheddarAndCocoa.Game
         /// exactly like the live path, so an unbraced forced brake still tumbles both dogs.</summary>
         public void ForceResolveRoadEvent()
         {
-            if (IsComplete || IsFailed) return;
+            if (_state.ReadyToClear() || IsFailed) return;
             float now = _context.Now();
             if (_phase == Phase.Telegraph && _currentEvent == RoadEventKind.Brake)
             {
@@ -276,7 +359,7 @@ namespace CheddarAndCocoa.Game
         /// <summary>Test hook: bank one clean road event (the old ForceLurch equivalent).</summary>
         public void ForceEventSurvived()
         {
-            if (IsComplete || IsFailed) return;
+            if (_state.ReadyToClear() || IsFailed) return;
             _currentEvent = RoadEventKind.TurnLeft;
             _eventTumbles = 0;
             _phase = Phase.Turning;
@@ -287,7 +370,7 @@ namespace CheddarAndCocoa.Game
         /// headless frame time is too small to accumulate slide distance.</summary>
         public void ForceTurnSlide(float deltaTime, RoadEventKind kind = RoadEventKind.TurnRight)
         {
-            if (IsComplete || IsFailed || kind == RoadEventKind.Brake) return;
+            if (_state.ReadyToClear() || IsFailed || kind == RoadEventKind.Brake) return;
             if (_phase != Phase.Turning || _currentEvent != kind)
             {
                 _currentEvent = kind;
@@ -300,6 +383,7 @@ namespace CheddarAndCocoa.Game
 
         public void ForceBrace(int dogIndex) => HandleInteract(dogIndex);
         public void ForceTumble(int dogIndex) => Tumble(dogIndex, "TUMBLE!", Vector2.up * 4f);
+        public void ForceFinishSuccessPresentation() => _successHoldRemaining = 0f;
         public int DogIndexOf(DogId dogId) => _context.IndexOfDog(dogId);
 
         // ---------------------------------------------------------------- internals
@@ -307,12 +391,13 @@ namespace CheddarAndCocoa.Game
 
         private void BeginTelegraph(float now, RoadEventKind kind)
         {
-            if (IsComplete || IsFailed) return;
+            if (_state.ReadyToClear() || IsFailed) return;
             _currentEvent = kind;
             _eventTumbles = 0;
             _phase = Phase.Telegraph;
             _phaseEndsAt = now + TelegraphSeconds;
             ClearEventLatches();
+            _cheddarTuckedForBrake = false;
             for (int i = 0; i < 2; i++) _doorSquished[i] = false;
 
             string warning = kind switch
@@ -323,7 +408,7 @@ namespace CheddarAndCocoa.Game
             };
             _context.SetActorState(_dashboard, $"DRIVER: {warning}", DriverTint, 0.3f);
             _context.SetCue(kind == RoadEventKind.Brake
-                ? "Brakes ahead! Both dogs brace (interact) before the stop!"
+                ? "Brakes ahead! Cocoa Interact to plant first, then Cheddar tuck beside her!"
                 : "Turn ahead! Fight the slide and jump the junk as it sweeps past!");
             _context.RequestRumble("car_telegraph", 0.12f, 0.2f, 0.12f);
             _context.LogEvent("CarTelegraph", kind.ToString());
@@ -422,15 +507,27 @@ namespace CheddarAndCocoa.Game
                 obstacle.transform.position = pos;
             }
 
+            int cocoa = _context.IndexOfDog(DogId.Cocoa);
+            int cheddar = _context.IndexOfDog(DogId.Cheddar);
+            bool cocoaAnchored = cocoa >= 0 && BraceActive(cocoa, now);
+            bool pairStillTogether = cocoa >= 0 && cheddar >= 0
+                && Vector2.Distance(_context.Dogs[cocoa].transform.position,
+                    _context.Dogs[cheddar].transform.position) <= PartnerBraceRange;
+
             for (int i = 0; i < 2; i++)
             {
                 var dog = _context.Dogs != null && i < _context.Dogs.Length ? _context.Dogs[i] : null;
                 if (dog == null) continue;
-                if (BraceActive(i, now))
+                DogId dogId = DogIdAt(i);
+                bool protectedFromBrake = dogId == DogId.Cocoa
+                    ? cocoaAnchored
+                    : _cheddarTuckedForBrake && cocoaAnchored && pairStillTogether && BraceActive(i, now);
+                if (protectedFromBrake)
                 {
                     _context.AddScore(ScoreEventCatalog.BraceHeld.Points, ScoreEventCatalog.BraceHeld.Label);
                     _context.CreditDog(i);
-                    _context.SpawnWorldPop(dog.transform.position, "BRACED!", new Color(0.65f, 0.85f, 1f));
+                    _context.SpawnWorldPop(dog.transform.position,
+                        dogId == DogId.Cheddar ? "TUCKED SAFE!" : "ANCHORED!", new Color(0.65f, 0.85f, 1f));
                     if (_context.DogFeedback != null && i < _context.DogFeedback.Length && _context.DogFeedback[i] != null)
                         _context.DogFeedback[i].ShowProudBrief();
                 }
@@ -446,9 +543,10 @@ namespace CheddarAndCocoa.Game
 
         private void ResolveEvent(float now)
         {
-            if (IsComplete || IsFailed) return;
+            if (_state.ReadyToClear() || IsFailed) return;
             _state.ResolveEvent();
             _driverEased = false;
+            _cheddarTuckedForBrake = false;
             ClearEventLatches();
 
             if (_eventTumbles == 0)
@@ -472,11 +570,17 @@ namespace CheddarAndCocoa.Game
             }
             _context.LogEvent("CarRoadEventResolved", $"{_state.EventsResolved}/{_state.RequiredEvents}");
 
-            if (IsComplete)
+            if (_state.ReadyToClear())
             {
+                _successHoldRemaining = SuccessHoldSeconds;
                 _context.AddScore(ScoreEventCatalog.RideComplete.Points, ScoreEventCatalog.RideComplete.Label);
                 _context.SetActorState(_dashboard, "DRIVER: we're home!", DriverTint, 0.12f);
+                _context.SetCue("We're home! Cocoa held the line and Cheddar survived the backseat rodeo!");
+                _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "WE'RE HOME!");
                 _context.SpawnWorldPop(DogMidpoint() + Vector2.up * 1.2f, "WE'RE HOME!", new Color(1f, 0.9f, 0.4f));
+                _context.RequestAudioCue(ArenaFeedbackCatalog.MissionWin);
+                _context.RequestRumble("car_home", 0.3f, 0.55f, 0.2f);
+                _context.LogEvent("CarRidePayoff", "Home arrival; holding live-world success beat");
                 return;
             }
 
@@ -488,7 +592,7 @@ namespace CheddarAndCocoa.Game
 
         private void Tumble(int dogIndex, string popText, Vector2 fling)
         {
-            if (IsComplete || IsFailed) return;
+            if (_state.ReadyToClear() || IsFailed) return;
             _eventTumbles++;
             _state.Tumble();
             _bracedUntil[dogIndex] = 0f;
@@ -559,6 +663,10 @@ namespace CheddarAndCocoa.Game
             var dog = _context.Dogs != null && dogIndex < _context.Dogs.Length ? _context.Dogs[dogIndex] : null;
             return dog == null || !dog.IsJumping; // airborne dogs have nothing planted
         }
+
+        private DogId DogIdAt(int dogIndex) => dogIndex >= 0 && dogIndex < _context.Dogs.Length &&
+            _context.Dogs[dogIndex] != null && _context.Dogs[dogIndex].TryGetComponent<DogIdentity>(out var identity)
+                ? identity.Id : DogId.Cheddar;
 
         private void SetDriverCalm() =>
             _context.SetActorState(_dashboard, "DRIVER: cruising - watch the mirror", DriverTint, 0.12f);

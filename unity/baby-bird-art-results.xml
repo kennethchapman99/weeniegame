@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="12" result="Passed" total="12" passed="12" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-07-16 12:28:34Z" end-time="2026-07-16 12:28:39Z" duration="5.7260625">
+  <test-suite type="TestSuite" id="1649" name="Cheddar and Cocoa" fullname="Cheddar and Cocoa" runstate="Runnable" testcasecount="551" result="Passed" start-time="2026-07-16 12:28:34Z" end-time="2026-07-16 12:28:39Z" duration="5.726063" total="12" passed="12" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="SetUpFixture" id="1001" name="CheddarAndCocoa.Tests.PlayMode.dll" fullname="PlayModeGlobalTestSetup" classname="PlayModeGlobalTestSetup" runstate="Runnable" testcasecount="551" result="Passed" start-time="2026-07-16 12:28:34Z" end-time="2026-07-16 12:28:39Z" duration="5.716188" total="12" passed="12" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="8096" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1642" name="CheddarAndCocoa" fullname="CheddarAndCocoa" runstate="Runnable" testcasecount="551" result="Passed" start-time="2026-07-16 12:28:34Z" end-time="2026-07-16 12:28:39Z" duration="5.709277" total="12" passed="12" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1645" name="Tests" fullname="CheddarAndCocoa.Tests" runstate="Runnable" testcasecount="549" result="Passed" start-time="2026-07-16 12:28:34Z" end-time="2026-07-16 12:28:39Z" duration="5.705893" total="12" passed="12" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1166" name="CoopBabyBirdBedlamPlayModeTests" fullname="CheddarAndCocoa.Tests.CoopBabyBirdBedlamPlayModeTests" classname="CheddarAndCocoa.Tests.CoopBabyBirdBedlamPlayModeTests" runstate="Runnable" testcasecount="12" result="Passed" start-time="2026-07-16 12:28:34Z" end-time="2026-07-16 12:28:39Z" duration="5.696616" total="12" passed="12" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1176" name="Bedlam_AirliftPath_UnclaimedChickCountsAsAMistake" fullname="CheddarAndCocoa.Tests.CoopBabyBirdBedlamPlayModeTests.Bedlam_AirliftPath_UnclaimedChickCountsAsAMistake" methodname="Bedlam_AirliftPath_UnclaimedChickCountsAsAMistake" classname="CheddarAndCocoa.Tests.CoopBabyBirdBedlamPlayModeTests" runstate="Runnable" seed="854022850" result="Passed" start-time="2026-07-16 12:28:34Z" end-time="2026-07-16 12:28:34Z" duration="0.760953" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1170" name="Bedlam_AppearsInMissionSelectRotation" fullname="CheddarAndCocoa.Tests.CoopBabyBirdBedlamPlayModeTests.Bedlam_AppearsInMissionSelectRotation" methodname="Bedlam_AppearsInMissionSelectRotation" classname="CheddarAndCocoa.Tests.CoopBabyBirdBedlamPlayModeTests" runstate="Runnable" seed="99462144" result="Passed" start-time="2026-07-16 12:28:34Z" end-time="2026-07-16 12:28:34Z" duration="0.056812" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1168" name="Bedlam_AuthoredCharacterSprites_ReplaceSquareAndEagleFallbacks" fullname="CheddarAndCocoa.Tests.CoopBabyBirdBedlamPlayModeTests.Bedlam_AuthoredCharacterSprites_ReplaceSquareAndEagleFallbacks" methodname="Bedlam_AuthoredCharacterSprites_ReplaceSquareAndEagleFallbacks" classname="CheddarAndCocoa.Tests.CoopBabyBirdBedlamPlayModeTests" runstate="Runnable" seed="947068830" result="Passed" start-time="2026-07-16 12:28:34Z" end-time="2026-07-16 12:28:34Z" duration="0.056477" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1171" name="Bedlam_ClearPath_GrabShakeGulpFourChicks" fullname="CheddarAndCocoa.Tests.CoopBabyBirdBedlamPlayModeTests.Bedlam_ClearPath_GrabShakeGulpFourChicks" methodname="Bedlam_ClearPath_GrabShakeGulpFourChicks" classname="CheddarAndCocoa.Tests.CoopBabyBirdBedlamPlayModeTests" runstate="Runnable" seed="368690052" result="Passed" start-time="2026-07-16 12:28:34Z" end-time="2026-07-16 12:28:35Z" duration="0.064578" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1172" name="Bedlam_DefendPath_RepelledDiveNeverPecks" fullname="CheddarAndCocoa.Tests.CoopBabyBirdBedlamPlayModeTests.Bedlam_DefendPath_RepelledDiveNeverPecks" methodname="Bedlam_DefendPath_RepelledDiveNeverPecks" classname="CheddarAndCocoa.Tests.CoopBabyBirdBedlamPlayModeTests" runstate="Runnable" seed="1582687230" result="Passed" start-time="2026-07-16 12:28:35Z" end-time="2026-07-16 12:28:35Z" duration="0.051099" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1175" name="Bedlam_FailPath_ThreePecksEndTheFeast" fullname="CheddarAndCocoa.Tests.CoopBabyBirdBedlamPlayModeTests.Bedlam_FailPath_ThreePecksEndTheFeast" methodname="Bedlam_FailPath_ThreePecksEndTheFeast" classname="CheddarAndCocoa.Tests.CoopBabyBirdBedlamPlayModeTests" runstate="Runnable" seed="321841249" result="Passed" start-time="2026-07-16 12:28:35Z" end-time="2026-07-16 12:28:35Z" duration="0.060907" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1174" name="Bedlam_GulpMidDive_CancelsTheDive" fullname="CheddarAndCocoa.Tests.CoopBabyBirdBedlamPlayModeTests.Bedlam_GulpMidDive_CancelsTheDive" methodname="Bedlam_GulpMidDive_CancelsTheDive" classname="CheddarAndCocoa.Tests.CoopBabyBirdBedlamPlayModeTests" runstate="Runnable" seed="505658790" result="Passed" start-time="2026-07-16 12:28:35Z" end-time="2026-07-16 12:28:35Z" duration="0.050988" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1173" name="Bedlam_PeckPath_ExpiredDiveDropsTheChick" fullname="CheddarAndCocoa.Tests.CoopBabyBirdBedlamPlayModeTests.Bedlam_PeckPath_ExpiredDiveDropsTheChick" methodname="Bedlam_PeckPath_ExpiredDiveDropsTheChick" classname="CheddarAndCocoa.Tests.CoopBabyBirdBedlamPlayModeTests" runstate="Runnable" seed="647440422" result="Passed" start-time="2026-07-16 12:28:35Z" end-time="2026-07-16 12:28:35Z" duration="0.048433" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1178" name="Bedlam_PositionDriven_ChickFallsAndCheddarGrabsIt" fullname="CheddarAndCocoa.Tests.CoopBabyBirdBedlamPlayModeTests.Bedlam_PositionDriven_ChickFallsAndCheddarGrabsIt" methodname="Bedlam_PositionDriven_ChickFallsAndCheddarGrabsIt" classname="CheddarAndCocoa.Tests.CoopBabyBirdBedlamPlayModeTests" runstate="Runnable" seed="2074059926" result="Passed" start-time="2026-07-16 12:28:35Z" end-time="2026-07-16 12:28:39Z" duration="4.399598" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1177" name="Bedlam_Replay_ResetsThePuzzle" fullname="CheddarAndCocoa.Tests.CoopBabyBirdBedlamPlayModeTests.Bedlam_Replay_ResetsThePuzzle" methodname="Bedlam_Replay_ResetsThePuzzle" classname="CheddarAndCocoa.Tests.CoopBabyBirdBedlamPlayModeTests" runstate="Runnable" seed="377306539" result="Passed" start-time="2026-07-16 12:28:39Z" end-time="2026-07-16 12:28:39Z" duration="0.046689" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1167" name="Bedlam_RunsThroughDedicatedController" fullname="CheddarAndCocoa.Tests.CoopBabyBirdBedlamPlayModeTests.Bedlam_RunsThroughDedicatedController" methodname="Bedlam_RunsThroughDedicatedController" classname="CheddarAndCocoa.Tests.CoopBabyBirdBedlamPlayModeTests" runstate="Runnable" seed="1768810604" result="Passed" start-time="2026-07-16 12:28:39Z" end-time="2026-07-16 12:28:39Z" duration="0.044115" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1169" name="Bedlam_VisualStates_FollowFallGrabShakeDiveRescueSuccessAndReplay" fullname="CheddarAndCocoa.Tests.CoopBabyBirdBedlamPlayModeTests.Bedlam_VisualStates_FollowFallGrabShakeDiveRescueSuccessAndReplay" methodname="Bedlam_VisualStates_FollowFallGrabShakeDiveRescueSuccessAndReplay" classname="CheddarAndCocoa.Tests.CoopBabyBirdBedlamPlayModeTests" runstate="Runnable" seed="529626997" result="Passed" start-time="2026-07-16 12:28:39Z" end-time="2026-07-16 12:28:39Z" duration="0.046830" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: /Users/kchapman/Weeniegame/unity/baby-bird-art-results.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

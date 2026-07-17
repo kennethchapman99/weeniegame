@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="11" result="Passed" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-07-16 11:48:29Z" end-time="2026-07-16 11:48:30Z" duration="1.1619899">
+  <test-suite type="TestSuite" id="1647" name="Cheddar and Cocoa" fullname="Cheddar and Cocoa" runstate="Runnable" testcasecount="549" result="Passed" start-time="2026-07-16 11:48:29Z" end-time="2026-07-16 11:48:30Z" duration="1.161990" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="SetUpFixture" id="1001" name="CheddarAndCocoa.Tests.PlayMode.dll" fullname="PlayModeGlobalTestSetup" classname="PlayModeGlobalTestSetup" runstate="Runnable" testcasecount="549" result="Passed" start-time="2026-07-16 11:48:29Z" end-time="2026-07-16 11:48:30Z" duration="1.155235" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="83773" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1640" name="CheddarAndCocoa" fullname="CheddarAndCocoa" runstate="Runnable" testcasecount="549" result="Passed" start-time="2026-07-16 11:48:29Z" end-time="2026-07-16 11:48:30Z" duration="1.149452" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1643" name="Tests" fullname="CheddarAndCocoa.Tests" runstate="Runnable" testcasecount="547" result="Passed" start-time="2026-07-16 11:48:29Z" end-time="2026-07-16 11:48:30Z" duration="1.144673" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1146" name="CarRidePlayModeTests" fullname="CheddarAndCocoa.Tests.CarRidePlayModeTests" classname="CheddarAndCocoa.Tests.CarRidePlayModeTests" runstate="Runnable" testcasecount="11" result="Passed" start-time="2026-07-16 11:48:29Z" end-time="2026-07-16 11:48:30Z" duration="1.137474" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1147" name="CarRide_AppearsInMissionSelectRotation" fullname="CheddarAndCocoa.Tests.CarRidePlayModeTests.CarRide_AppearsInMissionSelectRotation" methodname="CarRide_AppearsInMissionSelectRotation" classname="CheddarAndCocoa.Tests.CarRidePlayModeTests" runstate="Runnable" seed="2064251282" result="Passed" start-time="2026-07-16 11:48:29Z" end-time="2026-07-16 11:48:30Z" duration="0.594592" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1154" name="CarRide_Brace_PlantsAgainstTheSlide_AndDoorSquishHurts" fullname="CheddarAndCocoa.Tests.CarRidePlayModeTests.CarRide_Brace_PlantsAgainstTheSlide_AndDoorSquishHurts" methodname="CarRide_Brace_PlantsAgainstTheSlide_AndDoorSquishHurts" classname="CheddarAndCocoa.Tests.CarRidePlayModeTests" runstate="Runnable" seed="1949042255" result="Passed" start-time="2026-07-16 11:48:30Z" end-time="2026-07-16 11:48:30Z" duration="0.086434" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1150" name="CarRide_BrakeEvent_BracedDogsRideItOut" fullname="CheddarAndCocoa.Tests.CarRidePlayModeTests.CarRide_BrakeEvent_BracedDogsRideItOut" methodname="CarRide_BrakeEvent_BracedDogsRideItOut" classname="CheddarAndCocoa.Tests.CarRidePlayModeTests" runstate="Runnable" seed="1302859591" result="Passed" start-time="2026-07-16 11:48:30Z" end-time="2026-07-16 11:48:30Z" duration="0.054543" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1151" name="CarRide_BrakeEvent_UnbracedDogsAreFlungForward" fullname="CheddarAndCocoa.Tests.CarRidePlayModeTests.CarRide_BrakeEvent_UnbracedDogsAreFlungForward" methodname="CarRide_BrakeEvent_UnbracedDogsAreFlungForward" classname="CheddarAndCocoa.Tests.CarRidePlayModeTests" runstate="Runnable" seed="1424956523" result="Passed" start-time="2026-07-16 11:48:30Z" end-time="2026-07-16 11:48:30Z" duration="0.045638" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1148" name="CarRide_ClearPath_RidesOutEveryRoadEvent" fullname="CheddarAndCocoa.Tests.CarRidePlayModeTests.CarRide_ClearPath_RidesOutEveryRoadEvent" methodname="CarRide_ClearPath_RidesOutEveryRoadEvent" classname="CheddarAndCocoa.Tests.CarRidePlayModeTests" runstate="Runnable" seed="89623209" result="Passed" start-time="2026-07-16 11:48:30Z" end-time="2026-07-16 11:48:30Z" duration="0.054600" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1149" name="CarRide_FailPath_TooManyTumbles" fullname="CheddarAndCocoa.Tests.CarRidePlayModeTests.CarRide_FailPath_TooManyTumbles" methodname="CarRide_FailPath_TooManyTumbles" classname="CheddarAndCocoa.Tests.CarRidePlayModeTests" runstate="Runnable" seed="1102487041" result="Passed" start-time="2026-07-16 11:48:30Z" end-time="2026-07-16 11:48:30Z" duration="0.053488" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1156" name="CarRide_Replay_ResetsRideState" fullname="CheddarAndCocoa.Tests.CarRidePlayModeTests.CarRide_Replay_ResetsRideState" methodname="CarRide_Replay_ResetsRideState" classname="CheddarAndCocoa.Tests.CarRidePlayModeTests" runstate="Runnable" seed="2054701752" result="Passed" start-time="2026-07-16 11:48:30Z" end-time="2026-07-16 11:48:30Z" duration="0.046384" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1153" name="CarRide_SlidingJunk_BonksGroundedDogs_JumpClearsIt" fullname="CheddarAndCocoa.Tests.CarRidePlayModeTests.CarRide_SlidingJunk_BonksGroundedDogs_JumpClearsIt" methodname="CarRide_SlidingJunk_BonksGroundedDogs_JumpClearsIt" classname="CheddarAndCocoa.Tests.CarRidePlayModeTests" runstate="Runnable" seed="2044475951" result="Passed" start-time="2026-07-16 11:48:30Z" end-time="2026-07-16 11:48:30Z" duration="0.046422" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[Cheddar] HOP!
+]]></output>
+            </test-case>
+            <test-case id="1157" name="CarRide_SmoothAndTumble_HaveReadablePackReactions" fullname="CheddarAndCocoa.Tests.CarRidePlayModeTests.CarRide_SmoothAndTumble_HaveReadablePackReactions" methodname="CarRide_SmoothAndTumble_HaveReadablePackReactions" classname="CheddarAndCocoa.Tests.CarRidePlayModeTests" runstate="Runnable" seed="1273164326" result="Passed" start-time="2026-07-16 11:48:30Z" end-time="2026-07-16 11:48:30Z" duration="0.045270" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1152" name="CarRide_TurnSlide_SlidesEverything_CheddarSlidesHardest" fullname="CheddarAndCocoa.Tests.CarRidePlayModeTests.CarRide_TurnSlide_SlidesEverything_CheddarSlidesHardest" methodname="CarRide_TurnSlide_SlidesEverything_CheddarSlidesHardest" classname="CheddarAndCocoa.Tests.CarRidePlayModeTests" runstate="Runnable" seed="1298466556" result="Passed" start-time="2026-07-16 11:48:30Z" end-time="2026-07-16 11:48:30Z" duration="0.053604" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1155" name="CarRide_UnitedBark_MakesTheDriverEaseUp" fullname="CheddarAndCocoa.Tests.CarRidePlayModeTests.CarRide_UnitedBark_MakesTheDriverEaseUp" methodname="CarRide_UnitedBark_MakesTheDriverEaseUp" classname="CheddarAndCocoa.Tests.CarRidePlayModeTests" runstate="Runnable" seed="2099218056" result="Passed" start-time="2026-07-16 11:48:30Z" end-time="2026-07-16 11:48:30Z" duration="0.047003" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: /Users/kchapman/Weeniegame/unity/car-ride-playmode-results.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

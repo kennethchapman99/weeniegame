@@ -40,39 +40,39 @@ namespace CheddarAndCocoa.Game
                 case GameManager.MissionVariant.SnackHeist:
                     return new MissionPresentationProfile("Either dog can stash snacks while the partner guards the squirrel lane.", "Steal + defend", "Snack district with plates, crumbs, and stash cues", threats, ReadabilityRequirement.WarningVisible);
                 case GameManager.MissionVariant.SockPanic:
-                    return new MissionPresentationProfile("One dog tips the basket; the partner dives for the exposed sock.", "Hold-and-release", "Laundry district with basket, sock, and decoy cues", dogs);
+                    return new MissionPresentationProfile("Cocoa anchors the basket continuously while Cheddar dives for the exposed sock.", "Anchor + steal", "Laundry district with basket, sock, decoy, and held-open cues", dogs);
                 case GameManager.MissionVariant.SquirrelConspiracy:
-                    return new MissionPresentationProfile("Nearest dog pressures the squirrel while the partner holds the active cutoff.", "Chase + cutoff", "Fence route, stash reveal, and cutoff markers", threats, ReadabilityRequirement.WarningVisible);
+                    return new MissionPresentationProfile("Cheddar pressures the squirrel into Cocoa's held cutoff, then Cocoa cracks the stash.", "Herd + cutoff", "Fence route, stash reveal, and cutoff markers", threats, ReadabilityRequirement.WarningVisible);
                 case GameManager.MissionVariant.EagleShadowPanic:
                     return new MissionPresentationProfile("Both dogs hide, then Cocoa rescues Cheddar before the united-bark finish.", "Hide + rescue", "Eagle sweep lane, cover bands, and rescue circle", threats, ReadabilityRequirement.WarningVisible);
                 case GameManager.MissionVariant.CoyotesFence:
-                    return new MissionPresentationProfile("One dog bark-pins the coyote while the partner fills the weak spot.", "Defend + repair", "Fence pressure lane, weak gaps, and fake lure", threats, ReadabilityRequirement.WarningVisible);
+                    return new MissionPresentationProfile("Cocoa bark-pins the coyote while Cheddar races to fill each weak spot.", "Pin + repair", "Fence pressure lane, weak gaps, timed pin, and fake lure", threats, ReadabilityRequirement.WarningVisible);
                 case GameManager.MissionVariant.WeenieRoundup:
-                    return new MissionPresentationProfile("Each dog carries loose weenies to the shared bowl without fumbling.", "Carry + deliver", "Bowl lane with loose/carry weenie markers", dogs);
+                    return new MissionPresentationProfile("Split the small carries, then Cocoa steadies the jumbo while Cheddar hauls it home.", "Carry + steady", "Bowl lane, four small carries, and a two-dog jumbo route", dogs);
                 case GameManager.MissionVariant.ScentSearch:
-                    return new MissionPresentationProfile("Use bark-sniff heat cues, then commit to the right dig spot.", "Sniff + dig", "Scent patches, mounds, and dig-spot grass", dogs);
+                    return new MissionPresentationProfile("Cheddar reads a broad direction, Cocoa calls the exact hot mound, then Cheddar digs.", "Track + call + dig", "Scent patches, called mound, and live bone-cache reveal", dogs);
                 case GameManager.MissionVariant.ThunderstormComfort:
-                    return new MissionPresentationProfile("Stay close, comfort panic spikes, and bark together through thunder.", "Comfort + calm", "Storm band, huddle zone, and emotion feedback", dogs, ReadabilityRequirement.WarningVisible);
+                    return new MissionPresentationProfile("Cocoa reassures first, Cheddar answers, then both hold the huddle through thunder.", "Reassure + answer", "Storm band, ordered bark handoff, huddle hold, and panic feedback", dogs, ReadabilityRequirement.WarningVisible);
                 case GameManager.MissionVariant.MarkTheYard:
                     return new MissionPresentationProfile("Split up to claim zones, then regroup coverage before the squirrel reclaims.", "Territory control", "Central lawn zones with reclaim feedback", threats, ReadabilityRequirement.WarningVisible);
                 case GameManager.MissionVariant.LeashWalk:
                     return new MissionPresentationProfile("Move as a tethered pair and negotiate each checkpoint without snapping.", "Tethered traversal", "Route stones, leash dashes, and checkpoint markers", dogs, ReadabilityRequirement.WarningVisible);
                 case GameManager.MissionVariant.CarRide:
-                    return new MissionPresentationProfile("Fight the slide, jump the junk, and brace for the brakes together.", "Slide + timing", "Tilting cabin, sliding seat junk, driver telegraphs, brace cues", dogs, ReadabilityRequirement.WarningVisible);
+                    return new MissionPresentationProfile("Fight the slide and jump junk, then Cocoa anchors so Cheddar can tuck through brakes.", "Slide + anchor", "Tilting cabin, sliding junk, driver telegraphs, partnered brake brace", dogs, ReadabilityRequirement.WarningVisible);
                 case GameManager.MissionVariant.GateCrash:
-                    return new MissionPresentationProfile("Cocoa braces the gate while Cheddar squeezes through for the toy.", "Hold-and-release", "Gate, toy, brace pad, and squeeze lane", dogs, ReadabilityRequirement.WarningVisible);
+                    return new MissionPresentationProfile("Cocoa deliberately anchors the gate, then holds while Cheddar squeezes through for the toy.", "Anchor-and-cross", "Gate, toy, brace pad, squeeze lane, and snap recovery", dogs, ReadabilityRequirement.WarningVisible);
                 case GameManager.MissionVariant.TableStealth:
-                    return new MissionPresentationProfile("One dog distracts the human while the partner sneaks the steak.", "Distract-and-sneak", "Table, human attention, steak, and exposure reads", dogs, ReadabilityRequirement.WarningVisible);
+                    return new MissionPresentationProfile("Cocoa can hold a belly-rub flop for Cheddar, or Cheddar can burp a short opening for Cocoa to steal the steak.", "Distract-and-sneak", "Table, human attention, steak, alternate role routes, exposure reads, and held payoff", dogs, ReadabilityRequirement.WarningVisible);
                 case GameManager.MissionVariant.SquirrelSwitcheroo:
-                    return new MissionPresentationProfile("One dog sells the decoy while the partner raids the real stash.", "Bait-and-switch", "Decoy, stash, squirrel route, and backfire cues", threats, ReadabilityRequirement.WarningVisible);
+                    return new MissionPresentationProfile("Cheddar Bark-taunts at the decoy and peels away; Cocoa Interacts once at the exposed stash.", "Bait-and-switch", "Decoy, stash, squirrel route, guarded whiff, backfire, and held payoff", threats, ReadabilityRequirement.WarningVisible);
                 case GameManager.MissionVariant.WalkCampaign:
-                    return new MissionPresentationProfile("Split the door stare and leash presentation until the human gets it.", "Social manipulation", "Human, door, leash, and comprehension meter", dogs);
+                    return new MissionPresentationProfile("Cocoa deliberately Interact-stares at the door while Cheddar Interact-presents the leash; both hold until the human gets it.", "Social manipulation", "Human, door, leash, comprehension meter, wrong-item reactions, and held walkies payoff", dogs);
                 case GameManager.MissionVariant.BoneRelay:
                     return new MissionPresentationProfile("One dog reads the scent relay while the partner digs the matching mound.", "Smell-and-act", "Scent zone, mounds, bone, and relay arrows", dogs);
                 case GameManager.MissionVariant.GreatEscape:
-                    return new MissionPresentationProfile("Alternate station ownership through the escape contraption chain.", "Sequence chain", "Contraption stations, owner colors, and botch cues", dogs, ReadabilityRequirement.WarningVisible);
+                    return new MissionPresentationProfile("Alternate deliberate owner-only Interacts through the escape contraption chain.", "Sequence chain", "Contraption stations, owner colors, action names, fumble/settle recovery, and held breakout payoff", dogs, ReadabilityRequirement.WarningVisible);
                 case GameManager.MissionVariant.ChaosMachine:
-                    return new MissionPresentationProfile("Pull the lever, then split through machine junctions before they reset.", "Chaos machine", "Machine stages, junction pads, and cause/effect pops", dogs, ReadabilityRequirement.WarningVisible);
+                    return new MissionPresentationProfile("Cheddar Interact-pulls the lever, then named owners Interact-fire timed junctions while the partner pre-positions.", "Chaos machine", "Distinct machine stages, owner/action maps, timed command handoffs, jam recovery, and held toy-launch payoff", dogs, ReadabilityRequirement.WarningVisible);
                 case GameManager.MissionVariant.BlanketCatch:
                     return new MissionPresentationProfile("Stretch the blanket together and catch the falling prize in the shared span.", "Long-dog geometry", "Blanket span, falling object, and catch lane", dogs);
                 case GameManager.MissionVariant.KitchenFoodFrenzy:
@@ -180,7 +180,7 @@ namespace CheddarAndCocoa.Game
             {
                 Variant = variant,
                 Name = "Mark the Yard",
-                IntroPrompt = "Cheddar + Cocoa must claim every territory zone and hold them all at once - but the squirrel keeps re-marking them, so split up and cover the yard.",
+                IntroPrompt = "Cheddar runs the territory route: enter a grey zone and press Interact to mark it green. Each mark attracts the reclaim squirrel, so Cocoa tracks the thief and BARKS nearby to drive it off, buying Cheddar time for the next zone. A stolen mark is recoverable; hold all five green at once to own the yard.",
                 ReadyScoreLabel = "READY TO MARK TERRITORY",
                 ItemRootName = "Territory Zones",
                 ItemObjectName = "Zone",
@@ -213,8 +213,8 @@ namespace CheddarAndCocoa.Game
                 SquirrelMissPopLabel = "STOLEN!",
                 SquirrelStealJuiceLabel = "ZONE STOLEN!",
                 SquirrelScareJuiceLabel = "ZONE MARKED!",
-                TugObjectiveText = "Hold the zones together",
-                WaitingObjectiveText = "Cover the last zone together",
+                TugObjectiveText = "Cheddar marks; Cocoa barks off the thief",
+                WaitingObjectiveText = "Interact at zones and defend each opening",
                 ClearObjectiveText = "Yard claimed - replay Mark the Yard",
                 ClearBannerPrefix = "YARD CLAIMED!",
                 ClearScoreLabel = "YARD MARKED",
@@ -242,7 +242,7 @@ namespace CheddarAndCocoa.Game
             {
                 Variant = variant,
                 Name = "Gate Crash",
-                IntroPrompt = "The toy rolled under the heavy gate. Cocoa has to brace the gate open while Cheddar squeezes through to grab it - if she lets go mid-squeeze, the gate snaps shut.",
+                IntroPrompt = "The toy rolled under the heavy gate. Cocoa must reach it and Interact to anchor it open, then stay planted while Cheddar squeezes through - if she leaves, the gate snaps shut.",
                 ReadyScoreLabel = "READY TO CRASH THE GATE",
                 ItemRootName = "Gate",
                 ItemObjectName = "Gate",
@@ -304,7 +304,7 @@ namespace CheddarAndCocoa.Game
             {
                 Variant = variant,
                 Name = "Table Stealth",
-                IntroPrompt = "A steak dropped under the dinner table. One dog has to hold the human's attention - Cocoa flops belly-up for a rub, Cheddar burps a cloud - while the other sneaks the steak. Sneak while the human is watching and you get spotted.",
+                IntroPrompt = "A steak dropped under the dinner table. Cocoa can Interact-flop beside the human so Cheddar sneaks, or Cheddar can Bark a burp beside the human so Cocoa steals. Sneak without a real distraction and the human spots the heist.",
                 ReadyScoreLabel = "READY TO RAID THE TABLE",
                 ItemRootName = "Steak",
                 ItemObjectName = "Steak",
@@ -366,7 +366,7 @@ namespace CheddarAndCocoa.Game
             {
                 Variant = variant,
                 Name = "The Ol' Switcheroo",
-                IntroPrompt = "The squirrel is guarding its buried stash and won't leave. Cheddar feints at a decoy nut pile to bait it into a chase - and only while the squirrel is committed to the decoy can Cocoa raid the real stash. Over-feint and the squirrel wises up (or Cheddar bolts after his own decoy) and the window snaps shut.",
+                IntroPrompt = "The squirrel is guarding its buried stash. Cheddar must Bark beside the decoy, then peel away once it commits; Cocoa can press Interact at the real stash once during that chase. Raid too early or hold the feint too long and the squirrel resets the trick.",
                 ReadyScoreLabel = "READY TO PULL THE SWITCHEROO",
                 ItemRootName = "Stash",
                 ItemObjectName = "Stash",
@@ -428,7 +428,7 @@ namespace CheddarAndCocoa.Game
             {
                 Variant = variant,
                 Name = "The Walk Campaign",
-                IntroPrompt = "The human won't take the hint. Send ONE clear message together - Cocoa fixes the door with a dignified stare while Cheddar presents the leash - and hold it until the human gets it. Cover only one (or wander off) and they get confused and bring the wrong thing.",
+                IntroPrompt = "The human won't take the hint. Cocoa must Interact at the door to start her dignified stare while Cheddar Interacts at the leash to present it; both stay planted until the human gets it. A broken or lonely signal produces the wrong item.",
                 ReadyScoreLabel = "READY TO DEMAND A WALK",
                 ItemRootName = "Walk",
                 ItemObjectName = "Walk",
@@ -490,7 +490,7 @@ namespace CheddarAndCocoa.Game
             {
                 Variant = variant,
                 Name = "The Rube Goldberg",
-                IntroPrompt = "The dogs rigged a backyard contraption: towel drop, basket tip, toy launch. Pre-position at your junctions, then pull the lever - the cascade runs ITSELF, but each junction has a split-second window where its owner dog must be in place or the machine misfires and jams there. A re-pull resumes from the jam. Trust the timing and cover your junctions.",
+                IntroPrompt = "The dogs rigged a towel-drop, basket-tip, toy-launch contraption. Cheddar must Interact-pull the lever; then each junction's named owner must reach it and Interact before its timer expires while the partner pre-positions ahead. A jam points to the failed step, and Cheddar re-pulls to resume.",
                 ReadyScoreLabel = "READY TO RIG THE MACHINE",
                 ItemRootName = "Junction",
                 ItemObjectName = "Junction",
@@ -552,7 +552,7 @@ namespace CheddarAndCocoa.Game
             {
                 Variant = variant,
                 Name = "The Great Escape",
-                IntroPrompt = "Zoomies time - but the gate's latched. Run the contraption chain in order, taking turns: Cocoa paws the latch, Cheddar shoulders the gate, Cocoa drags the cooler to prop it, Cheddar squeezes through. The active station glows for whoever's turn it is. Wrong dog or wrong order does nothing; dawdle and the contraption eases back a step.",
+                IntroPrompt = "Zoomies time, but the gate is latched. Follow the glowing chain in order: Cocoa paws the latch, Cheddar shoulders the gate, Cocoa drags the cooler, Cheddar squeezes through. The named owner must press Interact at each station; wrong paws clank, and dawdling slides the chain back one step.",
                 ReadyScoreLabel = "READY TO BUST OUT",
                 ItemRootName = "Step",
                 ItemObjectName = "Step",
@@ -672,7 +672,7 @@ namespace CheddarAndCocoa.Game
             {
                 Variant = variant,
                 Name = "The Bone Detail",
-                IntroPrompt = "Four look-alike dirt mounds, only one hiding the real bone. Cocoa's the nose: she sniffs the scent post to call which mound is real. Cheddar's the only one who can dig - but he can't tell them apart, so he has to wait for her call. Dig blind or dig a decoy and it's a wasted dig; waste too many and the team gives up. Each bone re-buries the next somewhere new.",
+                IntroPrompt = "Four look-alike dirt mounds, only one hiding the real bone. Cocoa's the nose: reach the scent post and BARK to call the real mound. Cheddar's the only digger, but he cannot tell them apart, so he waits for her glowing call. Dig blind or dig a decoy and it is a wasted dig; waste too many and the team gives up. Each bone re-buries the next somewhere new.",
                 ReadyScoreLabel = "READY TO WORK THE SCENT",
                 ItemRootName = "Bone",
                 ItemObjectName = "Bone",
@@ -705,8 +705,8 @@ namespace CheddarAndCocoa.Game
                 SquirrelMissPopLabel = "NOPE!",
                 SquirrelStealJuiceLabel = "NOPE!",
                 SquirrelScareJuiceLabel = "BONE!",
-                TugObjectiveText = "Sniff and dig together",
-                WaitingObjectiveText = "Dig the mound Cocoa calls",
+                TugObjectiveText = "Cocoa barks the scent; Cheddar digs",
+                WaitingObjectiveText = "Reach the post, bark, then dig the call",
                 ClearObjectiveText = "Bones recovered - replay The Bone Detail",
                 ClearBannerPrefix = "BONES!",
                 ClearScoreLabel = "BONE DETAIL CLEAR",
@@ -734,7 +734,7 @@ namespace CheddarAndCocoa.Game
             {
                 Variant = variant,
                 Name = "The Blanket Catch",
-                IntroPrompt = "Food's tumbling off the counter! Cheddar and Cocoa each grab a corner of a blanket and stretch it between them - too close and it sags, too far and it RIPS, so find the taut band. Then slide the middle of the blanket under each falling snack to catch it. Rip the blanket too many times and it's done.",
+                IntroPrompt = "Food's teetering on the counter! Cheddar and Cocoa each grab a blanket corner - too close and it sags, too far and it RIPS. Make the blanket taut, then Cocoa BARKS to call the next snack down. Both dogs slide the middle under it and hold the catch together. Rip the blanket too many times and it's done.",
                 ReadyScoreLabel = "READY TO CATCH SOME SNACKS",
                 ItemRootName = "Snack",
                 ItemObjectName = "Snack",
@@ -767,8 +767,8 @@ namespace CheddarAndCocoa.Game
                 SquirrelMissPopLabel = "SPLAT!",
                 SquirrelStealJuiceLabel = "RIP!",
                 SquirrelScareJuiceLabel = "CAUGHT!",
-                TugObjectiveText = "Stretch the blanket together",
-                WaitingObjectiveText = "Slide the taut blanket under the next snack",
+                TugObjectiveText = "Stretch the blanket; Cocoa calls the drop",
+                WaitingObjectiveText = "Make it taut, Cocoa bark, then catch together",
                 ClearObjectiveText = "Snacks caught - replay The Blanket Catch",
                 ClearBannerPrefix = "DINNER!",
                 ClearScoreLabel = "BLANKET CATCH CLEAR",
@@ -858,7 +858,7 @@ namespace CheddarAndCocoa.Game
             {
                 Variant = variant,
                 Name = "Walkies on the Leash",
-                IntroPrompt = "Cheddar + Cocoa are clipped to one leash. Walk through every checkpoint together without drifting so far apart the leash snaps.",
+                IntroPrompt = "Cheddar + Cocoa share one leash. Alternate scouts: the named dog reaches each checkpoint and BARKS the route call, then both dogs join without snapping the leash.",
                 ReadyScoreLabel = "READY FOR WALKIES",
                 ItemRootName = "Checkpoints",
                 ItemObjectName = "Checkpoint",
@@ -891,8 +891,8 @@ namespace CheddarAndCocoa.Game
                 SquirrelMissPopLabel = "SNAP!",
                 SquirrelStealJuiceLabel = "LEASH SNAP!",
                 SquirrelScareJuiceLabel = "CHECKPOINT!",
-                TugObjectiveText = "Walk to the checkpoint together",
-                WaitingObjectiveText = "Walk to the last checkpoint together",
+                TugObjectiveText = "Scout barks the route call, then both dogs join",
+                WaitingObjectiveText = "Call the last checkpoint and finish together",
                 ClearObjectiveText = "Great walk - replay Walkies on the Leash",
                 ClearBannerPrefix = "WALK COMPLETE!",
                 ClearScoreLabel = "WALK COMPLETE",
@@ -920,7 +920,7 @@ namespace CheddarAndCocoa.Game
             {
                 Variant = variant,
                 Name = "Sock Panic",
-                IntroPrompt = "Tip the laundry basket, then have the partner dive for each exposed sock before laundry order returns.",
+                IntroPrompt = "Cocoa anchors the laundry basket and must stay beside it; Cheddar dives for each exposed sock before the six-second opening closes.",
                 ReadyScoreLabel = "READY TO PANIC ABOUT SOCKS",
                 ItemRootName = "Scattered Socks",
                 ItemObjectName = "Panic Sock",
@@ -953,8 +953,8 @@ namespace CheddarAndCocoa.Game
                 SquirrelMissPopLabel = "MISS! -SOCK",
                 SquirrelStealJuiceLabel = "MISS! SOCK PANIC",
                 SquirrelScareJuiceLabel = "SOCK BARK POP!",
-                TugObjectiveText = "Return the socks",
-                WaitingObjectiveText = "Find the last runaway sock",
+                TugObjectiveText = "Cocoa holds; Cheddar dives",
+                WaitingObjectiveText = "Hold open the last sock dive",
                 ClearObjectiveText = "Sock panic solved - replay Sock Panic",
                 ClearBannerPrefix = "SOCKS SORTED!",
                 ClearScoreLabel = "SOCK PANIC CLEAR",
@@ -964,8 +964,8 @@ namespace CheddarAndCocoa.Game
                 TimeFailReason = "Laundry order returned before the final sock was rescued.",
                 StolenFailReason = "No squirrel stole socks; the dogs simply lost the plot.",
                 PredatorFailReason = "No predator here, just laundry pressure.",
-                PawfectClearReason = "Tiny legends restored sock civilization.",
-                HeroClearReason = "The laundry pile survived with only mild drama.",
+                PawfectClearReason = "Cocoa held every opening steady while Cheddar built a flawless sock mountain.",
+                HeroClearReason = "Anchor queen and chaos thief rescued the laundry pile with only mild drama.",
                 BasicClearReason = "The socks came home looking emotionally handled.",
                 ItemColor = new Color(0.42f, 0.72f, 1f),
                 ItemAccentColor = new Color(1f, 0.88f, 0.28f),
@@ -982,7 +982,7 @@ namespace CheddarAndCocoa.Game
             {
                 Variant = variant,
                 Name = "Car Ride Chaos",
-                IntroPrompt = "Cheddar + Cocoa ride the back seat home. Turns tilt the cabin and slide everything sideways - jump the loose junk, and brace (interact) when the driver hits the brakes!",
+                IntroPrompt = "Cheddar + Cocoa ride the back seat home. Jump loose junk on turns; at brakes Cocoa plants first so nearby Cheddar can tuck behind her!",
                 ReadyScoreLabel = "READY FOR THE CAR RIDE",
                 ItemRootName = "Road Events",
                 ItemObjectName = "Road Event",
@@ -1044,7 +1044,7 @@ namespace CheddarAndCocoa.Game
             {
                 Variant = variant,
                 Name = "Scent Search",
-                IntroPrompt = "Cheddar + Cocoa must sniff out the buried bones (bark to sniff HOT/COLD) and dig them up (interact) before the yard is a mess.",
+                IntroPrompt = "Cheddar points in a broad direction, Cocoa tracks and barks the exact RED HOT mound, then Cheddar digs her call before the yard is a mess.",
                 ReadyScoreLabel = "READY TO SNIFF",
                 ItemRootName = "Dig Spots",
                 ItemObjectName = "Dig Spot",
@@ -1168,7 +1168,7 @@ namespace CheddarAndCocoa.Game
             {
                 Variant = variant,
                 Name = "Thunderstorm Comfort",
-                IntroPrompt = "A storm is rolling in. Cheddar + Cocoa must huddle close to keep each other calm and ride out every thunderclap together.",
+                IntroPrompt = "A storm is rolling in. Huddle close, have Cocoa bark reassurance first and Cheddar answer, then hold together through every thunderclap.",
                 ReadyScoreLabel = "READY TO RIDE OUT THE STORM",
                 ItemRootName = "Storm",
                 ItemObjectName = "Thunderclap",
@@ -1292,7 +1292,7 @@ namespace CheddarAndCocoa.Game
             {
                 Variant = variant,
                 Name = "Snack Heist",
-                IntroPrompt = "Cheddar + Cocoa must secure the forbidden snack stash before the squirrel union notices.",
+                IntroPrompt = "Cheddar steals the forbidden snack stash while Cocoa bark-guards the squirrel lane.",
                 ReadyScoreLabel = "READY TO HEIST SNACKS",
                 ItemRootName = "Forbidden Snacks",
                 ItemObjectName = "Forbidden Snack",
@@ -1314,7 +1314,7 @@ namespace CheddarAndCocoa.Game
                 MaxStolenFood = balance.MaxStolenFood,
                 SquirrelPenalty = balance.SquirrelPenalty,
                 SquirrelScareScore = balance.SquirrelScareScore,
-                SquirrelObjectiveText = "Bark-guard the snack thief",
+                SquirrelObjectiveText = "Cocoa: bark-guard the snack thief",
                 SquirrelStealingCue = "Squirrel is reaching for the forbidden snack stash - bark guard!",
                 SquirrelStoleCue = "Squirrel got a snack and looks professionally smug!",
                 SquirrelStealScoreLabel = "SNACK THIEF",
@@ -1354,7 +1354,7 @@ namespace CheddarAndCocoa.Game
             {
                 Variant = variant,
                 Name = "The Great Backyard Squirrel Conspiracy",
-                IntroPrompt = "Cheddar + Cocoa must herd the suspicious squirrel, reveal the hidden stash, and crack the backyard conspiracy.",
+                IntroPrompt = "Cheddar BARK-herds the suspicious squirrel into Cocoa's held cutoff. Complete four handoffs, then Cocoa inspects the revealed stash.",
                 ReadyScoreLabel = "READY TO INVESTIGATE SQUIRRELS",
                 ItemRootName = "Conspiracy Clues",
                 ItemObjectName = "Conspiracy Clue",
@@ -1376,19 +1376,19 @@ namespace CheddarAndCocoa.Game
                 MaxStolenFood = balance.MaxStolenFood,
                 SquirrelPenalty = balance.SquirrelPenalty,
                 SquirrelScareScore = balance.SquirrelScareScore,
-                SquirrelObjectiveText = "Herd and cutoff the suspicious squirrel",
+                SquirrelObjectiveText = "Cheddar herds into Cocoa's cutoff",
                 SquirrelStealingCue = "The squirrel is running its conspiracy route - cut it off!",
                 SquirrelStoleCue = "The squirrel taunted the yard and moved the stash gossip forward!",
                 SquirrelStealScoreLabel = "SQUIRREL TAUNT",
-                SquirrelScareScoreLabel = "GOOD HERD",
+                SquirrelScareScoreLabel = "CUTOFF",
                 SquirrelStealingActorLabel = "SQUIRREL ROUTE - HERD!",
                 SquirrelDroppedActorLabel = "SQUIRREL ROUTE BLOCKED!",
                 SquirrelStoleActorLabel = "SQUIRREL TAUNTED!",
                 SquirrelMissPopLabel = "TAUNT!",
                 SquirrelStealJuiceLabel = "MISS! SQUIRREL TAUNT",
                 SquirrelScareJuiceLabel = "HERD POP!",
-                TugObjectiveText = "Reveal the squirrel stash",
-                WaitingObjectiveText = "Track the squirrel route together",
+                TugObjectiveText = "Cheddar herds; Cocoa holds cutoff",
+                WaitingObjectiveText = "Cocoa cracks the revealed stash",
                 ClearObjectiveText = "Conspiracy cracked - replay Squirrel Conspiracy",
                 ClearBannerPrefix = "CONSPIRACY CRACKED!",
                 ClearScoreLabel = "SQUIRREL CASE CLOSED",
@@ -1449,8 +1449,8 @@ namespace CheddarAndCocoa.Game
                 SquirrelMissPopLabel = "SPOTTED!",
                 SquirrelStealJuiceLabel = "EAGLE SPOOK!",
                 SquirrelScareJuiceLabel = "SHADOW DISTRACTED!",
-                TugObjectiveText = "Rescue the stranded toy",
-                WaitingObjectiveText = "Hide in cover and wait out the shadow",
+                TugObjectiveText = "Cheddar wiggles; Cocoa pulls him free",
+                WaitingObjectiveText = "Both dogs hide before the sweep completes",
                 ClearObjectiveText = "Yard defended - replay Eagle Shadow Panic",
                 ClearBannerPrefix = "EAGLE DRIVEN OFF!",
                 ClearScoreLabel = "SHADOW PANIC CLEAR",
@@ -1461,7 +1461,7 @@ namespace CheddarAndCocoa.Game
                 StolenFailReason = "The eagle shadow kept catching dogs in the open.",
                 PredatorFailReason = "The eagle shadow caught a dog in the open.",
                 PawfectClearReason = "Tiny defenders dodged every shadow and barked the eagle out of the sky.",
-                HeroClearReason = "The toy was rescued and the united front held strong.",
+                HeroClearReason = "Cocoa pulled Cheddar from the talons and their united front held strong.",
                 BasicClearReason = "The eagle gave up, even if a few sweeps got close.",
                 ItemColor = new Color(0.4f, 0.46f, 0.6f),
                 ItemAccentColor = new Color(0.7f, 0.82f, 1f),
@@ -1478,7 +1478,7 @@ namespace CheddarAndCocoa.Game
             {
                 Variant = variant,
                 Name = "Coyotes at the Fence",
-                IntroPrompt = "Cheddar + Cocoa must patrol the fence gaps, bark-pin the coyote, fill the weak spots together, and block the final push.",
+                IntroPrompt = "Cocoa gets close and BARK-pins the coyote for a short opening; Cheddar Interacts at the weak spot before it closes. Repair three gaps, then unite-bark the final push.",
                 ReadyScoreLabel = "READY TO HOLD THE FENCE",
                 ItemRootName = "Fence Weak Spots",
                 ItemObjectName = "Weak Spot",
@@ -1500,7 +1500,7 @@ namespace CheddarAndCocoa.Game
                 MaxStolenFood = balance.MaxStolenFood,
                 SquirrelPenalty = balance.SquirrelPenalty,
                 SquirrelScareScore = balance.SquirrelScareScore,
-                SquirrelObjectiveText = "Bark-pin the coyote at the fence",
+                SquirrelObjectiveText = "Cocoa pins; Cheddar fills dirt",
                 SquirrelStealingCue = "No squirrel here - the coyote is testing the fence.",
                 SquirrelStoleCue = "No squirrel here - watch the gaps.",
                 SquirrelStealScoreLabel = "COYOTE BREACH",
@@ -1511,8 +1511,8 @@ namespace CheddarAndCocoa.Game
                 SquirrelMissPopLabel = "BREACH!",
                 SquirrelStealJuiceLabel = "COYOTE BREACH!",
                 SquirrelScareJuiceLabel = "FENCE HELD!",
-                TugObjectiveText = "Fill the fence weak spot",
-                WaitingObjectiveText = "Patrol the fence gaps together",
+                TugObjectiveText = "Cheddar fills during Cocoa's bark pin",
+                WaitingObjectiveText = "Cocoa closes in to pin the coyote",
                 ClearObjectiveText = "Yard defended - replay Coyotes at the Fence",
                 ClearBannerPrefix = "YARD DEFENDED!",
                 ClearScoreLabel = "COYOTE PATROL CLEAR",

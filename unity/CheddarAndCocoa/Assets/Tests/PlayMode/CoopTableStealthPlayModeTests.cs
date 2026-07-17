@@ -64,6 +64,12 @@ namespace CheddarAndCocoa.Tests
             _game.ForceTableSneak(2.0f);  // Cheddar sneaks the steak while the human is held (needs 1.5s)
 
             Assert.IsTrue(_game.TableStealthPuzzle.Solved);
+            Assert.IsInstanceOf<IMissionSuccessPresentationController>(_game.TableStealthController);
+            Assert.IsTrue(_game.TableStealthController.IsPresentingSuccessfulOutcome,
+                "The stolen steak should remain visible in the live world before the result card.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
+            Assert.That(_game.ObjectiveLabel, Does.Contain("Steak secured"));
+            _game.ForceTableSuccessPresentationComplete();
             Assert.AreEqual(GameManager.MissionOutcome.Clear, _game.Outcome);
             Assert.IsTrue(_game.RuntimeSnapshot.IsClear);
             Assert.That(_game.EndSummaryLabel, Does.Contain("Steak Sneaked"));
@@ -141,13 +147,24 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
-        public IEnumerator TableStealth_PositionDriven_FloppingLetsTheSneakerProgress_LeavingExposes()
+        public IEnumerator TableStealth_PositionDriven_CocoaMustInteractFlop_ThenLeavingExposes()
         {
             yield return LoadArena();
             _game.StartMission(GameManager.MissionVariant.TableStealth);
             yield return null;
 
-            // Cocoa flops by the human, Cheddar stands in the steak lane: the sneak progresses.
+            // Proximity alone is not a belly flop; Cocoa must deliberately Interact.
+            _cocoa.transform.position = _game.TableHumanZone;
+            _cheddar.transform.position = _game.TableStealZone;
+            yield return null;
+            Assert.IsFalse(_game.TableStealthController.FlopEngaged);
+            Assert.AreEqual(0f, _game.TableStealthPuzzle.SneakProgress);
+
+            _cocoa.Interact();
+            yield return null;
+            Assert.IsTrue(_game.TableStealthController.FlopEngaged);
+
+            // Cocoa stays flopped by the human while Cheddar works the steak lane.
             // Driven against a real-time deadline so enough deltaTime accumulates for the human's
             // attention to build (per-frame dt in headless batchmode is tiny).
             float deadline = Time.realtimeSinceStartup + 4f;
@@ -175,7 +192,38 @@ namespace CheddarAndCocoa.Tests
                 }
                 Assert.IsTrue(_game.TableStealthPuzzle.Exposures > before || _game.TableStealthPuzzle.Solved,
                     "Sneaking after Cocoa stops distracting gets the pair spotted.");
+                Assert.IsFalse(_game.TableStealthController.FlopEngaged,
+                    "Leaving the human must release the committed flop and require another Interact.");
             }
+        }
+
+        [UnityTest]
+        public IEnumerator TableStealth_CheddarBarkBurp_OpensShortSneakWindowForCocoa()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.TableStealth);
+            yield return null;
+
+            _cheddar.transform.position = _game.TableHumanZone;
+            _cocoa.transform.position = _game.TableStealZone;
+            _cheddar.Bark();
+            yield return null;
+
+            Assert.IsTrue(_game.TableStealthController.BurpWindowForCocoa,
+                "Cheddar's live bark by the human must activate Cocoa's alternate sneak route.");
+            Assert.IsTrue(_game.TableStealthPuzzle.HumanDistracted);
+            Assert.That(_game.ObjectiveLabel, Does.Contain("Cocoa"));
+
+            float deadline = Time.realtimeSinceStartup + 4f;
+            while (Time.realtimeSinceStartup < deadline && _game.TableStealthPuzzle.SneakProgress <= 0f)
+            {
+                _cheddar.transform.position = _game.TableHumanZone;
+                _cocoa.transform.position = _game.TableStealZone;
+                yield return null;
+            }
+
+            Assert.Greater(_game.TableStealthPuzzle.SneakProgress, 0f,
+                "Cocoa should turn Cheddar's burp distraction into steak progress.");
         }
 
         private IEnumerator LoadArena()

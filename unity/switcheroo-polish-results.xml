@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="8" result="Passed" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-07-16 22:52:18Z" end-time="2026-07-16 22:52:19Z" duration="0.9251844">
+  <test-suite type="TestSuite" id="1662" name="Cheddar and Cocoa" fullname="Cheddar and Cocoa" runstate="Runnable" testcasecount="564" result="Passed" start-time="2026-07-16 22:52:18Z" end-time="2026-07-16 22:52:19Z" duration="0.925184" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="SetUpFixture" id="1001" name="CheddarAndCocoa.Tests.PlayMode.dll" fullname="PlayModeGlobalTestSetup" classname="PlayModeGlobalTestSetup" runstate="Runnable" testcasecount="564" result="Passed" start-time="2026-07-16 22:52:18Z" end-time="2026-07-16 22:52:19Z" duration="0.915430" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="79253" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1655" name="CheddarAndCocoa" fullname="CheddarAndCocoa" runstate="Runnable" testcasecount="564" result="Passed" start-time="2026-07-16 22:52:18Z" end-time="2026-07-16 22:52:19Z" duration="0.908620" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1658" name="Tests" fullname="CheddarAndCocoa.Tests" runstate="Runnable" testcasecount="562" result="Passed" start-time="2026-07-16 22:52:18Z" end-time="2026-07-16 22:52:19Z" duration="0.903913" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1343" name="CoopSquirrelSwitcherooPlayModeTests" fullname="CheddarAndCocoa.Tests.CoopSquirrelSwitcherooPlayModeTests" classname="CheddarAndCocoa.Tests.CoopSquirrelSwitcherooPlayModeTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-07-16 22:52:18Z" end-time="2026-07-16 22:52:19Z" duration="0.894187" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1344" name="Switcheroo_AppearsInMissionSelectRotation" fullname="CheddarAndCocoa.Tests.CoopSquirrelSwitcherooPlayModeTests.Switcheroo_AppearsInMissionSelectRotation" methodname="Switcheroo_AppearsInMissionSelectRotation" classname="CheddarAndCocoa.Tests.CoopSquirrelSwitcherooPlayModeTests" runstate="Runnable" seed="1935166247" result="Passed" start-time="2026-07-16 22:52:18Z" end-time="2026-07-16 22:52:19Z" duration="0.506670" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1346" name="Switcheroo_ClearPath_BaitThenRaidThreeTimes" fullname="CheddarAndCocoa.Tests.CoopSquirrelSwitcherooPlayModeTests.Switcheroo_ClearPath_BaitThenRaidThreeTimes" methodname="Switcheroo_ClearPath_BaitThenRaidThreeTimes" classname="CheddarAndCocoa.Tests.CoopSquirrelSwitcherooPlayModeTests" runstate="Runnable" seed="625983520" result="Passed" start-time="2026-07-16 22:52:19Z" end-time="2026-07-16 22:52:19Z" duration="0.080185" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1351" name="Switcheroo_CocoaMustInteractAtStash_DuringCommittedWindow" fullname="CheddarAndCocoa.Tests.CoopSquirrelSwitcherooPlayModeTests.Switcheroo_CocoaMustInteractAtStash_DuringCommittedWindow" methodname="Switcheroo_CocoaMustInteractAtStash_DuringCommittedWindow" classname="CheddarAndCocoa.Tests.CoopSquirrelSwitcherooPlayModeTests" runstate="Runnable" seed="1082604952" result="Passed" start-time="2026-07-16 22:52:19Z" end-time="2026-07-16 22:52:19Z" duration="0.047157" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[Cocoa] interact (grab placeholder)
+[Cocoa] interact (grab placeholder)
+]]></output>
+            </test-case>
+            <test-case id="1348" name="Switcheroo_FailPath_OverBaitsTooManyTimes" fullname="CheddarAndCocoa.Tests.CoopSquirrelSwitcherooPlayModeTests.Switcheroo_FailPath_OverBaitsTooManyTimes" methodname="Switcheroo_FailPath_OverBaitsTooManyTimes" classname="CheddarAndCocoa.Tests.CoopSquirrelSwitcherooPlayModeTests" runstate="Runnable" seed="588764717" result="Passed" start-time="2026-07-16 22:52:19Z" end-time="2026-07-16 22:52:19Z" duration="0.051944" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1350" name="Switcheroo_PositionDriven_CheddarMustBarkToBait_ThenLeavingDecaysIt" fullname="CheddarAndCocoa.Tests.CoopSquirrelSwitcherooPlayModeTests.Switcheroo_PositionDriven_CheddarMustBarkToBait_ThenLeavingDecaysIt" methodname="Switcheroo_PositionDriven_CheddarMustBarkToBait_ThenLeavingDecaysIt" classname="CheddarAndCocoa.Tests.CoopSquirrelSwitcherooPlayModeTests" runstate="Runnable" seed="1427282179" result="Passed" start-time="2026-07-16 22:52:19Z" end-time="2026-07-16 22:52:19Z" duration="0.076293" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[Cheddar] WOOF!
+]]></output>
+            </test-case>
+            <test-case id="1349" name="Switcheroo_Replay_ResetsThePuzzle" fullname="CheddarAndCocoa.Tests.CoopSquirrelSwitcherooPlayModeTests.Switcheroo_Replay_ResetsThePuzzle" methodname="Switcheroo_Replay_ResetsThePuzzle" classname="CheddarAndCocoa.Tests.CoopSquirrelSwitcherooPlayModeTests" runstate="Runnable" seed="334654246" result="Passed" start-time="2026-07-16 22:52:19Z" end-time="2026-07-16 22:52:19Z" duration="0.042365" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1345" name="Switcheroo_RunsThroughDedicatedController" fullname="CheddarAndCocoa.Tests.CoopSquirrelSwitcherooPlayModeTests.Switcheroo_RunsThroughDedicatedController" methodname="Switcheroo_RunsThroughDedicatedController" classname="CheddarAndCocoa.Tests.CoopSquirrelSwitcherooPlayModeTests" runstate="Runnable" seed="1310316442" result="Passed" start-time="2026-07-16 22:52:19Z" end-time="2026-07-16 22:52:19Z" duration="0.043135" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1347" name="Switcheroo_StrikeWhileGuarding_Whiffs" fullname="CheddarAndCocoa.Tests.CoopSquirrelSwitcherooPlayModeTests.Switcheroo_StrikeWhileGuarding_Whiffs" methodname="Switcheroo_StrikeWhileGuarding_Whiffs" classname="CheddarAndCocoa.Tests.CoopSquirrelSwitcherooPlayModeTests" runstate="Runnable" seed="289678688" result="Passed" start-time="2026-07-16 22:52:19Z" end-time="2026-07-16 22:52:19Z" duration="0.040683" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: /Users/kchapman/Weeniegame/unity/switcheroo-polish-results.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

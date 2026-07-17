@@ -147,7 +147,7 @@ namespace CheddarAndCocoa.Tests
             GameManager.MissionVariant.BackyardRescue => 0,
             GameManager.MissionVariant.SnackHeist => 0,
             GameManager.MissionVariant.SockPanic => ScoreEventCatalog.BasketTipped.Points + ScoreEventCatalog.SockDive.Points,
-            GameManager.MissionVariant.SquirrelConspiracy => ScoreEventCatalog.GoodHerd.Points * 4
+            GameManager.MissionVariant.SquirrelConspiracy => ScoreEventCatalog.Cutoff.Points * 4
                 + ScoreEventCatalog.DoubleBarkBlock.Points + ScoreEventCatalog.StashFound.Points
                 + ScoreEventCatalog.ConspiracyCracked.Points,
             GameManager.MissionVariant.EagleShadowPanic => ScoreEventCatalog.SafeHide.Points * 2 // RequiredHides

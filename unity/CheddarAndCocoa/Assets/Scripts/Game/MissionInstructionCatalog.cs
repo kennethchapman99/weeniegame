@@ -21,21 +21,21 @@ namespace CheddarAndCocoa.Game
                 case GameManager.MissionVariant.SquirrelConspiracy:
                     return "A suspicious squirrel has been plotting in the yard. Cheddar and Cocoa herd it around its route, cut off its escape, and crack open its hidden stash.";
                 case GameManager.MissionVariant.EagleShadowPanic:
-                    return "A huge eagle shadow sweeps over the yard. Cheddar and Cocoa dive for cover, rescue a stranded toy caught in the open, then face the shadow down together.";
+                    return "A huge eagle shadow sweeps the whole yard. Both dogs dive for cover, Cheddar wiggles free through Cocoa's timed pulls, then they face the eagle down together.";
                 case GameManager.MissionVariant.CoyotesFence:
                     return "Coyotes are testing the fence line. Cheddar and Cocoa split up to pin the intruder with bark pressure and patch every weak spot before the yard is breached.";
                 case GameManager.MissionVariant.WeenieRoundup:
                     return "A whole litter of scattered weenies needs herding home. Cheddar and Cocoa carry them one by one back to the home bowl before time runs out.";
                 case GameManager.MissionVariant.ScentSearch:
-                    return "Cheddar and Cocoa follow their noses through the yard's buried-bone puzzle, sniffing out hot and cold trails to find every bone without wasting a dig.";
+                    return "Cheddar catches the broad direction of a buried bone, Cocoa tracks down the exact red-hot patch, and Cheddar digs only after her bark call.";
                 case GameManager.MissionVariant.ThunderstormComfort:
-                    return "A summer storm is rolling in and it's spooking the pups, especially Cheddar. Cheddar and Cocoa huddle close together to comfort each other through every clap.";
+                    return "A summer storm is spooking Cheddar. The dogs huddle, Cocoa gives the steady reassurance bark, and Cheddar answers before each thunderclap.";
                 case GameManager.MissionVariant.MarkTheYard:
                     return "Territory matters. Cheddar and Cocoa race to claim every zone in the yard and hold them all at once before a scheming squirrel steals them back.";
                 case GameManager.MissionVariant.LeashWalk:
                     return "Cheddar and Cocoa share a single leash for a proper neighborhood walk, staying close enough that it never snaps taut as they hit every checkpoint.";
                 case GameManager.MissionVariant.CarRide:
-                    return "The dogs are riding the back seat home. Every turn tilts the cabin and sends pups, cooler, and toy bin sliding - and when the brakes slam, only a well-planted dog stays off the floor.";
+                    return "The dogs are riding the back seat home. Turns send pups and junk sliding; at each brake Cocoa plants first so Cheddar can tuck safely behind her.";
                 case GameManager.MissionVariant.GateCrash:
                     return "Cheddar and Cocoa spot a heavy gate standing between them and a toy on the other side. One braces it open while the other squeezes through before it slams shut.";
                 case GameManager.MissionVariant.TableStealth:
@@ -92,76 +92,83 @@ namespace CheddarAndCocoa.Game
                 case GameManager.MissionVariant.SnackHeist:
                     return new[]
                     {
-                        "Walk into snack-plate props to stash them (Stash snacks 0/4).",
-                        "SQUIRREL SNACK HEIST - BARK! means bark near the squirrel to scare it off the targeted snack.",
+                        "Cheddar is the snack thief: run him into snack plates to stash 4 forbidden snacks.",
+                        "Cocoa is the guard: when SQUIRREL SNACK HEIST - BARK! appears, bark near the squirrel to open Cheddar's safe stealing window.",
+                        "The watched final snack will not bank until Cocoa has stopped at least one active heist.",
+                        "Wrong roles cause a harmless snack audit or mouth-full bark, so swap jobs and recover.",
                         "Two successful steals ends the run, so don't let it reach a snack twice."
                     };
                 case GameManager.MissionVariant.SockPanic:
                     return new[]
                     {
-                        "One dog interacts at the LAUNDRY BASKET to tip it open (TIP BASKET).",
-                        "The other then has 6 seconds to dive onto the exposed sock (DIVE FOR SOCK) - the tipper can't grab their own sock, so trade roles.",
-                        "Return 5 socks before time runs out; a missed dive just flops the basket shut, nothing is lost for good."
+                        "Cocoa is the anchor: Interact at the LAUNDRY BASKET to tip it open, then stay beside it and HOLD.",
+                        "Cheddar is the chaos diver: once Cocoa opens the basket, he has 6 seconds to dive onto the exposed sock.",
+                        "If Cocoa leaves, Cocoa grabs the sock, or time expires, the basket flops shut; recover by resetting the same hold-and-dive beat.",
+                        "Rescue 5 socks before time runs out to build Cheddar's glorious sock mountain."
                     };
                 case GameManager.MissionVariant.SquirrelConspiracy:
                     return new[]
                     {
-                        "Herd the squirrel around its route - the nearest dog gets BARK HERD guidance while the partner runs to the glowing HOLD CUTOFF zone.",
-                        "A cutoff only scores if the partner is actually standing in that zone when you bark.",
-                        "Build up control to reveal the hidden stash, then interact there to crack the case before the squirrel racks up 3 taunts."
+                        "Cheddar pressures the squirrel with BARK HERD while Cocoa runs ahead to the glowing HOLD CUTOFF zone.",
+                        "Cheddar's bark cannot advance the route unless Cocoa is physically holding the active cutoff; a solo herd escapes but remains recoverable.",
+                        "Complete 4 handoffs to reveal the hidden stash, then Cocoa reaches it and Interacts while Cheddar guards the culprit.",
+                        "Crack the case before the squirrel racks up 3 taunts."
                     };
                 case GameManager.MissionVariant.EagleShadowPanic:
                     return new[]
                     {
-                        "When the eagle's shadow sweeps the yard, get into one of the three HIDE HERE cover zones before it passes over you (2 clean hides opens the rescue).",
-                        "Then one dog distracts while the other frees the stranded toy caught in the open.",
-                        "Finally bring both dogs together and bark for the united-front finish.",
+                        "A completed sweep crosses the whole yard: both dogs must be inside HIDE HERE cover when it resolves (2 clean hides opens the rescue).",
+                        "The eagle then snatches Cheddar. He Interacts to WIGGLE the grip open; Cocoa gets close and Interacts to PULL during that short window.",
+                        "Repeat the wiggle/pull handoff three times, then huddle both dogs and bark together for the united-front finish.",
                         "Three exposures caught in the open ends the mission."
                     };
                 case GameManager.MissionVariant.CoyotesFence:
                     return new[]
                     {
-                        "When a coyote is testing a fence gap, one dog bark-pins it (hold the bark) while the partner interacts at the WEAK SPOT to fill the dirt.",
-                        "Fills only count while the pin is held.",
-                        "Bark away the fake snack lure instead of taking the bait.",
+                        "Cocoa is the steady sentinel: get near the coyote and BARK to pin it for a short opening.",
+                        "Cheddar is the digger: reach the active WEAK SPOT and Interact before Cocoa's pin expires.",
+                        "Neither dog can perform both jobs, and out-of-range barks do not pin the coyote; repin and recover if the opening closes.",
+                        "Cocoa barks away the fake snack lure instead of letting Cheddar take the bait.",
                         "After enough repairs, both dogs bark together to block the final push; 3 breaches ends the mission."
                     };
                 case GameManager.MissionVariant.WeenieRoundup:
                     return new[]
                     {
-                        "Walk into any loose WEENIE marker to pick it up, then carry it to the HOME BOWL in the back corner.",
-                        "Both dogs can carry at once, so split the yard between you.",
-                        "A fumble bounces a dropped weenie a short distance - just chase it down again.",
-                        "Deliver all 5 before the timer runs out."
+                        "Split up for the four small WEENIES: walk into one to pick it up, then carry it to the HOME BOWL.",
+                        "The JUMBO is a team haul: Cocoa stands beside it to steady, then Cheddar grabs it.",
+                        "Stay together all the way to the bowl; separation makes the jumbo fumble, but it can be grabbed again immediately.",
+                        "Deliver all 5 before the timer runs out, then enjoy the live bowl-full payoff."
                     };
                 case GameManager.MissionVariant.ScentSearch:
                     return new[]
                     {
-                        "Bark near a DIG? mound for a heat readout (RED HOT / WARM / COLD) toward the buried bone.",
-                        "Move toward hotter readings, then interact to dig the mound you think is hottest.",
-                        "A correct dig yields a bone and re-buries the next one elsewhere; a wrong dig wastes one of your four allowed misses.",
-                        "Find 3 bones to clear it."
+                        "Cheddar can bark for a broad compass direction, but Cocoa is the precise tracker.",
+                        "Move Cocoa between DIG? patches and bark for COLD / WARM / RED HOT; a red-hot bark calls the exact mound.",
+                        "Cheddar follows Cocoa's call and Interacts at the glowing mound. Cocoa cannot dig, and premature role attempts coach without spending a miss.",
+                        "A called wrong mound costs one of four cold digs. Find 3 bones, then enjoy the live cache reveal."
                     };
                 case GameManager.MissionVariant.ThunderstormComfort:
                     return new[]
                     {
-                        "There's nothing to collect - just stay close together.",
-                        "When the STORM CLOUD flashes HUDDLE! for a thunderclap, keep both dogs huddled close so panic drains instead of climbing.",
-                        "Cheddar spooks harder than Cocoa, so watch his meter.",
-                        "Weather 5 claps without either dog's panic maxing out."
+                        "Huddle close before each clap; passive proximity calms panic but does not prepare the dogs for thunder.",
+                        "Cocoa BARKS first with a steady reassurance, then Cheddar BARKS back before her short window closes.",
+                        "Hold the physical huddle after COMFORT READY. A missed order, expired answer, or separation spikes panic but the next clap is immediately recoverable.",
+                        "Prepare and weather 5 claps without either dog's panic maxing out, then enjoy the live storm-passed beat."
                     };
                 case GameManager.MissionVariant.MarkTheYard:
                     return new[]
                     {
-                        "Split up and stand in each of the 5 CLAIM zones to mark them green.",
-                        "The squirrel periodically re-marks whichever claimed zone is nearest it, so hold ground across the whole yard.",
-                        "Win the instant all five zones glow green at the same time."
+                        "Cheddar runs the route: enter a grey zone and press Interact to deliberately mark it green.",
+                        "Each mark attracts the reclaim squirrel; Cocoa tracks it down and BARKS nearby to drive it off.",
+                        "Cocoa's defense creates a short opening for Cheddar to reach another zone before the squirrel returns.",
+                        "A stolen mark can be reclaimed safely; hold all five green at once to own the yard."
                     };
                 case GameManager.MissionVariant.LeashWalk:
                     return new[]
                     {
                         "Cheddar and Cocoa share one leash, so stay close as you walk.",
-                        "Move together through each of the four CHECKPOINT markers in order - both dogs must stand on the current checkpoint to bank it.",
+                        "The named scout alternates each checkpoint: reach the marker and BARK the route call so your partner knows where to join.",
+                        "After the call, both dogs must stand on the current checkpoint together to bank it.",
                         "Drift too far apart and the leash snaps taut as a penalty; four snaps fails the walk."
                     };
                 case GameManager.MissionVariant.CarRide:
@@ -169,66 +176,73 @@ namespace CheddarAndCocoa.Game
                     {
                         "Watch the driver: the dashboard telegraphs every TURN and BRAKE before it hits.",
                         "Turns tilt the cabin and slide dogs and seat junk sideways - fight the slide, and jump over the cooler and toy bin as they sweep past.",
-                        "When BRAKES flash, press interact to brace before the stop or you're flung into the front seats.",
+                        "When BRAKES flash, Cocoa Interacts to plant first; Cheddar gets beside her and Interacts to tuck behind the anchor. Hold together until the stop.",
                         "Ride out all 7 road events; 5 tumbles fails the drive. Bark together and the driver eases up."
                     };
                 case GameManager.MissionVariant.GateCrash:
                     return new[]
                     {
-                        "Cocoa braces the heavy gate open (anchor) while Cheddar squeezes through the gap to reach the toy on the other side (crosser).",
-                        "If Cocoa lets go mid-squeeze, the gate snaps shut and Cheddar has to start his crossing over - hold steady until he's through."
+                        "Cocoa creates the opening: reach the heavy gate and press Interact to plant as the anchor.",
+                        "Cheddar turns that opening into progress by squeezing through the gap toward the toy while Cocoa stays beside the gate.",
+                        "If Cocoa leaves, the gate snaps shut, Cheddar loses the crossing, and Cocoa must Interact again to re-anchor.",
+                        "Hold steady until Cheddar claims the toy; wrong-dog and out-of-range attempts coach the pair without costing the round."
                     };
                 case GameManager.MissionVariant.TableStealth:
                     return new[]
                     {
                         "A steak is dropped under the dinner table and a human is watching.",
-                        "One dog holds the human's attention: Cocoa flops belly-up for a rub, or Cheddar burps a distraction cloud.",
-                        "The partner sneaks the steak along the safe lane in segments.",
-                        "Sneak while the human is actually watching and you get spotted, sent back to your last checkpoint."
+                        "Choose the opening: Cocoa reaches the human and Interacts to hold a belly-rub flop, or Cheddar Barks beside the human to fire a short burp cloud.",
+                        "Cocoa's sustained flop sends Cheddar to the steak; Cheddar's burst burp sends Cocoa. The partner turns the distraction into sneak progress.",
+                        "Leaving a flop ends that hold, while a burp fades quickly. Sneaking without real attention gets the pair spotted, but the setup is recoverable.",
+                        "Secure the steak before four exposures; the stolen-steak gag holds in the live world before the result card."
                     };
                 case GameManager.MissionVariant.SquirrelSwitcheroo:
                     return new[]
                     {
                         "The squirrel is guarding its buried stash.",
-                        "Cheddar feints toward a decoy nut pile to bait the squirrel into committing to the chase.",
-                        "Only while it's fully committed can Cocoa slip in and raid the real stash.",
-                        "Hold the feint too long and the squirrel wises up (or Cheddar chases his own decoy) - feather off and try again."
+                        "Cheddar reaches the decoy and Barks to start the feint, then feathers away once the squirrel commits.",
+                        "Only during that chase window can Cocoa reach the real stash and press Interact for one raid.",
+                        "Proximity alone does nothing. A guarded raid bonks harmlessly; over-baiting makes the squirrel wise up; both failures explain the reset.",
+                        "Pull three clean switcheroos; the cracked-stash payoff holds in the live world before results."
                     };
                 case GameManager.MissionVariant.WalkCampaign:
                     return new[]
                     {
-                        "Neither signal works alone: Cocoa holds a dignified door-stare while Cheddar presents the leash at the same time.",
-                        "The human only gets the message when both stations are held together.",
-                        "Cover only one station (or wander off) and the human grabs the wrong thing; too many misreads calls off the walk."
+                        "Neither signal works alone: Cocoa reaches the door and presses Interact for the dignified stare; Cheddar reaches the leash and presses Interact to present it.",
+                        "Both dogs must stay beside their station so the two deliberate poses overlap long enough for the human to understand.",
+                        "Leaving breaks that pose and requires another Interact. One signal held alone eventually makes the human fetch a funny wrong item.",
+                        "After three misreads the walk is off; a clean campaign holds the live WALKIES payoff before results."
                     };
                 case GameManager.MissionVariant.BoneRelay:
                     return new[]
                     {
                         "Four look-alike dirt mounds hide one real bone.",
-                        "Cocoa noses the scent post to call which mound is real; only Cheddar can dig, so he waits for Cocoa's call before digging.",
-                        "Digging blind or digging a decoy wastes a dig - waste too many and the team gives up.",
-                        "Each bone found re-buries the next one somewhere new."
+                        "Cocoa reaches the scent post and BARKS to call which mound is real; proximity alone does not reveal it.",
+                        "Only Cheddar can dig, so he waits for Cocoa's glowing call before committing to a mound.",
+                        "A blind/decoy dig wastes one chance; each find re-buries the next bone, and three finds expose the stash."
                     };
                 case GameManager.MissionVariant.GreatEscape:
                     return new[]
                     {
                         "Run the contraption chain in role order: Cocoa paws the latch, Cheddar shoulders the gate, Cocoa drags the cooler, Cheddar squeezes through.",
-                        "Only the glowing station's owner can advance it - wrong dog or wrong order is a harmless fumble.",
-                        "Dawdling eases the chain back a step; botch it too many times and the breakout fails."
+                        "The glowing station's named owner must reach it and press Interact; proximity alone never fires a step.",
+                        "A deliberate wrong-dog Interact makes a harmless, readable CLANK. Dawdling eases the chain back one station, which can be repeated normally.",
+                        "Six total fumbles/settles fails the breakout; a clean final squeeze holds the completed contraption and FREE DOGS payoff before results."
                     };
                 case GameManager.MissionVariant.ChaosMachine:
                     return new[]
                     {
-                        "Pre-position both dogs at their junctions, then pull the lever - the cascade (towel drop, basket tip, toy launch) runs itself.",
-                        "Each junction has a brief window where its owner dog must be in place, or the machine visibly jams there.",
-                        "Re-pull the lever to resume from the jam; too many misfires fails the run."
+                        "Cheddar reaches the lever and presses Interact to start or resume the towel-drop, basket-tip, toy-launch cascade; Cocoa pre-positions at the first junction.",
+                        "While it rolls, the named owner must reach the glowing junction and Interact before its brief window expires. The other dog gets a head start toward the next station.",
+                        "Proximity alone never pulls or fires anything. Wrong paws coach; a missed timer visibly jams at that exact junction.",
+                        "Cheddar re-pulls after a jam; four misfires fails. A clean toy launch holds the completed glorious mess before results."
                     };
                 case GameManager.MissionVariant.BlanketCatch:
                     return new[]
                     {
-                        "Both dogs grip opposite corners of a blanket and stretch it between them to catch food falling from the counter.",
-                        "Too close together and it sags (slack); too far apart and it RIPS - find the taut middle band.",
-                        "Keep the blanket's midpoint under the falling snack.",
+                        "Cheddar and Cocoa spread apart to pull the blanket taut; too close sags and too far RIPS.",
+                        "Once the blanket is taut, Cocoa BARKS to call the next snack down from the counter.",
+                        "Both dogs slide the blanket's midpoint under the falling snack and hold the catch together.",
                         "Rip the blanket too many times and the mission fails."
                     };
                 case GameManager.MissionVariant.BabyBirdBedlam:

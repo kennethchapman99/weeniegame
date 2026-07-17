@@ -3,12 +3,13 @@ using UnityEngine;
 
 namespace CheddarAndCocoa.Game
 {
-    public sealed class BoneRelayMissionController : IMissionController
+    public sealed class BoneRelayMissionController : IMissionController, IMissionSuccessPresentationController
     {
         private const float ScentRange = 3.5f;
         private const float DigRange = 3f;
         private const int FindsNeeded = 3;
         private const int MaxWasted = 5;
+        private const float SuccessHoldSeconds = 1.15f;
         private static readonly Vector2 ScentZonePos = new(0f, 9f);
         private static readonly Vector2[] MoundSpots = { new(-12f, -6f), new(12f, -6f), new(-12f, 6f), new(12f, 6f) };
         private static readonly Color MoundCallColor = new(0.5f, 0.9f, 0.55f);
@@ -29,9 +30,11 @@ namespace CheddarAndCocoa.Game
         private int _blindSeen;
         private int _wrongSeen;
         private bool _failed;
+        private float _successHoldRemaining;
 
         public GameManager.MissionVariant Variant => GameManager.MissionVariant.BoneRelay;
-        public bool IsComplete => _puzzle.Solved;
+        public bool IsComplete => _puzzle.Solved && _successHoldRemaining <= 0f;
+        public bool IsPresentingSuccessfulOutcome => _puzzle.Solved && _successHoldRemaining > 0f;
         public bool IsFailed => _failed;
         public string FailReason => _failed ? "The dogs dug up half the yard guessing instead of waiting for Cocoa's call." : null;
         public CoopScentRelayPuzzle Puzzle => _puzzle;
@@ -45,9 +48,11 @@ namespace CheddarAndCocoa.Game
         {
             get
             {
+                if (IsPresentingSuccessfulOutcome)
+                    return "Bone detail complete! Cocoa called every scent and Cheddar dug up the stash.";
                 int wasted = _puzzle.BlindActs + _puzzle.WrongDigs;
                 if (!_puzzle.Known)
-                    return $"Cocoa: sniff the scent post to call the real mound - Cheddar, wait for it! (bones {_puzzle.Finds}/{FindsNeeded}, wasted {wasted}/{MaxWasted})";
+                    return $"Cocoa: reach the scent post and BARK to call the real mound - Cheddar, wait! (bones {_puzzle.Finds}/{FindsNeeded}, wasted {wasted}/{MaxWasted})";
                 return $"Cheddar: dig the glowing mound Cocoa called! (bones {_puzzle.Finds}/{FindsNeeded}, wasted {wasted}/{MaxWasted})";
             }
         }
@@ -71,6 +76,7 @@ namespace CheddarAndCocoa.Game
             _lastActedMound = -1;
             ClearMoundOverrides();
             _failed = false;
+            _successHoldRemaining = 0f;
             SetSceneActive(true);
             MissionPropArt.SetSprite(_scentPostArt, FinalGameplayArt.BoneRelayScentPostIdle);
             UpdateMoundVisuals();
@@ -78,14 +84,16 @@ namespace CheddarAndCocoa.Game
 
         public void Tick(float deltaTime, float now)
         {
-            if (_puzzle.Solved || _failed || _mounds == null) return;
+            if (_puzzle.Solved)
+            {
+                _successHoldRemaining = Mathf.Max(0f, _successHoldRemaining - deltaTime);
+                return;
+            }
+            if (_failed || _mounds == null) return;
 
             int reader = _context.IndexOfDog(DogId.Cocoa);
             int digger = _context.IndexOfDog(DogId.Cheddar);
             if (reader < 0 || digger < 0) return;
-
-            if (Vector2.Distance(_context.Dogs[reader].transform.position, ScentZonePos) <= ScentRange)
-                _puzzle.Reveal();
 
             int inside = -1;
             for (int i = 0; i < _mounds.Length; i++)
@@ -106,7 +114,22 @@ namespace CheddarAndCocoa.Game
             UpdateMoundVisuals();
         }
 
-        public bool HandleBark(int dogIndex) => false;
+        public bool HandleBark(int dogIndex)
+        {
+            if (_puzzle.Solved || _failed || _puzzle.Known) return false;
+            if (_context.IndexOfDog(DogId.Cocoa) != dogIndex) return false;
+
+            Vector2 cocoaPos = _context.Dogs[dogIndex].transform.position;
+            if (Vector2.Distance(cocoaPos, ScentZonePos) > ScentRange)
+            {
+                _context.MarkFailedInteraction(DogId.Cocoa, "Reach the scent post before barking the call.");
+                _context.SetCue("Cocoa needs the scent first - reach the purple post, then BARK the mound call.");
+                return false;
+            }
+
+            RevealFromCocoaBark(dogIndex);
+            return true;
+        }
 
         public void Cleanup() => SetSceneActive(false);
 
@@ -124,7 +147,7 @@ namespace CheddarAndCocoa.Game
             if (_context.IndexOfDog(DogId.Cocoa) == dogIndex)
             {
                 target = _scentPost != null ? _scentPost.transform : null;
-                copy = "SNIFF SCENT";
+                copy = "BARK THE SCENT";
                 hideDistance = ScentRange;
             }
             else
@@ -151,6 +174,8 @@ namespace CheddarAndCocoa.Game
             UpdateMoundVisuals();
         }
 
+        public bool ForceCocoaCall() => HandleBark(_context.IndexOfDog(DogId.Cocoa));
+
         public void ForceBoneDig(int target)
         {
             _lastActedMound = target;
@@ -158,6 +183,8 @@ namespace CheddarAndCocoa.Game
             HandleProgress();
             if (!_failed) UpdateMoundVisuals();
         }
+
+        public void ForceFinishSuccessPresentation() => _successHoldRemaining = 0f;
 
         private void HandleProgress()
         {
@@ -175,6 +202,7 @@ namespace CheddarAndCocoa.Game
                 _context.SpawnWorldPop(digPos, "BONE!", new Color(0.5f, 0.9f, 0.55f));
                 _context.LogEvent("BoneFound", $"{_puzzle.Finds}/{FindsNeeded}");
                 SetMoundOverride(_lastActedMound, FinalGameplayArt.BoneRelayMoundFound);
+                if (_puzzle.Solved) CompleteBoneDetail(digPos);
             }
 
             bool wasted = false;
@@ -236,6 +264,34 @@ namespace CheddarAndCocoa.Game
             MissionPropArt.SetSprite(_scentPostArt, _puzzle.Known
                 ? FinalGameplayArt.BoneRelayScentPostCalled
                 : FinalGameplayArt.BoneRelayScentPostIdle);
+        }
+
+        private void RevealFromCocoaBark(int readerIndex)
+        {
+            ClearMoundOverrides();
+            _puzzle.Reveal();
+            _context.CreditDog(readerIndex);
+            _context.SetFeedback(GameManager.FeedbackKind.SquirrelScared);
+            _context.SetCue("Cocoa caught the scent and barked the call - Cheddar, dig the glowing mound!");
+            _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "SCENT CALLED!");
+            _context.SpawnWorldPop(ScentZonePos + Vector2.up, "WOOF - FOUND IT!", new Color(0.65f, 0.9f, 1f));
+            _context.RequestRumble("bone_scent_call", 0.1f, 0.24f, 0.09f);
+            _context.LogEvent("BoneScentCalled", $"mound {_puzzle.RevealedTarget + 1}");
+            _context.LogObjectiveChanged();
+            UpdateMoundVisuals();
+        }
+
+        private void CompleteBoneDetail(Vector2 digPos)
+        {
+            _successHoldRemaining = SuccessHoldSeconds;
+            _context.SetFeedback(GameManager.FeedbackKind.LevelClear);
+            _context.SetCue("Bone detail complete! Cocoa's nose and Cheddar's paws uncovered the whole stash.");
+            _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "BONE STASH!");
+            _context.SpawnWorldPop(digPos + Vector2.up, "THREE BONES!", new Color(1f, 0.85f, 0.3f));
+            _context.RequestAudioCue(ArenaFeedbackCatalog.MissionWin);
+            _context.RequestRumble("bone_detail_complete", 0.28f, 0.55f, 0.2f);
+            _context.LogEvent("BoneDetailComplete", "Holding live-world scent-and-dig payoff");
+            _context.LogObjectiveChanged();
         }
 
         private void BuildScene()

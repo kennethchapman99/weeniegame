@@ -29,6 +29,20 @@ namespace CheddarAndCocoa.Tests
             Assert.That(Path.GetFileName(Controller.OpeningExplainerPath),
                 Is.EqualTo("operation_pee_break_intro.mp4"));
             Assert.AreEqual(10.042f, PeeBreakMissionController.OpeningExplainerDurationSeconds, 0.001f);
+            Assert.AreEqual("TEENAGER COMPREHENSION", PeeBreakMissionController.OpeningComprehensionCorrectionLabel,
+                "The runtime overlay must replace the explainer's baked misspelled meter heading.");
+            Assert.IsFalse(PeeBreakMissionController.NeedsComprehensionCorrection(0d));
+            Assert.IsFalse(PeeBreakMissionController.NeedsComprehensionCorrection(4d),
+                "The preceding bladder-urgency shot must remain unobscured.");
+            Assert.IsFalse(PeeBreakMissionController.NeedsComprehensionCorrection(4.5d));
+            Assert.IsTrue(PeeBreakMissionController.NeedsComprehensionCorrection(4.65d));
+            Assert.IsTrue(PeeBreakMissionController.NeedsComprehensionCorrection(5.5d));
+            Assert.IsFalse(PeeBreakMissionController.NeedsComprehensionCorrection(6d),
+                "The valid bladder-urgency shot must remain unobscured.");
+            Assert.IsFalse(PeeBreakMissionController.NeedsComprehensionCorrection(7.2d));
+            Assert.IsTrue(PeeBreakMissionController.NeedsComprehensionCorrection(7.35d));
+            Assert.IsTrue(PeeBreakMissionController.NeedsComprehensionCorrection(8.5d));
+            Assert.IsFalse(PeeBreakMissionController.NeedsComprehensionCorrection(9.5d));
 
             var videoObject = FindLoadedObject("PeeBreakOpeningExplainerVideo");
             Assert.IsNotNull(videoObject);

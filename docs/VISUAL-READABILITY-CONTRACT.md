@@ -32,6 +32,14 @@ debug/playtest copy. In normal play the generated arrow icon can point at the ne
 the text label appears only with the F1 overlay. If a level cannot be understood with the arrow text
 hidden, the level needs stronger environment staging, object pose, or state-change cues.
 
+Every controller-owned objective target also drives a short three-paw scent breadcrumb near the
+relevant dog. The trail is a heading hint, not a GPS route: it reveals only the first few metres,
+uses that dog's identity color at low opacity, animates softly in sequence, and clears inside the
+interaction zone. It must never extend all the way to a hidden objective or replace authored
+landmarks, prop silhouettes, state animation, and partner communication. Because all 23 registered
+missions use the shared `TryGetObjectiveTarget` contract, this rule applies roster-wide without
+moving mission state into `GameManager`.
+
 Actionable bark, tug, and rescue range rings may remain visible while the action is available, but
 their support text is debug/playtest copy. In normal play these rings must read through icon shape,
 placement, scale, color, and object/character context, not through labels like `BARK RANGE`, `BOTH

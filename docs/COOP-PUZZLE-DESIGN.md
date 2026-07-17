@@ -236,10 +236,11 @@ Upgrade from collect/protect/tug into a squirrel trap sequence:
 
 ### Snack Heist
 
-Make forbidden snacks a stealth puzzle:
-- One dog distracts the human/table watcher.
-- The other nudges a chair, grabs a snack, and carries it through a safe lane.
-- Snack smell attracts Cheddar harder, so Cocoa may need to body-block him from bait.
+Make forbidden snacks an asymmetric guard-and-steal puzzle:
+- Cheddar is the chaos thief who can bank snack plates; his first theft provokes an immediate squirrel run.
+- Cocoa is the steady guard whose in-range bark cancels an active steal and opens Cheddar's safe theft window.
+- The watched final snack cannot bank until Cocoa has stopped at least one heist, so the partner handoff is required rather than optional flavor.
+- Wrong-role attempts become a harmless Cocoa quality-control inspection or Cheddar mouth-full bark, then return to the same readable state.
 
 ### Sock Panic
 
@@ -272,23 +273,23 @@ Make repair a three-step role puzzle:
 ### Weenie Roundup
 
 Make carrying require teamwork:
-- Heavy jumbo weenie needs two dogs to carry slowly.
-- Cheddar can solo-carry small ones but is tempted to eat/fumble.
-- Cocoa can steady a carried item through narrow gates.
+- Implemented: four small weenies preserve the fast split-yard carry loop.
+- Implemented: Cocoa must steady the heavy jumbo before Cheddar can grab it.
+- Implemented: Cocoa stays beside Cheddar through the haul; separation causes a readable, recoverable fumble.
 
 ### Scent Search
 
 Make scent information asymmetric:
-- Cheddar gets strong food/bone scent but poor direction near laundry.
-- Cocoa gets steadier direction but weaker range.
-- One dog sniffs from high/clean ground while the other digs.
+- Implemented: Cheddar's excited bark gives only a broad compass direction.
+- Implemented: Cocoa physically searches the patches for a steady `COLD / WARM / RED HOT` read and barks the exact mound call.
+- Implemented: only Cheddar can turn Cocoa's live call into progress by digging; premature role attempts coach without consuming a miss.
 
 ### Thunderstorm Comfort
 
 Make comfort active:
-- One dog gathers blanket/toy comfort objects.
-- The other maintains huddle/calm zone.
-- Thunder changes which object is needed next.
+- Implemented for the current generated-art slice: Cocoa opens each comfort beat with a steady reassurance bark.
+- Implemented: Cheddar must answer within the short window, then both maintain the physical huddle through the clap.
+- Implemented: wrong order, expired timing, or separation raises panic but leaves the next clap immediately recoverable; future object-gathering can extend this loop after couch validation.
 
 ### Mark the Yard
 
@@ -307,9 +308,9 @@ Make leash wrapping useful, not only a penalty:
 ### Car Ride Balance
 
 Make car balance a communication puzzle:
-- One dog sees incoming lurch warning through the window.
-- The other must move first to counterweight.
-- A snack/toy slides across the seat and tempts the wrong movement.
+- Implemented: the shared driver telegraph announces each lurch while sliding cooler/toy hazards still demand individual movement choices.
+- Implemented for every brake: Cocoa must plant first, creating the physical anchor Cheddar uses by moving nearby and tucking in.
+- Implemented: Cheddar-first, out-of-range, or broken-hold attempts explain the miss and recover on the next brake; the optional united bark still eases the next event.
 
 ## Implementation rule
 

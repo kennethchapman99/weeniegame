@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="6" result="Passed" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-07-17 02:41:58Z" end-time="2026-07-17 02:42:01Z" duration="3.516619">
+  <test-suite type="TestSuite" id="1662" name="Cheddar and Cocoa" fullname="Cheddar and Cocoa" runstate="Runnable" testcasecount="564" result="Passed" start-time="2026-07-17 02:41:58Z" end-time="2026-07-17 02:42:01Z" duration="3.516619" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="SetUpFixture" id="1001" name="CheddarAndCocoa.Tests.PlayMode.dll" fullname="PlayModeGlobalTestSetup" classname="PlayModeGlobalTestSetup" runstate="Runnable" testcasecount="564" result="Passed" start-time="2026-07-17 02:41:58Z" end-time="2026-07-17 02:42:01Z" duration="3.506629" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="6903" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1655" name="CheddarAndCocoa" fullname="CheddarAndCocoa" runstate="Runnable" testcasecount="564" result="Passed" start-time="2026-07-17 02:41:58Z" end-time="2026-07-17 02:42:01Z" duration="3.497597" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1658" name="Tests" fullname="CheddarAndCocoa.Tests" runstate="Runnable" testcasecount="562" result="Passed" start-time="2026-07-17 02:41:58Z" end-time="2026-07-17 02:42:01Z" duration="3.491611" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1590" name="SnackHeistPlayModeTests" fullname="CheddarAndCocoa.Tests.SnackHeistPlayModeTests" classname="CheddarAndCocoa.Tests.SnackHeistPlayModeTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-07-17 02:41:58Z" end-time="2026-07-17 02:42:01Z" duration="3.484599" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1592" name="SnackHeist_ClearPath_CollectAllSnacks" fullname="CheddarAndCocoa.Tests.SnackHeistPlayModeTests.SnackHeist_ClearPath_CollectAllSnacks" methodname="SnackHeist_ClearPath_CollectAllSnacks" classname="CheddarAndCocoa.Tests.SnackHeistPlayModeTests" runstate="Runnable" seed="353400243" result="Passed" start-time="2026-07-17 02:41:58Z" end-time="2026-07-17 02:42:01Z" duration="2.609883" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1593" name="SnackHeist_FailPath_SquirrelStealsEnough" fullname="CheddarAndCocoa.Tests.SnackHeistPlayModeTests.SnackHeist_FailPath_SquirrelStealsEnough" methodname="SnackHeist_FailPath_SquirrelStealsEnough" classname="CheddarAndCocoa.Tests.SnackHeistPlayModeTests" runstate="Runnable" seed="1123154530" result="Passed" start-time="2026-07-17 02:42:01Z" end-time="2026-07-17 02:42:01Z" duration="0.109635" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1594" name="SnackHeist_Replay_ResetsState" fullname="CheddarAndCocoa.Tests.SnackHeistPlayModeTests.SnackHeist_Replay_ResetsState" methodname="SnackHeist_Replay_ResetsState" classname="CheddarAndCocoa.Tests.SnackHeistPlayModeTests" runstate="Runnable" seed="1636712623" result="Passed" start-time="2026-07-17 02:42:01Z" end-time="2026-07-17 02:42:01Z" duration="0.043701" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1591" name="SnackHeist_RunsThroughDedicatedController" fullname="CheddarAndCocoa.Tests.SnackHeistPlayModeTests.SnackHeist_RunsThroughDedicatedController" methodname="SnackHeist_RunsThroughDedicatedController" classname="CheddarAndCocoa.Tests.SnackHeistPlayModeTests" runstate="Runnable" seed="1500936691" result="Passed" start-time="2026-07-17 02:42:01Z" end-time="2026-07-17 02:42:01Z" duration="0.037740" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1595" name="SnackHeist_StashedSpriteLingersBeforeTreatDestroyed" fullname="CheddarAndCocoa.Tests.SnackHeistPlayModeTests.SnackHeist_StashedSpriteLingersBeforeTreatDestroyed" methodname="SnackHeist_StashedSpriteLingersBeforeTreatDestroyed" classname="CheddarAndCocoa.Tests.SnackHeistPlayModeTests" runstate="Runnable" seed="395645969" result="Passed" start-time="2026-07-17 02:42:01Z" end-time="2026-07-17 02:42:01Z" duration="0.639328" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1596" name="SnackHeist_UsesReadableTargetAndGuardLaneArt" fullname="CheddarAndCocoa.Tests.SnackHeistPlayModeTests.SnackHeist_UsesReadableTargetAndGuardLaneArt" methodname="SnackHeist_UsesReadableTargetAndGuardLaneArt" classname="CheddarAndCocoa.Tests.SnackHeistPlayModeTests" runstate="Runnable" seed="1651011619" result="Passed" start-time="2026-07-17 02:42:01Z" end-time="2026-07-17 02:42:01Z" duration="0.039147" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: /Users/kchapman/Weeniegame/unity/snack-heist-polish-results.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

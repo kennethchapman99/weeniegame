@@ -10,11 +10,14 @@ namespace CheddarAndCocoa.Game
     /// marker, both through the narrow context.
     /// </summary>
     public sealed class CoyotesFenceMissionController :
-        IMissionController, IMissionInteractionController, IMissionUnitedBarkListener
+        IMissionController, IMissionInteractionController, IMissionUnitedBarkListener,
+        IMissionSuccessPresentationController
     {
         private const int GapCount = 4;
         private const int RequiredRepairs = 3;
         private const int MaxBreaches = 3;
+        private const float BarkPressureSeconds = 2.25f;
+        private const float SuccessHoldSeconds = 1.15f;
 
         private readonly PatrolDefenseMissionState _state = new PatrolDefenseMissionState();
         private MissionContext _context;
@@ -22,13 +25,16 @@ namespace CheddarAndCocoa.Game
         private GameObject[] _gapMarkers;
         private Vector2 _activeGapPosition;
         private bool _pressureHeld;
+        private float _pressureUntil;
+        private float _successHoldRemaining;
 
         public PatrolDefenseMissionState State => _state;
         public Vector2[] Gaps => (Vector2[])_gaps.Clone();
         public bool PressureHeld => _pressureHeld;
 
         public GameManager.MissionVariant Variant => GameManager.MissionVariant.CoyotesFence;
-        public bool IsComplete => _state.FinalPressureComplete;
+        public bool IsComplete => _state.FinalPressureComplete && _successHoldRemaining <= 0f;
+        public bool IsPresentingSuccessfulOutcome => _state.FinalPressureComplete && _successHoldRemaining > 0f;
         public bool IsFailed => _state.TooManyBreaches(MaxBreaches);
         public string FailReason => IsFailed ? "The coyote breached the fence one too many times while the dogs got separated." : null;
         public string OutcomeSummary => MissionOutcomeSummaryBuilder.BuildPatrolSummary(_state);
@@ -38,10 +44,11 @@ namespace CheddarAndCocoa.Game
         {
             get
             {
+                if (IsPresentingSuccessfulOutcome) return "Coyote retreating! Cheddar and Cocoa hold the repaired fence.";
                 if (_state.ReadyForFinalPressure(RequiredRepairs)) return "Block the final coyote push - both dogs bark together";
                 if (_state.FakeSnackActive) return "Ignore the fake snack lure - hold the fence";
-                if (_pressureHeld) return "Coyote pinned - partner fill the weak spot now";
-                return $"Patrol fence gap {_state.ActiveGapIndex + 1}: repairs {_state.GapsRepaired}/{RequiredRepairs}, breaches {_state.Breaches}/{MaxBreaches}";
+                if (_pressureHeld) return "Cocoa has the coyote pinned - Cheddar fill the weak spot NOW";
+                return $"Cocoa: BARK-pin coyote. Cheddar: fill dirt. Gap {_state.ActiveGapIndex + 1}, repairs {_state.GapsRepaired}/{RequiredRepairs}, breaches {_state.Breaches}/{MaxBreaches}";
             }
         }
 
@@ -67,6 +74,8 @@ namespace CheddarAndCocoa.Game
             _state.Reset();
             _state.SelectGap(0);
             _pressureHeld = false;
+            _pressureUntil = 0f;
+            _successHoldRemaining = 0f;
             _activeGapPosition = _gaps[0];
             SetGapMarkersActive(true);
             // A previous attempt can leave gaps showing stale Breached/Repaired art; every sibling
@@ -80,7 +89,14 @@ namespace CheddarAndCocoa.Game
         public void Tick(float deltaTime, float now)
         {
             var predator = _context.PredatorObject;
-            if (predator == null || _state.FinalPressureComplete) return;
+            if (predator == null) return;
+            if (_state.FinalPressureComplete)
+            {
+                _successHoldRemaining = Mathf.Max(0f, _successHoldRemaining - deltaTime);
+                return;
+            }
+            if (_pressureHeld && now >= _pressureUntil)
+                ExpireBarkPressure();
 
             Vector2 target = _gaps[_state.ActiveGapIndex % _gaps.Length];
             predator.transform.position = Vector3.MoveTowards(
@@ -91,8 +107,7 @@ namespace CheddarAndCocoa.Game
 
         public bool HandleBark(int dogIndex)
         {
-            RegisterBarkPressure(dogIndex);
-            return true;
+            return RegisterBarkPressure(dogIndex, force: false);
         }
 
         public void OnUnitedBark()
@@ -104,8 +119,7 @@ namespace CheddarAndCocoa.Game
         {
             if (dogIndex < 0 || _context.Dogs == null || dogIndex >= _context.Dogs.Length) return false;
             if (!_context.Dogs[dogIndex].TryGetComponent<DogIdentity>(out var identity)) return false;
-            TryRepair(identity.Id);
-            return true;
+            return TryRepair(identity.Id);
         }
 
         public void Cleanup() => SetGapMarkersActive(false);
@@ -155,8 +169,12 @@ namespace CheddarAndCocoa.Game
             }
             else
             {
-                target = _context.SquirrelObject != null ? _context.SquirrelObject.transform : null;
-                copy = _pressureHeld ? "FILL DIRT" : "BARK COYOTE";
+                bool cocoa = _context.IndexOfDog(DogId.Cocoa) == dogIndex;
+                target = cocoa
+                    ? _context.PredatorObject != null ? _context.PredatorObject.transform : null
+                    : _context.SquirrelObject != null ? _context.SquirrelObject.transform : null;
+                copy = cocoa ? "BARK-PIN COYOTE" : _pressureHeld ? "INTERACT: FILL DIRT" : "WAIT FOR COCOA PIN";
+                hideDistance = cocoa ? _context.SingleBarkSquirrelRange : 2f;
             }
 
             return target != null;
@@ -171,7 +189,7 @@ namespace CheddarAndCocoa.Game
         }
 
         /// <summary>Test hook: register bark pressure from the given dog.</summary>
-        public void ForceBarkPressure(DogId dogId) => RegisterBarkPressure(_context.IndexOfDog(dogId));
+        public void ForceBarkPressure(DogId dogId) => RegisterBarkPressure(_context.IndexOfDog(dogId), force: true);
 
         /// <summary>Test hook: fill the active weak spot, skipping the distance check.</summary>
         public void ForceRepair(DogId dogId) => TryRepair(dogId, force: true);
@@ -184,6 +202,11 @@ namespace CheddarAndCocoa.Game
 
         /// <summary>Test hook: block the final push when it is ready.</summary>
         public void ForceFinalBlock() => OnUnitedBark();
+        public void ForcePressureTimeout()
+        {
+            if (_pressureHeld) ExpireBarkPressure();
+        }
+        public void ForceFinishSuccessPresentation() => _successHoldRemaining = 0f;
 
         /// <summary>Test hook: resolve the coyote reaching the active gap at current pressure.</summary>
         public void ForceProwlReach() => EvaluateReach();
@@ -206,6 +229,7 @@ namespace CheddarAndCocoa.Game
             if (_pressureHeld)
             {
                 _pressureHeld = false;
+                _pressureUntil = 0f;
                 _context.SetCue("The coyote lunged at the weak spot but the bark pressure drove it back!");
                 _context.SetActorState(predator, "COYOTE DRIVEN BACK!", new Color(0.7f, 0.42f, 0.16f), 0.24f);
                 if (predator != null)
@@ -221,12 +245,30 @@ namespace CheddarAndCocoa.Game
             if (predator != null) predator.transform.position = new Vector2(0f, _context.Bounds.yMax + 2f);
         }
 
-        private void RegisterBarkPressure(int dogIndex)
+        private bool RegisterBarkPressure(int dogIndex, bool force)
         {
-            if (dogIndex < 0 || _context.Dogs == null || dogIndex >= _context.Dogs.Length || _state.FinalPressureComplete) return;
+            if (dogIndex < 0 || _context.Dogs == null || dogIndex >= _context.Dogs.Length ||
+                _state.FinalPressureComplete || _state.ReadyForFinalPressure(RequiredRepairs)) return false;
+            DogId dogId = DogIdAt(dogIndex);
+            if (dogId != DogId.Cocoa)
+            {
+                _context.MarkFailedInteraction(dogId, "Cocoa holds territory; Cheddar fills the dirt gap");
+                _context.SetCue("Cheddar's bark is enthusiastic but Cocoa must pin the coyote while he fills dirt.");
+                return false;
+            }
+            if (!force && Vector2.Distance(_context.Dogs[dogIndex].transform.position,
+                    _context.PredatorObject.transform.position) > _context.SingleBarkSquirrelRange)
+            {
+                _context.MarkFailedInteraction(dogId, "get closer to the coyote before bark-pinning it");
+                _context.SetCue("Cocoa needs to close the gap before her bark can pin the coyote.");
+                return false;
+            }
+            if (_pressureHeld) return false;
 
             _state.AddBarkPressure();
             _pressureHeld = true;
+            _pressureUntil = _context.Now() + BarkPressureSeconds;
+            _context.CreditDog(dogIndex);
             SetActiveGapArt(FinalGameplayArt.CoyotesFenceGapPinned);
             _context.AddScore(ScoreEventCatalog.FenceHeld.Points, ScoreEventCatalog.FenceHeld.Label);
             _context.SetFeedback(GameManager.FeedbackKind.SquirrelScared);
@@ -249,32 +291,41 @@ namespace CheddarAndCocoa.Game
 
             UpdateGapSignals();
             _context.LogObjectiveChanged();
+            return true;
         }
 
-        private void TryRepair(DogId dogId, bool force = false)
+        private bool TryRepair(DogId dogId, bool force = false)
         {
             int dogIndex = _context.IndexOfDog(dogId);
-            if (dogIndex < 0) return;
+            if (dogIndex < 0) return false;
+            if (dogId != DogId.Cheddar)
+            {
+                _context.MarkFailedInteraction(dogId, "Cheddar digs and fills; Cocoa keeps the coyote pinned");
+                _context.SetCue("Cocoa cannot leave the pin - Cheddar must Interact at the weak spot.");
+                return false;
+            }
             if (_state.FinalPressureComplete)
             {
                 _context.MarkFailedInteraction(dogId, "yard already defended");
-                return;
+                return false;
             }
             if (!_pressureHeld)
             {
-                _context.MarkFailedInteraction(dogId, "partner must bark-hold the coyote before filling dirt");
-                return;
+                _context.MarkFailedInteraction(dogId, "Cocoa must bark-hold the coyote before filling dirt");
+                return false;
             }
             if (!force && Vector2.Distance(_context.Dogs[dogIndex].transform.position, _activeGapPosition) > 2f)
             {
                 _context.MarkFailedInteraction(dogId, "too far from the fence weak spot");
-                return;
+                return false;
             }
 
             _state.AddRepair();
             _context.CreditDog(dogIndex);
             _pressureHeld = false;
+            _pressureUntil = 0f;
             int repairedGap = _state.ActiveGapIndex;
+            Vector2 repairedPosition = _activeGapPosition;
             SetGapArt(repairedGap, FinalGameplayArt.CoyotesFenceGapRepaired);
             _state.SelectGap((_state.ActiveGapIndex + 1) % GapCount);
             _activeGapPosition = _gaps[_state.ActiveGapIndex % _gaps.Length];
@@ -285,10 +336,13 @@ namespace CheddarAndCocoa.Game
             _context.SetCue($"{DogName(dogIndex)} filled the weak spot ({_state.GapsRepaired}/{RequiredRepairs}). Patrol the next gap!");
             _context.SetActorState(_context.SquirrelObject, $"WEAK SPOT FILLED {_state.GapsRepaired}/{RequiredRepairs}", new Color(0.45f, 1f, 0.55f), 0.18f);
             _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, ScoreEventCatalog.DirtFilled.Label);
-            _context.SpawnWorldPop(_activeGapPosition, "DIRT FILLED!", new Color(0.55f, 1f, 0.45f));
+            _context.SpawnWorldPop(repairedPosition, "DIRT FILLED!", new Color(0.55f, 1f, 0.45f));
             _context.RequestAudioCue(ArenaFeedbackCatalog.TugRescueSuccess);
             _context.RequestRumble("coyote_repair", 0.2f, 0.4f, 0.14f);
             _context.LogEvent("CoyoteRepair", $"repairs {_state.GapsRepaired}/{RequiredRepairs}");
+
+            if (_state.GapsRepaired == RequiredRepairs - 1 && !_state.FakeSnackActive)
+                TriggerFakeSnack();
 
             if (_state.ReadyForFinalPressure(RequiredRepairs))
             {
@@ -299,15 +353,20 @@ namespace CheddarAndCocoa.Game
 
             UpdateGapSignals();
             _context.LogObjectiveChanged();
+            return true;
         }
 
         private void RegisterBreach()
         {
             _state.AddBreach();
             _pressureHeld = false;
+            _pressureUntil = 0f;
             int breachedGap = _state.ActiveGapIndex;
             SetGapArt(breachedGap, FinalGameplayArt.CoyotesFenceGapBreached);
             _state.SelectGap((_state.ActiveGapIndex + 1) % GapCount);
+            _activeGapPosition = _gaps[_state.ActiveGapIndex % _gaps.Length];
+            SetActiveGapArt(FinalGameplayArt.CoyotesFenceGapOpen);
+            if (_context.SquirrelObject != null) _context.SquirrelObject.transform.position = _activeGapPosition;
             _context.AddScore(ScoreEventCatalog.FakeOut.Points, "COYOTE BREACH");
             _context.SetFeedback(GameManager.FeedbackKind.SquirrelStoleFood);
             _context.SetCue($"The coyote slipped through a weak spot! Breach {_state.Breaches}/{MaxBreaches}.");
@@ -328,9 +387,11 @@ namespace CheddarAndCocoa.Game
 
             _state.StartFakeSnack();
             var predator = _context.PredatorObject;
-            bool cheddarCloser = _context.Dogs.Length > 1 && predator != null &&
-                Vector2.Distance(_context.Dogs[0].transform.position, predator.transform.position) <=
-                Vector2.Distance(_context.Dogs[1].transform.position, predator.transform.position);
+            int cheddar = _context.IndexOfDog(DogId.Cheddar);
+            int cocoa = _context.IndexOfDog(DogId.Cocoa);
+            bool cheddarCloser = cheddar >= 0 && cocoa >= 0 && predator != null &&
+                Vector2.Distance(_context.Dogs[cheddar].transform.position, predator.transform.position) <=
+                Vector2.Distance(_context.Dogs[cocoa].transform.position, predator.transform.position);
             _context.SetFeedback(GameManager.FeedbackKind.SquirrelStealing);
             _context.SetCue(cheddarCloser
                 ? "Fake snack lure! Cheddar is RABIDLY tempted - someone bark him back to the fence!"
@@ -349,16 +410,35 @@ namespace CheddarAndCocoa.Game
             if (!_state.ReadyForFinalPressure(RequiredRepairs)) return;
 
             _state.CompleteFinalPressure();
+            _successHoldRemaining = SuccessHoldSeconds;
+            for (int i = 0; i < _context.Dogs.Length; i++)
+                if (_context.Dogs[i] != null) _context.CreditDog(i);
             _context.AddScore(ScoreEventCatalog.YardDefended.Points, ScoreEventCatalog.YardDefended.Label);
             _context.SetFeedback(GameManager.FeedbackKind.UnitedBark);
             _context.SetCue("United bark slammed the final coyote push - the yard is defended!");
             _context.SetActorState(_context.PredatorObject, "COYOTE RETREATS - YARD DEFENDED!", Color.gray, 0.1f);
+            if (_context.PredatorObject != null)
+                _context.PredatorObject.transform.position = new Vector2(0f, _context.Bounds.yMax + 2f);
             _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, ScoreEventCatalog.YardDefended.Label);
             _context.SpawnWorldPop((Vector2)_context.Dogs[0].transform.position + Vector2.up, "YARD DEFENDED!", new Color(1f, 0.95f, 0.3f));
+            foreach (var feedback in _context.DogFeedback)
+                if (feedback != null) feedback.ShowProudBrief();
             _context.RequestAudioCue(ArenaFeedbackCatalog.TugRescueSuccess);
             _context.RequestRumble("coyote_yard_defended", 0.34f, 0.62f, 0.2f);
             _context.LogEvent("CoyoteYardDefended", "final push blocked");
             UpdateGapSignals();
+        }
+
+        private void ExpireBarkPressure()
+        {
+            _pressureHeld = false;
+            _pressureUntil = 0f;
+            SetActiveGapArt(FinalGameplayArt.CoyotesFenceGapOpen);
+            _context.SetCue("Cocoa's bark opening closed - repin the coyote before Cheddar fills dirt.");
+            _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "PIN LOST!");
+            _context.LogEvent("CoyotePinExpired", "Cheddar missed Cocoa's bark opening");
+            UpdateGapSignals();
+            _context.LogObjectiveChanged();
         }
 
         private void BuildGapMarkers()
@@ -430,6 +510,11 @@ namespace CheddarAndCocoa.Game
                 ? identity.Id.ToString()
                 : _context.Dogs[dogIndex].name;
         }
+
+        private DogId DogIdAt(int dogIndex) => dogIndex >= 0 && dogIndex < _context.Dogs.Length &&
+            _context.Dogs[dogIndex] != null && _context.Dogs[dogIndex].TryGetComponent<DogIdentity>(out var identity)
+                ? identity.Id
+                : DogId.Cheddar;
 
         private Vector2 ClampInsideBounds(Vector2 point, float margin)
         {

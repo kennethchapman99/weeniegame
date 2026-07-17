@@ -39,7 +39,7 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
-        public IEnumerator WeenieRoundup_ClearPath_CarryEveryWeenieToTheBowl()
+        public IEnumerator WeenieRoundup_ClearPath_EndsWithSteadyJumboTeamHaulAndLivePayoff()
         {
             yield return LoadArena();
             var game = _game;
@@ -55,22 +55,93 @@ namespace CheddarAndCocoa.Tests
             Assert.Greater(required, 0);
             Assert.AreEqual(required, game.WeenieRoundupState.Loose);
 
-            // Two dogs ferry weenies in parallel until the bowl is full.
-            int guard = 0;
-            while (game.Outcome == GameManager.MissionOutcome.InProgress && guard++ < 50)
+            // The first four stay the fast, parallel carry loop.
+            for (int i = 0; i < required - 1; i++)
             {
-                game.ForceWeeniePickup(DogId.Cheddar);
-                game.ForceWeenieDeliver(DogId.Cheddar);
-                game.ForceWeeniePickup(DogId.Cocoa);
-                game.ForceWeenieDeliver(DogId.Cocoa);
-                yield return null;
+                DogId carrier = i % 2 == 0 ? DogId.Cheddar : DogId.Cocoa;
+                game.ForceWeeniePickup(carrier);
+                game.ForceWeenieDeliver(carrier);
             }
+            yield return null;
+
+            Assert.AreEqual(required - 1, game.WeenieRoundupState.Delivered);
+            Assert.That(game.ObjectiveLabel, Does.Contain("FINAL JUMBO"));
+
+            Vector2 jumbo = WeenieRoundupMissionController.ComputeSpots(game.ArenaBounds)[required - 1];
+            _cheddar.transform.position = jumbo;
+            _cocoa.transform.position = jumbo + Vector2.right;
+            yield return null;
+
+            Assert.AreEqual(0, game.WeenieRoundupState.Loose,
+                "Cheddar should lift the jumbo only once Cocoa is beside it to steady.");
+            Assert.That(game.ObjectiveLabel, Does.Contain("JUMBO HAUL"));
+            Assert.IsTrue(HasWorldPop("TEAM JUMBO"));
+
+            Vector2 bowl = ((WeenieRoundupMissionController)game.ActiveMissionController).BowlPosition;
+            _cheddar.transform.position = bowl;
+            _cocoa.transform.position = bowl + Vector2.left;
+            yield return null;
 
             Assert.AreEqual(required, game.WeenieRoundupState.Delivered);
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, game.Outcome,
+                "The full bowl should remain live briefly before the end screen takes over.");
+            Assert.IsTrue(((WeenieRoundupMissionController)game.ActiveMissionController).IsPresentingSuccessfulOutcome);
+            Assert.IsTrue(HasWorldPop("BOWL FULL"));
+
+            ((WeenieRoundupMissionController)game.ActiveMissionController).ForceFinishSuccessPresentation();
+            yield return null;
+
             Assert.AreEqual(GameManager.MissionOutcome.Clear, game.Outcome);
             Assert.AreEqual(GameManager.FlowState.EndScreen, game.CurrentFlow);
             Assert.IsTrue(game.RuntimeSnapshot.IsClear);
             Assert.That(game.EndSummaryLabel, Does.Contain("Weenie Wranglers"));
+        }
+
+        [UnityTest]
+        public IEnumerator WeenieRoundup_JumboRejectsSoloGrab_AndSeparationFumblesRecoverably()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.WeenieRoundup);
+            yield return null;
+
+            Vector2 jumbo = WeenieRoundupMissionController.ComputeSpots(_game.ArenaBounds)[4];
+            _cheddar.transform.position = jumbo;
+            _cocoa.transform.position = jumbo + Vector2.right;
+            yield return null;
+            Assert.AreEqual(5, _game.WeenieRoundupState.Loose,
+                "The jumbo is the climax and must stay locked until all four small carries are banked.");
+
+            _cheddar.transform.position = _game.ArenaBounds.center;
+            _cocoa.transform.position = _game.ArenaBounds.center + Vector2.right;
+            for (int i = 0; i < 4; i++)
+            {
+                DogId carrier = i % 2 == 0 ? DogId.Cheddar : DogId.Cocoa;
+                _game.ForceWeeniePickup(carrier);
+                _game.ForceWeenieDeliver(carrier);
+            }
+            yield return null;
+
+            _cheddar.transform.position = jumbo;
+            _cocoa.transform.position = jumbo + Vector2.left * 8f;
+            yield return null;
+
+            Assert.AreEqual(1, _game.WeenieRoundupState.Loose,
+                "Cheddar cannot turn the jumbo into another solo fetch errand.");
+            Assert.That(_game.LastCue, Does.Contain("Cocoa"));
+
+            _cocoa.transform.position = jumbo + Vector2.right;
+            yield return null;
+            Assert.AreEqual(0, _game.WeenieRoundupState.Loose);
+
+            _cocoa.transform.position = jumbo + Vector2.left * 8f;
+            yield return new WaitForSeconds(0.95f);
+
+            Assert.AreEqual(1, _game.WeenieRoundupState.Loose,
+                "A separated jumbo should bounce back into the yard for an immediate retry.");
+            Assert.AreEqual(1, _game.WeenieRoundupState.Drops);
+            Assert.That(_game.LastCue, Does.Contain("try the team haul again"));
+            Assert.IsTrue(HasWorldPop("FUMBLE"));
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
         }
 
         [UnityTest]

@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="18" result="Passed" total="18" passed="18" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-07-16 18:31:10Z" end-time="2026-07-16 18:31:15Z" duration="4.8741025">
+  <test-suite type="TestSuite" id="1649" name="Cheddar and Cocoa" fullname="Cheddar and Cocoa" runstate="Runnable" testcasecount="551" result="Passed" start-time="2026-07-16 18:31:10Z" end-time="2026-07-16 18:31:15Z" duration="4.874103" total="18" passed="18" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="SetUpFixture" id="1001" name="CheddarAndCocoa.Tests.PlayMode.dll" fullname="PlayModeGlobalTestSetup" classname="PlayModeGlobalTestSetup" runstate="Runnable" testcasecount="551" result="Passed" start-time="2026-07-16 18:31:10Z" end-time="2026-07-16 18:31:15Z" duration="4.864692" total="18" passed="18" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="74416" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1642" name="CheddarAndCocoa" fullname="CheddarAndCocoa" runstate="Runnable" testcasecount="551" result="Passed" start-time="2026-07-16 18:31:10Z" end-time="2026-07-16 18:31:15Z" duration="4.856206" total="18" passed="18" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1645" name="Tests" fullname="CheddarAndCocoa.Tests" runstate="Runnable" testcasecount="549" result="Passed" start-time="2026-07-16 18:31:10Z" end-time="2026-07-16 18:31:15Z" duration="4.850237" total="18" passed="18" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1522" name="PeeBreakPlayModeTests" fullname="CheddarAndCocoa.Tests.PeeBreakPlayModeTests" classname="CheddarAndCocoa.Tests.PeeBreakPlayModeTests" runstate="Runnable" testcasecount="18" result="Passed" start-time="2026-07-16 18:31:10Z" end-time="2026-07-16 18:31:15Z" duration="4.842130" total="18" passed="18" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1528" name="BeatTwo_ColdReadSplitsCocoaDoorAndCheddarLeash" fullname="CheddarAndCocoa.Tests.PeeBreakPlayModeTests.BeatTwo_ColdReadSplitsCocoaDoorAndCheddarLeash" methodname="BeatTwo_ColdReadSplitsCocoaDoorAndCheddarLeash" classname="CheddarAndCocoa.Tests.PeeBreakPlayModeTests" runstate="Runnable" seed="1939811297" result="Passed" start-time="2026-07-16 18:31:10Z" end-time="2026-07-16 18:31:11Z" duration="0.586909" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1531" name="BeatTwo_PartialComboNamesTheMissingPartnerJob" fullname="CheddarAndCocoa.Tests.PeeBreakPlayModeTests.BeatTwo_PartialComboNamesTheMissingPartnerJob" methodname="BeatTwo_PartialComboNamesTheMissingPartnerJob" classname="CheddarAndCocoa.Tests.PeeBreakPlayModeTests" runstate="Runnable" seed="1697603405" result="Passed" start-time="2026-07-16 18:31:11Z" end-time="2026-07-16 18:31:11Z" duration="0.056492" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1537" name="BladderPressureAddsDogLocalUrgencyCuesWithoutGameplayColliders" fullname="CheddarAndCocoa.Tests.PeeBreakPlayModeTests.BladderPressureAddsDogLocalUrgencyCuesWithoutGameplayColliders" methodname="BladderPressureAddsDogLocalUrgencyCuesWithoutGameplayColliders" classname="CheddarAndCocoa.Tests.PeeBreakPlayModeTests" runstate="Runnable" seed="1090071089" result="Passed" start-time="2026-07-16 18:31:11Z" end-time="2026-07-16 18:31:11Z" duration="0.058947" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1535" name="ChargerGambitDropsComprehensionWhenBlockDrops" fullname="CheddarAndCocoa.Tests.PeeBreakPlayModeTests.ChargerGambitDropsComprehensionWhenBlockDrops" methodname="ChargerGambitDropsComprehensionWhenBlockDrops" classname="CheddarAndCocoa.Tests.PeeBreakPlayModeTests" runstate="Runnable" seed="752974471" result="Passed" start-time="2026-07-16 18:31:11Z" end-time="2026-07-16 18:31:11Z" duration="0.055458" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1536" name="ChargerOnlyDrainsWhileCocoaUnplugsAndVisiblyPowersDown" fullname="CheddarAndCocoa.Tests.PeeBreakPlayModeTests.ChargerOnlyDrainsWhileCocoaUnplugsAndVisiblyPowersDown" methodname="ChargerOnlyDrainsWhileCocoaUnplugsAndVisiblyPowersDown" classname="CheddarAndCocoa.Tests.PeeBreakPlayModeTests" runstate="Runnable" seed="1632252024" result="Passed" start-time="2026-07-16 18:31:11Z" end-time="2026-07-16 18:31:11Z" duration="0.053123" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1539" name="ClimaxOpensDoorClearsAndReplayResetsEverything" fullname="CheddarAndCocoa.Tests.PeeBreakPlayModeTests.ClimaxOpensDoorClearsAndReplayResetsEverything" methodname="ClimaxOpensDoorClearsAndReplayResetsEverything" classname="CheddarAndCocoa.Tests.PeeBreakPlayModeTests" runstate="Runnable" seed="1632818203" result="Passed" start-time="2026-07-16 18:31:11Z" end-time="2026-07-16 18:31:13Z" duration="1.317768" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[Cheddar] WOOF!
+[Cocoa] WOOF!
+]]></output>
+            </test-case>
+            <test-case id="1534" name="ColdReadQuestionMarkerRecordsCurrentBeatAndResetsOnReplay" fullname="CheddarAndCocoa.Tests.PeeBreakPlayModeTests.ColdReadQuestionMarkerRecordsCurrentBeatAndResetsOnReplay" methodname="ColdReadQuestionMarkerRecordsCurrentBeatAndResetsOnReplay" classname="CheddarAndCocoa.Tests.PeeBreakPlayModeTests" runstate="Runnable" seed="993093435" result="Passed" start-time="2026-07-16 18:31:13Z" end-time="2026-07-16 18:31:13Z" duration="0.047414" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1527" name="ExactCombosAdvanceAndChangeRoleLocks" fullname="CheddarAndCocoa.Tests.PeeBreakPlayModeTests.ExactCombosAdvanceAndChangeRoleLocks" methodname="ExactCombosAdvanceAndChangeRoleLocks" classname="CheddarAndCocoa.Tests.PeeBreakPlayModeTests" runstate="Runnable" seed="1778444640" result="Passed" start-time="2026-07-16 18:31:13Z" end-time="2026-07-16 18:31:13Z" duration="0.047025" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1532" name="LaterBeatPartialCombosNameMissingPartnerJobBeforePlayersReadHud" fullname="CheddarAndCocoa.Tests.PeeBreakPlayModeTests.LaterBeatPartialCombosNameMissingPartnerJobBeforePlayersReadHud" methodname="LaterBeatPartialCombosNameMissingPartnerJobBeforePlayersReadHud" classname="CheddarAndCocoa.Tests.PeeBreakPlayModeTests" runstate="Runnable" seed="1482385660" result="Passed" start-time="2026-07-16 18:31:13Z" end-time="2026-07-16 18:31:13Z" duration="0.044884" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1530" name="LiveRehearsal_BeatThreeBeatFourUsePositionsBarksAndRecoveries" fullname="CheddarAndCocoa.Tests.PeeBreakPlayModeTests.LiveRehearsal_BeatThreeBeatFourUsePositionsBarksAndRecoveries" methodname="LiveRehearsal_BeatThreeBeatFourUsePositionsBarksAndRecoveries" classname="CheddarAndCocoa.Tests.PeeBreakPlayModeTests" runstate="Runnable" seed="1784283276" result="Passed" start-time="2026-07-16 18:31:13Z" end-time="2026-07-16 18:31:14Z" duration="1.827672" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[Cheddar] WOOF!
+[Cheddar] WOOF!
+[Cocoa] WOOF!
+]]></output>
+            </test-case>
+            <test-case id="1540" name="MissionSwitchCleansOwnedActorsAndReusesResetController" fullname="CheddarAndCocoa.Tests.PeeBreakPlayModeTests.MissionSwitchCleansOwnedActorsAndReusesResetController" methodname="MissionSwitchCleansOwnedActorsAndReusesResetController" classname="CheddarAndCocoa.Tests.PeeBreakPlayModeTests" runstate="Runnable" seed="150400632" result="Passed" start-time="2026-07-16 18:31:14Z" end-time="2026-07-16 18:31:15Z" duration="0.066321" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1529" name="ObserverRehearsal_ColdPathSurfacesBeatOneBeatTwoAndFirstEarlyBarkMisread" fullname="CheddarAndCocoa.Tests.PeeBreakPlayModeTests.ObserverRehearsal_ColdPathSurfacesBeatOneBeatTwoAndFirstEarlyBarkMisread" methodname="ObserverRehearsal_ColdPathSurfacesBeatOneBeatTwoAndFirstEarlyBarkMisread" classname="CheddarAndCocoa.Tests.PeeBreakPlayModeTests" runstate="Runnable" seed="1304891298" result="Passed" start-time="2026-07-16 18:31:15Z" end-time="2026-07-16 18:31:15Z" duration="0.047869" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1533" name="OffMessageMisreadIsFunnyRecoverableFailure" fullname="CheddarAndCocoa.Tests.PeeBreakPlayModeTests.OffMessageMisreadIsFunnyRecoverableFailure" methodname="OffMessageMisreadIsFunnyRecoverableFailure" classname="CheddarAndCocoa.Tests.PeeBreakPlayModeTests" runstate="Runnable" seed="1293994177" result="Passed" start-time="2026-07-16 18:31:15Z" end-time="2026-07-16 18:31:15Z" duration="0.042742" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1523" name="OpeningExplainer_IsPackagedAndControllerOwned" fullname="CheddarAndCocoa.Tests.PeeBreakPlayModeTests.OpeningExplainer_IsPackagedAndControllerOwned" methodname="OpeningExplainer_IsPackagedAndControllerOwned" classname="CheddarAndCocoa.Tests.PeeBreakPlayModeTests" runstate="Runnable" seed="1266577164" result="Passed" start-time="2026-07-16 18:31:15Z" end-time="2026-07-16 18:31:15Z" duration="0.044409" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1524" name="OpeningExplainer_SkipHandsOffToTheControlsCardWithoutSpendingMissionTime" fullname="CheddarAndCocoa.Tests.PeeBreakPlayModeTests.OpeningExplainer_SkipHandsOffToTheControlsCardWithoutSpendingMissionTime" methodname="OpeningExplainer_SkipHandsOffToTheControlsCardWithoutSpendingMissionTime" classname="CheddarAndCocoa.Tests.PeeBreakPlayModeTests" runstate="Runnable" seed="309607601" result="Passed" start-time="2026-07-16 18:31:15Z" end-time="2026-07-16 18:31:15Z" duration="0.045746" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1538" name="OptionalFloorToysCanBeBattedWithoutChangingMissionProgress" fullname="CheddarAndCocoa.Tests.PeeBreakPlayModeTests.OptionalFloorToysCanBeBattedWithoutChangingMissionProgress" methodname="OptionalFloorToysCanBeBattedWithoutChangingMissionProgress" classname="CheddarAndCocoa.Tests.PeeBreakPlayModeTests" runstate="Runnable" seed="217049434" result="Passed" start-time="2026-07-16 18:31:15Z" end-time="2026-07-16 18:31:15Z" duration="0.048207" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1526" name="PeeBreakCharacterAndRoomDetailsAnimateWithoutGameplayColliders" fullname="CheddarAndCocoa.Tests.PeeBreakPlayModeTests.PeeBreakCharacterAndRoomDetailsAnimateWithoutGameplayColliders" methodname="PeeBreakCharacterAndRoomDetailsAnimateWithoutGameplayColliders" classname="CheddarAndCocoa.Tests.PeeBreakPlayModeTests" runstate="Runnable" seed="1744601303" result="Passed" start-time="2026-07-16 18:31:15Z" end-time="2026-07-16 18:31:15Z" duration="0.389631" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1525" name="StartState_IsControllerOwnedReadableAndLowPressure" fullname="CheddarAndCocoa.Tests.PeeBreakPlayModeTests.StartState_IsControllerOwnedReadableAndLowPressure" methodname="StartState_IsControllerOwnedReadableAndLowPressure" classname="CheddarAndCocoa.Tests.PeeBreakPlayModeTests" runstate="Runnable" seed="954742214" result="Passed" start-time="2026-07-16 18:31:15Z" end-time="2026-07-16 18:31:15Z" duration="0.054381" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: /Users/kchapman/Weeniegame/unity/pee-break-overlay-results.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

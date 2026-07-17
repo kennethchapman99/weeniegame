@@ -10,7 +10,8 @@ namespace CheddarAndCocoa.Game
         public bool StashRevealed { get; private set; }
         public bool StashFound { get; private set; }
 
-        public int ControlCount => Herds + Cutoffs;
+        /// <summary>Only a completed two-dog cutoff controls the route; solo herds are attempts.</summary>
+        public int ControlCount => Cutoffs;
         public bool ReadyForStash(int requiredControl) => !StashRevealed && ControlCount >= requiredControl;
         public bool TooManyTaunts(int maxTaunts) => Taunts >= maxTaunts;
 

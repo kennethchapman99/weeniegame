@@ -9,12 +9,14 @@ namespace CheddarAndCocoa.Game
     /// must be in position or the machine misfires and jams. A re-pull resumes from the jam; too many
     /// misfires fail the mission.
     /// </summary>
-    public sealed class ChaosMachineMissionController : IMissionController
+    public sealed class ChaosMachineMissionController : IMissionController, IMissionInteractionController,
+        IMissionSuccessPresentationController
     {
         private const float LeverRangeVal = 3f;
         private const float JunctionRange = 3f;
         private const float WindowPerStage = 3f;
         private const int MaxStalls = 4;
+        private const float SuccessHoldSeconds = 1.15f;
 
         private static readonly ChainActor[] Owners = { ChainActor.Cocoa, ChainActor.Cheddar, ChainActor.Cocoa };
         private static readonly Vector2[] JunctionSpots = { new(-4f, 7f), new(6f, -7f), new(14f, 7f) };
@@ -37,9 +39,11 @@ namespace CheddarAndCocoa.Game
         private int _stageSeen;
         private int _stallsSeen;
         private bool _failed;
+        private bool _completionPresented;
+        private float _successHoldRemaining;
 
         public GameManager.MissionVariant Variant => GameManager.MissionVariant.ChaosMachine;
-        public bool IsComplete => _puzzle.Solved;
+        public bool IsComplete => _puzzle.Solved && _successHoldRemaining <= 0f;
         public bool IsFailed => _failed;
         public string FailReason => _failed
             ? "The machine misfired too many times - the cascade never made it to the end."
@@ -51,16 +55,20 @@ namespace CheddarAndCocoa.Game
         public ChainActor JunctionOwner(int index) => index >= 0 && index < Owners.Length ? Owners[index] : ChainActor.Either;
         public Vector2 EntryTarget => _context.Bounds.center;
         public string OutcomeSummary => MissionOutcomeSummaryBuilder.BuildChaosMachineSummary(_puzzle);
+        public bool IsPresentingSuccessfulOutcome => _puzzle.Solved && _successHoldRemaining > 0f;
+        public float SuccessHoldRemaining => _successHoldRemaining;
 
         public string ObjectiveLabel
         {
             get
             {
+                if (IsPresentingSuccessfulOutcome)
+                    return "CHAOS COMPLETE! Towel, basket, and toy all fired in one glorious mess!";
                 if (!_puzzle.Running)
-                    return $"Pre-position at your junctions, then pull the lever to start the cascade (junctions {_puzzle.Stage}/{_puzzle.StageCount}, misfires {_puzzle.Stalls}/{MaxStalls})";
+                    return $"Cheddar: Interact-pull the lever; partner pre-position at the live junction (junctions {_puzzle.Stage}/{_puzzle.StageCount}, misfires {_puzzle.Stalls}/{MaxStalls})";
                 int stage = Mathf.Clamp(_puzzle.Stage, 0, Actions.Length - 1);
                 string who = Owners[stage] == ChainActor.Cheddar ? "Cheddar" : "Cocoa";
-                return $"{who}: be at the {Actions[stage].ToLowerInvariant()} junction NOW - the cascade's rolling! (junctions {_puzzle.Stage}/{_puzzle.StageCount}, misfires {_puzzle.Stalls}/{MaxStalls})";
+                return $"{who}: Interact at the {Actions[stage].ToLowerInvariant()} junction NOW - the cascade's rolling! (junctions {_puzzle.Stage}/{_puzzle.StageCount}, misfires {_puzzle.Stalls}/{MaxStalls})";
             }
         }
 
@@ -77,33 +85,29 @@ namespace CheddarAndCocoa.Game
             _stageSeen = 0;
             _stallsSeen = 0;
             _failed = false;
+            _completionPresented = false;
+            _successHoldRemaining = 0f;
             SetSceneActive(true);
             UpdateVisuals();
         }
 
         public void Tick(float deltaTime, float now)
         {
-            if (_puzzle.Solved || _failed || _context.Dogs == null) return;
+            if (_failed || _context.Dogs == null) return;
+
+            if (_puzzle.Solved)
+            {
+                _successHoldRemaining = Mathf.Max(0f, _successHoldRemaining - deltaTime);
+                UpdateVisuals();
+                return;
+            }
 
             int cheddar = _context.IndexOfDog(DogId.Cheddar);
             int cocoa = _context.IndexOfDog(DogId.Cocoa);
             if (cheddar < 0 || cocoa < 0) return;
 
-            if (!_puzzle.Running)
-            {
-                bool atLever = Vector2.Distance(_context.Dogs[cheddar].transform.position, LeverPos) <= LeverRangeVal
-                    || Vector2.Distance(_context.Dogs[cocoa].transform.position, LeverPos) <= LeverRangeVal;
-                if (atLever) _puzzle.Trigger();
-            }
-
             if (_puzzle.Running)
-            {
-                int stage = Mathf.Clamp(_puzzle.Stage, 0, JunctionSpots.Length - 1);
-                ChainActor owner = Owners[stage];
-                int ownerIdx = owner == ChainActor.Cheddar ? cheddar : cocoa;
-                bool assisting = Vector2.Distance(_context.Dogs[ownerIdx].transform.position, JunctionSpots[stage]) <= JunctionRange;
-                _puzzle.Advance(deltaTime, assisting);
-            }
+                _puzzle.Advance(deltaTime, assisting: false);
 
             HandleProgress();
             if (_failed) return;
@@ -111,6 +115,61 @@ namespace CheddarAndCocoa.Game
         }
 
         public bool HandleBark(int dogIndex) => false;
+
+        public bool HandleInteract(int dogIndex)
+        {
+            if (_puzzle.Solved || _failed || _context.Dogs == null || dogIndex < 0 || dogIndex >= _context.Dogs.Length)
+                return false;
+
+            DogId dog = DogIdAt(dogIndex);
+            if (!_puzzle.Running)
+            {
+                if (dog != DogId.Cheddar)
+                {
+                    _context.SetCue("Cocoa covers the first live junction; Cheddar is the chaos gremlin who Interact-pulls the lever.");
+                    _context.SpawnWorldPop(_context.Dogs[dogIndex].transform.position + Vector3.up, "CHEDDAR PULLS", new Color(1f, 0.72f, 0.3f));
+                    return true;
+                }
+                if (Vector2.Distance(_context.Dogs[dogIndex].transform.position, LeverPos) > LeverRangeVal)
+                {
+                    _context.SetCue("Cheddar must reach the lever before he can Interact-pull the machine into motion.");
+                    _context.SpawnWorldPop(_context.Dogs[dogIndex].transform.position + Vector3.up, "INTERACT AT LEVER", new Color(1f, 0.72f, 0.3f));
+                    return true;
+                }
+
+                _puzzle.Trigger();
+                _context.SetCue("Cheddar pulled it! Cocoa, hit the towel-drop junction before the cascade jams!");
+                _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "MACHINE GO!");
+                _context.SpawnWorldPop(LeverPos, "CLACK-WHIRR!", new Color(1f, 0.72f, 0.3f));
+                _context.RequestAudioCue(ArenaFeedbackCatalog.SnackSockCollect);
+                _context.RequestRumble("chaos_lever", 0.12f, 0.28f, 0.1f);
+                _context.LogEvent("ChaosLeverPulled", $"stage {_puzzle.Stage}");
+                UpdateVisuals();
+                return true;
+            }
+
+            int stage = Mathf.Clamp(_puzzle.Stage, 0, JunctionSpots.Length - 1);
+            ChainActor expected = Owners[stage];
+            ChainActor actor = dog == DogId.Cheddar ? ChainActor.Cheddar : ChainActor.Cocoa;
+            if (actor != expected)
+            {
+                string who = expected == ChainActor.Cheddar ? "Cheddar" : "Cocoa";
+                _context.SetCue($"Wrong paws for {Actions[stage].ToLowerInvariant()} - {who} must Interact at this junction!");
+                _context.SpawnWorldPop(_context.Dogs[dogIndex].transform.position + Vector3.up, $"{who.ToUpperInvariant()}'S TURN", new Color(1f, 0.55f, 0.25f));
+                return true;
+            }
+            if (Vector2.Distance(_context.Dogs[dogIndex].transform.position, JunctionSpots[stage]) > JunctionRange)
+            {
+                _context.SetCue($"Get to the glowing {Actions[stage].ToLowerInvariant()} junction and Interact before it jams!");
+                _context.SpawnWorldPop(_context.Dogs[dogIndex].transform.position + Vector3.up, "INTERACT AT JUNCTION", new Color(1f, 0.72f, 0.3f));
+                return true;
+            }
+
+            _puzzle.Advance(0.0001f, assisting: true);
+            HandleProgress();
+            if (!_failed) UpdateVisuals();
+            return true;
+        }
 
         public void Cleanup() => SetSceneActive(false);
 
@@ -135,18 +194,22 @@ namespace CheddarAndCocoa.Game
         {
             if (!_puzzle.Running)
             {
-                target = _lever != null ? _lever.transform : null;
-                copy = "PULL LEVER";
-                hideDistance = LeverRangeVal;
+                bool cheddar = _context.IndexOfDog(DogId.Cheddar) == dogIndex;
+                int stage = Mathf.Clamp(_puzzle.Stage, 0, JunctionSpots.Length - 1);
+                target = cheddar ? (_lever != null ? _lever.transform : null)
+                    : (_junctions != null && _junctions[stage] != null ? _junctions[stage].transform : null);
+                copy = cheddar ? "INTERACT: PULL LEVER" : "PRE-POSITION";
+                hideDistance = cheddar ? LeverRangeVal : JunctionRange;
             }
             else
             {
                 int stage = Mathf.Clamp(_puzzle.Stage, 0, JunctionSpots.Length - 1);
-                target = _junctions != null && _junctions[stage] != null ? _junctions[stage].transform : null;
                 ChainActor owner = Owners[stage];
                 bool isOwner = (owner == ChainActor.Cheddar && _context.IndexOfDog(DogId.Cheddar) == dogIndex)
                     || (owner == ChainActor.Cocoa && _context.IndexOfDog(DogId.Cocoa) == dogIndex);
-                copy = isOwner ? "COVER JUNCTION" : "NEXT JUNCTION";
+                int targetStage = isOwner ? stage : Mathf.Min(stage + 1, JunctionSpots.Length - 1);
+                target = _junctions != null && _junctions[targetStage] != null ? _junctions[targetStage].transform : null;
+                copy = isOwner ? "INTERACT: FIRE IT" : stage + 1 < JunctionSpots.Length ? "PRE-POSITION NEXT" : "BACK UP PARTNER";
                 hideDistance = JunctionRange;
             }
             return target != null;
@@ -171,6 +234,8 @@ namespace CheddarAndCocoa.Game
             if (!_failed) UpdateVisuals();
         }
 
+        public void ForceFinishSuccessPresentation() => _successHoldRemaining = 0f;
+
         private void HandleProgress()
         {
             if (_puzzle.Stage > _stageSeen)
@@ -185,6 +250,8 @@ namespace CheddarAndCocoa.Game
                 _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "WHIRR!");
                 int doneStage = Mathf.Clamp(_puzzle.Stage - 1, 0, JunctionSpots.Length - 1);
                 _context.SpawnWorldPop(JunctionSpots[doneStage], "WHIRR!", new Color(0.6f, 0.85f, 0.95f));
+                _context.RequestAudioCue(ArenaFeedbackCatalog.SnackSockCollect);
+                _context.RequestRumble("chaos_stage", 0.12f, 0.28f, 0.1f);
                 _context.LogEvent("ChaosStage", $"{_puzzle.Stage}/{_puzzle.StageCount}");
             }
 
@@ -197,8 +264,22 @@ namespace CheddarAndCocoa.Game
                 _context.SetCue($"Misfire! The machine jammed at the {Actions[jam].ToLowerInvariant()} - re-pull the lever. ({_puzzle.Stalls}/{MaxStalls})");
                 _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "MISFIRE!");
                 _context.SpawnWorldPop(JunctionSpots[jam], "STUCK!", new Color(1f, 0.4f, 0.25f));
+                _context.RequestAudioCue(ArenaFeedbackCatalog.ThreatWarning);
+                _context.RequestRumble("chaos_misfire", 0.2f, 0.42f, 0.16f);
                 _context.LogEvent("ChaosStall", $"{_puzzle.Stalls}/{MaxStalls}");
                 if (_puzzle.Stalls >= MaxStalls) _failed = true;
+            }
+
+            if (_puzzle.Solved && !_completionPresented)
+            {
+                _completionPresented = true;
+                _successHoldRemaining = SuccessHoldSeconds;
+                _context.SetCue("CHAOS COMPLETE! Towel, basket, and toy all fired in one glorious mess!");
+                _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "GLORIOUS CHAOS!");
+                _context.SpawnWorldPop(JunctionSpots[JunctionSpots.Length - 1], "TOY LAUNCHED!", new Color(1f, 0.86f, 0.3f));
+                _context.RequestAudioCue(ArenaFeedbackCatalog.MissionWin);
+                _context.RequestRumble("chaos_payoff", 0.32f, 0.58f, 0.22f);
+                _context.LogEvent("ChaosMachinePayoff", "Cascade complete; holding live-world success beat");
             }
         }
 
@@ -296,5 +377,13 @@ namespace CheddarAndCocoa.Game
         private Vector2 ClampInsideBounds(Vector2 point, float margin) => new(
             Mathf.Clamp(point.x, _context.Bounds.xMin + margin, _context.Bounds.xMax - margin),
             Mathf.Clamp(point.y, _context.Bounds.yMin + margin, _context.Bounds.yMax - margin));
+
+        private DogId DogIdAt(int dogIndex)
+        {
+            if (_context.Dogs == null || dogIndex < 0 || dogIndex >= _context.Dogs.Length || _context.Dogs[dogIndex] == null)
+                return DogId.Cheddar;
+            var identity = _context.Dogs[dogIndex].GetComponent<DogIdentity>();
+            return identity != null ? identity.Id : DogId.Cheddar;
+        }
     }
 }

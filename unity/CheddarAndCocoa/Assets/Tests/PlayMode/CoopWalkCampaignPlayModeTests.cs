@@ -65,6 +65,11 @@ namespace CheddarAndCocoa.Tests
 
             Assert.IsTrue(_game.WalkCampaignPuzzle.Solved);
             Assert.AreEqual(0, _game.WalkCampaignPuzzle.Misreads);
+            Assert.IsInstanceOf<IMissionSuccessPresentationController>(_game.WalkCampaignController);
+            Assert.IsTrue(_game.WalkCampaignController.IsPresentingSuccessfulOutcome);
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
+            Assert.That(_game.ObjectiveLabel, Does.Contain("WALKIES"));
+            _game.ForceWalkCampaignSuccessPresentationComplete();
             Assert.AreEqual(GameManager.MissionOutcome.Clear, _game.Outcome);
             Assert.IsTrue(_game.RuntimeSnapshot.IsClear);
             Assert.That(_game.EndSummaryLabel, Does.Contain("Walkies Secured"));
@@ -155,7 +160,7 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
-        public IEnumerator Walk_PositionDriven_BothStationsBuildComprehension()
+        public IEnumerator Walk_PositionDriven_BothDogsMustInteractThenHoldTheirStations()
         {
             yield return LoadArena();
             _game.StartMission(GameManager.MissionVariant.WalkCampaign);
@@ -164,7 +169,22 @@ namespace CheddarAndCocoa.Tests
             var cheddarBody = _cheddar.GetComponent<Rigidbody2D>();
             var cocoaBody = _cocoa.GetComponent<Rigidbody2D>();
 
-            // Both dogs cover their stations at once: the human starts getting the message.
+            _cocoa.transform.position = _game.WalkDoorZone;
+            _cheddar.transform.position = _game.WalkLeashZone;
+            if (cocoaBody != null) cocoaBody.linearVelocity = Vector2.zero;
+            if (cheddarBody != null) cheddarBody.linearVelocity = Vector2.zero;
+            yield return null;
+            Assert.IsFalse(_game.WalkCampaignPuzzle.ExactMatch,
+                "Standing on both stations alone must not silently perform either social signal.");
+            Assert.AreEqual(0f, _game.WalkCampaignPuzzle.Comprehension);
+
+            _cocoa.Interact();
+            _cheddar.Interact();
+            yield return null;
+            Assert.IsTrue(_game.WalkCampaignController.DoorStareEngaged);
+            Assert.IsTrue(_game.WalkCampaignController.LeashPresented);
+
+            // Both deliberately engaged signals held together build comprehension.
             for (int i = 0; i < 30; i++)
             {
                 _cocoa.transform.position = _game.WalkDoorZone;
@@ -173,8 +193,14 @@ namespace CheddarAndCocoa.Tests
                 if (cheddarBody != null) cheddarBody.linearVelocity = Vector2.zero;
                 yield return null;
             }
-            Assert.IsTrue(_game.WalkCampaignPuzzle.ExactMatch, "Both stations covered should send the exact message.");
+            Assert.IsTrue(_game.WalkCampaignPuzzle.ExactMatch, "Both Interact-engaged stations should send the exact message.");
             Assert.Greater(_game.WalkCampaignPuzzle.Comprehension, 0f);
+
+            _cocoa.transform.position = new Vector3(_game.WalkDoorZone.x - 40f, _game.WalkDoorZone.y, 0f);
+            yield return null;
+            Assert.IsFalse(_game.WalkCampaignController.DoorStareEngaged,
+                "Leaving the door breaks Cocoa's stare and requires another Interact.");
+            Assert.IsFalse(_game.WalkCampaignPuzzle.ExactMatch);
         }
 
         private IEnumerator LoadArena()

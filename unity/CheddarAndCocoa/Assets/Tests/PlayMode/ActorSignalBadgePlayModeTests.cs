@@ -513,11 +513,12 @@ namespace CheddarAndCocoa.Tests
                 "Cheddar's unpresented leash must signal at distance.");
 
             _cheddar.transform.position = leash.transform.position;
+            _cheddar.Interact();
             yield return null;
             yield return null;
 
             Assert.IsFalse(StationSignaling(leash),
-                "Cheddar presenting the leash resolves that half of the message.");
+                "Cheddar's deliberate leash Interact resolves that half of the message.");
             Assert.IsTrue(StationSignaling(human),
                 "Cocoa's half must keep signalling independently.");
         }

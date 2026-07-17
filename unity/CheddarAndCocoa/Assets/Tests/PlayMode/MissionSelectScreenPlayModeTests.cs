@@ -60,6 +60,11 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(GameManager.MissionSelectTilesPerPage, screen.TileCapacity);
             Assert.AreEqual(GameManager.MissionSelectTilesPerPage, screen.ActiveTileCount,
                 "The full first page should fill every tile slot.");
+            Assert.AreEqual(GameManager.MissionVariant.OperationPeeBreak, screen.TileVariantAt(0));
+            Assert.AreEqual(GameManager.MissionVariant.KitchenFoodFrenzy, screen.TileVariantAt(1));
+            Assert.AreEqual(GameManager.MissionVariant.CarRide, screen.TileVariantAt(2));
+            Assert.AreEqual(GameManager.MissionVariant.BabyBirdBedlam, screen.TileVariantAt(3));
+            Assert.AreEqual(GameManager.MissionVariant.GateCrash, screen.TileVariantAt(4));
             for (int slot = 0; slot < screen.ActiveTileCount; slot++)
             {
                 Assert.IsNotNull(screen.TileCoverSpriteAt(slot),
@@ -86,19 +91,23 @@ namespace CheddarAndCocoa.Tests
             game.SelectMission(GameManager.MissionVariant.BackyardRescue);
             yield return null;
             Assert.That(screen.PageLabelText, Does.Contain("Page 1 of 2"));
-            Assert.IsTrue(screen.TileIsSelectedAt(0), "The selected mission's tile should highlight.");
-            Assert.IsFalse(screen.TileIsSelectedAt(1));
+            Assert.IsTrue(screen.TileIsSelectedAt(5), "The selected mission's tile should highlight.");
+            Assert.IsFalse(screen.TileIsSelectedAt(0));
 
-            // Operation Pee Break sits on page 1, in the short page of remainders.
-            game.SelectMission(GameManager.MissionVariant.OperationPeeBreak);
+            // Blanket Catch sits on page 2, in the short page of remainders.
+            game.SelectMission(GameManager.MissionVariant.BlanketCatch);
             yield return null;
-            int peeBreakSlot = game.SelectedMissionIndex - GameManager.MissionSelectTilesPerPage;
+            int blanketSlot = game.SelectedMissionIndex - GameManager.MissionSelectTilesPerPage;
             Assert.AreEqual(1, game.SelectedMissionPage);
             Assert.That(screen.PageLabelText, Does.Contain("Page 2 of 2"));
             Assert.AreEqual(game.MissionSelectOptionCount - GameManager.MissionSelectTilesPerPage,
                 screen.ActiveTileCount, "The short last page should only show the remaining missions.");
-            Assert.AreEqual(GameManager.MissionVariant.OperationPeeBreak, screen.TileVariantAt(peeBreakSlot));
-            Assert.IsTrue(screen.TileIsSelectedAt(peeBreakSlot));
+            Assert.AreEqual(GameManager.MissionVariant.BlanketCatch, screen.TileVariantAt(blanketSlot));
+            Assert.IsTrue(screen.TileIsSelectedAt(blanketSlot));
+
+            game.SelectMission(GameManager.MissionVariant.OperationPeeBreak);
+            yield return null;
+            int peeBreakSlot = game.SelectedMissionIndex;
 
             Assert.That(screen.DetailNameText, Does.Contain(game.SelectedMissionName));
             Assert.AreEqual(MissionInstructionCatalog.DescriptionFor(GameManager.MissionVariant.OperationPeeBreak),

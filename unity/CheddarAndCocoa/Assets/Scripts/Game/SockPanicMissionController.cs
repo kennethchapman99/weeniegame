@@ -3,10 +3,13 @@ using UnityEngine;
 
 namespace CheddarAndCocoa.Game
 {
-    public sealed class SockPanicMissionController : IMissionController, IMissionInteractionController, IMissionTreatCollector
+    public sealed class SockPanicMissionController : IMissionController, IMissionInteractionController,
+        IMissionTreatCollector, IMissionSuccessPresentationController
     {
         private const float BasketInteractRange = 2.6f;
+        private const float BasketHoldRange = 3.25f;
         private const float OpeningSeconds = 6f;
+        private const float SuccessHoldSeconds = 1.15f;
 
         private readonly SockBasketMissionState _state = new();
         private MissionContext _context;
@@ -14,9 +17,12 @@ namespace CheddarAndCocoa.Game
         private Treat _exposedSock;
         private float _openingUntil;
         private float _basketFumbleUntil;
+        private float _successHoldRemaining;
 
         public GameManager.MissionVariant Variant => GameManager.MissionVariant.SockPanic;
-        public bool IsComplete => _state.SuccessfulDives >= _context.ObjectiveGoal;
+        public bool IsComplete => _state.SuccessfulDives >= _context.ObjectiveGoal && _successHoldRemaining <= 0f;
+        public bool IsPresentingSuccessfulOutcome => _state.SuccessfulDives >= _context.ObjectiveGoal &&
+                                                     _successHoldRemaining > 0f;
         public bool IsFailed => false;
         public string FailReason => null;
         public string OutcomeSummary => IsComplete ? "Socks Rescued"
@@ -27,9 +33,11 @@ namespace CheddarAndCocoa.Game
         public Treat ExposedSock => _exposedSock;
         public bool SpawnTreatsHidden => true;
 
-        public string ObjectiveLabel => _state.BasketOpen
-            ? $"Basket open! Partner dive for the sock ({_state.SuccessfulDives}/{_context.ObjectiveGoal} returned)"
-            : $"Tip the laundry basket, then partner-dive: socks {_state.SuccessfulDives}/{_context.ObjectiveGoal}, fumbles {_state.Fumbles}";
+        public string ObjectiveLabel => IsPresentingSuccessfulOutcome
+            ? "Sock mountain rescued! Cocoa holds steady while Cheddar claims the laundry prize."
+            : _state.BasketOpen
+                ? $"Cocoa: HOLD the basket. Cheddar: DIVE for the sock! ({_state.SuccessfulDives}/{_context.ObjectiveGoal} returned)"
+                : $"Cocoa: Interact to tip the laundry basket and hold. Cheddar: get ready to dive. Socks {_state.SuccessfulDives}/{_context.ObjectiveGoal}, fumbles {_state.Fumbles}";
 
         public void Initialize(MissionContext context)
         {
@@ -45,6 +53,7 @@ namespace CheddarAndCocoa.Game
             _state.Reset();
             _openingUntil = 0f;
             _basketFumbleUntil = 0f;
+            _successHoldRemaining = 0f;
             _basket.transform.position = _context.Bounds.center;
             _basket.SetActive(true);
             SetBasketClosed("LAUNDRY BASKET - ONE DOG TIP, PARTNER DIVE!");
@@ -53,6 +62,21 @@ namespace CheddarAndCocoa.Game
         public void Tick(float deltaTime, float now)
         {
             UpdateBasketArt();
+            if (_state.SuccessfulDives >= _context.ObjectiveGoal)
+            {
+                _successHoldRemaining = Mathf.Max(0f, _successHoldRemaining - deltaTime);
+                return;
+            }
+            if (_state.BasketOpen)
+            {
+                int cocoa = _context.IndexOfDog(DogId.Cocoa);
+                if (cocoa < 0 || Vector2.Distance(_context.Dogs[cocoa].transform.position, _basket.transform.position) > BasketHoldRange)
+                {
+                    _state.ExpireOpening();
+                    RegisterFumble("FUMBLE! Cocoa left the basket and it flopped shut before Cheddar's dive.");
+                    return;
+                }
+            }
             if (!_state.BasketOpen || now < _openingUntil) return;
             _state.ExpireOpening();
             RegisterFumble("FUMBLE! The basket flopped shut on the runaway sock.");
@@ -62,8 +86,7 @@ namespace CheddarAndCocoa.Game
 
         public bool HandleInteract(int dogIndex)
         {
-            TryTipBasket(dogIndex, false);
-            return true;
+            return TryTipBasket(dogIndex, false);
         }
 
         public bool HandleTreatCollected(Treat treat, int dogIndex)
@@ -72,6 +95,14 @@ namespace CheddarAndCocoa.Game
             if (treat != _exposedSock)
             {
                 _context.MarkFailedInteraction(DogIdAt(dogIndex), "tip the laundry basket first");
+                return true;
+            }
+
+            if (DogIdAt(dogIndex) != DogId.Cheddar)
+            {
+                SetTreatProp(treat, FinalGameplayArt.SockPanicSockDecoy);
+                _state.TryCollect(dogIndex);
+                RegisterFumble("DECOY! Cocoa has to hold the basket while Cheddar dives for the sock.");
                 return true;
             }
 
@@ -101,6 +132,8 @@ namespace CheddarAndCocoa.Game
             _context.RequestAudioCue(ArenaFeedbackCatalog.SnackSockCollect);
             _context.RecoverCollectible(treat);
             _context.LogEvent("Collection", $"{DogName(dogIndex)} collected a sock {_state.SuccessfulDives}/{_context.ObjectiveGoal}");
+            if (_state.SuccessfulDives >= _context.ObjectiveGoal)
+                CompleteSockRescue(treat.transform.position);
             _context.LogObjectiveChanged();
             return true;
         }
@@ -127,13 +160,15 @@ namespace CheddarAndCocoa.Game
             if (_state.BasketOpen && dogIndex != _state.OpenerDogIndex)
             {
                 target = _exposedSock != null ? _exposedSock.transform : null;
-                copy = "DIVE FOR SOCK";
+                copy = DogIdAt(dogIndex) == DogId.Cheddar ? "DIVE FOR SOCK" : "HOLD BASKET";
                 hideDistance = 1.2f;
             }
             else
             {
                 target = _basket != null ? _basket.transform : null;
-                copy = _state.BasketOpen ? "HOLD BASKET" : "TIP BASKET";
+                copy = DogIdAt(dogIndex) == DogId.Cocoa
+                    ? _state.BasketOpen ? "HOLD BASKET" : "INTERACT TO TIP"
+                    : _state.BasketOpen ? "DIVE FOR SOCK" : "WAIT TO DIVE";
                 hideDistance = BasketInteractRange;
             }
             return target != null;
@@ -144,6 +179,7 @@ namespace CheddarAndCocoa.Game
                 outcome == GameManager.MissionOutcome.Clear, outcome == GameManager.MissionOutcome.Failed);
 
         public void ForceTip(DogId dogId) => TryTipBasket(_context.IndexOfDog(dogId), true);
+        public void ForceFinishSuccessPresentation() => _successHoldRemaining = 0f;
 
         public void ForceTimeout()
         {
@@ -151,25 +187,36 @@ namespace CheddarAndCocoa.Game
             RegisterFumble("FUMBLE! The basket flopped shut on the runaway sock.");
         }
 
-        private void TryTipBasket(int dogIndex, bool force)
+        private bool TryTipBasket(int dogIndex, bool force)
         {
-            if (dogIndex < 0 || _basket == null) return;
+            if (dogIndex < 0 || _basket == null || _state.SuccessfulDives >= _context.ObjectiveGoal) return false;
+            if (DogIdAt(dogIndex) != DogId.Cocoa)
+            {
+                _context.MarkFailedInteraction(DogIdAt(dogIndex), "Cocoa anchors this basket; Cheddar gets ready to dive");
+                _context.SetCue("Cheddar cannot hold still long enough - Cocoa must Interact to anchor the basket.");
+                return false;
+            }
+            if (force)
+            {
+                _context.Dogs[dogIndex].transform.position = _basket.transform.position;
+                if (_context.Dogs[dogIndex].TryGetComponent<Rigidbody2D>(out var body)) body.linearVelocity = Vector2.zero;
+            }
             if (!force && Vector2.Distance(_context.Dogs[dogIndex].transform.position, _basket.transform.position) > BasketInteractRange)
             {
                 _context.MarkFailedInteraction(DogIdAt(dogIndex), "too far from laundry basket");
-                return;
+                return false;
             }
             if (!_state.TryOpen(dogIndex))
             {
                 _context.MarkFailedInteraction(DogIdAt(dogIndex), "basket already held open");
-                return;
+                return false;
             }
 
             _exposedSock = _context.AcquireHiddenTreat();
             if (_exposedSock == null)
             {
                 _state.ExpireOpening();
-                return;
+                return false;
             }
 
             _exposedSock.transform.position = _basket.transform.position + Vector3.right * 2f;
@@ -177,6 +224,7 @@ namespace CheddarAndCocoa.Game
             SetTreatProp(_exposedSock, FinalGameplayArt.SockPanicSockExposed);
             _openingUntil = _context.Now() + OpeningSeconds;
             _context.AddScore(ScoreEventCatalog.BasketTipped.Points, ScoreEventCatalog.BasketTipped.Label);
+            _context.CreditDog(dogIndex);
             _context.SetCue($"{DogName(dogIndex)} tipped the basket - partner dive for the sock!");
             // The open basket is a closing timed window: pulse into the urgency channel (0.26+)
             // so the partner reads the distance signal badge, not just the close-range text.
@@ -186,6 +234,21 @@ namespace CheddarAndCocoa.Game
             _context.RequestAudioCue(ArenaFeedbackCatalog.Bark);
             _context.LogEvent("SockBasket", $"{DogName(dogIndex)} tipped the basket");
             _context.LogObjectiveChanged();
+            return true;
+        }
+
+        private void CompleteSockRescue(Vector3 position)
+        {
+            _successHoldRemaining = SuccessHoldSeconds;
+            _context.SetFeedback(GameManager.FeedbackKind.LevelClear);
+            _context.SetCue("Sock mountain rescued! Cocoa held the line and Cheddar stole every last prize.");
+            _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "SOCK MOUNTAIN!");
+            _context.SpawnWorldPop(position + Vector3.up, "SOCK MOUNTAIN RESCUED!", new Color(0.65f, 0.9f, 1f));
+            foreach (var feedback in _context.DogFeedback)
+                if (feedback != null) feedback.ShowProudBrief();
+            _context.RequestAudioCue(ArenaFeedbackCatalog.TugRescueSuccess);
+            _context.RequestRumble("sock_rescue", 0.2f, 0.45f, 0.16f);
+            _context.LogEvent("SockPanicPayoff", "Cocoa anchored; Cheddar recovered the sock mountain");
         }
 
         private void RegisterFumble(string cue)

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="3" result="Passed" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-07-17 20:36:37Z" end-time="2026-07-17 20:36:37Z" duration="0.0584029">
+  <test-suite type="TestSuite" id="1668" name="Cheddar and Cocoa" fullname="Cheddar and Cocoa" runstate="Runnable" testcasecount="568" result="Passed" start-time="2026-07-17 20:36:37Z" end-time="2026-07-17 20:36:37Z" duration="0.058403" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="SetUpFixture" id="1001" name="CheddarAndCocoa.Tests.PlayMode.dll" fullname="PlayModeGlobalTestSetup" classname="PlayModeGlobalTestSetup" runstate="Runnable" testcasecount="568" result="Passed" start-time="2026-07-17 20:36:37Z" end-time="2026-07-17 20:36:37Z" duration="0.051722" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="96194" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1661" name="CheddarAndCocoa" fullname="CheddarAndCocoa" runstate="Runnable" testcasecount="568" result="Passed" start-time="2026-07-17 20:36:37Z" end-time="2026-07-17 20:36:37Z" duration="0.046211" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1664" name="Tests" fullname="CheddarAndCocoa.Tests" runstate="Runnable" testcasecount="566" result="Passed" start-time="2026-07-17 20:36:37Z" end-time="2026-07-17 20:36:37Z" duration="0.043830" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1159" name="CharacterCarryDirectionPlayModeTests" fullname="CheddarAndCocoa.Tests.CharacterCarryDirectionPlayModeTests" classname="CheddarAndCocoa.Tests.CharacterCarryDirectionPlayModeTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-07-17 20:36:37Z" end-time="2026-07-17 20:36:37Z" duration="0.035657" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="ParameterizedMethod" id="1162" name="Carry_HasAuthoredStraightFrames" fullname="CheddarAndCocoa.Tests.CharacterCarryDirectionPlayModeTests.Carry_HasAuthoredStraightFrames" classname="CheddarAndCocoa.Tests.CharacterCarryDirectionPlayModeTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-07-17 20:36:37Z" end-time="2026-07-17 20:36:37Z" duration="0.032683" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1160" name="Carry_HasAuthoredStraightFrames(Cheddar)" fullname="CheddarAndCocoa.Tests.CharacterCarryDirectionPlayModeTests.Carry_HasAuthoredStraightFrames(Cheddar)" methodname="Carry_HasAuthoredStraightFrames" classname="CheddarAndCocoa.Tests.CharacterCarryDirectionPlayModeTests" runstate="Runnable" seed="681046274" result="Passed" start-time="2026-07-17 20:36:37Z" end-time="2026-07-17 20:36:37Z" duration="0.023465" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1161" name="Carry_HasAuthoredStraightFrames(Cocoa)" fullname="CheddarAndCocoa.Tests.CharacterCarryDirectionPlayModeTests.Carry_HasAuthoredStraightFrames(Cocoa)" methodname="Carry_HasAuthoredStraightFrames" classname="CheddarAndCocoa.Tests.CharacterCarryDirectionPlayModeTests" runstate="Runnable" seed="754085693" result="Passed" start-time="2026-07-17 20:36:37Z" end-time="2026-07-17 20:36:37Z" duration="0.005654" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-case id="1163" name="Carry_VerticalFacingSelectsStraightArtWithoutMirroring" fullname="CheddarAndCocoa.Tests.CharacterCarryDirectionPlayModeTests.Carry_VerticalFacingSelectsStraightArtWithoutMirroring" methodname="Carry_VerticalFacingSelectsStraightArtWithoutMirroring" classname="CheddarAndCocoa.Tests.CharacterCarryDirectionPlayModeTests" runstate="Runnable" seed="160464642" result="Passed" start-time="2026-07-17 20:36:37Z" end-time="2026-07-17 20:36:37Z" duration="0.000728" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: /Users/kchapman/Weeniegame/unity/character-carry-results.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

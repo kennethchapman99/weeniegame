@@ -1,6 +1,12 @@
 # Level Readiness Scores
 
-Status date: 2026-07-01
+Status date: 2026-07-16
+
+Showcase-order update (2026-07-15): the selector's first five are now **Operation Pee Break**,
+**Kitchen Falling Food Frenzy**, **Car Ride Chaos**, **Baby Bird Bedlam**, and **Gate Crash**, in
+descending current production quality. This reflects the deep-slice work and the later authored
+Car Ride/Baby Bird/Gate Crash polish that postdates the score snapshot below. It does not claim the
+pending two-human retest passed, and it does not change deterministic mission tuning.
 
 This scorecard rates the current Unity arena mission roster for the first couch-test push. It is not
 a final art review. Scores reflect the playable Unity implementation, documentation in
@@ -83,27 +89,28 @@ Scale:
 | # | Level | Level design | Scenery and assets | Readiness to play | Current read |
 |---:|---|---:|---:|---:|---|
 | 1 | Backyard Rescue | 4 | 4 | 4 | Strong broad rescue loop with animated squirrel pressure, eagle/coyote reads, toy, wet, and mud beats; may be busy for a cold first test. |
-| 2 | Snack Heist | 4 | 4 | 4 | Compact food-steal objective is readable and dog-authentic; snack district cues plus squirrel steal motion now support couch testing. |
-| 3 | Sock Panic | 4 | 4 | 4 | Tip/dive timing creates a clear shared beat; laundry district dressing and basket/sock markers are readable enough for first testing. |
-| 4 | The Great Backyard Squirrel Conspiracy | 4 | 4 | 4 | Chase/cutoff pressure has clearer squirrel motion, stash/cutoff labels, and yard dressing for a useful couch read. |
-| 5 | Eagle Shadow Panic | 4 | 4 | 4 | Hide, rescue, and united-front play is strong; animated eagle sweep/attack frames and cover bands improve threat clarity. |
-| 6 | Coyotes at the Fence | 4 | 4 | 4 | Bark-pin, fence-filling, and fake-lure roles work well; coyote patrol/threat/retreat motion and fence lane dressing make the pressure readable. |
-| 7 | Weenie Roundup | 4 | 4 | 4 | Carry/deliver loop is easy to understand; bowl/weenie assets and persistent carry visuals make it couch-test useful. |
-| 8 | Scent Search | 4 | 4 | 4 | Sniff, dig, and choice tension fit the dogs well; scent patches and mound/grass language now clear the first-test bar. |
-| 9 | Thunderstorm Comfort | 4 | 4 | 4 | Comfort fantasy and calm/panic loop are testable; storm/emotion labels, huddle feedback, and VFX make the emotional state readable. |
-| 10 | Mark the Yard | 4 | 4 | 4 | Territory control creates useful route planning; zone markers, central lawn dressing, and animated generated squirrel idle/scared/steal states make reclaim cause/effect readable. |
-| 11 | Walkies on the Leash | 4 | 4 | 4 | Tethered movement naturally forces communication; route stones/dashes and checkpoint dressing make the path legible. |
-| 12 | Car Ride Balance | 4 | 4 | 4 | Balance/lurch concept is distinct; generated car silhouette, lurch feedback, and counter-lean cues are sufficient for first testing. |
-| 13 | Gate Crash | 4 | 4 | 4 | Hold/release and gate timing are good couch-test mechanics; gate, toy, and role-marker staging now meet the readable greybox bar. |
-| 14 | Table Stealth | 4 | 4 | 4 | Human distraction plus stealing is funny and dog-specific; table/human/steak silhouettes now include watching-table, watching-Cocoa, spotted, steak-gone, and caught human states for testing. |
-| 15 | The Ol' Switcheroo | 4 | 4 | 4 | Bait/decoy/raid structure has good co-op intent; squirrel motion plus stash/decoy markers make the scene readable. |
-| 16 | The Walk Campaign | 4 | 4 | 4 | Strong precursor to Operation Pee Break with route pressure; leash/human/route cues now include confused, getting-it, misread, walkies, and gave-up human states for couch iteration. |
-| 17 | The Bone Detail | 4 | 4 | 4 | Sniff/dig asymmetry is on-theme; scent, mound, bone, and dig-spot presentation clear the first-test bar. |
-| 18 | The Great Escape | 4 | 4 | 4 | Sequential escape-chain teamwork is readable; contraption station markers and role color-coding support useful couch play. |
-| 19 | The Rube Goldberg | 4 | 4 | 4 | Replayable timing concept has clear machine-stage markers and cause/effect pops for first-test iteration. |
-| 20 | The Blanket Catch | 4 | 4 | 4 | Shared-object catch is now a useful support slice; blanket/catch feedback and falling-object cues are readable enough to test. |
+| 2 | Snack Heist | 4 | 4 | 4 | Cheddar's theft now provokes Cocoa's required active-heist guard before the watched final snack; wrong roles recover cleanly and the secured stash holds live before clear. |
+| 3 | Sock Panic | 4 | 4 | 4 | Cocoa now continuously anchors the basket while Cheddar performs the timed sock dive; broken holds recover cleanly and the fifth sock earns a held live payoff. |
+| 4 | The Great Backyard Squirrel Conspiracy | 4 | 4 | 4 | Cheddar's herd now advances only through Cocoa's physically held cutoff; Cocoa owns the stash inspection, solo attempts recover cleanly, and the cracked-case payoff stays live before clear. |
+| 5 | Eagle Shadow Panic | 4 | 4 | 4 | Full-yard sweeps now require both dogs genuinely in cover; Cheddar-wiggle/Cocoa-pull rescue timing and the held united-bark retreat create a complete authored arc. |
+| 6 | Coyotes at the Fence | 4 | 4 | 4 | Cocoa's in-range timed bark pin now creates Cheddar's exclusive dirt-fill opening; breach targets advance correctly and the united-bark retreat stays live before clear. |
+| 7 | Weenie Roundup | 4 | 4 | 4 | Four fast split-yard carries now climax in Cocoa steadying Cheddar's jumbo haul; separation fumbles recover cleanly and a held bowl-full beat keeps the finish live. |
+| 8 | Scent Search | 4 | 4 | 4 | Cheddar's broad direction now hands off to Cocoa's precise hot-patch call and back to Cheddar's dig; role misreads coach cleanly and the final cache stays live before clear. |
+| 9 | Thunderstorm Comfort | 4 | 4 | 4 | Passive parking is replaced by Cocoa's timed reassurance, Cheddar's answer, and a held huddle; missed beats raise panic but recover next clap, and the passed storm stays live before clear. |
+| 10 | Mark the Yard | 4 | 4 | 4 | Deliberate Interact marking now hands off from Cheddar's route to Cocoa's squirrel-repel bark, with recoverable steals and a held all-marked payoff. |
+| 11 | Walkies on the Leash | 4 | 4 | 4 | Tethered movement now alternates named scout bark calls before the pair can bank each checkpoint; route dressing, snap pressure, and a live finish keep the handoff legible. |
+| 12 | Car Ride Balance | 4 | 4 | 4 | Turn/jump chaos retains asymmetric slide physics, while brakes now require Cocoa's planted anchor and Cheddar's nearby tuck; failed handoffs recover next stop and arrival stays live. |
+| 13 | Gate Crash | 4 | 4 | 4 | Cocoa must deliberately Interact to anchor before Cheddar can cross; role/range coaching, readable snap-and-retry recovery, gate/toy feedback, and the held rescue payoff make the handoff couch-test ready. |
+| 14 | Table Stealth | 4 | 4 | 4 | Cocoa's deliberate Interact-flop opens a sustained Cheddar sneak, while Cheddar's live Bark-burp opens a burst Cocoa sneak; role/range coaching, recoverable exposures, state acting, and the held steak payoff make both routes couch-readable. |
+| 15 | The Ol' Switcheroo | 4 | 4 | 4 | Cheddar deliberately Bark-baits and peels away before Cocoa's one Interact raid; guarded bonks, over-bait backfires, role/range coaching, dual credit, and the held cracked-stash payoff make the deception readable and recoverable. |
+| 16 | The Walk Campaign | 4 | 4 | 4 | Cocoa and Cheddar must deliberately Interact into their distinct stare/leash poses and stay planted together; broken-pose recovery, specific wrong-item gags, human state acting, tactile feedback, and the held WALKIES payoff make the con couch-readable. |
+| 17 | The Bone Detail | 4 | 4 | 4 | Cocoa now barks an explicit scent-post call for Cheddar's dig, with visible wrong-dig recovery and a held three-bone payoff; ready for two-player tuning. |
+| 18 | The Great Escape | 4 | 4 | 4 | Four named dog-authentic steps now require alternating owner-only Interacts; wrong-paws clanks, tactile settle-back recovery, non-farmable repeat handling, command signals, and a held FREE DOGS payoff make the sequence couch-readable. |
+| 19 | The Rube Goldberg | 4 | 4 | 4 | Cheddar's deliberate lever Interact starts an owner-only timed junction relay while the partner pre-positions; wrong-paws coaching, exact jam/re-pull recovery, distinct action props, tactile feedback, and the held toy-launch payoff make the machine couch-readable. |
+| 20 | The Blanket Catch | 4 | 4 | 4 | Taut-span teamwork now hands off into Cocoa's bark-called drop, visible catch/splat recovery, and a held full-blanket payoff; ready for two-player tuning. |
 | 21 | Kitchen Falling Food Frenzy | 5 | 4 | 4 | Strong extracted slice with clear role split and dinner-rush chaos; food/kitchen assets are serviceable and now clear the asset floor. |
 | 22 | Operation Pee Break | 5 | 4 | 4 | Best current deep-slice candidate: readable roles, yard route, pressure, recovery, replay hooks, and generated cartoon prop coverage for its couch/door/phone/leash beats; still needs the second human couch pass. |
+| 23 | Baby Bird Bedlam | 4 | 4 | 4 | Authored chick/parent states and the nest landmark carry a hard feast/fend split; wrong-role and distant-defense inputs now coach players back into the still-live dive window. |
 
 ## Ranking Snapshot
 

@@ -5,11 +5,13 @@
     "com.unity.inputsystem": "1.19.0",
     "com.unity.test-framework": "1.6.0",
     "com.unity.ugui": "2.0.0",
+    "com.unity.modules.adaptiveperformance": "1.0.0",
     "com.unity.modules.audio": "1.0.0",
     "com.unity.modules.imgui": "1.0.0",
     "com.unity.modules.physics2d": "1.0.0",
     "com.unity.modules.ui": "1.0.0",
     "com.unity.modules.uielements": "1.0.0",
+    "com.unity.modules.vectorgraphics": "1.0.0",
     "com.unity.modules.video": "1.0.0"
   }
 }

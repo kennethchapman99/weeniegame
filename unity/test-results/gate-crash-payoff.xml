@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="10" result="Passed" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-07-16 11:45:14Z" end-time="2026-07-16 11:45:15Z" duration="1.0214692">
+  <test-suite type="TestSuite" id="1647" name="Cheddar and Cocoa" fullname="Cheddar and Cocoa" runstate="Runnable" testcasecount="549" result="Passed" start-time="2026-07-16 11:45:14Z" end-time="2026-07-16 11:45:15Z" duration="1.021469" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="SetUpFixture" id="1001" name="CheddarAndCocoa.Tests.PlayMode.dll" fullname="PlayModeGlobalTestSetup" classname="PlayModeGlobalTestSetup" runstate="Runnable" testcasecount="549" result="Passed" start-time="2026-07-16 11:45:14Z" end-time="2026-07-16 11:45:15Z" duration="1.013776" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="77419" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1640" name="CheddarAndCocoa" fullname="CheddarAndCocoa" runstate="Runnable" testcasecount="549" result="Passed" start-time="2026-07-16 11:45:14Z" end-time="2026-07-16 11:45:15Z" duration="1.008326" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1643" name="Tests" fullname="CheddarAndCocoa.Tests" runstate="Runnable" testcasecount="547" result="Passed" start-time="2026-07-16 11:45:14Z" end-time="2026-07-16 11:45:15Z" duration="1.004335" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1248" name="CoopGateCrashPlayModeTests" fullname="CheddarAndCocoa.Tests.CoopGateCrashPlayModeTests" classname="CheddarAndCocoa.Tests.CoopGateCrashPlayModeTests" runstate="Runnable" testcasecount="10" result="Passed" start-time="2026-07-16 11:45:14Z" end-time="2026-07-16 11:45:15Z" duration="0.996622" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1249" name="GateCrash_AppearsInMissionSelectRotation" fullname="CheddarAndCocoa.Tests.CoopGateCrashPlayModeTests.GateCrash_AppearsInMissionSelectRotation" methodname="GateCrash_AppearsInMissionSelectRotation" classname="CheddarAndCocoa.Tests.CoopGateCrashPlayModeTests" runstate="Runnable" seed="1392031476" result="Passed" start-time="2026-07-16 11:45:14Z" end-time="2026-07-16 11:45:15Z" duration="0.556543" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1253" name="GateCrash_ClearAndFail_BothKickTheSharedCameraShake" fullname="CheddarAndCocoa.Tests.CoopGateCrashPlayModeTests.GateCrash_ClearAndFail_BothKickTheSharedCameraShake" methodname="GateCrash_ClearAndFail_BothKickTheSharedCameraShake" classname="CheddarAndCocoa.Tests.CoopGateCrashPlayModeTests" runstate="Runnable" seed="931129200" result="Passed" start-time="2026-07-16 11:45:15Z" end-time="2026-07-16 11:45:15Z" duration="0.081588" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1251" name="GateCrash_ClearPath_HoldThenSqueezeThrough" fullname="CheddarAndCocoa.Tests.CoopGateCrashPlayModeTests.GateCrash_ClearPath_HoldThenSqueezeThrough" methodname="GateCrash_ClearPath_HoldThenSqueezeThrough" classname="CheddarAndCocoa.Tests.CoopGateCrashPlayModeTests" runstate="Runnable" seed="2035332651" result="Passed" start-time="2026-07-16 11:45:15Z" end-time="2026-07-16 11:45:15Z" duration="0.044980" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1258" name="GateCrash_DoorOutrageGag_FiresWhenCheddarIdlesAtTheClosedGateAndStaysQuietWhileHeld" fullname="CheddarAndCocoa.Tests.CoopGateCrashPlayModeTests.GateCrash_DoorOutrageGag_FiresWhenCheddarIdlesAtTheClosedGateAndStaysQuietWhileHeld" methodname="GateCrash_DoorOutrageGag_FiresWhenCheddarIdlesAtTheClosedGateAndStaysQuietWhileHeld" classname="CheddarAndCocoa.Tests.CoopGateCrashPlayModeTests" runstate="Runnable" seed="578410322" result="Passed" start-time="2026-07-16 11:45:15Z" end-time="2026-07-16 11:45:15Z" duration="0.044434" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1252" name="GateCrash_FailPath_GateSnapsTooManyTimes" fullname="CheddarAndCocoa.Tests.CoopGateCrashPlayModeTests.GateCrash_FailPath_GateSnapsTooManyTimes" methodname="GateCrash_FailPath_GateSnapsTooManyTimes" classname="CheddarAndCocoa.Tests.CoopGateCrashPlayModeTests" runstate="Runnable" seed="591682550" result="Passed" start-time="2026-07-16 11:45:15Z" end-time="2026-07-16 11:45:15Z" duration="0.042505" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1254" name="GateCrash_FlawlessClear_ShakesHarderThanAScrappyClear" fullname="CheddarAndCocoa.Tests.CoopGateCrashPlayModeTests.GateCrash_FlawlessClear_ShakesHarderThanAScrappyClear" methodname="GateCrash_FlawlessClear_ShakesHarderThanAScrappyClear" classname="CheddarAndCocoa.Tests.CoopGateCrashPlayModeTests" runstate="Runnable" seed="1839708241" result="Passed" start-time="2026-07-16 11:45:15Z" end-time="2026-07-16 11:45:15Z" duration="0.049242" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1256" name="GateCrash_PositionDriven_HoldingLetsTheCrosserProgress_LeavingSnaps" fullname="CheddarAndCocoa.Tests.CoopGateCrashPlayModeTests.GateCrash_PositionDriven_HoldingLetsTheCrosserProgress_LeavingSnaps" methodname="GateCrash_PositionDriven_HoldingLetsTheCrosserProgress_LeavingSnaps" classname="CheddarAndCocoa.Tests.CoopGateCrashPlayModeTests" runstate="Runnable" seed="44251235" result="Passed" start-time="2026-07-16 11:45:15Z" end-time="2026-07-16 11:45:15Z" duration="0.043968" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1255" name="GateCrash_Replay_ResetsThePuzzle" fullname="CheddarAndCocoa.Tests.CoopGateCrashPlayModeTests.GateCrash_Replay_ResetsThePuzzle" methodname="GateCrash_Replay_ResetsThePuzzle" classname="CheddarAndCocoa.Tests.CoopGateCrashPlayModeTests" runstate="Runnable" seed="312826183" result="Passed" start-time="2026-07-16 11:45:15Z" end-time="2026-07-16 11:45:15Z" duration="0.046395" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1250" name="GateCrash_RunsThroughDedicatedController" fullname="CheddarAndCocoa.Tests.CoopGateCrashPlayModeTests.GateCrash_RunsThroughDedicatedController" methodname="GateCrash_RunsThroughDedicatedController" classname="CheddarAndCocoa.Tests.CoopGateCrashPlayModeTests" runstate="Runnable" seed="1766113148" result="Passed" start-time="2026-07-16 11:45:15Z" end-time="2026-07-16 11:45:15Z" duration="0.040103" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1257" name="GateCrash_Snap_KicksAnImmediateShakeBeforeTheRoundEnds" fullname="CheddarAndCocoa.Tests.CoopGateCrashPlayModeTests.GateCrash_Snap_KicksAnImmediateShakeBeforeTheRoundEnds" methodname="GateCrash_Snap_KicksAnImmediateShakeBeforeTheRoundEnds" classname="CheddarAndCocoa.Tests.CoopGateCrashPlayModeTests" runstate="Runnable" seed="1048279596" result="Passed" start-time="2026-07-16 11:45:15Z" end-time="2026-07-16 11:45:15Z" duration="0.040758" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: /Users/kchapman/Weeniegame/unity/test-results/gate-crash-payoff.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

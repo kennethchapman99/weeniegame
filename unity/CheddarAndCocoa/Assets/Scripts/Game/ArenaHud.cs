@@ -387,6 +387,16 @@ namespace CheddarAndCocoa.Game
             var bottom = new Rect(0f, VirtualHeight - 76f, VirtualWidth, 76f);
             DrawTintedRect(top, new Color(0.01f, 0.015f, 0.02f, 0.82f));
             DrawTintedRect(bottom, new Color(0.01f, 0.015f, 0.02f, 0.82f));
+            if (_game.ActiveMissionController is IMissionOpeningPresentationController opening &&
+                !string.IsNullOrEmpty(opening.OpeningOverlayLabel))
+            {
+                // The supplied Pee Break explainer has a baked misspelling only during its
+                // comprehension shots. The controller times this plaque to those shots so the
+                // valid BLADDER URGENCY heading remains unobscured everywhere else.
+                var correctionPlaque = new Rect(42f, 125f, 420f, 72f);
+                DrawTintedRect(correctionPlaque, new Color(0.01f, 0.015f, 0.02f, 0.9f));
+                GUI.Label(correctionPlaque, opening.OpeningOverlayLabel, _hud);
+            }
             GUI.Label(new Rect(28f, 12f, VirtualWidth - 56f, 56f),
                 $"{_game.ActiveMissionName.ToUpperInvariant()}  •  WATCH THE PLAN", _mid);
             GUI.Label(new Rect(28f, bottom.y + 10f, VirtualWidth - 56f, 52f),

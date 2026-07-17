@@ -44,7 +44,7 @@ namespace CheddarAndCocoa.Tests
             Assert.IsInstanceOf<LeashWalkMissionController>(game.ActiveMissionController,
                 "Walkies on the Leash must run entirely through its own IMissionController.");
             Assert.AreEqual("leash_walk", game.RuntimeSnapshot.MissionId);
-            Assert.That(game.ObjectiveLabel, Does.Contain("Walk the leash"));
+            Assert.That(game.ObjectiveLabel, Does.Contain("BARK the route call"));
             int required = game.RuntimeSnapshot.ObjectiveGoal;
             Assert.Greater(required, 0);
 
@@ -53,6 +53,8 @@ namespace CheddarAndCocoa.Tests
             {
                 game.ForceReachCheckpoint();
                 yield return null;
+                if (game.LeashWalkState.Reached >= required)
+                    game.LeashWalkController.ForceFinishSuccessPresentation();
             }
 
             Assert.AreEqual(required, game.LeashWalkState.Reached);
@@ -61,6 +63,45 @@ namespace CheddarAndCocoa.Tests
             Assert.That(game.EndSummaryLabel, Does.Contain("Best Walk Ever"));
             Assert.AreNotEqual("MVP: awaiting dog heroics", game.MvpLabel,
                 "Reaching checkpoints together should credit both dogs toward the MVP stat.");
+        }
+
+        [UnityTest]
+        public IEnumerator LeashWalk_CheckpointsRequireAlternatingScoutBarksBeforePairCanBankThem()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.LeashWalk);
+            yield return null;
+
+            var controller = _game.LeashWalkController;
+            Assert.AreEqual(DogId.Cheddar, controller.RequiredScoutDog,
+                "Cheddar should create the opening at the first checkpoint.");
+
+            DogController cheddar = null, cocoa = null;
+            foreach (var identity in Object.FindObjectsByType<DogIdentity>(FindObjectsSortMode.None))
+            {
+                if (identity.Id == DogId.Cheddar) cheddar = identity.GetComponent<DogController>();
+                if (identity.Id == DogId.Cocoa) cocoa = identity.GetComponent<DogController>();
+            }
+            Assert.IsNotNull(cheddar);
+            Assert.IsNotNull(cocoa);
+
+            Vector2 first = controller.Checkpoints[0];
+            cheddar.transform.position = first;
+            cocoa.transform.position = first;
+            yield return null;
+            Assert.AreEqual(0, controller.State.Reached,
+                "Passive overlap must not bank a checkpoint before its route call.");
+
+            Assert.IsFalse(controller.ForceRouteCall(DogId.Cocoa),
+                "The partner cannot replace the named scout's bark call.");
+            Assert.IsTrue(controller.ForceRouteCall(DogId.Cheddar));
+            Assert.IsTrue(controller.CheckpointCalled);
+            yield return null;
+
+            Assert.AreEqual(1, controller.State.Reached);
+            Assert.AreEqual(DogId.Cocoa, controller.RequiredScoutDog,
+                "The route caller should alternate so both dogs own a distinct opening beat.");
+            Assert.That(_game.ObjectiveLabel, Does.Contain("Cocoa"));
         }
 
         [UnityTest]

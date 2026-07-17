@@ -103,6 +103,17 @@ namespace CheddarAndCocoa.Tests
 
             Assert.AreEqual(KitchenFoodFrenzyMissionState.RequiredCatches, _game.KitchenState.GoodCatches);
             Assert.AreEqual(KitchenFoodFrenzyMissionState.FinaleSuccessesRequired, _game.KitchenState.FinaleSuccesses);
+            var controller = (KitchenFoodFrenzyMissionController)_game.ActiveMissionController;
+            Assert.IsInstanceOf<IMissionSuccessPresentationController>(controller);
+            Assert.IsTrue(controller.IsPresentingSuccessfulOutcome,
+                "The caught feast should remain visible before the result card replaces gameplay.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
+            Assert.That(_game.ObjectiveLabel, Does.Contain("Dinner saved"));
+            Assert.IsTrue(LogContains("KitchenPayoff"));
+
+            controller.ForceFinishSuccessPresentation();
+            yield return null;
+
             Assert.AreEqual(GameManager.MissionOutcome.Clear, _game.Outcome);
             Assert.AreEqual(GameManager.FlowState.EndScreen, _game.CurrentFlow);
             Assert.That(_game.MissionBanner, Does.Contain("KITCHEN CLEARED"));

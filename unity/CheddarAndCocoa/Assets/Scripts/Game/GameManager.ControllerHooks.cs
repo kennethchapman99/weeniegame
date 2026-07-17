@@ -1,3 +1,4 @@
+using CheddarAndCocoa.Dogs;
 using UnityEngine;
 
 namespace CheddarAndCocoa.Game
@@ -18,6 +19,30 @@ namespace CheddarAndCocoa.Game
             CheckClear();
         }
 
+        public void ForceGateSuccessPresentationComplete()
+        {
+            if (MissionActive()) GateCrashController?.ForceFinishSuccessPresentation();
+            CheckClear();
+        }
+
+        public bool ForceMarkInteraction(DogId dogId, int zoneIndex)
+        {
+            return MissionActive() && MarkTheYardController != null &&
+                   MarkTheYardController.ForceMarkInteraction(dogId, zoneIndex);
+        }
+
+        public bool ForceMarkYardDefenseBark(DogId dogId)
+        {
+            return MissionActive() && MarkTheYardController != null &&
+                   MarkTheYardController.ForceDefenseBark(dogId);
+        }
+
+        public void ForceMarkYardSuccessPresentationComplete()
+        {
+            if (MissionActive()) MarkTheYardController?.ForceFinishSuccessPresentation();
+            CheckClear();
+        }
+
         public void ForceTableFlop(bool flopped = true)
         {
             if (MissionActive()) TableStealthController?.ForceTableFlop(flopped);
@@ -34,6 +59,12 @@ namespace CheddarAndCocoa.Game
             CheckClear();
         }
 
+        public void ForceTableSuccessPresentationComplete()
+        {
+            if (MissionActive()) TableStealthController?.ForceFinishSuccessPresentation();
+            CheckClear();
+        }
+
         public void ForceSwitcherooBait(float seconds, bool baiting = true)
         {
             if (MissionActive()) SquirrelSwitcherooController?.ForceSwitcherooBait(seconds, baiting);
@@ -46,9 +77,21 @@ namespace CheddarAndCocoa.Game
             CheckClear();
         }
 
+        public void ForceSwitcherooSuccessPresentationComplete()
+        {
+            if (MissionActive()) SquirrelSwitcherooController?.ForceFinishSuccessPresentation();
+            CheckClear();
+        }
+
         public void ForceWalkCampaign(float seconds, bool doorStare, bool presentLeash)
         {
             if (MissionActive()) WalkCampaignController?.ForceWalkCampaign(seconds, doorStare, presentLeash);
+            CheckClear();
+        }
+
+        public void ForceWalkCampaignSuccessPresentationComplete()
+        {
+            if (MissionActive()) WalkCampaignController?.ForceFinishSuccessPresentation();
             CheckClear();
         }
 
@@ -58,9 +101,20 @@ namespace CheddarAndCocoa.Game
             CheckClear();
         }
 
+        public bool ForceBoneCall()
+        {
+            return MissionActive() && BoneRelayController != null && BoneRelayController.ForceCocoaCall();
+        }
+
         public void ForceBoneDig(int target)
         {
             if (MissionActive()) BoneRelayController?.ForceBoneDig(target);
+            CheckClear();
+        }
+
+        public void ForceBoneSuccessPresentationComplete()
+        {
+            if (MissionActive()) BoneRelayController?.ForceFinishSuccessPresentation();
             CheckClear();
         }
 
@@ -76,6 +130,12 @@ namespace CheddarAndCocoa.Game
             CheckClear();
         }
 
+        public void ForceEscapeSuccessPresentationComplete()
+        {
+            if (MissionActive()) GreatEscapeController?.ForceFinishSuccessPresentation();
+            CheckClear();
+        }
+
         public void ForceChaosTrigger()
         {
             if (MissionActive()) ChaosMachineController?.ForceChaosTrigger();
@@ -84,6 +144,12 @@ namespace CheddarAndCocoa.Game
         public void ForceChaosAdvance(float seconds, bool assisting)
         {
             if (MissionActive()) ChaosMachineController?.ForceChaosAdvance(seconds, assisting);
+            CheckClear();
+        }
+
+        public void ForceChaosSuccessPresentationComplete()
+        {
+            if (MissionActive()) ChaosMachineController?.ForceFinishSuccessPresentation();
             CheckClear();
         }
 
@@ -96,6 +162,17 @@ namespace CheddarAndCocoa.Game
         public void ForceBlanketCatch(float itemX)
         {
             if (MissionActive()) BlanketCatchController?.ForceBlanketCatch(itemX);
+            CheckClear();
+        }
+
+        public bool ForceBlanketCallDrop()
+        {
+            return MissionActive() && BlanketCatchController != null && BlanketCatchController.ForceCocoaCallDrop();
+        }
+
+        public void ForceBlanketSuccessPresentationComplete()
+        {
+            if (MissionActive()) BlanketCatchController?.ForceFinishSuccessPresentation();
             CheckClear();
         }
 

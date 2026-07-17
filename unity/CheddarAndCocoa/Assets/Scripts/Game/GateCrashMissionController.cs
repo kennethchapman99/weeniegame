@@ -8,13 +8,15 @@ namespace CheddarAndCocoa.Game
     /// squeezes through to the toy; if Cocoa lets go mid-squeeze the gate snaps shut, and too many
     /// snaps end the run.
     /// </summary>
-    public sealed class GateCrashMissionController : IMissionController, IMissionPressureHud
+    public sealed class GateCrashMissionController : IMissionController, IMissionInteractionController,
+        IMissionPressureHud, IMissionSuccessPresentationController
     {
         private const float HoldRange = 4f;
         private const float CrossRange = 4f;
         private const float CrossNeeded = 0.8f;
         private const float HoldWindow = 30f; // generous; snaps come from releasing, not timeout.
         private const int MaxSnaps = 4;
+        private const float SuccessHoldSeconds = 1.15f;
 
         private static readonly Color GateIdleColor = new(0.7f, 0.5f, 0.2f);
         private static readonly Color GateHeldColor = new(0.4f, 0.8f, 0.5f);
@@ -30,7 +32,9 @@ namespace CheddarAndCocoa.Game
         private int _snapsSeen;
         private bool _creditedSolve;
         private bool _failed;
+        private bool _anchorEngaged;
         private float _gateSnapReactionUntil;
+        private float _successHoldRemaining;
 
         // "Cheddar believes every closed door is a personal attack" - purely cosmetic, no
         // mechanic effect. See docs/GAME-DESIGN-BIBLE.md's Running gags list.
@@ -40,7 +44,7 @@ namespace CheddarAndCocoa.Game
         public int DoorOutrageCount { get; private set; }
 
         public GameManager.MissionVariant Variant => GameManager.MissionVariant.GateCrash;
-        public bool IsComplete => _puzzle.Solved;
+        public bool IsComplete => _puzzle.Solved && _successHoldRemaining <= 0f;
         public bool IsFailed => _failed;
         public string FailReason => _failed
             ? "The gate snapped shut too many times before Cheddar could squeeze through."
@@ -51,17 +55,22 @@ namespace CheddarAndCocoa.Game
         public Vector2 EntryTarget => _context.Bounds.center;
         public string OutcomeSummary => MissionOutcomeSummaryBuilder.BuildGateCrashSummary(_puzzle);
         public string PressureLabel => "SQUEEZE THROUGH";
-        public bool PressureVisible => true;
+        public bool PressureVisible => !_puzzle.Solved;
         public float PressureNormalized => _puzzle.CrossRatio;
         public Color PressureColor => Color.Lerp(new Color(0.95f, 0.55f, 0.16f), new Color(0.38f, 1f, 0.5f), _puzzle.CrossRatio);
+        public float SuccessHoldRemaining => _successHoldRemaining;
+        public bool IsPresentingSuccessfulOutcome => _puzzle.Solved && _successHoldRemaining > 0f;
+        public bool AnchorEngaged => _anchorEngaged;
 
         public string ObjectiveLabel
         {
             get
             {
+                if (IsPresentingSuccessfulOutcome)
+                    return "Toy rescued! Cheddar has it - Cocoa held strong!";
                 return _puzzle.Held
                     ? $"Cheddar: squeeze through while Cocoa holds (snaps {_puzzle.Snaps}/{MaxSnaps})"
-                    : $"Cocoa: hold the gate open for Cheddar (snaps {_puzzle.Snaps}/{MaxSnaps})";
+                    : $"Cocoa: reach the gate and Interact to anchor it (snaps {_puzzle.Snaps}/{MaxSnaps})";
             }
         }
 
@@ -78,7 +87,9 @@ namespace CheddarAndCocoa.Game
             _snapsSeen = 0;
             _creditedSolve = false;
             _failed = false;
+            _anchorEngaged = false;
             _gateSnapReactionUntil = 0f;
+            _successHoldRemaining = 0f;
             _nextDoorOutrageAt = _context.Now() + DoorOutrageCooldown;
             _holdZone = new Vector2(_context.Bounds.center.x - 10f, _context.Bounds.center.y);
             _crossZone = new Vector2(_context.Bounds.center.x + 10f, _context.Bounds.center.y);
@@ -90,13 +101,22 @@ namespace CheddarAndCocoa.Game
 
         public void Tick(float deltaTime, float now)
         {
-            if (_puzzle.Solved || _failed || _context.Dogs == null) return;
+            if (_failed || _context.Dogs == null) return;
+
+            if (_puzzle.Solved)
+            {
+                _successHoldRemaining = Mathf.Max(0f, _successHoldRemaining - deltaTime);
+                UpdateLabels();
+                return;
+            }
 
             int anchor = _context.IndexOfDog(DogId.Cocoa);
             int crosser = _context.IndexOfDog(DogId.Cheddar);
             if (anchor < 0 || crosser < 0) return;
 
-            bool held = Vector2.Distance(_context.Dogs[anchor].transform.position, _holdZone) <= HoldRange;
+            bool anchorInRange = Vector2.Distance(_context.Dogs[anchor].transform.position, _holdZone) <= HoldRange;
+            if (_anchorEngaged && !anchorInRange) _anchorEngaged = false;
+            bool held = _anchorEngaged && anchorInRange;
             _puzzle.SetHeld(held);
             if (Vector2.Distance(_context.Dogs[crosser].transform.position, _crossZone) <= CrossRange)
                 _puzzle.Advance(deltaTime);
@@ -113,6 +133,44 @@ namespace CheddarAndCocoa.Game
         }
 
         public bool HandleBark(int dogIndex) => false;
+
+        public bool HandleInteract(int dogIndex)
+        {
+            if (_puzzle.Solved || _failed || dogIndex < 0 || dogIndex >= _context.Dogs.Length) return false;
+            DogId dogId = DogIdAt(dogIndex);
+            if (dogId != DogId.Cocoa)
+            {
+                _context.MarkFailedInteraction(dogId, "Cocoa is the steady gate anchor; Cheddar takes the squeeze route");
+                _context.SetCue("Cheddar can glare at the gate, but Cocoa must Interact to plant the anchor.");
+                return true;
+            }
+
+            if (Vector2.Distance(_context.Dogs[dogIndex].transform.position, _holdZone) > HoldRange)
+            {
+                _context.MarkFailedInteraction(dogId, "get closer to the gate before anchoring it");
+                _context.SetCue("Cocoa needs paws on the gate - reach the GATE marker and Interact.");
+                return true;
+            }
+
+            if (_anchorEngaged)
+            {
+                _context.SetCue("Cocoa is anchored - stay planted while Cheddar squeezes through!");
+                return true;
+            }
+
+            _anchorEngaged = true;
+            _puzzle.SetHeld(true);
+            MissionPropArt.SetSprite(_gateArt, FinalGameplayArt.GateCrashGateHeld);
+            if (_context.DogFeedback[dogIndex] != null) _context.DogFeedback[dogIndex].ShowProudBrief();
+            _context.SetCue("Cocoa deliberately anchored the gate - Cheddar, squeeze to the toy!");
+            _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "GATE ANCHORED!");
+            _context.SpawnWorldPop(_holdZone, "COCOA ANCHORED!", new Color(0.48f, 1f, 0.68f));
+            _context.RequestRumble("gate_anchor", 0.12f, 0.28f, 0.1f);
+            _context.LogEvent("GateAnchored", $"attempt {_puzzle.Snaps + 1}");
+            _context.LogObjectiveChanged();
+            UpdateLabels();
+            return true;
+        }
 
         public void Cleanup() => SetSceneActive(false);
 
@@ -139,7 +197,7 @@ namespace CheddarAndCocoa.Game
             if (_context.IndexOfDog(DogId.Cocoa) == dogIndex)
             {
                 target = _gate != null ? _gate.transform : null;
-                copy = "HOLD GATE";
+                copy = _puzzle.Held ? "STAY ANCHORED" : "INTERACT TO ANCHOR";
             }
             else
             {
@@ -156,6 +214,7 @@ namespace CheddarAndCocoa.Game
         /// <summary>Test hook: Cocoa engages or releases the gate brace (releasing mid-squeeze snaps).</summary>
         public void ForceGateHold(bool held)
         {
+            _anchorEngaged = held;
             _puzzle.SetHeld(held);
             HandleSnaps();
             UpdateLabels();
@@ -166,6 +225,13 @@ namespace CheddarAndCocoa.Game
         {
             _puzzle.Advance(seconds);
             HandleSnaps();
+            UpdateLabels();
+        }
+
+        /// <summary>Deterministic seam for tests that need to advance past the live-world payoff.</summary>
+        public void ForceFinishSuccessPresentation()
+        {
+            _successHoldRemaining = 0f;
             UpdateLabels();
         }
 
@@ -196,15 +262,24 @@ namespace CheddarAndCocoa.Game
             if (_puzzle.Solved && !_creditedSolve)
             {
                 _creditedSolve = true;
+                _successHoldRemaining = SuccessHoldSeconds;
                 int anchor = _context.IndexOfDog(DogId.Cocoa);
                 int crosser = _context.IndexOfDog(DogId.Cheddar);
                 if (anchor >= 0) _context.CreditDog(anchor);
                 if (crosser >= 0) _context.CreditDog(crosser);
+                MissionPropArt.SetSprite(_toyArt, FinalGameplayArt.GateCrashToyClaimed);
+                _context.SetCue("Cheddar got the toy! Cocoa held the gate open!");
+                _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "TOY RESCUED!");
+                _context.SpawnWorldPop(_crossZone, "TOY RESCUED!", new Color(1f, 0.9f, 0.3f));
+                _context.RequestAudioCue(ArenaFeedbackCatalog.MissionWin);
+                _context.RequestRumble("gate_toy_rescued", 0.3f, 0.55f, 0.2f);
+                _context.LogEvent("GateCrashPayoff", "Toy rescued; holding live-world success beat");
             }
 
             if (_puzzle.Snaps <= _snapsSeen) return;
 
             _snapsSeen = _puzzle.Snaps;
+            _anchorEngaged = false;
             _gateSnapReactionUntil = _context.Now() + 0.55f;
             MissionPropArt.SetSprite(_gateArt, FinalGameplayArt.GateCrashGateSnap);
             _context.AddScore(ScoreEventCatalog.FakeOut.Points, "GATE SNAP");
@@ -212,6 +287,8 @@ namespace CheddarAndCocoa.Game
             _context.SetCue($"The gate snapped shut! ({_puzzle.Snaps}/{MaxSnaps}) Cocoa has to brace it.");
             _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "GATE SNAP!");
             _context.SpawnWorldPop(_crossZone, "SNAP!", new Color(1f, 0.35f, 0.2f));
+            _context.RequestAudioCue(ArenaFeedbackCatalog.ThreatWarning);
+            _context.RequestRumble("gate_snap", 0.18f, 0.38f, 0.14f);
             _context.RequestShake(0.12f);
             _context.LogEvent("GateSnap", $"{_puzzle.Snaps}/{MaxSnaps}");
             if (_puzzle.Snaps >= MaxSnaps) _failed = true;
@@ -272,5 +349,9 @@ namespace CheddarAndCocoa.Game
         private Vector2 ClampInsideBounds(Vector2 point, float margin) => new(
             Mathf.Clamp(point.x, _context.Bounds.xMin + margin, _context.Bounds.xMax - margin),
             Mathf.Clamp(point.y, _context.Bounds.yMin + margin, _context.Bounds.yMax - margin));
+
+        private DogId DogIdAt(int dogIndex) => dogIndex >= 0 && dogIndex < _context.Dogs.Length &&
+            _context.Dogs[dogIndex] != null && _context.Dogs[dogIndex].TryGetComponent<DogIdentity>(out var identity)
+                ? identity.Id : DogId.Cheddar;
     }
 }

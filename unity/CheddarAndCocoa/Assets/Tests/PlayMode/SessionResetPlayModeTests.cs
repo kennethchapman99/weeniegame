@@ -121,7 +121,7 @@ namespace CheddarAndCocoa.Tests
             // still cycle back to the first mission once every mission has been attempted at least once.
             game.ShowSessionSummary();
             game.ContinueSession();
-            Assert.AreEqual(GameManager.MissionVariant.BackyardRescue, game.ActiveMissionVariant,
+            Assert.AreEqual(GameManager.MissionVariant.OperationPeeBreak, game.ActiveMissionVariant,
                 "Once every mission has been attempted, Continue should still wrap cleanly to the first.");
             Assert.AreEqual(GameManager.FlowState.Playing, game.CurrentFlow);
         }
@@ -145,6 +145,7 @@ namespace CheddarAndCocoa.Tests
             yield return null;
             game.ForceGateHold(true);
             game.ForceGateCross(1.0f);
+            game.ForceGateSuccessPresentationComplete();
             Assert.AreEqual(GameManager.MissionOutcome.Clear, game.Outcome);
             yield return null;
 

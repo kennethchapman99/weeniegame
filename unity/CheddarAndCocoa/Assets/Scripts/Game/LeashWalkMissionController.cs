@@ -3,12 +3,13 @@ using UnityEngine;
 
 namespace CheddarAndCocoa.Game
 {
-    public sealed class LeashWalkMissionController : IMissionController
+    public sealed class LeashWalkMissionController : IMissionController, IMissionSuccessPresentationController
     {
         private const float MaxLeash = 7f;
         private const float CheckpointRange = 2.6f;
         private const int MaxSnaps = 4;
         private const float SnapCooldown = 1.5f;
+        private const float SuccessHoldSeconds = 1.15f;
 
         // "Every walk is an intelligence-gathering mission" - purely cosmetic, no mechanic effect.
         private const float IntelCooldown = 9f;
@@ -20,10 +21,13 @@ namespace CheddarAndCocoa.Game
         private float _nextSnapAt;
         private float _nextIntelAt;
         private bool _cleared;
+        private bool _checkpointCalled;
+        private float _successHoldRemaining;
         public int IntelGatheredCount { get; private set; }
 
         public GameManager.MissionVariant Variant => GameManager.MissionVariant.LeashWalk;
-        public bool IsComplete => _cleared;
+        public bool IsComplete => _cleared && _successHoldRemaining <= 0f;
+        public bool IsPresentingSuccessfulOutcome => _cleared && _successHoldRemaining > 0f;
         public bool IsFailed => _state.TooManySnaps(MaxSnaps);
         public string FailReason => _state.TooManySnaps(MaxSnaps)
             ? "The leash snapped taut too many times - the walk fell apart."
@@ -32,10 +36,16 @@ namespace CheddarAndCocoa.Game
         public Vector2[] Checkpoints => _checkpoints != null ? (Vector2[])_checkpoints.Clone() : new Vector2[0];
         public Vector2 EntryTarget => _checkpoints != null && _checkpoints.Length > 0 ? _checkpoints[0] : Vector2.zero;
         public string OutcomeSummary => MissionOutcomeSummaryBuilder.BuildLeashSummary(_state);
+        public bool CheckpointCalled => _checkpointCalled;
+        public DogId RequiredScoutDog => _state.CheckpointIndex % 2 == 0 ? DogId.Cheddar : DogId.Cocoa;
 
-        public string ObjectiveLabel => _cleared
-            ? "Walk complete!"
-            : $"Walk the leash together to checkpoint {Mathf.Min(_state.Reached + 1, _state.RequiredCheckpoints)}/{_state.RequiredCheckpoints} - stay close (snaps {_state.Snaps}/{MaxSnaps})";
+        public string ObjectiveLabel => IsPresentingSuccessfulOutcome
+            ? "Best walk ever! Cheddar and Cocoa finish the route side by side."
+            : _cleared
+                ? "Walk complete!"
+                : !_checkpointCalled
+                    ? $"{DogName(RequiredScoutDog)}: reach checkpoint {Mathf.Min(_state.Reached + 1, _state.RequiredCheckpoints)}/{_state.RequiredCheckpoints} and BARK the route call. Partner: stay close! (snaps {_state.Snaps}/{MaxSnaps})"
+                    : $"Route called! Both dogs reach checkpoint {Mathf.Min(_state.Reached + 1, _state.RequiredCheckpoints)}/{_state.RequiredCheckpoints} together. (snaps {_state.Snaps}/{MaxSnaps})";
 
         public void Initialize(MissionContext context)
         {
@@ -50,6 +60,9 @@ namespace CheddarAndCocoa.Game
             _nextSnapAt = 0f;
             _nextIntelAt = _context.Now() + IntelCooldown;
             _cleared = false;
+            _checkpointCalled = false;
+            _successHoldRemaining = 0f;
+            IntelGatheredCount = 0;
             for (int i = 0; i < _markers.Length; i++) SetMarkerArt(i, FinalGameplayArt.LeashWalkCheckpointWaiting);
             SetMarkersActive(true);
             UpdateCheckpointSignals();
@@ -66,7 +79,12 @@ namespace CheddarAndCocoa.Game
 
         public void Tick(float deltaTime, float now)
         {
-            if (_cleared || IsFailed || _context.Dogs == null || _context.Dogs.Length < 2) return;
+            if (_cleared)
+            {
+                _successHoldRemaining = Mathf.Max(0f, _successHoldRemaining - deltaTime);
+                return;
+            }
+            if (IsFailed || _context.Dogs == null || _context.Dogs.Length < 2) return;
 
             if (Vector2.Distance(_context.Dogs[0].transform.position, _context.Dogs[1].transform.position) > MaxLeash
                 && now >= _nextSnapAt)
@@ -81,7 +99,7 @@ namespace CheddarAndCocoa.Game
             {
                 bool aOn = Vector2.Distance(_context.Dogs[0].transform.position, _checkpoints[idx]) <= CheckpointRange;
                 bool bOn = Vector2.Distance(_context.Dogs[1].transform.position, _checkpoints[idx]) <= CheckpointRange;
-                if (aOn && bOn) RegisterCheckpointReached();
+                if (_checkpointCalled && aOn && bOn) RegisterCheckpointReached();
             }
 
             if (now >= _nextIntelAt)
@@ -91,7 +109,47 @@ namespace CheddarAndCocoa.Game
             }
         }
 
-        public bool HandleBark(int dogIndex) => false;
+        public bool HandleBark(int dogIndex)
+        {
+            if (_cleared || IsFailed || _checkpointCalled || _context.Dogs == null ||
+                dogIndex < 0 || dogIndex >= _context.Dogs.Length) return false;
+
+            int idx = _state.CheckpointIndex;
+            if (idx < 0 || idx >= _checkpoints.Length) return false;
+            DogId required = RequiredScoutDog;
+            int requiredIndex = _context.IndexOfDog(required);
+            float distance = Vector2.Distance(_context.Dogs[dogIndex].transform.position, _checkpoints[idx]);
+
+            if (dogIndex != requiredIndex)
+            {
+                if (distance <= CheckpointRange)
+                {
+                    DogId barkingDog = dogIndex == _context.IndexOfDog(DogId.Cheddar) ? DogId.Cheddar : DogId.Cocoa;
+                    _context.MarkFailedInteraction(barkingDog,
+                        $"{DogName(required)} has this route call; keep the leash slack for them.");
+                    _context.SetCue($"Wrong scout - {DogName(required)} needs to BARK this checkpoint call.");
+                }
+                return false;
+            }
+            if (distance > CheckpointRange)
+            {
+                _context.MarkFailedInteraction(required, "Reach the active checkpoint before barking the route call.");
+                _context.SetCue($"{DogName(required)} needs to reach the glowing checkpoint, then BARK the route call.");
+                return false;
+            }
+
+            _checkpointCalled = true;
+            _context.CreditDog(dogIndex);
+            _context.SetFeedback(GameManager.FeedbackKind.UnitedBark);
+            _context.SetCue($"{DogName(required)} called the route - partner, join them without snapping the leash!");
+            _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "THIS WAY!");
+            _context.SpawnWorldPop(_checkpoints[idx] + Vector2.up * 0.7f, "THIS WAY!", new Color(0.55f, 0.9f, 1f));
+            _context.RequestAudioCue(ArenaFeedbackCatalog.SquirrelStunned);
+            _context.RequestRumble("leash_call", 0.12f, 0.28f, 0.1f);
+            _context.LogEvent("LeashRouteCalled", $"{DogName(required)} checkpoint {idx + 1}");
+            _context.LogObjectiveChanged();
+            return true;
+        }
 
         public void Cleanup() => SetMarkersActive(false);
 
@@ -114,7 +172,8 @@ namespace CheddarAndCocoa.Game
             int idx = _state.CheckpointIndex;
             target = _markers != null && idx >= 0 && idx < _markers.Length && _markers[idx] != null
                 ? _markers[idx].transform : null;
-            copy = "WALK TOGETHER";
+            bool isScout = _context.IndexOfDog(RequiredScoutDog) == dogIndex;
+            copy = _checkpointCalled ? "JOIN TOGETHER" : isScout ? "BARK ROUTE CALL" : $"FOLLOW {DogName(RequiredScoutDog).ToUpperInvariant()}";
             hideDistance = CheckpointRange;
             return target != null;
         }
@@ -125,6 +184,8 @@ namespace CheddarAndCocoa.Game
 
         public void ForceReachCheckpoint() => RegisterCheckpointReached();
         public void ForceLeashSnap() => RegisterSnap();
+        public bool ForceRouteCall(DogId dogId) => HandleBark(_context.IndexOfDog(dogId));
+        public void ForceFinishSuccessPresentation() => _successHoldRemaining = 0f;
 
         /// <summary>Public so tests can trigger the gag directly instead of waiting out the cooldown.</summary>
         public void TrySpawnIntelGathered()
@@ -158,6 +219,7 @@ namespace CheddarAndCocoa.Game
             if (_state.ReadyToClear()) return;
             int idx = _state.CheckpointIndex;
             _state.ReachCheckpoint();
+            _checkpointCalled = false;
             if (_markers != null && idx >= 0 && idx < _markers.Length && _markers[idx] != null)
             {
                 SetMarkerArt(idx, FinalGameplayArt.LeashWalkCheckpointReached);
@@ -183,6 +245,11 @@ namespace CheddarAndCocoa.Game
             {
                 _context.AddScore(ScoreEventCatalog.WalkComplete.Points, ScoreEventCatalog.WalkComplete.Label);
                 _cleared = true;
+                _successHoldRemaining = SuccessHoldSeconds;
+                _context.SetCue("Best walk ever - Cheddar and Cocoa finish the route side by side!");
+                _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "BEST WALK EVER!");
+                _context.SpawnWorldPop(_checkpoints[idx] + Vector2.up * 1.1f, "BEST WALK EVER!", new Color(0.65f, 0.95f, 0.75f));
+                _context.RequestRumble("walk_complete", 0.2f, 0.45f, 0.16f);
             }
             else
             {
@@ -244,6 +311,8 @@ namespace CheddarAndCocoa.Game
                 if (_markers[i] != null)
                     _markers[i].SetActive(active && i >= _state.CheckpointIndex);
         }
+
+        private static string DogName(DogId dogId) => dogId == DogId.Cheddar ? "Cheddar" : "Cocoa";
 
         /// <summary>Single source of truth for checkpoint geometry, shared with GameManager's compat accessor.</summary>
         public static Vector2[] ComputeCheckpoints(Rect bounds)

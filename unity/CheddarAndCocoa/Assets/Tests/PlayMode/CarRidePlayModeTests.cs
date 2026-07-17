@@ -49,7 +49,7 @@ namespace CheddarAndCocoa.Tests
             Assert.Greater(required, 0);
 
             int guard = 0;
-            while (game.Outcome == GameManager.MissionOutcome.InProgress && guard++ < 30)
+            while (game.CarRideState.EventsResolved < required && guard++ < 30)
             {
                 game.ForceCarEventSurvived();
                 yield return null;
@@ -57,6 +57,17 @@ namespace CheddarAndCocoa.Tests
 
             Assert.AreEqual(required, game.CarRideState.EventsResolved);
             Assert.AreEqual(0, game.CarRideState.Tumbles);
+            var controller = (CarRideMissionController)game.ActiveMissionController;
+            Assert.IsInstanceOf<IMissionSuccessPresentationController>(controller);
+            Assert.IsTrue(controller.IsPresentingSuccessfulOutcome,
+                "The home arrival should remain visible before the result card replaces the backseat.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, game.Outcome);
+            Assert.That(game.ObjectiveLabel, Does.Contain("We're home"));
+            Assert.IsTrue(HasWorldPop("WE'RE HOME"));
+
+            controller.ForceFinishSuccessPresentation();
+            yield return null;
+
             Assert.AreEqual(GameManager.MissionOutcome.Clear, game.Outcome);
             Assert.IsTrue(game.RuntimeSnapshot.IsClear);
             Assert.That(game.EndSummaryLabel, Does.Contain("Smooth Riders"));
@@ -98,19 +109,78 @@ namespace CheddarAndCocoa.Tests
             yield return null;
             Assert.IsTrue(controller.IsTelegraphing, "A brake should telegraph before it fires.");
 
-            controller.ForceBrace(0);
-            controller.ForceBrace(1);
-            Assert.IsTrue(controller.IsDogBraced(0));
-            Assert.IsTrue(controller.IsDogBraced(1));
+            var cheddar = FindDog(DogId.Cheddar);
+            var cocoa = FindDog(DogId.Cocoa);
+            cocoa.transform.position = Vector3.zero;
+            cheddar.transform.position = Vector3.right;
+            int cocoaIndex = controller.DogIndexOf(DogId.Cocoa);
+            int cheddarIndex = controller.DogIndexOf(DogId.Cheddar);
+            controller.ForceBrace(cocoaIndex);
+            controller.ForceBrace(cheddarIndex);
+            Assert.IsTrue(controller.IsDogBraced(cocoaIndex));
+            Assert.IsTrue(controller.IsDogBraced(cheddarIndex));
+            Assert.IsTrue(controller.CheddarTuckedForBrake);
 
             controller.ForceResolveRoadEvent();
             yield return null;
 
             Assert.AreEqual(0, controller.State.Tumbles, "Braced dogs must survive the brake slam.");
             Assert.AreEqual(1, controller.State.EventsResolved);
-            Assert.IsTrue(HasWorldPop("BRACED"), "A held brace should celebrate visibly.");
+            Assert.IsTrue(HasWorldPop("ANCHORED"), "Cocoa's held anchor should celebrate visibly.");
+            Assert.IsTrue(HasWorldPop("TUCKED SAFE"), "Cheddar's successful tuck should celebrate visibly.");
             foreach (var feedback in _game.DogFeedback)
                 Assert.AreEqual(DogReadabilityFeedback.Pose.Proud, feedback.CurrentPose);
+        }
+
+        [UnityTest]
+        public IEnumerator CarRide_BrakeRequiresCocoaAnchorThenNearbyCheddarTuck_AndRecoversNextBrake()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.CarRide);
+            yield return null;
+            var controller = (CarRideMissionController)_game.ActiveMissionController;
+            var cheddar = FindDog(DogId.Cheddar);
+            var cocoa = FindDog(DogId.Cocoa);
+            int cheddarIndex = controller.DogIndexOf(DogId.Cheddar);
+            int cocoaIndex = controller.DogIndexOf(DogId.Cocoa);
+
+            controller.ForceBeginRoadEvent(CarRideMissionController.RoadEventKind.Brake);
+            cheddar.transform.position = Vector3.zero;
+            cocoa.transform.position = Vector3.right * 8f;
+            controller.ForceBrace(cheddarIndex);
+            Assert.IsFalse(controller.CheddarTuckedForBrake,
+                "Cheddar cannot create his own brake solution before Cocoa plants.");
+            Assert.That(_game.LastCue, Does.Contain("Cocoa"));
+
+            controller.ForceBrace(cocoaIndex);
+            controller.ForceBrace(cheddarIndex);
+            Assert.IsFalse(controller.CheddarTuckedForBrake,
+                "Cheddar must physically reach Cocoa's anchor, not answer from across the bench.");
+
+            cheddar.transform.position = cocoa.transform.position + Vector3.right;
+            controller.ForceBrace(cheddarIndex);
+            Assert.IsTrue(controller.CheddarTuckedForBrake);
+            cheddar.transform.position = Vector3.left * 8f;
+            controller.ForceResolveRoadEvent();
+            yield return null;
+
+            Assert.AreEqual(1, controller.State.Tumbles,
+                "Cocoa should ride out her anchor while Cheddar gets flung after breaking the tuck hold.");
+            Assert.AreEqual(1, controller.State.EventsResolved);
+
+            controller.ForceBeginRoadEvent(CarRideMissionController.RoadEventKind.Brake);
+            cocoa.transform.position = Vector3.zero;
+            cheddar.transform.position = Vector3.right;
+            controller.ForceBrace(cocoaIndex);
+            controller.ForceBrace(cheddarIndex);
+            Assert.IsTrue(controller.CheddarTuckedForBrake);
+            controller.ForceResolveRoadEvent();
+            yield return null;
+
+            Assert.AreEqual(1, controller.State.Tumbles,
+                "A correctly coordinated retry should add no new tumble.");
+            Assert.AreEqual(2, controller.State.EventsResolved);
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
         }
 
         [UnityTest]

@@ -71,11 +71,41 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(_game.BlanketPuzzle.Solved);
             Assert.AreEqual(needed, _game.BlanketPuzzle.Caught);
             Assert.AreEqual(0, _game.BlanketPuzzle.Rips);
+            Assert.IsTrue(_game.BlanketCatchController.IsPresentingSuccessfulOutcome,
+                "The fifth catch should hold its live full-blanket payoff before the result card.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
+
+            _game.ForceBlanketSuccessPresentationComplete();
+
             Assert.AreEqual(GameManager.MissionOutcome.Clear, _game.Outcome);
             Assert.IsTrue(_game.RuntimeSnapshot.IsClear);
             Assert.That(_game.EndSummaryLabel, Does.Contain("Dinner Saved"));
             Assert.AreNotEqual("MVP: awaiting dog heroics", _game.MvpLabel,
                 "Catching snacks in the blanket should credit both dogs toward the MVP stat.");
+        }
+
+        [UnityTest]
+        public IEnumerator Blanket_CocoaBarkCallsEachDrop_OnlyAfterTheTeamMakesTheBlanketTaut()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.BlanketCatch);
+            yield return null;
+
+            var controller = _game.BlanketCatchController;
+            Assert.IsTrue(controller.WaitingForCocoaBark);
+            Assert.That(controller.ObjectiveLabel, Does.Contain("Cocoa BARKS"));
+
+            _game.ForceBlanketSpan(2f, 0f);
+            Assert.IsFalse(_game.ForceBlanketCallDrop(),
+                "Cocoa's early bark should be a readable, harmless mistake while the blanket is slack.");
+            Assert.IsTrue(controller.WaitingForCocoaBark);
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
+
+            _game.ForceBlanketSpan(7.5f, 0f);
+            Assert.IsTrue(_game.ForceBlanketCallDrop(),
+                "Cocoa's bark should release the snack once both dogs create a taut catch surface.");
+            Assert.IsFalse(controller.WaitingForCocoaBark);
+            Assert.That(controller.ObjectiveLabel, Does.Contain("slide the middle under the snack"));
         }
 
         [UnityTest]
@@ -158,6 +188,8 @@ namespace CheddarAndCocoa.Tests
             _cocoa.transform.position = new Vector3(itemX + 4f, y, 0f);
             if (_cheddar.TryGetComponent<Rigidbody2D>(out var cheddarBody)) cheddarBody.linearVelocity = Vector2.zero;
             if (_cocoa.TryGetComponent<Rigidbody2D>(out var cocoaBody)) cocoaBody.linearVelocity = Vector2.zero;
+            yield return null; // let the live position driver register the taut span
+            Assert.IsTrue(_game.ForceBlanketCallDrop(), "Cocoa's bark should call the positioned snack drop.");
 
             yield return new WaitForSecondsRealtime(2.6f); // let the snack fall from SpawnY to CatchLineY
 
@@ -198,6 +230,7 @@ namespace CheddarAndCocoa.Tests
                 yield return null;
             }
             Assert.IsTrue(_game.BlanketPuzzle.Taut, "A mid spread should pull the blanket taut.");
+            Assert.IsTrue(_game.ForceBlanketCallDrop(), "Cocoa should call the live snack drop with bark.");
 
             // Yank too far apart: the blanket over-stretches and rips.
             for (int i = 0; i < 4; i++)

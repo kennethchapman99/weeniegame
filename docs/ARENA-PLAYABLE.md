@@ -5,10 +5,12 @@
 > `GameManager` branches.
 
 `unity/CheddarAndCocoa/Assets/Scenes/ArenaScene.unity` is now a co-op proving ground instead of a
-flat treat loop. As of 2026-07-13, the arena exposes 23 mission variants (Baby Bird Bedlam joined
-the roster by owner request, appended last in the selector so existing missions keep their stable
-seeds). A cold start opens a generated in-scene mission select; every mission runs through the
-controller boundary.
+flat treat loop. As of 2026-07-15, the arena exposes 23 mission variants. A cold start opens a
+generated in-scene mission select; every mission runs through the controller boundary. The library
+leads with the five most developed slices: **Operation Pee Break**, **Kitchen Falling Food
+Frenzy**, **Car Ride Chaos**, **Baby Bird Bedlam**, and **Gate Crash**. This quality order is
+presentation-only; deterministic mission modifiers use mission identity rather than selector
+position, so reordering does not retune the levels.
 
 For current global character art direction, read `docs/ART-DIRECTION.md`. Backyard Mission is the
 playable proof of that direction, not the only place the direction applies. For future external
@@ -51,7 +53,7 @@ module; no third-party runtime dependency was added.
 
 The first post-Pee-Break audit batch replaces changing percentages with controller-owned visual
 meters in **Gate Crash** (squeeze), **Table Stealth** (steak sneak), **The Walk Campaign** (human
-comprehension), **Car Ride Balance** (spill danger), and **Thunderstorm Comfort** (panic). Their
+comprehension), **Car Ride Chaos** (live slide force), and **Thunderstorm Comfort** (panic). Their
 objective and actor copy now says what the dogs should do and reserves the continuously changing
 value for the shared meter. Operation Pee Break's in-world phone uses the existing battery fill plus
 `CHARGING` / `DRAINING` / `LOW` / `DEAD` states instead of printing a percentage. The first complete
@@ -72,6 +74,15 @@ keyboard clusters plus Nintendo Switch-style Y/X/A/B action mapping before the t
 movable play was added only to the previously empty Pee Break room (tennis ball and squeaky toy).
 The other arenas already contain mission-themed objects that move, carry, fall, fumble, scatter, or
 react; adding generic toys beside those authored interactions would make their objectives less clear.
+
+The 2026-07-16 roster-wide wayfinding pass adds a literal dog-life scent read to the same shared
+objective-target seam: at most three faint, dog-colored paw breadcrumbs animate along the first few
+metres of each role's heading, disappear inside the interaction zone, and never reveal a complete
+route. The F1 overlay retains the exact action/distance copy. Standalone review also found and fixed
+Car Ride's cabin/background render-order tie; its opaque cabin, scrolling windshield, and bench now
+cover the backyard plate and decorations. Final evidence after both changes: `552/552` PlayMode tests
+passed, the macOS development player rebuilt and passed startup smoke, and the packaged art-review
+harness produced all 69 expected 1920×1080 frames with no logged exceptions.
 
 #### Consistent two-player couch retest
 
@@ -96,25 +107,25 @@ authoring pads remain available to an observer:
 | Mission | Uncoached sequence to validate | Couch-visible proof and recovery check |
 | --- | --- | --- |
 | Backyard Rescue | recover food; alternate gap-holder and squirrel-pressure roles; survive predator; both tug | squirrel/gap/rope/predator reactions, TEAM TUG meter; fake route and wrong-dog bounce recover |
-| Snack Heist | stash snacks while partner guards the squirrel | plate/stash and squirrel state changes; a steal is obvious and replay-safe |
-| Sock Panic | one dog tips the basket, partner dives for and returns the sock | basket/sock pulse and fumble feedback; wrong grab or timeout resets the beat |
-| Squirrel Conspiracy | herd, hold cutoff, then expose the stash | squirrel/cutoff/stash reactions; taunts remain recoverable before fail |
-| Eagle Toy Rescue | use cover, rescue the toy, finish with united bark | sweep/cover/talon/toy reactions; exposures clearly reset the hide beat |
-| Coyote Fence Defense | bark-pin, repair gaps, finish with united bark | gap and coyote states; breach feedback identifies a retryable gap |
-| Weenie Roundup | pick up, carry, and deliver weenies to the bowl | visible carried cargo, bowl reaction, and harmless dropped-weenie recovery |
-| Scent Search | bark-sniff for heat, then dig the hottest mound | hot/cold patch and bone reveal; wrong dig reads as a miss, not a dead end |
-| Thunderstorm Comfort | huddle through each clap | dog/storm reactions plus PANIC meter; split-clap mistake is funny and survivable |
-| Mark the Yard | split up to claim and defend all zones | zone/squirrel reactions replace circles; pads appear only under F1 |
+| Snack Heist | Cheddar steals while Cocoa bark-guards the squirrel | wrong roles coach cleanly; the watched final snack and held stash payoff enforce the handoff |
+| Sock Panic | Cocoa anchors the basket while Cheddar dives for and returns the sock | basket/sock pulse and fumble feedback; broken hold, wrong grab, or timeout resets the beat |
+| Squirrel Conspiracy | Cheddar herds into Cocoa's cutoff, then Cocoa cracks the stash | escaped solo herds, squirrel/cutoff/stash reactions, and recoverable taunts |
+| Eagle Shadow Panic | both hide, Cheddar wiggles, Cocoa pulls, both united-bark | sweep/cover/talon reactions; open-ground exposure and mistimed pulls recover clearly |
+| Coyote Fence Defense | Cocoa bark-pins, Cheddar repairs, both finish with united bark | timed pin, moving gap, lure, and breach feedback make every recovery legible |
+| Weenie Roundup | split four small carries, then Cocoa steadies Cheddar's jumbo haul | visible cargo, recoverable separation fumble, bowl reaction, and held live payoff |
+| Scent Search | Cheddar points broadly, Cocoa tracks/calls, Cheddar digs | directional bark, hot/cold search, recoverable role coaching, and held cache reveal |
+| Thunderstorm Comfort | Cocoa reassures, Cheddar answers, both hold the huddle | ordered bark window, PANIC meter, recoverable missed clap, and held storm-passed payoff |
+| Mark the Yard | Cheddar interacts to mark; Cocoa barks the reclaim squirrel away | contact alone cannot claim; zone/squirrel reactions, recoverable steal, and held all-marked payoff |
 | Walkies on the Leash | stay together through ordered checkpoints | route stones, active checkpoint, and leash snap; separation can be repaired |
-| Car Ride Balance | both dogs counter-lean through the lurches | cabin tilt and SPILL DANGER meter; a bad lean visibly spills pressure, not progress |
-| Gate Crash | Cocoa holds the opening while Cheddar squeezes through | gate/toy/dog reactions plus SQUEEZE THROUGH meter; mistimed attempts reset safely |
-| Table Stealth | Cocoa distracts the human while Cheddar sneaks to the steak | human/steak/dog reactions plus STEAK SNEAK meter; detection returns to a readable setup |
-| Switcheroo | bait the watcher, then use the exposed stash route | decoy/stash reactions; a backfire exposes why and restores the route |
-| The Walk Campaign | Cocoa stares while Cheddar presents the leash | human/leash/dog reactions plus HUMAN GETS IT meter; lost attention is recoverable |
-| Bone Relay | Cocoa calls the scent, Cheddar digs the signalled mound | scent-post/mound/bone reactions; wrong dig resets without hiding the next clue |
-| The Great Escape | alternate owners through the ordered stations | active-owner command signals and station state swaps; botches preserve the sequence |
-| Chaos Machine | pull the lever, then solve the revealed junction chain | lever/junction cause-and-effect animation; a jam points back to the active fix |
-| Blanket Catch | spread and hold the blanket under falling snacks | blanket tension and falling-item reactions; a rip resets to a usable blanket |
+| Car Ride Chaos | jump sliding junk; Cocoa anchors and Cheddar tucks for brakes | cabin tilt, SLIDE FORCE, partnered brake wayfinding, recoverable flings, and held arrival |
+| Gate Crash | Cocoa Interacts to anchor the opening while Cheddar squeezes through | proximity alone does not open the gate; gate/toy/dog reactions plus SQUEEZE THROUGH meter; leaving snaps and requires a deliberate re-anchor; claimed-toy payoff holds before the result card |
+| Table Stealth | Cocoa Interact-flops so Cheddar sneaks, or Cheddar Bark-burps so Cocoa sneaks | proximity alone cannot flop; sustained and burst routes swap the stealing role; human/steak/dog reactions plus STEAK SNEAK meter; exposures recover; stolen-steak payoff holds before results |
+| Switcheroo | Cheddar Bark-baits and peels away; Cocoa Interacts once at the exposed stash | proximity alone does nothing; decoy/stash reactions, guarded bonk, readable backfire/reset, and held cracked-stash payoff |
+| The Walk Campaign | Cocoa Interact-stares while Cheddar Interact-presents the leash | proximity alone does nothing; leaving breaks the pose; HUMAN GETS IT meter, escalating wrong-item gags, recoverable misreads, and held WALKIES payoff |
+| Bone Relay | Cocoa reaches the scent post and barks the call; Cheddar digs the signalled mound | proximity alone cannot reveal; post/called-mound/bone reactions, recoverable wrong dig, and held three-bone payoff |
+| The Great Escape | alternate owner-only Interacts through the four ordered stations | proximity alone does nothing; named action/owner signals, wrong-paws CLANK, responsive settle-back redo, first-clear scoring, and held FREE DOGS payoff |
+| Chaos Machine | Cheddar Interact-pulls; named owners Interact-fire timed junctions while partners pre-position | proximity alone does nothing; distinct cause/effect props, wrong-paws coaching, exact jam/re-pull recovery, tactile stages, and held toy-launch payoff |
+| Blanket Catch | spread taut; Cocoa barks to call each drop; both slide under it | blanket tension, called-drop, catch/splat reactions, and held full-blanket payoff; early bark/rip recover safely |
 | Kitchen Falling Food Frenzy | Cheddar calls drops; Cocoa catches food and dodges onions; clear dinner rush | counter telegraph, bowl/food reactions, and distinct YUM/DODGED/miss feedback |
 | Operation Pee Break | charge phone, break gaze, present leash, united-bark at door | station props and Teenager reactions, BLADDER/phone meters, two movable toys; circles are F1-only |
 | Baby Bird Bedlam | reach the oak/nest, react to the fall, grab/shake while partner defends | oak/nest/chick/parent reactions; pecks interrupt without making the rescue unwinnable |
@@ -432,7 +443,10 @@ accents:
   `Assets/Art/ReferenceOnly/`. Kitchen Falling Food Frenzy stages an indoor tile/counter area
   behind the controller-owned counter and safe bowl, and Car Ride Chaos stages a full backseat set
   (cabin shell, bench lane, sprite-masked scrolling windshield scenery) that covers the camera
-  frame entirely, so nothing reads like the generic backyard. The whole set tilts during turns.
+  frame entirely, so nothing reads like the generic backyard. The 2026-07-14 authored-art refresh
+  adds layered leather/trim depth, a texture-calmed bench, a seamless opaque neighborhood strip,
+  a personality-rich mirror-eye driver, chunky outlined cooler/toy-bin hazards, and a new
+  backseat-chaos mission tile. The whole set tilts during turns.
   These are decorative mission-owned roots with no colliders.
 
 Still placeholder or deliberately deferred:
@@ -552,7 +566,8 @@ real `GamepadPlayerInput` → `DogController` path (same pattern as the existing
 action buttons now have real controller-press proof, not just keyboard or direct-intent tests.
 
 Separately, there was no player-facing tutorial — new players had to piece together bark/interact/
-jump/wrestle from a small always-on text line. Backyard Rescue (the first mission in `MissionOrder`)
+jump/wrestle from a small always-on text line. Backyard Rescue (the original first mission and still
+a dedicated low-pressure practice slice)
 now teaches one action at a time in a temporary on-screen card above the player identity chips:
 
 - Four action-colored Switch-style glyphs (Y/West bark, X/North interact, A/East jump, B/South wrestle) rendered as
@@ -961,104 +976,110 @@ Manual acceptance check: start Backyard Rescue with **1**. Confirm the blue esca
 
 ### Snack Heist
 
-Snack Heist is a compact protect-and-collect mission using the existing item and squirrel systems without predator or tug requirements. Cheddar and Cocoa must stash `4` forbidden snacks before the squirrel steals `2` within `80` seconds.
+Snack Heist is a compact asymmetric protect-and-collect mission using the existing item and squirrel systems without predator or tug requirements. Cheddar must stash `4` forbidden snacks while Cocoa guards the squirrel lane; the squirrel can steal only `2` within `80` seconds.
 
 Readable differences:
 
 - Collectibles use generated snack-plate prop sprites with dimmed fallback markers and **Snack!**
   labels. A delayed art-stability check verifies the dynamic treat enhancer does not replace them
   with Backyard weenie art after spawn.
-- Objective text starts as **Stash snacks 0/4**.
+- Objective text starts as **Cheddar: Stash snacks 0/4**. Cheddar's first stash immediately starts a readable squirrel heist so Cocoa receives an authored guard opening.
+- Only Cocoa can interrupt an active steal. Cheddar's mouth-full guard bark and Cocoa's snack inspection produce harmless, funny role coaching without consuming the snack or losing the run.
+- The watched final snack does not bank until Cocoa has stopped at least one active heist, guaranteeing the protect-then-steal co-op handoff.
 - Squirrel pressure uses snack-specific labels like **SQUIRREL SNACK HEIST - BARK!** and **SQUIRREL STOLE A SNACK!**.
 - Unique scoring/events include **+60 SNACK STASHED**, **+35 SNACK GUARD BARK**, **-90 SNACK THIEF**, and **SNACK HEIST CLEAR**.
+- The final stash holds live for `1.15` seconds with **STASH SECURED!**, mission-win audio, rumble, and the defeated squirrel-union state before the clear card.
 - Clear banner: **SNACK STASH SAVED!**.
 - Fail reason calls out the squirrel union escaping with forbidden snacks.
 
-Manual check: press **2**, collect one snack, confirm **+60 SNACK STASHED** and **Stash snacks 1/4**. Let or force the squirrel to steal twice and confirm GameOver/replay uses Snack Heist copy.
+Manual check: start Snack Heist from mission select. Touch a plate as Cocoa and confirm **QUALITY CONTROL** leaves it available. Stash the first plate as Cheddar, confirm the squirrel immediately targets another plate, then try Cheddar's nearby bark and confirm **MOUTH FULL!** does not cancel the steal. Bark near the active squirrel as Cocoa, confirm **+35 SNACK GUARD BARK**, then finish with Cheddar. Confirm the final snack cannot bank before Cocoa's guard, the held **STASH SECURED!** payoff is readable, and the end card follows. On replay, let or force the squirrel to steal twice and confirm the flavored fail copy.
 
 ### Sock Panic
 
-Sock Panic is now built around the **Tip and Dive** co-op puzzle beat. One dog interacts beside the laundry basket to tip it open; the other dog has `6` seconds to dive onto the exposed sock. The basket-tipper cannot collect their own exposed sock, so players must alternate or deliberately keep their roles. Cheddar and Cocoa must return `5` socks before the `55` second timer expires, with squirrel, predator, and rope actors disabled.
+Sock Panic is now built around the **Anchor and Dive** co-op puzzle beat. Cocoa uses her veteran-queen steadiness to interact beside the laundry basket, tip it open, and remain within the hold range. Cheddar uses his chaos-puppy sock obsession to dive onto the exposed sock within `6` seconds. If Cocoa leaves the basket before the dive, it immediately flops shut. They must rescue `5` socks before the `55` second timer expires, with squirrel, predator, and rope actors disabled.
 
 Readable differences:
 
 - A generated slatted **LAUNDRY BASKET** is the shared puzzle object; hidden socks only become visible after a tip.
-- Objective arrows show **TIP BASKET**, then split into **HOLD BASKET** and **DIVE FOR SOCK** roles.
+- Objective arrows split by identity: Cocoa sees **INTERACT TO TIP** / **HOLD BASKET**, while Cheddar sees **WAIT TO DIVE** / **DIVE FOR SOCK**.
 - Objective text tracks returned socks and fumbles, then calls out the temporary partner-dive window.
 - Unique scoring/events include **+20 BASKET TIPPED**, **+40 PARTNER SOCK DIVE**, **-15 DECOY SOCK FUMBLE**, and **SOCK PANIC CLEAR**.
-- Clear banner: **SOCKS SORTED!**.
+- The fifth dive holds a short live **SOCK MOUNTAIN RESCUED!** proud-pose payoff before the **SOCKS SORTED!** clear screen.
 - Time failure reason: **Laundry order returned before the final sock was rescued.**
 
-Funny failure/recovery: if the basket-tipper grabs the sock or the opening times out, the sock is exposed as a decoy/fumble and the basket flops shut. Nothing is permanently lost; either dog can tip it again.
+Funny failure/recovery: if Cocoa abandons the hold, grabs the sock herself, or lets the opening time out, the sock is exposed as a decoy/fumble and the basket flops shut. Nothing is permanently lost; Cocoa can anchor it again while Cheddar resets for another ridiculous dive.
 
-Manual check: press **3**, move one dog to the basket and interact, then use the partner to collect the exposed sock. Confirm **+20 BASKET TIPPED**, **+40 PARTNER SOCK DIVE**, and `1/5` returned. Intentionally grab with the basket-tipper and let one opening time out; confirm both produce **-15 DECOY SOCK FUMBLE** and reset to **TIP BASKET**. Replay and confirm socks, fumbles, basket state, and score reset.
+Manual check: press **3** and confirm Cheddar cannot open the basket. Move Cocoa to the basket and Interact, keep her beside it, then use Cheddar to collect the exposed sock. Confirm **+20 BASKET TIPPED**, **+40 PARTNER SOCK DIVE**, and `1/5` returned. Intentionally walk Cocoa away, grab with Cocoa, and let one opening time out; confirm each produces a recoverable **-15 DECOY SOCK FUMBLE** and resets to Cocoa's **INTERACT TO TIP** state. Rescue the fifth sock and verify the live sock-mountain payoff precedes the end screen. Replay and confirm socks, fumbles, basket state, and score reset.
 
 ### Squirrel Conspiracy
 
-Squirrel Conspiracy is the first production-mission slice using `HerdingMissionState`. Cheddar and Cocoa must herd the suspicious squirrel around its route, earn coordinated cutoff progress, survive fake-outs/taunts, reveal the hidden stash, then interact to crack the case before the squirrel reaches `3` taunts. Each route step now activates one visible **HOLD CUTOFF** zone: the dog nearest the squirrel receives **BARK HERD** guidance while the partner is routed to that zone. A cutoff scores only when the partner is actually holding the active zone; ordinary separation no longer counts.
+Squirrel Conspiracy is the first production-mission slice using `HerdingMissionState`. Cheddar uses chaos-puppy pressure to **BARK HERD** the suspicious squirrel while Cocoa uses her territory-holding steadiness on the active **HOLD CUTOFF** zone. Each route step requires that physical two-dog handoff: Cheddar's solo herd attempt does not advance control or reveal the stash. Four completed cutoffs expose the evidence, then Cocoa must reach the stash and Interact while Cheddar guards the culprit. Fake-outs and taunts remain recoverable until the squirrel reaches `3` taunts.
 
 Readable differences:
 
 - The squirrel stays active as the primary objective instead of stealing spawned collectibles.
-- Objective text tracks route/control progress, stash reveal, and taunt pressure.
+- Per-dog objective arrows keep Cheddar on **BARK HERD** and Cocoa on **HOLD CUTOFF**, then switch Cocoa to **INTERACT STASH** and Cheddar to **GUARD SQUIRREL**.
+- Objective text tracks route/control progress, escaped solo herds, stash reveal, and taunt pressure.
 - Unique scoring/events include **GOOD HERD**, **CUTOFF**, **DOUBLE BARK BLOCK**, **FAKE OUT**, **STASH FOUND**, and **CONSPIRACY CRACKED** from the production score catalog.
-- Clear banner: **CONSPIRACY CRACKED!**.
+- Cocoa cracking the stash holds a short live proud-pose payoff before the **CONSPIRACY CRACKED!** clear screen.
 - Fail reason calls out the squirrel taunting the yard into a misinformation spiral.
 
-Manual check: press **4**, bark near the squirrel from useful positions until controls reach `4/4`, then move to the revealed stash and interact. Confirm the end summary says **Conspiracy Cracked**. Let or force three taunts and confirm fail/replay reset the herding counters.
+Manual check: press **4**. Bark as Cocoa and confirm she cannot replace Cheddar's pressure role. Bark as Cheddar while Cocoa is away from the cutoff and confirm the squirrel escapes without increasing control. Put Cocoa on **HOLD CUTOFF**, bark near the squirrel as Cheddar, and confirm one **CUTOFF** advances the route. Complete four handoffs, confirm Cheddar cannot inspect the stash, then Interact there as Cocoa and verify the live payoff precedes **Conspiracy Cracked**. Let or force three taunts and confirm fail/replay resets the herding counters.
 
 ### Eagle Shadow Panic
 
-Eagle Shadow Panic is the second production-mission slice using `ThreatSweepMissionState`. A sweeping eagle shadow threatens the yard; Cheddar and Cocoa must hide in cover during sweeps, then split roles so one dog distracts while the other rescues a stranded toy, then huddle for a united-front bark circle to drive the eagle off. Three exposures (caught in the open) ends the run.
+Eagle Shadow Panic is the second production-mission slice using `ThreatSweepMissionState`. A sweeping eagle shadow crosses the whole yard; Cheddar and Cocoa must both be inside cover when each pass resolves. After two clean hides the eagle snatches Cheddar: he Interacts to wiggle the talon grip open, Cocoa gets close and Interacts to pull during the short window, and three successful handoffs free him. They then huddle for a united-front bark circle to drive the eagle off. Three exposures caught in the open end the run.
 
 Readable differences:
 
-- The predator actor is repurposed as the **EAGLE SHADOW SWEEP** threat and the squirrel actor is repurposed as the stranded **TOY** to rescue (no spawned collectibles or squirrel-steal loop).
-- Objective text moves through three phases: hide (`safe hides x/2, exposures x/3`), distracted rescue (`rescue the toy in the open`), and the final `United-front bark circle`.
-- The rescue objective only opens after `2` safe hides; the toy rescue then unlocks the united-front phase.
+- The predator actor is the **EAGLE SHADOW SWEEP** threat and the shared secondary actor carries the authored open/closed **TALON GRIP** states during Cheddar's rescue (no spawned collectibles or squirrel-steal loop).
+- Objective text moves through three phases: both dogs hide (`safe hides x/2, exposures x/3`), Cheddar-wiggle/Cocoa-pull rescue, and the final `United-front bark circle`.
+- The rescue objective only opens after `2` genuine covered passes; standing in open ground away from the eagle's endpoint no longer grants a free safe hide.
 - Unique scoring/events include **SAFE HIDE**, **SHADOW DISTRACTED**, **EAGLE SPOOK** (exposure penalty), **TOY RESCUED**, **UNITED FRONT**, and **SHADOW PANIC CLEAR**.
-- Clear banner: **EAGLE DRIVEN OFF!**; end summary on a clear reads **Backyard Defenders**.
+- The final united bark holds a short live proud-pose/eagle-retreat payoff before **EAGLE DRIVEN OFF!**; the end summary reads **Backyard Defenders**.
 - Fail reason calls out the eagle shadow catching dogs in the open too many times (**Shadow Trouble** summary).
 
-In real-time play the hide phase is spatial: three labeled **HIDE HERE** cover zones sit in the yard and the eagle shadow physically sweeps left/right across the field. On each sweep pass, a dog caught in the shadow column and not inside a cover zone is exposed; otherwise the dogs score a safe hide. Two clean hides open the rescue.
+In real-time play the hide phase is spatial: three labeled **HIDE HERE** cover zones sit in the yard and the eagle shadow physically sweeps left/right across the field. Because one pass traverses the full play band, every dog outside cover when the pass completes is exposed. Both dogs safely covered scores one hide; two clean hides open the rescue.
 
 The deterministic test/pacing hooks are `ForceEagleShadowSafeHide()`, `ForceEagleShadowExposure()`, `ForceEagleShadowSweepPass()`, `ForceEagleShadowRescue(dog)`, and `ForceEagleShadowUnitedFront()` (`EagleCoverZones` exposes the cover positions); in normal play the final united-front phase also resolves through the existing huddled united-bark path.
 
-Manual check: press **5**, hide twice to open the rescue objective, interact near the toy to rescue it, then bring both dogs together and bark to complete the united front. Confirm the end summary says **Backyard Defenders**. Force three exposures and confirm fail/replay reset the threat-sweep counters, and that every cover zone visibly starts the new attempt back on its calm Safe art rather than still showing the last run's red Spotted sprite.
+Manual check: press **5**. Leave either dog in open ground through a completed sweep—even away from the eagle's final edge position—and confirm it records an exposure. Put both dogs in cover for two passes. Confirm Cheddar is pinned in the talons, Cocoa cannot pull from far away, a Cocoa pull without Cheddar's fresh wiggle misses recoverably, and three timed wiggle/pull handoffs free him. Huddle and bark together, verify the live eagle-retreat payoff precedes **Backyard Defenders**, then force three exposures and confirm replay resets the counters and all cover art to calm Safe states.
 
 ### Coyotes at the Fence
 
-Coyotes at the Fence is the third production-mission slice using `PatrolDefenseMissionState`. A coyote tests weak spots along the yard fence; one dog must **bark-pin** the coyote while the partner **fills the weak spot** — fills only progress while bark pressure is held, forcing a role split. A late **fake snack lure** tempts whichever dog is closer (a Cheddar-specific gag) and is defused by barking instead of taking the bait. After enough weak spots are filled, both dogs bark down the final coyote push. Three breaches end the run.
+Coyotes at the Fence is the third production-mission slice using `PatrolDefenseMissionState`. Cocoa uses her territory-queen steadiness to get within bark range and **BARK-PIN** the coyote, creating a `2.25`-second opening. Cheddar uses his digging energy to reach the active **WEAK SPOT** and Interact before that opening closes. Roles are enforced: the same dog cannot create and cash out the opening, and an across-the-yard bark does nothing. A late **fake snack lure** targets Cheddar's impulse control and is defused by Cocoa's bark. After three repaired gaps, both dogs bark down the final coyote push. Three breaches end the run.
 
 Readable differences:
 
 - The predator actor is repurposed as the **COYOTE AT THE FENCE** and the squirrel actor as the moving **WEAK SPOT / FILL DIRT** marker (no spawned collectibles or squirrel-steal loop).
-- Objective text moves through patrol (`fence gap n, repairs x/3, breaches x/3`), pinned (`partner fill the weak spot now`), lure (`ignore the fake snack lure`), and final-push (`both dogs bark together`) states.
-- A fill attempt with no partner bark pressure is rejected as a missed interaction, so the role split is mechanically enforced.
+- Objective arrows split by identity: Cocoa tracks **BARK-PIN COYOTE** while Cheddar sees **WAIT FOR COCOA PIN**, then **INTERACT: FILL DIRT** during the live opening.
+- Objective text moves through patrol (`fence gap n, repairs x/3, breaches x/3`), timed pin (`Cheddar fill NOW`), lure, and final-push (`both dogs bark together`) states.
+- Wrong-role, out-of-range, late, and no-pressure attempts are rejected with actionable recovery copy.
 - Unique scoring/events include **FENCE HELD**, **DIRT FILLED**, **COYOTE BLOCKED**, **FAKE SNACK BAIT**, **COYOTE BREACH** (penalty), and **YARD DEFENDED**.
-- Clear banner: **YARD DEFENDED!**; end summary on a clear reads **Fence Guardians**, on a breach fail reads **Needs More Patrols**.
+- The final united bark holds a short live proud-pose/coyote-retreat payoff before **YARD DEFENDED!**; the clear summary reads **Fence Guardians**, while a breach fail reads **Needs More Patrols**.
 
-In real-time play the coyote physically prowls toward the active **WEAK SPOT** (one of four labeled fence gaps around the yard). If the dogs are holding bark pressure when it arrives it is driven back; an unguarded gap breaches.
+In real-time play the coyote physically prowls toward the active **WEAK SPOT** (one of four labeled fence gaps around the yard). Cocoa's live bark pin drives it back if it reaches the gap; an unguarded gap breaches. After a breach, both the logical target and visible weak-spot marker advance together to the next gap.
 
 The deterministic test/pacing hooks are `ForceCoyoteBarkPressure(dog)`, `ForceCoyoteRepair(dog)`, `ForceCoyoteBreach()`, `ForceCoyoteFakeSnack()`, `ForceCoyoteProwlReach()`, and `ForceCoyoteFinalBlock()` (`FenceGaps` exposes the gap positions); in normal play barking pins the coyote and the final push also resolves through the existing huddled united-bark path.
 
-Manual check: press **6**, bark to pin the coyote, then interact at the weak spot to fill it; repeat three times, then bring both dogs together and bark to block the final push. Confirm the end summary says **Fence Guardians**. Force three breaches and confirm fail/replay reset the patrol counters, and that every fence gap visibly starts the new attempt back on its neutral Open art rather than still showing the last run's repaired/breached sprite.
+Manual check: press **6**. Confirm Cheddar's bark and Cocoa's dirt-fill attempt cannot replace their partner's role, and that Cocoa cannot pin from outside bark range. Bark nearby as Cocoa, then Interact at the weak spot as Cheddar before the opening closes. Let one pin expire and confirm Cheddar gets recovery guidance instead of progress. Force one breach and verify the active weak-spot marker moves to the new logical gap. Repair three gaps, huddle and bark together, and verify the live coyote-retreat payoff precedes **Fence Guardians**. Confirm three breaches fail and replay resets counters and every gap to neutral Open art.
 
 ### Weenie Roundup
 
-Weenie Roundup is a shared-object **carry** mission using `CarryRoundupMissionState` — the first level built around the carry dog-verb and the large yard. Five **WEENIE** markers are scattered across the field and a **HOME BOWL** sits in the back corner. A free dog that walks onto a loose weenie picks it up and carries it; reaching the bowl delivers it. Deliver all five before the `85` second timer expires. Both dogs can carry in parallel, so the fastest clear splits the yard between them.
+Weenie Roundup is a shared-object **carry + steady** mission using `CarryRoundupMissionState`. Four small **WEENIE** markers preserve the quick split-yard ferry loop. The fifth is a visibly larger **JUMBO WEENIE**: Cocoa must stand beside it to steady the load before Cheddar can grab it, then the dogs must remain together through the haul to the **HOME BOWL**. Deliver all five before the `85` second timer expires.
 
 Readable differences:
 
-- No squirrel/predator/tug; the loop is pick-up → carry → deliver across the whole yard.
-- A carried weenie rides above the dog; a fumble (`ForceWeenieDrop`) bounces it a couple units away so the dog has to chase it down again.
-- Objective text tracks deliveries and loose count, switching to "Carry the weenie to the HOME BOWL" while carrying.
+- No squirrel/predator/tug; the opening loop is pick-up → carry → deliver across the whole yard, followed by one authored co-op haul.
+- Cocoa cannot carry the jumbo and Cheddar cannot lift it without Cocoa nearby. During transit, Cocoa's objective points back to Cheddar so the steadying job stays legible.
+- A carried weenie rides above the dog. If the pair separates for roughly a second during the jumbo haul, it bounces back into the yard with explicit retry guidance; ordinary deterministic fumbles remain recoverable too.
+- Objective text tracks deliveries and loose count, then switches through `FINAL JUMBO`, `JUMBO HAUL`, and the live bowl-full payoff.
 - Unique scoring/events include **WEENIE GRABBED**, **WEENIE DELIVERED**, **FUMBLED WEENIE** (penalty), and **ROUNDUP COMPLETE**.
 - Clear banner: **BOWL FILLED!**; end summary on a clear reads **Weenie Wranglers**, with fumbles reading **Butterpaws**.
 
-The deterministic test/pacing hooks are `ForceWeeniePickup(dog)`, `ForceWeenieDeliver(dog)`, and `ForceWeenieDrop(dog)` (`BowlPosition` exposes the bowl); in normal play pickup/deliver/drop are driven by dog proximity to weenies and the bowl.
+The deterministic test/pacing hooks are `ForceWeeniePickup(dog)`, `ForceWeenieDeliver(dog)`, and `ForceWeenieDrop(dog)` (`BowlPosition` exposes the bowl); in normal play pickup/deliver/drop are driven by dog proximity, Cocoa's jumbo support range, pair separation, and the bowl.
 
-Manual check: press **7**, walk a dog onto a weenie to grab it, carry it to the bowl, and repeat (split the dogs up) until the bowl shows 5/5. Confirm the end summary says **Weenie Wranglers**.
+Manual check: press **7** and split the dogs to ferry the four small weenies. At the jumbo, confirm Cocoa alone is told to steady, Cheddar alone cannot lift, and Cocoa standing beside it creates Cheddar's grab. Separate during the haul and verify the jumbo fumbles harmlessly, then retry, stay together into the bowl, and confirm the live `BOWL FULL!` beat precedes **Weenie Wranglers**.
 
 Pickup now produces `WEENIE GRABBED!`, a proud carrier pose, collection cue, and light rumble. A drop
 produces `FUMBLE!` at the bounced weenie, a worried flinch, warning cue, and stronger rumble before
@@ -1066,19 +1087,21 @@ the chase resumes.
 
 ### Scent Search
 
-Scent Search is a **sniff + dig** mission using `ScentSearchMissionState` — the info-gathering verbs the other levels don't use. Six **DIG?** mounds are scattered across the yard; one hides a bone. **Bark to sniff**: the closer the sniffing dog is to the buried bone, the hotter the readout (`RED HOT` / `WARM` / `COLD`). **Interact to dig** the mound you think is hot; the right one yields a bone and re-buries the next one elsewhere, a cold one wastes a dig. Find three bones before four cold digs (or the timer) end the run.
+Scent Search is an asymmetric **track + call + dig** mission using `ScentSearchMissionState`. Six **DIG?** mounds are scattered across the yard; one hides a bone. Cheddar's excited bark gives a broad compass direction but cannot reveal the mound. Cocoa moves between patches and barks for the precise `COLD / WARM / RED HOT` read; a red-hot bark marks her exact call. Cheddar then reaches that glowing mound and Interacts to dig. Find three bones before four genuinely wrong called digs (or the timer) end the run.
 
 Readable differences:
 
-- No squirrel/predator/tug; the loop is sniff-for-heat → dig-the-hot-spot.
-- Bark is repurposed as the sniff/scent read; interact is the dig.
-- Objective text tracks bones found and cold digs.
+- No squirrel/predator/tug; the loop is Cheddar direction → Cocoa heat search/call → Cheddar dig.
+- Bark remains useful for both dogs but returns identity-specific information. Interact belongs to Cheddar's digging role.
+- Cheddar digging before Cocoa's call or Cocoa trying to dig produces explicit role guidance without wasting a cold-dig life. After a call, choosing a different mound is a real scored miss.
+- Objective arrows keep Cocoa on active scent patches, point an uncalled Cheddar back toward Cocoa, and then send Cheddar directly to the called mound.
+- Objective text tracks bones and cold digs, then holds the final found mound live as a bone-cache payoff before clear.
 - Unique scoring/events include **HOT SNIFF**, **BONE DUG UP**, **COLD DIG** (penalty), and **SEARCH COMPLETE**.
 - Clear banner: **BONES UNEARTHED!**; end summary reads **Master Sniffers** on a clean clear, **Dug Up The Whole Yard** when there were wasted digs.
 
-The deterministic test/pacing hooks are `ForceScentSniff(dog)`, `ForceScentDigCorrect(dog)`, and `ForceScentDigWrong(dog)` (`DigSpots` exposes the mound positions); in normal play sniff/dig are driven by barking and interacting near the mounds.
+The deterministic test/pacing hooks are `ForceScentSniff(dog)`, `ForceScentDigCorrect(dog)`, and `ForceScentDigWrong(dog)` (`DigSpots`, `BuriedSpotIndex`, and `CalledSpotIndex` expose the current search); normal play enforces the Cocoa-call/Cheddar-dig handoff through bark, position, and Interact.
 
-Manual check: press **8**, bark near a mound to read the heat, move toward hotter readings, and interact to dig. Confirm digging the hot mound says **BONE DUG UP** and three finds clear with **Master Sniffers**.
+Manual check: press **8**. Bark as Cheddar and confirm he reports only a compass direction. Try digging before a call and confirm no cold-dig life is spent. Move Cocoa between mounds, barking until `RED HOT` marks her call; confirm Cocoa cannot dig it, then bring Cheddar to the glowing mound and Interact. Repeat for three bones and confirm the live `BONE CACHE` reveal precedes **Master Sniffers**.
 
 A cold dig now adds a worried dog flinch, warning cue, and short rumble to the existing `COLD!` pop
 and score penalty. The failed read is visible, audible, and physical before the player chooses another
@@ -1086,40 +1109,56 @@ mound.
 
 ### Thunderstorm Comfort
 
-Thunderstorm Comfort is a **comfort / panic co-regulation** mission using the existing `PanicMeter` primitive — and it leans hard into Cheddar/Cocoa identity: Cheddar (chaos puppy) spooks harder at each clap than Cocoa (veteran queen). A storm throws periodic **thunderclaps** that spike both dogs' panic; the only way panic comes down is the two dogs **huddling close** to comfort each other. Weather five claps without either dog's panic maxing out (which makes them bolt and fails the run).
+Thunderstorm Comfort is an active **reassure + answer + huddle** mission using the existing `PanicMeter`. Cheddar (chaos puppy) still spooks harder than Cocoa (veteran queen), but proximity alone no longer clears the level. Before each periodic thunderclap the dogs huddle, Cocoa barks the steady reassurance opener, Cheddar answers within the short window, and both hold the physical huddle until the clap lands. Only a prepared clap advances the five-clap goal; max panic still makes a dog bolt and fail.
 
 Readable differences:
 
-- No collect/squirrel loop; the whole mission is positioning — stay close through each clap, drift apart and panic climbs.
-- A STORM CLOUD indicator flashes "HUDDLE!" on each clap; the HUD objective shows claps weathered and current panic %.
+- No collect/squirrel loop; each beat is an active communication sequence: huddle → Cocoa bark → Cheddar bark → hold.
+- The storm actor and objective distinguish `COCOA BARKS FIRST`, Cheddar's answer window, `COMFORT READY`, a missed comfort, and the storm-passed payoff.
+- Wrong bark order coaches harmlessly. An unprepared or separated clap raises panic and counts as an exposed mistake but does not advance progress, so the pair can recover on the next clap.
+- Prepared comfort softens the asymmetric panic spike; continued huddling drains accumulated panic between claps.
 - Unique scoring/events include **CLAP WEATHERED**, **COMFORT HUDDLE**, and **STORM PASSED**.
 - Clear banner: **STORM WEATHERED!**; end summary reads **Weathered The Storm** on a clear, **Spooked By Thunder** on a bolt.
 
-The deterministic test/pacing hooks are `ForceThunderclap()` and `ForceComfortStep(seconds)` (`Panic` and `ThunderstormState` expose the live values); in normal play claps fire on a timer and `PanicMeter.Step` drains panic while the dogs are within cuddle range.
+The deterministic test/pacing hooks are `ForceThunderclap()` and `ForceComfortStep(seconds)` (`ComfortPrepared`, `Panic`, and `ThunderstormState` expose the live sequence); normal play consumes Cocoa/Cheddar bark input inside the controller, fires claps on a timer, and drains panic while the dogs remain within cuddle range.
 
-Manual check: press **9**, keep both dogs close together, and ride out the claps; confirm panic falls while huddled and rises when split, and that five weathered claps clear with **Weathered The Storm**. A clap that lands while the dogs are apart now counts as a mistake (`ExposedClaps`), so a clear with every clap huddled should show **FLAWLESS** and a clear that survived a split clap should not.
+Manual check: press **9** and first park both dogs together without barking; confirm the clap says `TOO QUIET`, raises panic, and does not advance. Bark as Cheddar first and confirm Cocoa-first guidance. Then bark Cocoa→Cheddar while huddled, see `COMFORT READY`, and hold through the clap. Break the huddle once after preparing and confirm `TOO FAR` remains recoverable. Prepare/weather five claps and confirm the live `STORM PASSED!` scene precedes **Weathered The Storm**; any missed comfort should prevent **FLAWLESS**.
 
 ### Mark the Yard
 
-Mark the Yard is a **territory-control** mission using `TerritoryMissionState`. Five **CLAIM** zones are spread across the yard; a dog standing in a zone marks it (turns green). But the squirrel periodically **re-marks** the claimed zone nearest to it, so the dogs must split up and cover ground to hold every zone at once. Win the moment all five are claimed simultaneously; the timer expiring (with the squirrel chipping away) is the fail.
+Mark the Yard is a **territory-control** mission using `TerritoryMissionState`. Five territory zones
+are spread across the yard. Entering one prepares it, but contact alone does not claim it: a player
+must press **Interact** to perform the mark and turn it green. Each mark activates the squirrel's
+reclaim prowl. Cheddar is presented as the route runner while Cocoa tracks the thief and **BARKS**
+within range to drive it back to the yard edge, buying a short opening for the next mark. Both dogs
+retain recovery access to the zones. Hold all five simultaneously to earn the live all-marked payoff;
+the timer expiring with the squirrel chipping away is the fail.
 
 Readable differences:
 
 - The squirrel is repurposed as a territory rival that steals zones back rather than stealing food.
 - The reclaim squirrel is now a generated/animated actor: idle/watch while waiting, a brief scared
   reaction when a dog marks territory, and a steal animation when it re-marks a zone.
+- Cocoa's close bark visibly repels the squirrel, delays its next reclaim, credits her defense role,
+  and points Cheddar toward the next marking opening; an out-of-range bark is harmless guidance.
 - Zones recolor grey→green when held and flash "SQUIRREL STOLE IT!" when re-marked.
 - Objective text tracks zones held and how many the squirrel has stolen back.
 - Unique scoring/events include **ZONE MARKED**, **ZONE STOLEN** (penalty), and **YARD MARKED**.
 - Clear banner: **YARD CLAIMED!**; end summary reads **Yard Is Ours** on a clear, **Squirrel Keeps Stealing It** when the squirrel chipped in.
 
-The deterministic test/pacing hooks are `ForceClaimZone(dog)` and `ForceSquirrelReclaim()` (`TerritoryZones` exposes the zone positions); in normal play claiming is driven by a dog standing in a zone and the squirrel re-marks on a timer.
+The deterministic test/pacing hooks include `ForceClaimZone(dog)`, `ForceMarkInteraction(dog, zone)`,
+`ForceMarkYardDefenseBark(dog)`, and `ForceSquirrelReclaim()`. Targeted
+`MarkTheYardPlayModeTests` passed `9/9` on 2026-07-16. In normal play Interact claims a nearby zone,
+Cocoa's bark repels a nearby squirrel, and the squirrel otherwise re-marks on a timer.
 
-Manual check: press **0**, split the dogs to stand in different zones until all five glow green at once; confirm the squirrel visibly flinches after a zone is claimed, then moves in with stealing animation if you leave a claimed zone too long, and that holding all five clears with **Yard Is Ours**.
+Manual check: press **0**, move Cheddar into a zone and confirm standing alone does not claim it;
+press Interact and see it turn green. Move Cocoa near the incoming squirrel and bark to knock it back,
+then use the opening to mark another zone. Confirm a stolen zone can be re-marked and the fifth mark
+holds the live yard-owned scene before **Yard Is Ours**.
 
 ### Walkies on the Leash
 
-Walkies on the Leash is a **tethered-coordination** mission using `LeashWalkMissionState` — the eleventh mission, reachable by arrow-selecting past Mark the Yard (the number row 1-9/0 maps to the first ten). The two dogs share one leash and must walk through four **CHECKPOINT** markers in order; both dogs have to stand on the current checkpoint together to bank it. If they drift more than the leash length apart, it snaps taut (a rate-limited penalty); four snaps fail the walk. The dogs start side by side so the leash is slack — staying close as they cross the yard is the whole challenge.
+Walkies on the Leash is a **tethered-coordination** mission using `LeashWalkMissionState` — the eleventh mission, reachable by arrow-selecting past Mark the Yard (the number row 1-9/0 maps to the first ten). The two dogs share one leash and must walk through four **CHECKPOINT** markers in order. The named scout alternates between Cheddar and Cocoa: that dog reaches the marker and **BARKS** the route call, creating the opening for both dogs to stand on the checkpoint together and bank it. Passive overlap does not advance the route. If they drift more than the leash length apart, it snaps taut (a rate-limited penalty); four snaps fail the walk. The dogs start side by side so the leash is slack — communicating who scouts and who follows is the challenge.
 
 Readable differences:
 
@@ -1131,7 +1170,7 @@ Readable differences:
 
 The deterministic test/pacing hooks are `ForceReachCheckpoint()` and `ForceLeashSnap()` (`LeashCheckpoints` exposes the positions); in normal play both are driven by the dogs' positions and the distance between them.
 
-Manual check: arrow to Walkies on the Leash, keep both dogs close as you walk to each checkpoint in turn, and confirm drifting apart snaps the leash. Reaching all four clears with **Best Walk Ever**.
+Manual check: arrow to Walkies on the Leash, send the named scout to each checkpoint, and confirm the wrong dog's bark and passive two-dog overlap do not bank it. Have the named scout bark, bring the partner onto the marker, and verify the scout alternates on the next checkpoint. Confirm drifting apart snaps the leash. Reaching all four holds a short live **BEST WALK EVER!** payoff before the clear screen.
 
 Checkpoint success now gives both dogs a brief proud pose alongside the score pop. A leash snap
 produces a midpoint `LEASH SNAP!` warning, threat cue, rumble, and synchronized worried flinch before
@@ -1145,9 +1184,9 @@ The three verbs:
 
 - **Turns** (telegraphed `LEFT/RIGHT TURN AHEAD`): the cabin tilts and everything slides toward the outside of the turn. Cheddar slides hardest (chaos-puppy multiplier 1.25×), Cocoa least (0.85×). Getting pinned against the downhill door mid-turn is a **DOOR SQUISH!** tumble.
 - **Sliding junk**: the loose **COOLER** and **TOY BIN** slide across the bench faster than any dog. A grounded dog in their path takes a **BONK!** tumble (with knockback stun); a **jumping** dog clears them with a `CLEAN HOP!` credit.
-- **Brakes** (telegraphed `BRAKES AHEAD - BRACE (INTERACT)!`): each dog must press interact to plant (`COCOA PLANTS!` / `CHEDDAR HUNKERS!`). Braced dogs bank **BRACED** points at the stop; unbraced dogs are `FLUNG FORWARD!` into a tumble. Bracing also plants a dog against turn slides — but claws don't stop a sliding cooler, so jump those.
+- **Brakes** (telegraphed `BRAKES AHEAD`): Cocoa must Interact first to plant (`COCOA PLANTS!`). Cheddar then moves within the partner-brace range and Interacts to tuck behind her (`TUCKED SAFE!`). The pair must remain together until the stop; Cocoa banks `ANCHORED!` and Cheddar banks `TUCKED SAFE!`, while a missing/broken handoff flings the exposed dog forward. Outside brake telegraphs, either dog can still brace against ordinary turn slide — but claws do not stop a sliding cooler, so jump those.
 
-Co-op layer: a **united bark** during cruise/telegraph makes the driver ease off the gas for the next event (gentler tilt, slower junk), once per event. Five tumbles fails the ride; a clean event pops **SMOOTH!** with the proud pack pose, and finishing all seven banks **RIDE COMPLETE**.
+Co-op layer: each scripted brake now contains a mandatory Cocoa-anchor → nearby Cheddar-tuck handoff, with dog-specific objective arrows and recovery guidance. A **united bark** during cruise/telegraph additionally makes the driver ease off the gas for the next event (gentler tilt, slower junk), once per event. Five tumbles fails the ride; a clean event pops **SMOOTH!** with the proud pack pose, and finishing all seven banks **RIDE COMPLETE** before the held home-arrival scene.
 
 Readable differences:
 
@@ -1157,7 +1196,7 @@ Readable differences:
 
 Deterministic test hooks: `ForceCarEventSurvived()` / `ForceCarTumble(dog)` on GameManager, plus controller-level `ForceBeginRoadEvent(kind)`, `ForceResolveRoadEvent()`, `ForceBrace(dog)`, and `ForceTurnSlide(dt, kind)` (headless frame time can't accumulate slide distance, so slide/bonk/squish physics are tested through fixed-dt slide steps).
 
-Manual check: arrow to Car Ride Chaos and confirm (1) the backyard is fully covered by the cabin set and the windshield scenery scrolls, (2) a telegraphed turn tilts the cabin and slides both dogs and the junk — with Cheddar visibly outsliding Cocoa, (3) jumping over the sweeping cooler avoids the bonk, (4) bracing on the brake telegraph pops `BRACED!` while an unbraced dog gets flung into the front seats, and (5) a united bark mid-cruise draws the `easing up` driver response and a gentler next event.
+Manual check: arrow to Car Ride Chaos and confirm (1) the backyard is fully covered by the cabin set and the windshield scenery scrolls, (2) a telegraphed turn tilts the cabin and slides both dogs and the junk — with Cheddar visibly outsliding Cocoa, (3) jumping over the sweeping cooler avoids the bonk, (4) Cheddar-first and far-away brake attempts coach without arming, Cocoa Interact creates the anchor, nearby Cheddar Interact creates `TUCKED SAFE`, and breaking the pair before the stop flings Cheddar but recovers next brake, and (5) a united bark mid-cruise draws the `easing up` driver response and a gentler next event. Finish all seven and confirm the live `WE'RE HOME!` beat precedes the result card.
 
 > **Mechanic-module coverage:** with Car Ride Chaos, all nine `ProductionMechanicModule` values (Herding, ThreatSweep, PatrolDefense, SharedObject, TerritoryControl, ScentSearch, RhythmPanic, VehicleBalance, LeashPhysics) keep at least one playable, tested mission.
 
@@ -1306,6 +1345,10 @@ Cheddar), `PARENT REPELLED` +125 (credits Cocoa), `PECKED` -50, `CHICK AIRLIFTED
 tile is now a painterly production portrait matching the other Adventure Library cards. The former
 flat generator writes only `ReferenceOnly/GeneratedMissionTiles/babybirdbedlam_placeholder.png`, so
 running it cannot replace the runtime portrait.
+
+Wrong-role inputs stay recoverable under pressure: Cocoa inspecting a grounded chick leaves it for
+Cheddar, Cheddar's mouth-full bark cannot repel a dive, and Cocoa barking outside repel range coaches
+her underneath the parent without consuming the active dive window.
 
 Manual acceptance check: select **Baby Bird Bedlam** with two local players. Confirm the nest, first
 falling chick, and `THE NEST` label read cold; Cheddar's arrow points at the nest, then the falling
@@ -1511,12 +1554,11 @@ The 2026-07-03 pass raised the remaining timed act-now windows into the same urg
 labels ending in `NOW!` now classify as the command skin: Sock Panic's open-basket dive window
 raises a command badge until the sock is grabbed or the basket flops shut; Eagle Shadow's talon-grip
 rescue raises a warning badge while Cheddar wiggles and swaps to a command badge during Cocoa's
-cracked-grip pull window; Car Ride's SPILL DANGER meter becomes an urgent `SPILL WARNING` state (with a
-warning badge) once it enters the danger band, and returns to the calm readout when the dogs recover the
-lean. Manual acceptance check: tip the basket and watch the command icon from across the yard; get
-snatched in Eagle Shadow and confirm the warning→command icon swap tracks the wiggle/pull rhythm;
-in Car Ride lean hard to one side until the label flips to SPILL WARNING and confirm the badge
-appears over the car and drops after recovering.
+cracked-grip pull window. Car Ride's redesigned driver actor now raises the warning badge for turn
+and brake telegraphs while the shared `SLIDE FORCE` meter mirrors actual cabin tilt. Manual
+acceptance check: tip the basket and watch the command icon from across the yard; get snatched in
+Eagle Shadow and confirm the warning→command icon swap tracks the wiggle/pull rhythm; in Car Ride,
+confirm the driver badge appears before the set tilts and the meter rises with the turn slide.
 
 The 2026-07-04 pass extended the same distance signal to **station markers** (they have no
 `MissionActorFeedback` pulse channel, so mission controllers drive
@@ -1537,7 +1579,79 @@ while the sneak window is live; The Ol' Switcheroo signals the decoy until the s
 then the stash during the raid window; The Walk Campaign signals each half of the exact-combo
 message until its dog is sending it. Weenie Roundup's home bowl rides the actor pulse channel
 instead: a weenie in transit raises a `BRING IT NOW!` command badge over the bowl that drops on
-delivery or fumble. The two predator-defense missions completed the roster (2026-07-04): Eagle
+delivery or fumble.
+
+Gate Crash now preserves its earned climax in the live world for `1.15` seconds before the shared
+result card appears. During that controller-owned hold, the squeeze meter hides, the toy swaps to
+its claimed state, the objective credits both roles, and **TOY RESCUED!** appears at Cheddar's side
+of the gate. Timeout pressure freezes through the payoff, and replay resets the hold alongside the
+gate, toy, squeeze progress, and snap count.
+
+The opening is now a deliberate authored handoff instead of a proximity trigger. Cocoa must reach
+the brace pad and press **Interact**; only then can Cheddar build squeeze progress. Walking Cocoa
+away snaps the gate, erases the partial crossing, and requires another Interact to re-anchor. A
+Cheddar-first or out-of-range attempt gives role/range coaching without a penalty. Snaps carry an
+immediate threat cue and rumble, while the rescued-toy payoff carries a distinct mission-win cue and
+shared rumble.
+
+Table Stealth now turns both advertised distractions into live, asymmetric player verbs. Cocoa must
+reach the human and press **Interact** to commit a sustained belly-rub flop, then remain nearby while
+Cheddar sneaks. Alternatively, Cheddar can **Bark** beside the human to produce a short burp-cloud
+opening for Cocoa at the steak. Wrong-role, out-of-range, and cooldown attempts coach without an
+instant penalty; sneaking while the human is truly watching still produces a recoverable exposure,
+threat cue, and rumble. A successful steal holds the steak-gone/human-distracted gag for `1.15`
+seconds with mission-win audio and shared rumble before the result card.
+
+The Ol' Switcheroo now requires an explicit two-verb deception. Cheddar reaches the decoy and
+**Barks** to start the feint, then physically peels away once the squirrel commits; Cocoa reaches the
+stash and presses **Interact** for one raid during that window. Merely standing on either station no
+longer advances the puzzle. An early raid produces a recoverable guarded **BONK**, while holding the
+feint too long produces a threat-backed backfire and full reset. Each clean raid credits both roles,
+and the third holds the raided-stash/chased-decoy gag for `1.15` seconds with mission-win feedback
+before results.
+
+The Walk Campaign now makes both halves of its social con deliberate. Cocoa presses **Interact** at
+the door to lock into her stare, while Cheddar presses **Interact** at the leash to present it; the
+human's comprehension rises only while both dogs remain beside their engaged station. Proximity
+alone does nothing, and leaving breaks that pose until its dog Interacts again. Incomplete messages
+now escalate through specific wrong-item gags (food bowl, bath towel, vacuum) with threat audio and
+rumble. A clean message earns a `1.15`-second live **WALKIES!** payoff with the human and grabbed
+leash before results.
+
+The Great Escape now treats every contraption step as a deliberate action instead of a trigger
+volume. The glowing station names both its owner and dog-authentic action; that dog must arrive and
+press **Interact**. A wrong dog can only fumble by deliberately trying the active station, producing
+a visible **WRONG PAWS!** clank with audio and rumble. If the chain settles backward, the restored
+step responds normally when repeated, but first-clear scoring prevents farming already-completed
+links. The final squeeze holds all four completed stations and **FREE DOGS!** for `1.15` seconds
+before results.
+
+Chaos Machine now turns the automatic-looking cascade into a deliberate timed relay. Cheddar must
+reach the lever and press **Interact**, handing the first live window to Cocoa; each junction then
+requires its displayed owner to arrive and **Interact** before the three-second timer expires. The
+off-duty dog's arrow routes forward to pre-position at the next junction. Proximity alone cannot
+pull or fire anything, and wrong-paws attempts coach without consuming the window. A miss jams at
+the exact towel/basket/toy step with threat feedback; Cheddar re-pulls to resume. The final toy
+launch holds the completed three-prop cascade and **GLORIOUS CHAOS!** for `1.15` seconds before
+results.
+
+The Bone Detail now makes its advertised scent relay literal. Cocoa must reach the scent post and
+**BARK** to reveal the real mound; standing nearby prepares the read but no longer completes her
+role automatically. Cheddar remains the only digger, so Cocoa creates the information opening and
+Cheddar turns it into progress. An out-of-range bark points Cocoa back to the post, while a blind or
+wrong dig remains visible and recoverable. The third find holds the live called-mound/bone-stash
+payoff for `1.15` seconds before the result card. Targeted `CoopBoneRelayPlayModeTests` passed
+`10/10` on 2026-07-16.
+
+Blanket Catch now turns its symmetric positioning exercise into a dog-authentic handoff. Both dogs
+first create the taut catch surface; Cocoa's bark then calls each snack down from the counter, and
+the pair slides the blanket midpoint under it. Barking while the blanket is slack is a visible,
+harmless **BLANKET FIRST!** mistake rather than a wasted hidden input. The fifth catch holds the live
+full-blanket pose for `1.15` seconds before the result card, with timeout pressure frozen through the
+payoff. Replay resets the called-drop state, catch reactions, rips, and payoff hold. Targeted
+`CoopBlanketCatchPlayModeTests` passed `9/9` on 2026-07-16.
+
+The two predator-defense missions completed the roster (2026-07-04): Eagle
 Shadow Panic's cover pads each carry a command badge during the hide phase (the eagle actor itself
 carries the threat warning), a pad's badge drops while a dog is tucked inside its cover radius, and
 all pads go quiet once the snatch/rescue beat moves the urgency to the talons; Coyotes at the
@@ -1923,6 +2037,9 @@ Use this after any placeholder-art, authored-art, or sprite import change:
 - Dog pose states are still distinct: idle, run, bark, tug, stunned, rescued, proud, sad.
 - Bark ring/text, generated objective cue arrows, score pops, and playtest overlay remain readable
   but do not hide the dogs or core mission objects.
+- Each dog's current role target emits at most three faint, dog-colored paw breadcrumbs near the
+  dog. They suggest a heading, stop well before a distant destination, and vanish in the target
+  zone; full route text remains behind F1 so exploration and couch communication still matter.
 - The 102-pixel top HUD and bottom P1/P2 chips leave the central action field open; the Backyard
   tutorial is temporary and never replaces the current objective.
 - Movement lean, squash/stretch, and paw trails are readable during motion but do not become constant noise.
@@ -1978,7 +2095,7 @@ Use this after any placeholder-art, authored-art, or sprite import change:
 
 ## Test coverage
 
-`unity/Assets/Tests/PlayMode/ArenaGameLoopPlayModeTests.cs` loads ArenaScene and verifies mission select initialization, centralized tuning defaults, movement/camera tuning defaults, mission balance invariants, starting each mission through the new flow, end-screen Replay / Next Mission / Mission Select availability, session totals across multiple missions, session summary after all three variants have ended, dogs, independent movement response, camera component/config, interaction range indicator state, mission state, intro prompt/banner, deterministic objective labels, delayed first squirrel steal window, initial score state, item recovery scoring, HUD score-pop state, world score/miss/success pops, playtest overlay state, playtest event log entries, squirrel steal/scare labels and score events, solo/united bark feedback and scoring, bark burst state, predator defense scoring, failed predator hit and rescue scoring, tug waiting/together feedback and scoring, LevelClear score/rank/summary/reason, GameOver score/rank/summary/reason, replay prompt visibility, restart reset state, exposed modifier state, dog identity labels, dog pose labels, movement intent labels/arrows, objective-arrow labels, generated arena audio listener, required replaceable audio cue slots, expected major-event audio cue requests, expected rumble request names, and audio/rumble suppression toggles.
+`unity/Assets/Tests/PlayMode/ArenaGameLoopPlayModeTests.cs` loads ArenaScene and verifies mission select initialization, centralized tuning defaults, movement/camera tuning defaults, mission balance invariants, starting each mission through the new flow, end-screen Replay / Next Mission / Mission Select availability, session totals across multiple missions, session summary after all three variants have ended, dogs, independent movement response, camera component/config, interaction range indicator state, mission state, intro prompt/banner, deterministic objective labels, delayed first squirrel steal window, initial score state, item recovery scoring, HUD score-pop state, world score/miss/success pops, playtest overlay state, playtest event log entries, squirrel steal/scare labels and score events, solo/united bark feedback and scoring, bark burst state, predator defense scoring, failed predator hit and rescue scoring, tug waiting/together feedback and scoring, LevelClear score/rank/summary/reason, GameOver score/rank/summary/reason, replay prompt visibility, restart reset state, exposed modifier state, dog identity labels, dog pose labels, movement intent labels/arrows, objective-arrow labels, shared generated scent-breadcrumb roots and art, generated arena audio listener, required replaceable audio cue slots, expected major-event audio cue requests, expected rumble request names, and audio/rumble suppression toggles. `FinalArtIntegrationPlayModeTests` also verifies the trail is capped at three hints for a far target, hides its explanatory text in normal play, and clears inside the interaction zone.
 
 The same test file also verifies **Snack Heist** and **Sock Panic** can initialize, update objective labels, score unique mission events, reach clear/fail outcomes, and expose replay state. `ControllerCoopPlayModeTests` still verifies the baseline two-pad movement/bark proof and now clears scene objects before constructing its own bootstrap so it does not accidentally inspect leftover ArenaScene dogs from previous tests.
 

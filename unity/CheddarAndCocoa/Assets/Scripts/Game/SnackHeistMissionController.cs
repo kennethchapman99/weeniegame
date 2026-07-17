@@ -1,10 +1,16 @@
 using System.Collections.Generic;
 using UnityEngine;
+using CheddarAndCocoa.Dogs;
 
 namespace CheddarAndCocoa.Game
 {
-    public sealed class SnackHeistMissionController : IMissionController, IMissionTreatCollector
+    public sealed class SnackHeistMissionController : IMissionController, IMissionTreatCollector,
+        IMissionSuccessPresentationController
     {
+        private const int CheddarIndex = 0;
+        private const int CocoaIndex = 1;
+        private const float SuccessHoldSeconds = 1.15f;
+
         private MissionContext _context;
         private Treat _squirrelTarget;
         private GameObject _guardLane;
@@ -12,21 +18,27 @@ namespace CheddarAndCocoa.Game
         private float _squirrelTimer;
         private float _scaredUntil;
         private float _nextScareScoreAt;
+        private float _successHoldRemaining;
         private bool _squirrelHasStarted;
+        private bool _completionPresented;
 
         public GameManager.MissionVariant Variant => GameManager.MissionVariant.SnackHeist;
-        public bool IsComplete => Recovered >= _context.ObjectiveGoal;
+        public bool IsComplete => Recovered >= _context.ObjectiveGoal && _successHoldRemaining <= 0f;
         public bool IsFailed => Stolen >= _context.MaxStolenFood;
         public string FailReason => IsFailed ? "The squirrel union escaped with too many forbidden snacks." : null;
         public string OutcomeSummary => IsComplete ? "Stash Secured"
             : IsFailed ? "Squirrel Union Wins" : "Still Guarding";
         public string ObjectiveLabel => _squirrelTarget != null
-            ? "Bark-guard the snack thief"
-            : $"Stash snacks {Recovered}/{_context.ObjectiveGoal}";
+            ? "Cocoa: bark-guard the snack thief"
+            : GuardBarks == 0 && Recovered >= _context.ObjectiveGoal - 1
+                ? "Cocoa must guard one steal"
+                : $"Cheddar: Stash snacks {Recovered}/{_context.ObjectiveGoal}";
         public Vector2 EntryTarget => NearestTreat(_context.Bounds.center)?.transform.position ?? _context.Bounds.center;
         public int Recovered { get; private set; }
         public int Stolen { get; private set; }
+        public int GuardBarks { get; private set; }
         public bool SpawnTreatsHidden => false;
+        public bool IsPresentingSuccessfulOutcome => _successHoldRemaining > 0f;
 
         public void Initialize(MissionContext context) => _context = context;
 
@@ -34,10 +46,13 @@ namespace CheddarAndCocoa.Game
         {
             Recovered = 0;
             Stolen = 0;
+            GuardBarks = 0;
             _squirrelTarget = null;
             _squirrelHasStarted = false;
             _scaredUntil = 0f;
             _nextScareScoreAt = 0f;
+            _successHoldRemaining = 0f;
+            _completionPresented = false;
             _squirrelTimer = NextDelay();
             HideGuardLane();
             _context.SquirrelObject.SetActive(true);
@@ -47,6 +62,11 @@ namespace CheddarAndCocoa.Game
 
         public void Tick(float deltaTime, float now)
         {
+            if (_successHoldRemaining > 0f)
+            {
+                _successHoldRemaining = Mathf.Max(0f, _successHoldRemaining - deltaTime);
+                return;
+            }
             if (now < _scaredUntil) return;
             Treat nearby = FindTreatNear(_context.SquirrelObject.transform.position, 0.3f);
             if (nearby != null)
@@ -80,7 +100,24 @@ namespace CheddarAndCocoa.Game
             if (Vector2.Distance(_context.Dogs[dogIndex].transform.position, _context.SquirrelObject.transform.position) >= _context.SingleBarkSquirrelRange)
                 return false;
 
+            if (dogIndex != CocoaIndex)
+            {
+                _context.SetCue("Cheddar's snack-mouth bark is not intimidating. Cocoa guards the stash!");
+                _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "COCOA GUARDS!");
+                _context.SpawnWorldPop(_context.Dogs[dogIndex].transform.position, "MOUTH FULL!", new Color(1f, 0.72f, 0.25f));
+                _context.MarkFailedInteraction(DogId.Cheddar, "Cheddar tried to guard instead of stealing");
+                return true;
+            }
+
+            if (_squirrelTarget == null)
+            {
+                _context.SetCue("Cocoa is ready, but wait for the squirrel to make its move!");
+                _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "WAIT FOR THE HEIST!");
+                return true;
+            }
+
             _squirrelTarget = null;
+            GuardBarks++;
             HideGuardLane();
             _scaredUntil = Mathf.Max(_scaredUntil, _context.Now() + _context.SingleBarkScareSeconds);
             _squirrelTimer = NextDelay();
@@ -91,7 +128,7 @@ namespace CheddarAndCocoa.Game
                 _nextScareScoreAt = _context.Now() + 1f;
             }
             _context.SetFeedback(GameManager.FeedbackKind.SquirrelScared);
-            _context.SetCue($"{_context.Dogs[dogIndex].name} scared the squirrel! It dropped the snack plan!");
+            _context.SetCue("Cocoa scared the squirrel! Cheddar has a safe snack-stealing window!");
             _context.SetActorState(_context.SquirrelObject, "SQUIRREL DROPPED THE SNACK!", new Color(0.85f, 0.85f, 0.85f), 0.08f);
             _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "SNACK DROP POP!");
             _context.SpawnWorldPop(_context.SquirrelObject.transform.position, "DROP!", new Color(0.9f, 0.95f, 1f));
@@ -104,6 +141,24 @@ namespace CheddarAndCocoa.Game
         public bool HandleTreatCollected(Treat treat, int dogIndex)
         {
             if (treat == null) return false;
+            if (dogIndex != CheddarIndex)
+            {
+                _context.SetCue("Cocoa carefully audits the snack instead of stealing it. Cheddar, grab it!");
+                _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "CHEDDAR STEALS!");
+                _context.SpawnWorldPop(treat.transform.position, "QUALITY CONTROL", new Color(0.55f, 0.82f, 1f));
+                if (dogIndex >= 0) _context.MarkFailedInteraction(DogId.Cocoa, "Cocoa inspected Cheddar's snack target");
+                return true;
+            }
+
+            if (GuardBarks == 0 && Recovered >= _context.ObjectiveGoal - 1)
+            {
+                _context.SetCue("The last snack is watched! Cocoa must bark-stop one squirrel heist first.");
+                _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "COCOA: GUARD THE LAST SNACK!");
+                _context.SpawnWorldPop(treat.transform.position, "TOO HOT!", new Color(1f, 0.45f, 0.2f));
+                _context.MarkFailedInteraction(DogId.Cheddar, "Cheddar reached the watched final snack before Cocoa guarded");
+                return true;
+            }
+
             SetTreatProp(treat, FinalGameplayArt.SnackHeistPlateStashed);
             Recovered++;
             _context.AddScore(_context.ItemScore, "SNACK STASHED");
@@ -118,6 +173,9 @@ namespace CheddarAndCocoa.Game
             HideGuardLane();
             _context.ReplaceCollectible(treat);
             _context.LogEvent("Collection", $"{DogName(dogIndex)} collected a forbidden snack {Recovered}/{_context.ObjectiveGoal}");
+            if (Recovered == 1 && GuardBarks == 0 && _squirrelTarget == null)
+                StartSteal(NearestTreatExcluding(_context.Bounds.center, treat));
+            if (Recovered >= _context.ObjectiveGoal) PresentCompletion();
             _context.LogObjectiveChanged();
             return true;
         }
@@ -197,6 +255,9 @@ namespace CheddarAndCocoa.Game
             StartSteal(target);
         }
 
+        /// <summary>Deterministic seam for advancing past the live secured-stash payoff.</summary>
+        public void ForceFinishSuccessPresentation() => _successHoldRemaining = 0f;
+
         private void StartSteal(Treat target)
         {
             if (target == null) return;
@@ -239,6 +300,22 @@ namespace CheddarAndCocoa.Game
             _context.LogEvent("SquirrelStole", $"{Stolen}/{_context.MaxStolenFood}");
         }
 
+        private void PresentCompletion()
+        {
+            if (_completionPresented) return;
+            _completionPresented = true;
+            _successHoldRemaining = SuccessHoldSeconds;
+            _squirrelTarget = null;
+            HideGuardLane();
+            _context.SetCue("Cheddar secured the stash while Cocoa sent the squirrel union packing!");
+            _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "STASH SECURED!");
+            _context.SetActorState(_context.SquirrelObject, "SQUIRREL UNION DEFEATED!", new Color(0.82f, 0.82f, 0.82f), 0.08f);
+            _context.SpawnWorldPop(_context.Bounds.center, "STASH SECURED!", new Color(1f, 0.82f, 0.22f));
+            _context.RequestAudioCue(ArenaFeedbackCatalog.MissionWin);
+            _context.RequestRumble("snack_heist_clear", 0.3f, 0.55f, 0.22f);
+            _context.LogEvent("CoopPayoff", "Cheddar stole the snacks after Cocoa guarded the squirrel lane");
+        }
+
         private float NextDelay()
         {
             bool trouble = _context.ActiveModifier() == GameManager.RoundModifier.SquirrelTrouble;
@@ -262,6 +339,19 @@ namespace CheddarAndCocoa.Game
             foreach (var treat in ActiveTreats())
             {
                 if (treat == null) continue;
+                float distance = Vector2.Distance(position, treat.transform.position);
+                if (distance < best) { best = distance; nearest = treat; }
+            }
+            return nearest;
+        }
+
+        private Treat NearestTreatExcluding(Vector2 position, Treat excluded)
+        {
+            Treat nearest = null;
+            float best = float.PositiveInfinity;
+            foreach (var treat in ActiveTreats())
+            {
+                if (treat == null || treat == excluded) continue;
                 float distance = Vector2.Distance(position, treat.transform.position);
                 if (distance < best) { best = distance; nearest = treat; }
             }

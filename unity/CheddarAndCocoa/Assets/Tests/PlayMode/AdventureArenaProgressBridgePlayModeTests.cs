@@ -43,6 +43,10 @@ namespace CheddarAndCocoa.Tests
                 "The bridge should have started the queued mission once GameManager was found.");
 
             for (int i = 0; i < 7; i++) game.ForceCarEventSurvived(); // CarRideMissionState.RequiredEvents
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, game.Outcome,
+                "Adventure progress must wait until Car Ride's earned home-arrival payoff finishes.");
+            game.CarRideController.ForceFinishSuccessPresentation();
+            yield return null;
             Assert.AreEqual(GameManager.MissionOutcome.Clear, game.Outcome);
 
             // WatchForMissionEnd polls once per frame; give it a couple of ticks to observe the end

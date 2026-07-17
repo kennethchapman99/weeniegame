@@ -37,6 +37,7 @@ namespace CheddarAndCocoa.Game
         private const float ToyInteractRange = 2.8f;
         private const float ToyKickSpeed = 7.5f;
         public const float OpeningExplainerDurationSeconds = 10.042f;
+        public const string OpeningComprehensionCorrectionLabel = "TEENAGER COMPREHENSION";
         private const float OpeningExplainerSafetyTimeoutSeconds = 18f;
         private const string OpeningExplainerRelativePath = "OperationPeeBreak/operation_pee_break_intro.mp4";
 
@@ -175,6 +176,10 @@ namespace CheddarAndCocoa.Game
         public float SuccessHoldRemaining => _successHoldRemaining;
         public bool IsPresentingSuccessfulOutcome => DoorOpen && _successHoldRemaining > 0f;
         public bool IsPresentingOpening { get; private set; }
+        public string OpeningOverlayLabel => _introVideoPlayer != null && _introVideoPlayer.isPlaying &&
+            NeedsComprehensionCorrection(_introVideoPlayer.time)
+                ? OpeningComprehensionCorrectionLabel
+                : string.Empty;
         public bool OpeningExplainerAvailable { get; private set; }
         public string OpeningExplainerPath => Path.Combine(Application.streamingAssetsPath, OpeningExplainerRelativePath);
         public string PressureLabel => "BLADDER EMERGENCY";
@@ -270,6 +275,10 @@ namespace CheddarAndCocoa.Game
         }
 
         public void SkipOpeningPresentation() => FinishOpeningPresentation("player skip");
+
+        public static bool NeedsComprehensionCorrection(double playbackSeconds) =>
+            playbackSeconds >= 4.6d && playbackSeconds < 5.95d ||
+            playbackSeconds >= 7.3d && playbackSeconds < 8.9d;
 
         public void Tick(float deltaTime, float now)
         {

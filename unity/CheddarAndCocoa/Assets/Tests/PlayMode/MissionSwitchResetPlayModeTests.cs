@@ -43,6 +43,19 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(0, game.ScentSearchState.Sniffs, "Scent state should reset when leaving Scent Search.");
             Assert.AreEqual(0, game.ScentSearchState.WastedDigs);
 
+            DogController cheddar = null;
+            DogController cocoa = null;
+            foreach (var identity in Object.FindObjectsByType<DogIdentity>(FindObjectsSortMode.None))
+            {
+                if (identity.Id == DogId.Cheddar) cheddar = identity.GetComponent<DogController>();
+                if (identity.Id == DogId.Cocoa) cocoa = identity.GetComponent<DogController>();
+            }
+            Assert.IsNotNull(cheddar);
+            Assert.IsNotNull(cocoa);
+            cheddar.transform.position = Vector3.zero;
+            cocoa.transform.position = Vector3.right;
+            cocoa.Bark();
+            cheddar.Bark();
             game.ForceThunderclap();
             yield return null;
             Assert.Greater(game.ThunderstormState.ClapsSurvived, 0);

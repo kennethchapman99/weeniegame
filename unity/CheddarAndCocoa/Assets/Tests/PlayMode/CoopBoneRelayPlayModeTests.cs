@@ -70,11 +70,36 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(_game.BoneRelayPuzzle.Solved);
             Assert.AreEqual(3, _game.BoneRelayPuzzle.Finds);
             Assert.AreEqual(0, _game.BoneRelayPuzzle.BlindActs + _game.BoneRelayPuzzle.WrongDigs);
+            Assert.IsTrue(_game.BoneRelayController.IsPresentingSuccessfulOutcome,
+                "The third bone should hold its live scent-and-dig payoff before the result card.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
+
+            _game.ForceBoneSuccessPresentationComplete();
+
             Assert.AreEqual(GameManager.MissionOutcome.Clear, _game.Outcome);
             Assert.IsTrue(_game.RuntimeSnapshot.IsClear);
             Assert.That(_game.EndSummaryLabel, Does.Contain("Bones Recovered"));
             Assert.AreNotEqual("MVP: awaiting dog heroics", _game.MvpLabel,
                 "Digging up a called bone should credit the digging dog toward the MVP stat.");
+        }
+
+        [UnityTest]
+        public IEnumerator Bone_CocoaMustBarkAtTheScentPost_ToCallCheddarsMound()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.BoneRelay);
+            yield return null;
+
+            _cocoa.transform.position = _game.BoneScentZone + Vector2.left * 5f;
+            Assert.IsFalse(_game.ForceBoneCall(), "A bark away from the scent post must not reveal the mound.");
+            Assert.IsFalse(_game.BoneRelayPuzzle.Known);
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
+
+            _cocoa.transform.position = _game.BoneScentZone;
+            Assert.IsTrue(_game.ForceBoneCall(), "Cocoa's bark at the scent post should reveal the real mound.");
+            Assert.IsTrue(_game.BoneRelayPuzzle.Known);
+            Assert.GreaterOrEqual(_game.BoneRelayPuzzle.RevealedTarget, 0);
+            Assert.That(_game.BoneRelayController.ObjectiveLabel, Does.Contain("Cheddar: dig"));
         }
 
         [UnityTest]
@@ -192,7 +217,10 @@ namespace CheddarAndCocoa.Tests
                 if (cheddarBody != null) cheddarBody.linearVelocity = Vector2.zero;
                 yield return null;
             }
-            Assert.IsTrue(_game.BoneRelayPuzzle.Known, "Cocoa at the scent post should call the mound.");
+            Assert.IsFalse(_game.BoneRelayPuzzle.Known,
+                "Standing at the scent post should prepare Cocoa's read, not silently call it without bark.");
+            Assert.IsTrue(_game.ForceBoneCall(), "Cocoa should explicitly bark the mound call from the scent post.");
+            Assert.IsTrue(_game.BoneRelayPuzzle.Known);
             correct = _game.BoneRelayPuzzle.CorrectTarget;
 
             // Cheddar runs in and digs the called mound; Cocoa stays on the post.

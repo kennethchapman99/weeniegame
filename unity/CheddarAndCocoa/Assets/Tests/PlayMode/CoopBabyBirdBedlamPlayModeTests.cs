@@ -41,6 +41,118 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator Bedlam_AuthoredCharacterSprites_ReplaceSquareAndEagleFallbacks()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.BabyBirdBedlam);
+            yield return null;
+
+            string[] characterPaths =
+            {
+                FinalGameplayArt.BabyBirdChickFalling,
+                FinalGameplayArt.BabyBirdChickGrounded,
+                FinalGameplayArt.BabyBirdChickGrabbed,
+                FinalGameplayArt.BabyBirdChickShaking,
+                FinalGameplayArt.BabyBirdChickGulped,
+                FinalGameplayArt.BabyBirdChickPecked,
+                FinalGameplayArt.BabyBirdMotherCircling,
+                FinalGameplayArt.BabyBirdMotherWarning,
+                FinalGameplayArt.BabyBirdMotherAttacking,
+                FinalGameplayArt.BabyBirdMotherRepelled,
+                FinalGameplayArt.BabyBirdMotherRescue,
+                FinalGameplayArt.BabyBirdMotherDefeated
+            };
+            foreach (string path in characterPaths)
+                Assert.IsTrue(FinalGameplayArt.Has(path), $"Missing authored Bedlam character sprite: {path}");
+
+            var chick = FindLoadedObject("BedlamChick");
+            Assert.IsNotNull(chick);
+            var chickArt = chick.GetComponent<MissionPropArtAttachment>();
+            var motherArt = _game.PredatorObject.GetComponent<MissionPropArtAttachment>();
+            AssertCharacterArt(chick, chickArt, FinalGameplayArt.BabyBirdChickFalling);
+            AssertCharacterArt(_game.PredatorObject, motherArt, FinalGameplayArt.BabyBirdMotherCircling);
+            Assert.AreNotEqual(FinalGameplayArt.EagleThreat, motherArt.ResourcePath);
+            Assert.AreNotEqual(FinalGameplayArt.EagleAction, motherArt.ResourcePath);
+            Assert.IsFalse(MissionPropArt.FindFallbackRenderer(chick).enabled,
+                "The old square chick renderer must not show behind the authored silhouette.");
+            Assert.IsFalse(MissionPropArt.FindFallbackRenderer(_game.PredatorObject).enabled,
+                "The generic eagle body must not show behind the angry mother sprite.");
+            Assert.IsNull(chick.GetComponent<Collider2D>(),
+                "Character artwork must not add gameplay collision to the controller-owned chick state.");
+            Assert.IsInstanceOf<BabyBirdBedlamMissionController>(_game.ActiveMissionController);
+        }
+
+        [UnityTest]
+        public IEnumerator Bedlam_VisualStates_FollowFallGrabShakeDiveRescueSuccessAndReplay()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.BabyBirdBedlam);
+            yield return null;
+
+            var controller = _game.BabyBirdBedlamController;
+            var chick = FindLoadedObject("BedlamChick");
+            MissionPropArtAttachment ChickArt() => chick.GetComponent<MissionPropArtAttachment>();
+            MissionPropArtAttachment MotherArt() => _game.PredatorObject.GetComponent<MissionPropArtAttachment>();
+
+            controller.ForceChickFall(0f);
+            Assert.AreEqual(FinalGameplayArt.BabyBirdChickFalling, ChickArt().ResourcePath);
+            _game.ForceChickLand(0f);
+            Assert.AreEqual(FinalGameplayArt.BabyBirdChickGrounded, ChickArt().ResourcePath);
+            _game.ForceChickGrab();
+            Assert.AreEqual(FinalGameplayArt.BabyBirdChickGrabbed, ChickArt().ResourcePath);
+            _game.ForceChickShake();
+            Assert.AreEqual(FinalGameplayArt.BabyBirdChickShaking, ChickArt().ResourcePath);
+
+            _game.ForceParentDive();
+            Assert.AreEqual(FinalGameplayArt.BabyBirdMotherWarning, MotherArt().ResourcePath);
+            controller.Tick(0.45f, Time.time);
+            controller.Tick(0.45f, Time.time);
+            Assert.AreEqual(FinalGameplayArt.BabyBirdMotherAttacking, MotherArt().ResourcePath);
+            _game.ForceParentRepel();
+            Assert.AreEqual(FinalGameplayArt.BabyBirdMotherRepelled, MotherArt().ResourcePath);
+
+            while (_game.FeastGuardPuzzle.Chick == CoopFeastGuardPuzzle.ChickState.Held)
+                _game.ForceChickShake();
+            Assert.AreEqual(FinalGameplayArt.BabyBirdChickGulped, ChickArt().ResourcePath);
+            Assert.IsTrue(chick.activeSelf, "The gulp key pose should hold briefly instead of vanishing instantly.");
+
+            _game.Restart();
+            yield return null;
+            Assert.AreEqual(FinalGameplayArt.BabyBirdMotherCircling, MotherArt().ResourcePath);
+            Assert.IsFalse(chick.activeSelf, "Replay must clean up any held chick reaction pose.");
+
+            _game.ForceChickLand(0f);
+            _game.ForceChickAirlift();
+            Assert.AreEqual(FinalGameplayArt.BabyBirdMotherRescue, MotherArt().ResourcePath);
+
+            _game.Restart();
+            yield return null;
+            _game.ForceChickLand(0f);
+            _game.ForceChickGrab();
+            _game.ForceParentDive();
+            _game.ForceDiveAdvance(5f);
+            Assert.AreEqual(FinalGameplayArt.BabyBirdChickPecked, ChickArt().ResourcePath);
+            Assert.AreEqual(FinalGameplayArt.BabyBirdMotherAttacking, MotherArt().ResourcePath);
+
+            _game.Restart();
+            yield return null;
+            for (int i = 0; i < _game.FeastGuardPuzzle.ChicksNeeded; i++)
+            {
+                _game.ForceChickLand(0f);
+                _game.ForceChickGrab();
+                for (int shake = 0; shake < _game.FeastGuardPuzzle.ShakesNeeded; shake++)
+                    _game.ForceChickShake();
+            }
+            Assert.AreEqual(FinalGameplayArt.BabyBirdMotherDefeated, MotherArt().ResourcePath);
+            Assert.IsTrue(controller.IsPresentingSuccessfulOutcome);
+
+            _game.Restart();
+            yield return null;
+            Assert.AreEqual(FinalGameplayArt.BabyBirdMotherCircling, MotherArt().ResourcePath);
+            Assert.IsFalse(chick.activeSelf);
+        }
+
+        [UnityTest]
         public IEnumerator Bedlam_AppearsInMissionSelectRotation()
         {
             yield return LoadArena();
@@ -80,6 +192,16 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(_game.FeastGuardPuzzle.Solved);
             Assert.AreEqual(needed, _game.FeastGuardPuzzle.ChicksEaten);
             Assert.AreEqual(0, _game.FeastGuardPuzzle.Mistakes);
+            var controller = _game.BabyBirdBedlamController;
+            Assert.IsInstanceOf<IMissionSuccessPresentationController>(controller);
+            Assert.IsTrue(controller.IsPresentingSuccessfulOutcome,
+                "The full-bellies payoff should remain visible before the result card replaces the yard.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
+            Assert.That(_game.ObjectiveLabel, Does.Contain("Cocoa ruled the sky"));
+
+            controller.ForceFinishSuccessPresentation();
+            yield return null;
+
             Assert.AreEqual(GameManager.MissionOutcome.Clear, _game.Outcome);
             Assert.IsTrue(_game.RuntimeSnapshot.IsClear);
             Assert.That(_game.EndSummaryLabel, Does.Contain("Nest Feast"));
@@ -106,6 +228,39 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(CoopFeastGuardPuzzle.ChickState.Held, _game.FeastGuardPuzzle.Chick,
                 "A repelled dive should leave Cheddar still working on his chick.");
             Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
+        }
+
+        [UnityTest]
+        public IEnumerator Bedlam_WrongRolesAndRange_CoachBackIntoTheDefense()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.BabyBirdBedlam);
+            yield return null;
+
+            var controller = _game.BabyBirdBedlamController;
+            controller.ForceChickLand(0f);
+            Assert.IsTrue(controller.HandleInteract(1));
+            Assert.AreEqual(CoopFeastGuardPuzzle.ChickState.Grounded, _game.FeastGuardPuzzle.Chick,
+                "Cocoa's snack inspection must leave the chick available for Cheddar.");
+            Assert.That(_game.LastCue, Does.Contain("keeps watch"));
+
+            controller.ForceChickGrab();
+            controller.ForceParentDive();
+            Assert.IsTrue(controller.HandleBark(0));
+            Assert.IsTrue(_game.FeastGuardPuzzle.DiveActive,
+                "Cheddar's mouth-full bark should coach the role without canceling the dive.");
+            Assert.That(_game.LastCue, Does.Contain("chick in his mouth"));
+
+            _cocoa.transform.position = Vector2.down * 20f;
+            Assert.IsTrue(controller.HandleBark(1));
+            Assert.IsTrue(_game.FeastGuardPuzzle.DiveActive,
+                "Cocoa's distant bark should preserve the same recoverable dive window.");
+            Assert.That(_game.LastCue, Does.Contain("too far away"));
+
+            _cocoa.transform.position = _game.PredatorObject.transform.position;
+            Assert.IsTrue(controller.HandleBark(1));
+            Assert.IsFalse(_game.FeastGuardPuzzle.DiveActive);
+            Assert.AreEqual(1, _game.FeastGuardPuzzle.Repels);
         }
 
         [UnityTest]
@@ -265,6 +420,31 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(_game);
             Assert.IsNotNull(_cheddar);
             Assert.IsNotNull(_cocoa);
+        }
+
+        private static void AssertCharacterArt(GameObject owner, MissionPropArtAttachment attachment,
+            string expectedPath)
+        {
+            Assert.IsNotNull(attachment, $"{owner.name} needs a mission-prop art attachment.");
+            Assert.AreEqual(expectedPath, attachment.ResourcePath);
+            Assert.IsTrue(attachment.HasRuntimeSprite);
+            Assert.That(attachment.RuntimeSpriteName, Does.Not.Contain("Square"));
+            var overlay = owner.GetComponent<ArtSpriteOverlay>();
+            Assert.IsNotNull(overlay);
+            Assert.IsFalse(overlay.HasShadow, "Character sprites must not carry floating square shadow backplates.");
+            var artChild = owner.transform.Find("ActualArtOverlay");
+            Assert.IsNotNull(artChild);
+            Assert.IsNull(artChild.GetComponent<Collider2D>(),
+                "Presentation overlays must not add or replace controller-owned collision geometry.");
+        }
+
+        private static GameObject FindLoadedObject(string objectName)
+        {
+            foreach (var candidate in Resources.FindObjectsOfTypeAll<GameObject>())
+            {
+                if (candidate.name == objectName && candidate.scene.IsValid()) return candidate;
+            }
+            return null;
         }
     }
 }

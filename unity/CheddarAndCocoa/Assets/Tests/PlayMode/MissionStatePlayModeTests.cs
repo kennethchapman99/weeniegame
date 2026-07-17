@@ -16,8 +16,9 @@ namespace CheddarAndCocoa.Tests
             state.AddTaunt();
 
             Assert.AreEqual(1, state.RouteIndex);
-            Assert.AreEqual(2, state.ControlCount);
-            Assert.IsTrue(state.ReadyForStash(2));
+            Assert.AreEqual(1, state.ControlCount,
+                "A solo herd is only an attempt; coordinated cutoffs own route control.");
+            Assert.IsTrue(state.ReadyForStash(1));
             Assert.IsTrue(state.TooManyTaunts(1));
 
             state.FindStash();

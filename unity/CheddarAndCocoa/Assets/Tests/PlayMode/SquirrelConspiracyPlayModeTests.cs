@@ -52,7 +52,13 @@ namespace CheddarAndCocoa.Tests
             _cocoa.transform.position = _game.SquirrelObject.transform.position;
             _game.ForceSquirrelConspiracyHerd(DogId.Cheddar);
             Assert.AreEqual(1, _game.SquirrelConspiracyState.Herds);
-            Assert.That(_game.LastScoreEventLabel, Does.Contain(ScoreEventCatalog.GoodHerd.Label));
+            Assert.AreEqual(0, _game.SquirrelConspiracyState.ControlCount,
+                "Cheddar's solo pressure must not solve a mandatory co-op cutoff.");
+            Assert.That(_game.LastCue, Does.Contain("Cocoa"));
+
+            _game.ForceSquirrelConspiracyHerd(DogId.Cocoa);
+            Assert.AreEqual(0, _game.SquirrelConspiracyState.ControlCount,
+                "Cocoa cannot replace Cheddar's herding role with a bark.");
 
             _cheddar.transform.position = _game.SquirrelObject.transform.position;
             _cocoa.transform.position = _game.ActiveSquirrelCutoffZone;
@@ -74,7 +80,8 @@ namespace CheddarAndCocoa.Tests
 
             Assert.AreEqual(GameManager.MissionVariant.SquirrelConspiracy, game.ActiveMissionVariant);
             Assert.AreEqual("squirrel_conspiracy", game.RuntimeSnapshot.MissionId);
-            Assert.That(game.ObjectiveLabel, Does.Contain("Herd squirrel route"));
+            Assert.That(game.ObjectiveLabel, Does.Contain("Cheddar: BARK herd"));
+            Assert.That(game.ObjectiveLabel, Does.Contain("Cocoa: HOLD cutoff"));
 
             for (int i = 0; i < 4; i++)
             {
@@ -86,9 +93,13 @@ namespace CheddarAndCocoa.Tests
 
             Assert.IsTrue(game.SquirrelConspiracyState.StashRevealed);
             Assert.AreEqual(4, game.SquirrelConspiracyState.ControlCount);
-            Assert.That(game.ObjectiveLabel, Does.Contain("Sniff"));
+            Assert.That(game.ObjectiveLabel, Does.Contain("Cocoa: reach the revealed stash"));
 
             game.ForceSquirrelConspiracyFindStash(DogId.Cocoa);
+            yield return null;
+            Assert.IsTrue(game.SquirrelConspiracyController.IsPresentingSuccessfulOutcome,
+                "Cracking the case should stay in the live world briefly before the end screen.");
+            game.SquirrelConspiracyController.ForceFinishSuccessPresentation();
             yield return null;
 
             Assert.AreEqual(GameManager.MissionOutcome.Clear, game.Outcome);
@@ -171,8 +182,8 @@ namespace CheddarAndCocoa.Tests
             yield return null;
             AssertMissionArt("SquirrelCutoff_0", FinalGameplayArt.SquirrelConspiracyCutoffHeld);
 
-            _cocoa.transform.position = _game.SquirrelObject.transform.position + Vector3.right * 20f;
-            _game.ForceSquirrelConspiracyHerd(DogId.Cocoa);
+            _cheddar.transform.position = _game.SquirrelObject.transform.position + Vector3.right * 20f;
+            _game.ForceSquirrelConspiracyHerd(DogId.Cheddar);
             yield return null;
             AssertMissionArt("SquirrelCutoff_0", FinalGameplayArt.SquirrelConspiracyCutoffFakeout);
         }

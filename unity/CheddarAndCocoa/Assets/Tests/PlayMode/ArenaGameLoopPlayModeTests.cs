@@ -184,6 +184,7 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(cheddar);
             Assert.IsNotNull(cocoa);
 
+            game.SelectMission(GameManager.MissionVariant.BackyardRescue);
             game.StartSelectedMission();
             yield return null;
 
@@ -301,10 +302,10 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(game.MissionSelectVisible);
             Assert.AreEqual(GameManager.FlowState.MissionSelect, game.CurrentFlow);
             Assert.AreEqual(23, game.MissionSelectOptionCount);
-            Assert.AreEqual(GameManager.MissionVariant.BackyardRescue, game.SelectedMissionVariant);
-            Assert.AreEqual("Backyard Rescue", game.SelectedMissionName);
+            Assert.AreEqual(GameManager.MissionVariant.OperationPeeBreak, game.SelectedMissionVariant);
+            Assert.AreEqual("Operation Pee Break", game.SelectedMissionName);
             Assert.That(game.SelectedMissionReadinessLabel, Does.Contain("Readability gate: READY"));
-            Assert.That(game.SelectedMissionReadinessLabel, Does.Contain("Rescue + bait-and-switch"));
+            Assert.That(game.SelectedMissionReadinessLabel, Does.Contain("Social manipulation"));
             Assert.AreEqual(GameManager.MissionVariant.OperationPeeBreak, game.CouchTestFocusVariant);
             Assert.That(game.CouchTestFocusLabel, Does.Contain("COUCH TEST FOCUS"));
             Assert.That(game.CouchTestFocusLabel, Does.Contain("Operation Pee Break"));
@@ -317,6 +318,7 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(0, game.SessionMissionsPlayed);
             Assert.AreEqual(0, game.SessionTotalScore);
 
+            game.SelectMission(GameManager.MissionVariant.BackyardRescue);
             game.StartSelectedMission();
             yield return null;
 
@@ -399,6 +401,14 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(game.ObjectiveArrows[1].UsesGeneratedCueArt);
             Assert.AreEqual("cue_objective_arrow", game.ObjectiveArrows[0].CueSpriteName);
             Assert.AreEqual("cue_objective_arrow", game.ObjectiveArrows[1].CueSpriteName);
+            Assert.IsNotNull(cheddar.transform.Find(ObjectiveArrowFeedback.ScentBreadcrumbRootName));
+            Assert.IsNotNull(cocoa.transform.Find(ObjectiveArrowFeedback.ScentBreadcrumbRootName));
+            Assert.AreEqual(ObjectiveArrowFeedback.ScentBreadcrumbSlots, game.ObjectiveArrows[0].ScentBreadcrumbCount);
+            Assert.AreEqual(ObjectiveArrowFeedback.ScentBreadcrumbSlots, game.ObjectiveArrows[1].ScentBreadcrumbCount);
+            Assert.IsTrue(game.ObjectiveArrows[0].UsesGeneratedScentArt);
+            Assert.IsTrue(game.ObjectiveArrows[1].UsesGeneratedScentArt);
+            Assert.AreEqual("cue_target_paw", game.ObjectiveArrows[0].ScentBreadcrumbSpriteName);
+            Assert.AreEqual("cue_target_paw", game.ObjectiveArrows[1].ScentBreadcrumbSpriteName);
             Assert.That(game.SquirrelObject.GetComponent<MissionActorFeedback>().Label, Does.Contain("WAITING"));
             float introGuard = 0f;
             while (introGuard < 3f)
@@ -716,11 +726,13 @@ namespace CheddarAndCocoa.Tests
 
             var game = Object.FindFirstObjectByType<GameManager>();
             var cheddar = FindDog(DogId.Cheddar);
+            var cocoa = FindDog(DogId.Cocoa);
             Assert.IsNotNull(game);
             Assert.IsNotNull(cheddar);
+            Assert.IsNotNull(cocoa);
             Assert.IsFalse(game.PlaytestOverlayVisible);
             Assert.IsFalse(game.PlaytestModeEnabled);
-            Assert.IsTrue(LogContains(game, "MissionSelect: Backyard Rescue"));
+            Assert.IsTrue(LogContains(game, "MissionSelect: Operation Pee Break"));
             Assert.That(game.LastPlaytestEvent, Does.Contain("ObjectiveChanged"));
 
             game.SetPlaytestOverlayVisible(true);
@@ -731,7 +743,7 @@ namespace CheddarAndCocoa.Tests
             game.StartMission(GameManager.MissionVariant.SnackHeist);
             yield return null;
             Assert.IsTrue(LogContains(game, "MissionStarted: Snack Heist"));
-            Assert.IsTrue(LogContains(game, "ObjectiveChanged: Stash snacks"));
+            Assert.IsTrue(LogContains(game, "ObjectiveChanged: Cheddar: Stash snacks"));
             Assert.Greater(game.ObjectiveChangeCount, 0);
             Assert.AreEqual(0, game.BarksUsed);
             Assert.AreEqual(0, game.FailedInteractions);
@@ -927,28 +939,28 @@ namespace CheddarAndCocoa.Tests
             // page: page 0 holds indices 0-11, page 1 holds 12-22). Directional navigation must
             // match that visible grid: vertical steps wrap within the current page's column, and
             // horizontal steps walk the tile order linearly so the page flips at page edges.
-            game.SelectMission(GameManager.MissionVariant.BackyardRescue); // page 0, top-left (index 0)
+            game.SelectMission(GameManager.MissionVariant.BackyardRescue); // page 0, row 2 (index 5)
             Assert.AreEqual(0, game.SelectedMissionPage);
             game.SelectMissionRight();
-            Assert.AreEqual(GameManager.MissionVariant.SnackHeist, game.SelectedMissionVariant); // index 1
+            Assert.AreEqual(GameManager.MissionVariant.SnackHeist, game.SelectedMissionVariant); // index 6
             game.SelectMissionBelow();
-            Assert.AreEqual(GameManager.MissionVariant.CoyotesFence, game.SelectedMissionVariant); // index 5 (row below)
+            Assert.AreEqual(GameManager.MissionVariant.CoyotesFence, game.SelectedMissionVariant); // index 10
             game.SelectMissionLeft();
-            Assert.AreEqual(GameManager.MissionVariant.EagleShadowPanic, game.SelectedMissionVariant); // index 4
+            Assert.AreEqual(GameManager.MissionVariant.EagleShadowPanic, game.SelectedMissionVariant); // index 9
             game.SelectMissionAbove();
-            Assert.AreEqual(GameManager.MissionVariant.BackyardRescue, game.SelectedMissionVariant); // index 0
+            Assert.AreEqual(GameManager.MissionVariant.BackyardRescue, game.SelectedMissionVariant); // index 5
             game.SelectMissionAbove();
-            Assert.AreEqual(GameManager.MissionVariant.ThunderstormComfort, game.SelectedMissionVariant, // wraps to index 8
+            Assert.AreEqual(GameManager.MissionVariant.KitchenFoodFrenzy, game.SelectedMissionVariant, // wraps to index 1
                 "Vertical navigation should wrap within the visible column of the current page.");
-            game.SelectMission(GameManager.MissionVariant.CarRide); // index 11, last tile of page 0
+            game.SelectMission(GameManager.MissionVariant.WeenieRoundup); // index 11, last tile of page 0
             Assert.AreEqual(0, game.SelectedMissionPage);
             game.SelectMissionRight();
-            Assert.AreEqual(GameManager.MissionVariant.GateCrash, game.SelectedMissionVariant, // index 12
+            Assert.AreEqual(GameManager.MissionVariant.ScentSearch, game.SelectedMissionVariant, // index 12
                 "Pushing right past the last tile of a page should flip to the next page.");
             Assert.AreEqual(1, game.SelectedMissionPage);
-            game.SelectMission(GameManager.MissionVariant.BlanketCatch); // index 19: page 1, row 1, col 3
+            game.SelectMission(GameManager.MissionVariant.BoneRelay); // index 19: page 1, row 1, col 3
             game.SelectMissionBelow();
-            Assert.AreEqual(GameManager.MissionVariant.BabyBirdBedlam, game.SelectedMissionVariant, // clamps to index 22
+            Assert.AreEqual(GameManager.MissionVariant.BlanketCatch, game.SelectedMissionVariant, // clamps to index 22
                 "Stepping into the missing corner of the short last page should clamp to the final mission.");
             Assert.AreEqual(2, game.MissionSelectPageCount);
             game.SelectCouchTestFocusMission();
@@ -1014,7 +1026,8 @@ namespace CheddarAndCocoa.Tests
             game.StartSelectedMission();
             yield return null;
             Assert.AreEqual(GameManager.MissionVariant.SockPanic, game.ActiveMissionVariant);
-            Assert.That(game.ObjectiveLabel, Does.Contain("Tip the laundry basket"));
+            Assert.That(game.ObjectiveLabel, Does.Contain("Cocoa"));
+            Assert.That(game.ObjectiveLabel, Does.Contain("Cheddar"));
         }
 
         [UnityTest]
@@ -1035,7 +1048,7 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(game.MissionSelectVisible);
             Assert.AreEqual(23, game.MissionSelectOptionCount);
             Assert.That(game.ObjectiveLabel, Does.Contain("Choose a mission"));
-            Assert.IsTrue(LogContains(game, "MissionSelect: Backyard Rescue"));
+            Assert.IsTrue(LogContains(game, "MissionSelect: Operation Pee Break"));
 
             AssertMissionIdAvailable(game, GameManager.MissionVariant.BackyardRescue, "Backyard Rescue");
             AssertMissionIdAvailable(game, GameManager.MissionVariant.SnackHeist, "Snack Heist");
@@ -1174,8 +1187,10 @@ namespace CheddarAndCocoa.Tests
 
             var game = Object.FindFirstObjectByType<GameManager>();
             var cheddar = FindDog(DogId.Cheddar);
+            var cocoa = FindDog(DogId.Cocoa);
             Assert.IsNotNull(game);
             Assert.IsNotNull(cheddar);
+            Assert.IsNotNull(cocoa);
 
             Assert.IsTrue(game.MissionSelectVisible);
             game.StartMission(GameManager.MissionVariant.SnackHeist);
@@ -1195,13 +1210,21 @@ namespace CheddarAndCocoa.Tests
             firstSnack.CollectBy(cheddar);
             Assert.AreEqual(60, game.LastScoreDelta);
             Assert.AreEqual("+60 SNACK STASHED", game.LastScoreEventLabel);
-            Assert.That(game.ObjectiveLabel, Does.Contain("Stash snacks 1/4"));
+            Assert.That(game.ObjectiveLabel, Does.Contain("Cocoa: bark-guard"));
+
+            cocoa.transform.position = game.SquirrelObject.transform.position;
+            Assert.IsTrue(game.SnackHeistController.HandleBark(1));
+            Assert.AreEqual(1, game.SnackHeistController.GuardBarks);
 
             while (game.BreakfastRecovered < game.BreakfastGoal)
             {
                 FirstTreat().CollectBy(cheddar);
                 yield return null;
             }
+
+            Assert.IsTrue(game.SnackHeistController.IsPresentingSuccessfulOutcome,
+                "The secured stash should remain visible before the end card replaces play.");
+            yield return WaitForOutcome(game, GameManager.MissionOutcome.Clear);
 
             Assert.AreEqual(GameManager.MissionOutcome.Clear, game.Outcome);
             Assert.IsTrue(game.ReplayPromptVisible);
@@ -1256,7 +1279,8 @@ namespace CheddarAndCocoa.Tests
                 "Sock Panic must run entirely through its own IMissionController.");
             Assert.AreEqual("Sock Panic", game.ActiveMissionName);
             Assert.That(game.MissionIntroPrompt, Does.Contain("laundry basket"));
-            Assert.That(game.ObjectiveLabel, Does.Contain("Tip the laundry basket"));
+            Assert.That(game.ObjectiveLabel, Does.Contain("Cocoa"));
+            Assert.That(game.ObjectiveLabel, Does.Contain("Cheddar"));
             Assert.IsFalse(game.SquirrelObject.activeSelf);
             Assert.IsFalse(game.PredatorObject.activeSelf);
             Assert.IsFalse(game.RopeObject.activeSelf);
@@ -1267,7 +1291,8 @@ namespace CheddarAndCocoa.Tests
             var firstSock = game.ExposedSock;
             Assert.IsNotNull(firstSock);
             Assert.IsTrue(game.SockPanicState.BasketOpen);
-            Assert.That(game.ObjectiveLabel, Does.Contain("Partner dive"));
+            Assert.That(game.ObjectiveLabel, Does.Contain("Cocoa: HOLD"));
+            Assert.That(game.ObjectiveLabel, Does.Contain("Cheddar: DIVE"));
             AssertHasChildren(firstSock.transform, ArenaArtCatalog.CollectiblePartNames(GameManager.MissionVariant.SockPanic));
             firstSock.CollectBy(cocoa);
             Assert.AreEqual(-15, game.LastScoreDelta);
@@ -1279,7 +1304,7 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(40, game.LastScoreDelta);
             Assert.AreEqual("+40 PARTNER SOCK DIVE", game.LastScoreEventLabel);
             Assert.AreEqual(1, game.SockPanicState.SuccessfulDives);
-            Assert.That(game.ObjectiveLabel, Does.Contain("socks 1/5"));
+            Assert.That(game.ObjectiveLabel, Does.Contain("Socks 1/5"));
 
             while (game.BreakfastRecovered < game.BreakfastGoal)
             {
@@ -1287,6 +1312,9 @@ namespace CheddarAndCocoa.Tests
                 game.ExposedSock.CollectBy(cheddar);
                 yield return null;
             }
+
+            game.SockPanicController.ForceFinishSuccessPresentation();
+            yield return null;
 
             Assert.AreEqual(GameManager.MissionOutcome.Clear, game.Outcome);
             Assert.IsTrue(game.ReplayPromptVisible);
@@ -1385,16 +1413,34 @@ namespace CheddarAndCocoa.Tests
             {
                 if (game.ActiveMissionVariant == GameManager.MissionVariant.SockPanic)
                 {
-                    var collectorId = dog.GetComponent<DogIdentity>().Id;
-                    var openerId = collectorId == DogId.Cheddar ? DogId.Cocoa : DogId.Cheddar;
-                    game.ForceSockBasketTip(openerId);
+                    game.ForceSockBasketTip(DogId.Cocoa);
                     Assert.IsNotNull(game.ExposedSock);
-                    game.ExposedSock.CollectBy(dog);
+                    game.ExposedSock.CollectBy(FindDog(DogId.Cheddar));
+                }
+                else if (game.ActiveMissionVariant == GameManager.MissionVariant.SnackHeist)
+                {
+                    if (game.SnackHeistController.GuardBarks == 0 && game.BreakfastRecovered > 0)
+                    {
+                        var cocoa = FindDog(DogId.Cocoa);
+                        cocoa.transform.position = game.SquirrelObject.transform.position;
+                        Assert.IsTrue(game.SnackHeistController.HandleBark(1));
+                    }
+                    FirstTreat().CollectBy(dog);
                 }
                 else
                 {
                     FirstTreat().CollectBy(dog);
                 }
+                yield return null;
+            }
+            if (game.ActiveMissionVariant == GameManager.MissionVariant.SockPanic)
+            {
+                game.SockPanicController.ForceFinishSuccessPresentation();
+                yield return null;
+            }
+            else if (game.ActiveMissionVariant == GameManager.MissionVariant.SnackHeist)
+            {
+                game.SnackHeistController.ForceFinishSuccessPresentation();
                 yield return null;
             }
         }

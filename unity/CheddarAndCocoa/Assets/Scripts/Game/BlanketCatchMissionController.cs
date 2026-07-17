@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace CheddarAndCocoa.Game
 {
-    public sealed class BlanketCatchMissionController : IMissionController
+    public sealed class BlanketCatchMissionController : IMissionController, IMissionSuccessPresentationController
     {
         private const float MinSeparation = 4f;
         private const float MaxSeparation = 11f;
@@ -14,6 +14,7 @@ namespace CheddarAndCocoa.Game
         private const float SpawnY = 11f;
         private const float FallSpeed = 7f;
         private const float FallingReactionSeconds = 0.6f;
+        private const float SuccessHoldSeconds = 1.15f;
 
         private readonly CoopStretchSpanPuzzle _puzzle = new();
         private MissionContext _context;
@@ -21,6 +22,7 @@ namespace CheddarAndCocoa.Game
         private TextMesh _blanketLabel;
         private MissionPropArtAttachment _blanketArt;
         private GameObject _fallingItem;
+        private TextMesh _fallingLabel;
         private MissionPropArtAttachment _fallingArt;
         private float _itemX;
         private float _itemY;
@@ -31,9 +33,13 @@ namespace CheddarAndCocoa.Game
         private int _missedSeen;
         private int _ripsSeen;
         private bool _failed;
+        private bool _waitingForCocoaBark;
+        private float _successHoldRemaining;
 
         public GameManager.MissionVariant Variant => GameManager.MissionVariant.BlanketCatch;
-        public bool IsComplete => _puzzle.Solved;
+        public bool IsComplete => _puzzle.Solved && _successHoldRemaining <= 0f;
+        public bool IsPresentingSuccessfulOutcome => _puzzle.Solved && _successHoldRemaining > 0f;
+        public bool WaitingForCocoaBark => _waitingForCocoaBark;
         public bool IsFailed => _failed;
         public string FailReason => _failed ? "The blanket tore to shreds - too many over-stretches and there was nothing left to catch with." : null;
         public CoopStretchSpanPuzzle Puzzle => _puzzle;
@@ -45,6 +51,10 @@ namespace CheddarAndCocoa.Game
         {
             get
             {
+                if (IsPresentingSuccessfulOutcome)
+                    return "Dinner saved! Cheddar and Cocoa hold their snack-filled blanket victory pose.";
+                if (_waitingForCocoaBark)
+                    return "Hold the blanket taut - Cocoa BARKS to call the next snack drop";
                 string span = _puzzle.Taut ? "taut - slide the middle under the snack"
                     : _puzzle.Overstretched ? "too far apart - close up before it rips!"
                     : "too close - spread out to pull it taut";
@@ -69,6 +79,8 @@ namespace CheddarAndCocoa.Game
             _fallingOverrideUntil = 0f;
             _respawnAt = 0f;
             _failed = false;
+            _waitingForCocoaBark = false;
+            _successHoldRemaining = 0f;
             SetSceneActive(true);
             SpawnItem();
             UpdateVisuals();
@@ -76,7 +88,13 @@ namespace CheddarAndCocoa.Game
 
         public void Tick(float deltaTime, float now)
         {
-            if (_puzzle.Solved || _failed) return;
+            if (_puzzle.Solved)
+            {
+                _successHoldRemaining = Mathf.Max(0f, _successHoldRemaining - deltaTime);
+                UpdateVisuals();
+                return;
+            }
+            if (_failed) return;
 
             int a = _context.IndexOfDog(DogId.Cheddar);
             int b = _context.IndexOfDog(DogId.Cocoa);
@@ -105,6 +123,12 @@ namespace CheddarAndCocoa.Game
                 return;
             }
 
+            if (_waitingForCocoaBark)
+            {
+                UpdateVisuals();
+                return;
+            }
+
             _itemY -= FallSpeed * deltaTime;
             if (_itemY <= CatchLineY)
             {
@@ -116,7 +140,31 @@ namespace CheddarAndCocoa.Game
             UpdateVisuals();
         }
 
-        public bool HandleBark(int dogIndex) => false;
+        public bool HandleBark(int dogIndex)
+        {
+            if (_puzzle.Solved || _failed || !_waitingForCocoaBark) return false;
+            if (_context.IndexOfDog(DogId.Cocoa) != dogIndex) return false;
+
+            if (!_puzzle.Taut)
+            {
+                _context.MarkFailedInteraction(DogId.Cocoa, "Pull the blanket taut with Cheddar before calling the drop.");
+                _context.SetCue("Cocoa called too early - spread into the taut band, then bark again.");
+                _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "BLANKET FIRST!");
+                _context.SpawnWorldPop(new Vector2(_itemX, SpawnY - 1f), "NOT YET!", new Color(0.95f, 0.65f, 0.25f));
+                _context.LogEvent("BlanketDropBlocked", "Cocoa barked before the blanket was taut");
+                return false;
+            }
+
+            _waitingForCocoaBark = false;
+            _context.SetCue("Cocoa called it down - both dogs slide the taut blanket under the snack!");
+            _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "DROP CALLED!");
+            _context.SpawnWorldPop(new Vector2(_itemX, SpawnY - 1f), "DROP!", new Color(0.55f, 0.9f, 1f));
+            _context.RequestRumble("blanket_drop_call", 0.08f, 0.2f, 0.08f);
+            _context.LogEvent("BlanketDropCalled", "Cocoa barked with the blanket taut");
+            _context.LogObjectiveChanged();
+            UpdateVisuals();
+            return true;
+        }
 
         public void Cleanup() => SetSceneActive(false);
 
@@ -130,8 +178,13 @@ namespace CheddarAndCocoa.Game
 
         public bool TryGetObjectiveTarget(int dogIndex, out Transform target, out string copy, out float hideDistance)
         {
-            target = _fallingItem != null && _fallingItem.activeSelf ? _fallingItem.transform : null;
-            copy = "GET UNDER SNACK";
+            bool cocoa = _context.IndexOfDog(DogId.Cocoa) == dogIndex;
+            target = _waitingForCocoaBark && !cocoa
+                ? (_blanketObj != null && _blanketObj.activeSelf ? _blanketObj.transform : null)
+                : (_fallingItem != null && _fallingItem.activeSelf ? _fallingItem.transform : null);
+            copy = _waitingForCocoaBark
+                ? cocoa ? "BARK TO CALL DROP" : "HOLD BLANKET TAUT"
+                : "GET UNDER SNACK";
             hideDistance = CatchTolerance;
             return target != null;
         }
@@ -149,11 +202,16 @@ namespace CheddarAndCocoa.Game
 
         public void ForceBlanketCatch(float itemX)
         {
+            _waitingForCocoaBark = false;
             _itemX = itemX;
             _puzzle.TryCatch(itemX);
             HandleProgress();
             if (!_failed && !_puzzle.Solved) UpdateVisuals();
         }
+
+        public bool ForceCocoaCallDrop() => HandleBark(_context.IndexOfDog(DogId.Cocoa));
+
+        public void ForceFinishSuccessPresentation() => _successHoldRemaining = 0f;
 
         private void HandleRips()
         {
@@ -183,6 +241,7 @@ namespace CheddarAndCocoa.Game
                 _context.SpawnWorldPop(new Vector2(_itemX, CatchLineY), "CAUGHT!", new Color(0.5f, 0.95f, 0.55f));
                 ShowFallingReaction(FinalGameplayArt.BlanketSnackCaught, FallingReactionSeconds);
                 _context.LogEvent("BlanketCatch", $"{_puzzle.Caught}/{CatchesNeeded}");
+                if (_puzzle.Solved) CompleteDinnerSave();
             }
             if (_puzzle.Missed > _missedSeen)
             {
@@ -204,6 +263,7 @@ namespace CheddarAndCocoa.Game
             var rng = _context.Random();
             _itemX = Mathf.Lerp(_context.Bounds.xMin + 3f, _context.Bounds.xMax - 3f, (float)rng.NextDouble());
             _itemY = SpawnY;
+            _waitingForCocoaBark = true;
             if (_fallingItem != null)
             {
                 _fallingOverrideArt = null;
@@ -234,6 +294,8 @@ namespace CheddarAndCocoa.Game
                     : _puzzle.Overstretched ? "TOO FAR - RIPPING!" : "TOO CLOSE - SAGGING";
                 _blanketLabel.transform.localScale = new Vector3(0.08f / Mathf.Max(width, 0.01f), 0.16f, 1f);
             }
+            if (_fallingLabel != null)
+                _fallingLabel.text = _waitingForCocoaBark ? "COCOA: BARK TO DROP" : "SNACK FALLING!";
         }
 
         private void BuildScene()
@@ -254,7 +316,7 @@ namespace CheddarAndCocoa.Game
             var isr = _fallingItem.AddComponent<SpriteRenderer>();
             if (_context.ActorSprite != null) isr.sprite = _context.ActorSprite;
             isr.color = new Color(0.95f, 0.8f, 0.4f);
-            _context.AddWorldLabel(_fallingItem, "SNACK", Vector3.up * 1.1f, 11, Color.white);
+            _fallingLabel = _context.AddWorldLabel(_fallingItem, "SNACK", Vector3.up * 1.1f, 11, Color.white);
             _fallingArt = MissionPropArt.AttachObject(_fallingItem, FinalGameplayArt.BlanketSnackFalling, 0.012f, 18, true);
             _fallingItem.SetActive(false);
         }
@@ -278,6 +340,21 @@ namespace CheddarAndCocoa.Game
             _fallingOverrideArt = resourcePath;
             _fallingOverrideUntil = _context.Now() + seconds;
             MissionPropArt.SetSprite(_fallingArt, resourcePath);
+        }
+
+        private void CompleteDinnerSave()
+        {
+            _successHoldRemaining = SuccessHoldSeconds;
+            _waitingForCocoaBark = false;
+            _context.SetFeedback(GameManager.FeedbackKind.LevelClear);
+            _context.SetCue("Dinner saved! Cheddar and Cocoa hold the full blanket while snacks rain safely home.");
+            _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "DINNER SAVED!");
+            _context.SpawnWorldPop(new Vector2(_puzzle.MidpointX, CatchLineY + 1f), "FULL BLANKET!", new Color(1f, 0.85f, 0.3f));
+            _context.RequestAudioCue(ArenaFeedbackCatalog.MissionWin);
+            _context.RequestRumble("blanket_dinner_saved", 0.28f, 0.55f, 0.2f);
+            MissionPropArt.SetSprite(_blanketArt, FinalGameplayArt.BlanketCatchTaut);
+            _context.LogEvent("BlanketDinnerSaved", "Holding live-world full-blanket payoff");
+            _context.LogObjectiveChanged();
         }
 
         private void SetSceneActive(bool active)

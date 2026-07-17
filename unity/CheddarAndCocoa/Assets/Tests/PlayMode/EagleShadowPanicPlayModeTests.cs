@@ -74,6 +74,11 @@ namespace CheddarAndCocoa.Tests
             yield return null;
 
             Assert.IsTrue(game.EagleShadowPanicState.UnitedFrontComplete);
+            var controller = (EagleShadowPanicMissionController)game.ActiveMissionController;
+            Assert.IsTrue(controller.IsPresentingSuccessfulOutcome,
+                "The united bark should hold a live eagle-retreat payoff before the end screen.");
+            controller.ForceFinishSuccessPresentation();
+            yield return null;
             Assert.AreEqual(GameManager.MissionOutcome.Clear, game.Outcome);
             Assert.AreEqual(GameManager.FlowState.EndScreen, game.CurrentFlow);
             Assert.IsTrue(game.RuntimeSnapshot.IsComplete);
@@ -205,10 +210,11 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(1, game.EagleShadowPanicState.SafeHides);
             Assert.AreEqual(0, game.EagleShadowPanicState.Exposures);
 
-            // Caught in the open under the shadow column: an exposure.
+            // A completed sweep crossed the entire yard: open-ground dogs are exposed even though
+            // the eagle actor has reached the far edge and is no longer directly above them.
             _cheddar.transform.position = new Vector3(0f, 0f, 0f);
             _cocoa.transform.position = new Vector3(0f, 0f, 0f);
-            game.PredatorObject.transform.position = new Vector3(0f, game.PredatorObject.transform.position.y, 0f);
+            game.PredatorObject.transform.position = new Vector3(50f, game.PredatorObject.transform.position.y, 0f);
             game.ForceEagleShadowSweepPass();
             yield return null;
 

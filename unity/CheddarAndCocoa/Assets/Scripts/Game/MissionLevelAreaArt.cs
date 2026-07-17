@@ -47,10 +47,10 @@ namespace CheddarAndCocoa.Game
             var area = CreateRoot(CarRideRootName);
             area.transform.position = bounds.center;
             area.AddPlate("BackseatCabinShellPlate", FinalGameplayArt.BackseatCabinShell,
-                bounds.center, new Vector2(56f, 33f), -8, Color.white);
+                bounds.center, new Vector2(56f, 33f), 4, Color.white);
             area.BuildWindshieldScroller(bounds.center + Vector2.up * 12f);
             area.AddPlate("BackseatBenchPlate", FinalGameplayArt.BackseatBench,
-                bounds.center + Vector2.down * 1.4f, new Vector2(36f, 11f), -6, Color.white);
+                bounds.center + Vector2.down * 1.4f, new Vector2(36f, 11f), 6, Color.white);
             return area;
         }
 
@@ -77,7 +77,7 @@ namespace CheddarAndCocoa.Game
                 var plate = AddPlate($"BackseatWindshieldSceneryPlate_{i + 1}",
                     FinalGameplayArt.BackseatWindshieldScenery,
                     openingCenter + Vector2.right * (i * SceneryWrapDistance),
-                    new Vector2(SceneryWrapDistance, 5.8f), -7, Color.white);
+                    new Vector2(SceneryWrapDistance, 5.8f), 5, Color.white);
                 if (plate == null) continue;
                 plate.transform.SetParent(scroller.transform, true);
                 plate.GetComponent<SpriteRenderer>().maskInteraction = SpriteMaskInteraction.VisibleInsideMask;

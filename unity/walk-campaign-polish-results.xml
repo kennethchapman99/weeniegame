@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="8" result="Passed" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-07-16 22:55:58Z" end-time="2026-07-16 22:55:59Z" duration="0.9100307">
+  <test-suite type="TestSuite" id="1662" name="Cheddar and Cocoa" fullname="Cheddar and Cocoa" runstate="Runnable" testcasecount="564" result="Passed" start-time="2026-07-16 22:55:58Z" end-time="2026-07-16 22:55:59Z" duration="0.910031" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="SetUpFixture" id="1001" name="CheddarAndCocoa.Tests.PlayMode.dll" fullname="PlayModeGlobalTestSetup" classname="PlayModeGlobalTestSetup" runstate="Runnable" testcasecount="564" result="Passed" start-time="2026-07-16 22:55:58Z" end-time="2026-07-16 22:55:59Z" duration="0.902360" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="82519" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1655" name="CheddarAndCocoa" fullname="CheddarAndCocoa" runstate="Runnable" testcasecount="564" result="Passed" start-time="2026-07-16 22:55:58Z" end-time="2026-07-16 22:55:59Z" duration="0.896745" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1658" name="Tests" fullname="CheddarAndCocoa.Tests" runstate="Runnable" testcasecount="562" result="Passed" start-time="2026-07-16 22:55:58Z" end-time="2026-07-16 22:55:59Z" duration="0.892404" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1373" name="CoopWalkCampaignPlayModeTests" fullname="CheddarAndCocoa.Tests.CoopWalkCampaignPlayModeTests" classname="CheddarAndCocoa.Tests.CoopWalkCampaignPlayModeTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-07-16 22:55:58Z" end-time="2026-07-16 22:55:59Z" duration="0.884046" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1374" name="Walk_AppearsInMissionSelectRotation" fullname="CheddarAndCocoa.Tests.CoopWalkCampaignPlayModeTests.Walk_AppearsInMissionSelectRotation" methodname="Walk_AppearsInMissionSelectRotation" classname="CheddarAndCocoa.Tests.CoopWalkCampaignPlayModeTests" runstate="Runnable" seed="1534993018" result="Passed" start-time="2026-07-16 22:55:58Z" end-time="2026-07-16 22:55:59Z" duration="0.525262" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1376" name="Walk_ClearPath_BothDogsHoldTheCombo" fullname="CheddarAndCocoa.Tests.CoopWalkCampaignPlayModeTests.Walk_ClearPath_BothDogsHoldTheCombo" methodname="Walk_ClearPath_BothDogsHoldTheCombo" classname="CheddarAndCocoa.Tests.CoopWalkCampaignPlayModeTests" runstate="Runnable" seed="1465651248" result="Passed" start-time="2026-07-16 22:55:59Z" end-time="2026-07-16 22:55:59Z" duration="0.073715" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1378" name="Walk_FailPath_TooManyMixedSignals" fullname="CheddarAndCocoa.Tests.CoopWalkCampaignPlayModeTests.Walk_FailPath_TooManyMixedSignals" methodname="Walk_FailPath_TooManyMixedSignals" classname="CheddarAndCocoa.Tests.CoopWalkCampaignPlayModeTests" runstate="Runnable" seed="1026051746" result="Passed" start-time="2026-07-16 22:55:59Z" end-time="2026-07-16 22:55:59Z" duration="0.052991" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1379" name="Walk_HumanActorStatesShowConfusionComprehensionMisreadAndOutcome" fullname="CheddarAndCocoa.Tests.CoopWalkCampaignPlayModeTests.Walk_HumanActorStatesShowConfusionComprehensionMisreadAndOutcome" methodname="Walk_HumanActorStatesShowConfusionComprehensionMisreadAndOutcome" classname="CheddarAndCocoa.Tests.CoopWalkCampaignPlayModeTests" runstate="Runnable" seed="1468197851" result="Passed" start-time="2026-07-16 22:55:59Z" end-time="2026-07-16 22:55:59Z" duration="0.047817" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1377" name="Walk_OneDogAlone_NeverConvincesTheHuman" fullname="CheddarAndCocoa.Tests.CoopWalkCampaignPlayModeTests.Walk_OneDogAlone_NeverConvincesTheHuman" methodname="Walk_OneDogAlone_NeverConvincesTheHuman" classname="CheddarAndCocoa.Tests.CoopWalkCampaignPlayModeTests" runstate="Runnable" seed="1288176284" result="Passed" start-time="2026-07-16 22:55:59Z" end-time="2026-07-16 22:55:59Z" duration="0.044480" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1381" name="Walk_PositionDriven_BothDogsMustInteractThenHoldTheirStations" fullname="CheddarAndCocoa.Tests.CoopWalkCampaignPlayModeTests.Walk_PositionDriven_BothDogsMustInteractThenHoldTheirStations" methodname="Walk_PositionDriven_BothDogsMustInteractThenHoldTheirStations" classname="CheddarAndCocoa.Tests.CoopWalkCampaignPlayModeTests" runstate="Runnable" seed="113193506" result="Passed" start-time="2026-07-16 22:55:59Z" end-time="2026-07-16 22:55:59Z" duration="0.052531" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[Cocoa] interact (grab placeholder)
+[Cheddar] interact (grab placeholder)
+]]></output>
+            </test-case>
+            <test-case id="1380" name="Walk_Replay_ResetsThePuzzle" fullname="CheddarAndCocoa.Tests.CoopWalkCampaignPlayModeTests.Walk_Replay_ResetsThePuzzle" methodname="Walk_Replay_ResetsThePuzzle" classname="CheddarAndCocoa.Tests.CoopWalkCampaignPlayModeTests" runstate="Runnable" seed="513236641" result="Passed" start-time="2026-07-16 22:55:59Z" end-time="2026-07-16 22:55:59Z" duration="0.041000" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1375" name="Walk_RunsThroughDedicatedController" fullname="CheddarAndCocoa.Tests.CoopWalkCampaignPlayModeTests.Walk_RunsThroughDedicatedController" methodname="Walk_RunsThroughDedicatedController" classname="CheddarAndCocoa.Tests.CoopWalkCampaignPlayModeTests" runstate="Runnable" seed="319822877" result="Passed" start-time="2026-07-16 22:55:59Z" end-time="2026-07-16 22:55:59Z" duration="0.040765" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: /Users/kchapman/Weeniegame/unity/walk-campaign-polish-results.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

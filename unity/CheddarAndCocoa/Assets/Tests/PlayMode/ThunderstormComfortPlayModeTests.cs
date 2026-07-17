@@ -53,7 +53,7 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
-        public IEnumerator ThunderstormComfort_ClearPath_HuddleThroughEveryClap()
+        public IEnumerator ThunderstormComfort_ClearPath_CocoaReassuresCheddarAnswersThroughEveryClap()
         {
             yield return LoadArena();
             var game = _game;
@@ -68,20 +68,81 @@ namespace CheddarAndCocoa.Tests
             _cheddar.transform.position = Vector3.zero;
             _cocoa.transform.position = Vector3.zero;
 
-            int guard = 0;
-            while (game.Outcome == GameManager.MissionOutcome.InProgress && guard++ < 30)
+            var controller = (ThunderstormComfortMissionController)game.ActiveMissionController;
+            for (int i = 0; i < 5; i++)
             {
                 _cheddar.transform.position = Vector3.zero;
                 _cocoa.transform.position = Vector3.zero;
+                _cocoa.Bark();
+                _cheddar.Bark();
+                Assert.IsTrue(controller.ComfortPrepared,
+                    "Cocoa's reassurance followed by Cheddar's answer should arm the next clap.");
                 game.ForceThunderclap();
                 game.ForceComfortStep(2f);
                 yield return null;
             }
 
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, game.Outcome,
+                "The passed storm should remain live briefly before the end card.");
+            Assert.IsTrue(controller.IsPresentingSuccessfulOutcome);
+            Assert.IsTrue(HasWorldPop("STORM PASSED"));
+
+            controller.ForceFinishSuccessPresentation();
+            yield return null;
+
             Assert.AreEqual(GameManager.MissionOutcome.Clear, game.Outcome);
             Assert.IsTrue(game.ThunderstormState.ReadyToClear());
             Assert.IsTrue(game.RuntimeSnapshot.IsClear);
             Assert.That(game.EndSummaryLabel, Does.Contain("Weathered The Storm"));
+        }
+
+        [UnityTest]
+        public IEnumerator ThunderstormComfort_RequiresOrderedHuddleBarks_AndMissesRecoverNextClap()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.ThunderstormComfort);
+            yield return null;
+
+            var controller = (ThunderstormComfortMissionController)_game.ActiveMissionController;
+            _cheddar.transform.position = Vector3.zero;
+            _cocoa.transform.position = Vector3.right;
+
+            _cheddar.Bark();
+            Assert.IsFalse(controller.ComfortPrepared,
+                "Cheddar cannot skip Cocoa's steady reassurance opener.");
+            Assert.That(_game.LastCue, Does.Contain("Cocoa"));
+
+            _game.ForceThunderclap();
+            yield return null;
+            Assert.AreEqual(0, _game.ThunderstormState.ClapsSurvived,
+                "Passive proximity without the bark handoff must not bank storm progress.");
+            Assert.AreEqual(1, _game.ThunderstormState.ExposedClaps);
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
+
+            _cocoa.Bark();
+            yield return new WaitForSeconds(1.75f);
+            _cheddar.Bark();
+            Assert.IsFalse(controller.ComfortPrepared,
+                "Cheddar's answer must land inside Cocoa's readable reassurance window.");
+
+            _cocoa.Bark();
+            _cheddar.Bark();
+            Assert.IsTrue(controller.ComfortPrepared);
+            _cocoa.transform.position = Vector3.right * 12f;
+            _game.ForceThunderclap();
+            yield return null;
+            Assert.AreEqual(0, _game.ThunderstormState.ClapsSurvived,
+                "Prepared comfort still requires the pair to hold the physical huddle.");
+            Assert.AreEqual(2, _game.ThunderstormState.ExposedClaps);
+
+            _cocoa.transform.position = Vector3.right;
+            _cocoa.Bark();
+            _cheddar.Bark();
+            _game.ForceThunderclap();
+            yield return null;
+            Assert.AreEqual(1, _game.ThunderstormState.ClapsSurvived,
+                "The next properly prepared clap should recover immediately.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
         }
 
         [UnityTest]
@@ -199,6 +260,7 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(0, game.ThunderstormState.ClapsSurvived);
             Assert.Less(game.Panic.CheddarPanic, 0.1f);
             Assert.Less(game.Panic.CocoaPanic, 0.1f);
+            Assert.IsFalse(game.ThunderstormController.ComfortPrepared);
             Assert.AreEqual(1, game.MissionReplayCount);
         }
 
@@ -225,6 +287,8 @@ namespace CheddarAndCocoa.Tests
             _cheddar.transform.position = Vector3.zero;
             _cocoa.transform.position = Vector3.zero;
             game.ForceComfortStep(2f);
+            _cocoa.Bark();
+            _cheddar.Bark();
             game.ForceThunderclap();
             yield return null;
 
