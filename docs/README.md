@@ -9,6 +9,10 @@ two-player couch playtest.
 These documents govern current decisions and work:
 
 - [Next Production Slice](NEXT-PRODUCTION-SLICE.md) — canonical seven-step sequence.
+- [Pre-Launch Production Plan](PRELAUNCH-PRODUCTION-PLAN.md) — master plan for the pre-launch-ready
+  bar: guidance/anti-stuck ladder, animation, art consistency, first-session flow.
+- [Pre-Launch Agent Work Queue](AGENT-WORK-QUEUE-PRELAUNCH.md) — the sized, ordered execution queue
+  implementing that plan; one task per agent run, status board inside.
 - [Baseline Couch Playtest — 2026-06-20](BASELINE-COUCH-PLAYTEST-2026-06-20.md) — technical evidence,
   cold-session protocol, findings, and current gate decision.
 - [Game Design Bible](GAME-DESIGN-BIBLE.md) — creative north star; level list is an idea bank.
