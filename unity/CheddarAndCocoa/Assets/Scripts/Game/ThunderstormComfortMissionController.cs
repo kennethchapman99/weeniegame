@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace CheddarAndCocoa.Game
 {
-    public sealed class ThunderstormComfortMissionController : IMissionController
+    public sealed class ThunderstormComfortMissionController : IMissionController, IMissionPressureHud
     {
         private const int ClapGoal = 5;
         private const float ClapInterval = 5.5f;
@@ -27,15 +27,18 @@ namespace CheddarAndCocoa.Game
         public ThunderstormMissionState StormState => _stormState;
         public Vector2 EntryTarget => _context != null ? _context.Bounds.center : Vector2.zero;
         public string OutcomeSummary => MissionOutcomeSummaryBuilder.BuildThunderstormSummary(_stormState);
+        public string PressureLabel => "PANIC";
+        public bool PressureVisible => true;
+        public float PressureNormalized => _context?.PanicMeter != null
+            ? Mathf.Clamp01(Mathf.Max(_context.PanicMeter.CheddarPanic, _context.PanicMeter.CocoaPanic))
+            : 0f;
+        public Color PressureColor => Color.Lerp(new Color(0.42f, 0.85f, 1f), new Color(1f, 0.2f, 0.12f), PressureNormalized);
 
         public string ObjectiveLabel
         {
             get
             {
-                int panicPct = _context?.PanicMeter != null
-                    ? Mathf.RoundToInt(Mathf.Max(_context.PanicMeter.CheddarPanic, _context.PanicMeter.CocoaPanic) * 100f)
-                    : 0;
-                return $"Huddle to stay calm and ride out the storm: claps {_stormState.ClapsSurvived}/{ClapGoal}, panic {panicPct}%";
+                return $"Huddle to calm each other: thunder claps {_stormState.ClapsSurvived}/{ClapGoal}";
             }
         }
 

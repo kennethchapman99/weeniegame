@@ -42,8 +42,10 @@ namespace CheddarAndCocoa.Tests
                 "Mission select should have visual mission badges, not only text rows.");
             Assert.That(ArenaHud.PlayerOwnershipLabel, Does.Contain("P1 Cheddar"));
             Assert.That(ArenaHud.PlayerOwnershipLabel, Does.Contain("P2 Cocoa"));
-            Assert.That(ArenaHud.PadControlsLabel, Does.Contain("X / West barks"));
-            Assert.That(ArenaHud.PadControlsLabel, Does.Contain("Y / North interacts"));
+            Assert.That(ArenaHud.PadControlsLabel, Does.Contain("Y / West barks"));
+            Assert.That(ArenaHud.PadControlsLabel, Does.Contain("X / North interacts"));
+            Assert.That(ArenaHud.PadControlsLabel, Does.Contain("A / East jumps"));
+            Assert.That(ArenaHud.PadControlsLabel, Does.Contain("B / South wrestles"));
             Assert.IsTrue(ArenaHud.GeneratedHudSkinAvailable,
                 "Mission select/end-card HUD should have generated skin sprites, not only IMGUI boxes.");
             Assert.IsTrue(WorldLabelSkin.GeneratedWorldLabelSkinAvailable,
@@ -133,6 +135,8 @@ namespace CheddarAndCocoa.Tests
 
             Assert.GreaterOrEqual(layout.Goal.height, 80f,
                 "The GOAL block needs room for a wrapped two-to-three line mission prompt.");
+            Assert.GreaterOrEqual(layout.Controls.height, 250f,
+                "Every level briefing needs room for visual keyboard and Switch-style controller diagrams.");
             Assert.GreaterOrEqual(ArenaHud.MissionBriefingGoalFontSize, 22,
                 "The mission goal must be couch-readable.");
         }

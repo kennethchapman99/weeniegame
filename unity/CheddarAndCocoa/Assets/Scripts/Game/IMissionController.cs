@@ -56,6 +56,43 @@ namespace CheddarAndCocoa.Game
     }
 
     /// <summary>
+    /// Optional presentation surface for missions that have already earned success but need a
+    /// short live-world payoff before the shared end screen takes over. The orchestrator freezes
+    /// timeout pressure while this is true; the controller still decides when IsComplete becomes
+    /// true and normal cleanup begins.
+    /// </summary>
+    public interface IMissionSuccessPresentationController
+    {
+        bool IsPresentingSuccessfulOutcome { get; }
+    }
+
+    /// <summary>
+    /// Optional controller-owned pre-mission explainer. The shared orchestrator freezes mission
+    /// time while this is active, then presents the normal controls card. Keeping playback here
+    /// prevents a one-off mission intro from becoming a GameManager branch.
+    /// </summary>
+    public interface IMissionOpeningPresentationController
+    {
+        bool IsPresentingOpening { get; }
+        void TickOpeningPresentation(float unscaledDeltaTime);
+        void SkipOpeningPresentation();
+    }
+
+    /// <summary>
+    /// Optional controller-owned continuous readout for the shared HUD. The historical name is
+    /// retained for compatibility, but this surface also covers progress, balance, calm, and other
+    /// values that are clearer as a meter than as a changing number. Keeping the value here avoids
+    /// moving mission-specific state into GameManager.
+    /// </summary>
+    public interface IMissionPressureHud
+    {
+        bool PressureVisible { get; }
+        string PressureLabel { get; }
+        float PressureNormalized { get; }
+        Color PressureColor { get; }
+    }
+
+    /// <summary>
     /// Narrow shared-services bundle for mission controllers. It intentionally exposes dogs,
     /// arena presentation services, scoring, and session-safe callbacks—not GameManager itself.
     /// </summary>
@@ -87,11 +124,13 @@ namespace CheddarAndCocoa.Game
         public Func<float> Now { get; }
         public Func<GameManager.RoundModifier> ActiveModifier { get; }
         public Func<bool> DebugPresentationEnabled { get; }
+        public Func<bool> AudioEnabled { get; }
         public Func<IReadOnlyList<Treat>> ActiveTreats { get; }
         /// <summary>True once the shared predator sequence has been resolved for this round.</summary>
         public Func<bool> IsPredatorResolved { get; }
         /// <summary>True once the shared tug-of-war sequence has been completed for this round.</summary>
         public Func<bool> IsTugComplete { get; }
+        public Func<float> TugProgress { get; }
 
         public Action<int, string> AddScore { get; }
         public Action<int> CreditDog { get; }
@@ -140,9 +179,11 @@ namespace CheddarAndCocoa.Game
             Func<float> now,
             Func<GameManager.RoundModifier> activeModifier,
             Func<bool> debugPresentationEnabled,
+            Func<bool> audioEnabled,
             Func<IReadOnlyList<Treat>> activeTreats,
             Func<bool> isPredatorResolved,
             Func<bool> isTugComplete,
+            Func<float> tugProgress,
             Action<int, string> addScore,
             Action<int> creditDog,
             Action<string> setCue,
@@ -191,9 +232,11 @@ namespace CheddarAndCocoa.Game
             Now = now ?? throw new ArgumentNullException(nameof(now));
             ActiveModifier = activeModifier ?? throw new ArgumentNullException(nameof(activeModifier));
             DebugPresentationEnabled = debugPresentationEnabled ?? throw new ArgumentNullException(nameof(debugPresentationEnabled));
+            AudioEnabled = audioEnabled ?? throw new ArgumentNullException(nameof(audioEnabled));
             ActiveTreats = activeTreats ?? throw new ArgumentNullException(nameof(activeTreats));
             IsPredatorResolved = isPredatorResolved ?? throw new ArgumentNullException(nameof(isPredatorResolved));
             IsTugComplete = isTugComplete ?? throw new ArgumentNullException(nameof(isTugComplete));
+            TugProgress = tugProgress ?? throw new ArgumentNullException(nameof(tugProgress));
             AddScore = addScore ?? throw new ArgumentNullException(nameof(addScore));
             CreditDog = creditDog ?? throw new ArgumentNullException(nameof(creditDog));
             SetCue = setCue ?? throw new ArgumentNullException(nameof(setCue));

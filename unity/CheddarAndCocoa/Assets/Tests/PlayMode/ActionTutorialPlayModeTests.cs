@@ -9,11 +9,10 @@ using CheddarAndCocoa.Game;
 namespace CheddarAndCocoa.Tests
 {
     /// <summary>
-    /// Covers <see cref="GameManager.ShowActionTutorial"/> and its four latching flags — the
-    /// first-level (Backyard Rescue) on-screen button-prompt legend that <see cref="ArenaHud"/>
-    /// draws. Asserts it only appears for Backyard Rescue, that each action button flips its own
-    /// flag regardless of whether the action resolves into anything (a whiffed wrestle still counts
-    /// as "the player found the button"), and that the legend retires once all four are learned.
+    /// Covers the first-level (Backyard Rescue) progressive button tutorial drawn by
+    /// <see cref="ArenaHud"/>. Every action must be demonstrated independently by both players;
+    /// later verbs do not clear while an earlier prompt is active, and pause-menu skip/replay seams
+    /// preserve a quick path for returning couch players.
     /// </summary>
     public sealed class ActionTutorialPlayModeTests
     {
@@ -54,6 +53,38 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(rig.Cocoa);
         }
 
+        [Test]
+        public void ProductionHud_KeepsObjectiveAndPlayerIdentityReadableWithoutCoveringThePlayfield()
+        {
+            var layout = ArenaHud.BuildGameplayHudLayout(1920f, 1080f);
+
+            Assert.LessOrEqual(layout.TopBar.height, 108f,
+                "Normal play should use one compact objective card, not the old multi-band debug dashboard.");
+            Assert.Less(layout.TopBar.yMax, 140f);
+            Assert.GreaterOrEqual(ArenaHud.GameplayObjectiveFontSize, 26);
+            Assert.GreaterOrEqual(ArenaHud.GameplayIdentityFontSize, 22);
+            Assert.GreaterOrEqual(ArenaHud.GameplayStatusFontSize, 18);
+            Rect pressure = ArenaHud.BuildPressureMeterRect(layout.TopBar);
+            Assert.GreaterOrEqual(pressure.xMin, layout.TopBar.xMin);
+            Assert.LessOrEqual(pressure.xMax, layout.TopBar.xMax);
+            Assert.GreaterOrEqual(pressure.yMin, layout.TopBar.yMin);
+            Assert.LessOrEqual(pressure.yMax, layout.TopBar.yMax,
+                "A mission pressure meter should remain inside the compact top HUD, not become another screen band.");
+            Assert.LessOrEqual(layout.CheddarChip.yMax, 1080f);
+            Assert.LessOrEqual(layout.CocoaChip.yMax, 1080f);
+            Assert.Less(layout.CheddarChip.xMax, layout.CocoaChip.xMin,
+                "P1 and P2 identity chips should anchor separate couch-player corners.");
+            Assert.GreaterOrEqual(layout.CheddarChip.height, ArenaHud.GameplayIdentityFontSize * 2.8f,
+                "Two-line player/source chips need enough height to avoid clipping either line.");
+            Assert.AreEqual("P1  CHEDDAR\nCONNECT PAD",
+                ArenaHud.BuildPlayerIdentityChipLabel("P1  CHEDDAR", "CONNECT PAD"));
+            foreach (string line in ArenaHud.BuildPlayerIdentityChipLabel("P2  COCOA", "PAD READY").Split('\n'))
+                Assert.LessOrEqual(line.Length, 12,
+                    "Player and source stay on separate short lines even on a narrow couch window.");
+            Assert.That(ArenaHud.PlayerIdentityLabel, Does.Contain("P1 CHEDDAR"));
+            Assert.That(ArenaHud.PlayerIdentityLabel, Does.Contain("P2 COCOA"));
+        }
+
         [UnityTest]
         public IEnumerator BackyardRescue_StartsWithTutorialVisibleAndNothingLearnedYet()
         {
@@ -65,6 +96,9 @@ namespace CheddarAndCocoa.Tests
             Assert.IsFalse(rig.Game.TutorialInteractDone);
             Assert.IsFalse(rig.Game.TutorialJumpDone);
             Assert.IsFalse(rig.Game.TutorialWrestleDone);
+            Assert.AreEqual(GameManager.TutorialActionStep.Bark, rig.Game.CurrentTutorialAction);
+            Assert.IsFalse(rig.Game.TutorialActionDone(DogId.Cheddar, GameManager.TutorialActionStep.Bark));
+            Assert.IsFalse(rig.Game.TutorialActionDone(DogId.Cocoa, GameManager.TutorialActionStep.Bark));
         }
 
         [UnityTest]
@@ -80,25 +114,106 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
-        public IEnumerator EachActionButton_LatchesItsOwnFlag_EvenWhenItWhiffs()
+        public IEnumerator OnePlayer_CannotClearTheirPartnersPrompt_AndLaterActionsWaitTheirTurn()
         {
             var rig = new Rig();
             yield return BootBackyardRescue(rig);
 
-            // Cheddar/Cocoa spawn ~20 units apart (ArenaBootstrap), well outside wrestle range, so
-            // this wrestle attempt whiffs — the flag should still flip because it tracks "found the
-            // button", not "won the exchange".
-            rig.Cheddar.Bark();
+            // Random later buttons do not let one player mash through the complete legend.
             rig.Cheddar.Interact();
             rig.Cheddar.Jump();
             rig.Cheddar.Wrestle();
+            Assert.IsFalse(rig.Game.TutorialInteractDone);
+            Assert.IsFalse(rig.Game.TutorialJumpDone);
+            Assert.IsFalse(rig.Game.TutorialWrestleDone);
+
+            rig.Cheddar.Bark();
             yield return null;
 
-            Assert.IsTrue(rig.Game.TutorialBarkDone, "Bark should latch the tutorial flag.");
-            Assert.IsTrue(rig.Game.TutorialInteractDone, "Interact should latch the tutorial flag.");
-            Assert.IsTrue(rig.Game.TutorialJumpDone, "Jump should latch the tutorial flag.");
-            Assert.IsTrue(rig.Game.TutorialWrestleDone, "A whiffed wrestle attempt should still latch the tutorial flag.");
-            Assert.IsFalse(rig.Game.ShowActionTutorial, "Legend should retire once all four actions are demonstrated.");
+            Assert.IsTrue(rig.Game.TutorialActionDone(DogId.Cheddar, GameManager.TutorialActionStep.Bark));
+            Assert.IsFalse(rig.Game.TutorialActionDone(DogId.Cocoa, GameManager.TutorialActionStep.Bark));
+            Assert.IsFalse(rig.Game.TutorialBarkDone,
+                "The aggregate Bark step must wait until Cocoa has also found her button.");
+            Assert.AreEqual(GameManager.TutorialActionStep.Bark, rig.Game.CurrentTutorialAction);
+            Assert.IsTrue(rig.Game.ShowActionTutorial);
+        }
+
+        [UnityTest]
+        public IEnumerator Actions_UnlockProgressively_AndRequireBothDogs()
+        {
+            var rig = new Rig();
+            yield return BootBackyardRescue(rig);
+
+            rig.Cheddar.Bark();
+            rig.Cocoa.Bark();
+            Assert.IsTrue(rig.Game.TutorialBarkDone);
+            Assert.AreEqual(GameManager.TutorialActionStep.Interact, rig.Game.CurrentTutorialAction);
+
+            rig.Cheddar.Interact();
+            rig.Cocoa.Interact();
+            Assert.IsTrue(rig.Game.TutorialInteractDone);
+            Assert.AreEqual(GameManager.TutorialActionStep.Jump, rig.Game.CurrentTutorialAction);
+            Assert.AreEqual(0, rig.Game.FailedInteractions,
+                "Players obeying the Interact lesson must not receive an error cue or miss penalty.");
+
+            rig.Cheddar.Jump();
+            rig.Cocoa.Jump();
+            Assert.IsTrue(rig.Game.TutorialJumpDone);
+            Assert.AreEqual(GameManager.TutorialActionStep.Wrestle, rig.Game.CurrentTutorialAction);
+
+            // The dogs spawn far apart, so both attempts whiff. Button discovery still counts; the
+            // tutorial is teaching input ownership, not demanding a successful wrestle outcome.
+            rig.Cheddar.Wrestle();
+            rig.Cocoa.Wrestle();
+            yield return null;
+
+            Assert.IsTrue(rig.Game.TutorialWrestleDone);
+            Assert.AreEqual(GameManager.TutorialActionStep.Complete, rig.Game.CurrentTutorialAction);
+            Assert.IsFalse(rig.Game.ShowActionTutorial,
+                "The tutorial should retire only after both players try every progressively disclosed action.");
+        }
+
+        [UnityTest]
+        public IEnumerator Tutorial_CanBeSkippedAndReplayedWithoutRestartingTheMission()
+        {
+            var rig = new Rig();
+            yield return BootBackyardRescue(rig);
+
+            rig.Game.SkipActionTutorial();
+            Assert.IsFalse(rig.Game.ShowActionTutorial);
+            Assert.AreEqual(GameManager.TutorialActionStep.Complete, rig.Game.CurrentTutorialAction);
+
+            rig.Game.ReplayActionTutorial();
+            Assert.IsTrue(rig.Game.ShowActionTutorial);
+            Assert.AreEqual(GameManager.TutorialActionStep.Bark, rig.Game.CurrentTutorialAction);
+            Assert.IsFalse(rig.Game.TutorialActionDone(DogId.Cheddar, GameManager.TutorialActionStep.Bark));
+            Assert.IsFalse(rig.Game.TutorialActionDone(DogId.Cocoa, GameManager.TutorialActionStep.Bark));
+        }
+
+        [UnityTest]
+        public IEnumerator CameraShakeComfortSetting_GatesFutureShakeRequests()
+        {
+            var rig = new Rig();
+            yield return BootBackyardRescue(rig);
+
+            rig.Game.SetCameraShakeEnabled(false);
+            Assert.IsFalse(rig.Game.CameraShakeEnabled);
+            rig.Game.ForcePredatorAttack();
+            Assert.AreEqual(0, rig.Game.ShakeRequestCount,
+                "Disabling shake from pause should suppress the next threat camera kick.");
+            Assert.AreEqual(0f, rig.Game.LastShakeMagnitude);
+
+            rig.Game.StartMission(GameManager.MissionVariant.BackyardRescue);
+            rig.Game.SetCameraShakeEnabled(true);
+            rig.Game.ForcePredatorAttack();
+            Assert.AreEqual(1, rig.Game.ShakeRequestCount);
+            Assert.Greater(rig.Game.LastShakeMagnitude, 0f);
+            var cameraRig = Camera.main.GetComponent<CheddarAndCocoa.CameraRig.SharedCameraController>();
+            Assert.Greater(cameraRig.PendingShakeMagnitude, 0f);
+
+            rig.Game.SetCameraShakeEnabled(false);
+            Assert.AreEqual(0f, cameraRig.PendingShakeMagnitude,
+                "Turning shake off must cancel motion already queued before the pause setting changed.");
         }
 
         [UnityTest]
@@ -106,11 +221,7 @@ namespace CheddarAndCocoa.Tests
         {
             var rig = new Rig();
             yield return BootBackyardRescue(rig);
-            rig.Cheddar.Bark();
-            rig.Cheddar.Interact();
-            rig.Cheddar.Jump();
-            rig.Cheddar.Wrestle();
-            yield return null;
+            rig.Game.SkipActionTutorial();
             Assert.IsFalse(rig.Game.ShowActionTutorial);
 
             rig.Game.StartMission(GameManager.MissionVariant.BackyardRescue);
@@ -118,6 +229,8 @@ namespace CheddarAndCocoa.Tests
 
             Assert.IsTrue(rig.Game.ShowActionTutorial, "Replaying Backyard Rescue should show the legend again.");
             Assert.IsFalse(rig.Game.TutorialBarkDone);
+            Assert.IsFalse(rig.Game.TutorialActionDone(DogId.Cheddar, GameManager.TutorialActionStep.Bark));
+            Assert.IsFalse(rig.Game.TutorialActionDone(DogId.Cocoa, GameManager.TutorialActionStep.Bark));
         }
     }
 }

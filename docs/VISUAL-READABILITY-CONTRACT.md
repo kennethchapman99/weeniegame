@@ -53,6 +53,23 @@ only when the environment/object silhouette gives the first read and the text is
 scaffolding. Future mission-specific staging passes should replace label-first reads with scale,
 pose, object clusters, and before/after prop states.
 
+## Shared Player-Facing HUD Rule
+
+Normal couch play must preserve the center of the play field for dogs, objectives, and hazards. The
+current arena contract is one compact 102-pixel top bar for mission, objective/progress, timer, and
+score, plus two bottom-corner identity chips for **P1 CHEDDAR** and **P2 COCOA**. Each chip may report
+`PAD READY`, `PAD LOST`, `KEYS`, or `CONNECT PAD`; it must not become a full control legend. The
+`PAD LOST` state stays short even though that dog's keyboard fallback remains available.
+
+The Backyard Rescue action tutorial is a temporary teaching layer, not a second persistent HUD. It
+reveals Bark, Interact, Jump, and Wrestle one at a time; Cheddar and Cocoa have independent cells, and
+the next verb cannot appear until both players complete the current one. Pause must expose
+skip/replay plus Audio, Rumble, and Camera Shake controls using controller navigation.
+
+Diagnostic state, readiness gates, event history, full world-label maps, and control walls are not
+part of the production first read. They remain behind the explicit F1/backquote observer overlay.
+The bottom-left diagnostics toggle may appear only after that overlay has already been requested.
+
 ## Pee Break Audit
 
 Current staging issues addressed in this pass:
@@ -63,31 +80,56 @@ Current staging issues addressed in this pass:
   and labels.
 - The phone was mechanically important, but the first read could still be "cyan marker" rather than
   "attention blocker."
-- The leash/door area needed more walk-object context such as shoes and a mat.
+- The leash/door area needed a recognizable walk-object cluster instead of a colored station pad.
 - Dog urgency was mostly meter/HUD-driven instead of visible on the dogs.
 - Teenager cause/effect needed clearer presentation states: phone idle, annoyed glance, distracted
   again, and stand-up success.
 
+The 2026-07-13 follow-up uses `pee_break_living_room_plate.png` as the dominant full-frame interior
+read. The plate includes the closed front door and hides the procedural wall, wood-floor, baseboard,
+standalone window, side-table, door frame, and door slab while preserving the full-arena foundation
+underneath for extreme shared-camera framing. There is no active separate closed-door sprite. When
+the team succeeds, `pee_break_living_room_success_plate.png` replaces the base plate and embeds both
+the open architectural doorway and standing Teenager as one coherent payoff state.
+
+Before success, the distracted seated Teenager and leash remain controller-owned overlays. The
+standalone couch stays fallback-only because the Teenager art includes its seat, the standalone
+phone/charger appears only when Beat 3 makes it actionable, and the isolated open-door sprite is a
+fallback if the success plate cannot load. Their block-built silhouettes are suppressed whenever
+replacement art loads. The current beat alone gets the strongest affordance: the phone enlarges
+during the charger gambit, the leash brightens/pulses only when relevant, the hallway rug stays
+hidden until Beat 3, and the comprehension/confusion fills plus four beat pips are thick enough to
+read from the sofa.
+
 Remaining placeholder limits:
 
-- Pee Break still uses generated cartoon PNGs and Unity primitive silhouettes, not final authored
-  animation.
+- Pee Break now has coherent painterly base/success room plates and generated cartoon state props,
+  but these are still raster production candidates with lightweight transform/tint motion rather
+  than final authored character and prop animation.
 - Text prompts still exist as close-range/debug scaffolding for couch testing.
-- Audio cues are still procedural/slot placeholders.
+- Audio still uses authored cue banks with generated fallback and needs a physical two-player mix
+  pass.
 - The shared dog-mounted objective arrows remain part of the current couch-test UI.
 
 ## Pee Break Review Shots
 
 Use the intended couch-coop camera, not Scene View, for review. Recommended screenshots:
 
-- Start: both dogs, couch, Teenager, glowing phone, door, leash hook, shoes, and door mat visible.
+- Start: the base room plate fills the couch camera with no backyard leak or procedural
+  wall/wood-floor/window rectangles showing through. Its baked closed door, both dogs, the seated
+  phone-absorbed Teenager/beanbag, and hanging leash read cleanly without duplicate couch, phone, or
+  door sprites.
 - Beat 1: Cocoa near the door; only a close-range door prompt appears.
 - Beat 2 partial: Cocoa at door without Cheddar on leash; Teenager reacts and leash remains visually
   obvious.
-- Beat 3: charger cord, outlet, phone drain, Cheddar hallway block, and Cocoa charger action visible.
+- Beat 3: enlarged generated phone/charger art, plug-state cue, phone drain, Cheddar hallway block,
+  and Cocoa charger action visible; the procedural cord itself must not show through.
 - Misread: tennis ball gag visible without needing the label.
 - Beat 4: leash plus door setup and united-bark payoff framed together.
-- Success: Teenager stands up, phone is no longer dominant, door opens to grass/hydrant payoff.
+- Success: the authored success plate fully replaces the base room, embedding the standing Teenager
+  and open doorway while the phone distraction disappears and the grass/hydrant payoff holds for the
+  full 1.15-second live-world beat before the end card. The hold must remain a clear, readable reward
+  rather than looking like a frozen or late UI transition.
 
 Automated capture support already exists in the standalone player:
 

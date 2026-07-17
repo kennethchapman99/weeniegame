@@ -33,6 +33,7 @@ namespace CheddarAndCocoa.Game
         private GameObject _chickObj;
         private TextMesh _chickLabel;
         private GameObject _nestObj;
+        private MissionPropArtAttachment _nestArt;
         private bool _chickFalling;
         private float _chickX;
         private float _chickY;
@@ -514,6 +515,12 @@ namespace CheddarAndCocoa.Game
             nsr.color = new Color(0.5f, 0.35f, 0.18f);
             nsr.sortingOrder = 2;
             _context.AddWorldLabel(_nestObj, "THE NEST", Vector3.up * 1.1f, 12, Color.white);
+            // Reuse the authored shade-tree silhouette as the oak beneath the controller-owned
+            // nest. It makes the first objective readable before the first chick drops without
+            // adding collision or a new gameplay target.
+            _nestArt = MissionPropArt.Attach(_nestObj, FinalGameplayArt.EnvironmentShadeTree,
+                Vector3.one * 0.018f, 4, Color.white, new Vector3(0f, -4.6f, 0.08f), false);
+            _nestArt?.SetProximityAffordance(false);
             _nestObj.SetActive(false);
 
             _chickObj = new GameObject("BedlamChick");

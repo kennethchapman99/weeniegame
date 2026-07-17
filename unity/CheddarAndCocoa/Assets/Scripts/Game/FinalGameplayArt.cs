@@ -56,6 +56,8 @@ namespace CheddarAndCocoa.Game
         public const string WowAdventureRouteMotif = Root + "/Props/Wow/motif_adventure_route";
         public const string WowBackyardPropsMotif = Root + "/Props/Wow/motif_backyard_props";
         public const string PeeBreakCouch = Root + "/Props/PeeBreak/pee_break_couch";
+        public const string PeeBreakLivingRoomPlate = Root + "/Props/PeeBreak/pee_break_living_room_plate";
+        public const string PeeBreakLivingRoomSuccessPlate = Root + "/Props/PeeBreak/pee_break_living_room_success_plate";
         public const string PeeBreakTeenager = Root + "/Props/PeeBreak/pee_break_teenager";
         public const string PeeBreakPhoneCharger = Root + "/Props/PeeBreak/pee_break_phone_charger";
         public const string PeeBreakOpenDoor = Root + "/Props/PeeBreak/pee_break_open_door";
@@ -322,7 +324,8 @@ namespace CheddarAndCocoa.Game
 
         public static readonly string[] PeeBreakPropPack =
         {
-            PeeBreakCouch, PeeBreakTeenager, PeeBreakPhoneCharger,
+            PeeBreakCouch, PeeBreakLivingRoomPlate, PeeBreakLivingRoomSuccessPlate,
+            PeeBreakTeenager, PeeBreakPhoneCharger,
             PeeBreakOpenDoor, PeeBreakLeash, PeeBreakHydrantRelief,
             PeeBreakBladderMeter, PeeBreakMisreadTennisBall
         };

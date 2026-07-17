@@ -156,6 +156,70 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator ReplacingDisconnectedPad_RebindsOnlyItsDog_WithoutStealingSiblingPad()
+        {
+            foreach (var go in Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None))
+                Object.Destroy(go);
+            yield return null;
+
+            var cheddarPad = InputSystem.AddDevice<Gamepad>();
+            var cocoaPad = InputSystem.AddDevice<Gamepad>();
+            var boot = new GameObject("Boot").AddComponent<GameBootstrap>();
+            yield return null;
+            yield return null;
+
+            GamepadPlayerInput cheddarInput = null, cocoaInput = null;
+            DogController cheddar = null, cocoa = null;
+            foreach (var id in Object.FindObjectsByType<DogIdentity>(FindObjectsSortMode.None))
+            {
+                if (id.Id == DogId.Cheddar)
+                {
+                    cheddar = id.GetComponent<DogController>();
+                    cheddarInput = id.GetComponent<GamepadPlayerInput>();
+                }
+                else if (id.Id == DogId.Cocoa)
+                {
+                    cocoa = id.GetComponent<DogController>();
+                    cocoaInput = id.GetComponent<GamepadPlayerInput>();
+                }
+            }
+
+            Assert.IsNotNull(cheddarInput);
+            Assert.IsNotNull(cocoaInput);
+            Assert.AreEqual(cheddarPad.deviceId, cheddarInput.BoundGamepadDeviceId);
+            Assert.AreEqual(cocoaPad.deviceId, cocoaInput.BoundGamepadDeviceId);
+
+            InputSystem.RemoveDevice(cheddarPad);
+            yield return null;
+            Assert.IsFalse(cheddarInput.HasBoundGamepad, "Cheddar should report the disconnected P1 pad.");
+            Assert.AreEqual(cocoaPad.deviceId, cocoaInput.BoundGamepadDeviceId,
+                "Cocoa must retain the still-connected P2 pad.");
+
+            var replacementPad = InputSystem.AddDevice<Gamepad>();
+            yield return null;
+            Assert.AreEqual(replacementPad.deviceId, cheddarInput.BoundGamepadDeviceId,
+                "Cheddar should claim the unassigned replacement controller.");
+            Assert.AreEqual(cocoaPad.deviceId, cocoaInput.BoundGamepadDeviceId,
+                "Cheddar reconnect must not steal Cocoa's controller.");
+
+            Vector2 cheddarStart = cheddar.transform.position;
+            Vector2 cocoaStart = cocoa.transform.position;
+            for (int i = 0; i < 30; i++)
+            {
+                InputSystem.QueueStateEvent(replacementPad, new GamepadState { leftStick = Vector2.left });
+                yield return null;
+                yield return new WaitForFixedUpdate();
+            }
+
+            Assert.Less(cheddar.transform.position.x - cheddarStart.x, -0.2f,
+                "The replacement P1 controller should drive Cheddar.");
+            Assert.Less(Vector2.Distance(cocoa.transform.position, cocoaStart), 0.05f,
+                "The replacement P1 controller must not drive Cocoa.");
+
+            Object.Destroy(boot.gameObject);
+        }
+
+        [UnityTest]
         public IEnumerator KeyboardFallback_ProvidesInteractForBothDogs()
         {
             foreach (var go in Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None))

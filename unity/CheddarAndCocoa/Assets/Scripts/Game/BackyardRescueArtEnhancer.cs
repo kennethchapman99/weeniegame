@@ -240,6 +240,7 @@ namespace CheddarAndCocoa.Game
 
         private void EnhanceDogShadows()
         {
+            Sprite shadowSprite = FinalGameplayArt.Load(FinalGameplayArt.DogFxGroundGlow);
             foreach (var feedback in FindObjectsByType<DogReadabilityFeedback>(FindObjectsSortMode.None))
             {
                 if (feedback == null) continue;
@@ -249,12 +250,14 @@ namespace CheddarAndCocoa.Game
                 var go = new GameObject("ActualDogShadow");
                 go.transform.SetParent(feedback.transform);
                 go.transform.localPosition = new Vector3(0f, -0.55f, 0.08f);
-                go.transform.localScale = new Vector3(1.35f, 0.22f, 1f);
+                go.transform.localScale = new Vector3(1.02f, 0.34f, 1f);
                 var sr = go.AddComponent<SpriteRenderer>();
-                sr.sprite = SpriteShapeCache.WhiteSquare;
-                sr.color = new Color(0f, 0f, 0f, 0.18f);
+                // A missing soft sprite is better than resurrecting the long WhiteSquare bar that
+                // looked like a status meter under every dog in every mission.
+                sr.sprite = shadowSprite;
+                sr.color = new Color(0.02f, 0.025f, 0.03f, 0.13f);
                 sr.sortingOrder = 3;
-                OverlayCount++;
+                if (shadowSprite != null) OverlayCount++;
             }
         }
 

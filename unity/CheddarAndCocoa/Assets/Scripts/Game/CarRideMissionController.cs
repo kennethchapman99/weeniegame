@@ -14,7 +14,8 @@ namespace CheddarAndCocoa.Game
     /// Cheddar is light chaos-puppy cargo and slides hardest; Cocoa plants like a veteran and
     /// slides least — she holds the line while he does the acrobatics.
     /// </summary>
-    public sealed class CarRideMissionController : IMissionController, IMissionInteractionController, IMissionUnitedBarkListener
+    public sealed class CarRideMissionController : IMissionController, IMissionInteractionController,
+        IMissionUnitedBarkListener, IMissionPressureHud
     {
         public enum RoadEventKind { TurnLeft, TurnRight, Brake }
         private enum Phase { Cruise, Telegraph, Turning, BrakeSettle }
@@ -76,6 +77,13 @@ namespace CheddarAndCocoa.Game
         public bool IsTurning => _phase == Phase.Turning;
         public bool DriverEased => _driverEased;
         public bool IsDogBraced(int dogIndex) => BraceActive(dogIndex, _context.Now());
+        public string PressureLabel => "SLIDE FORCE";
+        public bool PressureVisible => true;
+        public float PressureNormalized => Mathf.Clamp01(Mathf.Abs(_visualTilt) / CabinTiltDegrees);
+        public Color PressureColor => Color.Lerp(
+            new Color(0.35f, 0.92f, 0.62f),
+            new Color(1f, 0.2f, 0.08f),
+            PressureNormalized);
 
         public string ObjectiveLabel
         {

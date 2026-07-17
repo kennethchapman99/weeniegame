@@ -14,6 +14,19 @@ namespace CheddarAndCocoa.Game
     /// </summary>
     public sealed partial class GameManager : MonoBehaviour
     {
+        /// <summary>
+        /// Core actions taught by the first-play Backyard Rescue onboarding. <see cref="Complete"/>
+        /// is a terminal display state, not an action a dog can perform.
+        /// </summary>
+        public enum TutorialActionStep
+        {
+            Bark,
+            Interact,
+            Jump,
+            Wrestle,
+            Complete
+        }
+
         // Nested enums and the MissionDefinition data type live in GameManager.Types.cs (same
         // partial class) to keep this controller file focused on runtime behavior.
 
@@ -228,6 +241,8 @@ namespace CheddarAndCocoa.Game
         public string MissionRoleHint => _mission != null ? _mission.RoleHint : string.Empty;
         public string MissionReusablePresentation => _mission != null ? _mission.ReusablePresentation : string.Empty;
         public string ActiveMissionReadinessLabel => _mission != null ? MissionReadinessLabelFor(_mission.Variant) : SelectedMissionReadinessLabel;
+        public bool MissionOpeningPresentationVisible => MissionActive() &&
+            _activeMissionController is IMissionOpeningPresentationController opening && opening.IsPresentingOpening;
         public bool MissionBriefingVisible => MissionActive() && Time.time < _introPromptUntil;
         public string MissionBanner { get; private set; } = string.Empty;
         public string EndRank { get; private set; } = "Needs More Bark";
@@ -281,17 +296,73 @@ namespace CheddarAndCocoa.Game
         public int ColdReadQuestionCount { get; private set; }
         public int MissionReplayCount { get; private set; }
 
-        // First-level (Backyard Rescue) button-prompt tutorial: each flag latches true the first
-        // time EITHER dog performs that action this mission, so the HUD legend can fade a row out
-        // once the team has demonstrably learned it. Resets whenever Backyard Rescue (re)starts.
-        public bool TutorialBarkDone { get; private set; }
-        public bool TutorialInteractDone { get; private set; }
-        public bool TutorialJumpDone { get; private set; }
-        public bool TutorialWrestleDone { get; private set; }
+        // The first-play tutorial is deliberately per dog: one player cannot dismiss the other
+        // player's prompt. Only the currently displayed action records progress, keeping the lesson
+        // progressive instead of rewarding random button-mashing through all four verbs at once.
+        private const int TutorialActionCount = (int)TutorialActionStep.Complete;
+        private bool[,] _tutorialActionDone;
+
+        public bool ActionTutorialAvailable =>
+            ActiveMissionVariant == MissionVariant.BackyardRescue && MissionActive();
+        public TutorialActionStep CurrentTutorialAction
+        {
+            get
+            {
+                if (!TutorialActionDoneForAll(TutorialActionStep.Bark)) return TutorialActionStep.Bark;
+                if (!TutorialActionDoneForAll(TutorialActionStep.Interact)) return TutorialActionStep.Interact;
+                if (!TutorialActionDoneForAll(TutorialActionStep.Jump)) return TutorialActionStep.Jump;
+                if (!TutorialActionDoneForAll(TutorialActionStep.Wrestle)) return TutorialActionStep.Wrestle;
+                return TutorialActionStep.Complete;
+            }
+        }
+
+        // Compatibility/readability properties now mean both players completed that action.
+        public bool TutorialBarkDone => TutorialActionDoneForAll(TutorialActionStep.Bark);
+        public bool TutorialInteractDone => TutorialActionDoneForAll(TutorialActionStep.Interact);
+        public bool TutorialJumpDone => TutorialActionDoneForAll(TutorialActionStep.Jump);
+        public bool TutorialWrestleDone => TutorialActionDoneForAll(TutorialActionStep.Wrestle);
         public bool ShowActionTutorial =>
-            ActiveMissionVariant == MissionVariant.BackyardRescue &&
-            MissionActive() &&
-            !(TutorialBarkDone && TutorialInteractDone && TutorialJumpDone && TutorialWrestleDone);
+            ActionTutorialAvailable && CurrentTutorialAction != TutorialActionStep.Complete;
+
+        public bool TutorialActionDone(DogId dogId, TutorialActionStep action)
+        {
+            if (action == TutorialActionStep.Complete)
+                return CurrentTutorialAction == TutorialActionStep.Complete;
+            int dogIndex = _dogs != null ? IndexOfDog(dogId) : -1;
+            return dogIndex >= 0 && _tutorialActionDone != null &&
+                dogIndex < _tutorialActionDone.GetLength(0) && _tutorialActionDone[dogIndex, (int)action];
+        }
+
+        public string PlayerControlSourceLabel(DogId dogId)
+        {
+            int dogIndex = _dogs != null ? IndexOfDog(dogId) : -1;
+            if (dogIndex < 0 || _inputs == null || dogIndex >= _inputs.Length || _inputs[dogIndex] == null)
+                return "CONNECT PAD";
+            if (_inputs[dogIndex].HasBoundGamepad) return "PAD READY";
+            if (_inputs[dogIndex].HasDisconnectedGamepad) return "PAD LOST";
+            return _inputs[dogIndex].AssignedKeyboardScheme != GamepadPlayerInput.KeyboardScheme.None
+                ? "KEYS"
+                : "CONNECT PAD";
+        }
+
+        /// <summary>Pause-menu escape hatch for returning players.</summary>
+        public void SkipActionTutorial()
+        {
+            if (!ActionTutorialAvailable) return;
+            EnsureActionTutorialProgress();
+            for (int dog = 0; dog < _tutorialActionDone.GetLength(0); dog++)
+                for (int action = 0; action < TutorialActionCount; action++)
+                    _tutorialActionDone[dog, action] = true;
+            LogPlaytestEvent("Tutorial", "skipped");
+        }
+
+        /// <summary>Pause-menu replay for couch testers who want the prompts back.</summary>
+        public void ReplayActionTutorial()
+        {
+            if (!ActionTutorialAvailable) return;
+            ResetActionTutorialProgress();
+            LogPlaytestEvent("Tutorial", "replayed from Bark");
+        }
         public float MissionDurationSeconds => CurrentFlow == FlowState.MissionSelect ? 0f : Mathf.Clamp(roundDuration - TimeRemaining, 0f, roundDuration);
 
         /// <summary>Test/dev seam: fixed lead-in length in seconds; null uses briefing + sniff tuning.</summary>
@@ -316,6 +387,7 @@ namespace CheddarAndCocoa.Game
         public string MissionFailureSummaryLabel => BuildMissionFailureSummaryLabel();
         public bool AudioEnabled { get; private set; } = true;
         public bool RumbleEnabled { get; private set; } = true;
+        public bool CameraShakeEnabled { get; private set; } = true;
         public IReadOnlyList<string> AudioCueRequests => _audioCueRequests;
         public IReadOnlyList<string> RumbleRequests => _rumbleRequests;
         public string LastAudioCueRequested { get; private set; } = string.Empty;
@@ -325,6 +397,7 @@ namespace CheddarAndCocoa.Game
         public int ShakeRequestCount { get; private set; }
         public int AudioCueRequestCount => _audioCueRequests.Count;
         public int RumbleRequestCount => _rumbleRequests.Count;
+        public int ActiveRumblePadCount => _activeRumbleDeviceIds.Count;
         public bool MusicLoopReady => _music != null && _music.clip != null && _music.loop;
         public bool MusicMuted => _music == null || _music.mute;
         public bool IsPaused { get; private set; }
@@ -362,6 +435,8 @@ namespace CheddarAndCocoa.Game
         private readonly Dictionary<string, AudioCueSlot> _audioSlots = ArenaFeedbackCatalog.BuildLookup();
         private readonly List<string> _audioCueRequests = new();
         private readonly List<string> _rumbleRequests = new();
+        private readonly HashSet<int> _activeRumbleDeviceIds = new();
+        private readonly HashSet<int> _rumbleDispatchDeviceIds = new();
         private CheddarAndCocoa.CameraRig.SharedCameraController _camera;
         private MissionDefinition _mission;
         private GameObject _bunnyCameoObject;
@@ -427,6 +502,7 @@ namespace CheddarAndCocoa.Game
         private bool _squirrelHasStarted;
         private float _introPromptUntil;
         private float _leadInRemaining;
+        private bool _openingPresentationWasActive;
         private float _missionClockOffset;
         private float _scorePopUntil;
         private float _teamBarkFeedbackUntil;
@@ -456,6 +532,7 @@ namespace CheddarAndCocoa.Game
             _dogStarts = new Vector2[dogs.Length];
             _lastBarks = new float[dogs.Length];
             _dogContribution = new int[dogs.Length];
+            _tutorialActionDone = new bool[dogs.Length, TutorialActionCount];
             DogFeedback = new DogReadabilityFeedback[dogs.Length];
             ObjectiveArrows = new ObjectiveArrowFeedback[dogs.Length];
             InteractionRangeIndicators = new InteractionRangeIndicator[dogs.Length + 3];
@@ -480,6 +557,7 @@ namespace CheddarAndCocoa.Game
             InteractionRangeIndicator.SetDebugTextVisible(PlaytestOverlayVisible);
             DogReadabilityFeedback.SetDebugIdentityLabelsVisible(PlaytestOverlayVisible);
             MissionPropArtAttachment.SetAffordanceTargets(_dogs);
+            MissionPropArtAttachment.SetDebugGeometryVisible(PlaytestOverlayVisible);
 
             _playtestLog.Clear();
             _panic = gameObject.AddComponent<PanicMeter>();
@@ -536,9 +614,11 @@ namespace CheddarAndCocoa.Game
             now: () => MissionNow,
             activeModifier: () => ActiveModifier,
             debugPresentationEnabled: () => PlaytestOverlayVisible,
+            audioEnabled: () => AudioEnabled,
             activeTreats: () => _treats,
             isPredatorResolved: () => PredatorResolved,
             isTugComplete: () => TugComplete,
+            tugProgress: () => TugProgress,
             addScore: AddScore,
             creditDog: CreditDog,
             setCue: cue => LastCue = cue,
@@ -789,6 +869,7 @@ namespace CheddarAndCocoa.Game
             ObjectiveArrowFeedback.SetDebugTextVisible(visible);
             InteractionRangeIndicator.SetDebugTextVisible(visible);
             DogReadabilityFeedback.SetDebugIdentityLabelsVisible(visible);
+            MissionPropArtAttachment.SetDebugGeometryVisible(visible);
             LogPlaytestEvent("Overlay", visible ? "shown" : "hidden");
         }
 
@@ -805,6 +886,17 @@ namespace CheddarAndCocoa.Game
             RumbleEnabled = enabled;
             if (!enabled) StopRumble();
             LogPlaytestEvent("Rumble", enabled ? "enabled" : "disabled");
+        }
+
+        public void SetCameraShakeEnabled(bool enabled)
+        {
+            CameraShakeEnabled = enabled;
+            if (!enabled)
+            {
+                LastShakeMagnitude = 0f;
+                _camera?.ClearShake();
+            }
+            LogPlaytestEvent("CameraShake", enabled ? "enabled" : "disabled");
         }
 
         public void RecordColdReadQuestion(string note = "what do I do?")
@@ -1157,10 +1249,7 @@ namespace CheddarAndCocoa.Game
             BarksUsed = 0;
             FailedInteractions = 0;
             ObjectiveChangeCount = 0;
-            TutorialBarkDone = false;
-            TutorialInteractDone = false;
-            TutorialJumpDone = false;
-            TutorialWrestleDone = false;
+            ResetActionTutorialProgress();
 
             if (!_reuseMissionSeedOnNextBegin)
                 _missionSeed = MissionSeedGenerator.StableSeed(_mission.Variant.ToString(), SessionMissionsPlayed, _selectedMissionIndex);
@@ -1168,6 +1257,10 @@ namespace CheddarAndCocoa.Game
             _rng = new System.Random(_missionSeed);
             ActiveModifier = (RoundModifier)_rng.Next(0, 3);
             ActivateMissionController(_mission.Variant);
+            if (LeadInSecondsOverride.HasValue && LeadInSecondsOverride.Value <= 0f &&
+                _activeMissionController is IMissionOpeningPresentationController testOpening)
+                testOpening.SkipOpeningPresentation();
+            _openingPresentationWasActive = MissionOpeningPresentationVisible;
             if (_dogContribution != null) System.Array.Clear(_dogContribution, 0, _dogContribution.Length);
             if (_panic != null) _panic.ResetMeter();
             _nextUnitedBarkAt = 0f;
@@ -1243,6 +1336,30 @@ namespace CheddarAndCocoa.Game
             TickMissionSelectionKeys();
             if (!MissionActive()) return;
 
+            if (_activeMissionController is IMissionOpeningPresentationController openingPresentation)
+            {
+                openingPresentation.TickOpeningPresentation(Time.unscaledDeltaTime);
+                if (openingPresentation.IsPresentingOpening)
+                {
+                    _openingPresentationWasActive = true;
+                    _missionClockOffset += Time.deltaTime;
+                    SetOpeningPresentationDogLock(true);
+                    MissionBanner = string.Empty;
+                    return;
+                }
+
+                if (_openingPresentationWasActive)
+                {
+                    _openingPresentationWasActive = false;
+                    SetOpeningPresentationDogLock(false);
+                    _introPromptUntil = Time.time + _tuning.IntroPromptSeconds;
+                    _leadInRemaining = Mathf.Max(0f, LeadInSecondsOverride ??
+                        (_tuning.IntroPromptSeconds + _tuning.LeadInSniffSeconds));
+                    MissionBanner = MissionIntroPrompt;
+                    LogPlaytestEvent("OpeningPresentation", "explainer complete; controls card shown");
+                }
+            }
+
             MissionBanner = Time.time < _introPromptUntil ? MissionIntroPrompt : string.Empty;
 
             // Sniff-around lead-in: the yard is visible and the dogs can roam, but the round
@@ -1253,19 +1370,27 @@ namespace CheddarAndCocoa.Game
                 return;
             }
 
-            TimeRemaining -= Time.deltaTime;
-            if (TimeRemaining <= 0f)
-            {
-                EndRound(false);
-                return;
-            }
-
+            // Resolve the players' current-frame actions before timeout. A co-op objective earned
+            // on the final visible fraction of a second must win that race, and an optional
+            // controller-owned success presentation can then hold the live payoff without the
+            // shared clock converting it into a failure.
             TickModifier();
             if (_activeMissionController != null) _activeMissionController.Tick(Time.deltaTime, MissionNow);
             else TickSquirrel();
             TickPredator();
             TickTugProximity();
             CheckClear();
+            if (!MissionActive()) return;
+
+            bool presentingEarnedSuccess = _activeMissionController is IMissionSuccessPresentationController successPresentation
+                && successPresentation.IsPresentingSuccessfulOutcome;
+            if (!presentingEarnedSuccess) TimeRemaining -= Time.deltaTime;
+            if (!presentingEarnedSuccess && TimeRemaining <= 0f)
+            {
+                EndRound(false);
+                return;
+            }
+
             UpdateObjectiveArrows();
             UpdateTravelAssists();
             UpdateInteractionRanges();
@@ -1287,6 +1412,25 @@ namespace CheddarAndCocoa.Game
             UpdateTravelAssists();
             UpdateInteractionRanges();
             LogObjectiveIfChanged();
+        }
+
+        private void SetOpeningPresentationDogLock(bool locked)
+        {
+            if (_dogs == null) return;
+            foreach (var dog in _dogs)
+            {
+                if (dog == null) continue;
+                dog.SetMode(locked ? MovementMode.Transit : MovementMode.Free);
+                if (dog.TryGetComponent<Rigidbody2D>(out var body)) body.linearVelocity = Vector2.zero;
+            }
+        }
+
+        public void SkipMissionOpeningPresentation()
+        {
+            if (_activeMissionController is not IMissionOpeningPresentationController opening ||
+                !opening.IsPresentingOpening) return;
+            opening.SkipOpeningPresentation();
+            LogPlaytestEvent("OpeningPresentation", "skipped by player");
         }
 
         private void EndLeadIn(string reason)
@@ -1638,7 +1782,7 @@ namespace CheddarAndCocoa.Game
             TugProgress = Mathf.Min(1f, TugProgress + Time.deltaTime * _tuning.TugChargePerSecond);
             LastFeedback = FeedbackKind.TugTogether;
             LastCue = "Both dogs are tugging - tiny sausage teamwork!";
-            SetActorState(RopeObject, $"BOTH DOGS TUGGING {Mathf.RoundToInt(TugProgress * 100f)}%", new Color(1f, 0.78f, 0.22f), 0.22f);
+            SetActorState(RopeObject, "BOTH DOGS TUGGING - KEEP PULLING!", new Color(1f, 0.78f, 0.22f), 0.22f);
             if (TugProgress >= 1f) CompleteTug();
         }
 
@@ -1679,7 +1823,12 @@ namespace CheddarAndCocoa.Game
         private void OnDogInteracted(DogId dogId)
         {
             if (!MissionActive()) return;
-            TutorialInteractDone = true;
+            if (MissionOpeningPresentationVisible)
+            {
+                SkipMissionOpeningPresentation();
+                return;
+            }
+            bool tutorialDiscovery = TryRecordTutorialAction(dogId, TutorialActionStep.Interact);
 
             // A deliberate interact during the sniff-around freeze means "we're ready" — start the
             // round without charging a missed-interaction against the players.
@@ -1697,12 +1846,17 @@ namespace CheddarAndCocoa.Game
 
             if (_mission == null || !_mission.RequiresTug)
             {
+                // A first-play discovery press is successful tutorial input even when there is no
+                // nearby gameplay object. Do not answer the exact button we asked for with the
+                // disabled/error cue; contextual targets teach interaction precision later.
+                if (tutorialDiscovery) return;
                 MarkFailedInteraction(dogId, "no interact target in this mission");
                 return;
             }
 
             if (TugComplete)
             {
+                if (tutorialDiscovery) return;
                 MarkFailedInteraction(dogId, "tug already complete");
                 return;
             }
@@ -1711,6 +1865,7 @@ namespace CheddarAndCocoa.Game
             if (dogIndex < 0) return;
             if (Vector2.Distance(_dogs[dogIndex].transform.position, RopeObject.transform.position) > _tuning.TugInteractDistance)
             {
+                if (tutorialDiscovery) return;
                 MarkFailedInteraction(dogId, "too far from rope");
                 return;
             }
@@ -1719,7 +1874,7 @@ namespace CheddarAndCocoa.Game
             TugProgress = Mathf.Min(1f, TugProgress + _tuning.TugInteractProgress);
             LastFeedback = FeedbackKind.TugNeedsPartner;
             LastCue = $"{DogName(_dogs[dogIndex])} has the rope - partner pile on!";
-            SetActorState(RopeObject, $"ROPE {Mathf.RoundToInt(TugProgress * 100f)}% - NEED PARTNER DOG", new Color(1f, 0.78f, 0.22f), 0.2f);
+            SetActorState(RopeObject, "ROPE MOVING - NEED PARTNER DOG", new Color(1f, 0.78f, 0.22f), 0.2f);
             RequestAudioCue(ArenaFeedbackCatalog.Bark);
             LogPlaytestEvent("Tug", LastCue);
             if (TugProgress >= 1f) CompleteTug();
@@ -1745,7 +1900,12 @@ namespace CheddarAndCocoa.Game
         private void OnDogBarked(DogId dogId)
         {
             if (!MissionActive()) return;
-            TutorialBarkDone = true;
+            if (MissionOpeningPresentationVisible)
+            {
+                SkipMissionOpeningPresentation();
+                return;
+            }
+            TryRecordTutorialAction(dogId, TutorialActionStep.Bark);
 
             int dogIndex = IndexOfDog(dogId);
             if (dogIndex < 0) return;
@@ -1824,7 +1984,7 @@ namespace CheddarAndCocoa.Game
         private void OnDogWrestled(DogId dogId)
         {
             if (!MissionActive()) return;
-            TutorialWrestleDone = true;
+            TryRecordTutorialAction(dogId, TutorialActionStep.Wrestle);
 
             int dogIndex = IndexOfDog(dogId);
             if (dogIndex < 0 || _dogs.Length < 2) return;
@@ -1886,12 +2046,11 @@ namespace CheddarAndCocoa.Game
         }
 
         /// <summary>Jump has no gameplay resolution here (DogController.Jump already ran the arc
-        /// hop) - this only latches the button-prompt tutorial flag so the HUD legend can retire
-        /// the JUMP row once it's been demonstrated.</summary>
+        /// hop) - this only records the currently taught action for that specific player.</summary>
         private void OnDogJumped(DogId dogId)
         {
             if (!MissionActive()) return;
-            TutorialJumpDone = true;
+            TryRecordTutorialAction(dogId, TutorialActionStep.Jump);
         }
 
         private void ScareSquirrel(float seconds, string cue, bool awardScore)
@@ -2361,10 +2520,7 @@ namespace CheddarAndCocoa.Game
             BarksUsed = 0;
             FailedInteractions = 0;
             ObjectiveChangeCount = 0;
-            TutorialBarkDone = false;
-            TutorialInteractDone = false;
-            TutorialJumpDone = false;
-            TutorialWrestleDone = false;
+            ResetActionTutorialProgress();
             _scorePopUntil = 0f;
             _squirrelTarget = null;
             _grabbedDog = -1;
@@ -2565,6 +2721,50 @@ namespace CheddarAndCocoa.Game
                 return registeredDefinition;
 
             throw new System.InvalidOperationException($"No MissionDefinition registered for {variant}. Add it to MissionCatalog.");
+        }
+
+        private void EnsureActionTutorialProgress()
+        {
+            int dogCount = _dogs != null ? _dogs.Length : 0;
+            if (_tutorialActionDone == null || _tutorialActionDone.GetLength(0) != dogCount)
+                _tutorialActionDone = new bool[dogCount, TutorialActionCount];
+        }
+
+        private void ResetActionTutorialProgress()
+        {
+            EnsureActionTutorialProgress();
+            if (_tutorialActionDone.Length > 0)
+                System.Array.Clear(_tutorialActionDone, 0, _tutorialActionDone.Length);
+        }
+
+        private bool TutorialActionDoneForAll(TutorialActionStep action)
+        {
+            if (action == TutorialActionStep.Complete) return CurrentTutorialAction == TutorialActionStep.Complete;
+            if (_dogs == null || _dogs.Length == 0 || _tutorialActionDone == null ||
+                _tutorialActionDone.GetLength(0) != _dogs.Length) return false;
+
+            int actionIndex = (int)action;
+            for (int dog = 0; dog < _dogs.Length; dog++)
+                if (!_tutorialActionDone[dog, actionIndex]) return false;
+            return true;
+        }
+
+        private bool TryRecordTutorialAction(DogId dogId, TutorialActionStep action)
+        {
+            if (!ActionTutorialAvailable || CurrentTutorialAction != action) return false;
+            int dogIndex = IndexOfDog(dogId);
+            if (dogIndex < 0) return false;
+
+            EnsureActionTutorialProgress();
+            int actionIndex = (int)action;
+            if (_tutorialActionDone[dogIndex, actionIndex]) return false;
+
+            _tutorialActionDone[dogIndex, actionIndex] = true;
+            string detail = TutorialActionDoneForAll(action)
+                ? $"both players completed {action}"
+                : $"{dogId} completed {action}; waiting for partner";
+            LogPlaytestEvent("Tutorial", detail);
+            return true;
         }
 
         private int IndexOfDog(DogId dogId)
@@ -3259,20 +3459,22 @@ namespace CheddarAndCocoa.Game
 
             LastRumbleRequested = requestName;
             _rumbleRequests.Add(requestName);
-
-            var pad = Gamepad.current;
-            if (pad == null) return;
-
-            pad.SetMotorSpeeds(lowFrequency, highFrequency);
             CancelInvoke(nameof(StopRumble));
-            Invoke(nameof(StopRumble), Mathf.Max(0.01f, seconds));
+            StopRumble();
+            ForEachPlayerGamepad(pad =>
+            {
+                pad.SetMotorSpeeds(lowFrequency, highFrequency);
+                _activeRumbleDeviceIds.Add(pad.deviceId);
+            });
+            if (_activeRumbleDeviceIds.Count > 0)
+                Invoke(nameof(StopRumble), Mathf.Max(0.01f, seconds));
         }
 
         /// <summary>Cosmetic camera kick, mirroring RequestRumble's controller kick - purely additive,
         /// no effect if no camera is wired.</summary>
         private void RequestShake(float magnitude)
         {
-            if (magnitude <= 0f) return;
+            if (!CameraShakeEnabled || magnitude <= 0f) return;
             LastShakeMagnitude = magnitude;
             ShakeRequestCount++;
             _camera?.AddShake(magnitude);
@@ -3280,8 +3482,31 @@ namespace CheddarAndCocoa.Game
 
         private void StopRumble()
         {
-            var pad = Gamepad.current;
-            if (pad != null) pad.SetMotorSpeeds(0f, 0f);
+            ForEachPlayerGamepad(pad => pad.SetMotorSpeeds(0f, 0f));
+            _activeRumbleDeviceIds.Clear();
+        }
+
+        private void ForEachPlayerGamepad(Action<Gamepad> apply)
+        {
+            _rumbleDispatchDeviceIds.Clear();
+            if (_inputs != null)
+            {
+                foreach (var input in _inputs)
+                {
+                    if (input == null || !input.HasBoundGamepad) continue;
+                    int deviceId = input.BoundGamepadDeviceId;
+                    if (!_rumbleDispatchDeviceIds.Add(deviceId)) continue;
+                    if (InputSystem.GetDeviceById(deviceId) is Gamepad pad && pad.added) apply(pad);
+                }
+            }
+
+            // Keyboard-only rigs and early startup can have no explicit player binding. Preserve
+            // the old current-pad fallback in that case, but never let it replace a bound P1/P2 pad.
+            if (_rumbleDispatchDeviceIds.Count == 0 && Gamepad.current != null && Gamepad.current.added)
+            {
+                _rumbleDispatchDeviceIds.Add(Gamepad.current.deviceId);
+                apply(Gamepad.current);
+            }
         }
 
         private void OnDestroy()

@@ -8,7 +8,7 @@ namespace CheddarAndCocoa.Game
     /// squeezes through to the toy; if Cocoa lets go mid-squeeze the gate snaps shut, and too many
     /// snaps end the run.
     /// </summary>
-    public sealed class GateCrashMissionController : IMissionController
+    public sealed class GateCrashMissionController : IMissionController, IMissionPressureHud
     {
         private const float HoldRange = 4f;
         private const float CrossRange = 4f;
@@ -50,15 +50,18 @@ namespace CheddarAndCocoa.Game
         public Vector2 CrossZone => _crossZone;
         public Vector2 EntryTarget => _context.Bounds.center;
         public string OutcomeSummary => MissionOutcomeSummaryBuilder.BuildGateCrashSummary(_puzzle);
+        public string PressureLabel => "SQUEEZE THROUGH";
+        public bool PressureVisible => true;
+        public float PressureNormalized => _puzzle.CrossRatio;
+        public Color PressureColor => Color.Lerp(new Color(0.95f, 0.55f, 0.16f), new Color(0.38f, 1f, 0.5f), _puzzle.CrossRatio);
 
         public string ObjectiveLabel
         {
             get
             {
-                int pct = Mathf.RoundToInt(_puzzle.CrossRatio * 100f);
                 return _puzzle.Held
-                    ? $"Cheddar: squeeze through while Cocoa holds ({pct}%, snaps {_puzzle.Snaps}/{MaxSnaps})"
-                    : $"Cocoa: hold the gate open at the marker (squeeze {pct}%, snaps {_puzzle.Snaps}/{MaxSnaps})";
+                    ? $"Cheddar: squeeze through while Cocoa holds (snaps {_puzzle.Snaps}/{MaxSnaps})"
+                    : $"Cocoa: hold the gate open for Cheddar (snaps {_puzzle.Snaps}/{MaxSnaps})";
             }
         }
 

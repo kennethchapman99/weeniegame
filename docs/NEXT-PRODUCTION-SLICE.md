@@ -4,6 +4,77 @@
 
 ## Current status
 
+### Operation Pee Break couch-test response (2026-07-14)
+
+The Ken/Sue Operation Pee Break run did not accept the deep-slice gate. The players reported that
+the active stations and their order were unclear, large circle targets felt too abstract, the room
+needed a couple of optional movable toys, bladder pressure should be a visible meter instead of
+numbers, and the opening needed a visual keyboard/controller explanation. The roster remains frozen.
+
+The immediate Unity response stays inside the existing controller boundary:
+
+- normal play keeps the large station circles hidden; each dog's objective arrow, small command
+  signal, contextual label, and a pulse on the prop/Teenager communicate the current job and a
+  successful partial signal. F1 diagnostics can still reveal the underlying station geometry;
+- a tennis ball and squeaky toy can be batted around with Interact without changing score or mission
+  progression;
+- `IMissionPressureHud` exposes the controller-owned bladder value to a persistent, number-free
+  **BLADDER EMERGENCY** HUD bar;
+- every level briefing now includes side-by-side visual keyboard layouts and a Nintendo
+  Switch-style controller diagram. Switch face labels follow physical position: Y/West bark,
+  X/North interact, A/East jump, B/South wrestle;
+- Operation Pee Break begins with the supplied ten-second animated explainer. Its controller owns
+  preparation, playback, either-player skip, audio-toggle response, and cleanup through the narrow
+  `IMissionOpeningPresentationController` boundary; mission time and dog movement remain frozen
+  until the explainer and shared controls card are finished.
+
+This is a response pass, not acceptance. Re-run Operation Pee Break cold with two controllers and
+confirm the items above before changing the verdict.
+
+The complete PlayMode suite passed `542/542` after this response, including deterministic opening-
+video lifecycle and skip coverage. The macOS development player then rebuilt successfully, included
+the explainer under its StreamingAssets, and passed the packaged-player startup smoke check. The
+two-human cold retest remains the next gate; automated evidence does not accept the deep slice.
+
+### Pre-couch-test usability hardening (2026-07-13)
+
+The active slice received a player-facing hardening pass before the still-pending Ken/Sue couch
+gate. This does not add a mission, reorder the seven gates, or count as acceptance:
+
+- Cold start now says **Cheddar + Cocoa Adventures**, marks Operation Pee Break as **START HERE** /
+  **RECOMMENDED**, and offers one-click **Play Recommended**. The full frozen 23-mission roster stays
+  available as the paged **Adventure Library**, while each preview is capped at four essential team
+  beats and player-facing readiness/debug controls are removed.
+- Ordinary play now shows a compact mission/objective/progress/timer/score bar plus persistent
+  **P1 CHEDDAR** and **P2 COCOA** input-source chips. The duplicate control wall and diagnostics are
+  absent until an observer explicitly opens F1/backquote.
+- Backyard Rescue now teaches Bark -> Interact -> Jump -> Wrestle progressively and separately for
+  both players; one dog cannot clear the partner's prompt. Pause can skip/replay that lesson and is
+  fully D-pad/arrow + A/Enter navigable, with Audio, Rumble, and Camera Shake comfort toggles.
+- Team rumble now reaches both distinct bound pads. A disconnected dog can take an unclaimed
+  replacement controller without stealing the sibling's still-connected pad.
+- Operation Pee Break now uses paired full-frame painterly 16:9 room plates: the base embeds the
+  closed front door, and the success state replaces it with the open doorway and standing Teenager.
+  Procedural room blocks remain hidden fallbacks above a leak-prevention foundation. The seated
+  Teenager and leash stay active pre-success; the standalone couch/open door are fallbacks and the
+  standalone phone/charger appears only for its actionable beat. Controller-owned props/rules remain
+  authoritative. Baby Bird Bedlam's flat runtime picker placeholder is replaced by a matching
+  painterly portrait; the old generator is confined to `ReferenceOnly`.
+- Pee Break's earned door-open success now holds the live room/hydrant payoff for 1.15 seconds before
+  the end card. The narrow `IMissionSuccessPresentationController` contract pauses timeout pressure
+  during that controller-owned hold, preventing a last-second clear from becoming a failure while
+  its visual reward is still on screen.
+
+Final automated verification on 2026-07-14 is green: the complete PlayMode suite passed `537/537`,
+the macOS development player rebuilt successfully, and that exact player completed the 23-mission
+art-review harness with 69 `1920x1080` frames plus its manifest and no logged exceptions/errors.
+The final Pee Break captures confirm the leak-prevention foundation hides yard props at camera
+overscan and the two dogs are staged below, rather than over, the standing Teenager during payoff.
+
+The mission roster remains frozen at its current 23 variants. Step 6 is still open: automated tests,
+builds, and art captures can verify implementation safety, but only the Ken/Sue end-to-end Operation
+Pee Break playthrough and laugh log can accept or reject the deep slice.
+
 Kitchen Falling Food Frenzy is implemented and playtest-ready. Its behavior was extracted behind
 `IMissionController` on 2026-06-21 with the full 333-test PlayMode suite green. The baseline
 readability fix verification remains deferred—not passed—because the owner was unavailable for a
@@ -44,20 +115,21 @@ route/cutoff geometry, herding and taunt state, stash interaction, and failure o
 the shared squirrel actor through the narrow context).
 Snack Heist now follows behind `SnackHeistMissionController` (controller-owned collection/steal
 state, squirrel pressure, bark defense, and collectible interpretation through narrow pool services).
-The arena presentation pass now gives Operation Pee Break controller-owned room/couch/door/phone/
-leash set dressing plus smaller silhouette details, Pass-2 phone-attention/battery/charger/door/
-leash state props, Teenager comprehension/confusion reads and beat pips, Pee Break-specific end-card
+The arena presentation pass now gives Operation Pee Break controller-owned paired room states,
+pre-success Teenager/leash overlays, progressive phone attention/battery/charger cues, fallback
+couch/open-door art, comprehension/confusion reads and beat pips, and Pee Break-specific end-card
 replay copy with dog role credit, backyard
 mission-readability districts with continuous fence, house/patio, central lawn, snack, laundry,
 route, and back-door cues, and mission-select badges/thumbnails so the picker reads less like a debug
 list. The cold-start picker now calls out Operation Pee Break as the couch-test focus, supports
-F5/P/Y to highlight it without scrolling through the roster, and the mission briefing/live HUD expose
-the P1 Cheddar / P2 Cocoa ownership line for first-minute couch clarity. Mission select and end cards
+F5/P/Y to highlight it without scrolling through the roster, and the mission briefing plus persistent
+bottom identity chips expose P1 Cheddar / P2 Cocoa ownership for first-minute couch clarity. Mission select and end cards
 also surface small replay challenges, with Operation Pee Break explicitly chasing a Pawfect 0-misread
 signal. All mission definitions now expose reusable couch-test presentation metadata for role hints,
 mechanic families, scene cues, shared Cheddar/Cocoa presentation guidance, and readability flags, and
-the picker/playtest overlay now surfaces a per-mission readability gate for the selected or active
-mission. Operation Pee Break's picker details now present its authored 480-second timer as an `8m`
+the F1 playtest overlay surfaces a per-mission readability gate for the active mission; that
+developer state is deliberately absent from the player-facing picker. Operation Pee Break's picker
+details now present its authored 480-second timer as an `8m`
 deep-slice session. The backyard now follows a one-background rule (2026-07-02): the painted plate
 (`yard_backyard_plate_v02`) covers the full 120×68 yard at full opacity as the single background,
 the bootstrap rectangles stay only as invisible anchors, and the photo-crop reskin layer is
@@ -65,13 +137,15 @@ retired. `ArenaWowSetDressing` keeps a lean authored-art accent layer (snapshot 
 parade, mission-reactive spotlight/spark) plus reusable animated motif families for every roster
 mission, backed by generated transparent cartoon sprites in `ArenaFinal/Props/Wow`, with the source
 atlas retained under `ReferenceOnly/GeneratedWow`; it no longer draws placeholder rectangles over
-the plate. Operation Pee Break's
-deep-slice room now also overlays generated transparent cartoon prop sprites from
-`ArenaFinal/Props/PeeBreak`, with the atlas source retained under
-`ReferenceOnly/GeneratedPeeBreakProps`, for the couch, distracted Teenager, phone/charger, open door,
-leash, hydrant payoff, bladder gauge, and first misread tennis ball. The room also carries small
-animated household details (blanket, socks, chew toy, Teenager hoodie/foot fidget, phone ping) so the
-active deep slice reads as a lived-in dog-life scene before labels do the work. Generated Mission
+the plate. Operation Pee Break's deep-slice room now uses paired generated raster plates from
+`ArenaFinal/Props/PeeBreak`: the base owns the closed-door architecture and the success plate swaps
+in the open doorway and standing Teenager. Transparent controller overlays from the same folder
+provide the distracted seated Teenager, leash, hydrant payoff, bladder gauge, and first misread
+tennis ball. The standalone couch and open door are fallbacks; the standalone phone/charger is a
+progressive Beat-3 focus. Their earlier atlas source remains under
+`ReferenceOnly/GeneratedPeeBreakProps`. The room also carries small animated household details
+(blanket, socks, chew toy, Teenager hoodie/foot fidget, phone ping) so the active deep slice reads as
+a lived-in dog-life scene before labels do the work. Generated Mission
 Prop Pack Pass 2 now adds 30 reusable transparent cartoon sprites under `ArenaFinal/Props/Missions`, with
 source notes/contact sheet in `ReferenceOnly/GeneratedMissionProps`, and wires the non-Pee roster's
 visible focus props, hazards, pickups, and payoff stations through `MissionPropArt` overlays while
@@ -158,9 +232,10 @@ badge during Cocoa's pull window), and Car Ride's near-spill tilt at 70%+ (a `SP
 with a warning badge) — and labels ending in `NOW!` now classify as the authored command skin. The `IMissionController` migration also
 completed on 2026-07-02: Eagle Shadow Panic and Coyotes at the Fence were extracted behind the
 controller boundary (`MissionContext.PredatorObject`, `IMissionUnitedBarkListener`, static
-`Compute*` geometry helpers), so all 22 selectable missions are controller-owned and
-`GameManager.BuildMissionDefinition` resolves exclusively through the registry. Placeholder
-presentation still needs the second two-player couch acceptance pass.
+`Compute*` geometry helpers), so all 22 missions present at that date were controller-owned and
+`GameManager.BuildMissionDefinition` resolved exclusively through the registry. The later
+owner-requested Baby Bird Bedlam follows the same controller registry, making all 23 current
+variants controller-owned. Presentation still needs the second two-player couch acceptance pass.
 
 Gameplay-first presentation is now the active content approach: use generated Unity primitives,
 labels, role pads, and authored feedback to prove that Operation Pee Break is readable and fun before
@@ -186,17 +261,19 @@ that as a date-stamped warning, not a permanent metric or a line-count target.
    cannot substitute for it.
 7. Keep the mission roster frozen until that gate passes.
 
-## Couch test #4 runbook (the open acceptance gate, ready as of 2026-07-03)
+## Couch test #4 runbook (the open acceptance gate, hardened 2026-07-13)
 
-Status: sequence steps 1-5 are complete on `main` (all 22 missions run through
-`IMissionController` via `MissionControllerRegistry`; suite 428/428 green at `d096e4e`). Couch
-tests #2 and #3 produced presentation feedback but no accept/reject verdict on the deep slice, so
+Status: sequence steps 1-5 are complete on `main` (all 23 current missions run through
+`IMissionController` via `MissionControllerRegistry`; the historical 22-mission suite was 428/428
+green at `d096e4e`). Couch tests #2 and #3 produced presentation feedback but no accept/reject
+verdict on the deep slice, so
 **step 6 has never formally passed**. One sitting (Ken + Sue, two controllers) covers both halves:
 
-**Half 1 — verify the couch-test-#3 fixes (10 min):**
+**Half 1 — verify the couch-test-#3 fixes and input hardening (15 min):**
 
-1. Mission select: HOW TO PLAY reads as short bullets, with on-screen labels (e.g.
-   `SQUIRREL STEALING - BARK!`) shown in gold exactly as they appear in-game.
+1. Mission select: **YOUR TEAM PLAN** contains at most four short, sofa-readable beats, with any
+   named on-screen label (e.g. `SQUIRREL STEALING - BARK!`) shown in gold exactly as it appears
+   in-game.
 2. Backyard Rescue: no CHEDDAR/COCOA name text floats over the dogs (WOOF! flash still fires).
 3. Backyard Rescue: no floating sparkle-bone fake collectible anywhere in the yard.
 4. Backyard Rescue: yard shows only the painted plate + real props (no snack-table/laundry art);
@@ -207,6 +284,15 @@ tests #2 and #3 produced presentation feedback but no accept/reject verdict on t
    and paddles low in the water — not the run animation) → swim to any edge (rooted shake with
    droplets, then steps out wet). The water is the real pool-patio art, not a stretched pond.
 7. Mission briefing + in-game HUD: opaque dark cards/bands, all text readable from the sofa.
+8. Player-facing HUD: only the compact mission/objective/progress/timer/score bar and two P1/P2
+   input chips stay visible; no duplicate control wall, readiness label, or event-log text appears.
+9. Backyard Rescue tutorial: Cheddar and Cocoa must each complete Bark, Interact, Jump, then
+   Wrestle. One player's `DONE` cell waits for the partner, and pause can replay/skip the tutorial.
+10. Pause/comfort: navigate with D-pad + A only; toggle Audio, Rumble, and Camera Shake, then resume
+    with B/Start. Confirm both player pads pulse on team feedback when rumble is enabled.
+11. Diagnostics/reconnect: the F1 overlay is absent until the observer asks for it. If hardware
+    permits, disconnect one pad, confirm only that dog's chip shows `PAD LOST` while keyboard
+    fallback remains available, and confirm a replacement rebinds only that dog.
 
 **Live-feedback additions landed mid-test (2026-07-04):** the couch-test-#4 sitting already
 produced fixes on `main` (pool water alignment, donut floaties, wet-dog tint, detail-panel fit —
@@ -216,17 +302,19 @@ hold still through the briefing card + a 2.5s open-yard countdown, and any bark/
 skips straight to GO. Verify during the remaining sitting: timer frozen until GO, and a bark
 during the briefing card starts play instantly.
 
-**Half 2 — the actual gate:** play Operation Pee Break start to finish (it is the couch-test
-focus shortcut on the picker). Keep the laugh log from `docs/FAMILY-SHOWCASE-MANUAL-TEST.md`
-running throughout — not just a defect list, every laugh/surprise/quote in the moment. Then call
-it, one of:
+**Half 2 — the actual gate:** use **Play Recommended** (or the F5/P/Y focus shortcut) and play
+Operation Pee Break start to finish. Keep the laugh log from `docs/FAMILY-SHOWCASE-MANUAL-TEST.md`
+running throughout — not just a defect list, every laugh/surprise/quote in the moment. At the final
+united bark, confirm the open-door/hydrant relief scene remains live for a readable beat before the
+end card and cannot time out during that earned-success hold. Then call it, one of:
 
 - **ACCEPTED** — record the date here and the roster/roadmap freeze lifts, or
 - **REJECTED** — list exactly what failed; that list becomes the next work queue.
 
-Verdict: _pending_. Half 2 has not been played yet — this requires Ken + Sue on the couch with two
-controllers; it cannot be run or simulated from the terminal. Report back what happened (pass/fail
-on Pee Break end-to-end, plus the laugh log) and this line gets the date and verdict.
+Verdict: **REJECTED FOR THIS BUILD (2026-07-14)** — the run exposed unclear station order/feedback,
+abstract target circles, no optional room toys, numeric bladder presentation, and insufficient
+opening control instruction. The focused response is recorded in Current Status above. Re-test is
+required; automated coverage cannot change this verdict.
 
 ### Roster-wide funny-failure audit (2026-07-05, provisional — done ahead of the Half 2 verdict)
 

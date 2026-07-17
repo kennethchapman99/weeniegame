@@ -7,16 +7,18 @@ namespace CheddarAndCocoa.Input
 {
     /// <summary>
     /// Reads one player's gamepad each frame and feeds a <see cref="DogController.MoveIntent"/> to
-    /// its dog. Couch co-op: two of these exist, each paired (PlayerInput device pairing) to a
-    /// distinct controller — P1 drives Cheddar, P2 drives Cocoa (assignable in the lobby).
+    /// its dog. Couch co-op: two of these exist, each bound to a distinct controller slot — P1
+    /// drives Cheddar and P2 drives Cocoa. If a controller disconnects, its dog stays unbound until
+    /// that device returns or an unclaimed replacement controller appears; it never steals the
+    /// sibling's still-connected pad.
     ///
     /// PROTOTYPE MAP: src/core/gamepad.ts (GamepadSource per slot) + src/core/input.ts
     /// (computeIntent: stick -> ax/ay/arrive; A/B -> wrestle/jump). The deadzone below mirrors
     /// balance.ts INPUT.gamepadDeadzone = 0.25.
     ///
-    /// Recommended wiring: a PlayerInputManager ("join players" / "press a button to join")
-    /// instantiates a dog prefab per controller; this script lives on that prefab and resolves
-    /// its <see cref="DogController"/> locally. Use the Input System (not legacy Input).
+    /// A future front-end may replace slot assignment with PlayerInputManager join flow. This
+    /// component keeps the current fixed Cheddar/Cocoa ownership safe and reconnectable in the
+    /// meantime. Use the Input System (not legacy Input).
     /// </summary>
     [RequireComponent(typeof(DogController))]
     [RequireComponent(typeof(DogIdentity))]
@@ -36,10 +38,15 @@ namespace CheddarAndCocoa.Input
 
         private DogController _dog;
         private Gamepad _boundPad;
+        private bool _hasEverBoundPad;
 
         public float Deadzone => deadzone;
         public bool HasBoundGamepad => _boundPad != null && _boundPad.added;
+        public bool HasDisconnectedGamepad => _hasEverBoundPad && !HasBoundGamepad;
         public int BoundGamepadDeviceId => HasBoundGamepad ? _boundPad.deviceId : -1;
+        public string BoundGamepadDisplayName => HasBoundGamepad ? _boundPad.displayName : string.Empty;
+        public int GamepadSlot => gamepadSlot;
+        public KeyboardScheme AssignedKeyboardScheme => keyboardScheme;
 
         private void Awake()
         {
@@ -70,10 +77,10 @@ namespace CheddarAndCocoa.Input
                 Vector2 stick = pad.leftStick.ReadValue();
                 if (stick.magnitude < deadzone) stick = Vector2.zero;
                 move += stick;
-                wrestle |= pad.buttonSouth.wasPressedThisFrame; // A
-                jump |= pad.buttonEast.wasPressedThisFrame;      // B
-                bark |= pad.buttonWest.wasPressedThisFrame;      // X
-                interact |= pad.buttonNorth.wasPressedThisFrame; // Y
+                wrestle |= pad.buttonSouth.wasPressedThisFrame; // B on Switch-style pads
+                jump |= pad.buttonEast.wasPressedThisFrame;      // A on Switch-style pads
+                bark |= pad.buttonWest.wasPressedThisFrame;      // Y on Switch-style pads
+                interact |= pad.buttonNorth.wasPressedThisFrame; // X on Switch-style pads
             }
 
             var kb = Keyboard.current;
@@ -124,19 +131,58 @@ namespace CheddarAndCocoa.Input
         private Gamepad ResolvePad()
         {
             // Once assigned, keep the dog glued to the same device even if another pad becomes the
-            // current device or the Gamepad.all ordering changes. A disconnected pad remains bound
-            // and resumes control when the Input System re-adds that device.
+            // current device or Gamepad.all ordering changes. Some platforms re-add the same object
+            // after a transient disconnect, so retain it while absent and prefer it if it returns.
             if (_boundPad != null)
-                return _boundPad.added ? _boundPad : null;
+            {
+                if (_boundPad.added) return _boundPad;
+
+                // A physically replaced controller usually has a new InputDevice instance. Bind
+                // only an unclaimed device; rebinding by shifted Gamepad.all index here could hand
+                // Cocoa's controller to Cheddar (or vice versa) when just one pad disconnects.
+                Gamepad replacement = FirstUnclaimedPad();
+                if (replacement == null) return null;
+                _boundPad = replacement;
+                _hasEverBoundPad = true;
+                return _boundPad;
+            }
 
             if (gamepadSlot >= 0)
             {
-                if (gamepadSlot >= Gamepad.all.Count) return null;
-                _boundPad = Gamepad.all[gamepadSlot];
+                if (!_hasEverBoundPad)
+                {
+                    if (gamepadSlot >= Gamepad.all.Count) return null;
+                    _boundPad = Gamepad.all[gamepadSlot];
+                }
+                else
+                {
+                    _boundPad = FirstUnclaimedPad();
+                    if (_boundPad == null) return null;
+                }
+
+                _hasEverBoundPad = true;
                 return _boundPad;
             }
 
             return Gamepad.current;
+        }
+
+        private Gamepad FirstUnclaimedPad()
+        {
+            foreach (Gamepad candidate in Gamepad.all)
+            {
+                bool claimed = false;
+                foreach (GamepadPlayerInput input in FindObjectsByType<GamepadPlayerInput>(FindObjectsSortMode.None))
+                {
+                    if (input == this || input._boundPad != candidate) continue;
+                    claimed = true;
+                    break;
+                }
+
+                if (!claimed) return candidate;
+            }
+
+            return null;
         }
     }
 }

@@ -86,7 +86,7 @@ namespace CheddarAndCocoa.Game
                         "On the Predator Warning, huddle both dogs together and bark to drive it off - or bark-rescue a grabbed partner.",
                         "Squirrel Trap (twice): one dog bark-pressures the squirrel while the other holds the blue ESCAPE GAP marker.",
                         "Only the gap-holder can recover the dropped weenie - roles reverse for pass two.",
-                        "Finish together at the striped Rope/Tug prop until BOTH TUGGING hits 100%.",
+                        "Finish together at the striped Rope/Tug prop until it pops complete.",
                         "The pool is open: run the floaties, fall in and you swim, and you shake off at the deck."
                     };
                 case GameManager.MissionVariant.SnackHeist:

@@ -52,7 +52,9 @@ namespace CheddarAndCocoa.Dogs
             _root.localScale = Vector3.one;
 
             _groundGlow = AddRenderer("ShowcaseGroundGlow", new Vector3(0f, -0.58f, 0.06f),
-                new Vector3(1.26f, 0.18f, 1f), new Color(_primary.r, _primary.g, _primary.b, 0.18f), 22);
+                // Keep this as a soft identity halo under the paws. The previous 7:1 squash made
+                // the generated circular glow read as a long opaque status bar across the ground.
+                new Vector3(1.04f, 0.34f, 1f), new Color(_primary.r, _primary.g, _primary.b, 0.1f), 22);
             _sparkA = AddRenderer("ShowcaseSparkA", new Vector3(-0.48f, 0.36f, -0.24f),
                 Vector3.one * 0.09f, _secondary, 35);
             _sparkB = AddRenderer("ShowcaseSparkB", new Vector3(0.48f, 0.22f, -0.24f),
@@ -108,7 +110,7 @@ namespace CheddarAndCocoa.Dogs
             if (_groundGlow != null)
             {
                 _groundGlow.transform.localScale = _groundBaseScale * (1f + speed01 * 0.22f + pulse * 0.05f);
-                SetAlpha(_groundGlow, 0.16f + speed01 * 0.16f + pulse * 0.04f);
+                SetAlpha(_groundGlow, 0.08f + speed01 * 0.1f + pulse * 0.025f);
             }
 
             AnimateSpark(_sparkA, t, 0.0f, 0.46f + speed01 * 0.18f, 0.22f + speed01 * 0.32f, zoom);

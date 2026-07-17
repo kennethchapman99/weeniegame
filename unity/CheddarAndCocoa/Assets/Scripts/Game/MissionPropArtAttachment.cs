@@ -12,6 +12,7 @@ namespace CheddarAndCocoa.Game
 
         private static readonly Transform[] EmptyTargets = new Transform[0];
         private static Transform[] _affordanceTargets = EmptyTargets;
+        private static bool _debugGeometryVisible;
 
         private ArtSpriteOverlay _overlay;
         private float _fallbackMaxAlpha = 1f;
@@ -19,10 +20,12 @@ namespace CheddarAndCocoa.Game
         private float _affordanceRange = DefaultAffordanceRange;
         private bool _affordanceEnabled = true;
         private bool _affordanceActive;
+        private bool _debugOnlyFallback;
 
         public string ResourcePath { get; private set; } = string.Empty;
         public bool IsAffordanceActive => _affordanceActive;
         public float AffordanceRange => _affordanceRange;
+        public bool DebugOnlyFallback => _debugOnlyFallback;
         public bool HasRuntimeSprite
         {
             get
@@ -49,8 +52,10 @@ namespace CheddarAndCocoa.Game
             _affordanceTargets = targets;
         }
 
+        public static void SetDebugGeometryVisible(bool visible) => _debugGeometryVisible = visible;
+
         public bool Init(string resourcePath, Vector3 localPosition, Vector3 localScale,
-            int sortingOrder, Color tint, bool shadow = true)
+            int sortingOrder, Color tint, bool shadow = true, bool debugOnlyFallback = false)
         {
             ResourcePath = resourcePath ?? string.Empty;
             Sprite sprite = FinalGameplayArt.Load(ResourcePath);
@@ -59,6 +64,7 @@ namespace CheddarAndCocoa.Game
             _overlay = GetComponent<ArtSpriteOverlay>();
             if (_overlay == null) _overlay = gameObject.AddComponent<ArtSpriteOverlay>();
             _baseTint = tint;
+            _debugOnlyFallback = debugOnlyFallback;
             _overlay.Init(sprite, localPosition, localScale, sortingOrder, tint, shadow);
             _overlay.SetVisible(true); // undo any earlier ClearOverride() hide - Init means "show this now"
             return true;
@@ -76,6 +82,7 @@ namespace CheddarAndCocoa.Game
             ResourcePath = string.Empty;
             if (_overlay != null) _overlay.SetVisible(false);
             _fallbackMaxAlpha = 1f;
+            _debugOnlyFallback = false;
             var renderer = MissionPropArt.FindFallbackRenderer(gameObject);
             if (renderer != null)
             {
@@ -126,10 +133,16 @@ namespace CheddarAndCocoa.Game
 
         private void ApplyFallbackAlphaCap()
         {
-            if (_fallbackMaxAlpha >= 0.999f) return;
             var renderer = MissionPropArt.FindFallbackRenderer(gameObject);
             if (renderer == null) return;
             var color = renderer.color;
+            if (_debugOnlyFallback)
+            {
+                color.a = _debugGeometryVisible ? _fallbackMaxAlpha : 0f;
+                renderer.color = color;
+                return;
+            }
+            if (_fallbackMaxAlpha >= 0.999f) return;
             if (color.a <= _fallbackMaxAlpha) return;
             color.a = _fallbackMaxAlpha;
             renderer.color = color;

@@ -9,7 +9,7 @@ namespace CheddarAndCocoa.Game
     /// leash - and holding it. Covering only one (or wandering off) confuses the human; too many misreads
     /// end the run.
     /// </summary>
-    public sealed class WalkCampaignMissionController : IMissionController
+    public sealed class WalkCampaignMissionController : IMissionController, IMissionPressureHud
     {
         private const float StationRange = 3.5f;
         private const float ComprehendNeeded = 2.5f; // both dogs hold the combo this long -> walk earned.
@@ -50,9 +50,13 @@ namespace CheddarAndCocoa.Game
         public Vector2 LeashZone => _leashZone;
         public Vector2 EntryTarget => _context.Bounds.center;
         public string OutcomeSummary => MissionOutcomeSummaryBuilder.BuildWalkCampaignSummary(_puzzle);
+        public string PressureLabel => "HUMAN GETS IT";
+        public bool PressureVisible => true;
+        public float PressureNormalized => Mathf.Clamp01(_puzzle.Comprehension / ComprehendNeeded);
+        public Color PressureColor => Color.Lerp(HumanConfusedColor, HumanGettingItColor, PressureNormalized);
 
         public string ObjectiveLabel => _puzzle.ExactMatch
-            ? $"Hold it together! Cocoa stares the door, Cheddar holds the leash - the human's {Mathf.RoundToInt(_puzzle.Comprehension / ComprehendNeeded * 100)}% sold (confused {_puzzle.Misreads}/{MaxMisreads})"
+            ? $"Hold it together! Cocoa stares; Cheddar presents the leash (misreads {_puzzle.Misreads}/{MaxMisreads})"
             : $"Send ONE message: Cocoa stare at the door AND Cheddar present the leash at once (confused {_puzzle.Misreads}/{MaxMisreads})";
 
         public void Initialize(MissionContext context)

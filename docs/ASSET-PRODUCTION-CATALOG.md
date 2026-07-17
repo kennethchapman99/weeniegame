@@ -256,15 +256,37 @@ These sprites make the deep-slice room read as a couch-bound teenager situation 
 diagram. Fine-grained beat, label, room-detail, misread, and payoff coverage lives in
 `PeeBreakPlayModeTests`.
 
-Required/live:
-- `pee_break_couch.png` (`512x512`) - couch anchor for the Teenager room; idle fabric wobble/pillow bob.
-- `pee_break_teenager.png` (`512x512`) - phone-absorbed Teenager; head/thumb/foot animation states.
-- `pee_break_phone_charger.png` (`512x512`) - phone/charger boss object; glow, notification ping, battery drain.
-- `pee_break_open_door.png` (`512x512`) - door-open success state; panel swing and sunlight reveal.
+Required full-room states:
+
+- `pee_break_living_room_plate.png` (`1672x941`, 16:9) - painterly warm living-room foundation for
+  the full couch-play frame. It establishes walls, floor, window light, rug, room depth, and the
+  closed front door; there is no active separate closed-door sprite. Controller-owned actors and
+  state props stay layered above it. When loaded, the old wall/wood-floor/baseboard/window/
+  side-table/door-slab renderers are hidden fallback geometry rather than visible colored blocks;
+  the full-arena foundation stays behind the plate only to prevent the backyard from leaking into
+  extreme camera framing.
+- `pee_break_living_room_success_plate.png` (`1672x941`, 16:9) - matched success-state room plate
+  that replaces the base plate after the final united bark. It embeds the open architectural doorway
+  and standing Teenager so the payoff cannot read as disconnected floating overlays.
+
+Controller overlays and conditional fallbacks:
+
+- `pee_break_teenager.png` (`512x512`) - active pre-success, phone-absorbed seated Teenager/beanbag;
+  hidden when the success plate supplies the standing pose.
+- `pee_break_phone_charger.png` (`512x512`) - progressive Beat-3-only phone/charger focus; it enlarges
+  for the charger gambit and disappears from the success payoff.
+- `pee_break_couch.png` (`512x512`) - fallback-only furniture if the seated Teenager art is missing;
+  normally hidden because that character sprite already includes its seat.
+- `pee_break_open_door.png` (`512x512`) - fallback-only open-door state if the full success plate is
+  unavailable; normally hidden when the authored success room loads.
 - `pee_break_leash.png` (`512x512`) - Cheddar leash presentation prop; strap sway/presentation trail.
 - `pee_break_hydrant_relief.png` (`512x512`) - outdoor payoff gag; relief sparkle burst.
 - `pee_break_bladder_meter.png` (`512x512`) - in-world urgency meter; warning fill/tick shake.
 - `pee_break_misread_tennis_ball.png` (`512x512`) - recoverable wrong-idea misread; bounce/shake.
+
+- Provenance: the paired base and success room plates were generated as raster production candidates
+  with the built-in image-generation workflow, then selected and integrated as matched closed/open
+  room states against the existing game art.
 
 ### Escape / Catch / Kitchen P0 generated state pack
 
@@ -300,6 +322,24 @@ Required/live:
 - `kitchen_food_splat.png` (`512x512`) - floor splat for misses/dodges.
 
 ## UI
+
+### Mission-selection production replacements (2026-07-13)
+
+Live under `unity/CheddarAndCocoa/Assets/Art/Resources/ArenaFinal/UI/MissionTiles/`.
+
+- `babybirdbedlam.png` (`1254x1254`) - painterly Baby Bird Bedlam portrait matching the dark-green/
+  gold storybook framing of the adjacent Adventure Library cards. The illustration identifies
+  Cheddar's chick-feast role and Cocoa's parent-bird defense role, keeps its lower name strip free of
+  baked text, and lets TMP own the accessible mission title. It replaces the former flat placeholder
+  at the same runtime path.
+- Provenance: this tile was generated as a raster production candidate with the built-in
+  image-generation workflow, then selected and integrated against the existing game art. The
+  retired deterministic Baby Bird generator writes only
+  `Assets/Art/ReferenceOnly/GeneratedMissionTiles/babybirdbedlam_placeholder.png`; it cannot overwrite
+  the runtime portrait.
+
+These assets remove high-visibility placeholders for the next couch test, but they do not close the
+remaining final-animation, character-state, or authored-UI work.
 
 Required:
 - mission card

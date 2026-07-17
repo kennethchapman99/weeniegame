@@ -10,7 +10,7 @@ namespace CheddarAndCocoa.Game
     /// Predator and tug are handled by GameManager's shared systems; controller reads their
     /// resolved state via MissionContext to declare IsComplete.
     /// </summary>
-    public sealed class BackyardRescueMissionController : IMissionController, IMissionTreatCollector
+    public sealed class BackyardRescueMissionController : IMissionController, IMissionTreatCollector, IMissionPressureHud
     {
         private const float TrapGapRadius = 3.2f;
 
@@ -48,6 +48,11 @@ namespace CheddarAndCocoa.Game
         public Vector2 GapPosition => _gapPosition;
         public bool IsSquirrelStealing => _squirrelTarget != null;
         public bool SpawnTreatsHidden => false;
+        public bool PressureVisible => _context != null && !_context.IsTugComplete() &&
+            _collected >= Mathf.Max(2, _context.ObjectiveGoal / 2);
+        public string PressureLabel => "TEAM TUG";
+        public float PressureNormalized => _context != null ? Mathf.Clamp01(_context.TugProgress()) : 0f;
+        public Color PressureColor => Color.Lerp(new Color(0.95f, 0.55f, 0.16f), new Color(1f, 0.92f, 0.22f), PressureNormalized);
 
         public string ObjectiveLabel
         {

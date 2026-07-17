@@ -98,6 +98,7 @@ namespace CheddarAndCocoa.Bootstrap
             dbg.Init(cam,
                 cheddarDog, cheddar.GetComponent<DogIdentity>(), 0,
                 cocoaDog, cocoa.GetComponent<DogIdentity>(), 1);
+            dbg.SetLegendVisible(false);
         }
 
         // --- Tuning (same numbers as GameBootstrap; ported from src/config/balance.ts) ---

@@ -46,6 +46,7 @@ namespace CheddarAndCocoa.CameraRig
         public float ZoomLerp => zoomLerp;
         public bool IsClampedToBounds => clampToBounds;
         public Rect LevelBounds => levelBounds;
+        public float PendingShakeMagnitude => _shake;
         public float EffectiveMaxOrthoSize => MaximumOrthoSizeForAspect(_cam != null ? _cam.aspect : 16f / 9f);
 
         public void Configure(float initialOrthoSize, float minSize, float maxSize,
@@ -103,6 +104,9 @@ namespace CheddarAndCocoa.CameraRig
 
         /// <summary>Kick the screen shake (cosmetic). Mirrors the TS build's addShake().</summary>
         public void AddShake(float magnitude) => _shake = Mathf.Max(_shake, magnitude);
+
+        /// <summary>Immediately removes any queued comfort motion when shake is disabled.</summary>
+        public void ClearShake() => _shake = 0f;
 
         /// <summary>
         /// The authored max is the 16:9 presentation target. Narrower windows need a larger

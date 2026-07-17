@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""Generate the placeholder mission-select tile for Baby Bird Bedlam.
+"""Regenerate the retired placeholder concept for Baby Bird Bedlam.
 
-The other MissionTiles portraits are authored art; this one is a deterministic
-generated placeholder (sky, oak nest, tumbling chicks, diving parent, and the
-two long-dog silhouettes) so the new mission's tile slot never renders blank.
-Replace with authored art when the mission earns its portrait pass.
+The runtime mission tile now has an approved painterly portrait. This deterministic
+flat concept remains useful as reference material, but deliberately writes only to
+ReferenceOnly so running the helper cannot overwrite production art.
 """
 
 from __future__ import annotations
@@ -14,7 +13,7 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw
 
-OUT = Path("unity/CheddarAndCocoa/Assets/Art/Resources/ArenaFinal/UI/MissionTiles/babybirdbedlam.png")
+OUT = Path("unity/CheddarAndCocoa/Assets/Art/ReferenceOnly/GeneratedMissionTiles/babybirdbedlam_placeholder.png")
 SIZE = 1254
 
 

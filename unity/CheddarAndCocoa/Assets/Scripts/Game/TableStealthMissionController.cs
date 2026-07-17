@@ -9,7 +9,7 @@ namespace CheddarAndCocoa.Game
     /// steak; sneaking while the human is watching gets the pair spotted, and too many exposures end
     /// the run.
     /// </summary>
-    public sealed class TableStealthMissionController : IMissionController
+    public sealed class TableStealthMissionController : IMissionController, IMissionPressureHud
     {
         private const float DistractRange = 4f;
         private const float SneakRange = 4f;
@@ -56,15 +56,18 @@ namespace CheddarAndCocoa.Game
         public Vector2 StealZone => _stealZone;
         public Vector2 EntryTarget => _context.Bounds.center;
         public string OutcomeSummary => MissionOutcomeSummaryBuilder.BuildTableStealthSummary(_puzzle);
+        public string PressureLabel => "STEAK SNEAK";
+        public bool PressureVisible => true;
+        public float PressureNormalized => _puzzle.SneakRatio;
+        public Color PressureColor => Color.Lerp(new Color(0.92f, 0.68f, 0.24f), new Color(0.35f, 1f, 0.52f), _puzzle.SneakRatio);
 
         public string ObjectiveLabel
         {
             get
             {
-                int pct = Mathf.RoundToInt(_puzzle.SneakRatio * 100f);
                 return _puzzle.HumanDistracted
-                    ? $"Cheddar: sneak the steak while the human is distracted ({pct}%, spotted {_puzzle.Exposures}/{MaxExposures})"
-                    : $"Cocoa: flop belly-up by the human to hold their gaze (sneak {pct}%, spotted {_puzzle.Exposures}/{MaxExposures})";
+                    ? $"Cheddar: keep sneaking while Cocoa holds their gaze (spotted {_puzzle.Exposures}/{MaxExposures})"
+                    : $"Cocoa: flop belly-up for the human so Cheddar can sneak (spotted {_puzzle.Exposures}/{MaxExposures})";
             }
         }
 

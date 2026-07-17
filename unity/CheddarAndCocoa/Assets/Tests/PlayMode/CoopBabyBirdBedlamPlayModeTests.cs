@@ -32,6 +32,12 @@ namespace CheddarAndCocoa.Tests
                 "Baby Bird Bedlam must run entirely through its own IMissionController.");
             Assert.AreEqual(GameManager.MissionVariant.BabyBirdBedlam, _game.ActiveMissionController.Variant);
             Assert.AreSame(_game.BabyBirdBedlamController.Puzzle, _game.FeastGuardPuzzle);
+            var nest = GameObject.Find("BedlamNest");
+            Assert.IsNotNull(nest);
+            var nestArt = nest.GetComponent<MissionPropArtAttachment>();
+            Assert.IsNotNull(nestArt, "The cold start needs an authored oak/nest world cue before the first chick drops.");
+            Assert.AreEqual(FinalGameplayArt.EnvironmentShadeTree, nestArt.ResourcePath);
+            Assert.IsTrue(nestArt.HasRuntimeSprite);
         }
 
         [UnityTest]

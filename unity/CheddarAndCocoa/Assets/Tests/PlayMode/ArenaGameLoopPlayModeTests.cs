@@ -8,6 +8,7 @@ using CheddarAndCocoa.Dogs;
 using CheddarAndCocoa.Game;
 using CheddarAndCocoa.CameraRig;
 using CheddarAndCocoa.Input;
+using CheddarAndCocoa.Bootstrap;
 
 namespace CheddarAndCocoa.Tests
 {
@@ -358,6 +359,9 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(Camera.main.GetComponent<AudioListener>());
             Assert.IsNotNull(GameObject.Find(ArenaArtCatalog.ArenaHudObjectName));
             Assert.IsNotNull(GameObject.Find(ArenaArtCatalog.DebugHudObjectName));
+            Assert.IsFalse(GameObject.Find(ArenaArtCatalog.DebugHudObjectName)
+                .GetComponent<DebugHud>().LegendVisible,
+                "The arena should not draw the legacy always-on control wall over production gameplay.");
 
             var cheddarFeedback = cheddar.GetComponent<DogReadabilityFeedback>();
             var cocoaFeedback = cocoa.GetComponent<DogReadabilityFeedback>();
@@ -1486,6 +1490,15 @@ namespace CheddarAndCocoa.Tests
             var polish = dog.GetComponent<DogShowcasePolish>();
             Assert.IsNotNull(polish);
             Assert.IsTrue(polish.UsesGeneratedDogFx, $"{dog.name} showcase polish should use generated dog FX sprites, not white-square-only geometry.");
+            var groundGlow = root.Find("ShowcaseGroundGlow");
+            Assert.IsNotNull(groundGlow);
+            Assert.Less(groundGlow.localScale.x / groundGlow.localScale.y, 4f,
+                $"{dog.name} ground glow should read as a soft ellipse, not a long rectangular status bar.");
+            var shadow = dog.Find("ActualDogShadow");
+            Assert.IsNotNull(shadow);
+            Assert.IsNotNull(shadow.GetComponent<SpriteRenderer>().sprite);
+            Assert.AreNotSame(SpriteShapeCache.WhiteSquare, shadow.GetComponent<SpriteRenderer>().sprite,
+                $"{dog.name} must use a soft generated shadow rather than a stretched WhiteSquare placeholder.");
         }
 
         private static void AssertMissionBalance(GameManager.MissionVariant variant, ArenaMissionTuning tuning, bool expectSquirrel, bool expectPredator, bool expectTug)

@@ -23,6 +23,8 @@ namespace CheddarAndCocoa.Bootstrap
         private Camera _cam;
         private Entry _a, _b;
         private GUIStyle _legend, _tag, _woof;
+        private bool _legendVisible = true;
+        public bool LegendVisible => _legendVisible;
 
         public void Init(Camera cam,
             DogController dogA, DogIdentity idA, int slotA,
@@ -36,19 +38,28 @@ namespace CheddarAndCocoa.Bootstrap
             _b.dog.OnBark += _ => _b.lastBark = Time.time;
         }
 
+        /// <summary>
+        /// The standalone controller proof still uses the persistent diagnostic legend. The arena
+        /// has a production-facing HUD/tutorial, so it keeps only this component's transient bark
+        /// flash and suppresses the duplicate wall of controls.
+        /// </summary>
+        public void SetLegendVisible(bool visible) => _legendVisible = visible;
+
         private void OnGUI()
         {
             EnsureStyles();
             if (_cam == null) return;
 
-            // Always-visible couch co-op legend (top-left).
-            GUI.Label(new Rect(12, 10, 520, 150),
-                "Cheddar & Cocoa — Couch Co-op Controls\n" +
-                $"P1  CHEDDAR  (golden)  ·  pad {_a.slot}: {PadStatus(_a.slot)}\n" +
-                $"P2  COCOA    (brown)   ·  pad {_b.slot}: {PadStatus(_b.slot)}\n" +
-                "Stick/keys: move   ·   X/Space/Enter: bark   ·   Y/E/Right Shift: interact\n" +
-                "B/L-Shift/Right Ctrl: jump   ·   A/Q/Right Alt: wrestle",
-                _legend);
+            if (_legendVisible)
+            {
+                GUI.Label(new Rect(12, 10, 520, 150),
+                    "Cheddar & Cocoa — Couch Co-op Controls\n" +
+                    $"P1  CHEDDAR  (golden)  ·  pad {_a.slot}: {PadStatus(_a.slot)}\n" +
+                    $"P2  COCOA    (brown)   ·  pad {_b.slot}: {PadStatus(_b.slot)}\n" +
+                    "Stick/keys: move   ·   X/Space/Enter: bark   ·   Y/E/Right Shift: interact\n" +
+                    "B/L-Shift/Right Ctrl: jump   ·   A/Q/Right Alt: wrestle",
+                    _legend);
+            }
 
             // Couch feedback: no persistent name tag over the dogs — the authored dog art carries
             // identity now. Only the transient WOOF! bark flash remains (bark readability).

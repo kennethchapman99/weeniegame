@@ -12,9 +12,9 @@ namespace CheddarAndCocoa.Tests
     /// <summary>
     /// The mission picker is a UGUI Canvas + TextMeshPro paged picture-tile grid with a detail
     /// panel, replacing the IMGUI rows whose text scaled as a blurry bitmap. These tests pin the
-    /// view contract: crisp scaling setup, one tile per mission on the visible page, paging that
-    /// follows GameManager selection, a detail panel fed by the instruction catalog, and buttons
-    /// that delegate to the same GameManager flow methods keyboard/gamepad input uses.
+    /// view contract: crisp scaling setup, readable production-facing copy, one tile per mission
+    /// on the visible page, paging that follows GameManager selection, a concise detail preview,
+    /// and buttons that delegate to the same GameManager flow methods keyboard/gamepad input uses.
     /// </summary>
     public sealed class MissionSelectScreenPlayModeTests
     {
@@ -47,10 +47,19 @@ namespace CheddarAndCocoa.Tests
                 scaler.referenceResolution);
             Assert.Greater(screen.GetComponentsInChildren<TMP_Text>(true).Length, 20,
                 "Mission select copy should render through TextMeshPro.");
+            Assert.AreEqual("Cheddar + Cocoa Adventures", screen.TitleText);
+            Assert.That(screen.RecommendedHintText, Does.StartWith("START HERE:"));
+            Assert.That(screen.RecommendedHintText, Does.Contain(game.CouchTestFocusName));
+            Assert.That(screen.ControlsHintText, Does.Contain("Y selects Recommended"));
+            string playerFacingHeader =
+                $"{screen.TitleText} {screen.RecommendedHintText} {screen.ControlsHintText}".ToLowerInvariant();
+            Assert.That(playerFacingHeader, Does.Not.Contain("couch test"));
+            Assert.That(playerFacingHeader, Does.Not.Contain("family shortcut"));
+            Assert.That(playerFacingHeader, Does.Not.Contain("f5"));
 
             Assert.AreEqual(GameManager.MissionSelectTilesPerPage, screen.TileCapacity);
             Assert.AreEqual(GameManager.MissionSelectTilesPerPage, screen.ActiveTileCount,
-                "Page 0 of 22 missions should fill every tile slot.");
+                "The full first page should fill every tile slot.");
             for (int slot = 0; slot < screen.ActiveTileCount; slot++)
             {
                 Assert.IsNotNull(screen.TileCoverSpriteAt(slot),
@@ -61,6 +70,8 @@ namespace CheddarAndCocoa.Tests
                     $"Tile {slot} should carry the mission name.");
                 Assert.AreEqual(game.MissionVariantAt(slot), screen.TileVariantAt(slot),
                     "Tiles must follow GameManager's mission order.");
+                Assert.IsTrue(screen.TileCoverUsesTitleFreeCropAt(slot),
+                    $"Tile {slot} should crop its baked-in title ribbon so the TMP title is not duplicated.");
             }
         }
 
@@ -74,7 +85,7 @@ namespace CheddarAndCocoa.Tests
 
             game.SelectMission(GameManager.MissionVariant.BackyardRescue);
             yield return null;
-            Assert.That(screen.PageLabelText, Does.StartWith("Page 1/2"));
+            Assert.That(screen.PageLabelText, Does.Contain("Page 1 of 2"));
             Assert.IsTrue(screen.TileIsSelectedAt(0), "The selected mission's tile should highlight.");
             Assert.IsFalse(screen.TileIsSelectedAt(1));
 
@@ -83,7 +94,7 @@ namespace CheddarAndCocoa.Tests
             yield return null;
             int peeBreakSlot = game.SelectedMissionIndex - GameManager.MissionSelectTilesPerPage;
             Assert.AreEqual(1, game.SelectedMissionPage);
-            Assert.That(screen.PageLabelText, Does.StartWith("Page 2/2"));
+            Assert.That(screen.PageLabelText, Does.Contain("Page 2 of 2"));
             Assert.AreEqual(game.MissionSelectOptionCount - GameManager.MissionSelectTilesPerPage,
                 screen.ActiveTileCount, "The short last page should only show the remaining missions.");
             Assert.AreEqual(GameManager.MissionVariant.OperationPeeBreak, screen.TileVariantAt(peeBreakSlot));
@@ -98,36 +109,60 @@ namespace CheddarAndCocoa.Tests
                 "Couch test #3: how-to-play renders as bullet steps, not a wall of text.");
             Assert.That(screen.DetailHowToPlayText, Does.Contain("\n•  "),
                 "Every step gets its own bullet line.");
+            Assert.AreEqual(4, screen.DetailHowToPlayText.Split('\n').Length,
+                "The picker should preview the four teamwork beats instead of dumping the full tutorial.");
+            Assert.That(screen.DetailHowToPlayText, Does.Contain("Swap roles"));
+            Assert.That(screen.DetailHowToPlayText, Does.Contain("bark together"));
             Assert.AreEqual(ArenaHud.MissionBadgeCodeFor(GameManager.MissionVariant.OperationPeeBreak),
                 screen.DetailBadgeCodeText, "The detail panel should show the mission badge.");
             Assert.IsNotNull(screen.DetailCoverSprite, "The detail panel should show the mission cover art.");
             Assert.That(screen.DetailChallengeText, Does.Contain("Pawfect"));
-            Assert.IsFalse(string.IsNullOrWhiteSpace(screen.DetailReadinessText),
-                "The detail panel should keep the readability/readiness gate line.");
+            Assert.GreaterOrEqual(screen.DetailDescriptionFontFloor, 20f,
+                "Description text must remain readable from a couch instead of shrinking to 13pt.");
+            Assert.GreaterOrEqual(screen.DetailHowToFontFloor, 19f,
+                "Team-plan text must remain readable from a couch instead of shrinking to 13pt.");
+            Assert.That(screen.TileStatusAt(peeBreakSlot), Does.StartWith("RECOMMENDED"),
+                "The deep slice should be visibly recommended without developer-facing couch-test language.");
+            Assert.IsFalse(screen.RecommendedButton.gameObject.activeSelf,
+                "Selecting the recommended adventure should collapse the two competing actions into one start button.");
+            Assert.Greater(screen.StartButton.GetComponent<RectTransform>().rect.width, 800f,
+                "The recommended adventure should get one unambiguous full-width start action.");
+        }
+
+        [Test]
+        public void MissionPreview_EveryAdventureUsesAtMostFourTeamSteps()
+        {
+            foreach (GameManager.MissionVariant variant in System.Enum.GetValues(typeof(GameManager.MissionVariant)))
+            {
+                string preview = MissionSelectScreen.BuildHowToPlayText(variant);
+                Assert.IsFalse(string.IsNullOrWhiteSpace(preview), $"{variant} needs a player-facing team plan.");
+                Assert.LessOrEqual(preview.Split('\n').Length, 4,
+                    $"{variant} should use progressive teaching instead of a pre-mission instruction dump.");
+            }
         }
 
         [UnityTest]
-        public IEnumerator Screen_DetailPanel_FitsLongStepListsAndShowsUncroppedCover()
+        public IEnumerator Screen_DetailPanel_FitsConcisePlanAndCropsBakedCoverTitle()
         {
             yield return LoadArena();
 
             var game = Object.FindFirstObjectByType<GameManager>();
             var screen = Object.FindFirstObjectByType<MissionSelectScreen>();
 
-            // Couch test #4: Backyard Rescue's 7-step list overflowed its rect, printing over the
-            // challenge/readiness lines and the buttons, while the cover cropped to a sliver.
+            // Backyard Rescue used to dump seven steps over the challenge/buttons, while its
+            // square cover presented a second baked title alongside the TMP mission name.
             game.SelectMission(GameManager.MissionVariant.BackyardRescue);
             yield return null;
             Assert.IsTrue(screen.DetailTextFitsItsRects,
                 "The longest how-to list must auto-size into its rect, never over the rows below.");
-            Assert.IsTrue(screen.DetailCoverUncropped,
-                "The detail cover must aspect-fit so the whole mission picture is visible.");
+            Assert.IsTrue(screen.DetailCoverUsesTitleFreeCrop,
+                "The detail art should crop its baked title ribbon because TMP owns the readable mission title.");
 
-            // A short list stays fitting too (and gets the full-size font path).
+            // A shorter plan stays fitting too (and gets the full-size font path).
             game.SelectMission(GameManager.MissionVariant.GateCrash);
             yield return null;
             Assert.IsTrue(screen.DetailTextFitsItsRects);
-            Assert.IsTrue(screen.DetailCoverUncropped);
+            Assert.IsTrue(screen.DetailCoverUsesTitleFreeCrop);
         }
 
         [UnityTest]
@@ -161,20 +196,23 @@ namespace CheddarAndCocoa.Tests
 
             game.SelectMission(GameManager.MissionVariant.SnackHeist);
             yield return null;
-            Assert.IsTrue(screen.CouchFocusButton.gameObject.activeSelf,
-                "The couch-test shortcut button should offer to jump to the focus mission.");
-            screen.CouchFocusButton.onClick.Invoke();
+            Assert.IsTrue(screen.RecommendedButton.gameObject.activeSelf,
+                "A one-action recommended front door should remain available while browsing the library.");
+            screen.RecommendedButton.onClick.Invoke();
             yield return null;
-            Assert.AreEqual(GameManager.MissionVariant.OperationPeeBreak, game.SelectedMissionVariant,
-                "The couch-focus button must reuse the same GameManager path as the F5/P/Y shortcut.");
-            Assert.IsFalse(screen.CouchFocusButton.gameObject.activeSelf,
-                "The shortcut button should hide once the focus mission is already selected.");
+            Assert.AreEqual(GameManager.FlowState.Playing, game.CurrentFlow,
+                "Play Recommended should launch the recommended adventure directly.");
+            Assert.AreEqual(GameManager.MissionVariant.OperationPeeBreak, game.ActiveMissionVariant);
 
+            game.ForceGameOver();
+            game.ReturnToMissionSelect();
+            game.SelectMission(GameManager.MissionVariant.SnackHeist);
+            yield return null;
             screen.StartButton.onClick.Invoke();
             yield return null;
             Assert.AreEqual(GameManager.FlowState.Playing, game.CurrentFlow,
                 "The start button must start the selected mission.");
-            Assert.AreEqual(GameManager.MissionVariant.OperationPeeBreak, game.ActiveMissionVariant);
+            Assert.AreEqual(GameManager.MissionVariant.SnackHeist, game.ActiveMissionVariant);
         }
     }
 }

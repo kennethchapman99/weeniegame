@@ -6,13 +6,13 @@ namespace CheddarAndCocoa.Game
     {
         public static MissionPropArtAttachment Attach(GameObject target, string resourcePath,
             Vector3 localScale, int sortingOrder, Color? tint = null, Vector3? localPosition = null,
-            bool shadow = true)
+            bool shadow = true, bool debugOnlyFallback = false)
         {
             if (target == null || string.IsNullOrEmpty(resourcePath)) return null;
             var attachment = target.GetComponent<MissionPropArtAttachment>();
             if (attachment == null) attachment = target.AddComponent<MissionPropArtAttachment>();
             bool loaded = attachment.Init(resourcePath, localPosition ?? new Vector3(0f, 0.12f, -0.28f),
-                localScale, sortingOrder, tint ?? Color.white, shadow);
+                localScale, sortingOrder, tint ?? Color.white, shadow, debugOnlyFallback);
             if (loaded)
             {
                 float maxAlpha = shadow ? 0.14f : 0.1f;
@@ -33,7 +33,7 @@ namespace CheddarAndCocoa.Game
             float scale = 0.013f, int sortingOrder = 12)
         {
             return Attach(target, resourcePath, Vector3.one * scale, sortingOrder,
-                new Color(1f, 1f, 1f, 0.92f), new Vector3(0f, 0.1f, -0.28f), false);
+                new Color(1f, 1f, 1f, 0.92f), new Vector3(0f, 0.1f, -0.28f), false, true);
         }
 
         public static void SetSprite(MissionPropArtAttachment attachment, string resourcePath)
