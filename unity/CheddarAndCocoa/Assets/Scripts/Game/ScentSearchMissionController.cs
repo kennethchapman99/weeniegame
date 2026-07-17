@@ -347,7 +347,7 @@ namespace CheddarAndCocoa.Game
             MissionPropArt.SetSprite(_digMarkers[index].GetComponent<MissionPropArtAttachment>(), resourcePath);
         }
 
-        private DogId DogIdAt(int dogIndex) => dogIndex >= 0 && dogIndex < _context.Dogs.Length &&
+        private DogId DogIdAt(int dogIndex) => _context.Dogs != null && dogIndex >= 0 && dogIndex < _context.Dogs.Length &&
             _context.Dogs[dogIndex] != null && _context.Dogs[dogIndex].TryGetComponent<DogIdentity>(out var identity)
                 ? identity.Id : DogId.Cheddar;
 

@@ -123,7 +123,7 @@ namespace CheddarAndCocoa.Game
 
         public bool HandleBark(int dogIndex)
         {
-            if (_cleared || IsFailed || dogIndex < 0 || dogIndex >= _context.Dogs.Length) return false;
+            if (_cleared || IsFailed || _context.Dogs == null || dogIndex < 0 || dogIndex >= _context.Dogs.Length) return false;
             DogId dogId = DogIdAt(dogIndex);
             if (!IsHuddling())
             {
@@ -324,7 +324,7 @@ namespace CheddarAndCocoa.Game
                     _context.Dogs[1].transform.position) <= pm.CuddleRadius;
         }
 
-        private DogId DogIdAt(int dogIndex) => dogIndex >= 0 && dogIndex < _context.Dogs.Length &&
+        private DogId DogIdAt(int dogIndex) => _context.Dogs != null && dogIndex >= 0 && dogIndex < _context.Dogs.Length &&
             _context.Dogs[dogIndex] != null && _context.Dogs[dogIndex].TryGetComponent<DogIdentity>(out var identity)
                 ? identity.Id : DogId.Cheddar;
 

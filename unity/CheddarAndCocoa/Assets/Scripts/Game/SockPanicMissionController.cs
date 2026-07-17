@@ -305,7 +305,7 @@ namespace CheddarAndCocoa.Game
             MissionPropArt.AttachObject(treat.gameObject, resourcePath, 0.013f, 31, true);
         }
 
-        private DogId DogIdAt(int dogIndex) => dogIndex >= 0 && dogIndex < _context.Dogs.Length &&
+        private DogId DogIdAt(int dogIndex) => _context.Dogs != null && dogIndex >= 0 && dogIndex < _context.Dogs.Length &&
             _context.Dogs[dogIndex] != null && _context.Dogs[dogIndex].TryGetComponent<DogIdentity>(out var identity)
                 ? identity.Id : DogId.Cheddar;
 

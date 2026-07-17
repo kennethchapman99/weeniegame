@@ -136,7 +136,7 @@ namespace CheddarAndCocoa.Game
 
         public bool HandleInteract(int dogIndex)
         {
-            if (_puzzle.Solved || _failed || dogIndex < 0 || dogIndex >= _context.Dogs.Length) return false;
+            if (_puzzle.Solved || _failed || _context.Dogs == null || dogIndex < 0 || dogIndex >= _context.Dogs.Length) return false;
             DogId dogId = DogIdAt(dogIndex);
             if (dogId != DogId.Cocoa)
             {
@@ -350,7 +350,7 @@ namespace CheddarAndCocoa.Game
             Mathf.Clamp(point.x, _context.Bounds.xMin + margin, _context.Bounds.xMax - margin),
             Mathf.Clamp(point.y, _context.Bounds.yMin + margin, _context.Bounds.yMax - margin));
 
-        private DogId DogIdAt(int dogIndex) => dogIndex >= 0 && dogIndex < _context.Dogs.Length &&
+        private DogId DogIdAt(int dogIndex) => _context.Dogs != null && dogIndex >= 0 && dogIndex < _context.Dogs.Length &&
             _context.Dogs[dogIndex] != null && _context.Dogs[dogIndex].TryGetComponent<DogIdentity>(out var identity)
                 ? identity.Id : DogId.Cheddar;
     }
