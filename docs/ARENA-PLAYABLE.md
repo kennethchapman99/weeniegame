@@ -1857,6 +1857,26 @@ Bark remains visible through expanding bark rings and a short comic **BARK!** bu
 
 Manual readability check: each bark should pop the dog into a **WOOF!** pose label and show both the expanding bark ring and comic bark burst. A solo bark away from targets gives a joking solo-bark cue and sets `LastJuiceFeedback` to `BarkBurst`. A successful united bark gives a **DOUBLE WOOF** cue and is protected for a short moment so the second same-moment bark does not visually downgrade it back to solo feedback. During predator warning, the united bark should drive the predator away immediately.
 
+## Handoff flip flourish (G1.4)
+
+`MissionContext.SignalRoleHandoff(fromDog, toDog)` is a shared, roster-wide signal a mission
+controller calls at its own existing mid-mission moment where the acting role passes from one dog
+to the other — a short baton-swoosh sprite arcs from the dog who just finished to the dog who acts
+next, both HUD identity chips flash briefly, and one placeholder audio cue plays (`ui_replay_next_select`;
+a dedicated "coach woof"-style cue is a later audio task). It adds no new mission rules — controllers
+fire it at the same call site where the flip already happens.
+
+Wired into: Great Escape and Chaos Machine's owner alternation (each contraption step/junction
+completed), Scent Search's hot-call moment (Cocoa calls it, Cheddar digs), Table Stealth's route
+swap (Cheddar's burp opens Cocoa's sneak window and vice versa), Weenie Roundup's jumbo-haul lift
+(Cocoa steadies, Cheddar carries), and Blanket Catch's called drop (Cocoa calls it, both dogs slide
+under). **Not** wired into Operation Pee Break's Beat-3 charger flip — both dogs get new,
+non-swapped roles simultaneously there (Cheddar leash→hallway, Cocoa stare→charger), which is not a
+handoff between the two of them the way the other six sites are.
+
+Manual readability check: trigger any of the six wired moments and confirm the swoosh visibly travels
+between the two dogs (not just pops at a fixed point) and both HUD chips flash together, not just one.
+
 ## Scoring, ranks, and replay
 
 The score model is deliberately readable and arcade-simple. Score changes appear as short HUD labels and world pops like **+100 UNITED BARK** or **-50 SQUIRREL GOT ONE**:

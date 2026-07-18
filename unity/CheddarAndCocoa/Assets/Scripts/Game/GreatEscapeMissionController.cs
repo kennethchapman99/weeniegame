@@ -212,6 +212,12 @@ namespace CheddarAndCocoa.Game
                 _context.RequestAudioCue(ArenaFeedbackCatalog.SnackSockCollect);
                 _context.RequestRumble("escape_step", 0.1f, 0.24f, 0.1f);
                 _context.LogEvent("EscapeStep", $"{_puzzle.Step}/{_puzzle.StepCount}");
+                if (!_puzzle.Solved)
+                {
+                    DogId from = completedBy == ChainActor.Cheddar ? DogId.Cheddar : DogId.Cocoa;
+                    DogId to = _puzzle.NextOwner == ChainActor.Cheddar ? DogId.Cheddar : DogId.Cocoa;
+                    _context.SignalRoleHandoff(from, to);
+                }
             }
 
             bool wasted = false;

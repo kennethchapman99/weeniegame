@@ -168,6 +168,13 @@ namespace CheddarAndCocoa.Game
         public Action<GameObject, float> Pulse { get; }
         /// <summary>Cosmetic shared-camera jolt for a single sharp in-mission impact (a snap, a fumble).</summary>
         public Action<float> RequestShake { get; }
+        /// <summary>
+        /// Guidance-ladder handoff flourish (G1.4): call at an existing mid-mission moment where the
+        /// acting role passes from one dog to the other (a baton-swoosh visual, both HUD chips pulse,
+        /// one audio cue). Not for beats where both dogs' roles change simultaneously to new,
+        /// non-swapped assignments - that isn't a handoff between the two of them.
+        /// </summary>
+        public Action<DogId, DogId> SignalRoleHandoff { get; }
 
         public MissionContext(
             DogController[] dogs,
@@ -218,7 +225,8 @@ namespace CheddarAndCocoa.Game
             Action<Treat> replaceCollectible,
             Action<GameObject, string, Color, float> setActorState,
             Action<GameObject, float> pulse,
-            Action<float> requestShake)
+            Action<float> requestShake,
+            Action<DogId, DogId> signalRoleHandoff)
         {
             Dogs = dogs ?? throw new ArgumentNullException(nameof(dogs));
             DogFeedback = dogFeedback ?? throw new ArgumentNullException(nameof(dogFeedback));
@@ -272,6 +280,7 @@ namespace CheddarAndCocoa.Game
             SetActorState = setActorState ?? throw new ArgumentNullException(nameof(setActorState));
             Pulse = pulse ?? throw new ArgumentNullException(nameof(pulse));
             RequestShake = requestShake ?? throw new ArgumentNullException(nameof(requestShake));
+            SignalRoleHandoff = signalRoleHandoff ?? throw new ArgumentNullException(nameof(signalRoleHandoff));
         }
 
         public int IndexOfDog(DogId dogId)

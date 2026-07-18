@@ -162,6 +162,7 @@ namespace CheddarAndCocoa.Game
             _context.RequestRumble("blanket_drop_call", 0.08f, 0.2f, 0.08f);
             _context.LogEvent("BlanketDropCalled", "Cocoa barked with the blanket taut");
             _context.LogObjectiveChanged();
+            _context.SignalRoleHandoff(DogId.Cocoa, DogId.Cheddar);
             UpdateVisuals();
             return true;
         }

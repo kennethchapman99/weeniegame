@@ -258,6 +258,7 @@ namespace CheddarAndCocoa.Game
                     _context.CreditDog(cocoa);
                     if (_context.DogFeedback[cocoa] != null) _context.DogFeedback[cocoa].ShowProudBrief();
                 }
+                _context.SignalRoleHandoff(DogId.Cocoa, DogId.Cheddar);
             }
             _context.AddScore(ScoreEventCatalog.WeeniePickup.Points, ScoreEventCatalog.WeeniePickup.Label);
             _context.SetFeedback(GameManager.FeedbackKind.PartnerRescue);

@@ -197,6 +197,7 @@ namespace CheddarAndCocoa.Game
                 if (dogIndex < _context.DogFeedback.Length && _context.DogFeedback[dogIndex] != null)
                     _context.DogFeedback[dogIndex].ShowProudBrief();
                 _context.AddScore(ScoreEventCatalog.ScentSniff.Points, ScoreEventCatalog.ScentSniff.Label);
+                _context.SignalRoleHandoff(DogId.Cocoa, DogId.Cheddar);
             }
             _context.SetFeedback(GameManager.FeedbackKind.SquirrelScared);
             _context.SetCue(newCall

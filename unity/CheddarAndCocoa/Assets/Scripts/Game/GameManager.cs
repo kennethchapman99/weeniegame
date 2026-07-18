@@ -133,6 +133,11 @@ namespace CheddarAndCocoa.Game
         /// <summary>Role-turn beacon (G1.3): whether the paw badge is currently showing over the objective target.</summary>
         public bool GuidanceBeaconVisible => _roleTurnBeacon != null && _roleTurnBeacon.IsShowing;
         public Color GuidanceBeaconTint => _roleTurnBeacon != null ? _roleTurnBeacon.CurrentTint : Color.white;
+        /// <summary>Handoff flip flourish (G1.4): a one-shot flash on both HUD identity chips when the active role passes between dogs.</summary>
+        public bool HandoffChipFlashVisible => Time.time < _handoffFlashUntil;
+        public DogId? LastHandoffFromDog { get; private set; }
+        public DogId? LastHandoffToDog { get; private set; }
+        public int HandoffSignalCount { get; private set; }
         public MarkTheYardMissionController MarkTheYardController => _activeMissionController as MarkTheYardMissionController;
         public TerritoryMissionState MarkTheYardState => MarkTheYardController?.State ?? _emptyTerritoryState;
         public Vector2[] TerritoryZones => MarkTheYardMissionController.ComputeZones(_bounds);
@@ -484,6 +489,7 @@ namespace CheddarAndCocoa.Game
         private int _guidanceLastTier;
         private float _guidanceNudgeAt;
         private readonly TextMesh[] _guidanceWidenedLabels = new TextMesh[2];
+        private float _handoffFlashUntil;
         private int[] _dogContribution;
         private readonly CarRideMissionState _emptyCarState = new CarRideMissionState();
         // Gate Crash (Hold-and-Release co-op puzzle): Cocoa anchors the gate, Cheddar squeezes through.
@@ -669,7 +675,8 @@ namespace CheddarAndCocoa.Game
             replaceCollectible: ReplaceControllerCollectible,
             setActorState: SetActorState,
             pulse: Pulse,
-            requestShake: RequestShake);
+            requestShake: RequestShake,
+            signalRoleHandoff: SignalRoleHandoff);
 
         public void OnTreatCollected(Treat treat, DogController dog)
         {
@@ -1304,6 +1311,10 @@ namespace CheddarAndCocoa.Game
             _nextUnitedBarkAt = 0f;
             _teamBarkFeedbackUntil = 0f;
             _scorePopUntil = 0f;
+            _handoffFlashUntil = 0f;
+            LastHandoffFromDog = null;
+            LastHandoffToDog = null;
+            HandoffSignalCount = 0;
             _squirrelScaredUntil = 0f;
             _nextSquirrelScareScoreAt = 0f;
             _squirrelTarget = null;
@@ -2566,6 +2577,7 @@ namespace CheddarAndCocoa.Game
             _guidance.Reset();
             ResetGuidancePresentation();
             _scorePopUntil = 0f;
+            _handoffFlashUntil = 0f;
             _squirrelTarget = null;
             _grabbedDog = -1;
             ClearTreats();
@@ -3654,6 +3666,28 @@ namespace CheddarAndCocoa.Game
             LastShakeMagnitude = magnitude;
             ShakeRequestCount++;
             _camera?.AddShake(magnitude);
+        }
+
+        /// <summary>
+        /// Handoff flip flourish (G1.4): a baton-swoosh visual between the two dogs, a brief pulse on
+        /// both HUD identity chips, and one placeholder audio cue (a dedicated cue is S5.1). Mission
+        /// controllers call this at their own existing role-flip moments - this method owns none of
+        /// that timing, only the shared presentation.
+        /// </summary>
+        private void SignalRoleHandoff(DogId fromDog, DogId toDog)
+        {
+            if (_dogs == null) return;
+            int fromIndex = IndexOfDog(fromDog);
+            int toIndex = IndexOfDog(toDog);
+            if (fromIndex < 0 || toIndex < 0 || _dogs[fromIndex] == null || _dogs[toIndex] == null) return;
+
+            Sprite swooshSprite = FinalGameplayArt.Load(FinalGameplayArt.DogFxChaosSpark);
+            DogHandoffSwoosh.Spawn(swooshSprite, _dogs[fromIndex].transform.position, _dogs[toIndex].transform.position);
+            _handoffFlashUntil = Time.time + 0.6f;
+            RequestAudioCue(ArenaFeedbackCatalog.UiReplayNextSelect);
+            LastHandoffFromDog = fromDog;
+            LastHandoffToDog = toDog;
+            HandoffSignalCount++;
         }
 
         private void StopRumble()

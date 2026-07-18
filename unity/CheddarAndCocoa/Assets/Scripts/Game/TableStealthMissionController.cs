@@ -188,6 +188,7 @@ namespace CheddarAndCocoa.Game
             _context.RequestAudioCue(ArenaFeedbackCatalog.Bark);
             _context.RequestRumble("table_burp", 0.1f, 0.24f, 0.1f);
             _context.LogEvent("TableBurp", "Cheddar opened Cocoa's sneak window");
+            _context.SignalRoleHandoff(DogId.Cheddar, DogId.Cocoa);
             UpdateLabels();
             return true;
         }
@@ -219,6 +220,7 @@ namespace CheddarAndCocoa.Game
             _context.SpawnWorldPop(_humanZone, "BELLY UP!", new Color(0.35f, 1f, 0.78f));
             _context.RequestRumble("table_flop", 0.08f, 0.2f, 0.08f);
             _context.LogEvent("TableFlop", "Cocoa opened Cheddar's sneak window");
+            _context.SignalRoleHandoff(DogId.Cocoa, DogId.Cheddar);
             UpdateLabels();
             return true;
         }

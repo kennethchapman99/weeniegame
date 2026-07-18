@@ -449,12 +449,13 @@ namespace CheddarAndCocoa.Game
         private void DrawPlayerIdentityChips()
         {
             var layout = BuildGameplayHudLayout(VirtualWidth, VirtualHeight);
+            bool handoffFlash = _game.HandoffChipFlashVisible;
             DrawPlayerIdentityChip(layout.CheddarChip,
                 BuildPlayerIdentityChipLabel("P1  CHEDDAR", _game.PlayerControlSourceLabel(DogId.Cheddar)), CheddarAccent,
-                _game.GuidancePartnerDogIndex == 0);
+                _game.GuidancePartnerDogIndex == 0 || handoffFlash);
             DrawPlayerIdentityChip(layout.CocoaChip,
                 BuildPlayerIdentityChipLabel("P2  COCOA", _game.PlayerControlSourceLabel(DogId.Cocoa)), CocoaAccent,
-                _game.GuidancePartnerDogIndex == 1);
+                _game.GuidancePartnerDogIndex == 1 || handoffFlash);
         }
 
         public static string BuildPlayerIdentityChipLabel(string player, string controlSource) =>

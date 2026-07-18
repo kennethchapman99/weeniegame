@@ -268,6 +268,13 @@ namespace CheddarAndCocoa.Game
                 _context.RequestAudioCue(ArenaFeedbackCatalog.SnackSockCollect);
                 _context.RequestRumble("chaos_stage", 0.12f, 0.28f, 0.1f);
                 _context.LogEvent("ChaosStage", $"{_puzzle.Stage}/{_puzzle.StageCount}");
+                if (!_puzzle.Solved)
+                {
+                    DogId from = completedBy == ChainActor.Cheddar ? DogId.Cheddar : DogId.Cocoa;
+                    ChainActor nextOwner = Owners[Mathf.Clamp(_puzzle.Stage, 0, Owners.Length - 1)];
+                    DogId to = nextOwner == ChainActor.Cheddar ? DogId.Cheddar : DogId.Cocoa;
+                    _context.SignalRoleHandoff(from, to);
+                }
             }
 
             if (_puzzle.Stalls > _stallsSeen)

@@ -34,7 +34,7 @@
 | G1.1 | Stall detector + escalation ladder core | DONE (2026-07-17, see below) |
 | G1.2 | Tier 1–3 signal wiring | DONE (2026-07-17, see below) |
 | G1.3 | Role-turn beacon | DONE (2026-07-18, see below) |
-| G1.4 | Handoff flip flourish | OPEN |
+| G1.4 | Handoff flip flourish | DONE (2026-07-18, see below) |
 | G1.5 | Wrong-role coaching audit | OPEN |
 | G1.6 | Ladder observability + couch telemetry | OPEN |
 | A2.1 | Animation coverage audit | OPEN |
@@ -313,6 +313,44 @@ Catch's called drop. Controllers call it at their existing flip points — no ru
 **Tests:** driving each listed mission's flip through existing force hooks fires exactly one
 handoff signal with the right dogs; no signal on non-flip progress.
 **Docs:** note the flourish in `docs/ARENA-PLAYABLE.md`'s shared-signal section.
+
+**Done (2026-07-18):** Added `MissionContext.SignalRoleHandoff(DogId fromDog, DogId toDog)` →
+`GameManager.SignalRoleHandoff` — spawns a new `DogHandoffSwoosh` (a standalone one-shot GameObject,
+not attached to GameManager's own, learning last task's lesson) that arcs `FinalGameplayArt.DogFxChaosSpark`
+between the two dogs' positions with an ease-out lerp and a small sine arc height, flashes both HUD
+identity chips for 0.6s (reuses the exact chip-pulse rendering G1.2/G1.3 already built — `ArenaHud`
+now ORs `HandoffChipFlashVisible` into the same `guidancePulse` bool), and fires one placeholder
+audio cue (`ui_replay_next_select`, distinct from G1.2's `bark` Tier-3 placeholder so the two signals
+don't sound identical; both are S5.1's job to replace with dedicated cues).
+
+- **Wired 6 of the 7 named missions**, each at its own existing flip point (no rule changes, one
+  `_context.SignalRoleHandoff(from, to)` call added per site): Great Escape and Chaos Machine's
+  shared `HandleProgress()` step/stage-advance funnel; Scent Search's Cocoa-hot-call branch in
+  `Sniff()`; Table Stealth's `HandleBark()`/`HandleInteract()` (both directions — this mission's
+  real handlers are separate implementations from its test-only `ForceTableFlop`/`ForceTableBurp`
+  hooks, unlike the other five where the Force hooks funnel through the same production method);
+  Weenie Roundup's jumbo-lift branch in the shared pickup path; Blanket Catch's `HandleBark()`
+  called-drop branch (its `ForceCocoaCallDrop()` test hook calls this exact method, so it's covered
+  by both real and forced paths for free).
+- **Deliberately did not wire Operation Pee Break's Beat-3 charger flip** — read the actual
+  `AdvanceBeat()`/`CreditBeatRoles()` code first: both dogs' jobs change simultaneously to new,
+  *different* assignments (Cheddar leash→hallway, Cocoa stare→charger) at that beat, which is not a
+  "dog A hands off to dog B" moment the `SignalRoleHandoff(from, to)` shape represents — there's no
+  single dog receiving the other's outgoing role. Forcing a fabricated from/to pair onto it would
+  misrepresent the beat rather than flag it, so it's left out and documented here instead.
+- **Tests:** `RoleHandoffPlayModeTests.cs` (10 scene-integration tests) — each of the 6 wired
+  missions fires exactly one signal with the correct from/to dogs on its real flip trigger, plus a
+  paired "no false signal" check per mission where applicable (Great Escape's wrong-dog fumble,
+  Chaos Machine's lever-pull-alone, Scent Search's Cheddar direction-hint sniff, Weenie Roundup's
+  symmetric fast-carry loop, Blanket Catch's blocked call while slack); Great Escape's final step
+  also confirms no handoff fires once solved (no next owner to receive it); one test confirms both
+  HUD chips flash together; one confirms replay clears `HandoffSignalCount`/`LastHandoffFromDog`/
+  `LastHandoffToDog`/the chip flash. All ran green on the first try — no bugs found this round.
+- Full PlayMode suite: **608/608 passed, 0 skipped** (598 baseline + 10 new,
+  `unity/playmode-results.xml`, SHA-256
+  `d68144b96783df2cf36c77cb44b8bf80c8c8c8bf5b88b1cb44611184ba5128b5`, 2026-07-18 02:36 EDT).
+- Dev build + smoke + 23-mission art-review capture all pass clean; same known sandbox gap as
+  P0.1/G1.2/G1.3 — frames are flat unrenderable placeholders here, not yet visually inspected.
 
 ### G1.5 — Wrong-role coaching audit
 **Goal:** every mission's wrong-dog / wrong-time attempt produces a visible, audible, recoverable
