@@ -36,7 +36,7 @@
 | G1.3 | Role-turn beacon | DONE (2026-07-18, see below) |
 | G1.4 | Handoff flip flourish | DONE (2026-07-18, see below) |
 | G1.5 | Wrong-role coaching audit | DONE (2026-07-18, see below) |
-| G1.6 | Ladder observability + couch telemetry | OPEN |
+| G1.6 | Ladder observability + couch telemetry | DONE (2026-07-18, see below) |
 | A2.1 | Animation coverage audit | OPEN |
 | A2.2 | Interact micro-animation | OPEN |
 | A2.3 | Signal-critical verb strips (dig/sniff/carry) | OPEN |
@@ -452,6 +452,48 @@ activations and where (objective copy at activation). Keep it out of normal-play
 **Tests:** forced stall produces the expected recorded entries; normal-play HUD strings unchanged.
 **Docs:** add the "stall once on purpose, watch the ladder" step to
 `docs/FAMILY-SHOWCASE-MANUAL-TEST.md`'s observation checklist.
+
+**Done (2026-07-18):** This closes Phase 1 (G1.1-G1.6) of the guidance-ladder plan.
+
+- **F1 overlay:** new `GameManager.GuidanceDebugLabel` (`"Guidance: Tier N (X.Xs stalled, T2xN
+  T3xN)"`) added as one more row in `ArenaHud.DrawPlaytestOverlay()` (box height bumped 410→432 to
+  fit). This method is only reached when `PlaytestOverlayVisible` is true (F1 toggle) and never from
+  the normal-play HUD draw path, so "keep it out of normal-play HUD" holds structurally, not just by
+  convention.
+- **Per-attempt activation counts:** `GameManager.GuidanceTier2Activations`/`GuidanceTier3Activations`
+  (int, edge-triggered - only increment on the frame the tier first crosses into 2 or 3, not every
+  frame it stays there), reset alongside `_guidance.Reset()` in `BeginRound()`. Centralized the
+  edge-detection in one new `TickGuidance(float seconds)` method that both `Update()`'s real
+  per-frame tick AND the `ForceGuidanceStall` test hook now call — needed because those were two
+  separate call sites ticking the same `MissionGuidanceEscalation` instance, and edge-detection
+  (comparing tier before/after) has to live somewhere both reach or the deterministic test hook
+  would silently never trigger a recorded activation.
+  Each crossing also fires `LogPlaytestEvent("GuidanceTier2"/"GuidanceTier3", ObjectiveLabel)` -
+  satisfies "the existing playtest overlay/event path" and captures "where" (the objective copy at
+  that instant) for free, reusing the exact same event-log idiom used everywhere else in the file.
+- **Session summary:** new `GameManager.SessionGuidanceActivationsLabel` (mirrors the existing
+  `SessionRanksEarnedLabel` pattern exactly - a `List<string>` of one `"{mission}: T2xN T3xN"` entry
+  per attempt that had *any* activations, appended in `RecordSessionResult()`, showing the most
+  recent 3 with a "(+N earlier)" tail, reset in `ResetSession()`). Attempts with zero activations are
+  skipped so quiet missions don't clutter the summary. Rendered in `ArenaHud.DrawSessionSummary()` on
+  `layout.Challenge` - a rect that struct already defined (shared with the other end-screen) but that
+  this specific screen had never actually drawn anything into, so no layout rework was needed.
+- **Tests:** `GuidanceTelemetryPlayModeTests.cs` (6 new tests) — forced stall records both tier
+  crossings through the event log; repeated stall/reset/stall cycles count each crossing separately
+  (proves edge-triggering, not a one-shot latch); mission end folds the attempt's counts into the
+  session summary; a quiet attempt (no stalls) leaves the summary unmentioned; replay resets the
+  per-attempt counts; and a direct check that `ObjectiveLabel`/`TeamGuidanceLabel` (the normal-play
+  HUD strings) never mention "Tier"/"stalled" while `GuidanceDebugLabel` (F1-only) does. All passed
+  on the first run.
+- Full PlayMode suite: **619/619 passed, 0 skipped** (613 baseline + 6 new,
+  `unity/playmode-results.xml`, SHA-256
+  `e3ccb2cfc6a6157f31a288437292d4920fc44e1f2b068e1274d23d5477f0f608`, 2026-07-18 03:48 EDT). Dev
+  build + smoke + 23-mission art-review capture all pass clean; same known sandbox gap as prior
+  tasks — frames unrenderable here, not yet visually inspected.
+
+**Phase 1 (the sequential guidance-grammar core) is now fully complete: G1.1 through G1.6 all
+shipped and green.** Phases 2-4 (animation, art consistency, first-session flow) are parallelizable
+from here per `docs/PRELAUNCH-PRODUCTION-PLAN.md`.
 
 ---
 

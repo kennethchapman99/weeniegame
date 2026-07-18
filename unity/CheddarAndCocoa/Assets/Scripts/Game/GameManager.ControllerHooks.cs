@@ -10,7 +10,7 @@ namespace CheddarAndCocoa.Game
         /// <summary>Advances the guidance-escalation stall clock by an exact amount for deterministic tests.</summary>
         public void ForceGuidanceStall(float seconds)
         {
-            if (MissionActive()) _guidance.Tick(seconds);
+            if (MissionActive()) TickGuidance(seconds);
         }
 
         public void ForceGateHold(bool held = true)

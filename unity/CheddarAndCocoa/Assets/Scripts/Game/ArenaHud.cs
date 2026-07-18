@@ -734,7 +734,7 @@ namespace CheddarAndCocoa.Game
         private void DrawPlaytestOverlay()
         {
             float w = Mathf.Min(440f, Mathf.Max(1f, VirtualWidth - 24f));
-            float h = Mathf.Min(410f, Mathf.Max(1f, VirtualHeight - 24f));
+            float h = Mathf.Min(432f, Mathf.Max(1f, VirtualHeight - 24f));
             var box = new Rect(Mathf.Max(12f, VirtualWidth - w - 12f), 12f, w, h);
             DrawHudOverlay(box);
 
@@ -756,6 +756,7 @@ namespace CheddarAndCocoa.Game
             GUI.Label(new Rect(box.x + 12f, box.y + 334f, w - 24f, 20f), _game.ActiveMissionReadinessLabel, _overlay);
             GUI.Label(new Rect(box.x + 12f, box.y + 356f, w - 24f, 20f), _game.DemoReadinessLabel, _overlay);
             GUI.Label(new Rect(box.x + 12f, box.y + 378f, w - 24f, 20f), _game.PlaytestHotkeysLabel, _overlay);
+            GUI.Label(new Rect(box.x + 12f, box.y + 400f, w - 24f, 20f), _game.GuidanceDebugLabel, _overlay);
         }
 
         private void DrawPlaytestModeToggle()
@@ -894,6 +895,7 @@ namespace CheddarAndCocoa.Game
             GUI.Label(layout.Score, _game.SessionRanksEarnedLabel, _resultBody);
             string continuePrompt = _game.SessionAllMissionsCompleted ? "begins a Victory Lap" : "continues";
             GUI.Label(layout.Flavor, $"Enter / Start {continuePrompt}", _resultBody);
+            GUI.Label(layout.Challenge, _game.SessionGuidanceActivationsLabel, _resultBody);
 
             if (DrawResultButton(layout.Buttons[0], _game.SessionContinueActionLabel, true))
                 _game.ContinueSession();

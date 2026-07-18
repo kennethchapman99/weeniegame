@@ -253,6 +253,7 @@ Record short notes after each mission. Do not interrupt play unless the session 
 - Did arrows and labels help without covering the dogs?
 - Were important props visible before text was parsed?
 - Did success/failure feedback explain what just happened?
+- Stall once on purpose (stand still) — did the ladder escalate legibly, tier by tier?
 
 ### Co-op
 

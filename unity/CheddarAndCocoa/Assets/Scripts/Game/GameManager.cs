@@ -138,6 +138,13 @@ namespace CheddarAndCocoa.Game
         public DogId? LastHandoffFromDog { get; private set; }
         public DogId? LastHandoffToDog { get; private set; }
         public int HandoffSignalCount { get; private set; }
+        /// <summary>Ladder observability (G1.6): per-attempt Tier-2/Tier-3 crossing counts, reset on mission start/replay.</summary>
+        public int GuidanceTier2Activations { get; private set; }
+        public int GuidanceTier3Activations { get; private set; }
+        /// <summary>F1-overlay-only debug readout; never referenced by the normal-play HUD.</summary>
+        public string GuidanceDebugLabel =>
+            $"Guidance: Tier {GuidanceTier} ({GuidanceStallSeconds:0.0}s stalled, T2x{GuidanceTier2Activations} T3x{GuidanceTier3Activations})";
+        public string SessionGuidanceActivationsLabel { get; private set; } = "Stalls: none yet.";
         public MarkTheYardMissionController MarkTheYardController => _activeMissionController as MarkTheYardMissionController;
         public TerritoryMissionState MarkTheYardState => MarkTheYardController?.State ?? _emptyTerritoryState;
         public Vector2[] TerritoryZones => MarkTheYardMissionController.ComputeZones(_bounds);
@@ -528,6 +535,8 @@ namespace CheddarAndCocoa.Game
 
         private readonly List<Treat> _treats = new();
         private readonly List<string> _sessionRanks = new();
+        private readonly List<string> _sessionGuidanceActivations = new();
+        private readonly List<string> _attemptGuidanceActivationDetails = new();
         private float[] _lastBarks;
         private float _nextUnitedBarkAt;
         private float _squirrelTimer;
@@ -844,6 +853,8 @@ namespace CheddarAndCocoa.Game
             SessionUniqueMissionsCleared = 0;
             _lastSummaryMilestoneShown = 0;
             _sessionRanks.Clear();
+            _sessionGuidanceActivations.Clear();
+            SessionGuidanceActivationsLabel = "Stalls: none yet.";
             System.Array.Clear(_sessionCompletedMissions, 0, _sessionCompletedMissions.Length);
             System.Array.Clear(_sessionClearedMissions, 0, _sessionClearedMissions.Length);
             System.Array.Clear(_sessionFlawlessMissions, 0, _sessionFlawlessMissions.Length);
@@ -1292,6 +1303,9 @@ namespace CheddarAndCocoa.Game
                 _mission.GuidanceTier2Seconds, _mission.GuidanceTier3Seconds);
             _guidance.Reset();
             ResetGuidancePresentation();
+            GuidanceTier2Activations = 0;
+            GuidanceTier3Activations = 0;
+            _attemptGuidanceActivationDetails.Clear();
 
             if (!_reuseMissionSeedOnNextBegin)
                 // Mission order is presentation, not tuning. Use the enum's stable identity so a
@@ -1433,7 +1447,7 @@ namespace CheddarAndCocoa.Game
 
             bool presentingEarnedSuccess = _activeMissionController is IMissionSuccessPresentationController successPresentation
                 && successPresentation.IsPresentingSuccessfulOutcome;
-            if (!presentingEarnedSuccess) _guidance.Tick(Time.deltaTime);
+            if (!presentingEarnedSuccess) TickGuidance(Time.deltaTime);
             if (!presentingEarnedSuccess) TimeRemaining -= Time.deltaTime;
             if (!presentingEarnedSuccess && TimeRemaining <= 0f)
             {
@@ -2629,6 +2643,8 @@ namespace CheddarAndCocoa.Game
             SessionUniqueMissionsCompleted = CountCompletedMissions();
             SessionUniqueMissionsCleared = CountClearedMissions();
             _sessionRanks.Add($"{_mission.Name}: {EndRank}");
+            if (GuidanceTier2Activations > 0 || GuidanceTier3Activations > 0)
+                _sessionGuidanceActivations.Add($"{_mission.Name}: T2x{GuidanceTier2Activations} T3x{GuidanceTier3Activations}");
             UpdateSessionSummaryLabel();
         }
 
@@ -2687,6 +2703,20 @@ namespace CheddarAndCocoa.Game
             int earlier = _sessionRanks.Count - recent.Count;
             string earlierLabel = earlier > 0 ? $" (+{earlier} earlier)" : string.Empty;
             SessionRanksEarnedLabel = $"Recent ranks{earlierLabel}: {string.Join(" | ", recent)}";
+
+            if (_sessionGuidanceActivations.Count == 0)
+            {
+                SessionGuidanceActivationsLabel = "Stalls: none yet.";
+                return;
+            }
+
+            const int visibleStalls = 3;
+            int stallFirst = Mathf.Max(0, _sessionGuidanceActivations.Count - visibleStalls);
+            var recentStalls = new List<string>(visibleStalls);
+            for (int i = stallFirst; i < _sessionGuidanceActivations.Count; i++) recentStalls.Add(_sessionGuidanceActivations[i]);
+            int earlierStalls = _sessionGuidanceActivations.Count - recentStalls.Count;
+            string earlierStallsLabel = earlierStalls > 0 ? $" (+{earlierStalls} earlier)" : string.Empty;
+            SessionGuidanceActivationsLabel = $"Stalls{earlierStallsLabel}: {string.Join(" | ", recentStalls)}";
         }
 
         private int CountCompletedMissions()
@@ -2900,6 +2930,34 @@ namespace CheddarAndCocoa.Game
         /// label; Tier 3 flags the HUD objective line (rendered in ArenaHud) and fires one placeholder
         /// audio cue on the tier-up edge. Tier 0 leaves every one of these untouched/reverted.
         /// </summary>
+        /// <summary>
+        /// Ticks the guidance-escalation clock and records Tier-2/Tier-3 crossings (couch-test
+        /// telemetry, G1.6). The single choke point for advancing <see cref="_guidance"/> so both
+        /// real per-frame ticking (here) and the deterministic <see cref="ForceGuidanceStall"/> test
+        /// hook produce the same recorded activations.
+        /// </summary>
+        private void TickGuidance(float seconds)
+        {
+            int tierBefore = _guidance.Tier;
+            _guidance.Tick(seconds);
+            int tierAfter = _guidance.Tier;
+
+            if (tierAfter >= 2 && tierBefore < 2)
+            {
+                GuidanceTier2Activations++;
+                string detail = ObjectiveLabel;
+                _attemptGuidanceActivationDetails.Add($"T2 @ {detail}");
+                LogPlaytestEvent("GuidanceTier2", detail);
+            }
+            if (tierAfter >= 3 && tierBefore < 3)
+            {
+                GuidanceTier3Activations++;
+                string detail = ObjectiveLabel;
+                _attemptGuidanceActivationDetails.Add($"T3 @ {detail}");
+                LogPlaytestEvent("GuidanceTier3", detail);
+            }
+        }
+
         private void UpdateGuidancePresentation()
         {
             if (ObjectiveArrows == null || _dogs == null) return;
