@@ -109,6 +109,9 @@ namespace CheddarAndCocoa.Game
         public ScentSearchMissionState ScentSearchState => ScentSearchController?.State ?? _emptyScentState;
         public Vector2[] DigSpots => ScentSearchMissionController.ComputeDigSpots(_bounds);
         public PanicMeter Panic => _panic;
+        /// <summary>Current stall-escalation tier (0 Discovery - 3 Rescue). Zero visual output yet; G1.2 renders it.</summary>
+        public int GuidanceTier => _guidance.Tier;
+        public float GuidanceStallSeconds => _guidance.StallSeconds;
         public MarkTheYardMissionController MarkTheYardController => _activeMissionController as MarkTheYardMissionController;
         public TerritoryMissionState MarkTheYardState => MarkTheYardController?.State ?? _emptyTerritoryState;
         public Vector2[] TerritoryZones => MarkTheYardMissionController.ComputeZones(_bounds);
@@ -454,6 +457,7 @@ namespace CheddarAndCocoa.Game
         private readonly CarryRoundupMissionState _emptyCarryState = new CarryRoundupMissionState();
         private readonly ScentSearchMissionState _emptyScentState = new ScentSearchMissionState();
         private PanicMeter _panic;
+        private readonly MissionGuidanceEscalation _guidance = new MissionGuidanceEscalation();
         private int[] _dogContribution;
         private readonly CarRideMissionState _emptyCarState = new CarRideMissionState();
         // Gate Crash (Hold-and-Release co-op puzzle): Cocoa anchors the gate, Cheddar squeezes through.
@@ -1249,6 +1253,9 @@ namespace CheddarAndCocoa.Game
             FailedInteractions = 0;
             ObjectiveChangeCount = 0;
             ResetActionTutorialProgress();
+            _guidance.Configure(_mission.GuidanceTierCap, _mission.GuidanceTier1Seconds,
+                _mission.GuidanceTier2Seconds, _mission.GuidanceTier3Seconds);
+            _guidance.Reset();
 
             if (!_reuseMissionSeedOnNextBegin)
                 // Mission order is presentation, not tuning. Use the enum's stable identity so a
@@ -1386,6 +1393,7 @@ namespace CheddarAndCocoa.Game
 
             bool presentingEarnedSuccess = _activeMissionController is IMissionSuccessPresentationController successPresentation
                 && successPresentation.IsPresentingSuccessfulOutcome;
+            if (!presentingEarnedSuccess) _guidance.Tick(Time.deltaTime);
             if (!presentingEarnedSuccess) TimeRemaining -= Time.deltaTime;
             if (!presentingEarnedSuccess && TimeRemaining <= 0f)
             {
@@ -2235,6 +2243,7 @@ namespace CheddarAndCocoa.Game
 
         private void AddScore(int delta, string reason)
         {
+            _guidance.NotifyProgress();
             Score += delta;
             LastScoreDelta = delta;
             string sign = delta >= 0 ? "+" : "-";
@@ -2306,6 +2315,7 @@ namespace CheddarAndCocoa.Game
 
             _lastLoggedObjective = objective;
             ObjectiveChangeCount++;
+            _guidance.NotifyProgress();
             LogPlaytestEvent("ObjectiveChanged", objective);
         }
 
@@ -2523,6 +2533,7 @@ namespace CheddarAndCocoa.Game
             FailedInteractions = 0;
             ObjectiveChangeCount = 0;
             ResetActionTutorialProgress();
+            _guidance.Reset();
             _scorePopUntil = 0f;
             _squirrelTarget = null;
             _grabbedDog = -1;

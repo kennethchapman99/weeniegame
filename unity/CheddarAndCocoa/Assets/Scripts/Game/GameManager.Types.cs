@@ -92,6 +92,14 @@ namespace CheddarAndCocoa.Game
             public string ReusablePresentation;
             public ReadabilityRequirement RequiredReadability;
 
+            // Guidance escalation ladder overrides (see MissionGuidanceEscalation). Default: every
+            // mission gets the full 0-3 tier ladder at the default 12s/25s/45s timings; a mission may
+            // override the cap and timings for a timing-critical window without any code branching.
+            public int GuidanceTierCap = MissionGuidanceEscalation.MaxTier;
+            public float GuidanceTier1Seconds = MissionGuidanceEscalation.DefaultTier1Seconds;
+            public float GuidanceTier2Seconds = MissionGuidanceEscalation.DefaultTier2Seconds;
+            public float GuidanceTier3Seconds = MissionGuidanceEscalation.DefaultTier3Seconds;
+
             public string PresentationLine =>
                 string.IsNullOrEmpty(MechanicTag) && string.IsNullOrEmpty(SceneCue)
                     ? string.Empty

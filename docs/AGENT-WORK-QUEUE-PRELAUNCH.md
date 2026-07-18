@@ -31,7 +31,7 @@
 | ID | Task | Status |
 |---|---|---|
 | P0.1 | Baseline after Codex lands | DONE (2026-07-17, see below) |
-| G1.1 | Stall detector + escalation ladder core | OPEN |
+| G1.1 | Stall detector + escalation ladder core | DONE (2026-07-17, see below) |
 | G1.2 | Tier 1–3 signal wiring | OPEN |
 | G1.3 | Role-turn beacon | OPEN |
 | G1.4 | Handoff flip flourish | OPEN |
@@ -121,6 +121,46 @@ type resets it; frozen states don't accumulate stall time; replay resets; a miss
 cap never reaches 3.
 **Done when:** service exists with zero visual output (G1.2 renders it), suite green, new tests fail
 without the service.
+
+**Done (2026-07-17):** Added `MissionGuidanceEscalation`
+(`unity/CheddarAndCocoa/Assets/Scripts/Game/MissionGuidanceEscalation.cs`) — a plain C# class (not a
+`MonoBehaviour`; `GameManager` owns and ticks the one instance) tracking `StallSeconds`/`Tier`
+against configurable 12s/25s/45s thresholds and a tier cap, with `NotifyProgress()`/`Reset()`.
+
+- **Wiring, not a new subsystem:** GameManager ticks it in `Update()` at the exact line that already
+  gates `TimeRemaining` on `presentingEarnedSuccess` (`GameManager.cs`), so it inherits the existing
+  freeze structure for free — the opening explainer, sniff-around lead-in, and end-card early-returns
+  all already short-circuit `Update()` before that line; held success payoff got its own explicit
+  `if (!presentingEarnedSuccess)` guard next to the one `TimeRemaining` already uses; pause is free
+  because `Time.timeScale = 0` makes `Time.deltaTime` 0 while paused. `BeginRound()` calls
+  `Configure()` + `Reset()` on every mission start/replay; `ShowMissionSelect()` also resets it.
+  `AddScore()` and the "changed" branch of `LogObjectiveIfChanged()` — the two generic progress
+  signals every controller already fires through — call `NotifyProgress()`.
+- Per-mission overrides live as four new fields on `GameManager.MissionDefinition`
+  (`GuidanceTierCap`, `GuidanceTier1/2/3Seconds`), defaulted to the full ladder at standard timings;
+  no mission needed an override yet, so none of the 23 `Build*Definition` methods changed.
+- Added `GameManager.GuidanceTier` / `GuidanceStallSeconds` read-only properties (the only new
+  observable surface — no rendering, per the done-criteria) and a `ForceGuidanceStall(float seconds)`
+  test hook in `GameManager.ControllerHooks.cs` alongside the existing `Force*` deterministic hooks.
+- **Tests:** `MissionGuidanceEscalationTests.cs` (8 pure-logic tests, no scene: tier thresholds at
+  forced timestamps including boundaries, zero/negative-delta no-op, `NotifyProgress`/`Reset`, a
+  Tier-2 cap never reaching 3, a Tier-0 cap staying at Discovery, custom timing overrides) plus
+  `GuidanceEscalationPlayModeTests.cs` (9 scene-driven integration tests: mission-start-at-Tier-0,
+  forced-timestamp tier advance, a real score event (treat collect) resetting it, a real
+  objective-copy-only change (`ForcePredatorWarning`, no score) resetting it, pause not accumulating,
+  the sniff-around lead-in not accumulating (`LeadInSecondsOverride`), a real SnackHeist held-success
+  payoff not accumulating, replay resetting it, and all 23 registered mission definitions defaulting
+  to the full cap/standard timings). First run caught three test bugs in my own new integration
+  tests (not production code): two used exact `0f` equality against a value that legitimately ticks a
+  hair above zero one frame after start/restart (fixed with a `< 0.1f` bound), and the held-success
+  test's naive collect-loop stalled forever because SnackHeist requires a Cocoa guard-bark before
+  further collects count (fixed by mirroring the existing
+  `SnackHeist_Initializes_Scores_Clears_Fails_AndReplays` setup).
+- Full PlayMode suite: **588/588 passed, 0 skipped** (571 baseline + 17 new,
+  `unity/playmode-results.xml`, SHA-256
+  `47ad0875459d2f5480dc89b395f988f18db2c79bfcb5b4e8223352d01dedb9d2`, 2026-07-17 22:11 EDT).
+- No visual output added (by design — G1.2 renders the ladder). No doc beyond this queue entry
+  needed updating; `VISUAL-READABILITY-CONTRACT.md`'s "Guidance ladder" section is G1.2's task.
 
 ### G1.2 — Tier 1–3 signal wiring
 **Goal:** the ladder becomes visible/audible exactly as specified in the plan.

@@ -7,6 +7,12 @@ namespace CheddarAndCocoa.Game
     // active mission controller instead of reintroducing mission-owned state into GameManager.
     public sealed partial class GameManager : MonoBehaviour
     {
+        /// <summary>Advances the guidance-escalation stall clock by an exact amount for deterministic tests.</summary>
+        public void ForceGuidanceStall(float seconds)
+        {
+            if (MissionActive()) _guidance.Tick(seconds);
+        }
+
         public void ForceGateHold(bool held = true)
         {
             if (MissionActive()) GateCrashController?.ForceGateHold(held);
