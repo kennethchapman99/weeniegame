@@ -38,7 +38,7 @@
 | G1.5 | Wrong-role coaching audit | DONE (2026-07-18, see below) |
 | G1.6 | Ladder observability + couch telemetry | DONE (2026-07-18, see below) |
 | A2.1 | Animation coverage audit | DONE (2026-07-18, see below) |
-| A2.2 | Interact micro-animation | OPEN |
+| A2.2 | Interact micro-animation | DONE (2026-07-18, see below) |
 | A2.3 | Signal-critical verb strips (dig/sniff/carry) | OPEN |
 | A2.4 | Threat/NPC acting gaps | OPEN |
 | A2.5 | Held-payoff pose audit | OPEN |
@@ -553,6 +553,43 @@ otherwise a tucked head-bob/squash tween is acceptable pre-launch. Cheddar's rea
 Cocoa's (identity rule).
 **Tests:** accepted Interact triggers the read; rejected/wrong-role Interact does not double-fire
 with the coaching gag; state clears after the beat.
+
+**Done (2026-07-18):** Chose the tween fallback the task explicitly allows, not new authored art —
+no source sheets to export from for this, and a code-only squash is the smaller, lower-risk path.
+
+- One shared hook in `GameManager.OnDogInteracted`, right where `HandleInteract`'s result is already
+  checked — no changes to any of the 23 controllers. A new `_interactionCoachedThisAttempt` flag
+  (set by `MarkFailedInteraction`, reset before each `HandleInteract` dispatch) distinguishes a
+  genuine acceptance from a coached rejection, since several controllers' wrong-role branches
+  return `true` from `HandleInteract` too (a G1.5 fix, to avoid a different generic-fallback
+  clobber) — without this flag the squash would have double-fired on every coached rejection.
+  `DogReadabilityFeedback.ShowInteractAccepted()` only gets called when both conditions hold.
+- **Found and fixed a real transform-ownership bug while wiring this in**, not just added the
+  feature: my first attempt multiplied the squash into the two per-pose scale setters
+  (`ApplyPose`'s static-fallback assignment and `AnimateAuthoredMotion`'s per-frame authored-frame
+  assignment) — both silently discarded, because `ApplyPersonalityMotion` (called immediately
+  afterward every frame from `AnimatePose`) unconditionally recomputes and overwrites
+  `_authoredPose.transform.localScale` from its own `authoredBase` variable, ignoring whatever the
+  two earlier methods just set. Traced the actual call order (`AnimatePose` → `AnimateAuthoredMotion`
+  → `ApplyPersonalityMotion`) before committing and moved the multiplier to the true last writer.
+  Caught by reading the code path fully rather than trusting the first plausible-looking edit spot —
+  worth remembering for any future `_authoredPose.transform` change in this file, since it's written
+  from three different methods each frame and only the last one sticks.
+- Squash-and-pop: a single damped-sine scale bump (`1 + sin(t·π)·amplitude`, 0.22s), layered onto
+  whatever `AuthoredMotionScale`/`AuthoredFallbackScale`/personality/action-feedback scale is already
+  active rather than replacing it — does not touch `CurrentPose`, so it reads correctly mid-tug or
+  mid-dig. Cheddar's amplitude (0.2) is bigger than Cocoa's (0.12) per the identity rule.
+- **Tests:** `InteractMicroAnimationPlayModeTests.cs` (4 tests, Gate Crash as the fixture — a real
+  accept/reject pair already exists there): accepted Interact plays the read; wrong-role rejection
+  does not; too-far rejection does not; the read clears itself after its 0.22s beat. All passed on
+  the first run (the transform-ownership bug above was caught and fixed before ever running tests,
+  by reading the call order, not by a failing assertion).
+- Full PlayMode suite: **623/623 passed, 0 skipped** (619 baseline + 4 new,
+  `unity/playmode-results.xml`, SHA-256
+  `051ab762d97d172bbeee47450b526eccbc350a392e02bd4c177558c5dbd4c68c`, 2026-07-18 04:08 EDT). Dev
+  build + smoke + 23-mission art-review capture all pass clean (same known sandbox gap — a 0.22s
+  squash pulse wouldn't reliably land on a captured frame anyway, so this one specifically needs a
+  live human check, noted in the new `docs/ARENA-PLAYABLE.md` manual-check entry).
 
 ### A2.3 — Signal-critical verb strips: dig, sniff, carry
 **Goal:** the three most mission-load-bearing verbs read as animation at couch distance.

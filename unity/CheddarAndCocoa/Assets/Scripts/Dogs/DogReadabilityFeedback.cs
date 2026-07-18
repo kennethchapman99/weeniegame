@@ -60,6 +60,7 @@ namespace CheddarAndCocoa.Dogs
         private DogActionFeedback _actionFeedback;
         private DogProceduralAudio _proceduralAudio;
         private DogShowcasePolish _showcasePolish;
+        private float _interactSquashStartedAt = -1f;
 
         public Pose CurrentPose { get; private set; } = Pose.Idle;
         public string CurrentPoseLabel => CurrentPose.ToString();
@@ -137,6 +138,30 @@ namespace CheddarAndCocoa.Dogs
         public void ShowSad() => ForcePose(Pose.Sad, 999f);
         public void ShowPanic() => ForcePose(Pose.Sad, 0.6f);     // brief flinch (e.g. a thunderclap)
         public void ShowComfort() => ForcePose(Pose.Proud, 0.5f); // brief reassurance while huddling
+
+        /// <summary>
+        /// A2.2: a short paw-tap/nose-boop read on a genuinely-accepted Interact - a squash-and-pop
+        /// scale pulse layered on top of whatever pose is already showing (does not interrupt
+        /// CurrentPose, so it reads correctly even mid-tug/mid-dig). Cheddar's bounce is bigger and
+        /// snappier than Cocoa's (chaos-puppy vs. veteran-queen identity), matching every other
+        /// per-dog readability split in this file.
+        /// </summary>
+        public void ShowInteractAccepted() => _interactSquashStartedAt = Time.time;
+
+        /// <summary>Test/debug readout: is the accepted-Interact squash currently mid-beat?</summary>
+        public bool IsShowingInteractAccepted =>
+            _interactSquashStartedAt >= 0f && Time.time < _interactSquashStartedAt + InteractSquashDuration;
+
+        private const float InteractSquashDuration = 0.22f;
+
+        private float InteractSquashScale()
+        {
+            if (_interactSquashStartedAt < 0f) return 1f;
+            float t = (Time.time - _interactSquashStartedAt) / InteractSquashDuration;
+            if (t >= 1f) return 1f;
+            float amplitude = _identity != null && _identity.Id == DogId.Cheddar ? 0.2f : 0.12f;
+            return 1f + Mathf.Sin(Mathf.Clamp01(t) * Mathf.PI) * amplitude;
+        }
 
         /// <summary>
         /// Guidance-ladder Tier 1 nudge: turn to face the stalled objective using the existing
@@ -430,9 +455,10 @@ namespace CheddarAndCocoa.Dogs
             Vector2 actionScale = _actionFeedback != null ? _actionFeedback.VisualScale : Vector2.one;
             Vector2 actionOffset = _actionFeedback != null ? _actionFeedback.VisualOffset : Vector2.zero;
             float actionRotation = _actionFeedback != null ? _actionFeedback.VisualRotationDegrees : 0f;
+            float interactSquash = InteractSquashScale();
             _authoredPose.transform.localScale = new Vector3(
-                authoredBase.x * personality.Scale.x * barkPulse * actionScale.x,
-                authoredBase.y * personality.Scale.y * barkPulse * actionScale.y,
+                authoredBase.x * personality.Scale.x * barkPulse * actionScale.x * interactSquash,
+                authoredBase.y * personality.Scale.y * barkPulse * actionScale.y * interactSquash,
                 authoredBase.z);
             _authoredPose.transform.localRotation = Quaternion.Euler(0f, 0f,
                 personality.RotationDegrees + actionRotation);

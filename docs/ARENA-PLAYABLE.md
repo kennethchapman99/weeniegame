@@ -524,6 +524,32 @@ in range (e.g. Backyard Rescue's rope tug); jump is now the real always-availabl
 Covered by `JumpActionPlayModeTests` (arc ramps and lands, blocked while Busy, consumed from
 `MoveIntent`) and the `Jump` case added to `Profiles_PreserveDistinctCheddarAndCocoaIdentity`.
 
+### Interact micro-animation (A2.2, 2026-07-18)
+
+Pressing Interact now visibly does something on the acting dog, not just the target prop. One shared
+choke point (`GameManager.OnDogInteracted`, where `IMissionInteractionController.HandleInteract`'s
+result is already checked) plays `DogReadabilityFeedback.ShowInteractAccepted()` — a brief
+squash-and-pop scale pulse (0.22s, a single damped sine bump) layered on top of whatever pose is
+already showing, so it reads correctly even mid-tug or mid-dig without interrupting `CurrentPose`.
+Cheddar's bounce (0.2 amplitude) is bigger and snappier than Cocoa's (0.12), matching the
+chaos-puppy/veteran-queen identity split used everywhere else in this file.
+
+It only fires on a genuine acceptance: `MarkFailedInteraction` (the shared call every wrong-role/
+too-far coach beat already uses) sets a one-shot flag checked right after `HandleInteract` returns,
+so a coached rejection never also plays the accepted-Interact squash even though several controllers'
+rejection branches return `true` from `HandleInteract` (to avoid an unrelated generic-fallback
+clobber found in G1.5). No per-controller changes needed — every one of the 23 missions' Interact
+paths gets this for free through the one shared dispatch point.
+
+No new authored art (per the task's own allowed fallback) — a code-only tween on the existing
+`_authoredPose` transform's scale, applied in `ApplyPersonalityMotion` (the actual last writer of
+that transform each frame; the two earlier per-pose scale-setters get overwritten by it every frame,
+so multiplying the squash in anywhere upstream of that method would have been silently discarded).
+
+Manual check: press Interact on the correct dog for any mission's accept action (e.g. Gate Crash's
+Cocoa-anchors-the-gate) and confirm a quick, snappy squash-pop on that dog only; press it on the
+wrong dog and confirm the coaching pop-up fires but the dog itself does *not* also squash.
+
 ### Wrestle wired up as a real minimal verb (2026-07-13)
 
 The A-button had the identical dead-input bug as jump (`intent.wrestle` read every frame, never

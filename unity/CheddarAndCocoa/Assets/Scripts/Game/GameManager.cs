@@ -497,6 +497,7 @@ namespace CheddarAndCocoa.Game
         private float _guidanceNudgeAt;
         private readonly TextMesh[] _guidanceWidenedLabels = new TextMesh[2];
         private float _handoffFlashUntil;
+        private bool _interactionCoachedThisAttempt;
         private int[] _dogContribution;
         private readonly CarRideMissionState _emptyCarState = new CarRideMissionState();
         // Gate Crash (Hold-and-Release co-op puzzle): Cocoa anchors the gate, Cheddar squeezes through.
@@ -1903,10 +1904,23 @@ namespace CheddarAndCocoa.Game
                 return;
             }
 
-            if (_activeMissionController is IMissionInteractionController interactionController &&
-                interactionController.HandleInteract(IndexOfDog(dogId)))
+            if (_activeMissionController is IMissionInteractionController interactionController)
             {
-                return;
+                _interactionCoachedThisAttempt = false;
+                bool handled = interactionController.HandleInteract(IndexOfDog(dogId));
+                if (handled)
+                {
+                    // A2.2: the shared choke point for "Interact did something on the dog itself" -
+                    // only for a genuine acceptance, not a wrong-role/too-far coach beat (those
+                    // already got MarkFailedInteraction's own reaction; this must not double-fire).
+                    if (!_interactionCoachedThisAttempt)
+                    {
+                        int acceptedIndex = IndexOfDog(dogId);
+                        if (acceptedIndex >= 0 && DogFeedback[acceptedIndex] != null)
+                            DogFeedback[acceptedIndex].ShowInteractAccepted();
+                    }
+                    return;
+                }
             }
 
             if (_mission == null || !_mission.RequiresTug)
@@ -2387,6 +2401,7 @@ namespace CheddarAndCocoa.Game
         private void MarkFailedInteraction(DogId dogId, string reason)
         {
             FailedInteractions++;
+            _interactionCoachedThisAttempt = true;
             RequestAudioCue(ArenaFeedbackCatalog.UiButtonDisabled);
             LogPlaytestEvent("InteractionMiss", $"{dogId}: {reason}");
         }
