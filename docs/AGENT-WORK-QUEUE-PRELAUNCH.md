@@ -37,7 +37,7 @@
 | G1.4 | Handoff flip flourish | DONE (2026-07-18, see below) |
 | G1.5 | Wrong-role coaching audit | DONE (2026-07-18, see below) |
 | G1.6 | Ladder observability + couch telemetry | DONE (2026-07-18, see below) |
-| A2.1 | Animation coverage audit | OPEN |
+| A2.1 | Animation coverage audit | DONE (2026-07-18, see below) |
 | A2.2 | Interact micro-animation | OPEN |
 | A2.3 | Signal-critical verb strips (dig/sniff/carry) | OPEN |
 | A2.4 | Threat/NPC acting gaps | OPEN |
@@ -508,6 +508,41 @@ mapping; annotate the catalog per state with `authored strip` / `reused strip (w
 to read* come first (interact, dig, sniff, carry, comfort, flop, beg). No art changes in this task.
 **Done when:** `ANIMATION-STATE-CATALOG.md` carries the annotated table + ranked gap list, and
 A2.2–A2.4 scopes are confirmed or amended from it.
+
+**Done (2026-07-18):** Docs-only task, no code changed. Traced the full render path
+(`ApplyPose`→static fallback, `AnimatePose`/`AnimateAuthoredMotion`→authored motion strip with an
+E-facing-mirrored retry for missing directions) and inventoried every PNG under
+`Characters/Dogs/{Cheddar,Cocoa}/Motion/`. Added a full annotated table (12 `Pose` values + the
+verbs with no pose mapping at all) plus a ranked gap list to `docs/ANIMATION-STATE-CATALOG.md`.
+
+Key findings:
+- `Idle`/`Run`/`Bark` have full 5-direction authored art (8/8 effective via mirroring) — genuinely
+  complete, not a gap.
+- `Dig`/`Carry`/`Tug`/`Proud`/`Rescued`/`Sad`/`Stunned` have partial direction coverage (as little as
+  E-only) but the code's own "retry at E-facing, mirrored" fallback means they still play a real
+  animated strip for every direction, just not a truly-directional one — classified `reused strip`,
+  not `static fallback`. This matters because it changes A2.3's priority: dig already reads fine in
+  practice, so it should not be treated as equally urgent as truly-missing verbs.
+- **`Pose.Swim` and `Pose.Jump` have zero art of any kind** and both a `FinalDogPoseArt.PoseSuffix()`
+  and `ArenaDogPoseSprites.RectFor()` gap (`Dig`/`Carry`/`Swim`/`Jump` all silently default to
+  `"idle"`/the Idle crop) — confirmed a swimming or jumping dog currently renders as a plain
+  standing-idle sprite with zero visual distinction, despite the backyard pool being live gameplay.
+- **Interact, Sniff, dramatic Flop, Beg, head-tilt, paw-tap, push/pull, Hide have no `Pose` mapping
+  at all** — not low-frame-count, genuinely absent from the pose system. `Comfort` is worse than
+  absent: `ShowComfort()` aliases to `Pose.Proud`, so a comforting nuzzle currently visually reads as
+  a celebration.
+- `CharacterMotionArt.Clip` declares `Herd`/`Hide`/`Comfort` with zero assets and zero `Pose`
+  mapping — dead enum values, flagged for whoever eventually builds that art.
+- **Amended A2.3's scope** in the catalog: "dig/sniff/carry" as originally worded overweights dig
+  (already working via the mirror-fallback); sniff and comfort belong at equal-or-higher priority.
+
+Ranked gap list (worst first): Interact (A2.2's own scope, confirmed correct) → Sniff → Carry
+(partial direction coverage) → Comfort (misleadingly aliased, not just absent) → dramatic Flop
+(Table Stealth's headline beat) → Beg (no mission needs it yet — flagged as a build-vs-drop decision,
+not silently ignored) → Swim/Jump (confirmed static-idle; Jump's own mechanic wiring should be
+re-verified before commissioning art for it).
+
+No PlayMode run needed (docs-only, no runtime behavior changed).
 
 ### A2.2 — Interact micro-animation
 **Goal:** pressing Interact visibly *does something on the dog*, not just the prop.
