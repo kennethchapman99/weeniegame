@@ -7,7 +7,7 @@ namespace CheddarAndCocoa.Dogs
     public static class CharacterMotionArt
     {
         public enum Facing8 { E, SE, S, SW, W, NW, N, NE }
-        public enum Clip { Idle, Run, Bark, Tug, Dig, Carry, Herd, Hide, Comfort, Stunned, Rescued, Proud, Sad }
+        public enum Clip { Idle, Run, Bark, Tug, Dig, Carry, Herd, Hide, Comfort, Stunned, Rescued, Proud, Sad, Sniff }
 
         public static string ResourcePath(DogId dog, Clip clip, Facing8 facing, int frame)
         {
@@ -40,6 +40,7 @@ namespace CheddarAndCocoa.Dogs
                 case DogReadabilityFeedback.Pose.Rescued: clip = Clip.Rescued; return true;
                 case DogReadabilityFeedback.Pose.Proud: clip = Clip.Proud; return true;
                 case DogReadabilityFeedback.Pose.Sad: clip = Clip.Sad; return true;
+                case DogReadabilityFeedback.Pose.Sniff: clip = Clip.Sniff; return true;
                 default: clip = default; return false;
             }
         }
@@ -58,6 +59,7 @@ namespace CheddarAndCocoa.Dogs
                 Clip.Rescued => dog == DogId.Cheddar ? 6f : 4.5f,
                 Clip.Proud => dog == DogId.Cheddar ? 5f : 3.5f,
                 Clip.Sad => 2.5f,
+                Clip.Sniff => dog == DogId.Cheddar ? 4f : 3f, // deliberate/investigative, slower than dig
                 _ => 1f
             };
             int frame = Mathf.Max(0, Mathf.FloorToInt(Mathf.Max(0f, elapsedSeconds) * fps));
@@ -102,6 +104,7 @@ namespace CheddarAndCocoa.Dogs
             Clip.Rescued => DogReadabilityFeedback.Pose.Rescued,
             Clip.Proud => DogReadabilityFeedback.Pose.Proud,
             Clip.Sad => DogReadabilityFeedback.Pose.Sad,
+            Clip.Sniff => DogReadabilityFeedback.Pose.Sniff,
             _ => DogReadabilityFeedback.Pose.Idle
         };
     }

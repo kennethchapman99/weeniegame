@@ -28,7 +28,15 @@ namespace CheddarAndCocoa.Dogs
             Proud,
             Sad,
             Swim,
-            Jump
+            Jump,
+            /// <summary>
+            /// A2.3: wired into Scent Search's Sniff() verb. No authored art exists yet (needs a new
+            /// reference board through the external image-generation step this pass didn't have
+            /// access to - see docs/ANIMATION-STATE-CATALOG.md) - renders via the same
+            /// static-idle-fallback path Swim/Jump already use until real art lands, at which point
+            /// this Pose/Clip wiring needs no further changes.
+            /// </summary>
+            Sniff
         }
 
         private DogController _dog;
@@ -119,6 +127,8 @@ namespace CheddarAndCocoa.Dogs
 
         public void ShowTug() => ForcePose(Pose.Tug, 0.25f);
         public void ShowDig() => ForcePose(Pose.Dig, 0.55f);
+        /// <summary>A2.3: Scent Search's tracking/direction-hint sniff read.</summary>
+        public void ShowSniff() => ForcePose(Pose.Sniff, 0.5f);
         /// <summary>
         /// Tug while facing <paramref name="faceDir"/> so two dogs flanking a rope visibly lean into it
         /// from opposite sides (a readable tug-of-war silhouette) instead of holding stale travel facing.
@@ -586,6 +596,7 @@ namespace CheddarAndCocoa.Dogs
             Pose.Sad => "SAD FLOP",
             Pose.Swim => "PADDLE PADDLE",
             Pose.Jump => "HOP!",
+            Pose.Sniff => "SNIFF SNIFF...",
             _ => pose.ToString()
         };
 

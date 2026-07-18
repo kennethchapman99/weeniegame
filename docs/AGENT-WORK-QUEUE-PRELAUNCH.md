@@ -39,7 +39,7 @@
 | G1.6 | Ladder observability + couch telemetry | DONE (2026-07-18, see below) |
 | A2.1 | Animation coverage audit | DONE (2026-07-18, see below) |
 | A2.2 | Interact micro-animation | DONE (2026-07-18, see below) |
-| A2.3 | Signal-critical verb strips (dig/sniff/carry) | OPEN |
+| A2.3 | Signal-critical verb strips (dig/sniff/carry) | DONE (2026-07-18, code-side prep only — see below) |
 | A2.4 | Threat/NPC acting gaps | OPEN |
 | A2.5 | Held-payoff pose audit | OPEN |
 | V3.1 | Style-contract audit + fix list | OPEN |
@@ -599,6 +599,39 @@ the existing motion pipeline + `validate_character_motion_pack.py`. Wire through
 mapping; keep current reads as fallback.
 **Tests:** motion-pack validation passes; the missions' existing pose assertions updated to the new
 states; art-review frames for those missions show the verb mid-animation.
+
+**Done (2026-07-18): code-side prep only — no new authored art.** Hit a real tooling gap partway
+through: the motion pipeline's first step (hand-approved reference boards under
+`Assets/Art/ReferenceOnly/GeneratedCharacterMotion/`, per A2.1's own documented pipeline trace) needs
+an external image-generation tool this session has no access to — `tools/art/export_character_*.py`
+only crops/composites boards that already exist, it can't create them. Surfaced this to the owner via
+AskUserQuestion instead of silently skipping or faking a placeholder; the owner chose **"Code-side
+prep only"** over waiting/blocking or a lower-fidelity placeholder-art option.
+
+- Scoped down to **sniff only**, and wiring, not art: `dig` and `carry`'s NE/SE diagonals were left
+  untouched (same tooling gap, and sniff was the more mission-load-bearing gap of the three per
+  A2.1's audit — Scent Search's core verb had zero dedicated pose before this).
+- `DogReadabilityFeedback.cs`: new `Pose.Sniff` (doc comment on the enum member explains no art
+  exists yet) and `ShowSniff()`; `CharacterMotionArt.cs`: new `Clip.Sniff` wired through `TryClip`,
+  the fps table, and `FallbackPose`. With no runtime frames present yet, this renders through the
+  same static-idle fallback chain that already covers unmapped poses like Swim/Jump — confirmed via
+  `UsesAuthoredPoseArt` staying `true` in the new test, i.e. it degrades gracefully rather than
+  going blank.
+- `ScentSearchMissionController.Sniff()`: both dogs' ongoing tracking beat now calls `ShowSniff()` on
+  their `DogReadabilityFeedback`; the exact hot-patch discovery still plays `ShowProudBrief()`
+  unchanged (a bigger beat than the ongoing sniff read, verified by test).
+- **Tests:** `ScentSearchSniffPosePlayModeTests.cs` (2 new): Cheddar's wild-sniff read plays
+  `Pose.Sniff` and keeps `UsesAuthoredPoseArt` true; Cocoa's tracking sniff plays `Pose.Sniff`, but
+  moving onto the exact buried spot flips to `Pose.Proud` instead. Full PlayMode suite: **625/625
+  passed, 0 skipped** (623 baseline from A2.2 + 2 new, `unity/playmode-results.xml`, SHA-256
+  `64bfcac03396bb53e7acb60df11e9ad6c0250fdcb1d2448adaa74b6b1ab6c53f`, 2026-07-18 14:07 EDT).
+  `tools/art/validate_character_motion_pack.py` shows no regression (170/336 runtime frames,
+  unchanged — Sniff has no runtime frames yet by design). Dev build + smoke test + 23-mission
+  art-review capture (70 frames) all clean.
+- `docs/ANIMATION-STATE-CATALOG.md` updated: interact row now shows fixed (A2.2), sniff row now shows
+  wired/no-art-yet (A2.3), plus a dedicated "A2.2 / A2.3 outcomes" section documenting this tooling
+  gap for any future art-dependent task (A2.4 and A2.5 both look likely to hit the same wall for
+  threat/NPC and held-payoff art).
 
 ### A2.4 — Threat/NPC acting gaps
 **Goal:** no named NPC state silently reuses an unrelated read.

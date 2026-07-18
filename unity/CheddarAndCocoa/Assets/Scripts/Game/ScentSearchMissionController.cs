@@ -182,6 +182,7 @@ namespace CheddarAndCocoa.Game
                 _context.RequestAudioCue(ArenaFeedbackCatalog.Bark);
                 _context.LogEvent("ScentDirection", direction);
                 _context.LogObjectiveChanged();
+                if (dogIndex < _context.DogFeedback.Length) _context.DogFeedback[dogIndex]?.ShowSniff();
                 return;
             }
 
@@ -198,6 +199,12 @@ namespace CheddarAndCocoa.Game
                     _context.DogFeedback[dogIndex].ShowProudBrief();
                 _context.AddScore(ScoreEventCatalog.ScentSniff.Points, ScoreEventCatalog.ScentSniff.Label);
                 _context.SignalRoleHandoff(DogId.Cocoa, DogId.Cheddar);
+            }
+            else if (dogIndex < _context.DogFeedback.Length)
+            {
+                // Still tracking (not yet the exact hot patch) - the ongoing sniff read; the newCall
+                // branch above already plays a bigger ShowProudBrief() beat for the actual find.
+                _context.DogFeedback[dogIndex]?.ShowSniff();
             }
             _context.SetFeedback(GameManager.FeedbackKind.SquirrelScared);
             _context.SetCue(newCall

@@ -43,8 +43,8 @@ sniff/hide/comfort art — the enum slot is already there).
 | stunned | 2 × 1 (E only) | **reused strip (E-facing, mirrored)** | Wrestle-loss / grabbed read. |
 | swim | none | **static fallback (= plain idle image)** | `Pose.Swim` has no `Clip` mapping (`TryClip` returns false) and no `FinalDogPoseArt`/`ArenaDogPoseSprites` case — a swimming dog currently renders as a standing-idle sprite with zero visual distinction, even though the backyard pool mechanic is live gameplay. |
 | jump | none | **static fallback (= plain idle image)** | Same gap as swim — `Pose.Jump` renders as plain idle. |
-| interact (any mission's accept) | n/a | **missing** | No `Pose` value exists for "interacting" at all; pressing Interact changes only the prop/world state, never the dog's own pose. This is exactly what A2.2 is scoped to fix. |
-| sniff | n/a | **missing** | No `Pose.Sniff`; Scent Search's whole premise is sniffing and has no distinct dog read for it today. |
+| interact (any mission's accept) | n/a | **fixed (A2.2, 2026-07-18)** | `GameManager.OnDogInteracted` now plays a squash-and-pop cosmetic tween on a genuine Interact acceptance, roster-wide, via one shared hook. Not a `Pose`/authored-art fix — a tween layered on top of whatever pose is already showing. |
+| sniff | n/a | **wired, no art yet (A2.3, 2026-07-18)** | `Pose.Sniff`/`Clip.Sniff` now exist and `ScentSearchMissionController.Sniff()` calls `ShowSniff()` on both dogs' tracking beats. Renders via the same static-idle fallback Swim/Jump already use (no authored strip exists) — the code path is ready, only the art is missing. See the A2.3 note below for why: producing it needs the external image-generation step that created every other board in `ReferenceOnly/GeneratedCharacterMotion/`, which this pass had no tool access to invoke. |
 | comfort (as a distinct gesture) | n/a | **missing (aliased)** | `ShowComfort()` calls `ForcePose(Pose.Proud, 0.5f)` — a real gameplay signal fires, but it visually reads as "proud," not "comforting." |
 | dramatic flop (Table Stealth) | n/a | **missing** | No `Pose.Flop`; Cocoa's belly-flop distraction has no distinct pose while `_flopEngaged` is true. |
 | beg | n/a | **missing** | No `Pose.Beg` anywhere in the roster. |
@@ -83,6 +83,34 @@ working (if mirrored) authored art via the E-facing-retry path, so it is not a b
 sniff and carry are; sniff and comfort deserve at least equal priority within that task. A2.4
 ("threat/NPC acting gaps") is untouched by this audit — it covers non-dog actors, out of this pass's
 Dog-only scope.
+
+### A2.2 / A2.3 outcomes (2026-07-18)
+
+**A2.2 shipped in full** — gap #1 (Interact) is closed via a code-only tween (`GameManager.
+OnDogInteracted` → `DogReadabilityFeedback.ShowInteractAccepted()`), not new authored art; see
+`docs/ARENA-PLAYABLE.md`'s "Interact micro-animation" entry.
+
+**A2.3 shipped code-side only — new authored art was not produced this pass.** The character-motion
+pipeline documented above (§1 of the original A2.1 research) is a two-step process: an external
+image-generation step produces a hand-approved reference board under
+`ReferenceOnly/GeneratedCharacterMotion/`, *then* a `tools/art/export_character_*.py` script crops
+it into runtime frames. Every board that exists today (28 of them, per
+`tools/art/character_motion_manifest.json`) was produced by that first step through a tool this
+agent session did not have access to (no image-generation capability in this toolset). Rather than
+silently skip the task or fabricate placeholder art, the owner chose (when asked) "code-side prep
+only": `Pose.Sniff`/`Clip.Sniff` now exist end-to-end (enum values, `TryClip`, `FrameAtTime`,
+`FallbackPose`, `PoseCopy`, `DogReadabilityFeedback.ShowSniff()`), and
+`ScentSearchMissionController.Sniff()` calls it on both dogs' tracking beats (Cheddar's direction
+hint, Cocoa's ongoing WARM/COLD tracking — the exact hot-patch discovery still plays the bigger
+`ShowProudBrief()` celebration instead, unchanged). Until a reference board is produced through the
+external tool and a matching `export_character_sniff.py` extractor is written (following
+`export_character_dig.py`'s shape - see the original A2.1 research notes for the exact technique),
+`Pose.Sniff` renders via the same static-idle fallback `Pose.Swim`/`Pose.Jump` already use — a known,
+already-documented gap, not a new one. The moment art lands, no further code changes are needed.
+
+**Carry's missing NE/SE diagonals were not promoted** — same tooling gap, and lower priority than
+sniff per the ranked list above. `docs/AGENT-WORK-QUEUE-PRELAUNCH.md`'s A2.3 entry has the full
+evidence and should be consulted before anyone picks this back up to produce the actual art.
 
 ## Dog Locomotion
 
