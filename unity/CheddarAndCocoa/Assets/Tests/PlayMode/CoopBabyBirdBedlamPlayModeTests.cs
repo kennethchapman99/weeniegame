@@ -243,6 +243,10 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(CoopFeastGuardPuzzle.ChickState.Grounded, _game.FeastGuardPuzzle.Chick,
                 "Cocoa's snack inspection must leave the chick available for Cheddar.");
             Assert.That(_game.LastCue, Does.Contain("keeps watch"));
+            Assert.That(_game.LastJuiceLabel, Does.Contain("CHEDDAR"), "Cocoa's wrong-dog grab must produce a visible coach beat.");
+            Assert.AreEqual(ArenaFeedbackCatalog.UiButtonDisabled, _game.LastAudioCueRequested,
+                "Cocoa's wrong-dog grab must produce an audible coach beat.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
 
             controller.ForceChickGrab();
             controller.ForceParentDive();
@@ -250,6 +254,8 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(_game.FeastGuardPuzzle.DiveActive,
                 "Cheddar's mouth-full bark should coach the role without canceling the dive.");
             Assert.That(_game.LastCue, Does.Contain("chick in his mouth"));
+            Assert.That(_game.LastJuiceLabel, Does.Contain("COCOA"), "Cheddar's mouth-full bark must produce a visible coach beat.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
 
             _cocoa.transform.position = Vector2.down * 20f;
             Assert.IsTrue(controller.HandleBark(1));

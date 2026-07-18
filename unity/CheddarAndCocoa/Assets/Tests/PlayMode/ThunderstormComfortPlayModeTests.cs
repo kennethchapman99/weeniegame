@@ -111,6 +111,10 @@ namespace CheddarAndCocoa.Tests
             Assert.IsFalse(controller.ComfortPrepared,
                 "Cheddar cannot skip Cocoa's steady reassurance opener.");
             Assert.That(_game.LastCue, Does.Contain("Cocoa"));
+            Assert.That(_game.LastJuiceLabel, Does.Contain("COCOA"), "The out-of-order bark must produce a visible coach beat.");
+            Assert.AreEqual(ArenaFeedbackCatalog.UiButtonDisabled, _game.LastAudioCueRequested,
+                "The out-of-order bark must produce an audible coach beat.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
 
             _game.ForceThunderclap();
             yield return null;

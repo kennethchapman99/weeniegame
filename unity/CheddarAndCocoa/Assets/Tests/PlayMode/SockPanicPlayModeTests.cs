@@ -54,6 +54,10 @@ namespace CheddarAndCocoa.Tests
             _game.ForceSockBasketTip(DogId.Cheddar);
             Assert.IsFalse(_game.SockPanicState.BasketOpen,
                 "Cheddar is the chaotic diver; he must not replace Cocoa's anchor role.");
+            Assert.That(_game.LastJuiceLabel, Does.Contain("ANCHOR"), "The wrong-anchor attempt must produce a visible coach beat.");
+            Assert.AreEqual(ArenaFeedbackCatalog.UiButtonDisabled, _game.LastAudioCueRequested,
+                "The wrong-anchor attempt must produce an audible coach beat.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
 
             _game.ForceSockBasketTip(DogId.Cocoa);
             Assert.IsTrue(_game.SockPanicState.BasketOpen);

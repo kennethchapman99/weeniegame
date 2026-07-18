@@ -128,6 +128,11 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(1, _game.WeenieRoundupState.Loose,
                 "Cheddar cannot turn the jumbo into another solo fetch errand.");
             Assert.That(_game.LastCue, Does.Contain("Cocoa"));
+            Assert.That(_game.LastJuiceLabel, Does.Contain("STEADY"), "The solo-jumbo attempt must produce a visible coach beat.");
+            Assert.IsTrue(HasWorldPop("WOBBLY"), "The solo-jumbo attempt must produce a visible world pop.");
+            Assert.AreEqual(ArenaFeedbackCatalog.UiButtonDisabled, _game.LastAudioCueRequested,
+                "The solo-jumbo attempt must produce an audible coach beat.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
 
             _cocoa.transform.position = jumbo + Vector2.right;
             yield return null;

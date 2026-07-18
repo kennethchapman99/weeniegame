@@ -134,6 +134,7 @@ namespace CheddarAndCocoa.Game
             {
                 _context.SetCue("Cocoa is the stash raider - Cheddar has to Bark-taunt the squirrel at the decoy.");
                 _context.SpawnWorldPop(_context.Dogs[dogIndex].transform.position + Vector3.up, "CHEDDAR BAITS", new Color(1f, 0.72f, 0.3f));
+                _context.MarkFailedInteraction(DogId.Cocoa, "Cocoa tried to bait - that's Cheddar's move");
                 return true;
             }
 
@@ -170,6 +171,7 @@ namespace CheddarAndCocoa.Game
             {
                 _context.SetCue("Cheddar keeps the squirrel busy; Cocoa is the one who Interacts to raid the stash.");
                 _context.SpawnWorldPop(_context.Dogs[dogIndex].transform.position + Vector3.up, "COCOA RAIDS", new Color(0.35f, 0.9f, 0.8f));
+                _context.MarkFailedInteraction(DogId.Cheddar, "Cheddar tried to raid - that's Cocoa's move");
                 return true;
             }
 

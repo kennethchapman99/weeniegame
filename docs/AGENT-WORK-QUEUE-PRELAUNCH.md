@@ -35,7 +35,7 @@
 | G1.2 | Tier 1–3 signal wiring | DONE (2026-07-17, see below) |
 | G1.3 | Role-turn beacon | DONE (2026-07-18, see below) |
 | G1.4 | Handoff flip flourish | DONE (2026-07-18, see below) |
-| G1.5 | Wrong-role coaching audit | OPEN |
+| G1.5 | Wrong-role coaching audit | DONE (2026-07-18, see below) |
 | G1.6 | Ladder observability + couch telemetry | OPEN |
 | A2.1 | Animation coverage audit | OPEN |
 | A2.2 | Interact micro-animation | OPEN |
@@ -361,6 +361,88 @@ fires and the mission remains clearable afterward. Fill any gaps found using the
 template (cooldown field, `TrySpawnX()` hook, two-assertion test). Record the per-mission result
 table in this file under the task status.
 **Done when:** the table shows 23/23 with test names; suite green.
+
+**Done (2026-07-18):** Audited all 23 missions first (research pass, no code) before touching
+anything. Systemic finding: **every existing "wrong role" test in the roster checked only
+recoverability, none asserted the reaction actually fired** — the coaching contract was assumed,
+not verified, exactly as the task predicted. Also found real code gaps: 3 missions where the
+wrong-dog bark was completely silent (no reaction of any kind), and ~12 more missing either the
+visual or audio half of "visible, audible."
+
+- **Fixed the 3 silent missions** (`MarkTheYardMissionController.HandleBark`,
+  `BoneRelayMissionController.HandleBark`, `BlanketCatchMissionController.HandleBark`) — each had a
+  bare `return false;` on wrong-dog bark with zero `SetCue`/`SetJuice`/`SpawnWorldPop`/
+  `MarkFailedInteraction`. Added the full reaction (mirrors `BabyBirdBedlamMissionController`'s
+  existing template exactly: `SetCue` + `SetJuice(WarningMiss, ...)` + `SpawnWorldPop` +
+  `MarkFailedInteraction`).
+- **Added the missing visual half** (`SetJuice`+`SpawnWorldPop`) to 9 audio-only branches:
+  `SquirrelConspiracyMissionController.TryFindStash`, `CoyotesFenceMissionController`'s
+  `RegisterBarkPressure`/`TryRepair`, `WeenieRoundupMissionController`'s jumbo wrong-grabber/
+  not-steady branches (2 sites), `ScentSearchMissionController.DigAtSpot`'s wrong-dog/wait-for-call
+  branches (2 sites), `ThunderstormComfortMissionController.HandleBark`'s out-of-order branch,
+  `LeashWalkMissionController.HandleBark`'s wrong-scout branch, `CarRideMissionController`'s
+  too-early-brace branch, `GateCrashMissionController.HandleInteract`'s wrong-dog branch.
+- **Added the missing audio half** (`MarkFailedInteraction`) to 5 visual-only branches:
+  `EagleShadowPanicMissionController`'s mistimed-pull (also added the missing `SpawnWorldPop`, it
+  had neither), `TableStealthMissionController`'s `HandleBark`/`HandleInteract` wrong-dog branches
+  (2 sites), `SquirrelSwitcherooMissionController`'s `HandleBark`/`HandleInteract` wrong-dog
+  branches (2 sites), `ChaosMachineMissionController`'s lever/junction wrong-dog branches (2 sites).
+- **Found and fixed a real production bug while extending the first three tests**, not just a test
+  gap: `GameManager.OnDogBarked` has a generic "solo bark" fallback (`SetJuice(BarkBurst, "{DOG}
+  BARK BURST")`) that fires whenever the active controller's `HandleBark` returns `false` — meaning
+  the newly-added reactions on `MarkTheYard`/`BoneRelay`/`BlanketCatch`/`CoyotesFence`'s wrong-dog
+  branches were being immediately overwritten by that generic fallback for any REAL player bark
+  (Force-hook-driven tests never hit this, since those hooks call the controller method directly
+  and bypass `OnDogBarked` entirely — which is exactly why this had never been caught before).
+  Fixed by changing those four branches' return value from `false` to `true` (matching the
+  convention every other mission's wrong-dog `HandleBark`/`HandleInteract` branch already used) —
+  `false` from `HandleBark` means "solo bark, apply the generic fallback," not "wrong dog, but I
+  already coached it." One pre-existing test (`MarkTheYard_RequiresInteractToMark_...`) asserted
+  the old `IsFalse` contract and needed updating to match.
+- **Tests:** extended 16 existing tests with fire+recoverable assertions (`LastJuiceLabel`/
+  `HasWorldPop`/`LastAudioCueRequested` alongside the existing state-unchanged checks) and added 6
+  new test methods for missions with zero prior wrong-role coverage
+  (`SquirrelConspiracy_WrongDogFindStash_...`, `TableStealth_WrongDogAttempts_...`,
+  `Switcheroo_WrongDogAttempts_...`, `Walk_SingleMisread_...`, `KitchenFrenzy_WrongScout_...`, plus
+  a new bark-wrong-dog block folded into Bone Relay's existing scent-post test). First full run
+  caught 6 failures, all in the new test code itself, not further production bugs: three were the
+  `OnDogBarked` clobber above (which DID lead to the one real production fix); one was my own test
+  asserting `LastJuiceLabel` on a branch that only ever called `SpawnWorldPop` (fixed to assert the
+  world pop instead); one was a puzzle needing more than one wiggle+pull cycle to free a snatched
+  dog (used `ForceEagleShadowRescue()` instead of a single manual pair); one was a stale audio-cue
+  expectation (a later `RequestAudioCue` in the same branch legitimately overwrites the earlier
+  `MarkFailedInteraction` one - asserted the actual final cue, not the first one called).
+
+| # | Mission | Wrong-role branch | Fires visible+audible | Test |
+|---|---|---|---|---|
+| 1 | BackyardRescue | `HandleWeenieRecovery` WrongDog, `HandleSquirrelRedirect` WrongPressureDog | Yes (already full) | `BackyardSquirrelTrapPlayModeTests.BackyardTrap_RequiresGapPartnerRecovery_ThenReversesRoles` |
+| 2 | SnackHeist | `HandleBark` wrong dog, `HandleTreatCollected` wrong dog | Yes (already full) | `SnackHeistPlayModeTests.SnackHeist_ClearPath_CollectAllSnacks` |
+| 3 | SockPanic | `TryTipBasket` wrong anchor | Yes (visual added) | `SockPanicPlayModeTests.SockPanic_CocoaMustAnchorContinuouslyWhileCheddarDives` |
+| 4 | SquirrelConspiracy | `TryFindStash` wrong dog | Yes (visual added) | `SquirrelConspiracyPlayModeTests.SquirrelConspiracy_WrongDogFindStash_CoachesRecoverably_ThenCocoaStillCracksIt` (new) |
+| 5 | EagleShadowPanic | Mistimed rescue pull | Yes (pop+audio added) | `EagleShadowPanicPlayModeTests.EagleShadowPanic_Rescue_PullWithNoWindow_IsAMistimedMiss` |
+| 6 | CoyotesFence | `RegisterBarkPressure`/`TryRepair` wrong dog | Yes (visual added) | `CoyotesFencePlayModeTests.CoyotesFence_CocoaPinsInRangeAndCheddarRepairsBeforeTheOpeningCloses` |
+| 7 | WeenieRoundup | Jumbo wrong-grabber / not-steady | Yes (visual added) | `WeenieRoundupPlayModeTests.WeenieRoundup_JumboRejectsSoloGrab_AndSeparationFumblesRecoverably` |
+| 8 | ScentSearch | `DigAtSpot` wrong dog / wait-for-call | Yes (visual added) | `ScentSearchPlayModeTests.ScentSearch_RolesRequireCocoaCallThenCheddarDig_WithoutPunishingMisreads` |
+| 9 | ThunderstormComfort | Cheddar-bark-before-Cocoa | Yes (visual added) | `ThunderstormComfortPlayModeTests.ThunderstormComfort_RequiresOrderedHuddleBarks_AndMissesRecoverNextClap` |
+| 10 | MarkTheYard | `HandleBark` wrong dog | Yes (was silent - fixed) | `MarkTheYardPlayModeTests.MarkTheYard_RequiresInteractToMark_AndCocoaBarkDefendsTheOpening` |
+| 11 | LeashWalk | Wrong-scout route call | Yes (visual added) | `LeashWalkPlayModeTests.LeashWalk_CheckpointsRequireAlternatingScoutBarksBeforePairCanBankThem` |
+| 12 | CarRide | Cheddar-brace-before-Cocoa | Yes (visual added) | `CarRidePlayModeTests.CarRide_BrakeRequiresCocoaAnchorThenNearbyCheddarTuck_AndRecoversNextBrake` |
+| 13 | GateCrash | `HandleInteract` wrong dog | Yes (visual added) | `CoopGateCrashPlayModeTests.GateCrash_CocoaMustDeliberatelyAnchor_ThenHoldingLetsCheddarProgress_AndLeavingSnaps` |
+| 14 | TableStealth | `HandleBark`/`HandleInteract` wrong dog | Yes (audio added) | `CoopTableStealthPlayModeTests.TableStealth_WrongDogAttempts_CoachRecoverably_ThenTheRealRolesStillWork` (new) |
+| 15 | SquirrelSwitcheroo | `HandleBark`/`HandleInteract` wrong dog | Yes (audio added) | `CoopSquirrelSwitcherooPlayModeTests.Switcheroo_WrongDogAttempts_CoachRecoverably_ThenTheRealRolesStillWork` (new) |
+| 16 | WalkCampaign | Single misread (incomplete combo) | Yes (already full) | `CoopWalkCampaignPlayModeTests.Walk_SingleMisread_CoachesRecoverably_AndTheCorrectComboStillWorks` (new) |
+| 17 | BoneRelay | `HandleBark` wrong dog | Yes (was silent - fixed) | `CoopBoneRelayPlayModeTests.Bone_CocoaMustBarkAtTheScentPost_ToCallCheddarsMound` |
+| 18 | GreatEscape | Wrong-dog station attempt | Yes (already full) | `CoopGreatEscapePlayModeTests.Escape_WrongDog_IsAHarmlessFumble` |
+| 19 | ChaosMachine | Lever/junction wrong dog | Yes (audio added) | `CoopChaosMachinePlayModeTests.Chaos_PositionDriven_LeverAndJunctionsRequireOwnerInteract` |
+| 20 | BlanketCatch | `HandleBark` wrong dog | Yes (was silent - fixed) | `CoopBlanketCatchPlayModeTests.Blanket_CocoaBarkCallsEachDrop_OnlyAfterTheTeamMakesTheBlanketTaut` |
+| 21 | KitchenFoodFrenzy | WrongScout / WrongCatcher | Yes (already full) | `KitchenFoodFrenzyPlayModeTests.KitchenFrenzy_WrongScout_CocoaCannotTelegraphTheCounterKnock` (new) + `KitchenFrenzy_RoleFailuresFoodTypesAndClearPathAreDeterministic` |
+| 22 | OperationPeeBreak | Misread combo | Yes (already full) | `PeeBreakPlayModeTests.ObserverRehearsal_ColdPathSurfacesBeatOneBeatTwoAndFirstEarlyBarkMisread` |
+| 23 | BabyBirdBedlam | `HandleBark`/`HandleInteract` wrong dog | Yes (already full) | `CoopBabyBirdBedlamPlayModeTests.Bedlam_WrongRolesAndRange_CoachBackIntoTheDefense` |
+
+23/23. Full PlayMode suite: **613/613 passed, 0 skipped** (`unity/playmode-results.xml`, SHA-256
+`b078a83d1cfe5a36848cd596678127bb957be5164908de9bc8f80bd588d36198`, 2026-07-18 03:31 EDT). Dev
+build + smoke + 23-mission art-review capture all pass clean; same known sandbox gap as prior
+tasks — frames are flat unrenderable placeholders here, not yet visually inspected.
 
 ### G1.6 — Ladder observability + couch telemetry
 **Goal:** the next couch test produces stall *data*.

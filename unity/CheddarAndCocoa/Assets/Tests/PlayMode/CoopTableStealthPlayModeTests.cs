@@ -78,6 +78,33 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator TableStealth_WrongDogAttempts_CoachRecoverably_ThenTheRealRolesStillWork()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.TableStealth);
+            yield return null;
+
+            _cocoa.Bark();
+            Assert.That(_game.LastCue, Does.Contain("Cheddar"));
+            Assert.IsTrue(HasWorldPop("CHEDDAR BURPS"), "Cocoa's wrong-dog bark must produce a visible coach beat.");
+            Assert.AreEqual(ArenaFeedbackCatalog.UiButtonDisabled, _game.LastAudioCueRequested,
+                "Cocoa's wrong-dog bark must produce an audible coach beat.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
+
+            _cheddar.Interact();
+            Assert.That(_game.LastCue, Does.Contain("Cocoa"));
+            Assert.IsTrue(HasWorldPop("COCOA FLOPS"), "Cheddar's wrong-dog interact must produce a visible coach beat.");
+            Assert.AreEqual(ArenaFeedbackCatalog.UiButtonDisabled, _game.LastAudioCueRequested,
+                "Cheddar's wrong-dog interact must produce an audible coach beat.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
+
+            // Still recoverable: the real roles work right after.
+            _game.ForceTableFlop(true);
+            _game.ForceTableSneak(2.0f);
+            Assert.IsTrue(_game.TableStealthPuzzle.Solved);
+        }
+
+        [UnityTest]
         public IEnumerator TableStealth_FailPath_SpottedTooManyTimes()
         {
             yield return LoadArena();
@@ -241,6 +268,13 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(_game);
             Assert.IsNotNull(_cheddar);
             Assert.IsNotNull(_cocoa);
+        }
+
+        private static bool HasWorldPop(string text)
+        {
+            foreach (var pop in Object.FindObjectsByType<MissionWorldPop>(FindObjectsSortMode.None))
+                if (pop.Label.Contains(text)) return true;
+            return false;
         }
     }
 }

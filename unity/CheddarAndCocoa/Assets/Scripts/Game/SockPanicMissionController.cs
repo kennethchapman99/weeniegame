@@ -194,6 +194,8 @@ namespace CheddarAndCocoa.Game
             {
                 _context.MarkFailedInteraction(DogIdAt(dogIndex), "Cocoa anchors this basket; Cheddar gets ready to dive");
                 _context.SetCue("Cheddar cannot hold still long enough - Cocoa must Interact to anchor the basket.");
+                _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "COCOA: ANCHOR IT!");
+                if (_basket != null) _context.SpawnWorldPop(_basket.transform.position, "COCOA'S JOB", new Color(1f, 0.72f, 0.25f));
                 return false;
             }
             if (force)

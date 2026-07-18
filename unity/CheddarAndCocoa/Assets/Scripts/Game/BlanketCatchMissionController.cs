@@ -143,7 +143,14 @@ namespace CheddarAndCocoa.Game
         public bool HandleBark(int dogIndex)
         {
             if (_puzzle.Solved || _failed || !_waitingForCocoaBark) return false;
-            if (_context.IndexOfDog(DogId.Cocoa) != dogIndex) return false;
+            if (_context.IndexOfDog(DogId.Cocoa) != dogIndex)
+            {
+                _context.SetCue("Cheddar can't call the drop - Cocoa's the one who barks it down.");
+                _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "COCOA: CALL THE DROP!");
+                _context.SpawnWorldPop(_context.Dogs[dogIndex].transform.position + Vector3.up, "COCOA'S JOB", new Color(1f, 0.72f, 0.25f));
+                _context.MarkFailedInteraction(DogId.Cheddar, "Cheddar tried to bark-call the drop");
+                return true; // a coach beat fired - don't let the generic solo-bark juice clobber it
+            }
 
             if (!_puzzle.Taut)
             {

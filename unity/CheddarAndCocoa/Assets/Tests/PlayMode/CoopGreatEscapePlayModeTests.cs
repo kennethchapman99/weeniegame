@@ -92,6 +92,13 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(0, _game.GreatEscapePuzzle.Step);
             Assert.AreEqual(1, _game.GreatEscapePuzzle.Fumbles);
             Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
+            Assert.That(_game.LastJuiceLabel, Does.Contain("CLANK"), "The wrong-dog station attempt must produce a visible coach beat.");
+            Assert.AreEqual(ArenaFeedbackCatalog.ThreatWarning, _game.LastAudioCueRequested,
+                "The wrong-dog station attempt must produce an audible coach beat.");
+
+            // Still recoverable: the correct owner completes the step right after.
+            _game.ForceEscapeStep(_game.GreatEscapePuzzle.NextOwner);
+            Assert.AreEqual(1, _game.GreatEscapePuzzle.Step);
         }
 
         [UnityTest]

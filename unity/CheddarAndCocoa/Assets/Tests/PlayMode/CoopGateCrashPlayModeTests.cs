@@ -194,6 +194,10 @@ namespace CheddarAndCocoa.Tests
             Assert.IsFalse(_game.GateCrashController.AnchorEngaged,
                 "Cheddar owns the squeeze route and cannot replace Cocoa's anchor role.");
             Assert.That(_game.LastCue, Does.Contain("Cocoa"));
+            Assert.That(_game.LastJuiceLabel, Does.Contain("ANCHOR"), "The wrong-dog anchor attempt must produce a visible coach beat.");
+            Assert.AreEqual(ArenaFeedbackCatalog.UiButtonDisabled, _game.LastAudioCueRequested,
+                "The wrong-dog anchor attempt must produce an audible coach beat.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
 
             _cocoa.transform.position = _game.ArenaBounds.center;
             _cocoa.Interact();

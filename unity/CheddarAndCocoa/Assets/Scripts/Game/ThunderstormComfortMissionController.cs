@@ -155,6 +155,8 @@ namespace CheddarAndCocoa.Game
             {
                 _context.MarkFailedInteraction(dogId, "Cocoa gives the reassurance bark first");
                 _context.SetCue("Cheddar barked bravely, but he needs Cocoa's steady reassurance first.");
+                _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "WAIT FOR COCOA!");
+                _context.SpawnWorldPop(_context.Dogs[dogIndex].transform.position + Vector3.up, "TOO SOON!", new Color(1f, 0.72f, 0.25f));
                 return true;
             }
 

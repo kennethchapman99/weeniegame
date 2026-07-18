@@ -25,6 +25,10 @@ namespace CheddarAndCocoa.Tests
             _game.ForceBackyardTrapRedirect(DogId.Cocoa, true);
             Assert.AreEqual(1, _game.BackyardTrapState.Fumbles, "The wrong pressure dog should produce a recoverable juke.");
             Assert.IsFalse(_game.BackyardTrapState.WeenieDropped);
+            Assert.That(_game.LastJuiceLabel, Does.Contain("JUKE"), "The wrong pressure dog must produce a visible coach beat.");
+            Assert.AreEqual(ArenaFeedbackCatalog.ScorePenalty, _game.LastAudioCueRequested,
+                "The wrong pressure dog must produce an audible coach beat.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
 
             _game.ForceBackyardTrapRedirect(DogId.Cheddar, false);
             Assert.AreEqual(2, _game.BackyardTrapState.Fumbles, "An open escape gap should produce a recoverable fake route.");
@@ -40,6 +44,9 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(3, _game.BackyardTrapState.Fumbles, "The pressure dog cannot recover its own drop.");
             Assert.IsTrue(_game.BackyardTrapState.WeenieDropped, "The funny failure must remain recoverable.");
             Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
+            Assert.IsTrue(HasWorldPop("HOT POTATO"), "The self-recovery attempt must produce a visible coach beat.");
+            Assert.AreEqual(ArenaFeedbackCatalog.ScorePenalty, _game.LastAudioCueRequested,
+                "The self-recovery attempt must produce an audible coach beat.");
 
             _game.ForceBackyardTrapRecovery(DogId.Cocoa);
             yield return null;
@@ -96,6 +103,13 @@ namespace CheddarAndCocoa.Tests
         {
             foreach (string entry in _game.PlaytestEvents)
                 if (entry.Contains(text)) return true;
+            return false;
+        }
+
+        private static bool HasWorldPop(string text)
+        {
+            foreach (var pop in Object.FindObjectsByType<MissionWorldPop>(FindObjectsSortMode.None))
+                if (pop.Label.Contains(text)) return true;
             return false;
         }
     }

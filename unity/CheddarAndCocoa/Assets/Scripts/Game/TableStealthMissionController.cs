@@ -160,6 +160,7 @@ namespace CheddarAndCocoa.Game
             {
                 _context.SetCue("Cocoa's steady bark won't sell this one - she can Interact-flop, or Cheddar can bark a burp by the human.");
                 _context.SpawnWorldPop(_context.Dogs[dogIndex].transform.position + Vector3.up, "CHEDDAR BURPS", new Color(1f, 0.75f, 0.3f));
+                _context.MarkFailedInteraction(DogId.Cocoa, "Cocoa tried the burp - that's Cheddar's move");
                 return true;
             }
 
@@ -202,6 +203,7 @@ namespace CheddarAndCocoa.Game
             {
                 _context.SetCue("Cheddar is the noisy burper here - Cocoa is the one who can Interact-flop for belly rubs.");
                 _context.SpawnWorldPop(_context.Dogs[dogIndex].transform.position + Vector3.up, "COCOA FLOPS", new Color(0.35f, 0.9f, 0.8f));
+                _context.MarkFailedInteraction(DogId.Cheddar, "Cheddar tried to flop - that's Cocoa's move");
                 return true;
             }
 

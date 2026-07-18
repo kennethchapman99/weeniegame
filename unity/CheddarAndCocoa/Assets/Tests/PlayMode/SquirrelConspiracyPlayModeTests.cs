@@ -111,6 +111,41 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator SquirrelConspiracy_WrongDogFindStash_CoachesRecoverably_ThenCocoaStillCracksIt()
+        {
+            yield return LoadArena();
+            var game = _game;
+            var cheddar = _cheddar;
+            var cocoa = _cocoa;
+
+            game.StartMission(GameManager.MissionVariant.SquirrelConspiracy);
+            yield return null;
+
+            for (int i = 0; i < 4; i++)
+            {
+                cheddar.transform.position = game.SquirrelObject.transform.position;
+                cocoa.transform.position = game.ActiveSquirrelCutoffZone;
+                game.ForceSquirrelConspiracyHerd(DogId.Cheddar);
+                yield return null;
+            }
+            Assert.IsTrue(game.SquirrelConspiracyState.StashRevealed);
+
+            game.ForceSquirrelConspiracyFindStash(DogId.Cheddar);
+            yield return null;
+            Assert.IsFalse(game.SquirrelConspiracyState.StashFound,
+                "Cheddar guards the squirrel; only Cocoa can read the revealed stash.");
+            Assert.That(game.LastCue, Does.Contain("Cocoa"));
+            Assert.That(game.LastJuiceLabel, Does.Contain("STASH"), "The wrong-dog find-stash attempt must produce a visible coach beat.");
+            Assert.AreEqual(ArenaFeedbackCatalog.UiButtonDisabled, game.LastAudioCueRequested,
+                "The wrong-dog find-stash attempt must produce an audible coach beat.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, game.Outcome);
+
+            game.ForceSquirrelConspiracyFindStash(DogId.Cocoa);
+            yield return null;
+            Assert.IsTrue(game.SquirrelConspiracyState.StashFound);
+        }
+
+        [UnityTest]
         public IEnumerator SquirrelConspiracy_FailPath_TauntsEndMission()
         {
             yield return LoadArena();

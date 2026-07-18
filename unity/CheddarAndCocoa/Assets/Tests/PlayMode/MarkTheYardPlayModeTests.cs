@@ -113,8 +113,16 @@ namespace CheddarAndCocoa.Tests
             _cocoa.transform.position = firstZone;
             squirrel.transform.position = firstZone + Vector2.right;
 
-            Assert.IsFalse(_game.ForceMarkYardDefenseBark(DogId.Cheddar),
-                "Cheddar owns the route/mark role; Cocoa's queen bark owns squirrel defense.");
+            // The wrong-dog bark still counts as handled input (a coach beat fired) even though it
+            // does not repel the squirrel - Cheddar owns the route/mark role, Cocoa owns defense.
+            Assert.IsTrue(_game.ForceMarkYardDefenseBark(DogId.Cheddar));
+            Assert.AreEqual(0, _game.MarkTheYardController.SquirrelRepels,
+                "Cheddar's bark must not repel the squirrel - that is Cocoa's queen-bark role.");
+            Assert.That(_game.LastJuiceLabel, Does.Contain("COCOA"), "The wrong-dog defense bark must produce a visible coach beat.");
+            Assert.IsTrue(HasWorldPop("COCOA"), "The wrong-dog defense bark must produce a visible world pop.");
+            Assert.AreEqual(ArenaFeedbackCatalog.UiButtonDisabled, _game.LastAudioCueRequested,
+                "The wrong-dog defense bark must produce an audible coach beat.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
             Assert.IsTrue(_game.ForceMarkYardDefenseBark(DogId.Cocoa));
             Assert.AreEqual(1, _game.MarkTheYardController.SquirrelRepels);
             Assert.Greater(Vector2.Distance(squirrel.transform.position, firstZone), 6f,
@@ -280,6 +288,13 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(_game);
             Assert.IsNotNull(_cheddar);
             Assert.IsNotNull(_cocoa);
+        }
+
+        private static bool HasWorldPop(string text)
+        {
+            foreach (var pop in Object.FindObjectsByType<MissionWorldPop>(FindObjectsSortMode.None))
+                if (pop.Label.Contains(text)) return true;
+            return false;
         }
     }
 }

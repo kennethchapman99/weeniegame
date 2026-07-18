@@ -254,7 +254,9 @@ namespace CheddarAndCocoa.Game
             {
                 _context.MarkFailedInteraction(dogId, "Cocoa holds territory; Cheddar fills the dirt gap");
                 _context.SetCue("Cheddar's bark is enthusiastic but Cocoa must pin the coyote while he fills dirt.");
-                return false;
+                _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "COCOA: PIN THE COYOTE!");
+                _context.SpawnWorldPop(_context.Dogs[dogIndex].transform.position + Vector3.up, "COCOA'S JOB", new Color(1f, 0.72f, 0.25f));
+                return true; // a coach beat fired - don't let the generic solo-bark juice clobber it
             }
             if (!force && Vector2.Distance(_context.Dogs[dogIndex].transform.position,
                     _context.PredatorObject.transform.position) > _context.SingleBarkSquirrelRange)
@@ -302,6 +304,8 @@ namespace CheddarAndCocoa.Game
             {
                 _context.MarkFailedInteraction(dogId, "Cheddar digs and fills; Cocoa keeps the coyote pinned");
                 _context.SetCue("Cocoa cannot leave the pin - Cheddar must Interact at the weak spot.");
+                _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "CHEDDAR: FILL THE GAP!");
+                _context.SpawnWorldPop(_context.Dogs[dogIndex].transform.position + Vector3.up, "CHEDDAR'S JOB", new Color(1f, 0.72f, 0.25f));
                 return false;
             }
             if (_state.FinalPressureComplete)

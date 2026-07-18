@@ -110,6 +110,28 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator Walk_SingleMisread_CoachesRecoverably_AndTheCorrectComboStillWorks()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.WalkCampaign);
+            yield return null;
+
+            // Hold an incomplete message long enough for exactly one misread - well short of the fail threshold.
+            _game.ForceWalkCampaign(3f, doorStare: true, presentLeash: false);
+
+            Assert.AreEqual(1, _game.WalkCampaignPuzzle.Misreads);
+            Assert.That(_game.LastJuiceLabel, Does.Contain("CONFUSED"), "A single misread must produce a visible coach beat.");
+            Assert.AreEqual(ArenaFeedbackCatalog.ThreatWarning, _game.LastAudioCueRequested,
+                "A single misread must produce an audible coach beat.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome,
+                "One misread must be a recoverable coach beat, not a hard fail.");
+
+            // Still recoverable: the correct combo, held long enough, still earns the walk.
+            _game.ForceWalkCampaign(3f, doorStare: true, presentLeash: true);
+            Assert.IsTrue(_game.WalkCampaignPuzzle.Solved);
+        }
+
+        [UnityTest]
         public IEnumerator Walk_HumanActorStatesShowConfusionComprehensionMisreadAndOutcome()
         {
             yield return LoadArena();

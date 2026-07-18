@@ -215,6 +215,10 @@ namespace CheddarAndCocoa.Tests
             yield return null;
             Assert.AreEqual(0, _game.ChaosMachinePuzzle.Stage,
                 "Wrong-paws Interact should coach without firing the junction.");
+            Assert.IsTrue(HasWorldPop("TURN"), "The wrong-paws Interact must produce a visible coach beat.");
+            Assert.AreEqual(ArenaFeedbackCatalog.UiButtonDisabled, _game.LastAudioCueRequested,
+                "The wrong-paws Interact must produce an audible coach beat.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
 
             ownerDog.transform.position = _game.ChaosJunctionSpot(0);
             otherDog.transform.position = new Vector3(_game.ChaosJunctionSpot(0).x - 40f, _game.ChaosJunctionSpot(0).y, 0f);
@@ -250,6 +254,13 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(expectedResource, art.ResourcePath);
             Assert.IsTrue(art.HasRuntimeSprite);
             Assert.AreEqual(expectedSpriteName, art.RuntimeSpriteName);
+        }
+
+        private static bool HasWorldPop(string text)
+        {
+            foreach (var pop in Object.FindObjectsByType<MissionWorldPop>(FindObjectsSortMode.None))
+                if (pop.Label.Contains(text)) return true;
+            return false;
         }
     }
 }

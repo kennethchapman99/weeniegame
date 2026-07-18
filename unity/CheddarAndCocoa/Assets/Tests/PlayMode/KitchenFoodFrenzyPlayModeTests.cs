@@ -64,6 +64,22 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator KitchenFrenzy_WrongScout_CocoaCannotTelegraphTheCounterKnock()
+        {
+            yield return LoadKitchen();
+
+            _game.ForceKitchenTelegraph(DogId.Cocoa, KitchenFoodFrenzyMissionState.FoodKind.Good);
+            Assert.IsFalse(_game.KitchenState.TelegraphActive, "Cocoa cannot start Cheddar's counter-knock telegraph.");
+            Assert.That(_game.LastJuiceLabel, Does.Contain("CHEDDAR"), "The wrong-scout attempt must produce a visible coach beat.");
+            Assert.AreEqual(ArenaFeedbackCatalog.UiButtonDisabled, _game.LastAudioCueRequested,
+                "The wrong-scout attempt must produce an audible coach beat.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
+
+            _game.ForceKitchenTelegraph(DogId.Cheddar, KitchenFoodFrenzyMissionState.FoodKind.Good);
+            Assert.IsTrue(_game.KitchenState.TelegraphActive, "Cheddar's own telegraph must still work right after the coach beat.");
+        }
+
+        [UnityTest]
         public IEnumerator KitchenFrenzy_RoleFailuresFoodTypesAndClearPathAreDeterministic()
         {
             yield return LoadKitchen();
@@ -76,6 +92,10 @@ namespace CheddarAndCocoa.Tests
             _game.ForceKitchenCatch(DogId.Cheddar, true);
             Assert.AreEqual(1, _game.KitchenState.RoleFumbles);
             Assert.IsTrue(_game.KitchenState.DropActive, "Wrong catcher must leave the drop recoverable.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
+            Assert.That(_game.LastJuiceLabel, Does.Contain("COCOA"), "The wrong-catcher attempt must produce a visible coach beat.");
+            Assert.AreEqual(ArenaFeedbackCatalog.ScorePenalty, _game.LastAudioCueRequested,
+                "The wrong-catcher attempt must produce an audible coach beat.");
             _game.ForceKitchenCatch(DogId.Cocoa, true);
             Assert.AreEqual(1, _game.KitchenState.GoodCatches);
             Assert.AreEqual(1, _game.KitchenState.Combo);

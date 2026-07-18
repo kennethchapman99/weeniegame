@@ -44,6 +44,8 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(0, _game.BreakfastRecovered,
                 "Cocoa should leave Cheddar's snack theft intact and get a recoverable role cue.");
             Assert.That(_game.LastCue, Does.Contain("audits"));
+            Assert.That(_game.LastJuiceLabel, Does.Contain("CHEDDAR"), "Cocoa's wrong-dog collect must produce a visible coach beat.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
 
             first.CollectBy(cheddar);
             yield return null;
@@ -54,6 +56,10 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(_game.SnackHeistController.HandleBark(0));
             Assert.AreEqual(0, _game.SnackHeistController.GuardBarks,
                 "Cheddar's mouth-full bark must not solve Cocoa's guard role.");
+            Assert.That(_game.LastJuiceLabel, Does.Contain("COCOA"), "Cheddar's wrong-dog bark must produce a visible coach beat.");
+            Assert.AreEqual(ArenaFeedbackCatalog.UiButtonDisabled, _game.LastAudioCueRequested,
+                "Cheddar's wrong-dog bark must produce an audible coach beat.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
 
             cocoa.transform.position = _game.SquirrelObject.transform.position;
             Assert.IsTrue(_game.SnackHeistController.HandleBark(1));

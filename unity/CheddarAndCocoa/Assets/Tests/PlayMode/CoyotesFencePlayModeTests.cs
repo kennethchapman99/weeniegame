@@ -98,6 +98,10 @@ namespace CheddarAndCocoa.Tests
             yield return null;
             Assert.IsFalse(controller.PressureHeld,
                 "Cheddar cannot replace Cocoa's steady fence-pin role.");
+            Assert.That(_game.LastJuiceLabel, Does.Contain("COCOA"), "The wrong-dog bark must produce a visible coach beat.");
+            Assert.AreEqual(ArenaFeedbackCatalog.UiButtonDisabled, _game.LastAudioCueRequested,
+                "The wrong-dog bark must produce an audible coach beat.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
 
             _cocoa.transform.position = _game.PredatorObject.transform.position + Vector3.right * 20f;
             _cocoa.Bark();

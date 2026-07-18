@@ -121,7 +121,14 @@ namespace CheddarAndCocoa.Game
         public bool HandleBark(int dogIndex)
         {
             if (_puzzle.Solved || _failed || _puzzle.Known) return false;
-            if (_context.IndexOfDog(DogId.Cocoa) != dogIndex) return false;
+            if (_context.IndexOfDog(DogId.Cocoa) != dogIndex)
+            {
+                _context.SetCue("Cheddar can't call the mound - Cocoa's the nose, she has to bark the scent.");
+                _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "COCOA: BARK THE SCENT!");
+                _context.SpawnWorldPop(_context.Dogs[dogIndex].transform.position + Vector3.up, "COCOA'S JOB", new Color(1f, 0.72f, 0.25f));
+                _context.MarkFailedInteraction(DogId.Cheddar, "Cheddar tried to bark the scent call");
+                return true; // a coach beat fired - don't let the generic solo-bark juice clobber it
+            }
 
             Vector2 cocoaPos = _context.Dogs[dogIndex].transform.position;
             if (Vector2.Distance(cocoaPos, ScentZonePos) > ScentRange)

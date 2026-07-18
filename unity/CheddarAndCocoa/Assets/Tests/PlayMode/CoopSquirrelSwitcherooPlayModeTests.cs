@@ -83,6 +83,40 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator Switcheroo_WrongDogAttempts_CoachRecoverably_ThenTheRealRolesStillWork()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.SquirrelSwitcheroo);
+            yield return null;
+
+            _cocoa.Bark();
+            Assert.That(_game.LastCue, Does.Contain("Cheddar"));
+            Assert.IsTrue(HasWorldPop("CHEDDAR BAITS"), "Cocoa's wrong-dog bark must produce a visible coach beat.");
+            Assert.AreEqual(ArenaFeedbackCatalog.UiButtonDisabled, _game.LastAudioCueRequested,
+                "Cocoa's wrong-dog bark must produce an audible coach beat.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
+
+            _cheddar.Interact();
+            Assert.That(_game.LastCue, Does.Contain("Cocoa"));
+            Assert.IsTrue(HasWorldPop("COCOA RAIDS"), "Cheddar's wrong-dog interact must produce a visible coach beat.");
+            Assert.AreEqual(ArenaFeedbackCatalog.UiButtonDisabled, _game.LastAudioCueRequested,
+                "Cheddar's wrong-dog interact must produce an audible coach beat.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
+
+            // Still recoverable: the real roles work right after.
+            _game.ForceSwitcherooBait(0.7f);
+            _game.ForceSwitcherooStrike();
+            Assert.AreEqual(1, _game.SwitcherooPuzzle.Hits);
+        }
+
+        private static bool HasWorldPop(string text)
+        {
+            foreach (var pop in Object.FindObjectsByType<MissionWorldPop>(FindObjectsSortMode.None))
+                if (pop.Label.Contains(text)) return true;
+            return false;
+        }
+
+        [UnityTest]
         public IEnumerator Switcheroo_StrikeWhileGuarding_Whiffs()
         {
             yield return LoadArena();

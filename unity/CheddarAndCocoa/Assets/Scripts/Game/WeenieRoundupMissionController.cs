@@ -216,6 +216,8 @@ namespace CheddarAndCocoa.Game
                         _jumboRoleCueShown = true;
                         _context.MarkFailedInteraction(DogId.Cocoa, "Cocoa steadies the jumbo; Cheddar grabs and carries it");
                         _context.SetCue("Cocoa has the jumbo steady - Cheddar, come grab it!");
+                        _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "CHEDDAR: GRAB IT!");
+                        _context.SpawnWorldPop(_looseMarkers[markerIndex].transform.position + Vector3.up, "CHEDDAR'S JOB", new Color(1f, 0.72f, 0.25f));
                     }
                     return;
                 }
@@ -228,6 +230,8 @@ namespace CheddarAndCocoa.Game
                         _jumboSteadyCueShown = true;
                         _context.MarkFailedInteraction(DogId.Cheddar, "Cocoa must stand beside the jumbo before Cheddar grabs it");
                         _context.SetCue("That jumbo is too wobbly for Cheddar alone - Cocoa, get beside it and steady!");
+                        _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "NEED COCOA STEADY!");
+                        _context.SpawnWorldPop(_looseMarkers[markerIndex].transform.position + Vector3.up, "TOO WOBBLY!", new Color(1f, 0.72f, 0.25f));
                     }
                     return;
                 }

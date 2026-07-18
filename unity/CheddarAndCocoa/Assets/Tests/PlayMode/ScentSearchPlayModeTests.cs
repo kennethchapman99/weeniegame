@@ -105,6 +105,10 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(0, _game.ScentSearchState.Found);
             Assert.AreEqual(0, _game.ScentSearchState.WastedDigs,
                 "A premature role attempt should coach the handoff instead of spending a cold-dig life.");
+            Assert.That(_game.LastJuiceLabel, Does.Contain("WAIT"), "The premature dig must produce a visible coach beat.");
+            Assert.AreEqual(ArenaFeedbackCatalog.UiButtonDisabled, _game.LastAudioCueRequested,
+                "The premature dig must produce an audible coach beat.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
 
             _cocoa.transform.position = mound;
             _game.ForceScentSniff(DogId.Cocoa);
@@ -115,6 +119,10 @@ namespace CheddarAndCocoa.Tests
             yield return null;
             Assert.AreEqual(0, _game.ScentSearchState.Found,
                 "Cocoa owns the precise call, not the dirt-flinging dig.");
+            Assert.That(_game.LastJuiceLabel, Does.Contain("DIG"), "Cocoa's dig attempt must produce a visible coach beat.");
+            Assert.AreEqual(ArenaFeedbackCatalog.UiButtonDisabled, _game.LastAudioCueRequested,
+                "Cocoa's dig attempt must produce an audible coach beat.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
             Assert.AreEqual(0, _game.ScentSearchState.WastedDigs);
 
             _cheddar.Interact();

@@ -405,6 +405,8 @@ namespace CheddarAndCocoa.Game
                 _context.SetFeedback(GameManager.FeedbackKind.SquirrelStoleFood);
                 _context.SetCue("Mistimed pull - wait for Cheddar's wiggle to crack the grip first!");
                 _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "MISTIMED!");
+                _context.SpawnWorldPop(_snatchPosition, "TOO SOON!", new Color(1f, 0.72f, 0.25f));
+                _context.RequestAudioCue(ArenaFeedbackCatalog.SquirrelStealMiss);
                 _context.LogEvent("EagleRescueMiss", $"{_rescue.MissedPulls}");
             }
 

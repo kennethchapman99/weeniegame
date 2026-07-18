@@ -231,6 +231,8 @@ namespace CheddarAndCocoa.Game
             {
                 _context.MarkFailedInteraction(dogId, "Cocoa reads the evidence; Cheddar guards the squirrel");
                 _context.SetCue("Cheddar found the evidence but cannot stop vibrating - Cocoa must Interact with the stash.");
+                _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "COCOA: READ THE STASH!");
+                _context.SpawnWorldPop(_context.Dogs[dogIndex].transform.position + Vector3.up, "COCOA'S JOB", new Color(1f, 0.72f, 0.25f));
                 return true;
             }
             if (!_state.StashRevealed)

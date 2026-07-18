@@ -235,6 +235,8 @@ namespace CheddarAndCocoa.Game
             {
                 _context.MarkFailedInteraction(dogId, "Cocoa must plant first so Cheddar has an anchor");
                 _context.SetCue("Cheddar cannot brace that chaos-body alone - Cocoa must Interact and plant first!");
+                _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "COCOA PLANTS FIRST!");
+                _context.SpawnWorldPop(_context.Dogs[dogIndex].transform.position + Vector3.up, "TOO SOON!", new Color(1f, 0.72f, 0.25f));
                 return true;
             }
 

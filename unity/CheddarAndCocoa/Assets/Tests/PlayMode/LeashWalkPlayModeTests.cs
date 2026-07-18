@@ -94,6 +94,10 @@ namespace CheddarAndCocoa.Tests
 
             Assert.IsFalse(controller.ForceRouteCall(DogId.Cocoa),
                 "The partner cannot replace the named scout's bark call.");
+            Assert.That(_game.LastJuiceLabel, Does.Contain("CALL"), "The wrong-scout bark must produce a visible coach beat.");
+            Assert.AreEqual(ArenaFeedbackCatalog.UiButtonDisabled, _game.LastAudioCueRequested,
+                "The wrong-scout bark must produce an audible coach beat.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
             Assert.IsTrue(controller.ForceRouteCall(DogId.Cheddar));
             Assert.IsTrue(controller.CheckpointCalled);
             yield return null;

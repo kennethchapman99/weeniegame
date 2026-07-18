@@ -134,7 +134,15 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(0, game.EagleRescuePuzzle.Pulls);
             Assert.AreEqual(1, game.EagleRescuePuzzle.MissedPulls);
             Assert.IsFalse(game.EagleRescuePuzzle.Freed);
-            Assert.AreEqual(GameManager.MissionOutcome.InProgress, game.Outcome);
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, game.Outcome,
+                "A mistimed pull must be a recoverable coach beat, not a hard fail.");
+            Assert.That(game.LastJuiceLabel, Does.Contain("MISTIMED"), "The mistimed pull must produce a visible reaction.");
+            Assert.AreEqual(ArenaFeedbackCatalog.SquirrelStealMiss, game.LastAudioCueRequested,
+                "The mistimed pull must produce an audible reaction.");
+
+            // Still recoverable: correctly-timed wiggle+pull cycles still free the dog afterward.
+            game.ForceEagleShadowRescue();
+            Assert.IsTrue(game.EagleRescuePuzzle.Freed);
         }
 
         [UnityTest]

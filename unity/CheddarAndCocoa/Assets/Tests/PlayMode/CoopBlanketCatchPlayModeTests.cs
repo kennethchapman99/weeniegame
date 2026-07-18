@@ -102,6 +102,14 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
 
             _game.ForceBlanketSpan(7.5f, 0f);
+            _cheddar.Bark();
+            Assert.IsTrue(controller.WaitingForCocoaBark,
+                "Cheddar cannot call the drop - that's Cocoa's job.");
+            Assert.That(_game.LastJuiceLabel, Does.Contain("COCOA"), "Cheddar's wrong-dog call must produce a visible coach beat.");
+            Assert.AreEqual(ArenaFeedbackCatalog.UiButtonDisabled, _game.LastAudioCueRequested,
+                "Cheddar's wrong-dog call must produce an audible coach beat.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
+
             Assert.IsTrue(_game.ForceBlanketCallDrop(),
                 "Cocoa's bark should release the snack once both dogs create a taut catch surface.");
             Assert.IsFalse(controller.WaitingForCocoaBark);

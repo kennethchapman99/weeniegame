@@ -90,6 +90,14 @@ namespace CheddarAndCocoa.Tests
             _game.StartMission(GameManager.MissionVariant.BoneRelay);
             yield return null;
 
+            _cheddar.transform.position = _game.BoneScentZone;
+            _cheddar.Bark();
+            Assert.IsFalse(_game.BoneRelayPuzzle.Known, "Cheddar cannot call the mound - that's Cocoa's job.");
+            Assert.That(_game.LastJuiceLabel, Does.Contain("COCOA"), "Cheddar's wrong-dog bark must produce a visible coach beat.");
+            Assert.AreEqual(ArenaFeedbackCatalog.UiButtonDisabled, _game.LastAudioCueRequested,
+                "Cheddar's wrong-dog bark must produce an audible coach beat.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
+
             _cocoa.transform.position = _game.BoneScentZone + Vector2.left * 5f;
             Assert.IsFalse(_game.ForceBoneCall(), "A bark away from the scent post must not reveal the mound.");
             Assert.IsFalse(_game.BoneRelayPuzzle.Known);

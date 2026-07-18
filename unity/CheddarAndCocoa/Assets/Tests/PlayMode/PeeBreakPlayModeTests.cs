@@ -464,6 +464,8 @@ namespace CheddarAndCocoa.Tests
                 "The first misread should show the generated tennis-ball gag instead of only a colored square.");
             Assert.That(_game.LastCue, Does.Contain("Funny, but not outside"));
             Assert.That(_game.LastJuiceLabel, Does.Contain("MISREAD: TENNIS BALL"));
+            Assert.AreEqual(ArenaFeedbackCatalog.ScorePenalty, _game.LastAudioCueRequested,
+                "The misread coach beat must be audible, not just visual.");
             Assert.That(_game.TeamGuidanceLabel, Does.Contain("BLOCK HALLWAY"));
             Assert.That(_game.TeamGuidanceLabel, Does.Contain("UNPLUG CHARGER"));
 

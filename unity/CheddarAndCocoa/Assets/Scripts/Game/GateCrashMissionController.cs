@@ -142,6 +142,8 @@ namespace CheddarAndCocoa.Game
             {
                 _context.MarkFailedInteraction(dogId, "Cocoa is the steady gate anchor; Cheddar takes the squeeze route");
                 _context.SetCue("Cheddar can glare at the gate, but Cocoa must Interact to plant the anchor.");
+                _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "COCOA: ANCHOR THE GATE!");
+                _context.SpawnWorldPop(_context.Dogs[dogIndex].transform.position + Vector3.up, "COCOA'S JOB", new Color(1f, 0.72f, 0.25f));
                 return true;
             }
 

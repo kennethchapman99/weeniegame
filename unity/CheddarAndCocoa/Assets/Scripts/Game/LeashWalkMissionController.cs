@@ -128,6 +128,8 @@ namespace CheddarAndCocoa.Game
                     _context.MarkFailedInteraction(barkingDog,
                         $"{DogName(required)} has this route call; keep the leash slack for them.");
                     _context.SetCue($"Wrong scout - {DogName(required)} needs to BARK this checkpoint call.");
+                    _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, $"{DogName(required).ToUpperInvariant()}'S CALL!");
+                    _context.SpawnWorldPop(_context.Dogs[dogIndex].transform.position + Vector3.up, "WRONG SCOUT", new Color(1f, 0.72f, 0.25f));
                 }
                 return false;
             }

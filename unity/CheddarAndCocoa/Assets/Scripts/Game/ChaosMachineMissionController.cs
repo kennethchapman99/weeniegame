@@ -143,6 +143,7 @@ namespace CheddarAndCocoa.Game
                 {
                     _context.SetCue("Cocoa covers the first live junction; Cheddar is the chaos gremlin who Interact-pulls the lever.");
                     _context.SpawnWorldPop(_context.Dogs[dogIndex].transform.position + Vector3.up, "CHEDDAR PULLS", new Color(1f, 0.72f, 0.3f));
+                    _context.MarkFailedInteraction(DogId.Cocoa, "Cocoa tried to pull the lever - that's Cheddar's move");
                     return true;
                 }
                 if (Vector2.Distance(_context.Dogs[dogIndex].transform.position, LeverPos) > LeverRangeVal)
@@ -171,6 +172,7 @@ namespace CheddarAndCocoa.Game
                 string who = expected == ChainActor.Cheddar ? "Cheddar" : "Cocoa";
                 _context.SetCue($"Wrong paws for {Actions[stage].ToLowerInvariant()} - {who} must Interact at this junction!");
                 _context.SpawnWorldPop(_context.Dogs[dogIndex].transform.position + Vector3.up, $"{who.ToUpperInvariant()}'S TURN", new Color(1f, 0.55f, 0.25f));
+                _context.MarkFailedInteraction(dog, $"{dog} tried the junction out of turn");
                 return true;
             }
             if (Vector2.Distance(_context.Dogs[dogIndex].transform.position, JunctionSpots[stage]) > JunctionRange)

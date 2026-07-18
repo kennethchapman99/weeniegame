@@ -219,12 +219,16 @@ namespace CheddarAndCocoa.Game
             {
                 _context.MarkFailedInteraction(dogId, "Cocoa tracks and calls; Cheddar does the digging");
                 _context.SetCue("Cocoa found the trail, but Cheddar is the dirt-flinging digger!");
+                _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "CHEDDAR: DIG IT!");
+                _context.SpawnWorldPop(_context.Dogs[dogIndex].transform.position + Vector3.up, "CHEDDAR'S JOB", new Color(1f, 0.72f, 0.25f));
                 return;
             }
             if (!force && _calledSpot < 0)
             {
                 _context.MarkFailedInteraction(dogId, "wait for Cocoa to bark a RED HOT mound call");
                 _context.SetCue("Cheddar is ready to excavate the whole yard - Cocoa must call the RED HOT mound first!");
+                _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "WAIT FOR THE CALL!");
+                _context.SpawnWorldPop(_context.Dogs[dogIndex].transform.position + Vector3.up, "NOT CALLED YET", new Color(1f, 0.72f, 0.25f));
                 return;
             }
             if (spotIndex < 0 || spotIndex >= _digMarkers.Length || !_digMarkers[spotIndex].activeSelf)

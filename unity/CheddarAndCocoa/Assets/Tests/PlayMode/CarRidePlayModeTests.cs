@@ -151,6 +151,11 @@ namespace CheddarAndCocoa.Tests
             Assert.IsFalse(controller.CheddarTuckedForBrake,
                 "Cheddar cannot create his own brake solution before Cocoa plants.");
             Assert.That(_game.LastCue, Does.Contain("Cocoa"));
+            Assert.That(_game.LastJuiceLabel, Does.Contain("PLANTS"), "The too-early tuck must produce a visible coach beat.");
+            Assert.IsTrue(HasWorldPop("TOO SOON"), "The too-early tuck must produce a visible world pop.");
+            Assert.AreEqual(ArenaFeedbackCatalog.UiButtonDisabled, _game.LastAudioCueRequested,
+                "The too-early tuck must produce an audible coach beat.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
 
             controller.ForceBrace(cocoaIndex);
             controller.ForceBrace(cheddarIndex);
