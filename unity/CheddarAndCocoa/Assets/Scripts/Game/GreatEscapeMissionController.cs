@@ -10,7 +10,7 @@ namespace CheddarAndCocoa.Game
     /// the breakout.
     /// </summary>
     public sealed class GreatEscapeMissionController : IMissionController, IMissionInteractionController,
-        IMissionSuccessPresentationController
+        IMissionSuccessPresentationController, IMissionRoleOwner
     {
         private const float StationRange = 3f;
         private const float SettleTime = 7f; // dawdle this long and the contraption eases back a step.
@@ -50,6 +50,12 @@ namespace CheddarAndCocoa.Game
         public string OutcomeSummary => MissionOutcomeSummaryBuilder.BuildGreatEscapeSummary(_puzzle);
         public bool IsPresentingSuccessfulOutcome => _puzzle.Solved && _successHoldRemaining > 0f;
         public float SuccessHoldRemaining => _successHoldRemaining;
+        public DogId? RoleOwnerDog => _puzzle.NextOwner switch
+        {
+            ChainActor.Cheddar => DogId.Cheddar,
+            ChainActor.Cocoa => DogId.Cocoa,
+            _ => null
+        };
 
         public string ObjectiveLabel
         {

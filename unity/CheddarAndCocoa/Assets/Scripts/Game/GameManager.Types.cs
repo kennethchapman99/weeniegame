@@ -99,6 +99,11 @@ namespace CheddarAndCocoa.Game
             public float GuidanceTier1Seconds = MissionGuidanceEscalation.DefaultTier1Seconds;
             public float GuidanceTier2Seconds = MissionGuidanceEscalation.DefaultTier2Seconds;
             public float GuidanceTier3Seconds = MissionGuidanceEscalation.DefaultTier3Seconds;
+            /// <summary>
+            /// Role-turn beacon (G1.3): show it at Tier 0 too, not just Tier 1+. For hard-handoff
+            /// puzzles where "whose turn" is core to solving the step, not just a stall rescue.
+            /// </summary>
+            public bool GuidanceBeaconAlwaysOn = false;
 
             public string PresentationLine =>
                 string.IsNullOrEmpty(MechanicTag) && string.IsNullOrEmpty(SceneCue)

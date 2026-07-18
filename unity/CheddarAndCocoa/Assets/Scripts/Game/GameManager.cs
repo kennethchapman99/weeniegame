@@ -130,6 +130,9 @@ namespace CheddarAndCocoa.Game
             _guidanceOwningDogIndex.Value < _dogs.Length
                 ? DogName(_dogs[_guidanceOwningDogIndex.Value])
                 : string.Empty;
+        /// <summary>Role-turn beacon (G1.3): whether the paw badge is currently showing over the objective target.</summary>
+        public bool GuidanceBeaconVisible => _roleTurnBeacon != null && _roleTurnBeacon.IsShowing;
+        public Color GuidanceBeaconTint => _roleTurnBeacon != null ? _roleTurnBeacon.CurrentTint : Color.white;
         public MarkTheYardMissionController MarkTheYardController => _activeMissionController as MarkTheYardMissionController;
         public TerritoryMissionState MarkTheYardState => MarkTheYardController?.State ?? _emptyTerritoryState;
         public Vector2[] TerritoryZones => MarkTheYardMissionController.ComputeZones(_bounds);
@@ -475,6 +478,7 @@ namespace CheddarAndCocoa.Game
         private readonly CarryRoundupMissionState _emptyCarryState = new CarryRoundupMissionState();
         private readonly ScentSearchMissionState _emptyScentState = new ScentSearchMissionState();
         private PanicMeter _panic;
+        private RoleTurnBeacon _roleTurnBeacon;
         private readonly MissionGuidanceEscalation _guidance = new MissionGuidanceEscalation();
         private int? _guidanceOwningDogIndex;
         private int _guidanceLastTier;
@@ -586,6 +590,8 @@ namespace CheddarAndCocoa.Game
 
             _playtestLog.Clear();
             _panic = gameObject.AddComponent<PanicMeter>();
+            _roleTurnBeacon = gameObject.AddComponent<RoleTurnBeacon>();
+            _roleTurnBeacon.Init();
             _mission = BuildMissionDefinition(startingMission, _tuning);
             _selectedMissionIndex = IndexOfMission(startingMission);
             _treatRoot = new GameObject(_mission.ItemRootName).transform;
@@ -2888,7 +2894,7 @@ namespace CheddarAndCocoa.Game
 
             bool has0 = TryGetObjectiveTarget(0, out var target0, out _, out _);
             bool has1 = TryGetObjectiveTarget(1, out var target1, out _, out _);
-            _guidanceOwningDogIndex = ComputeGuidanceOwningDogIndex(has0, has1);
+            _guidanceOwningDogIndex = ResolveGuidanceOwningDogIndex(has0, has1);
 
             int tier = GuidanceTier;
             bool emphasize = tier >= 1;
@@ -2907,6 +2913,7 @@ namespace CheddarAndCocoa.Game
 
             UpdateGuidanceLabelGate(0, tier >= 2 && has0 ? target0 : null);
             UpdateGuidanceLabelGate(1, tier >= 2 && has1 ? target1 : null);
+            UpdateRoleTurnBeacon(tier, has0, target0, has1, target1);
 
             if (tier >= 3 && _guidanceLastTier < 3) RequestAudioCue(ArenaFeedbackCatalog.Bark);
             _guidanceLastTier = tier;
@@ -2920,6 +2927,55 @@ namespace CheddarAndCocoa.Game
         /// </summary>
         public static int? ComputeGuidanceOwningDogIndex(bool dog0HasTarget, bool dog1HasTarget) =>
             dog0HasTarget && !dog1HasTarget ? 0 : dog1HasTarget && !dog0HasTarget ? (int?)1 : null;
+
+        /// <summary>
+        /// Prefers a controller's explicit <see cref="IMissionRoleOwner"/> signal (hard-handoff
+        /// puzzles that already track a single current actor internally) over the generic
+        /// presence/absence heuristic, which most missions fall through to.
+        /// </summary>
+        private int? ResolveGuidanceOwningDogIndex(bool has0, bool has1)
+        {
+            if (_activeMissionController is IMissionRoleOwner roleOwner && roleOwner.RoleOwnerDog.HasValue)
+            {
+                int index = IndexOfDog(roleOwner.RoleOwnerDog.Value);
+                if (index >= 0) return index;
+            }
+
+            return ComputeGuidanceOwningDogIndex(has0, has1);
+        }
+
+        private static readonly Color GuidanceBeaconCheddarColor = new Color(1f, 0.55f, 0.1f);
+        private static readonly Color GuidanceBeaconCocoaColor = new Color(0.42f, 0.27f, 0.14f);
+
+        private void UpdateRoleTurnBeacon(int tier, bool has0, Transform target0, bool has1, Transform target1)
+        {
+            if (_roleTurnBeacon == null) return;
+
+            bool eligible = _guidanceOwningDogIndex.HasValue &&
+                (tier >= 1 || (_mission != null && _mission.GuidanceBeaconAlwaysOn));
+            if (!eligible)
+            {
+                _roleTurnBeacon.Hide();
+                return;
+            }
+
+            int owner = _guidanceOwningDogIndex.Value;
+            if (owner < 0 || owner >= _dogs.Length || _dogs[owner] == null)
+            {
+                _roleTurnBeacon.Hide();
+                return;
+            }
+
+            Transform beaconTarget = owner == 0 ? (has0 ? target0 : null) : (has1 ? target1 : null);
+            if (beaconTarget == null)
+            {
+                _roleTurnBeacon.Hide();
+                return;
+            }
+
+            bool isCheddar = _dogs[owner].TryGetComponent<DogIdentity>(out var identity) && identity.Id == DogId.Cheddar;
+            _roleTurnBeacon.Show(beaconTarget, isCheddar ? GuidanceBeaconCheddarColor : GuidanceBeaconCocoaColor);
+        }
 
         private void NudgeTowardGuidanceTarget(int dogIndex, Transform target)
         {
@@ -2951,6 +3007,7 @@ namespace CheddarAndCocoa.Game
                     WorldLabelVisibility.Attach(_guidanceWidenedLabels[i], WorldLabelVisibility.DefaultPromptRange);
                 _guidanceWidenedLabels[i] = null;
             }
+            _roleTurnBeacon?.Hide();
         }
 
         private void UpdateTravelAssists()

@@ -3,7 +3,8 @@ using UnityEngine;
 
 namespace CheddarAndCocoa.Game
 {
-    public sealed class BoneRelayMissionController : IMissionController, IMissionSuccessPresentationController
+    public sealed class BoneRelayMissionController : IMissionController, IMissionSuccessPresentationController,
+        IMissionRoleOwner
     {
         private const float ScentRange = 3.5f;
         private const float DigRange = 3f;
@@ -35,6 +36,9 @@ namespace CheddarAndCocoa.Game
         public GameManager.MissionVariant Variant => GameManager.MissionVariant.BoneRelay;
         public bool IsComplete => _puzzle.Solved && _successHoldRemaining <= 0f;
         public bool IsPresentingSuccessfulOutcome => _puzzle.Solved && _successHoldRemaining > 0f;
+        // Before a call is revealed Cocoa must bark the scent; once revealed, Cheddar owns the dig -
+        // mirrors the copy split in TryGetObjectiveTarget ("WAIT FOR CALL" vs "DIG THE CALL").
+        public DogId? RoleOwnerDog => _puzzle.Solved ? null : _puzzle.RevealedTarget < 0 ? DogId.Cocoa : DogId.Cheddar;
         public bool IsFailed => _failed;
         public string FailReason => _failed ? "The dogs dug up half the yard guessing instead of waiting for Cocoa's call." : null;
         public CoopScentRelayPuzzle Puzzle => _puzzle;

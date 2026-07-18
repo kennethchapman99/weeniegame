@@ -94,6 +94,20 @@ namespace CheddarAndCocoa.Game
     }
 
     /// <summary>
+    /// Optional hook for hard-handoff co-op puzzles that already track a single current actor
+    /// internally (e.g. an alternating-step sequence) but only expose it through per-dog copy text
+    /// in <see cref="IMissionController.TryGetObjectiveTarget"/> - that call returns true for BOTH
+    /// dogs on these missions (one gets "your step", the other "let partner interact"), which is
+    /// indistinguishable from a genuinely shared/symmetric step without this. The guidance-ladder
+    /// role-turn beacon (G1.3) uses this, when present, instead of guessing from target presence.
+    /// </summary>
+    public interface IMissionRoleOwner
+    {
+        /// <summary>The dog who should act on the current step right now, or null between steps / when nobody currently owns it.</summary>
+        DogId? RoleOwnerDog { get; }
+    }
+
+    /// <summary>
     /// Narrow shared-services bundle for mission controllers. It intentionally exposes dogs,
     /// arena presentation services, scoring, and session-safe callbacks—not GameManager itself.
     /// </summary>

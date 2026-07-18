@@ -104,13 +104,26 @@ the player** - every tier is a stronger nudge toward doing it themselves, never 
   cue (`ArenaFeedbackCatalog.Bark`; a dedicated "coach woof" cue is S5.1) fires once on the
   tier-up edge, not every frame.
 
+**Role-turn beacon (`RoleTurnBeacon`):** a small paw badge in the owning dog's identity color
+(Cheddar orange / Cocoa brown, tinted at runtime onto one neutral `cue_role_beacon` sprite) floats
+just above the active objective target - one consistent answer to "whose turn is it?" at the object
+itself, not just in the HUD. Visible from Tier 1 upward by default; a mission may set
+`GameManager.MissionDefinition.GuidanceBeaconAlwaysOn` to show it from Tier 0 for hard-handoff
+puzzles where knowing the current actor is core to solving the step, not just a stall rescue (Great
+Escape, Chaos Machine, Bone Relay - all three also implement `IMissionRoleOwner`, see the caveat
+below). Where both dogs share a step, there is no single owner and the beacon shows nothing - never
+guess and point at the wrong dog.
+
 **Owning-dog caveat:** `GameManager.GuidanceOwningDogIndex` is only set when exactly one dog has an
 objective target this frame (`TryGetObjectiveTarget` returns true for one dog and false for the
-other). Most missions hand *both* dogs a target at once, with different copy telling the non-acting
-dog to stand down - by design this is not disambiguated by parsing that copy text, so on those
-missions Tier 2's chip pulse and Tier 3's dog-naming simply stay off while the label-widening and
-HUD-flash effects still apply. A future task (G1.3, the role-turn beacon) is expected to need a real
-per-controller "who currently owns this step" signal; this ladder does not add one preemptively.
+other) - **or** when the active controller implements `IMissionRoleOwner`, an opt-in interface a
+controller uses to expose a single current actor it already tracks internally even though
+`TryGetObjectiveTarget` hands *both* dogs a target (with different copy telling the non-acting dog to
+stand down). The presence/absence heuristic alone never resolves an owner for genuinely alternating
+hard-handoff puzzles, because both dogs having *a* target is exactly their normal state - only the
+controller knows which one is live right now. Missions that implement neither path (most of the
+roster) correctly show no owner, no beacon, no chip pulse, no HUD dog-naming, rather than guessing
+from copy text.
 
 Per-mission tier-cap and timing overrides live on `GameManager.MissionDefinition`
 (`GuidanceTierCap`, `GuidanceTier1/2/3Seconds`) as data, not code branches. All 23 missions currently

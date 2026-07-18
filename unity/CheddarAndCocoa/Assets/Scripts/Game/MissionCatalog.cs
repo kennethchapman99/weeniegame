@@ -540,7 +540,10 @@ namespace CheddarAndCocoa.Game
                 ItemColor = new Color(0.62f, 0.64f, 0.7f),
                 ItemAccentColor = new Color(0.85f, 0.6f, 0.35f),
                 ItemSecondaryColor = new Color(0.32f, 0.34f, 0.4f),
-                ItemPopColor = new Color(0.6f, 0.85f, 0.95f)
+                ItemPopColor = new Color(0.6f, 0.85f, 0.95f),
+                // Hard handoff puzzle: the role-turn beacon should read at Tier 0, not just once the
+                // team stalls - knowing whose turn it is is core to running the cascade at all.
+                GuidanceBeaconAlwaysOn = true
             };
         }
 
@@ -602,7 +605,10 @@ namespace CheddarAndCocoa.Game
                 ItemColor = new Color(0.6f, 0.62f, 0.68f),
                 ItemAccentColor = new Color(0.8f, 0.7f, 0.4f),
                 ItemSecondaryColor = new Color(0.32f, 0.34f, 0.4f),
-                ItemPopColor = new Color(0.6f, 0.85f, 0.95f)
+                ItemPopColor = new Color(0.6f, 0.85f, 0.95f),
+                // Hard handoff puzzle: the role-turn beacon should read at Tier 0, not just once the
+                // team stalls - knowing whose turn it is is core to running the chain at all.
+                GuidanceBeaconAlwaysOn = true
             };
         }
 
@@ -722,7 +728,10 @@ namespace CheddarAndCocoa.Game
                 ItemColor = new Color(0.5f, 0.38f, 0.22f),
                 ItemAccentColor = new Color(0.78f, 0.7f, 0.5f),
                 ItemSecondaryColor = new Color(0.3f, 0.22f, 0.12f),
-                ItemPopColor = new Color(0.5f, 0.9f, 0.55f)
+                ItemPopColor = new Color(0.5f, 0.9f, 0.55f),
+                // Hard handoff puzzle: the role-turn beacon should read at Tier 0, not just once the
+                // team stalls - knowing whether to bark or dig right now is core to the mission.
+                GuidanceBeaconAlwaysOn = true
             };
         }
 

@@ -51,6 +51,7 @@ namespace CheddarAndCocoa.Game
         public const string CueBarkRange = Root + "/UI/Cues/cue_bark_range";
         public const string CueRescueRange = Root + "/UI/Cues/cue_rescue_range";
         public const string CueTugRange = Root + "/UI/Cues/cue_tug_range";
+        public const string CueRoleBeacon = Root + "/UI/Cues/cue_role_beacon";
         public const string DogFxChaosSpark = Root + "/VFX/Dog/dog_fx_chaos_spark";
         public const string DogFxCollarGlint = Root + "/VFX/Dog/dog_fx_collar_glint";
         public const string DogFxGroundGlow = Root + "/VFX/Dog/dog_fx_ground_glow";
@@ -313,7 +314,7 @@ namespace CheddarAndCocoa.Game
 
         public static readonly string[] GameplayCuePack =
         {
-            CueObjectiveArrow, CueTargetPaw, CueBarkRange, CueRescueRange, CueTugRange
+            CueObjectiveArrow, CueTargetPaw, CueBarkRange, CueRescueRange, CueTugRange, CueRoleBeacon
         };
 
         public static readonly string[] DogFxPack =

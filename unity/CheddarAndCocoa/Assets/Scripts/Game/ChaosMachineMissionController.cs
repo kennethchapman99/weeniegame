@@ -10,7 +10,7 @@ namespace CheddarAndCocoa.Game
     /// misfires fail the mission.
     /// </summary>
     public sealed class ChaosMachineMissionController : IMissionController, IMissionInteractionController,
-        IMissionSuccessPresentationController
+        IMissionSuccessPresentationController, IMissionRoleOwner
     {
         private const float LeverRangeVal = 3f;
         private const float JunctionRange = 3f;
@@ -56,6 +56,21 @@ namespace CheddarAndCocoa.Game
         public Vector2 EntryTarget => _context.Bounds.center;
         public string OutcomeSummary => MissionOutcomeSummaryBuilder.BuildChaosMachineSummary(_puzzle);
         public bool IsPresentingSuccessfulOutcome => _puzzle.Solved && _successHoldRemaining > 0f;
+        public DogId? RoleOwnerDog
+        {
+            get
+            {
+                if (_puzzle.Solved) return null;
+                if (!_puzzle.Running) return DogId.Cheddar; // pre-running: Cheddar always pulls the lever
+                int stage = Mathf.Clamp(_puzzle.Stage, 0, Owners.Length - 1);
+                return Owners[stage] switch
+                {
+                    ChainActor.Cheddar => DogId.Cheddar,
+                    ChainActor.Cocoa => DogId.Cocoa,
+                    _ => null
+                };
+            }
+        }
         public float SuccessHoldRemaining => _successHoldRemaining;
 
         public string ObjectiveLabel

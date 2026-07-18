@@ -33,7 +33,7 @@
 | P0.1 | Baseline after Codex lands | DONE (2026-07-17, see below) |
 | G1.1 | Stall detector + escalation ladder core | DONE (2026-07-17, see below) |
 | G1.2 | Tier 1–3 signal wiring | DONE (2026-07-17, see below) |
-| G1.3 | Role-turn beacon | OPEN |
+| G1.3 | Role-turn beacon | DONE (2026-07-18, see below) |
 | G1.4 | Handoff flip flourish | OPEN |
 | G1.5 | Wrong-role coaching audit | OPEN |
 | G1.6 | Ladder observability + couch telemetry | OPEN |
@@ -251,6 +251,56 @@ matching the existing cue-pack style, sources to `ReferenceOnly/`.
 **Tests:** beacon resource loads; owner mapping correct for an alternating-owner mission (drive
 Great Escape's sequence and assert the beacon follows the active owner); shared steps show none.
 **Docs:** `VISUAL-READABILITY-CONTRACT.md` guidance-ladder section gains the beacon rule.
+
+**Done (2026-07-18):** Shipped `RoleTurnBeacon` (new component, GameManager-owned, mirrors
+`ActorSignalBadge`'s established "child icon, position/enable the child not self" shape) plus a real
+owner-derivation path this task actually needed — see below.
+
+- **Confirmed and resolved the gap G1.2 flagged:** verified (by reading all three controllers) that
+  Great Escape, Chaos Machine, and Bone Relay never produce a single-true/single-false
+  `TryGetObjectiveTarget` split — they always hand both dogs a target, differentiated only by copy
+  text and an internal owner concept the controller already tracks (`_puzzle.NextOwner`,
+  `Owners[stage]`, `_puzzle.RevealedTarget`). G1.2's presence/absence heuristic alone would show no
+  beacon for these three 100% of the time, which is exactly backwards for the task's own flagship
+  "hard handoff" examples. Added `IMissionRoleOwner` (`DogId? RoleOwnerDog { get; }`), a new optional
+  marker interface following the established `IMissionSuccessPresentationController`-style pattern —
+  implemented on exactly those three controllers (reusing their existing internal state, no new
+  state), left off all 20 others. `GameManager.ResolveGuidanceOwningDogIndex` prefers this signal
+  when the active controller implements it, falling back to G1.2's `ComputeGuidanceOwningDogIndex`
+  otherwise — layered, backward-compatible, no `IMissionController` surface touched.
+- Added `GameManager.MissionDefinition.GuidanceBeaconAlwaysOn` (opt-in, default false); set `true`
+  on the three hard-handoff missions in `MissionCatalog.cs` so the beacon shows from Tier 0 (turn
+  order matters even when nobody's stalled), everyone else stays Tier-1+ gated.
+- Generated `cue_role_beacon.png` via new `tools/art/generate_role_beacon_cue.py` — **one** neutral
+  cream paw badge tinted at runtime to Cheddar orange / Cocoa brown via `SpriteRenderer.color`,
+  same approach the existing scent-breadcrumb paw cue already uses, rather than baking two
+  pre-colored sprites as the task text literally suggested ("the two badge sprites") — noting the
+  small deviation rather than hiding it.
+- **Caught and fixed a severe bug before committing:** `RoleTurnBeacon` is attached directly to
+  GameManager's own GameObject (matching `PanicMeter`'s existing pattern), but the first draft called
+  `gameObject.SetActive(false)`/set `transform.position` on itself to hide/reposition the icon —
+  which is GameManager's *own* GameObject and transform, not a private one. That disabled the entire
+  GameManager (and moved/rescaled it) the instant any mission's beacon logic ran, which is every
+  frame. First full-suite run after this landed 324/598 failures, cascading across totally unrelated
+  test files (tutorial, actor badges, adventure progression) with `"ArenaBootstrap did not build a
+  GameManager"` as the giveaway. Fixed by giving the beacon its own dedicated child GameObject and
+  only ever touching that child's `SpriteRenderer.enabled`/transform (`ActorSignalBadge`'s exact
+  shape) — full suite green after. Flagging this here because it's a sharp trap worth remembering:
+  *never* call `AddComponent<T>()` on `gameObject` for a `T` that will call `SetActive`/move
+  `transform` on itself, unless you've confirmed `T` isn't sharing that GameObject with something
+  else load-bearing.
+- **Tests:** `RoleTurnBeaconPlayModeTests.cs` — always-on Tier-0 visibility plus the beacon tint
+  alternating correctly across Great Escape's full 4-step sequence (Cocoa/Cheddar/Cocoa/Cheddar) and
+  disappearing once solved; Kitchen Food Frenzy (shared-step, no owner) staying beacon-free even at
+  forced Tier 3; replay producing a fresh, correctly-owned beacon rather than a stale reference.
+  "Beacon resource loads" is covered by the pre-existing `FinalArtIntegrationPlayModeTests` loop over
+  `FinalGameplayArt.GameplayCuePack`, which `cue_role_beacon` was added to rather than duplicating a
+  load-check test.
+- Full PlayMode suite: **598/598 passed, 0 skipped** (`unity/playmode-results.xml`, SHA-256
+  `3e451a8a598041234130c71a1d8138c0add8f6d3082720c43cdede8b63ed948b`, 2026-07-18 02:13 EDT).
+- Dev build + smoke passed; the 23-mission art-review capture also ran clean post-fix (no
+  exceptions) — same known sandbox gap as P0.1/G1.2, frames are flat unrenderable placeholders here,
+  not yet visually inspected.
 
 ### G1.4 — Handoff flip flourish
 **Goal:** the moment the active role flips between dogs is unmissable.
