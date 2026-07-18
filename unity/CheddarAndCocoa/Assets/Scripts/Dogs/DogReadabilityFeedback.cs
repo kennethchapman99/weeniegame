@@ -137,6 +137,16 @@ namespace CheddarAndCocoa.Dogs
         public void ShowSad() => ForcePose(Pose.Sad, 999f);
         public void ShowPanic() => ForcePose(Pose.Sad, 0.6f);     // brief flinch (e.g. a thunderclap)
         public void ShowComfort() => ForcePose(Pose.Proud, 0.5f); // brief reassurance while huddling
+
+        /// <summary>
+        /// Guidance-ladder Tier 1 nudge: turn to face the stalled objective using the existing
+        /// idle-facing read (flips the authored sprite toward <paramref name="faceDir"/>) - no new art.
+        /// </summary>
+        public void ShowGuidanceNudge(Vector2 faceDir)
+        {
+            if (faceDir.sqrMagnitude > 0.0001f) _lastIntentDir = faceDir.normalized;
+            ForcePose(Pose.Idle, 0.7f);
+        }
         public void SetCarrying(bool carrying)
         {
             IsCarrying = carrying;

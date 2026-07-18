@@ -24,8 +24,11 @@ namespace CheddarAndCocoa.Game
         private Vector3 _cueBaseScale = Vector3.one * 0.28f;
         private float _distanceToTarget;
         private Color _scentColor = Color.white;
+        private bool _emphasized;
 
         public string Label => _target != null ? _copy : string.Empty;
+        /// <summary>Set by the guidance-escalation ladder's Tier 1 nudge; brightens the arrow cue and breadcrumbs.</summary>
+        public bool IsEmphasized => _emphasized;
         public bool IsVisible => (_label != null && _label.gameObject.activeSelf) ||
                                  (_cue != null && _cue.gameObject.activeSelf) ||
                                  VisibleScentBreadcrumbCount > 0;
@@ -111,10 +114,14 @@ namespace CheddarAndCocoa.Game
             _target = null;
             _copy = string.Empty;
             _distanceToTarget = 0f;
+            _emphasized = false;
             if (_label != null) _label.gameObject.SetActive(false);
             if (_cue != null) _cue.gameObject.SetActive(false);
             SetScentBreadcrumbsVisible(false);
         }
+
+        /// <summary>Guidance-ladder Tier 1 nudge: brighten the cue and breadcrumbs while the team is stalled on this target.</summary>
+        public void SetEmphasis(bool emphasized) => _emphasized = emphasized;
 
         private void LateUpdate()
         {
@@ -140,19 +147,24 @@ namespace CheddarAndCocoa.Game
             var dir = ((Vector2)delta).normalized;
             UpdateScentBreadcrumbs(dir);
             var cuePosition = new Vector3(dir.x * 1.15f, dir.y * 1.15f + 0.72f, -0.18f);
+            float emphasisPulse = _emphasized ? 0.5f + 0.5f * Mathf.Sin(Time.time * 6f) : 0f;
             if (_cue != null)
             {
                 _cue.gameObject.SetActive(true);
                 _cue.transform.localPosition = cuePosition;
                 float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg - 90f;
                 _cue.transform.localRotation = Quaternion.Euler(0f, 0f, angle);
+                _cue.color = _emphasized
+                    ? Color.Lerp(Color.white, new Color(1f, 0.82f, 0.2f), 0.4f + emphasisPulse * 0.4f)
+                    : Color.white;
             }
 
             _label.transform.localPosition = cuePosition + new Vector3(0f, -0.62f, -0.02f);
             _label.transform.rotation = Quaternion.identity;
             float zoomScale = Camera.main != null ? Mathf.Clamp(Camera.main.orthographicSize / 7.5f, 1f, 3.2f) : 1f;
             _label.transform.localScale = _baseScale * zoomScale;
-            if (_cue != null) _cue.transform.localScale = _cueBaseScale * Mathf.Min(zoomScale, 1.8f);
+            if (_cue != null)
+                _cue.transform.localScale = _cueBaseScale * Mathf.Min(zoomScale, 1.8f) * (1f + emphasisPulse * 0.18f);
             _label.text = $"{_copy}  {Mathf.CeilToInt(_distanceToTarget)}m";
             ApplyTextVisibility();
         }
@@ -218,6 +230,7 @@ namespace CheddarAndCocoa.Game
                 float scale = 0.22f + wave * 0.035f;
                 breadcrumb.transform.localScale = Vector3.one * scale;
                 float alpha = (0.24f - i * 0.035f) + wave * 0.09f;
+                if (_emphasized) alpha = Mathf.Min(1f, alpha * 2.1f);
                 breadcrumb.color = new Color(_scentColor.r, _scentColor.g, _scentColor.b, alpha);
             }
         }

@@ -32,7 +32,7 @@
 |---|---|---|
 | P0.1 | Baseline after Codex lands | DONE (2026-07-17, see below) |
 | G1.1 | Stall detector + escalation ladder core | DONE (2026-07-17, see below) |
-| G1.2 | Tier 1–3 signal wiring | OPEN |
+| G1.2 | Tier 1–3 signal wiring | DONE (2026-07-17, see below) |
 | G1.3 | Role-turn beacon | OPEN |
 | G1.4 | Handoff flip flourish | OPEN |
 | G1.5 | Wrong-role coaching audit | OPEN |
@@ -178,6 +178,66 @@ behavior unchanged.
 assertable; at Tier 0 none are active; progress mid-Tier-2 returns everything to quiet.
 **Docs:** add a "Guidance ladder" section to `docs/VISUAL-READABILITY-CONTRACT.md` (tiers, what
 renders at each, the never-auto-complete rule).
+
+**Done (2026-07-17):** Shipped Tier 1-3 rendering, entirely computed live off `GuidanceTier` each
+frame (no new persistent-state timers beyond a nudge cadence, an edge-trigger for the one-shot audio
+cue, and small bookkeeping for reverting widened labels) — see the new "Guidance Ladder" section in
+`docs/VISUAL-READABILITY-CONTRACT.md` for the tier-by-tier spec as shipped.
+
+- **Tier 1:** `ObjectiveArrowFeedback.SetEmphasis(bool)` (new) brightens the cue tint/scale and
+  breadcrumb alpha via the same sin-wave-pulse idiom `MissionPropArtAttachment`'s proximity glow
+  already uses; `GameManager.UpdateGuidancePresentation()` sets it on every arrow whenever
+  `GuidanceTier >= 1`. Every ~1.2s while stalled it also calls the existing
+  `MissionPropArtAttachment.Pulse()` on the current objective prop(s) directly (bypassing proximity)
+  and a new `DogReadabilityFeedback.ShowGuidanceNudge(Vector2)` (reuses `ShowTug(Vector2)`'s
+  `_lastIntentDir` + `ForcePose` technique - flips the authored sprite to face the target, no new
+  art) on the dog(s) with a live target.
+- **Tier 2:** widens the active objective's world-label proximity gate via
+  `WorldLabelVisibility.Attach(label, wideRange)` (idempotent/re-parameterizable, already the
+  established API) on `target.GetComponentInChildren<TextMesh>()`; reverts to
+  `WorldLabelVisibility.DefaultPromptRange` the moment tier drops below 2, tracked per dog so it
+  never leaks a stale wide gate. Partner HUD chip pulse is gated on a real single-owner signal (see
+  below) and simply doesn't fire when that signal is unknown, rather than guessing.
+- **Tier 3:** `ArenaHud` flashes an amber pulse behind the objective line (mirrors the score-pop
+  timer idiom already in that file) and prefixes the owning dog's name when known;
+  `RequestAudioCue(ArenaFeedbackCatalog.Bark)` fires once on the tier-up edge (tracked via
+  `_guidanceLastTier`) as the S5.1-flagged placeholder for a dedicated "coach woof" cue.
+- **Real design gap found and scoped down, not hidden:** researched every `TryGetObjectiveTarget`
+  call site across all 23 controllers before writing any rendering code (see the "Owning-dog caveat"
+  in the new VISUAL-READABILITY-CONTRACT.md section) — there is no roster-wide "this dog owns the
+  current step" signal today; most controllers hand *both* dogs a target at once with different copy
+  telling one to stand down, which this does not disambiguate by parsing that copy text (fragile,
+  not a real contract). Shipped `GameManager.ComputeGuidanceOwningDogIndex(bool, bool)` (public
+  static, pure) as the honest version of that signal: non-null only when exactly one dog has a
+  target this frame. Tier 1's brighten-arrow and Tier 3's HUD-flash still fire correctly on every
+  mission (they don't need an owner); Tier 2's partner-chip-pulse and Tier 3's dog-naming correctly
+  stay off on missions where ownership is ambiguous rather than showing wrong information. Did not
+  add new `IMissionController` surface or parse mission copy text to force a signal that doesn't
+  exist yet — that's real design work for whoever picks up G1.3 (the role-turn beacon), which
+  already expects to need this and is explicitly flagged in the new doc section so it isn't
+  rediscovered from scratch.
+- **Tests:** `GuidanceSignalPlayModeTests.cs` — 1 pure test (`ComputeGuidanceOwningDogIndex`'s full
+  truth table) + 6 scene-integration `UnityTest`s using Kitchen Food Frenzy as the fixture mission
+  (its opening beat's markers carry a child world label from the same call that
+  `TryGetObjectiveTarget` returns, and it reliably hands both dogs a target, so it exercises Tier
+  1/2/3 rendering and the "both-true" no-owner path without any mission-specific plumbing): Tier-0
+  quiet, Tier-1 arrow emphasis, a real objective-copy-change progress signal dropping emphasis back
+  to quiet, Tier-2 widening both dogs' target labels and reverting them on progress, Tier-3 flagging
+  `GuidanceRescueActive` and firing exactly one `Bark` cue on the edge (not every frame), and replay
+  clearing all presentation state. First run caught one bug in the test file itself (`KitchenController`
+  is a private GameManager accessor; fixed by casting `ActiveMissionController`), and confirmed a
+  real one-frame render lag after a same-frame progress signal (`_guidance.Tick()`/
+  `UpdateGuidancePresentation()` run before `LogObjectiveIfChanged()` in `Update()`, so a reset
+  landing this frame only reaches the presentation next frame) — imperceptible at 60fps, left as-is
+  rather than reordering `Update()` for a 16ms difference, tests adjusted to allow one settle frame.
+- Full PlayMode suite: **595/595 passed, 0 skipped** (588 baseline + 7 new,
+  `unity/playmode-results.xml`, SHA-256
+  `1010c9aea3965e2708c47e6bd290dc2cd9ce13ddc046b1cf89e56b2d4909f456`, 2026-07-17 23:40 EDT).
+- Dev build + smoke passed (`unity/builds/dev/CheddarAndCocoa-Arena.app`); the 69-frame art-review
+  capture also ran clean (no exceptions from any of the changed code across all 23 missions) but,
+  same known sandbox gap as P0.1, only produced flat gray placeholder frames (`-nographics`, no
+  GPU/display here) - **not visually inspected**. Whoever runs the next visual/art task off this
+  queue needs a real display attached to actually see the Tier 1-3 rendering.
 
 ### G1.3 — Role-turn beacon
 **Goal:** one consistent answer to "whose turn is it?" at the object itself.

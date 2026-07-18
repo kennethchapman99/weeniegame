@@ -426,7 +426,15 @@ namespace CheddarAndCocoa.Game
                 objectiveRect.width = Mathf.Max(1f, meter.x - objectiveRect.x - 18f);
                 DrawPressureMeter(meter, pressureHud);
             }
-            GUI.Label(objectiveRect, _game.ObjectiveLabel, _objectiveHud);
+            string objectiveText = _game.ObjectiveLabel;
+            if (_game.GuidanceRescueActive)
+            {
+                float rescuePulse = 0.5f + 0.5f * Mathf.Sin(Time.time * 6f);
+                DrawTintedRect(objectiveRect, new Color(1f, 0.82f, 0.2f, 0.14f + rescuePulse * 0.14f));
+                if (!string.IsNullOrEmpty(_game.GuidanceRescueDogName))
+                    objectiveText = $"{_game.GuidanceRescueDogName.ToUpperInvariant()}: {objectiveText}";
+            }
+            GUI.Label(objectiveRect, objectiveText, _objectiveHud);
 
             string transient = _game.LeadInActive ? _game.LeadInCountdownLabel :
                 (_game.ScorePopVisible ? _game.LastScorePopLabel : string.Empty);
@@ -442,18 +450,26 @@ namespace CheddarAndCocoa.Game
         {
             var layout = BuildGameplayHudLayout(VirtualWidth, VirtualHeight);
             DrawPlayerIdentityChip(layout.CheddarChip,
-                BuildPlayerIdentityChipLabel("P1  CHEDDAR", _game.PlayerControlSourceLabel(DogId.Cheddar)), CheddarAccent);
+                BuildPlayerIdentityChipLabel("P1  CHEDDAR", _game.PlayerControlSourceLabel(DogId.Cheddar)), CheddarAccent,
+                _game.GuidancePartnerDogIndex == 0);
             DrawPlayerIdentityChip(layout.CocoaChip,
-                BuildPlayerIdentityChipLabel("P2  COCOA", _game.PlayerControlSourceLabel(DogId.Cocoa)), CocoaAccent);
+                BuildPlayerIdentityChipLabel("P2  COCOA", _game.PlayerControlSourceLabel(DogId.Cocoa)), CocoaAccent,
+                _game.GuidancePartnerDogIndex == 1);
         }
 
         public static string BuildPlayerIdentityChipLabel(string player, string controlSource) =>
             $"{player}\n{controlSource}";
 
-        private void DrawPlayerIdentityChip(Rect rect, string label, Color accent)
+        private void DrawPlayerIdentityChip(Rect rect, string label, Color accent, bool guidancePulse = false)
         {
             DrawHudOverlay(rect);
-            DrawTintedRect(rect, new Color(0.015f, 0.025f, 0.03f, 0.9f));
+            Color background = new Color(0.015f, 0.025f, 0.03f, 0.9f);
+            if (guidancePulse)
+            {
+                float pulse = 0.5f + 0.5f * Mathf.Sin(Time.time * 7f);
+                background = Color.Lerp(background, new Color(accent.r, accent.g, accent.b, 0.4f), 0.25f + pulse * 0.25f);
+            }
+            DrawTintedRect(rect, background);
             DrawTintedRect(new Rect(rect.x, rect.y, 8f, rect.height), accent);
             GUI.Label(new Rect(rect.x + 18f, rect.y, rect.width - 28f, rect.height), label, _playerChip);
         }

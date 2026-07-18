@@ -78,6 +78,44 @@ Diagnostic state, readiness gates, event history, full world-label maps, and con
 part of the production first read. They remain behind the explicit F1/backquote observer overlay.
 The bottom-left diagnostics toggle may appear only after that overlay has already been requested.
 
+## Guidance Ladder
+
+A shared, roster-wide stall-aware escalation ladder (`MissionGuidanceEscalation`, owned by
+`GameManager`) answers "the team hasn't made progress in a while - help without breaking flow."
+Any progress signal (a score event, an objective-copy change) resets it to Tier 0. It freezes
+(does not accumulate) during the briefing/sniff-around lead-in, the opening explainer, pause, and a
+held success payoff, and resets on every mission start/replay. **It never auto-completes a step for
+the player** - every tier is a stronger nudge toward doing it themselves, never a substitute.
+
+- **Tier 0 - Discovery (always on, default: 0-12s stalled):** the baseline from the rules above -
+  proximity-gated labels, the quiet arrow icon, breadcrumbs, prop silhouettes. No ladder-specific
+  rendering.
+- **Tier 1 - Nudge (default: 12-25s stalled):** the current objective's `ObjectiveArrowFeedback`
+  cue and breadcrumbs brighten (a warm tint pulse), the corresponding `MissionPropArtAttachment` on
+  the objective prop pulses periodically regardless of dog proximity, and the acting dog(s) turn to
+  face the objective using the existing idle-facing read (no new art).
+- **Tier 2 - Coach (default: 25-45s stalled):** the active objective's contextual world label
+  (the shared `AddWorldLabel`/`WorldLabelVisibility` path) has its proximity gate widened so it's
+  readable well before the dog is close enough to normally trigger it. When exactly one dog owns the
+  step (see the caveat below), the other dog's HUD identity chip pulses toward their own accent
+  color.
+- **Tier 3 - Rescue (default: 45s+ stalled, the ceiling):** the compact HUD objective line flashes
+  (amber pulse) and, when the owning dog is known, is prefixed with their name. One placeholder audio
+  cue (`ArenaFeedbackCatalog.Bark`; a dedicated "coach woof" cue is S5.1) fires once on the
+  tier-up edge, not every frame.
+
+**Owning-dog caveat:** `GameManager.GuidanceOwningDogIndex` is only set when exactly one dog has an
+objective target this frame (`TryGetObjectiveTarget` returns true for one dog and false for the
+other). Most missions hand *both* dogs a target at once, with different copy telling the non-acting
+dog to stand down - by design this is not disambiguated by parsing that copy text, so on those
+missions Tier 2's chip pulse and Tier 3's dog-naming simply stay off while the label-widening and
+HUD-flash effects still apply. A future task (G1.3, the role-turn beacon) is expected to need a real
+per-controller "who currently owns this step" signal; this ladder does not add one preemptively.
+
+Per-mission tier-cap and timing overrides live on `GameManager.MissionDefinition`
+(`GuidanceTierCap`, `GuidanceTier1/2/3Seconds`) as data, not code branches. All 23 missions currently
+default to the full ladder at 12s/25s/45s.
+
 ## Pee Break Audit
 
 Current staging issues addressed in this pass:

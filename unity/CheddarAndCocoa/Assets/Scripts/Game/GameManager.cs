@@ -109,9 +109,27 @@ namespace CheddarAndCocoa.Game
         public ScentSearchMissionState ScentSearchState => ScentSearchController?.State ?? _emptyScentState;
         public Vector2[] DigSpots => ScentSearchMissionController.ComputeDigSpots(_bounds);
         public PanicMeter Panic => _panic;
-        /// <summary>Current stall-escalation tier (0 Discovery - 3 Rescue). Zero visual output yet; G1.2 renders it.</summary>
+        /// <summary>Current stall-escalation tier (0 Discovery - 3 Rescue).</summary>
         public int GuidanceTier => _guidance.Tier;
         public float GuidanceStallSeconds => _guidance.StallSeconds;
+        /// <summary>
+        /// The dog whose objective target this frame is unambiguous (the other dog has no target of
+        /// its own). Null whenever both dogs have a target - most missions hand a target to both dogs
+        /// at once (with different copy telling one to stand down), which this deliberately does not
+        /// try to disambiguate by parsing copy text; see G1.2 in docs/AGENT-WORK-QUEUE-PRELAUNCH.md.
+        /// </summary>
+        public int? GuidanceOwningDogIndex => _guidanceOwningDogIndex;
+        /// <summary>Tier 2+: the non-owning dog's index, to pulse their HUD identity chip. Null unless GuidanceOwningDogIndex is known.</summary>
+        public int? GuidancePartnerDogIndex => GuidanceTier >= 2 && _guidanceOwningDogIndex.HasValue
+            ? (_guidanceOwningDogIndex.Value == 0 ? 1 : 0)
+            : (int?)null;
+        /// <summary>Tier 3: flash the HUD objective line.</summary>
+        public bool GuidanceRescueActive => GuidanceTier >= 3;
+        /// <summary>Tier 3: the owning dog's name to prefix onto the flashed objective line, or empty if unknown.</summary>
+        public string GuidanceRescueDogName => _guidanceOwningDogIndex.HasValue && _dogs != null &&
+            _guidanceOwningDogIndex.Value < _dogs.Length
+                ? DogName(_dogs[_guidanceOwningDogIndex.Value])
+                : string.Empty;
         public MarkTheYardMissionController MarkTheYardController => _activeMissionController as MarkTheYardMissionController;
         public TerritoryMissionState MarkTheYardState => MarkTheYardController?.State ?? _emptyTerritoryState;
         public Vector2[] TerritoryZones => MarkTheYardMissionController.ComputeZones(_bounds);
@@ -458,6 +476,10 @@ namespace CheddarAndCocoa.Game
         private readonly ScentSearchMissionState _emptyScentState = new ScentSearchMissionState();
         private PanicMeter _panic;
         private readonly MissionGuidanceEscalation _guidance = new MissionGuidanceEscalation();
+        private int? _guidanceOwningDogIndex;
+        private int _guidanceLastTier;
+        private float _guidanceNudgeAt;
+        private readonly TextMesh[] _guidanceWidenedLabels = new TextMesh[2];
         private int[] _dogContribution;
         private readonly CarRideMissionState _emptyCarState = new CarRideMissionState();
         // Gate Crash (Hold-and-Release co-op puzzle): Cocoa anchors the gate, Cheddar squeezes through.
@@ -1256,6 +1278,7 @@ namespace CheddarAndCocoa.Game
             _guidance.Configure(_mission.GuidanceTierCap, _mission.GuidanceTier1Seconds,
                 _mission.GuidanceTier2Seconds, _mission.GuidanceTier3Seconds);
             _guidance.Reset();
+            ResetGuidancePresentation();
 
             if (!_reuseMissionSeedOnNextBegin)
                 // Mission order is presentation, not tuning. Use the enum's stable identity so a
@@ -1402,6 +1425,7 @@ namespace CheddarAndCocoa.Game
             }
 
             UpdateObjectiveArrows();
+            UpdateGuidancePresentation();
             UpdateTravelAssists();
             UpdateInteractionRanges();
             LogObjectiveIfChanged();
@@ -2534,6 +2558,7 @@ namespace CheddarAndCocoa.Game
             ObjectiveChangeCount = 0;
             ResetActionTutorialProgress();
             _guidance.Reset();
+            ResetGuidancePresentation();
             _scorePopUntil = 0f;
             _squirrelTarget = null;
             _grabbedDog = -1;
@@ -2844,6 +2869,87 @@ namespace CheddarAndCocoa.Game
                     arrow.PointAt(target, copy, hideDistance);
                 else
                     arrow.Hide();
+            }
+        }
+
+        private const float GuidanceWideLabelRange = 1000f;
+        private const float GuidanceNudgeIntervalSeconds = 1.2f;
+
+        /// <summary>
+        /// Renders the guidance-escalation ladder (see MissionGuidanceEscalation): Tier 1 brightens
+        /// the current objective arrow/breadcrumbs, periodically pulses the objective prop, and turns
+        /// the acting dog's head toward it; Tier 2 lifts the proximity gate on that objective's world
+        /// label; Tier 3 flags the HUD objective line (rendered in ArenaHud) and fires one placeholder
+        /// audio cue on the tier-up edge. Tier 0 leaves every one of these untouched/reverted.
+        /// </summary>
+        private void UpdateGuidancePresentation()
+        {
+            if (ObjectiveArrows == null || _dogs == null) return;
+
+            bool has0 = TryGetObjectiveTarget(0, out var target0, out _, out _);
+            bool has1 = TryGetObjectiveTarget(1, out var target1, out _, out _);
+            _guidanceOwningDogIndex = ComputeGuidanceOwningDogIndex(has0, has1);
+
+            int tier = GuidanceTier;
+            bool emphasize = tier >= 1;
+            for (int i = 0; i < ObjectiveArrows.Length; i++)
+                ObjectiveArrows[i]?.SetEmphasis(emphasize);
+
+            if (tier >= 1 && Time.time >= _guidanceNudgeAt)
+            {
+                _guidanceNudgeAt = Time.time + GuidanceNudgeIntervalSeconds;
+                if (has0) NudgeTowardGuidanceTarget(0, target0);
+                if (has1) NudgeTowardGuidanceTarget(1, target1);
+                if (has0 && target0 != null) target0.GetComponent<MissionPropArtAttachment>()?.Pulse(0.3f, 0.12f);
+                if (has1 && target1 != null && target1 != target0)
+                    target1.GetComponent<MissionPropArtAttachment>()?.Pulse(0.3f, 0.12f);
+            }
+
+            UpdateGuidanceLabelGate(0, tier >= 2 && has0 ? target0 : null);
+            UpdateGuidanceLabelGate(1, tier >= 2 && has1 ? target1 : null);
+
+            if (tier >= 3 && _guidanceLastTier < 3) RequestAudioCue(ArenaFeedbackCatalog.Bark);
+            _guidanceLastTier = tier;
+        }
+
+        /// <summary>
+        /// Unambiguous only when exactly one dog has an objective target this frame. Most missions
+        /// hand both dogs a target at once (with different copy telling one to stand down), which
+        /// this deliberately does not try to disambiguate by parsing copy text - see the caveat on
+        /// GuidanceOwningDogIndex. Pure/static so it's directly testable without a scene.
+        /// </summary>
+        public static int? ComputeGuidanceOwningDogIndex(bool dog0HasTarget, bool dog1HasTarget) =>
+            dog0HasTarget && !dog1HasTarget ? 0 : dog1HasTarget && !dog0HasTarget ? (int?)1 : null;
+
+        private void NudgeTowardGuidanceTarget(int dogIndex, Transform target)
+        {
+            if (target == null || dogIndex < 0 || dogIndex >= _dogs.Length) return;
+            var feedback = DogFeedback != null && dogIndex < DogFeedback.Length ? DogFeedback[dogIndex] : null;
+            if (feedback == null || _dogs[dogIndex] == null) return;
+            feedback.ShowGuidanceNudge(target.position - _dogs[dogIndex].transform.position);
+        }
+
+        private void UpdateGuidanceLabelGate(int dogIndex, Transform target)
+        {
+            TextMesh desired = target != null ? target.GetComponentInChildren<TextMesh>() : null;
+            TextMesh current = _guidanceWidenedLabels[dogIndex];
+            if (current == desired) return;
+
+            if (current != null) WorldLabelVisibility.Attach(current, WorldLabelVisibility.DefaultPromptRange);
+            if (desired != null) WorldLabelVisibility.Attach(desired, GuidanceWideLabelRange);
+            _guidanceWidenedLabels[dogIndex] = desired;
+        }
+
+        private void ResetGuidancePresentation()
+        {
+            _guidanceOwningDogIndex = null;
+            _guidanceLastTier = 0;
+            _guidanceNudgeAt = 0f;
+            for (int i = 0; i < _guidanceWidenedLabels.Length; i++)
+            {
+                if (_guidanceWidenedLabels[i] != null)
+                    WorldLabelVisibility.Attach(_guidanceWidenedLabels[i], WorldLabelVisibility.DefaultPromptRange);
+                _guidanceWidenedLabels[i] = null;
             }
         }
 
