@@ -102,9 +102,9 @@ namespace CheddarAndCocoa.Game
                 {
                     Phase.Telegraph when _currentEvent == RoadEventKind.Brake && !_cheddarTuckedForBrake => "BRAKES AHEAD - Cocoa brace, Cheddar tuck!",
                     Phase.Telegraph when _currentEvent == RoadEventKind.Brake => "BRAKE TEAM READY - hold together!",
-                    Phase.Telegraph => "turn ahead - hold on!",
-                    Phase.Turning => "sliding - jump the junk!",
-                    _ => "watch the driver",
+                    Phase.Telegraph => "Turn ahead - hold on!",
+                    Phase.Turning => "Sliding - jump the junk!",
+                    _ => "Watch the driver",
                 };
                 return $"Ride home ({beat}): road events {_state.EventsResolved}/{_state.RequiredEvents}, tumbles {_state.Tumbles}/{MaxTumbles}";
             }

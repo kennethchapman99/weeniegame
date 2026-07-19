@@ -329,7 +329,12 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(game.PredatorObject);
             Assert.IsNotNull(game.RopeObject);
             Assert.IsNotEmpty(game.LastCue);
-            Assert.That(game.MissionIntroPrompt, Is.EqualTo("Cheddar + Cocoa must protect the weenies together."));
+            // V3.5: this was the blandest of all 23 IntroPrompts (9 words, no mention of the
+            // squirrel threat or the asymmetric pressure/gap roles every other mission's intro
+            // names) - the sole opening line every brand-new player reads first deserved better.
+            Assert.That(game.MissionIntroPrompt, Is.EqualTo(
+                "A squirrel is stealing breakfast! One dog pressures the thief while the other holds " +
+                "the escape gap - team up to protect the weenies together."));
             Assert.That(game.ActiveMissionReadinessLabel, Does.Contain("Readability gate: READY"));
             Assert.That(game.ActiveMissionReadinessLabel, Does.Contain("Rescue + bait-and-switch"));
             Assert.That(game.MissionBanner, Does.Contain("protect the weenies"));

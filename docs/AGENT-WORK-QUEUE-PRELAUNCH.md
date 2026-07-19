@@ -46,7 +46,7 @@
 | V3.2 | Kill remaining square/debug first reads | DONE (2026-07-19, see below) |
 | V3.3 | Mission tile consistency | DONE (2026-07-19, see below) |
 | V3.4 | Indoor-fantasy staging audit | DONE (2026-07-19, see below) |
-| V3.5 | HUD + end-card copy/style pass | OPEN |
+| V3.5 | HUD + end-card copy/style pass | DONE (2026-07-19, see below) |
 | F4.1 | Universal first-mission control reminder | OPEN |
 | F4.2 | Post-clear flow + session summary | OPEN |
 | F4.3 | Briefing accuracy audit | OPEN |
@@ -1080,6 +1080,67 @@ summary, and rank/challenge copy for leftover dev phrasing, inconsistent capital
 tone. Fix copy in place; no layout rework beyond what the skinned IMGUI already supports.
 **Tests:** existing copy assertions updated deliberately (each change named in the commit message);
 suite green.
+
+**Done (2026-07-19):** Swept `MissionCatalog.cs` (briefing `IntroPrompt`/`ReplayPrompt`/fail-reasons/
+`ItemWorldLabel`), `MissionInstructionCatalog.cs` ("YOUR TEAM PLAN" beats), all 23 controllers'
+`ObjectiveLabel` getters, and the session-summary/rank/challenge copy in `GameManager.cs`. Found no
+literal dev/debug/placeholder markers (`TODO`/`FIXME`/etc. - a repo-wide sweep in V3.2 already
+confirmed this and nothing has regressed it), so this pass is about tone/casing/punctuation
+consistency, not stray text. Four concrete, narrowly-scoped fixes, each verified against no existing
+test pinning the *old* wording before changing it, then the one test that DID pin exact text updated
+deliberately (not weakened) alongside the copy:
+
+1. **`ItemWorldLabel` punctuation** - 20 of 23 missions' one-word floating item labels end in "!"
+   (`"Food!"`, `"Bone!"`, `"Claim!"`...), one is a deliberate question (`"Dig?"`), and exactly two
+   were the odd ones out: Backyard Rescue's `"Weenie"` and Operation Pee Break's `"Signal"`. Backyard
+   Rescue's case was especially concrete: Weenie Roundup's own `ItemWorldLabel` is the *identical
+   word* `"Weenie!"` - the same noun read inconsistently across two missions. Fixed both to `"Weenie!"`
+   / `"Signal!"`.
+2. **Car Ride's `ObjectiveLabel`** had 3 of its 5 beat fragments starting lowercase
+   (`"turn ahead - hold on!"`, `"sliding - jump the junk!"`, `"watch the driver"`) while the other 2
+   and every other sampled mission's `ObjectiveLabel` capitalize the leading word. Capitalized all
+   three (`"Turn ahead..."`, `"Sliding..."`, `"Watch the driver"`).
+3. **Backyard Rescue's `IntroPrompt`** - the blandest of all 23 by a wide margin (9 words: "Cheddar +
+   Cocoa must protect the weenies together.") with no mention of the squirrel threat or the
+   pressure/gap-hold role split every other mission's intro names for its own mechanic. This is the
+   single line every brand-new player reads first (Backyard Rescue owns the cold-open tutorial), so
+   it was worth the risk of touching tutorial copy. Rewrote to name the actual threat and roles
+   ("A squirrel is stealing breakfast! One dog pressures the thief while the other holds the escape
+   gap - team up to protect the weenies together.") while deliberately keeping the verbatim tail
+   "protect the weenies together" so it stays a substring match for `MissionBanner`'s existing
+   contract (`MissionBanner = MissionIntroPrompt` at that point in the flow, per
+   `GameManager.cs:1290`) - confirmed by reading the assignment site, not assumed. Updated the one
+   test with an exact-match assertion on the old string
+   (`ArenaGameLoopPlayModeTests.cs`'s `MissionFlow_...` test) to the new copy, with a comment
+   explaining why, per this task's own instruction to name each change in the commit rather than
+   just widen the assertion.
+
+**Investigated and deliberately left alone, not silently skipped:**
+- Backyard Rescue's `ClearObjectiveText`/`ReplayPrompt`/`FailObjectiveText`/`GenericFailReason` all
+  say "the weenie rescue" instead of "Backyard Rescue" (the only mission whose replay-prompt doesn't
+  name itself). Initially looked like the same bug class as the `ItemWorldLabel` fix above, but on
+  closer read this phrase is used *consistently* across all four of Backyard Rescue's own fields, not
+  fighting itself - it reads as an intentional in-voice nickname (matching the game's dog-life-comedy
+  register), not a stray inconsistency. Changing it would swap one self-consistent convention for
+  another, not fix a defect, and it's the tutorial mission's copy - left alone rather than guessed at.
+- `"Cheddar + Cocoa"` vs. spelled-out `"Cheddar and Cocoa"` are both used across the roster. Neither
+  reads as wrong; standardizing one way would be five-plus call-site churn for a non-issue.
+- `EndSummaryLabel` and `ArenaHud.PlayerOwnershipLabel` are fully built and asserted by ~30 tests but
+  never actually drawn anywhere in `ArenaHud.cs`. Wiring them up would be a layout change, which this
+  task's own scope excludes ("no layout rework beyond what the skinned IMGUI already supports") -
+  flagged here as a real gap for whoever next touches end-card layout, not fixed under V3.5.
+- Swept `Assets/Scripts/Game/*MissionController.cs` for other lowercase-leading string literals
+  beyond Car Ride's; the rest (`BlanketCatchMissionController`'s span fragments,
+  `WalkCampaignMissionController.WrongThingForMisread`) are grammatically-correct because they're
+  embedded mid-sentence (`"Hold the blanket {span}..."`), not standalone labels - confirmed by
+  reading each call site before ruling them fine, not just pattern-matching the casing.
+
+No dev build/smoke/art-review capture for this task - every change is a C# string literal, zero
+sprite/resource/layout changes, matching A2.5's precedent that pose-only or copy-only changes don't
+need visual capture evidence. Full PlayMode suite: **645/645 passed, 0 failed, 0 skipped** (same
+count as V3.4 - the new assertions/updated copy landed inside existing test methods, no new test
+method), `unity/playmode-results.xml`, SHA-256
+`37e47e9c4d665538e4a823867323d65da81cdd3539ec4788f2e09025a32c13ec`, 2026-07-19 16:08 EDT.
 
 ---
 
