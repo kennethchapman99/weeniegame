@@ -258,7 +258,7 @@ namespace CheddarAndCocoa.Game
                     {
                         "Cheddar is the counter scout - reach the marked COUNTER route and bark to knock the next item loose (watch the colored telegraph flash).",
                         "Cocoa is the floor sweeper - catch gold food in the SAFE BOWL and dodge purple onions instead of catching them.",
-                        "After 3 good catches, survive the DINNER RUSH finale's GOOD-BAD-GOOD sequence to clear it."
+                        "After 3 good catches, survive the DINNER RUSH finale (catch gold, dodge purple, catch gold) to clear it."
                     };
                 case GameManager.MissionVariant.OperationPeeBreak:
                     return new[]

@@ -49,7 +49,7 @@
 | V3.5 | HUD + end-card copy/style pass | DONE (2026-07-19, see below) |
 | F4.1 | Universal first-mission control reminder | DONE (2026-07-19, see below) |
 | F4.2 | Post-clear flow + session summary | DONE (2026-07-19, see below) |
-| F4.3 | Briefing accuracy audit | OPEN |
+| F4.3 | Briefing accuracy audit | DONE (2026-07-19, see below) |
 | S5.1 | Audio for new signals | OPEN |
 | S5.2 | Feedback-slot audio coverage audit | OPEN |
 | E6.1 | Evidence refresh + gate handoff | OPEN |
@@ -1298,6 +1298,93 @@ it as a deliberate design decision).
 mission's briefing beats against its controller's actual sequence (per `ARENA-PLAYABLE.md`'s updated
 uncoached-sequence table); fix stale beats; keep gold in-game label quoting rule.
 **Tests:** existing briefing assertions updated; per-mission checklist recorded here.
+
+**Done (2026-07-19):** Audited all 23 missions' `MissionInstructionCatalog.HowToPlayStepsFor` text
+against ground truth read directly from each controller (`ObjectiveLabel` getters, role-gating checks
+in `HandleBark`/`HandleInteract`, and any `Owners[]`/`Actions[]` sequencing arrays), not against
+`ARENA-PLAYABLE.md`'s summary table alone (that table is itself a compressed secondary source, so
+treating it as sufficient ground truth would just move the staleness risk rather than remove it).
+**The task's own premise — "role redesigns changed who does what in most missions; briefings may
+lag" — did not hold up**, same shape as A2.5/V3.3's findings: `MissionInstructionCatalog.cs` was
+already touched directly in Codex's `50fa09a` asymmetric-role redesign commit, and 22 of 23 missions'
+briefing text already matches their controller's current role split exactly, including several
+non-obvious specifics verified by reading the actual gating code rather than trusting the prose:
+`BackyardSquirrelTrapState.RecoveryDog`/`GapDog`/`PressureDog` alternating correctly pass-to-pass;
+`CoyotesFenceMissionController.RegisterBarkPressure` gating the fake-snack-lure resolution to Cocoa
+specifically (`if (dogId != DogId.Cocoa)`); `ScentSearchMissionController.Sniff()` giving Cheddar a
+real "broad compass direction" bark distinct from Cocoa's hot/cold tracking; `GreatEscapeMissionController.Actions`
+matching "Cocoa paws the latch, Cheddar shoulders the gate, Cocoa drags the cooler, Cheddar squeezes
+through" verbatim; `ArenaMissionTuning.SnackHeist.MaxStolenFood = 2` matching "two successful steals
+ends the run."
+
+**Also verified the "keep gold in-game label quoting rule" mechanically, not by eye:** extracted every
+run of 2+ consecutive (or single, 2+ letter) all-caps tokens from the catalog's step text — the same
+`IsCapsToken` logic `HighlightOnScreenLabels` itself uses to decide what gets gold-highlighted — then
+grepped each one against every mission controller to confirm it's real on-screen text (`SetActorState`/
+`SpawnWorldPop`/`AddWorldLabel`/`TryGetObjectiveTarget` copy), not prose that happens to be capitalized.
+This is a stronger check than reading the prose for plausibility, and it found the one real bug:
+
+**Fixed:** Kitchen Food Frenzy's finale step said *"survive the DINNER RUSH finale's GOOD-BAD-GOOD
+sequence"* — `GOOD-BAD-GOOD` gold-highlights (2+ uppercase letters, no lowercase) but never appears
+anywhere in `KitchenFoodFrenzyMissionController` or `KitchenFoodFrenzyMissionState`; the real finale
+cue is `"DINNER RUSH! Three fast calls: catch gold, dodge purple, catch gold."` and
+`ExpectedFinaleKind` confirms the real sequence is Good→Bad→Good (3 calls,
+`FinaleSuccessesRequired = 3`). A player told to watch for "GOOD-BAD-GOOD" would never see that text
+on screen. Reworded to *"survive the DINNER RUSH finale (catch gold, dodge purple, catch gold) to
+clear it"* — keeps `DINNER RUSH` (a real, verified label) gold-quoted and describes the sequence in
+plain prose instead of a fabricated pseudo-label.
+
+**Real architecture finding, not just a text fix:** the picker's detail panel does not render
+`HowToPlayStepsFor`'s raw array — `MissionSelectScreen.BuildHowToPlayText` is a second layer with two
+special cases: Operation Pee Break gets an entirely separate, hand-written 4-line summary (not reused
+from the catalog at all), and Backyard Rescue's 7-step catalog entry is hand-trimmed to indices
+`[0, 1, 2, 5]`, deliberately dropping the squirrel-trap gap-hold/pressure beats (steps 3-4) with an
+existing code comment explaining why: "the picker only needs its main arc; contextual world prompts
+teach the trap hand-off ... when they become live." Verified that claim is still true today (not just
+asserted) — `BackyardRescueMissionController.ObjectiveLabel` narrates the live pressure/gap role split
+every frame during play, so the trap mechanic is genuinely taught in-world, not silently missing.
+Every other mission falls through to a generic "first 4 steps" cap (`steps.Length <= 4 ? steps :
+first four`), which silently drops a 5th step for exactly four missions (Snack Heist, Coyotes Fence,
+Table Stealth, Switcheroo) — in all four cases the dropped line is the fail-count/payoff-flavor
+closer, never a "who does what" mechanic beat, so this is a consistent, deliberate 4-beat brevity
+policy (matching `ARENA-PLAYABLE.md`'s "preview teaches at most four high-value team beats"), not
+staleness. Independently verified Operation Pee Break's separate hand-written 4-line summary against
+`PeeBreakMissionController`'s real `Beat` enum/`ObjectiveLabel` switch and found it accurate beat-for-
+beat. Both of these were investigated and correctly left alone, not silently skipped.
+
+| # | Mission | Verified against (ground truth) | Result |
+|---|---|---|---|
+| 1 | Backyard Rescue | `BackyardSquirrelTrapState` role fields (alternation each pass) | Accurate. Picker's 4-of-7-step trim is a deliberate, verified-still-true design choice (see above), not staleness. |
+| 2 | Snack Heist | `SnackHeistMissionController.ObjectiveLabel`/`IsFailed`, `ArenaMissionTuning.SnackHeist` (`MaxStolenFood=2`, `ItemGoal=4`) | Accurate |
+| 3 | Sock Panic | `SockPanicMissionController.ObjectiveLabel` | Accurate |
+| 4 | Squirrel Conspiracy | `SquirrelConspiracyMissionController.ObjectiveLabel` + `BARK HERD`/`HOLD CUTOFF` world labels | Accurate |
+| 5 | Eagle Shadow Panic | `EagleShadowPanicMissionController.ObjectiveLabel` + `HIDE HERE` world label | Accurate |
+| 6 | Coyotes at the Fence | `RegisterBarkPressure` (Cocoa-only)/`TryRepair` (Cheddar-only) gating, fake-snack resolution tied to Cocoa's pin | Accurate |
+| 7 | Weenie Roundup | `WeenieRoundupMissionController.ObjectiveLabel` + `JUMBO`/`HOME BOWL` world labels | Accurate |
+| 8 | Scent Search | `ScentSearchMissionController.Sniff()` (Cheddar compass point vs. Cocoa hot/cold call) + `DigAtSpot` gating | Accurate |
+| 9 | Thunderstorm Comfort | `ThunderstormComfortMissionController.ObjectiveLabel` + `COMFORT READY` label | Accurate |
+| 10 | Mark the Yard | `MarkTheYardMissionController.ObjectiveLabel` | Accurate |
+| 11 | Walkies on the Leash | `LeashWalkMissionController.ObjectiveLabel` (alternating named scout) | Accurate |
+| 12 | Car Ride Chaos | `CarRideMissionController.ObjectiveLabel` (Cocoa-plants-first/Cheddar-tucks sequencing) | Accurate |
+| 13 | Gate Crash | `GateCrashMissionController.ObjectiveLabel` + `SQUEEZE THROUGH` label | Accurate |
+| 14 | Table Stealth | `TableStealthMissionController.ObjectiveLabel` (dual-path Cocoa-flop/Cheddar-burp distraction) | Accurate |
+| 15 | Switcheroo | `SquirrelSwitcherooMissionController.ObjectiveLabel` | Accurate |
+| 16 | The Walk Campaign | `WalkCampaignMissionController.ObjectiveLabel` + `WALKIES!` label | Accurate |
+| 17 | Bone Relay | `BoneRelayMissionController.ObjectiveLabel` | Accurate |
+| 18 | The Great Escape | `Owners[]`/`Actions[]` = `{Cocoa,Cheddar,Cocoa,Cheddar}` / `{PAW THE LATCH, SHOULDER THE GATE, DRAG THE COOLER, SQUEEZE THROUGH}` | Accurate, verbatim match |
+| 19 | Chaos Machine | `Owners[]`/`Actions[]` = `{Cocoa,Cheddar,Cocoa}` / `{TOWEL DROP, BASKET TIP, TOY LAUNCH}` | Accurate |
+| 20 | Blanket Catch | `BlanketCatchMissionController.ObjectiveLabel` + `RIP!`/`TOO FAR - RIPPING!` labels | Accurate |
+| 21 | Kitchen Falling Food Frenzy | `KitchenFoodFrenzyMissionState` (`WarmupCatches=3`, `ExpectedFinaleKind` Good→Bad→Good, `FinaleSuccessesRequired=3`) | **Fixed** — fabricated `GOOD-BAD-GOOD` pseudo-label replaced with the real cue's plain-prose description |
+| 22 | Operation Pee Break | `PeeBreakMissionController.Beat` enum + `ObjectiveLabel` switch, cross-checked against `MissionSelectScreen`'s separate hand-written 4-line picker summary | Accurate (both copies) |
+| 23 | Baby Bird Bedlam | `ChicksNeeded=4`, `ShakesNeeded=3`, `MaxPecks=3` + `PARENT BIRD DIVE`/`THE NEST`/`GRAB IT!` labels | Accurate |
+
+23/23 audited, 1 fixed, 22 already accurate. New test:
+`BackyardPoolPlayModeTests.HowToPlaySteps_KitchenFoodFrenzy_DinnerRushDoesNotQuoteAFabricatedLabel`
+(would have failed before the fix). Full PlayMode suite: **660/660 passed, 0 failed, 0 skipped** (659
+baseline from F4.2 + 1 new), `unity/playmode-results.xml`, SHA-256
+`c41f2490f38b240cb95d32146fc456d8b1ae9814a566c4e7762d55173a957315`, 2026-07-19. No dev build/smoke/
+art-review capture — this is a single C# string literal plus a pure-logic test, zero sprite/resource/
+layout changes, matching V3.5 and F4.1/F4.2's precedent for copy-only or logic-only changes.
 
 ---
 

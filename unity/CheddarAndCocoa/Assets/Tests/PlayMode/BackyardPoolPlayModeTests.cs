@@ -111,6 +111,23 @@ namespace CheddarAndCocoa.Tests
         }
 
         [Test]
+        public void HowToPlaySteps_KitchenFoodFrenzy_DinnerRushDoesNotQuoteAFabricatedLabel()
+        {
+            // F4.3: "GOOD-BAD-GOOD" read as a gold on-screen label (2+ all-caps tokens) but never
+            // actually appears anywhere in KitchenFoodFrenzyMissionController - the real finale cue
+            // is "DINNER RUSH! Three fast calls: catch gold, dodge purple, catch gold." Briefing text
+            // must only gold-quote strings that are truly shown in the world.
+            string[] steps = MissionInstructionCatalog.HowToPlayStepsFor(GameManager.MissionVariant.KitchenFoodFrenzy);
+            string joined = string.Join("\n", steps);
+            Assert.That(joined, Does.Not.Contain("GOOD-BAD-GOOD"),
+                "This token was never a real on-screen label - it must not be quoted as one.");
+            Assert.That(joined, Does.Contain("DINNER RUSH"),
+                "DINNER RUSH is the real finale label (KitchenFoodFrenzyMissionController's SpawnWorldPop) and should stay quoted.");
+            Assert.That(joined.ToLowerInvariant(), Does.Contain("gold").And.Contain("purple"),
+                "The finale's actual catch/dodge sequence should still be described in the briefing.");
+        }
+
+        [Test]
         public void HighlightOnScreenLabels_WrapsCapsRunsAndLeavesProseAlone()
         {
             string highlighted = MissionInstructionCatalog.HighlightOnScreenLabels(
