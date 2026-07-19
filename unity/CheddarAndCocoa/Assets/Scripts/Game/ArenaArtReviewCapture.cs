@@ -135,21 +135,27 @@ namespace CheddarAndCocoa.Game
                     }
                     break;
                 case GameManager.MissionVariant.GateCrash:
+                    StageDogsAtCurrentObjective();
                     _game.ForceGateHold(true);
                     break;
                 case GameManager.MissionVariant.TableStealth:
+                    StageDogsAtCurrentObjective();
                     _game.ForceTableFlop(true);
                     break;
                 case GameManager.MissionVariant.SquirrelSwitcheroo:
+                    StageDogsAtCurrentObjective();
                     _game.ForceSwitcherooBait(0.7f);
                     break;
                 case GameManager.MissionVariant.WalkCampaign:
+                    StageDogsAtCurrentObjective();
                     _game.ForceWalkCampaign(1f, doorStare: true, presentLeash: false);
                     break;
                 case GameManager.MissionVariant.BoneRelay:
+                    StageDogsAtCurrentObjective();
                     _game.ForceBoneReveal();
                     break;
                 case GameManager.MissionVariant.GreatEscape:
+                    StageDogsAtCurrentObjective();
                     _game.ForceEscapeStep(_game.GreatEscapePuzzle.NextOwner);
                     break;
                 case GameManager.MissionVariant.ChaosMachine:
@@ -157,15 +163,18 @@ namespace CheddarAndCocoa.Game
                     StageDogsAtCurrentObjective();
                     break;
                 case GameManager.MissionVariant.BlanketCatch:
+                    StageDogsAtCurrentObjective();
                     _game.ForceBlanketSpan(6f, 0f);
                     break;
                 case GameManager.MissionVariant.KitchenFoodFrenzy:
+                    StageDogsAtCurrentObjective();
                     _game.ForceKitchenDrop(KitchenFoodFrenzyMissionState.FoodKind.Good);
                     break;
                 case GameManager.MissionVariant.OperationPeeBreak:
                     _game.ForcePeeBreakAdvance(SocialStimulus.DoorStare, 1f);
                     break;
                 case GameManager.MissionVariant.BabyBirdBedlam:
+                    StageDogsAtCurrentObjective();
                     _game.ForceChickLand(0f);
                     _game.ForceChickGrab();
                     _game.ForceParentDive();
@@ -220,32 +229,41 @@ namespace CheddarAndCocoa.Game
                     _game.ForceCarTumble();
                     break;
                 case GameManager.MissionVariant.GateCrash:
+                    StageDogsAtCurrentObjective();
                     _game.ForceGateHold(true);
                     _game.ForceGateCross(1f);
                     break;
                 case GameManager.MissionVariant.TableStealth:
+                    StageDogsAtCurrentObjective();
                     _game.ForceTableSneak(2f);
                     break;
                 case GameManager.MissionVariant.SquirrelSwitcheroo:
+                    StageDogsAtCurrentObjective();
                     _game.ForceSwitcherooStrike();
                     break;
                 case GameManager.MissionVariant.WalkCampaign:
+                    StageDogsAtCurrentObjective();
                     _game.ForceWalkCampaign(3f, doorStare: true, presentLeash: true);
                     break;
                 case GameManager.MissionVariant.BoneRelay:
+                    StageDogsAtCurrentObjective();
                     _game.ForceBoneDig(_game.BoneRelayPuzzle.CorrectTarget);
                     break;
                 case GameManager.MissionVariant.GreatEscape:
+                    StageDogsAtCurrentObjective();
                     for (int i = 0; i < _game.EscapeStationCount; i++)
                         _game.ForceEscapeStep(_game.GreatEscapePuzzle.NextOwner);
                     break;
                 case GameManager.MissionVariant.ChaosMachine:
+                    StageDogsAtCurrentObjective();
                     _game.ForceChaosAdvance(0.5f, assisting: true);
                     break;
                 case GameManager.MissionVariant.BlanketCatch:
+                    StageDogsAtCurrentObjective();
                     _game.ForceBlanketCatch(0f);
                     break;
                 case GameManager.MissionVariant.KitchenFoodFrenzy:
+                    StageDogsAtCurrentObjective();
                     _game.ForceKitchenCatch(DogId.Cocoa, true);
                     break;
                 case GameManager.MissionVariant.OperationPeeBreak:
@@ -258,6 +276,7 @@ namespace CheddarAndCocoa.Game
                     }
                     break;
                 case GameManager.MissionVariant.BabyBirdBedlam:
+                    StageDogsAtCurrentObjective();
                     _game.ForceParentRepel();
                     for (int shake = 0; shake < 3; shake++) _game.ForceChickShake();
                     break;
@@ -272,13 +291,16 @@ namespace CheddarAndCocoa.Game
             var rig = camera.GetComponent<SharedCameraController>();
             if (rig != null) rig.enabled = false;
 
+            bool peeBreak = variant == GameManager.MissionVariant.OperationPeeBreak;
+            float orthoSize = peeBreak ? 8.5f : 8f;
+
             Vector2 focus = _game.ArenaBounds.center;
             if (_focusOverride.HasValue)
             {
                 focus = _focusOverride.Value;
                 _focusOverride = null;
             }
-            else if (variant == GameManager.MissionVariant.OperationPeeBreak && _game.PeeBreakController != null)
+            else if (peeBreak && _game.PeeBreakController != null)
             {
                 focus = _game.PeeBreakController.DoorPosition + new Vector2(-4f, -1.4f);
             }
@@ -294,8 +316,35 @@ namespace CheddarAndCocoa.Game
                 if (dogs.Length > 0) focus = dogs[0].transform.position;
             }
 
+            // Real play never shows past the yard's edge: SharedCameraController is always
+            // configured with clamp:true (see ArenaBootstrap.BuildScene). This tool disables that
+            // rig above and places the camera manually, so it needs the same clamp - otherwise a
+            // fence/edge-adjacent objective (Coyotes Fence, Weenie Roundup's bowl) reads as a flat
+            // camera-background void that no player would ever actually see. Pee Break's indoor
+            // framing is intentionally bespoke (see DEEP-SLICE-OPERATION-PEE-BREAK.md) and skips it.
+            if (!peeBreak) focus = ClampFocusToBounds(focus, _game.ArenaBounds, orthoSize, camera.aspect);
+
             camera.transform.position = new Vector3(focus.x, focus.y, camera.transform.position.z);
-            camera.orthographicSize = variant == GameManager.MissionVariant.OperationPeeBreak ? 8.5f : 8f;
+            camera.orthographicSize = orthoSize;
+        }
+
+        /// <summary>
+        /// Mirrors SharedCameraController's own bounds clamp so a manually-placed capture camera
+        /// never shows past the yard's edge (see the ArenaBootstrap clamp:true call it stands in for).
+        /// Pure/static and exposed for testing, same pattern as <see cref="OutputDirectoryFromArgs"/>.
+        /// </summary>
+        public static Vector2 ClampFocusToBounds(Vector2 focus, Rect bounds, float orthoSize, float aspect)
+        {
+            focus.x = ClampAxis(focus.x, bounds.xMin, bounds.xMax, orthoSize * aspect);
+            focus.y = ClampAxis(focus.y, bounds.yMin, bounds.yMax, orthoSize);
+            return focus;
+        }
+
+        private static float ClampAxis(float value, float min, float max, float viewportHalfSize)
+        {
+            float safeMin = min + viewportHalfSize;
+            float safeMax = max - viewportHalfSize;
+            return safeMin <= safeMax ? Mathf.Clamp(value, safeMin, safeMax) : (min + max) * 0.5f;
         }
 
         private bool StageDogsAtCurrentObjective()

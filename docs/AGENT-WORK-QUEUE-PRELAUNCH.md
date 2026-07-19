@@ -43,7 +43,7 @@
 | A2.4 | Threat/NPC acting gaps | DONE (2026-07-18, see below) |
 | A2.5 | Held-payoff pose audit | DONE (2026-07-19, see below) |
 | V3.1 | Style-contract audit + fix list | DONE (2026-07-19, see below) |
-| V3.2 | Kill remaining square/debug first reads | OPEN |
+| V3.2 | Kill remaining square/debug first reads | DONE (2026-07-19, see below) |
 | V3.3 | Mission tile consistency | OPEN |
 | V3.4 | Indoor-fantasy staging audit | OPEN |
 | V3.5 | HUD + end-card copy/style pass | OPEN |
@@ -839,6 +839,101 @@ fallback pads that show through, and demote any normal-play debug text to F1. St
 where remaining items are cosmetic-corner grade and note them.
 **Tests:** existing final-art resource/integration tests extended for regenerated assets; fresh
 art-review capture attached as evidence.
+
+**Done (2026-07-19):** Worked V3.1's ranked list top-down within this task's actual scope (colored
+square / bare rectangle / debug string reads specifically - dimension-3 style-language mismatches
+like #1 and #5 are a separate decision, not this task's target).
+
+- **Baked text (fix-list #2) - larger than V3.1's sample found.** V3.1 explicitly flagged its pass as
+  sampled, not exhaustive. A full visual audit of the two affected state packs found baked captions
+  in **all 32 files** across GateCrash/TableStealth/SquirrelSwitcheroo/WalkCampaign/BoneRelay, not
+  just the 5 V3.1 happened to sample. Before touching any of them, traced every affected controller's
+  code and confirmed each removed caption is already shown - word for word or better - through the
+  shared `SetCue`/`SpawnWorldPop`/`MissionActorFeedback` dynamic-text path at the exact same state
+  transition (e.g. Gate Crash's `SpawnWorldPop(..., "COCOA ANCHORED!")` fires the same line
+  `MissionPropArt.SetSprite(_gateArt, FinalGameplayArt.GateCrashGateHeld)` does), so stripping the
+  baked text loses zero information. Wrote `tools/art/strip_baked_state_captions.py` since the
+  original one-shot generator for this family is gone (confirmed absent, matching V3.1's finding):
+  a connected-component pass erases any blob entirely above a measured caption/icon boundary row.
+  **Real complication found and fixed properly, not papered over:** 5 human-bust files
+  (`table_stealth_human_{distracted,watching}`, `walk_campaign_human_{confused,getting_it,misread}`)
+  have a second caption line positioned close enough to touch the head-circle's outline, so a few
+  letters flood-fill into the same connected component as the head and survive a naive strip (first
+  attempt left "COC"/"ATCHIN" fragments). Fixed by patching just the top ~110px of the canvas (well
+  above where any state's eyes/mouth/question-mark are drawn) from a same-mission sibling with a
+  single-line caption (already clean after the component pass) - keeps each state's own expression
+  and torso color, discards only the fused text. Verified every one of the 32 files by eye (not just
+  by heuristic) after the fix. Also removed `generate_environment_prop_pack.py`'s baked "GO" (patio
+  doormat) and checkpoint numerals 1-5 (leash route stones, confirmed actually rendering in the
+  Leash Walk payoff capture) - this generator still exists, so those two regenerated normally through
+  the script itself; the real checkpoint count is already narrated live via
+  `LeashWalkMissionController`'s HUD cue ("reach checkpoint X/Y").
+- **Fallback-shape / silhouette-first gap (fix-list #3, #4) - root cause resolved via the tool, not
+  the art.** Extended `ArenaArtReviewCapture.cs`'s `StageDogsAtCurrentObjective()` coverage (V3.1's
+  own cheap-fix recommendation) to the missions it named: Gate Crash, Table Stealth, Squirrel
+  Switcheroo, Walk Campaign, Bone Relay, Great Escape, Blanket Catch, Kitchen Food Frenzy, Baby Bird
+  Bedlam (both Main and Payoff), plus Chaos Machine's Payoff (its Main already had it). Deliberately
+  did **not** extend the other 12 missions, whose captures V3.1 graded as already fine without
+  staging - forcing it there risked regressing a composition that already reads correctly. Audited
+  the 5 flagged missions' actual `FinalGameplayArt` resource paths against their controller code
+  (Bone Relay's found-mound override, Chaos Machine's lever/junction paths, etc.) and found no
+  mismatched/missing resource - the wiring is correct, so the "generic tan-plaque" shape V3.1 saw was
+  the capture camera looking at the wrong spot, not a real fallback-pad render.
+- **ArenaBounds flat-fill (fix-list #7, half of it) - confirmed definitively, not just suspected.**
+  Traced `ArenaBootstrap.BuildScene()`: the real gameplay camera (`SharedCameraController`) is always
+  configured with `clamp: true` against `ArenaBounds`, so an actual player can never see past the
+  yard's edge - the flat `#243a1c` void V3.1 saw for Coyotes Fence/Weenie Roundup is only possible
+  because `ArenaArtReviewCapture` disables that rig (`rig.enabled = false`) and places the camera
+  manually with no clamping, and both missions' objectives legitimately sit near the yard boundary
+  (fence line, house-adjacent bowl). Fixed by adding `ClampFocusToBounds`/`ClampAxis` to the capture
+  tool, mirroring `SharedCameraController.ClampToBounds`'s own math exactly (Pee Break's bespoke
+  indoor framing is deliberately excluded). This was a real, fully-resolved finding, not a
+  documented-exception dodge - no player-facing code changed, only the diagnostic tool got as
+  trustworthy as the thing it's diagnosing. Chaos Machine's frame-edge lever clipping (the other half
+  of fix-list #7) likely shares this same staging-gap root cause and should already be improved by
+  the `StageDogsAtCurrentObjective()` fix above; not independently verified given the sandbox's
+  no-GPU limitation.
+- **Debug text outside F1 (V3.2's own "demote to F1" instruction) - audited, none found.** Checked
+  all three `OnGUI`-drawing classes (`ArenaHud`, `DebugHud`, `AdventureMapHud`) plus a literal
+  string search for `DEBUG`/`TODO`/`PLACEHOLDER`/etc. across every script. `ArenaHud`'s diagnostics
+  are already correctly gated behind `PlaytestOverlayVisible` (F1/backquote); `DebugHud`'s
+  controls-legend text is suppressed in the arena (`SetLegendVisible(false)`, only its bark-flash
+  flourish remains); `ObjectiveArrowFeedback`'s distance readout is already gated behind
+  `_debugTextVisible`; `AdventureMapHud` is dead/deferred campaign-progression code, not reachable
+  from the current mission-select flow. No violations to fix - a prior polish pass already covered
+  this ground.
+- **Duplicate score-pop stacking (fix-list #6) - investigated, deliberately not fixed.** Confirmed
+  `MissionWorldPop` has no de-dup or max-concurrent guard at all (every `SpawnWorldPop` call is a
+  fully independent, self-destructing instance), so the mechanism V3.1 suspected is real. But the
+  only way to trigger it is the capture tool's tight `for` loops calling `ForceClaimZone`/
+  `ForceEscapeStep` back-to-back with no settle frame between iterations - a real player needs five
+  separate physical actions across real seconds to claim five zones/stations, so this cannot happen
+  in actual play. Adding a stacking guard to `MissionWorldPop` would touch every mission's pop
+  effects for a capture-only cosmetic artifact; making the capture tool insert a settle delay would
+  mean converting `DrivePayoff` to a coroutine, whose payoff can't even be visually confirmed given
+  this sandbox's no-GPU limitation. Left as a noted cosmetic-corner item per this task's own stopping
+  rule, not implemented.
+- **Not in scope (confirmed, not silently skipped):** fix-list #1 (photoreal Sniff pose / Pee Break)
+  and #5 (painterly plate vs flat actors) are dimension-3 style-*language* mismatches, not square/
+  rectangle/debug-string reads - V3.1 already flagged #1 as needing an explicit owner decision and #5
+  as a documented intentional exception. Neither belongs to this task's actual goal statement; both
+  are still open for whoever makes that call.
+- New tests: `ArtReviewCapture_ClampsFocusToBoundsLikeTheRealCameraRig` (pure-logic, same pattern as
+  the existing `OutputDirectoryFromArgs` test - no scene needed). `ClampFocusToBounds`/`ClampAxis`
+  made `public static`/testable for this reason. No new test for the `StageDogsAtCurrentObjective()`
+  staging extension or the caption-strip script - both are dev-tooling changes with no clean
+  in-engine seam to assert against without either a disproportionate refactor or pixel-analysis code
+  in C#; verified instead by re-running the actual tools (full capture, direct visual inspection of
+  all 32 regenerated PNGs).
+- Full PlayMode suite: **644/644 passed, 0 skipped** (up from 643 - one new test), SHA-256
+  `03b2092d0abde41ca8e0c27eb43f5abfa2088050f76f0693b772d8ef7149b9e0`, 2026-07-19 17:56 UTC. Dev
+  player rebuilt at HEAD, executable SHA-256
+  `43ac96e048ea22dd97abc83a66755dadb95d93311ef004eeff842f3ec31c887b`; smoke passed. Art-review
+  capture ran cleanly (69/69 frames, no exceptions tied to this task's changes) but reproduced the
+  same no-GPU/no-display flat-placeholder sandbox gap flagged in every prior task (confirmed via
+  pixel-variance sampling: 1 unique color per frame) - the actual visual evidence for the art fixes
+  came from directly viewing all 32 regenerated PNGs plus the 2 regenerated environment sprites via
+  the Read tool, not from this capture.
 
 ### V3.3 — Mission tile consistency
 **Goal:** the 23 mission-select tiles read as one set.

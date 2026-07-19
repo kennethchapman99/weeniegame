@@ -44,7 +44,6 @@ def house_patio(draw: ImageDraw.ImageDraw):
     draw.ellipse((382, 156, 406, 180), fill=rgba("#f6d86d"), outline=rgba("#5c4216"), width=4)
     draw.rounded_rectangle((286, 248, 432, 288), radius=12, fill=rgba("#d9c8a8"), outline=rgba("#5c4a37"), width=7)
     draw.rounded_rectangle((114, 278, 254, 334), radius=16, fill=rgba("#e86545"), outline=rgba("#5c2b1e"), width=7)
-    draw.text((132, 296), "GO", fill=rgba("#fff2ca"))
 
 
 def back_door(draw: ImageDraw.ImageDraw):
@@ -102,9 +101,11 @@ def scent_trail(draw: ImageDraw.ImageDraw):
 
 
 def leash_route(draw: ImageDraw.ImageDraw):
-    for i, (x, y) in enumerate([(98, 346), (164, 302), (232, 256), (304, 212), (380, 166)]):
+    # Decorative background trail only - the real checkpoint sequence is tracked and
+    # narrated live via GameManager's HUD cue ("reach checkpoint X/Y"), so these stepping
+    # stones read as a plain numbered-free path rather than baking in a static count.
+    for x, y in [(98, 346), (164, 302), (232, 256), (304, 212), (380, 166)]:
         draw.ellipse((x - 42, y - 24, x + 42, y + 24), fill=rgba("#d1c08a", 220), outline=rgba("#6c6140"), width=7)
-        draw.text((x - 8, y - 13), str(i + 1), fill=rgba("#4c4128"))
     draw.arc((76, 120, 438, 412), 210, 340, fill=rgba("#38bdd2", 220), width=18)
     draw.ellipse((326, 116, 408, 198), outline=rgba("#177383"), width=12)
 

@@ -177,6 +177,30 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNull(ArenaArtReviewCapture.OutputDirectoryFromArgs(new[] { "player", "--unrelated" }));
         }
 
+        [Test]
+        public void ArtReviewCapture_ClampsFocusToBoundsLikeTheRealCameraRig()
+        {
+            var bounds = new Rect(-20f, -12f, 40f, 24f); // matches Rect(x,y,w,h): x in [-20,20], y in [-12,12]
+
+            // Fence/edge-adjacent objectives (Coyotes Fence's gap, Weenie Roundup's bowl near the
+            // house) must not pull the camera past the yard edge into empty space - this was the
+            // real V3.1 "flat dark-green fill covering half the frame" finding, confirmed to be a
+            // capture-only artifact since the real SharedCameraController always clamps (clamp:true).
+            Vector2 nearTopEdge = new(0f, 11f);
+            Vector2 clamped = ArenaArtReviewCapture.ClampFocusToBounds(nearTopEdge, bounds, orthoSize: 8f, aspect: 16f / 9f);
+            Assert.LessOrEqual(clamped.y + 8f, bounds.yMax + 0.001f,
+                "Top of the 8-unit viewport should never extend past the arena's top edge.");
+
+            // A focus already well clear of every edge should pass through unchanged.
+            Vector2 centered = new(2f, -1f);
+            Assert.AreEqual(centered, ArenaArtReviewCapture.ClampFocusToBounds(centered, bounds, orthoSize: 8f, aspect: 16f / 9f));
+
+            // Degenerate case: viewport wider than the bounds on an axis centers rather than clamping
+            // to a backwards (min > max) range.
+            Vector2 result = ArenaArtReviewCapture.ClampFocusToBounds(new Vector2(5f, 0f), bounds, orthoSize: 30f, aspect: 1f);
+            Assert.AreEqual(bounds.center.x, result.x, 0.001f);
+        }
+
         [UnityTest]
         public IEnumerator ObjectiveGuidance_UsesShortScentBreadcrumbsWithoutRevealingTheWholeRoute()
         {

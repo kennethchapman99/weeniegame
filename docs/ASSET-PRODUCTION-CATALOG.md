@@ -531,3 +531,28 @@ severity of the items above — outline widths sampled from `tools/art/*.py` gen
 4–12px at a 512px canvas as the new contract specifies, and every mission stays inside the documented
 warm/earth-tone-plus-teal-accent family. Both checks are worth re-running once V3.2 regenerates the
 items above, since new art can introduce what today's roster doesn't have.
+
+## V3.2 Fixes Applied (2026-07-19)
+
+Full narrative and evidence in `docs/AGENT-WORK-QUEUE-PRELAUNCH.md`'s V3.2 section; summary against
+this catalog's fix-list numbering:
+
+- **#2 baked text:** a full sweep (not just V3.1's sample) found baked captions in all 32 files of
+  the GateCrash/TableStealth/SquirrelSwitcheroo/WalkCampaign/BoneRelay packs, not just the 5 named
+  above. All stripped via new `tools/art/strip_baked_state_captions.py` (the original one-shot
+  generator remains gone). `generate_environment_prop_pack.py`'s baked "GO" and checkpoint numerals
+  removed and regenerated through the still-present script.
+- **#3/#4 fallback shape / silhouette gap:** root cause fixed at the tool — extended
+  `ArenaArtReviewCapture`'s `StageDogsAtCurrentObjective()` coverage to every mission V3.1 named.
+  Cross-checked the flagged missions' art resource paths against controller code: no missing/
+  mismatched resource found, confirming this was a capture-framing gap, not a runtime regression.
+- **#7 (flat-fill half):** confirmed via code that real play always clamps the camera to
+  `ArenaBounds` (`ArenaBootstrap` passes `clamp: true`); the flat void was possible only because the
+  review capture disables that rig. Fixed by adding equivalent bounds-clamping to the capture tool.
+- **#6 duplicate score-pop stacking:** confirmed `MissionWorldPop` has no stacking guard, but the
+  only trigger is the capture tool's back-to-back forced calls with no settle frame — not reachable
+  at real input speed. Documented, deliberately not fixed (disproportionate for a capture-only
+  artifact).
+- **#1 and #5** remain open — both are style-language questions (photoreal Sniff/Pee Break art;
+  painterly-plate-vs-flat-actor shading), not square/rectangle/debug-string reads, so they sit outside
+  V3.2's goal and still need the explicit owner decision V3.1 recommended.
