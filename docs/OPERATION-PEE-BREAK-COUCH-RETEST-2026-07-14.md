@@ -6,15 +6,25 @@
 ## Locked preflight evidence
 
 - Player: `unity/builds/dev/CheddarAndCocoa-Arena.app`
-- Player executable built: 2026-07-16 23:00:19 EDT with Unity 6000.4.2f1
-- Player executable SHA-256: `d2913eb6722256ddedd688c02ccea1099883f25f6aedb7b1346b7b6100c5ccbd`
-- Packaged explainer SHA-256: `280de2f463f2f64d337937a16673c549a970e99a6d1c2bb3774a05b34d002e63`
-- Full PlayMode result: 565/565 passed, 0 skipped, 2026-07-16 22:57:50 EDT
-- PlayMode result: `unity/playmode-final-polish-results.xml`
-- PlayMode result SHA-256: `05ba95aaa2d77f95d7ea35316f7d64076efa252f9e7fadb5729cf92ca477f009`
+- Player executable built: 2026-07-19 with Unity 6000.4.2f1
+- Player executable SHA-256: `ba57952c534ce679497c676fd0efe84c006721fbea63a4190932708837ea6a9e`
+- Packaged explainer SHA-256: `280de2f463f2f64d337937a16673c549a970e99a6d1c2bb3774a05b34d002e63` (unchanged
+  since 2026-07-16 - the video asset itself was not touched by the pre-launch queue)
+- Full PlayMode result: 662/662 passed, 0 failed, 0 skipped, 2026-07-19
+- PlayMode result: `unity/playmode-results.xml`
+- PlayMode result SHA-256: `95b2ac18d567225294b4b1adad40bd7d536cc29f6e3473c839dfc4d66c7dc17c`
 - Packaged-player startup smoke: passed after this rebuild
-- Packaged visual QA: the valid **BLADDER URGENCY** frames remain unobscured; affected explainer
-  shots replace the baked misspelling with **TEENAGER COMPREHENSION**.
+- **This build now also includes the full 2026-07-17..07-19 pre-launch queue** (see
+  `docs/AGENT-WORK-QUEUE-PRELAUNCH.md`, all rows DONE): the stall-aware guidance escalation ladder
+  (Tier 0-3), role-turn beacons, handoff flip flourish, a roster-wide wrong-role coaching audit,
+  animation coverage fixes (interact micro-animation, sniff pose, threat/NPC acting, held-payoff
+  poses), an art-consistency sweep (baked-text removal, mission-tile detail-panel fix, indoor staging
+  for 3 missions, HUD/end-card copy pass), a universal first-mission control-reminder strip and
+  post-clear routing audit, a briefing-accuracy audit (23/23 checked), and named audio cues for the
+  new signals plus a feedback-slot coverage sweep (9 previously-silent moments fixed). None of this
+  changed Pee Break's own beats, tuning, or fail conditions - the checklist below is unaffected by any
+  of it except that the new signals (ladder tiers, beacons, handoff chimes, control strip) are now
+  live during this same session and worth watching for, not just the original response-pass items.
 - Human players: pending
 - Physical controllers: pending
 - Shared display / couch distance: pending

@@ -254,6 +254,11 @@ Record short notes after each mission. Do not interrupt play unless the session 
 - Were important props visible before text was parsed?
 - Did success/failure feedback explain what just happened?
 - Stall once on purpose (stand still) — did the ladder escalate legibly, tier by tier?
+- On a hard-handoff mission (Great Escape, Chaos Machine, or Bone Relay), did the small paw-colored
+  role-turn beacon over the target help players see whose turn it is?
+- On their very first mission of the session (skip this on Backyard Rescue - it has its own
+  tutorial instead), did the fading control-reminder strip help, and did it get out of the way once
+  they'd used all four verbs or after ~20 seconds?
 
 ### Co-op
 
@@ -262,6 +267,9 @@ Record short notes after each mission. Do not interrupt play unless the session 
 - Did either player wait with nothing useful to do?
 - Did at least one mission produce "you do X while I do Y" communication?
 - Did Operation Pee Break's role flip make sense?
+- When a mission's active role flips mid-run (a baton-swoosh between the dogs, both HUD chips
+  flashing, a bark-chime in the receiving dog's own voice), did players notice the handoff moment
+  itself, not just the new instruction text?
 
 ### Controls and Flow
 

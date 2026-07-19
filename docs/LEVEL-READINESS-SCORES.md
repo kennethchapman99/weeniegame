@@ -1,6 +1,20 @@
 # Level Readiness Scores
 
-Status date: 2026-07-16
+Status date: 2026-07-19
+
+Pre-launch queue update (2026-07-17..07-19): the full `docs/AGENT-WORK-QUEUE-PRELAUNCH.md` (all rows
+DONE) landed on top of the scores below without touching mission rules, tuning, or the frozen 23-
+mission roster. Highlights that raise the roster's *couch-readiness* floor without changing any
+row's underlying design: every mission now has a stall-aware guidance escalation ladder (a stuck pair
+gets progressively stronger nudges instead of quitting), the three hard-handoff puzzles (Great
+Escape, Chaos Machine, Bone Relay) show a role-turn beacon, mid-mission role flips get a shared
+baton-swoosh-plus-chime flourish, every wrong-role attempt across all 23 missions was audited for a
+visible+audible coach reaction (3 were previously silent, now fixed), held-payoff poses were audited
+roster-wide (14 missions were freezing both dogs during their own success hold; fixed), a first-
+mission control-reminder strip now covers cold-start strangers, and 9 previously-silent feedback
+moments across 6 missions now have audio. See that queue doc's per-task write-ups for full detail and
+evidence; this scorecard's per-mission rows below were not rewritten, since none of this queue's work
+changed any mission's core design, difficulty, or asset floor rating.
 
 Showcase-order update (2026-07-15): the selector's first five are now **Operation Pee Break**,
 **Kitchen Falling Food Frenzy**, **Car Ride Chaos**, **Baby Bird Bedlam**, and **Gate Crash**, in

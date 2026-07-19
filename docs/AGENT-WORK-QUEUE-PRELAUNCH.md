@@ -1,9 +1,12 @@
 # Pre-Launch Agent Work Queue
 
-> **Status: ACTIVE.** Written 2026-07-17. This is the execution queue for
-> `docs/PRELAUNCH-PRODUCTION-PLAN.md`, sized for an implementation agent (Sonnet) working one task
-> per run. Read that plan plus `CLAUDE.md`, `docs/README.md`, `docs/ARENA-PLAYABLE.md`, and
-> `docs/VISUAL-READABILITY-CONTRACT.md` before the first task.
+> **Status: COMPLETE (2026-07-19).** Written 2026-07-17, all 23 rows DONE as of E6.1. This was the
+> execution queue for `docs/PRELAUNCH-PRODUCTION-PLAN.md`. The only remaining step toward "pre-launch
+> ready" is the human Operation Pee Break couch retest
+> (`docs/OPERATION-PEE-BREAK-COUCH-RETEST-2026-07-14.md`) - agents should not pick up further tasks
+> here until that retest produces new findings. Kept as reference for the per-task evidence and
+> lessons recorded below; read that plan plus `CLAUDE.md`, `docs/README.md`, `docs/ARENA-PLAYABLE.md`,
+> and `docs/VISUAL-READABILITY-CONTRACT.md` for the surrounding context.
 
 ## How to work this queue
 
@@ -52,7 +55,7 @@
 | F4.3 | Briefing accuracy audit | DONE (2026-07-19, see below) |
 | S5.1 | Audio for new signals | DONE (2026-07-19, see below) |
 | S5.2 | Feedback-slot audio coverage audit | DONE (2026-07-19, see below) |
-| E6.1 | Evidence refresh + gate handoff | OPEN |
+| E6.1 | Evidence refresh + gate handoff | DONE (2026-07-19, see below) — **queue complete** |
 
 ---
 
@@ -1553,3 +1556,49 @@ suite count, date); update `docs/FAMILY-SHOWCASE-MANUAL-TEST.md` with the new si
 status date with a short note of this queue's changes; mark this queue's status board complete.
 **Done when:** all evidence recorded. **The couch retest itself is human work — Ken and Sue with
 two controllers, plus ideally one session with first-time players. Agents stop here.**
+
+**Done (2026-07-19):** This closes the pre-launch queue - every row above is now DONE. All 4 remaining
+open tasks (F4.3, S5.1, S5.2, E6.1) landed in one session, continuing the same-day autonomous run that
+already carried V3.3-F4.2 (owner authorized both batches directly, "do next 5 phases" each time,
+without per-task confirmation).
+
+- Full PlayMode suite: **662/662 passed, 0 failed, 0 skipped** (unchanged from S5.2 - this task made
+  no code changes, only doc updates), `unity/playmode-results.xml`, SHA-256
+  `95b2ac18d567225294b4b1adad40bd7d536cc29f6e3473c839dfc4d66c7dc17c`, 2026-07-19.
+- Dev player rebuilt at HEAD (`35f7af8`): `unity/builds/dev/CheddarAndCocoa-Arena.app`, executable
+  SHA-256 `ba57952c534ce679497c676fd0efe84c006721fbea63a4190932708837ea6a9e`. Startup smoke passed.
+- Fresh art-review capture: 70/70 frames written, 0 exceptions in the run log, completed in ~18s.
+  **Reproduces the identical no-GPU/no-display flat-placeholder sandbox gap every single task in this
+  queue has hit** (confirmed again via pixel-variance sampling: 1 unique byte value per sampled
+  frame) - this is a standing limitation of this sandbox, not a regression or something fixable from
+  here. Nobody has visually inspected the Tier 1-3 ladder, role-turn beacons, or handoff flourish
+  through this specific harness this entire queue; every visual claim in G1.2 through V3.4 was instead
+  verified by directly viewing the underlying generated PNGs or (for V3.3's UI compositing bug) an
+  offline pixel-accurate math reproduction. **Whoever runs the actual couch retest has the first real
+  display this whole queue has had** - genuinely worth a few minutes with F1 on/off before the humans
+  sit down, specifically to eyeball the new Tier 1-3 rendering, the beacon, and the handoff swoosh for
+  the first time.
+- `docs/OPERATION-PEE-BREAK-COUCH-RETEST-2026-07-14.md`: preflight block refreshed with the hashes/
+  count/date above, plus a new paragraph naming everything this queue landed since the sheet was
+  written (guidance ladder, beacons, handoff flourish, wrong-role audit, animation fixes, art
+  consistency sweep, first-session flow, audio) and noting none of it touched Pee Break's own beats,
+  tuning, or fail conditions - the existing Required Observations table still applies unchanged; only
+  the ambient signals around it are new.
+- `docs/FAMILY-SHOWCASE-MANUAL-TEST.md`: added two Observation Checklist lines (role-turn beacon on a
+  hard-handoff mission; the first-mission control-reminder strip fading correctly) and one Co-op line
+  (noticing the handoff swoosh/chip-flash/chime, not just the new instruction text) - the guidance-
+  ladder stall-test line was already present from G1.6, so only the 3 signals G1.6 predates needed
+  adding.
+- `docs/LEVEL-READINESS-SCORES.md`: status date bumped to 2026-07-19 with a new summary paragraph
+  naming what the queue changed and explicitly noting the 23 per-mission score rows were deliberately
+  NOT rewritten, since none of this queue's work changed any mission's core design, difficulty, or
+  asset-floor rating (it changed roster-wide presentation/guidance/audio infrastructure sitting on top
+  of those ratings, not the ratings' own basis).
+- Queue status board above: all 23 rows DONE, no BLOCKED/OPEN remaining.
+
+**Handoff:** Phases 1-6 of `docs/PRELAUNCH-PRODUCTION-PLAN.md` are now fully implemented and evidenced.
+Per that plan's own definition of done, the only remaining step is human: the Operation Pee Break
+two-person couch retest (`docs/OPERATION-PEE-BREAK-COUCH-RETEST-2026-07-14.md`, still **NOT CALLED**),
+ideally plus one session with genuine first-time (non-family) players per the plan's stated pre-launch
+bar. **Agents stop here** - no further queue tasks exist to pick up until that retest produces new
+findings.
