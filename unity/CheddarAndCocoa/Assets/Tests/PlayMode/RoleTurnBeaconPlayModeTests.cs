@@ -54,6 +54,31 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator Beacon_FiresRoleTurnBeaconAppear_OnceOnTheRisingEdge_NotOnEveryOwnerChange()
+        {
+            // S5.1: the beacon's first appearance gets its own audio cue, distinct from the handoff
+            // chime that already fires when SignalRoleHandoff runs (owner changes here without a
+            // SignalRoleHandoff call would otherwise double up on audio for one visual moment).
+            yield return LoadArena();
+            var game = Object.FindFirstObjectByType<GameManager>();
+            game.StartMission(GameManager.MissionVariant.GreatEscape);
+            yield return null;
+
+            Assert.IsTrue(game.GuidanceBeaconVisible, "Great Escape is always-on, so it should already be showing on mission start.");
+            Assert.AreEqual(1, CountRoleTurnBeaconAppearCues(game),
+                "The always-on beacon's first appearance must fire exactly one RoleTurnBeaconAppear cue.");
+
+            for (int i = 0; i < 5; i++) yield return null;
+            Assert.AreEqual(1, CountRoleTurnBeaconAppearCues(game), "Staying visible must not spam the appear cue every frame.");
+
+            game.ForceEscapeStep(game.GreatEscapePuzzle.NextOwner);
+            yield return null;
+            Assert.IsTrue(game.GuidanceBeaconVisible);
+            Assert.AreEqual(1, CountRoleTurnBeaconAppearCues(game),
+                "The beacon stayed visible through the owner change - that's a handoff, not a fresh appearance.");
+        }
+
+        [UnityTest]
         public IEnumerator Beacon_SharedStepMission_StaysHidden_EvenWhileStalled()
         {
             yield return LoadArena();
@@ -87,6 +112,14 @@ namespace CheddarAndCocoa.Tests
             // The real assertion is that this is the NEW attempt's owner, not a stale reference to a
             // destroyed station from the previous one; Great Escape resets to step 0 (Cocoa) on replay.
             Assert.AreEqual(0, game.GreatEscapePuzzle.Step);
+        }
+
+        private static int CountRoleTurnBeaconAppearCues(GameManager game)
+        {
+            int count = 0;
+            foreach (string cue in game.AudioCueRequests)
+                if (cue == ArenaFeedbackCatalog.RoleTurnBeaconAppear) count++;
+            return count;
         }
 
         private static IEnumerator LoadArena()

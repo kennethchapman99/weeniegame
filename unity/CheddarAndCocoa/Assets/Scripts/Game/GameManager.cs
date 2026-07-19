@@ -3022,8 +3022,9 @@ namespace CheddarAndCocoa.Game
         /// Renders the guidance-escalation ladder (see MissionGuidanceEscalation): Tier 1 brightens
         /// the current objective arrow/breadcrumbs, periodically pulses the objective prop, and turns
         /// the acting dog's head toward it; Tier 2 lifts the proximity gate on that objective's world
-        /// label; Tier 3 flags the HUD objective line (rendered in ArenaHud) and fires one placeholder
-        /// audio cue on the tier-up edge. Tier 0 leaves every one of these untouched/reverted.
+        /// label; Tier 3 flags the HUD objective line (rendered in ArenaHud) and fires one
+        /// GuidanceRescueCall audio cue on the tier-up edge (S5.1). Tier 0 leaves every one of these
+        /// untouched/reverted.
         /// </summary>
         /// <summary>
         /// Ticks the guidance-escalation clock and records Tier-2/Tier-3 crossings (couch-test
@@ -3080,7 +3081,7 @@ namespace CheddarAndCocoa.Game
             UpdateGuidanceLabelGate(1, tier >= 2 && has1 ? target1 : null);
             UpdateRoleTurnBeacon(tier, has0, target0, has1, target1);
 
-            if (tier >= 3 && _guidanceLastTier < 3) RequestAudioCue(ArenaFeedbackCatalog.Bark);
+            if (tier >= 3 && _guidanceLastTier < 3) RequestAudioCue(ArenaFeedbackCatalog.GuidanceRescueCall);
             _guidanceLastTier = tier;
         }
 
@@ -3112,10 +3113,24 @@ namespace CheddarAndCocoa.Game
         private static readonly Color GuidanceBeaconCheddarColor = new Color(1f, 0.55f, 0.1f);
         private static readonly Color GuidanceBeaconCocoaColor = new Color(0.42f, 0.27f, 0.14f);
 
+        /// <summary>
+        /// Edge-detects the beacon's hidden-to-visible transition and fires RoleTurnBeaconAppear
+        /// exactly once per appearance (S5.1) - never on every frame it stays visible, and never on a
+        /// target/owner change while already visible (that moment is SignalRoleHandoff's job, with its
+        /// own distinct chime). The beacon's own IsShowing is the single source of truth; no separate
+        /// tracking field to keep in sync with resets.
+        /// </summary>
         private void UpdateRoleTurnBeacon(int tier, bool has0, Transform target0, bool has1, Transform target1)
         {
             if (_roleTurnBeacon == null) return;
 
+            bool wasShowing = _roleTurnBeacon.IsShowing;
+            ApplyRoleTurnBeaconState(tier, has0, target0, has1, target1);
+            if (_roleTurnBeacon.IsShowing && !wasShowing) RequestAudioCue(ArenaFeedbackCatalog.RoleTurnBeaconAppear);
+        }
+
+        private void ApplyRoleTurnBeaconState(int tier, bool has0, Transform target0, bool has1, Transform target1)
+        {
             bool eligible = _guidanceOwningDogIndex.HasValue &&
                 (tier >= 1 || (_mission != null && _mission.GuidanceBeaconAlwaysOn));
             if (!eligible)
@@ -3823,9 +3838,10 @@ namespace CheddarAndCocoa.Game
 
         /// <summary>
         /// Handoff flip flourish (G1.4): a baton-swoosh visual between the two dogs, a brief pulse on
-        /// both HUD identity chips, and one placeholder audio cue (a dedicated cue is S5.1). Mission
-        /// controllers call this at their own existing role-flip moments - this method owns none of
-        /// that timing, only the shared presentation.
+        /// both HUD identity chips, and an identity-distinct audio chime for whichever dog is now
+        /// taking over (S5.1: HandoffChimeCheddar/HandoffChimeCocoa, each backed by that dog's own
+        /// authored bark takes). Mission controllers call this at their own existing role-flip moments
+        /// - this method owns none of that timing, only the shared presentation.
         /// </summary>
         private void SignalRoleHandoff(DogId fromDog, DogId toDog)
         {
@@ -3837,7 +3853,9 @@ namespace CheddarAndCocoa.Game
             Sprite swooshSprite = FinalGameplayArt.Load(FinalGameplayArt.DogFxChaosSpark);
             DogHandoffSwoosh.Spawn(swooshSprite, _dogs[fromIndex].transform.position, _dogs[toIndex].transform.position);
             _handoffFlashUntil = Time.time + 0.6f;
-            RequestAudioCue(ArenaFeedbackCatalog.UiReplayNextSelect);
+            RequestAudioCue(toDog == DogId.Cheddar
+                ? ArenaFeedbackCatalog.HandoffChimeCheddar
+                : ArenaFeedbackCatalog.HandoffChimeCocoa);
             LastHandoffFromDog = fromDog;
             LastHandoffToDog = toDog;
             HandoffSignalCount++;

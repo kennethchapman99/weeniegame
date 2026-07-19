@@ -255,6 +255,36 @@ namespace CheddarAndCocoa.Game
                     Root + "/p1_squirrel_chatter_10",
                     Root + "/p0_acceleration_skid"
                 }
+            },
+            // S5.1: no fresh recordings available in this pass (same tooling gap A2.3/A2.4 hit for
+            // art), so these reuse the closest-fitting already-imported clips rather than sharing a
+            // bank with an unrelated existing cue. p0_menu_tile_focus is the only imported "draw
+            // attention, no success/failure connotation" clip, so it stands in for the Tier-3 rescue
+            // call until a dedicated coach-woof take exists (reusing an actual bark here would make
+            // the rescue cue indistinguishable from an ordinary bark, defeating the point). The star-
+            // appear trio ("something just appeared") is a genuine semantic fit for a badge popping
+            // into view, not just a placeholder. The handoff chimes are the one clean case: each dog's
+            // own bark takes ARE their identity, so reusing them per-dog is the intended design, not a
+            // compromise.
+            {
+                ArenaFeedbackCatalog.GuidanceRescueCall, new[]
+                {
+                    Root + "/p0_menu_tile_focus"
+                }
+            },
+            {
+                ArenaFeedbackCatalog.RoleTurnBeaconAppear, new[]
+                {
+                    Root + "/p3_star_appear_01",
+                    Root + "/p3_star_appear_02",
+                    Root + "/p3_star_appear_03"
+                }
+            },
+            {
+                ArenaFeedbackCatalog.HandoffChimeCheddar, CheddarBarks
+            },
+            {
+                ArenaFeedbackCatalog.HandoffChimeCocoa, CocoaBarks
             }
         };
 

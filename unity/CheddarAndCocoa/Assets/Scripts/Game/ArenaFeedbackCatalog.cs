@@ -33,6 +33,14 @@ namespace CheddarAndCocoa.Game
         public const string ThreatWarning = "threat_warning";
         public const string BackyardMusicLoop = "backyard_music_loop";
 
+        // S5.1: guidance-ladder Tier 3 rescue, role-turn beacon appearance, and the two dogs'
+        // identity-distinct handoff-flip chimes. Each replaces a placeholder cue an earlier signal
+        // task reused out of necessity (Bark / UiReplayNextSelect) with its own named slot.
+        public const string GuidanceRescueCall = "guidance_rescue_call";
+        public const string RoleTurnBeaconAppear = "role_turn_beacon_appear";
+        public const string HandoffChimeCheddar = "handoff_chime_cheddar";
+        public const string HandoffChimeCocoa = "handoff_chime_cocoa";
+
         public enum GeneratedSfxKind
         {
             None,
@@ -72,7 +80,14 @@ namespace CheddarAndCocoa.Game
             new AudioCueSlot(SquirrelStunned, GeneratedSfxKind.PenaltyThunk, 220f, 0.18f, 0.16f, -0.46f, 0.18f),
             new AudioCueSlot(BunnyHop, GeneratedSfxKind.TeamSuccess, 840f, 0.13f, 0.13f, 0.72f, 0.04f),
             new AudioCueSlot(ToySqueak, GeneratedSfxKind.TeamSuccess, 1250f, 0.11f, 0.13f, 0.4f, 0.02f),
-            new AudioCueSlot(ThreatWarning, GeneratedSfxKind.ThreatRattle, 230f, 0.28f, 0.21f, -0.12f, 0.58f)
+            new AudioCueSlot(ThreatWarning, GeneratedSfxKind.ThreatRattle, 230f, 0.28f, 0.21f, -0.12f, 0.58f),
+            new AudioCueSlot(GuidanceRescueCall, GeneratedSfxKind.UiBlip, 860f, 0.16f, 0.15f, 0.5f, 0.08f),
+            new AudioCueSlot(RoleTurnBeaconAppear, GeneratedSfxKind.ScoreSparkle, 980f, 0.18f, 0.13f, 0.66f, 0.06f),
+            // Cheddar (chaos-puppy) reads higher/faster/rougher than Cocoa (veteran-queen) here, same
+            // identity split A2.2's interact-squash amplitude uses - encoded in the generated-fallback
+            // params even though the authored bank (each dog's own bark takes) is what actually plays.
+            new AudioCueSlot(HandoffChimeCheddar, GeneratedSfxKind.DogBark, 480f, 0.14f, 0.22f, 0.9f, 0.16f),
+            new AudioCueSlot(HandoffChimeCocoa, GeneratedSfxKind.DogBark, 340f, 0.18f, 0.2f, 0.55f, 0.14f)
         };
 
         public static string SignatureFor(AudioCueSlot cue) => $"{cue.Kind}:{cue.Frequency:0}:{cue.Sweep:0.00}:{cue.Noise:0.00}";

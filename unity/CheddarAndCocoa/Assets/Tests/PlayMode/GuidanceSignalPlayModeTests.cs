@@ -126,7 +126,7 @@ namespace CheddarAndCocoa.Tests
             yield return null;
 
             Assert.IsFalse(game.GuidanceRescueActive);
-            int barksBefore = CountBarkCues(game);
+            int rescueCuesBefore = CountGuidanceRescueCues(game);
 
             game.ForceGuidanceStall(45f);
             yield return null;
@@ -137,10 +137,11 @@ namespace CheddarAndCocoa.Tests
             // the class-level note) - the flash must still activate, just without a dog name.
             Assert.IsNull(game.GuidanceOwningDogIndex);
             Assert.IsEmpty(game.GuidanceRescueDogName);
-            Assert.AreEqual(barksBefore + 1, CountBarkCues(game), "Tier 3 must fire exactly one placeholder audio cue on the tier-up edge.");
+            Assert.AreEqual(rescueCuesBefore + 1, CountGuidanceRescueCues(game),
+                "Tier 3 must fire exactly one GuidanceRescueCall audio cue on the tier-up edge (S5.1).");
 
             for (int i = 0; i < 5; i++) yield return null;
-            Assert.AreEqual(barksBefore + 1, CountBarkCues(game), "Staying at Tier 3 must not spam the audio cue every frame.");
+            Assert.AreEqual(rescueCuesBefore + 1, CountGuidanceRescueCues(game), "Staying at Tier 3 must not spam the audio cue every frame.");
         }
 
         [UnityTest]
@@ -171,11 +172,11 @@ namespace CheddarAndCocoa.Tests
             }
         }
 
-        private static int CountBarkCues(GameManager game)
+        private static int CountGuidanceRescueCues(GameManager game)
         {
             int count = 0;
             foreach (string cue in game.AudioCueRequests)
-                if (cue == ArenaFeedbackCatalog.Bark) count++;
+                if (cue == ArenaFeedbackCatalog.GuidanceRescueCall) count++;
             return count;
         }
 

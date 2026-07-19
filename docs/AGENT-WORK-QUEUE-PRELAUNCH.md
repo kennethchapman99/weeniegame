@@ -50,7 +50,7 @@
 | F4.1 | Universal first-mission control reminder | DONE (2026-07-19, see below) |
 | F4.2 | Post-clear flow + session summary | DONE (2026-07-19, see below) |
 | F4.3 | Briefing accuracy audit | DONE (2026-07-19, see below) |
-| S5.1 | Audio for new signals | OPEN |
+| S5.1 | Audio for new signals | DONE (2026-07-19, see below) |
 | S5.2 | Feedback-slot audio coverage audit | OPEN |
 | E6.1 | Evidence refresh + gate handoff | OPEN |
 
@@ -1396,6 +1396,70 @@ sofa-audible cue; the two dogs get identity-distinct handoff chimes.
 **Do:** add named cues through the existing cue-slot boundary (authored bank first,
 generated-profile fallback, same as current slots). Replace G1.2's placeholder Tier-3 cue.
 **Tests:** event-driven audio assertions per new slot (existing pattern).
+
+**Done (2026-07-19):** Added 4 new named cue slots to `ArenaFeedbackCatalog.RequiredAudioCues`/
+`AuthoredAudioCatalog.CueBanks` and wired each into its real call site, replacing the two ad-hoc
+placeholders G1.2/G1.4 flagged as this task's job:
+
+- `GuidanceRescueCall` replaces the Tier-3 `Bark` placeholder in `UpdateGuidancePresentation`'s
+  tier-up edge (`GameManager.cs`).
+- `RoleTurnBeaconAppear` is new audio the beacon never had (G1.3 shipped visual-only). Wiring this
+  needed a real edge-detector, not just a call site: `UpdateRoleTurnBeacon` was split into a thin
+  wrapper that reads `RoleTurnBeacon.IsShowing` before/after the (renamed, otherwise-untouched)
+  `ApplyRoleTurnBeaconState` and fires the cue only on the hidden-to-visible transition - confirmed it
+  does NOT re-fire on every owner/target change while already visible (that's a different moment,
+  already covered by the handoff chime below) and does NOT need a new tracking field, since the
+  beacon's own `IsShowing` is already the single source of truth and already resets correctly via
+  `ResetGuidancePresentation()`'s existing `Hide()` call.
+- `HandoffChimeCheddar`/`HandoffChimeCocoa` replace the single shared `UiReplayNextSelect` placeholder
+  in `SignalRoleHandoff`, selected by `toDog` (the dog now taking over, not the one handing off).
+
+**Real constraint discovered before writing any code, not after:** `ArenaGameLoopPlayModeTests
+.AuthoredAudioCatalog_ImportsEveryNamedClip_AndMapsEveryCue` already enforces that *every* cue in
+`RequiredAudioCues` maps to at least one real, resolvable authored clip - there is no existing
+precedent anywhere in the catalog for a "generated-synth-only" cue, so adding new cue names with an
+empty authored bank would fail this test immediately (and weakening it was not an option). This
+session has no audio-generation/recording tool, the same shape of gap A2.3/A2.4 hit for art. Followed
+A2.3's precedent (wire the code-side plumbing honestly against what's real, document the gap, don't
+block/fake/silently skip) rather than re-asking here since the shape of the answer was foreseeable
+from A2.3's own recorded resolution:
+- **Handoff chimes are not a compromise** - each dog's own already-imported bark takes
+  (`AuthoredAudioCatalog.CheddarBarks`/`CocoaBarks`) *are* their vocal identity, so reusing them
+  per-dog for "it's my turn now" is the intended design, matching CLAUDE.md's Cheddar/Cocoa-must-feel-
+  distinct rule directly, not a workaround.
+- **Role-turn beacon appearance** reuses the existing `StarAppear` trio (`p3_star_appear_01/02/03`) -
+  a genuine semantic fit ("something just appeared") already used elsewhere in the game for exactly
+  that idea, not a random pick.
+- **Tier-3 rescue call** is the one real gap: no unclaimed dog-vocal audio exists (`Bark`'s cue already
+  claims all 16 Cheddar+Cocoa takes), and reusing any of them would make the "you need help" cue
+  sonically indistinguishable from an ordinary bark, defeating the point of giving it its own slot.
+  Reused `p0_menu_tile_focus` (the only imported clip that reads as "pay attention" with no success/
+  failure/squirrel connotation already attached) and documented this plainly in
+  `AuthoredAudioCatalog.cs` as a placeholder pending a dedicated coach-woof recording - flagged here as
+  a genuine open follow-up, not silently left implicit.
+- Generated-fallback params were still designed deliberately for all 4 (not filler): Cheddar's and
+  Cocoa's handoff-chime synth profiles encode the same chaos-puppy/veteran-queen identity split A2.2's
+  interact-squash amplitude asymmetry uses (Cheddar higher/faster/rougher, Cocoa lower/steadier),
+  verifiable even though the authored bank is what actually plays in practice.
+
+**Tests:** extended 1 existing test rather than duplicating a fixture - `GuidanceSignalPlayModeTests
+.Tier3_FlagsRescueActive_AndFiresOneAudioCueOnTheEdge` now counts `GuidanceRescueCall` instead of
+`Bark` (renamed helper, updated message); `ArenaGameLoopPlayModeTests
+.AuthoredAudioCatalog_ImportsEveryNamedClip_AndMapsEveryCue` automatically covers all 4 new slots with
+zero changes since it iterates the catalogs generically. Added 2 new test methods: `RoleTurnBeaconPlayModeTests
+.Beacon_FiresRoleTurnBeaconAppear_OnceOnTheRisingEdge_NotOnEveryOwnerChange` (Great Escape fixture -
+fires exactly once on mission-start appearance, stays silent across 5 idle frames, stays silent across
+an owner change that keeps the beacon visible) and `RoleHandoffPlayModeTests
+.GreatEscape_EachStep_FiresTheReceivingDogsOwnIdentityDistinctChime` (same fixture's Cocoa->Cheddar
+then Cheddar->Cocoa steps, asserting the correct per-dog cue fires and the other dog's does not). Both
+passed on the first run - no bugs found this round. Full PlayMode suite: **662/662 passed, 0 failed, 0
+skipped** (660 baseline from F4.3 + 2 new), `unity/playmode-results.xml`, SHA-256
+`42fa8db22928dbbc34a120a170829423dd34ef0abce17d0548ee535a1c4aa3d7`, 2026-07-19. Dev player rebuilt at
+HEAD, executable SHA-256 `b767f4a0d361530f7966e029d54521d60339aa3cb51e4f278a0b96633fe5e7ca`; smoke
+passed. No art-review capture - audio has no pixel signature to capture either way, same reasoning
+that exempted A2.2's squash-pulse timing from needing one; whoever next has real speakers/a live
+display should do a manual listen-through of all 4 new cues, especially the two reused/placeholder
+choices flagged above.
 
 ### S5.2 — Feedback-slot audio coverage audit
 **Goal:** no major feedback moment is silent.

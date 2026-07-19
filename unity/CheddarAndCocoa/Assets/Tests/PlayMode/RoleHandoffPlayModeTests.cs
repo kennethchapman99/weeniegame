@@ -10,9 +10,10 @@ namespace CheddarAndCocoa.Tests
 {
     /// <summary>
     /// G1.4: the handoff flip flourish (MissionContext.SignalRoleHandoff - baton-swoosh visual, both
-    /// HUD chips flash, one placeholder audio cue) wired into each mission's own existing mid-mission
-    /// role-flip moment. GameManager.LastHandoffFromDog/ToDog/HandoffSignalCount are the deterministic
-    /// test surface (mirrors LastAudioCueRequested/AudioCueRequests from earlier work).
+    /// HUD chips flash, an identity-distinct audio chime for the receiving dog - S5.1) wired into each
+    /// mission's own existing mid-mission role-flip moment. GameManager.LastHandoffFromDog/ToDog/
+    /// HandoffSignalCount are the deterministic test surface (mirrors LastAudioCueRequested/
+    /// AudioCueRequests from earlier work).
     ///
     /// Pee Break's Beat-3 charger flip is deliberately NOT wired: both dogs' roles change to new,
     /// non-swapped assignments simultaneously there (Cheddar leash->hallway, Cocoa stare->charger),
@@ -43,6 +44,36 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(2, game.HandoffSignalCount);
             Assert.AreEqual(DogId.Cheddar, game.LastHandoffFromDog);
             Assert.AreEqual(DogId.Cocoa, game.LastHandoffToDog);
+        }
+
+        [UnityTest]
+        public IEnumerator GreatEscape_EachStep_FiresTheReceivingDogsOwnIdentityDistinctChime()
+        {
+            // S5.1: HandoffChimeCheddar/HandoffChimeCocoa replace the single shared placeholder cue -
+            // the chime must match whichever dog is now taking over (toDog), not the one handing off.
+            yield return LoadArena();
+            var game = Object.FindFirstObjectByType<GameManager>();
+            game.StartMission(GameManager.MissionVariant.GreatEscape);
+            yield return null;
+
+            int cheddarChimesBefore = CountCues(game, ArenaFeedbackCatalog.HandoffChimeCheddar);
+            int cocoaChimesBefore = CountCues(game, ArenaFeedbackCatalog.HandoffChimeCocoa);
+
+            game.ForceEscapeStep(game.GreatEscapePuzzle.NextOwner); // Cocoa -> Cheddar
+            yield return null;
+            Assert.AreEqual(DogId.Cheddar, game.LastHandoffToDog);
+            Assert.AreEqual(cheddarChimesBefore + 1, CountCues(game, ArenaFeedbackCatalog.HandoffChimeCheddar),
+                "Handing off TO Cheddar must fire Cheddar's own chime.");
+            Assert.AreEqual(cocoaChimesBefore, CountCues(game, ArenaFeedbackCatalog.HandoffChimeCocoa),
+                "Handing off TO Cheddar must not also fire Cocoa's chime.");
+
+            game.ForceEscapeStep(game.GreatEscapePuzzle.NextOwner); // Cheddar -> Cocoa
+            yield return null;
+            Assert.AreEqual(DogId.Cocoa, game.LastHandoffToDog);
+            Assert.AreEqual(cocoaChimesBefore + 1, CountCues(game, ArenaFeedbackCatalog.HandoffChimeCocoa),
+                "Handing off TO Cocoa must fire Cocoa's own chime.");
+            Assert.AreEqual(cheddarChimesBefore + 1, CountCues(game, ArenaFeedbackCatalog.HandoffChimeCheddar),
+                "Handing off TO Cocoa must not fire another Cheddar chime.");
         }
 
         [UnityTest]
@@ -243,6 +274,14 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNull(game.LastHandoffFromDog);
             Assert.IsNull(game.LastHandoffToDog);
             Assert.IsFalse(game.HandoffChipFlashVisible);
+        }
+
+        private static int CountCues(GameManager game, string cueName)
+        {
+            int count = 0;
+            foreach (string cue in game.AudioCueRequests)
+                if (cue == cueName) count++;
+            return count;
         }
 
         private static IEnumerator LoadArena()
