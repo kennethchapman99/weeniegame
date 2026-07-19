@@ -42,7 +42,7 @@
 | A2.3 | Signal-critical verb strips (dig/sniff/carry) | DONE (2026-07-18, code-side prep only — see below) |
 | A2.4 | Threat/NPC acting gaps | DONE (2026-07-18, see below) |
 | A2.5 | Held-payoff pose audit | DONE (2026-07-19, see below) |
-| V3.1 | Style-contract audit + fix list | OPEN |
+| V3.1 | Style-contract audit + fix list | DONE (2026-07-19, see below) |
 | V3.2 | Kill remaining square/debug first reads | OPEN |
 | V3.3 | Mission tile consistency | OPEN |
 | V3.4 | Indoor-fantasy staging audit | OPEN |
@@ -772,6 +772,63 @@ range, palette family, shading style, silhouette-first, no baked text). Run the 
 grade all 69 frames against it; append the ranked fix list (worst inconsistencies first) to
 `docs/ASSET-PRODUCTION-CATALOG.md`. No regeneration yet.
 **Done when:** contract + graded fix list exist. This task gates V3.2/V3.3 scope.
+
+**Done (2026-07-19):** Added the five-point checklist (outline weight, palette family, shading style,
+silhouette-first, no baked text) as a new "Style Contract" section in `docs/ART-DIRECTION.md`, with
+concrete numeric anchors pulled from real usage (outline widths sampled across `tools/art/*.py`
+cluster 4-12px at a 512px canvas) rather than written from vibes. Full audit + ranked fix list +
+23-mission grading table appended to `docs/ASSET-PRODUCTION-CATALOG.md`'s new "V3.1 Style-Contract
+Audit" section.
+
+- **Rebuilt dev player at HEAD** (`9f478ff`, executable SHA-256
+  `8b9dbfb16d5f923d5f59157c28be5d40c0f81da129f4de30379567d004ad65dd`) and ran smoke — both passed.
+- **Ran a fresh `--arena-art-review=` capture** with a manual watchdog (macOS has no `timeout`
+  binary; used a polled `kill -0`/`sleep 5` loop instead). It completed cleanly in ~25s, 69/69 frames
+  written — a structural improvement over A2.4's hang — but every frame sampled at zero pixel
+  variance: the same no-GPU/no-display sandbox gap flagged in P0.1/G1.2/G1.3/G1.4/A2.4 reproduced
+  again, so these frames carry no gradable visual information.
+- **Graded from `unity/builds/art-review-guidance-current/` instead** (2026-07-16, confirmed real
+  rendered content via pixel-variance sampling, already matches the current 23-mission/69-frame
+  roster) — converted its raw `.ppm` frames to 6 labeled contact-sheet JPGs (4 missions/sheet, kept
+  locally under `unity/builds/art-review-v3.1-style-audit/`, gitignored like all `unity/builds/`
+  output) and visually graded all 69 frames against the new checklist. Two assets that shipped after
+  that capture (A2.4's authored Sniff strips, G1.3's role-turn beacon) were graded directly from
+  source PNGs instead, since no completed capture contains them.
+- **Real finding, not just a methodology note:** while grading, found that 18 of 23 missions'
+  captured frames don't actually show the mission's real objective prop, traced to
+  `ArenaArtReviewCapture.cs` — only Weenie Roundup, Leash Walk, and Chaos Machine call
+  `StageDogsAtCurrentObjective()` before capturing. Cross-checked the affected missions' *actual*
+  registered art directly from `Assets/Art/Resources/ArenaFinal/Props/...` rather than grading an
+  empty frame, which surfaced the audit's biggest finding (below).
+- **Ranked fix list (worst first), full detail in the catalog doc:**
+  1. Off-style photoreal renders (A2.4's new Sniff pose art; all of Operation Pee Break) break
+     "same two dogs everywhere" mid-mission — highest severity, and flagged as needing an explicit
+     decision (permanent documented exception vs. a real fix target), not just a fix.
+  2. **Baked text confirmed in 5+ shipped runtime sprites** by direct pixel inspection —
+     `gate_crash_gate_held.png` ("GATE HELD"), `table_stealth_human_distracted.png`
+     ("DISTRACTED BY COCOA"), `switcheroo_stash_open.png` ("RAID WINDOW"),
+     `walk_campaign_human_walkies.png` ("WALKIES!"), `bone_relay_mound_found.png` ("BONE FOUND") —
+     plus `tools/art/generate_environment_prop_pack.py:47`/`:107` (baked "GO" and checkpoint
+     numerals 1-5), the latter confirmed actually rendering in the captured Leash Walk payoff frame.
+  3. A generic/fallback-looking prop shape appears instead of real art in 5+ missions' captures
+     (Bone Relay, Chaos Machine, Blanket Catch, Kitchen Food Frenzy, Baby Bird Bedlam) — traced to
+     the `StageDogsAtCurrentObjective()` gap above; recommended as a cheap follow-up since it would
+     make every future capture more gradable regardless of whether today's shape is a real
+     resource-load regression or just a capture-framing artifact (couldn't fully distinguish the two
+     without a live display).
+  4. Silhouette-first failures in the same 4 missions (near-empty-lawn reads), same root cause.
+  5. Roster-wide painterly-plate-vs-flat-cartoon-actor shading tension — the intentional documented
+     exception in the new contract, flagged for its pervasiveness (18+/23 missions) rather than as a
+     violation.
+  6. Duplicate score-pop checkmark icons stacking vertically (Mark the Yard, Great Escape payoffs) —
+     likely a rapid-forced-hook capture artifact, not reachable at real input speed.
+  7. Minor camera-composition notes (one clipped prop, two large flat-color void fills) — noted for
+     awareness, not scored against the style contract itself.
+- **Not found:** no dimension-1 (outline weight) or dimension-2 (palette family) violations at the
+  severity of the above — sampled generator-script outline widths and roster palette both already sit
+  inside what the new contract specifies.
+- No PlayMode run needed — docs-only, no runtime behavior changed (same precedent as A2.1). No new
+  dev build artifacts were committed (`unity/builds/` is gitignored, matching every prior task).
 
 ### V3.2 — Kill remaining square/debug first reads
 **Goal:** with F1 off at 1080p, nothing a player must understand reads as a colored square, bare

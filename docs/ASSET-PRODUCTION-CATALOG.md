@@ -386,3 +386,148 @@ Required:
 ## Production Rule
 
 No final art should be created until the mechanic using it is playable and tested.
+
+## V3.1 Style-Contract Audit (2026-07-19)
+
+Grades the roster against the five-point checklist added to `ART-DIRECTION.md`'s new "Style
+Contract" section: (1) outline weight, (2) palette family, (3) shading style, (4) silhouette-first,
+(5) no baked text. **No regeneration in this pass** — this is the audit + ranked fix list that gates
+V3.2 (kill remaining square/debug first reads) and V3.3 (mission tile consistency) scope.
+
+### Evidence and a methodology caveat
+
+A fresh dev build was cut at `9f478ff` (executable SHA-256
+`8b9dbfb16d5f923d5f59157c28be5d40c0f81da129f4de30379567d004ad65dd`), smoke-tested clean, and run
+through `--arena-art-review=`. It completed cleanly in ~25s and wrote 69/69 frames — better than the
+A2.4 session, which hung — but every frame sampled at zero color variance: the same "no GPU/display in
+this sandbox" gap flagged in P0.1/G1.2/G1.3/G1.4/A2.4 reproduced again today. Those frames carry no
+visual information and cannot be graded.
+
+**Graded from `unity/builds/art-review-guidance-current/` instead** — a 2026-07-16 capture confirmed
+by direct pixel-variance sampling to contain real rendered content (hundreds to low-thousands of
+unique sampled colors per frame), and already matching the current 23-mission/69-frame roster. Two
+assets shipped after that capture (A2.4's authored Sniff strips, G1.3's role-turn beacon) were graded
+directly from their source PNGs instead, since no frame of them exists in any completed capture. Where
+a mission's own capture frame turned out not to show its real objective prop at all (see finding #3
+below), that mission was also re-graded directly from its registered source PNG rather than left
+ungraded. No PlayMode run was needed — this task changed no code, matching the A2.1 precedent.
+
+### Ranked fix list (worst first)
+
+1. **Off-style photoreal renders break "same two dogs everywhere" mid-mission.** Cheddar and Cocoa's
+   idle/run/bark/tug art is flat, cel-shaded, thick-outlined cartoon. Two things render them
+   completely differently: the new Sniff pose (`Characters/Dogs/{Cheddar,Cocoa}/Motion/*_sniff_*.png`,
+   shipped in A2.4) is a soft-shaded, unoutlined, painterly-realistic illustration — same characters,
+   incompatible style, and it can appear mid-Scent-Search right next to their cartoon idle frame. All
+   of Operation Pee Break (room plates, dog renders, the "OPERATION: PEE" title card) is the same
+   violation at mission scale. Pee Break's treatment is a known, deliberate deep-slice production
+   choice (`docs/DEEP-SLICE-OPERATION-PEE-BREAK.md`), not an accident — but a contract that exists to
+   replace vibes with a checklist should still name unreconciled drift even when the drift was
+   intentional. Highest severity: this is the one rule (dimension 3, and implicitly dimension 1 since
+   the photoreal art has no outline at all) that most directly undercuts the game's central visual
+   promise. **Recommend:** decide explicitly whether Sniff and Pee Break are permanent, documented
+   style exceptions (like the painterly ground-plate exception already is) or a fix target for V3.2 —
+   right now the contract has no exception carved for them, so they read as failures, not choices.
+2. **Baked text in shipped runtime sprites**, contradicting the shared TextMesh/TMP label path every
+   other mission uses correctly (compare "HOME BOWL 1/5" in Weenie Roundup, "BLADDER URGENCY" in Pee
+   Break — both real dynamic labels, not violations). Confirmed by direct pixel inspection of the
+   registered PNGs:
+   - `Props/GateCrash/gate_crash_gate_held.png` — "GATE HELD" baked in.
+   - `Props/TableStealth/table_stealth_human_distracted.png` — "DISTRACTED BY COCOA" baked in.
+   - `Props/SquirrelSwitcheroo/switcheroo_stash_open.png` — "RAID WINDOW" baked in.
+   - `Props/WalkCampaign/walk_campaign_human_walkies.png` — "WALKIES!" baked in.
+   - `Props/BoneRelay/bone_relay_mound_found.png` — "BONE FOUND" baked in.
+   - `tools/art/generate_environment_prop_pack.py:47` (`house_patio()`) bakes "GO" into the doormat
+     prop; line 107 (`leash_route()`) bakes checkpoint numerals 1–5 into the waypoint markers — this
+     one is confirmed actually rendering in play, visible in the captured
+     `11-leash-walk-payoff.ppm` frame, not just sitting unused in a reference board.
+   The four generator scripts with a `draw.text` call that turned out to be contact-sheet-caption-only
+   (harmless, never shipped) are `generate_escape_catch_kitchen_p0_pack.py`,
+   `generate_mission_prop_pack.py`, and `normalize_pee_break_prop_pack.py` — checked and cleared so
+   the next pass doesn't re-flag them. The five per-state files above came from a Home Trip/Coop
+   Tricks-era generator script no longer present in `tools/art/` (one-shot, already run, since
+   removed) — graded from the shipped PNG directly since the source script is gone. **Recommend:** a
+   full sweep of every `Props/*/*.png` for baked text before V3.2 closes; this pass sampled, it did not
+   exhaustively check all ~150 registered files.
+3. **A generic/fallback-looking prop marker appears instead of the real registered art** in at least 5
+   missions' captured frames — Bone Relay, Chaos Machine, Blanket Catch, Kitchen Food Frenzy, and Baby
+   Bird Bedlam all show an identical tan rounded-plaque + oval + blue-triangle shape that matches
+   *none* of those missions' actual cataloged art (directly compared against
+   `bone_relay_mound_found.png`, `blanket_catch_taut.png`, and `chaos_lever_running.png` from source —
+   all completely different). Traced a likely mechanism in `ArenaArtReviewCapture.cs`: only 3 of 23
+   missions (Weenie Roundup, Leash Walk, Chaos Machine) call `StageDogsAtCurrentObjective()` before
+   capturing; for the other 18, camera and dog placement fall back to `TryGetObjectiveTarget` or
+   `ArenaBounds.center`, and when that lands away from the real prop, whatever's nearest gets
+   captured instead. This reads as a capture-tooling gap rather than a runtime art regression — the
+   codebase does have a documented generated-fallback path (`MissionPropArt.DimGeneratedFallback`/
+   `FindFallbackRenderer`) that fires when named art fails to resolve, so a live-display session should
+   confirm which one this actually is before treating it as closed either way. **Recommend:** extend
+   `DriveMainInteraction`/`DrivePayoff` with `StageDogsAtCurrentObjective()` calls for the missions
+   that lack one (cheap, mirrors the 3 that already do it) — this alone would make every future
+   art-review capture dramatically more useful for grading, independent of whether today's specific
+   shape is a real bug.
+4. **Silhouette-first failures driven by the same gap as #3.** With their real objective prop
+   effectively absent from the frame, Gate Crash, Table Stealth, Squirrel Switcheroo, and Walk
+   Campaign's captures read as near-empty lawn with only a stray warning-triangle or flower icon —
+   fails the cover/hide test outright, since there is nothing mission-specific to name. (Graded from
+   source PNGs instead per the methodology note; the shipped art itself is fine on this dimension —
+   see #2's finding that it's fine on style but fails on baked text instead.)
+5. **Roster-wide shading-language tension between painterly ground plates and flat cel-shaded
+   actors.** The Photo-Inspired Backyard Reskin Layer's soft-textured grass/stone/wood plates
+   (Backyard Rescue, Squirrel Conspiracy, Coyotes Fence, Car Ride's leather interior) sit directly
+   under thick-outlined flat-cartoon dogs and props every time. This is the documented, intentional
+   exception in the new contract's dimension 3 — flagged here not as a violation but because it's the
+   single most *pervasive* visual tension in the roster by frame count (visible to some degree in 18+
+   of 23 missions), and worth a deliberate look at whether the exception's boundary (plates yes,
+   characters/props no) is actually reading as intended at couch distance rather than as two different
+   games glued together. Car Ride and Kitchen Food Frenzy integrate it best; Backyard Rescue's painted
+   rocks/pavers against flat dog sprites is the starkest example.
+6. **Duplicate score-pop icons stack instead of distributing.** Mark the Yard and Great Escape's
+   payoff frames both show 4–5 identical green checkmark icons stacked in a vertical column at one
+   point rather than at each claimed zone/station. Very likely an artifact of the capture script
+   calling `ForceClaimZone`/`ForceEscapeStep` in a tight loop with no per-call settle frame — not
+   reachable at normal human input speed — but worth a quick check for a missing max-stack guard on
+   the checkmark pop effect while someone is in that code for #3.
+7. **Minor camera-composition gaps**, noted for awareness rather than scored against the style
+   contract itself: Chaos Machine's main frame clips its active lever/junction prop at the bottom
+   frame edge; Coyotes Fence and Weenie Roundup show a flat dark-green fill covering roughly half the
+   frame, likely the undecorated `ArenaBounds` fallback color showing past a photo-reskin plate's
+   edge rather than a graded-art issue.
+
+### Per-mission grading summary
+
+Dimension numbers match the `ART-DIRECTION.md` checklist (1 outline, 2 palette, 3 shading, 4
+silhouette-first, 5 no baked text). "Capture" = graded from the 2026-07-16 frames; "Source" = graded
+directly from the registered PNG because the capture didn't show the real prop (see finding #3).
+
+| # | Mission | Graded from | Worst dimension | Severity | Fix-list ref |
+|---|---|---|---|---|---|
+| 1 | Backyard Rescue | Capture | 3 (painterly plate vs flat actors) | Med | #5 |
+| 2 | Snack Heist | Capture | 3 | Low-Med | #5 |
+| 3 | Sock Panic | Capture | 4 (very sparse, tiny icons) | Med | #4-adjacent |
+| 4 | Squirrel Conspiracy | Capture | 3 + minor warning-icon clutter | Med | #5 |
+| 5 | Eagle Shadow Panic | Capture | 3 | Low | #5 |
+| 6 | Coyotes Fence | Capture | 4 (large flat void, see #7) | Med-High | #7 |
+| 7 | Weenie Roundup | Capture (staged) | 4 (void in payoff, see #7) | Med | #7 |
+| 8 | Scent Search | Capture + source (Sniff pose) | 3 (Sniff art, see #1) | High | #1 |
+| 9 | Thunderstorm Comfort | Capture | 4 (sparse) | Med | #4-adjacent |
+| 10 | Mark the Yard | Capture | 4 (sparse) + stacked icons | Med | #6 |
+| 11 | Leash Walk | Capture | 5 — baked "GO" + checkpoint numerals confirmed rendering | High | #2 |
+| 12 | Car Ride | Capture | 3, best-integrated in roster | Low | — |
+| 13 | Gate Crash | Source (capture blank) | 5 — baked "GATE HELD" | High | #2, #3 |
+| 14 | Table Stealth | Source (capture blank) | 5 — baked "DISTRACTED BY COCOA" | High | #2, #3 |
+| 15 | Squirrel Switcheroo | Source (capture blank) | 5 — baked "RAID WINDOW" | High | #2, #3 |
+| 16 | Walk Campaign | Source (capture blank) | 5 — baked "WALKIES!" | High | #2, #3 |
+| 17 | Bone Relay | Source (capture showed #3's fallback shape) | 5 — baked "BONE FOUND" | High | #2, #3 |
+| 18 | Great Escape | Capture (partial) + source | 4 (capture gap) + stacked icons; source art itself clean | Med-High | #3, #6 |
+| 19 | Chaos Machine | Capture (staged) | 4 (fallback shape in payoff) + minor clipping | Med | #3, #7 |
+| 20 | Blanket Catch | Source (capture showed #3's fallback shape) | 4 (capture gap only); source art clean, no baked text | Med | #3 |
+| 21 | Kitchen Food Frenzy | Capture | 4 (fallback shape briefly visible) | Low-Med | #3 |
+| 22 | Operation Pee Break | Capture | 3 — severe, see #1 | Highest | #1 |
+| 23 | Baby Bird Bedlam | Capture (partial, #3's fallback shape present) | 4 (capture gap) | Med | #3 |
+
+**Not found:** no violations of dimension 1 (outline weight) or dimension 2 (palette family) at the
+severity of the items above — outline widths sampled from `tools/art/*.py` generator scripts cluster
+4–12px at a 512px canvas as the new contract specifies, and every mission stays inside the documented
+warm/earth-tone-plus-teal-accent family. Both checks are worth re-running once V3.2 regenerates the
+items above, since new art can introduce what today's roster doesn't have.

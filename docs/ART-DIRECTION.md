@@ -7,6 +7,40 @@ shapes; authored sprites and animation should preserve these readability rules.
 For the external asset intake list, folder structure, naming rules, technical specs, and tracking
 template, use [ASSET-CATALOG.md](ASSET-CATALOG.md).
 
+## Style Contract
+
+> Added for V3.1 (2026-07-19): one visual language, enforced by a checklist instead of vibes. Grade
+> every new asset against these five checks before it ships, and grade every `--arena-art-review`
+> capture frame against them during a V3.x audit pass. The graded results and the ranked fix list
+> from the first audit live in `ASSET-PRODUCTION-CATALOG.md`'s "V3.1 Style-Contract Audit" section —
+> this section is the durable rule, that one is the dated report.
+
+1. **Outline weight** — dogs, mission props, and actors carry a dark outline roughly **4–12px thick
+   at a 512×512 source canvas** (about 1–2.5% of canvas width); 3–4px is acceptable for small
+   interior details, 14–20px only for a single large silhouette shape (a lever, a piece of
+   furniture). Do not mix a hairline (<2px) outline and a heavy (>12px) outline in the same sprite
+   set — pick one weight class per asset and stay in it.
+2. **Palette family** — warm, saturated, storybook color: golden-yellow/orange/brown earth tones
+   for fur, wood, and dirt; grass/leaf green for the yard; teal/blue as the one deliberate "cool"
+   family, reserved for Cocoa's identity accent and water. Avoid desaturated, muted, or
+   photographic/naturalistic color grading anywhere a player is meant to read gameplay state.
+   Cheddar and Cocoa's own body/accent colors (`## Color And Accent Rules` above) are the anchor —
+   every other prop's palette should feel like it was mixed from the same paint set.
+3. **Shading style** — flat/cel-shaded fill with at most one soft accent highlight, rim-light, or
+   drop shadow. No photoreal rendering and no painterly airbrush blending on characters, mission
+   actors, or interactable props. Environment ground plates are the one deliberate exception
+   (`Photo-Inspired Backyard Reskin Layer` below uses soft painterly texture on purpose) — but
+   characters and props must stay flat-shaded so they pop off any background, painterly or not.
+4. **Silhouette-first** — cover/hide test: at the arena camera's default gameplay zoom, with color
+   removed, a player must still be able to name the object from its outline alone. Anything that
+   reads as a bare colored rectangle, an anonymous dot, or requires reading a text label to identify
+   fails this check and needs a real silhouette before it ships.
+5. **No baked text** — no letters, numerals, or words drawn into sprite pixel data, ever. All
+   player-facing text renders through the shared TextMesh/TMP `AddWorldLabel`/HUD path (see the
+   Shared Label/Prompt Rule in `VISUAL-READABILITY-CONTRACT.md`) so it can be resized, relocalized,
+   and gated by the existing F1/proximity rules. `ReferenceOnly` contact-sheet tooling output
+   (thumbnail captions on a review grid) is exempt — it documents source art, it never ships.
+
 ## Visual Promise
 
 Cheddar & Cocoa should look like bold, funny, readable miniature dachshunds living through dog-life
