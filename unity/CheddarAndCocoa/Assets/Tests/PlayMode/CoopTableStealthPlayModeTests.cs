@@ -69,6 +69,9 @@ namespace CheddarAndCocoa.Tests
                 "The stolen steak should remain visible in the live world before the result card.");
             Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
             Assert.That(_game.ObjectiveLabel, Does.Contain("Steak secured"));
+            foreach (var feedback in _game.DogFeedback)
+                Assert.AreEqual(DogReadabilityFeedback.Pose.Proud, feedback.CurrentPose,
+                    "Both dogs should show an animated proud read during the held payoff, not frozen dogs.");
             _game.ForceTableSuccessPresentationComplete();
             Assert.AreEqual(GameManager.MissionOutcome.Clear, _game.Outcome);
             Assert.IsTrue(_game.RuntimeSnapshot.IsClear);

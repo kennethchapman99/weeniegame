@@ -300,6 +300,8 @@ namespace CheddarAndCocoa.Game
                 SetHumanState("HUMAN GRABBED THE LEASH - WALKIES!", HumanSuccessColor, 0.14f,
                     new Color(0.75f, 1f, 0.78f, 1f), FinalGameplayArt.WalkCampaignHumanWalkies);
                 MissionPropArt.SetSprite(_leashArt, FinalGameplayArt.WalkCampaignLeashGrabbed);
+                foreach (var feedback in _context.DogFeedback)
+                    if (feedback != null) feedback.ShowProudBrief();
             }
         }
 

@@ -75,6 +75,9 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(goal, _game.BreakfastRecovered);
             Assert.IsTrue(_game.SnackHeistController.IsPresentingSuccessfulOutcome,
                 "The final stash should get a readable in-world payoff before the end card.");
+            foreach (var feedback in _game.DogFeedback)
+                Assert.AreEqual(DogReadabilityFeedback.Pose.Proud, feedback.CurrentPose,
+                    "Both dogs should show an animated proud read during the held payoff, not frozen dogs.");
             float clearWait = 0f;
             while (_game.Outcome == GameManager.MissionOutcome.InProgress && clearWait < 2f)
             {

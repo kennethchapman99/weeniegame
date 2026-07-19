@@ -346,6 +346,8 @@ namespace CheddarAndCocoa.Game
             _context.SetCue("Every mark held! Cheddar owns the route and Cocoa rules the fence line.");
             _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "YARD IS OURS!");
             _context.SpawnWorldPop(_context.Bounds.center + Vector2.up, "ALL MARKED!", new Color(1f, 0.85f, 0.3f));
+            foreach (var feedback in _context.DogFeedback)
+                if (feedback != null) feedback.ShowProudBrief();
             _context.RequestAudioCue(ArenaFeedbackCatalog.MissionWin);
             _context.RequestRumble("mark_yard_complete", 0.28f, 0.55f, 0.2f);
             _context.LogEvent("MarkYardComplete", "Holding live-world territory payoff");

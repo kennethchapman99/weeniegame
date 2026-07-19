@@ -299,6 +299,8 @@ namespace CheddarAndCocoa.Game
             _context.SetCue("Bone detail complete! Cocoa's nose and Cheddar's paws uncovered the whole stash.");
             _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "BONE STASH!");
             _context.SpawnWorldPop(digPos + Vector2.up, "THREE BONES!", new Color(1f, 0.85f, 0.3f));
+            foreach (var feedback in _context.DogFeedback)
+                if (feedback != null) feedback.ShowProudBrief();
             _context.RequestAudioCue(ArenaFeedbackCatalog.MissionWin);
             _context.RequestRumble("bone_detail_complete", 0.28f, 0.55f, 0.2f);
             _context.LogEvent("BoneDetailComplete", "Holding live-world scent-and-dig payoff");

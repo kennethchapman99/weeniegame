@@ -388,6 +388,10 @@ namespace CheddarAndCocoa.Game
                         _context.SetCue("Dinner saved! Cheddar called every drop and Cocoa caught the feast!");
                         _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "DINNER SAVED!");
                         _context.SpawnWorldPop(_safeZonePosition, "DINNER SAVED!", new Color(1f, 0.86f, 0.28f));
+                        // The catching dog already got ShowProudBrief() above; the finale credits
+                        // both roles (Cheddar's calls + Cocoa's catches), so pose both dogs here.
+                        foreach (var feedback in _context.DogFeedback)
+                            if (feedback != null) feedback.ShowProudBrief();
                         _context.RequestAudioCue(ArenaFeedbackCatalog.MissionWin);
                         _context.RequestRumble("kitchen_payoff", 0.3f, 0.55f, 0.2f);
                         _context.LogEvent("KitchenPayoff", "Dinner saved; holding live-world success beat");

@@ -273,6 +273,8 @@ namespace CheddarAndCocoa.Game
                 _context.SetCue("Cheddar got the toy! Cocoa held the gate open!");
                 _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "TOY RESCUED!");
                 _context.SpawnWorldPop(_crossZone, "TOY RESCUED!", new Color(1f, 0.9f, 0.3f));
+                foreach (var feedback in _context.DogFeedback)
+                    if (feedback != null) feedback.ShowProudBrief();
                 _context.RequestAudioCue(ArenaFeedbackCatalog.MissionWin);
                 _context.RequestRumble("gate_toy_rescued", 0.3f, 0.55f, 0.2f);
                 _context.LogEvent("GateCrashPayoff", "Toy rescued; holding live-world success beat");

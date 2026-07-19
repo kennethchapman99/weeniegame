@@ -275,6 +275,10 @@ namespace CheddarAndCocoa.Game
                 _context.SetCue("The storm passed - Cocoa kept steady and Cheddar found his brave bark!");
                 _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "STORM PASSED!");
                 _context.SpawnWorldPop(_context.Bounds.center + Vector2.up * 2f, "STORM PASSED!", new Color(0.75f, 1f, 0.82f));
+                // Tick() short-circuits the huddle-comfort refresh loop once _cleared is true, so the
+                // held payoff needs its own pose call here or the dogs decay to Idle mid-hold.
+                foreach (var feedback in _context.DogFeedback)
+                    if (feedback != null) feedback.ShowProudBrief();
                 _context.RequestRumble("storm_passed", 0.38f, 0.62f, 0.24f);
             }
             else

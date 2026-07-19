@@ -358,6 +358,8 @@ namespace CheddarAndCocoa.Game
             _context.SetCue("Dinner saved! Cheddar and Cocoa hold the full blanket while snacks rain safely home.");
             _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "DINNER SAVED!");
             _context.SpawnWorldPop(new Vector2(_puzzle.MidpointX, CatchLineY + 1f), "FULL BLANKET!", new Color(1f, 0.85f, 0.3f));
+            foreach (var feedback in _context.DogFeedback)
+                if (feedback != null) feedback.ShowProudBrief();
             _context.RequestAudioCue(ArenaFeedbackCatalog.MissionWin);
             _context.RequestRumble("blanket_dinner_saved", 0.28f, 0.55f, 0.2f);
             MissionPropArt.SetSprite(_blanketArt, FinalGameplayArt.BlanketCatchTaut);

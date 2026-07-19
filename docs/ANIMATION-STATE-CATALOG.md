@@ -186,6 +186,42 @@ what the table above assumed:
   production label strings (not synthetic keywords) for both the fixed and already-correct cases,
   so a future label-text edit that silently breaks the mapping again gets caught.
 
+### A2.5 outcomes (2026-07-19) — held-payoff pose audit
+
+Audited the 1.15s `SuccessHoldSeconds`/`DoorOpenPayoffSeconds` hold every mission plays before the
+end card, checking whether it forces `Pose.Proud` on both dogs (via
+`DogReadabilityFeedback.ShowProudBrief()`) or leaves them on whatever pose they last had (Idle, in
+practice — "frozen dogs"). Ground truth differed from the task brief's own framing:
+
+- **Operation Pee Break, cited in the task brief as the reference-good pattern, was itself one of the
+  misses.** Its "hydrant/relief beat" only animates the **scene** (hydrant `SetActive`, three
+  `AnimateReliefSparkle` sparkles) — `Tick()` short-circuits to `AdvanceSuccessHold` the instant
+  `DoorOpen` is true, which never touches dog pose, so the dogs sat static through "Relief zoomies!"
+  Fixed by posing both dogs in `StageDogsForDoorOpenPayoff()`, which fires exactly when the hold
+  starts.
+- **14 of 23 missions had no pose call at all** at their completion trigger: Snack Heist, Scent
+  Search, Thunderstorm Comfort, Mark the Yard, Gate Crash, Table Stealth, Squirrel Switcheroo, Walk
+  Campaign, Bone Relay, Great Escape, Chaos Machine, Blanket Catch, Baby Bird Bedlam, and Pee Break
+  (above). Thunderstorm Comfort is the interesting case: it *does* call `ShowComfort()` continuously
+  while huddling, but that loop lives in the pre-clear branch of `Tick()` and gets skipped once
+  `_cleared` is set, so the pose decays back to Idle mid-hold rather than never firing.
+- **2 missions posed only one of the two dogs** at the finale: Weenie Roundup (the jumbo delivery
+  poses the hauler but not the partner who steadied it) and Kitchen Food Frenzy (poses the catching
+  dog but not the calling dog on every catch, including the finale).
+- **6 missions were already correct**: Sock Panic, Squirrel Conspiracy, Eagle Shadow Panic, Coyotes
+  at the Fence, Leash Walk, Car Ride — all already call `ShowProudBrief()` on both dogs at (or right
+  before) the hold trigger.
+- **Backyard Rescue has no held-payoff beat at all**, not a pose gap. It predates the
+  `IMissionController` migration's success-hold pattern: `GameManager.CheckClear()`'s legacy
+  `hasItems && hasPredator && hasTug` branch calls `EndRound(true)` the instant the last condition is
+  met, with no `IsPresentingSuccessfulOutcome` hold to pose during. Adding one is a mission-timing
+  change, out of a pose-only audit's scope — flagged, not attempted.
+- All fixes reuse the existing `ShowProudBrief()` idiom (`Pose.Proud`, 1.1s — already the convention
+  in the 6 correct missions) rather than introducing a new pose; no new art needed.
+- **Tests**: added a `DogReadabilityFeedback.Pose.Proud` assertion (both dogs, during the hold,
+  before `ForceFinishSuccessPresentation()`) into each of the 16 fixed missions' existing clear-path
+  PlayMode tests. See `docs/AGENT-WORK-QUEUE-PRELAUNCH.md`'s A2.5 entry for the full 23-row table.
+
 ## Dog Locomotion
 
 Cheddar and Cocoa both need:

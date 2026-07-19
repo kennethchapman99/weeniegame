@@ -313,6 +313,8 @@ namespace CheddarAndCocoa.Game
                 _context.SetCue("Steak secured! One dog sold the distraction and the other stole dinner!");
                 _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "STEAK SECURED!");
                 _context.SpawnWorldPop(_stealZone, "STEAK SECURED!", new Color(1f, 0.86f, 0.3f));
+                foreach (var feedback in _context.DogFeedback)
+                    if (feedback != null) feedback.ShowProudBrief();
                 _context.RequestAudioCue(ArenaFeedbackCatalog.MissionWin);
                 _context.RequestRumble("table_steak_secured", 0.28f, 0.52f, 0.2f);
                 _context.LogEvent("TableStealthPayoff", "Steak secured; holding live-world success beat");

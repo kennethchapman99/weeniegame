@@ -861,6 +861,9 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(((IMissionSuccessPresentationController)Controller).IsPresentingSuccessfulOutcome);
             Assert.IsFalse(Controller.IsComplete,
                 "Opening the door should begin a short controller-owned payoff hold, not clean the room in the same frame.");
+            foreach (var feedback in _game.DogFeedback)
+                Assert.AreEqual(DogReadabilityFeedback.Pose.Proud, feedback.CurrentPose,
+                    "Both dogs should show relief-zoomies proud poses during the door-open hold, not frozen dogs.");
             Assert.Greater(Controller.SuccessHoldRemaining, 0f);
             Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
             Assert.AreEqual(GameManager.FlowState.Playing, _game.CurrentFlow);

@@ -73,6 +73,9 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(_game.BoneRelayController.IsPresentingSuccessfulOutcome,
                 "The third bone should hold its live scent-and-dig payoff before the result card.");
             Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
+            foreach (var feedback in _game.DogFeedback)
+                Assert.AreEqual(DogReadabilityFeedback.Pose.Proud, feedback.CurrentPose,
+                    "Both dogs should show an animated proud read during the held payoff, not frozen dogs.");
 
             _game.ForceBoneSuccessPresentationComplete();
 

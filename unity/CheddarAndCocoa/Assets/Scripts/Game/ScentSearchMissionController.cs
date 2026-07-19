@@ -274,6 +274,8 @@ namespace CheddarAndCocoa.Game
                     _context.AddScore(ScoreEventCatalog.ScentSearchComplete.Points, ScoreEventCatalog.ScentSearchComplete.Label);
                     _context.SetActorState(_digMarkers[spotIndex], "BONE CACHE FOUND - TEAM TRACKERS!", new Color(1f, 0.9f, 0.45f), 0.35f);
                     _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "SEARCH COMPLETE!");
+                    foreach (var feedback in _context.DogFeedback)
+                        if (feedback != null) feedback.ShowProudBrief();
                     _context.RequestRumble("scent_search_complete", 0.38f, 0.62f, 0.24f);
                 }
                 else

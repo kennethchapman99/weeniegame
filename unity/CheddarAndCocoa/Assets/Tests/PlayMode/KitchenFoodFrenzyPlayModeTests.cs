@@ -130,6 +130,9 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
             Assert.That(_game.ObjectiveLabel, Does.Contain("Dinner saved"));
             Assert.IsTrue(LogContains("KitchenPayoff"));
+            foreach (var feedback in _game.DogFeedback)
+                Assert.AreEqual(DogReadabilityFeedback.Pose.Proud, feedback.CurrentPose,
+                    "Both dogs (caller and catcher) should pose proud during the held payoff, not just the last catcher.");
 
             controller.ForceFinishSuccessPresentation();
             yield return null;

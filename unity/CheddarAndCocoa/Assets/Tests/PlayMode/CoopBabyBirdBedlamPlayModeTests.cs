@@ -198,6 +198,9 @@ namespace CheddarAndCocoa.Tests
                 "The full-bellies payoff should remain visible before the result card replaces the yard.");
             Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
             Assert.That(_game.ObjectiveLabel, Does.Contain("Cocoa ruled the sky"));
+            foreach (var feedback in _game.DogFeedback)
+                Assert.AreEqual(DogReadabilityFeedback.Pose.Proud, feedback.CurrentPose,
+                    "Both dogs should show an animated proud read during the held payoff, not frozen dogs.");
 
             controller.ForceFinishSuccessPresentation();
             yield return null;

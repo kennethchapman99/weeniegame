@@ -258,6 +258,8 @@ namespace CheddarAndCocoa.Game
                 _context.SetCue("BREAKOUT! Cocoa built the opening and Cheddar burst through the final gap!");
                 _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "GREAT ESCAPE!");
                 _context.SpawnWorldPop(Spots[Spots.Length - 1], "FREE DOGS!", new Color(1f, 0.86f, 0.3f));
+                foreach (var feedback in _context.DogFeedback)
+                    if (feedback != null) feedback.ShowProudBrief();
                 _context.RequestAudioCue(ArenaFeedbackCatalog.MissionWin);
                 _context.RequestRumble("great_escape_payoff", 0.3f, 0.55f, 0.2f);
                 _context.LogEvent("GreatEscapePayoff", "Breakout complete; holding live-world success beat");

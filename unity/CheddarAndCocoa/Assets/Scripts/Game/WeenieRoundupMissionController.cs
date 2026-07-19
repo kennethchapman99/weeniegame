@@ -333,6 +333,10 @@ namespace CheddarAndCocoa.Game
                 _context.SetActorState(_bowl, "HOME BOWL FULL - TEAM JUMBO!", new Color(0.55f, 1f, 0.45f), 0.35f);
                 _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "BOWL FULL!");
                 _context.SpawnWorldPop(_bowlPosition + Vector2.up, "BOWL FULL!", new Color(1f, 0.9f, 0.35f));
+                // The delivering dog already got ShowProudBrief() above; the finale is a two-dog
+                // beat (Cocoa steadied the jumbo too), so re-affirm/extend the pose on both.
+                foreach (var feedback in _context.DogFeedback)
+                    if (feedback != null) feedback.ShowProudBrief();
                 _context.RequestRumble("roundup_complete", 0.38f, 0.62f, 0.24f);
             }
             else _context.LogObjectiveChanged();

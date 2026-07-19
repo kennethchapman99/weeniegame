@@ -311,6 +311,8 @@ namespace CheddarAndCocoa.Game
             _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "STASH SECURED!");
             _context.SetActorState(_context.SquirrelObject, "SQUIRREL UNION DEFEATED!", new Color(0.82f, 0.82f, 0.82f), 0.08f);
             _context.SpawnWorldPop(_context.Bounds.center, "STASH SECURED!", new Color(1f, 0.82f, 0.22f));
+            foreach (var feedback in _context.DogFeedback)
+                if (feedback != null) feedback.ShowProudBrief();
             _context.RequestAudioCue(ArenaFeedbackCatalog.MissionWin);
             _context.RequestRumble("snack_heist_clear", 0.3f, 0.55f, 0.22f);
             _context.LogEvent("CoopPayoff", "Cheddar stole the snacks after Cocoa guarded the squirrel lane");

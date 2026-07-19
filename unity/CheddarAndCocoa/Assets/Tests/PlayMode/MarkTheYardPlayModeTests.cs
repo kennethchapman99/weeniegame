@@ -82,6 +82,9 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(game.MarkTheYardState.AllClaimed);
             Assert.IsTrue(game.MarkTheYardController.IsPresentingSuccessfulOutcome);
             Assert.AreEqual(GameManager.MissionOutcome.InProgress, game.Outcome);
+            foreach (var feedback in game.DogFeedback)
+                Assert.AreEqual(DogReadabilityFeedback.Pose.Proud, feedback.CurrentPose,
+                    "Both dogs should show an animated proud read during the held payoff, not frozen dogs.");
 
             game.ForceMarkYardSuccessPresentationComplete();
 

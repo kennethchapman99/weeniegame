@@ -565,6 +565,8 @@ namespace CheddarAndCocoa.Game
             _context.SetCue("Feast complete! The dogs waddle off, full of chicks; the parents file a formal complaint.");
             _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "FEAST COMPLETE!");
             _context.SpawnWorldPop(Vector2.up * (GroundY + 1.2f), "FULL BELLIES!", new Color(1f, 0.86f, 0.28f));
+            foreach (var feedback in _context.DogFeedback)
+                if (feedback != null) feedback.ShowProudBrief();
             _context.RequestAudioCue(ArenaFeedbackCatalog.MissionWin);
             _context.RequestRumble("bedlam_feast", 0.3f, 0.55f, 0.2f);
             var parent = _context.PredatorObject;

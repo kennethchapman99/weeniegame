@@ -535,6 +535,8 @@ namespace CheddarAndCocoa.Game
             int cocoa = _context.IndexOfDog(DogId.Cocoa);
             PlaceDog(cheddar, _doorPosition + new Vector2(-7f, -4.8f));
             PlaceDog(cocoa, _doorPosition + new Vector2(-3.5f, -4.8f));
+            foreach (var feedback in _context.DogFeedback)
+                if (feedback != null) feedback.ShowProudBrief();
 
             void PlaceDog(int index, Vector2 position)
             {

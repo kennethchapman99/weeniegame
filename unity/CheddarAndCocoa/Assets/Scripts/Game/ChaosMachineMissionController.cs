@@ -301,6 +301,8 @@ namespace CheddarAndCocoa.Game
                 _context.SetCue("CHAOS COMPLETE! Towel, basket, and toy all fired in one glorious mess!");
                 _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "GLORIOUS CHAOS!");
                 _context.SpawnWorldPop(JunctionSpots[JunctionSpots.Length - 1], "TOY LAUNCHED!", new Color(1f, 0.86f, 0.3f));
+                foreach (var feedback in _context.DogFeedback)
+                    if (feedback != null) feedback.ShowProudBrief();
                 _context.RequestAudioCue(ArenaFeedbackCatalog.MissionWin);
                 _context.RequestRumble("chaos_payoff", 0.32f, 0.58f, 0.22f);
                 _context.LogEvent("ChaosMachinePayoff", "Cascade complete; holding live-world success beat");

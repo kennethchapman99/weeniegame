@@ -87,6 +87,9 @@ namespace CheddarAndCocoa.Tests
                 "The full bowl should remain live briefly before the end screen takes over.");
             Assert.IsTrue(((WeenieRoundupMissionController)game.ActiveMissionController).IsPresentingSuccessfulOutcome);
             Assert.IsTrue(HasWorldPop("BOWL FULL"));
+            foreach (var feedback in game.DogFeedback)
+                Assert.AreEqual(DogReadabilityFeedback.Pose.Proud, feedback.CurrentPose,
+                    "Both dogs (the hauler and the steadying partner) should pose proud during the held payoff.");
 
             ((WeenieRoundupMissionController)game.ActiveMissionController).ForceFinishSuccessPresentation();
             yield return null;

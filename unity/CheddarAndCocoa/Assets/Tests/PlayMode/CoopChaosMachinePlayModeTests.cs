@@ -84,6 +84,9 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(_game.ChaosMachineController.IsPresentingSuccessfulOutcome);
             Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
             Assert.That(_game.ObjectiveLabel, Does.Contain("CHAOS COMPLETE"));
+            foreach (var feedback in _game.DogFeedback)
+                Assert.AreEqual(DogReadabilityFeedback.Pose.Proud, feedback.CurrentPose,
+                    "Both dogs should show an animated proud read during the held payoff, not frozen dogs.");
             _game.ForceChaosSuccessPresentationComplete();
             Assert.AreEqual(GameManager.MissionOutcome.Clear, _game.Outcome);
             Assert.IsTrue(_game.RuntimeSnapshot.IsClear);

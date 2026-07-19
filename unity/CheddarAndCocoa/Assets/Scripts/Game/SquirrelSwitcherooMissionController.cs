@@ -282,6 +282,8 @@ namespace CheddarAndCocoa.Game
                     _context.SetCue("Stash cracked! Cheddar sold the fake and Cocoa stole the real prize!");
                     _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "STASH CRACKED!");
                     _context.SpawnWorldPop(_stashZone, "STASH CRACKED!", new Color(1f, 0.86f, 0.3f));
+                    foreach (var feedback in _context.DogFeedback)
+                        if (feedback != null) feedback.ShowProudBrief();
                     _context.RequestAudioCue(ArenaFeedbackCatalog.MissionWin);
                     _context.RequestRumble("switcheroo_payoff", 0.28f, 0.52f, 0.2f);
                     _context.LogEvent("SwitcherooPayoff", "Stash cracked; holding live-world success beat");

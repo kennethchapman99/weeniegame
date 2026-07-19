@@ -74,6 +74,9 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(GameManager.MissionOutcome.InProgress, game.Outcome,
                 "The uncovered cache should remain live briefly before the end screen.");
             Assert.IsTrue(controller.IsPresentingSuccessfulOutcome);
+            foreach (var feedback in game.DogFeedback)
+                Assert.AreEqual(DogReadabilityFeedback.Pose.Proud, feedback.CurrentPose,
+                    "Both dogs should show an animated proud read during the held payoff, not frozen dogs.");
 
             controller.ForceFinishSuccessPresentation();
             yield return null;

@@ -41,7 +41,7 @@
 | A2.2 | Interact micro-animation | DONE (2026-07-18, see below) |
 | A2.3 | Signal-critical verb strips (dig/sniff/carry) | DONE (2026-07-18, code-side prep only — see below) |
 | A2.4 | Threat/NPC acting gaps | DONE (2026-07-18, see below) |
-| A2.5 | Held-payoff pose audit | OPEN |
+| A2.5 | Held-payoff pose audit | DONE (2026-07-19, see below) |
 | V3.1 | Style-contract audit + fix list | OPEN |
 | V3.2 | Kill remaining square/debug first reads | OPEN |
 | V3.3 | Mission tile consistency | OPEN |
@@ -715,6 +715,51 @@ proud/outcome read, not frozen dogs.
 pose/motion on both dogs and any payoff actor state (existing pattern from Pee Break's
 hydrant/relief beat). Fix the misses; list per-mission results here.
 **Done when:** 23/23 table recorded; suite green.
+
+**Done (2026-07-19):** Audited every `SuccessHoldSeconds`/`DoorOpenPayoffSeconds` trigger site (the
+moment each controller sets `IsPresentingSuccessfulOutcome = true`) for whether it calls
+`DogReadabilityFeedback.ShowProudBrief()` (or an equivalent pose) on **both** dogs. Correction to the
+task's own framing while auditing: Pee Break's "existing pattern" only covers the hydrant/relief
+**scene** animation (`AnimateReliefSparkle`, hydrant `SetActive`) — the dogs themselves were static
+during `DoorOpen`'s hold (`Tick()` short-circuits to `AdvanceSuccessHold`, which never touches dog
+pose), so Pee Break was itself one of the misses fixed below, not the reference example.
+
+| # | Mission | Result | Fix |
+|---|---|---|---|
+| 1 | Backyard Rescue | **N/A — structural, not fixed** | Legacy (pre-`IMissionController`-migration) clear path: `GameManager.CheckClear()`'s `hasItems && hasPredator && hasTug` branch calls `EndRound(true)` immediately: no `SuccessHoldSeconds`/`IsPresentingSuccessfulOutcome` hold exists at all, so there is no held beat to pose. Retrofitting one is a mission-timing/rule change, not a pose fix — out of this task's scope per the queue's "never change mission rules or tuning, mark BLOCKED" guardrail. Flagged as a follow-up, not attempted here. |
+| 2 | Snack Heist | Fixed | `SnackHeistMissionController.PresentCompletion()` had no pose call at all; added the both-dogs `ShowProudBrief()` loop. |
+| 3 | Sock Panic | Already correct | `SockPanicMissionController.CompleteSockRescue()` already poses both dogs (`SockPanicMissionController.cs:250`). |
+| 4 | Squirrel Conspiracy | Already correct | `SquirrelConspiracyMissionController.cs:260`. |
+| 5 | Eagle Shadow Panic | Already correct | `EagleShadowPanicMissionController.cs:495`. |
+| 6 | Coyotes at the Fence | Already correct | `CoyotesFenceMissionController.cs:429`. |
+| 7 | Weenie Roundup | Fixed (partial miss) | `Deliver()` only posed the delivering dog; the jumbo finale is a two-dog beat (Cocoa steadies, Cheddar hauls) and Cocoa got nothing. Added a both-dogs loop in the `ReadyToClear` branch. |
+| 8 | Scent Search | Fixed | The `searchComplete` branch (bone-cache finale) had no pose call — only the interim per-dig `ShowDig()`/`ShowProudBrief()` (single dog, per-find) fired. Added a both-dogs loop at the finale. |
+| 9 | Thunderstorm Comfort | Fixed | `Tick()` returns immediately once `_cleared` is set (skips the huddle-refresh loop that normally calls `ShowComfort()`), so the "STORM PASSED" hold decayed to Idle well inside the 1.15s window. Added a both-dogs `ShowProudBrief()` call at the `_cleared = true` trigger. |
+| 10 | Mark the Yard | Fixed | `CompleteYardClaim()` had no pose call; added the loop. |
+| 11 | Leash Walk | Already correct | `LeashWalkMissionController.cs:241`. |
+| 12 | Car Ride | Already correct | `CarRideMissionController.cs:534` / `:564`. |
+| 13 | Gate Crash | Fixed | `HandleSnaps()`'s solved branch had no pose call; added the loop. |
+| 14 | Table Stealth | Fixed | `HandleExposures()`'s solved branch had no pose call; added the loop. |
+| 15 | Squirrel Switcheroo | Fixed | The `_puzzle.Solved` branch had no pose call (only the per-hit stash pop); added the loop. |
+| 16 | Walk Campaign | Fixed | The `_puzzle.Solved` branch had no pose call; added the loop. |
+| 17 | Bone Relay | Fixed | `CompleteBoneDetail()` had no pose call; added the loop. |
+| 18 | Great Escape | Fixed | The `_puzzle.Solved` branch had no pose call; added the loop. |
+| 19 | Chaos Machine | Fixed | The `_puzzle.Solved` branch had no pose call; added the loop. |
+| 20 | Blanket Catch | Fixed | `CompleteDinnerSave()` had no pose call anywhere in the controller; added the loop. |
+| 21 | Kitchen Food Frenzy | Fixed (partial miss) | Only the catching dog got `ShowProudBrief()` per catch; the finale credits both the caller and catcher roles, so the non-catching dog was frozen. Added a both-dogs loop in the `_state.Complete` branch. |
+| 22 | Operation Pee Break | Fixed | See correction note above — dogs were static during `DoorOpen`'s hold. Added a both-dogs `ShowProudBrief()` call in `StageDogsForDoorOpenPayoff()`, which fires exactly when the hold begins. |
+| 23 | Baby Bird Bedlam | Fixed | `CompleteFeast()` posed the parent-bird actor state but never the dogs; added the loop. |
+
+**Evidence:** 16 controllers fixed (14 full misses + 2 partial misses), 1 structural gap recorded as
+out-of-scope (Backyard Rescue), 6 already correct. Added a `DogReadabilityFeedback.Pose.Proud`
+assertion (both dogs, during the held payoff, before `ForceFinishSuccessPresentation()`) into each of
+the 16 fixed missions' existing clear-path PlayMode tests — none of these assertions would have
+passed before the fix. Full suite: **643/643 passed, 0 failed, 0 skipped** (same count as the A2.4
+baseline — no new test methods were added, only assertions inside existing ones —
+`unity/playmode-results.xml`, SHA-256
+`2dd2fcd6581b9cf2de65fae113546d40e4df61bf216414c85b70f196d315b3e7`, 2026-07-19 14:01 EDT). No visual
+build/art-review capture was required: this task only changes which `DogReadabilityFeedback.Pose` is
+forced during an existing hold window, not any art asset or resource path.
 
 ---
 
