@@ -193,6 +193,11 @@ namespace CheddarAndCocoa.Tests
             _cocoa.Interact();
             yield return null;
             Assert.IsTrue(_game.TableStealthController.FlopEngaged);
+            // TugRescueSuccess fires for the flop itself; SignalRoleHandoff's own chime fires right
+            // after in the same call (Cocoa -> Cheddar), so it - not this one - is the LAST cue
+            // requested. Check containment, not LastAudioCueRequested, to observe both correctly.
+            Assert.That(_game.AudioCueRequests, Does.Contain(ArenaFeedbackCatalog.TugRescueSuccess),
+                "S5.2: Cocoa's belly-flop decoy was a silent success beat (rumble but no audio) - must fire a cue now.");
 
             // Cocoa stays flopped by the human while Cheddar works the steak lane.
             // Driven against a real-time deadline so enough deltaTime accumulates for the human's

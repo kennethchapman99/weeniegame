@@ -167,6 +167,7 @@ namespace CheddarAndCocoa.Game
             _context.SetCue("Cocoa deliberately anchored the gate - Cheddar, squeeze to the toy!");
             _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "GATE ANCHORED!");
             _context.SpawnWorldPop(_holdZone, "COCOA ANCHORED!", new Color(0.48f, 1f, 0.68f));
+            _context.RequestAudioCue(ArenaFeedbackCatalog.TugRescueSuccess);
             _context.RequestRumble("gate_anchor", 0.12f, 0.28f, 0.1f);
             _context.LogEvent("GateAnchored", $"attempt {_puzzle.Snaps + 1}");
             _context.LogObjectiveChanged();

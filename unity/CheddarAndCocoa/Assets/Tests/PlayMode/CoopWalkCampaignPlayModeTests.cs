@@ -208,6 +208,12 @@ namespace CheddarAndCocoa.Tests
             yield return null;
             Assert.IsTrue(_game.WalkCampaignController.DoorStareEngaged);
             Assert.IsTrue(_game.WalkCampaignController.LeashPresented);
+            // S5.2: both the door-stare and leash-present engagements were silent success beats
+            // (rumble but no audio) - either dog's Interact now fires the same cue. Cheddar's
+            // engagement also completes the exact-match combo, whose own pre-existing
+            // SnackSockCollect cue fires right after in the same call and is the LAST cue
+            // requested - check containment, not LastAudioCueRequested, to observe both correctly.
+            Assert.That(_game.AudioCueRequests, Does.Contain(ArenaFeedbackCatalog.TugRescueSuccess));
 
             // Both deliberately engaged signals held together build comprehension.
             for (int i = 0; i < 30; i++)

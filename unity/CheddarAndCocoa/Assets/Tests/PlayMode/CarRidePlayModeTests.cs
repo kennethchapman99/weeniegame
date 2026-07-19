@@ -128,6 +128,8 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(1, controller.State.EventsResolved);
             Assert.IsTrue(HasWorldPop("ANCHORED"), "Cocoa's held anchor should celebrate visibly.");
             Assert.IsTrue(HasWorldPop("TUCKED SAFE"), "Cheddar's successful tuck should celebrate visibly.");
+            Assert.AreEqual(ArenaFeedbackCatalog.TugRescueSuccess, _game.LastAudioCueRequested,
+                "S5.2: the brace-team-ready moment was a silent success beat (rumble but no audio) - must fire a cue now.");
             foreach (var feedback in _game.DogFeedback)
                 Assert.AreEqual(DogReadabilityFeedback.Pose.Proud, feedback.CurrentPose);
         }

@@ -132,6 +132,8 @@ namespace CheddarAndCocoa.Tests
             _game.ForceBlanketCatch(0f);
             Assert.AreEqual(0, _game.BlanketPuzzle.Caught);
             Assert.AreEqual(1, _game.BlanketPuzzle.Missed);
+            Assert.AreEqual(ArenaFeedbackCatalog.ScorePenalty, _game.LastAudioCueRequested,
+                "S5.2: a missed catch was a silent miss (visual SPLAT only) - must fire a cue now.");
 
             // Taut but not under the snack: still a miss.
             _game.ForceBlanketSpan(7.5f, 0f);

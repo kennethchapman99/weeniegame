@@ -255,6 +255,7 @@ namespace CheddarAndCocoa.Game
             _context.SetCue("Cheddar tucked behind Cocoa's planted stance - hold together for the brake!");
             _context.SetActorState(_dashboard, "DRIVER: BRAKE TEAM READY!", DriverTint, 0.22f);
             _context.SpawnWorldPop(DogMidpoint(), "TUCKED SAFE!", new Color(0.55f, 1f, 0.72f));
+            _context.RequestAudioCue(ArenaFeedbackCatalog.TugRescueSuccess);
             _context.RequestRumble("car_brace_team", 0.12f, 0.28f, 0.1f);
             _context.LogEvent("CarBrakeTeamReady", _state.EventsResolved.ToString());
             _context.LogObjectiveChanged();

@@ -130,6 +130,8 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(controller.PressureHeld);
             controller.ForcePressureTimeout();
             Assert.IsFalse(controller.PressureHeld);
+            Assert.AreEqual(ArenaFeedbackCatalog.ScorePenalty, _game.LastAudioCueRequested,
+                "S5.2: a pin expiring was a silent miss (visual PIN LOST only) - must fire a cue now.");
             _game.ForceCoyoteRepair(DogId.Cheddar);
             Assert.AreEqual(1, _game.CoyotesFenceState.GapsRepaired,
                 "Cheddar must recover by waiting for Cocoa to repin after the opening closes.");
@@ -224,6 +226,8 @@ namespace CheddarAndCocoa.Tests
             game.ForceCoyoteProwlReach();
             yield return null;
             Assert.AreEqual(0, game.CoyotesFenceState.Breaches);
+            Assert.AreEqual(ArenaFeedbackCatalog.TugRescueSuccess, game.LastAudioCueRequested,
+                "S5.2: driving the coyote back was a silent success beat (visual DRIVEN BACK only) - must fire a cue now.");
 
             // Reaching an unguarded gap (pressure already spent) breaches the fence.
             game.ForceCoyoteProwlReach();

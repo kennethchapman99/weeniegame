@@ -51,7 +51,7 @@
 | F4.2 | Post-clear flow + session summary | DONE (2026-07-19, see below) |
 | F4.3 | Briefing accuracy audit | DONE (2026-07-19, see below) |
 | S5.1 | Audio for new signals | DONE (2026-07-19, see below) |
-| S5.2 | Feedback-slot audio coverage audit | OPEN |
+| S5.2 | Feedback-slot audio coverage audit | DONE (2026-07-19, see below) |
 | E6.1 | Evidence refresh + gate handoff | OPEN |
 
 ---
@@ -1466,6 +1466,79 @@ choices flagged above.
 **Do:** sweep the shared feedback slots + per-mission coach/payoff beats for missing cue requests;
 fill the worst gaps. Small task — do not start a mix/recording project; that stays post-launch.
 **Tests:** extended event-audio assertions; suite green.
+
+**Done (2026-07-19):** Established ground truth on what's already covered before searching for gaps.
+Traced the two shared dispatch points: `GameManager.OnDogBarked` unconditionally fires the `Bark` cue
+for every real bark press before ever reaching the controller, and `MarkFailedInteraction` always
+fires `UiButtonDisabled` - so any feedback moment reached through a `HandleBark` call or a coached
+rejection is already audio-covered for free, regardless of what the controller itself does.
+`OnDogInteracted` has no equivalent unconditional cue, so `HandleInteract`/`Tick`/timer-driven moments
+have no free coverage.
+
+Swept every `SetJuice(...SuccessPop/WarningMiss...)`/`SpawnWorldPop(...)` call site across all 23
+controllers for one missing an audio request within its enclosing method (not just a fixed-line
+window - GreatEscape's "WRONG PAWS!" looked like a hit under a narrow-window scan but its enclosing
+method already routes into a shared `if (wasted)` block that fires `RequestAudioCue(ThreatWarning)`
+a few lines further down; reading the *whole* method before touching anything caught this and it was
+correctly left alone, no fix needed). Found 9 real, confirmed-silent moments across 6 missions -
+each already had haptic rumble and/or a world-pop, just no audio:
+
+| Mission | Moment | Cue added | Reused from |
+|---|---|---|---|
+| Gate Crash | Cocoa's gate anchor engages (`HandleInteract`) | `TugRescueSuccess` | Same generic "team beat succeeded" cue PeeBreak's beat-advance and CoyotesFence's yard-defended already use |
+| Table Stealth | Cocoa's belly-rub decoy engages (`HandleInteract`) | `TugRescueSuccess` | " |
+| Walk Campaign | Cocoa's door-stare engages (`HandleInteract`) | `TugRescueSuccess` | " |
+| Walk Campaign | Cheddar's leash-present engages (`HandleInteract`) | `TugRescueSuccess` | " |
+| Car Ride | Brace-team-ready ("TUCKED SAFE!", `HandleBrakeBrace`) | `TugRescueSuccess` | " |
+| Coyotes at the Fence | Coyote driven back by held pressure (`EvaluateReach`) | `TugRescueSuccess` | " |
+| Coyotes at the Fence | Bark-pin expires ("PIN LOST!", `ExpireBarkPressure`) | `ScorePenalty` | Same "generic miss, no direct rejection" cue KitchenFoodFrenzy's `UnsafeLanding` branch already uses |
+| Blanket Catch | A catch attempt misses/rips ("MISSED!"/"SPLAT!", `HandleProgress`) | `ScorePenalty` | " |
+| Baby Bird Bedlam | A chick lands and the airlift countdown starts ("CHICK DOWN!", `Tick`) | `ThreatWarning` | Matches its existing "urgency/threat" usage elsewhere (e.g. ThunderstormComfort's thunderclap onset) rather than the "miss" framing, since nothing has gone wrong yet - the clock just started |
+
+All 9 reuse an existing cue rather than adding new ones - this task's own "no mix/recording project"
+boundary, and every added cue is semantically consistent with how the codebase already uses it
+elsewhere (verified per-cue, not assumed).
+
+**Investigated and deliberately left alone, not silently skipped:** GreatEscape's "WRONG PAWS!" (see
+above - already covered a few lines further down in the same method); Car Ride's "CLEAN HOP!" clean-
+jump-dodge read (a frequent, rapid micro-event during every turn/slide event, not a discrete once-per-
+beat moment - adding a cue risked audio spam across a single obstacle run, and there's no way to
+verify the right cadence without real speakers); Gate Crash's "HOW DARE YOU" idle-outrage gag and
+Walk Campaign's "too far, get closer" hint pops (minor flavor/nudge moments, not major feedback);
+Kitchen Food Frenzy's drop-telegraph announcement and Leash Walk's "INTEL GATHERED" (ambient
+announcements, not discrete result events); Thunderstorm Comfort's missed-clap pop (already covered -
+`ApplyThunderclap` fires `RequestAudioCue(ThreatWarning)` unconditionally at the top of the method,
+before the branch, same "wider window" catch as GreatEscape). Stopping here matches this task's own
+"fill the worst gaps" instruction rather than chasing every candidate to the same exhaustive depth.
+
+**Tests:** extended 7 existing tests (no new test methods - each already drove to the exact state that
+exercises the fix, per G1.5/A2.5's established convention) with an audio-cue assertion:
+`CoopGateCrashPlayModeTests.GateCrash_CocoaMustDeliberatelyAnchor_...`,
+`CoopTableStealthPlayModeTests.TableStealth_PositionDriven_CocoaMustInteractFlop_...`,
+`CoopWalkCampaignPlayModeTests.Walk_PositionDriven_BothDogsMustInteractThenHoldTheirStations`,
+`CarRidePlayModeTests.CarRide_BrakeEvent_BracedDogsRideItOut`,
+`CoyotesFencePlayModeTests.CoyotesFence_ProwlReach_BarkPressureDrivesOffElseBreaches` and
+`.._CocoaPinsInRangeAndCheddarRepairsBeforeTheOpeningCloses`,
+`CoopBlanketCatchPlayModeTests.Blanket_SlackOrOffCenter_Misses`,
+`CoopBabyBirdBedlamPlayModeTests.Bedlam_PositionDriven_ChickFallsAndCheddarGrabsIt` (the one BabyBird
+test that lets a chick fall and land for real across real frames, rather than the `ForceChickLand`
+test-only bypass every other Bedlam test uses, which deliberately skips the reaction entirely and
+would not have exercised this fix).
+
+First full run caught 2 failures, both in the new assertions' own design, not production bugs: Table
+Stealth's flop-engage branch also calls `SignalRoleHandoff(Cocoa, Cheddar)` in the same method, whose
+S5.1 handoff chime fires immediately after and is the actual last cue requested; Walk Campaign's
+leash-present branch, when it's also the dog that completes the exact-match combo, runs into
+`HandleProgress`'s own pre-existing `SnackSockCollect` "combo" cue the same way. Both are real,
+already-correct cues legitimately firing after mine in the same call, not bugs - fixed by asserting
+`AudioCueRequests` containment instead of `LastAudioCueRequested` equality, the same "assert the
+event happened, not that it was the last one" lesson G1.5 hit for the exact same reason. Reran clean.
+
+Full PlayMode suite: **662/662 passed, 0 failed, 0 skipped** (same count as S5.1 - assertions landed
+inside existing tests, no new test methods), `unity/playmode-results.xml`, SHA-256
+`95b2ac18d567225294b4b1adad40bd7d536cc29f6e3473c839dfc4d66c7dc17c`, 2026-07-19. Dev player rebuilt at
+HEAD, executable SHA-256 `ba57952c534ce679497c676fd0efe84c006721fbea63a4190932708837ea6a9e`; smoke
+passed. No art-review capture - audio has no pixel signature either way, same reasoning S5.1 used.
 
 ---
 

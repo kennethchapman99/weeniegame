@@ -221,6 +221,8 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(_game.GateCrashController.AnchorEngaged);
             Assert.IsTrue(_game.GateCrashPuzzle.Held);
             Assert.IsTrue(HasWorldPop("COCOA ANCHORED"));
+            Assert.AreEqual(ArenaFeedbackCatalog.TugRescueSuccess, _game.LastAudioCueRequested,
+                "S5.2: Cocoa's anchor was a silent success beat (rumble but no audio) - must fire a cue now.");
 
             for (int i = 0; i < 8; i++)
             {

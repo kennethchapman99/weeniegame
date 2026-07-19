@@ -139,6 +139,7 @@ namespace CheddarAndCocoa.Game
                         _context.SetCue("A chick tumbled out of the nest! Cheddar, grab it!");
                         _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "CHICK DOWN!");
                         _context.SpawnWorldPop(new Vector2(_chickX, GroundY), "PLOP!", new Color(1f, 0.9f, 0.4f));
+                        _context.RequestAudioCue(ArenaFeedbackCatalog.ThreatWarning);
                         _context.LogEvent("BedlamChickLanded", $"x={_chickX:0.0}");
                         _context.LogObjectiveChanged();
                     }

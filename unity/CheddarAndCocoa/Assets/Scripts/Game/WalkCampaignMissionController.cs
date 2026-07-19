@@ -161,6 +161,7 @@ namespace CheddarAndCocoa.Game
                 _context.SetCue("Cocoa has the human pinned with the door-stare! Cheddar, present the leash.");
                 _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "THE STARE!");
                 _context.SpawnWorldPop(_doorZone, "WALK. NOW.", new Color(0.35f, 0.9f, 0.8f));
+                _context.RequestAudioCue(ArenaFeedbackCatalog.TugRescueSuccess);
                 _context.RequestRumble("walk_door_stare", 0.08f, 0.18f, 0.08f);
                 _context.LogEvent("WalkDoorStare", "Cocoa engaged");
             }
@@ -176,6 +177,7 @@ namespace CheddarAndCocoa.Game
                 _context.SetCue("Cheddar is presenting the leash with zero subtlety! Cocoa, hold the door-stare.");
                 _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "LEASH DELIVERY!");
                 _context.SpawnWorldPop(_leashZone, "THIS LEASH!", new Color(1f, 0.72f, 0.3f));
+                _context.RequestAudioCue(ArenaFeedbackCatalog.TugRescueSuccess);
                 _context.RequestRumble("walk_leash_present", 0.08f, 0.18f, 0.08f);
                 _context.LogEvent("WalkLeashPresented", "Cheddar engaged");
             }

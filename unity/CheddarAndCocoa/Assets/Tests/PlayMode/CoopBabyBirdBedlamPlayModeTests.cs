@@ -396,6 +396,8 @@ namespace CheddarAndCocoa.Tests
                 yield return null;
             Assert.AreEqual(CoopFeastGuardPuzzle.ChickState.Grounded, _game.FeastGuardPuzzle.Chick,
                 "A chick should tumble out of the nest and land on its own within the opening seconds.");
+            Assert.AreEqual(ArenaFeedbackCatalog.ThreatWarning, _game.LastAudioCueRequested,
+                "S5.2: a chick landing (airlift countdown starts) was a silent moment (visual PLOP only) - must fire a cue now.");
 
             var chick = GameObject.Find("BedlamChick");
             Assert.IsNotNull(chick);

@@ -222,6 +222,7 @@ namespace CheddarAndCocoa.Game
             _context.SetCue("Cocoa flopped for belly rubs! Cheddar, sneak the steak while she stays planted.");
             _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "BELLY-RUB DECOY!");
             _context.SpawnWorldPop(_humanZone, "BELLY UP!", new Color(0.35f, 1f, 0.78f));
+            _context.RequestAudioCue(ArenaFeedbackCatalog.TugRescueSuccess);
             _context.RequestRumble("table_flop", 0.08f, 0.2f, 0.08f);
             _context.LogEvent("TableFlop", "Cocoa opened Cheddar's sneak window");
             _context.SignalRoleHandoff(DogId.Cocoa, DogId.Cheddar);

@@ -271,6 +271,7 @@ namespace CheddarAndCocoa.Game
                 _context.SetCue(cue);
                 _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "MISSED!");
                 _context.SpawnWorldPop(new Vector2(_itemX, CatchLineY), "SPLAT!", new Color(0.85f, 0.5f, 0.3f));
+                _context.RequestAudioCue(ArenaFeedbackCatalog.ScorePenalty);
                 ShowFallingReaction(FinalGameplayArt.BlanketSnackSplat, FallingReactionSeconds);
                 _context.LogEvent("BlanketMiss", $"{_puzzle.Missed}");
             }

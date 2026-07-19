@@ -234,6 +234,7 @@ namespace CheddarAndCocoa.Game
                 _context.SetActorState(predator, "COYOTE DRIVEN BACK!", new Color(0.7f, 0.42f, 0.16f), 0.24f);
                 if (predator != null)
                     _context.SpawnWorldPop(predator.transform.position, "DRIVEN BACK!", new Color(1f, 0.85f, 0.3f));
+                _context.RequestAudioCue(ArenaFeedbackCatalog.TugRescueSuccess);
                 _context.LogEvent("CoyoteDrivenBack", "bark pressure drove the coyote back");
                 if (predator != null) predator.transform.position = new Vector2(0f, _context.Bounds.yMax + 2f);
                 UpdateGapSignals();
@@ -440,6 +441,7 @@ namespace CheddarAndCocoa.Game
             SetActiveGapArt(FinalGameplayArt.CoyotesFenceGapOpen);
             _context.SetCue("Cocoa's bark opening closed - repin the coyote before Cheddar fills dirt.");
             _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "PIN LOST!");
+            _context.RequestAudioCue(ArenaFeedbackCatalog.ScorePenalty);
             _context.LogEvent("CoyotePinExpired", "Cheddar missed Cocoa's bark opening");
             UpdateGapSignals();
             _context.LogObjectiveChanged();
