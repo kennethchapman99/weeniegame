@@ -48,7 +48,7 @@
 | V3.4 | Indoor-fantasy staging audit | DONE (2026-07-19, see below) |
 | V3.5 | HUD + end-card copy/style pass | DONE (2026-07-19, see below) |
 | F4.1 | Universal first-mission control reminder | DONE (2026-07-19, see below) |
-| F4.2 | Post-clear flow + session summary | OPEN |
+| F4.2 | Post-clear flow + session summary | DONE (2026-07-19, see below) |
 | F4.3 | Briefing accuracy audit | OPEN |
 | S5.1 | Audio for new signals | OPEN |
 | S5.2 | Feedback-slot audio coverage audit | OPEN |
@@ -1237,6 +1237,60 @@ decided yet" flag), rather than a general session-lifecycle system:
 skipping already-cleared missions (reuse `NextUnfinishedMissionIndex` semantics — attempts vs clears
 distinction already exists; preserve it). Session summary keeps its cleared-vs-attempted honesty.
 **Tests:** routing assertions for fresh / partially-cleared / all-cleared sessions.
+
+**Done (2026-07-19):** Read `NextUnfinishedMissionIndex`/`ChooseNextMission`/`ContinueSession` fresh
+before assuming anything was missing. `MissionOrder` is a single array (showcase five, then library
+18 as its literal tail) — "showcase order for the first five, then library order" is already exactly
+what a circular scan of that one array produces; no second ordering array or new routing table was
+needed. The primary, expected path (a new player starts from `CouchTestFocusVariant` = the
+recommended showcase mission, then keeps clicking Next) already satisfies the goal today.
+
+**Built a real improvement, tested it against the full suite, and reverted it — worth recording
+honestly rather than only reporting what shipped.** The task's goal text ("offers the next
+*showcase-order* mission") suggested a stronger contract than what exists: a player who manually
+picks a *later* showcase mission first (e.g. Gate Crash, skipping the recommended flow) currently
+gets routed straight into library missions on their next "Next," not back to the other unattempted
+showcase picks, because the scan only walks forward from wherever the player currently is. Implemented
+an "exhaust the showcase five before ever touching library order, regardless of current position" fix
+in `NextUnfinishedMissionIndex` and wrote a new passing test for exactly that scenario. Running the
+**full** suite (not just the new test) surfaced that this broke 4 pre-existing tests
+(`ArenaGameLoopPlayModeTests`'s `DemoRegression_ColdStartFlowDogsCameraOverlay_StayReachable`,
+`MissionFlow_Select_StartsEveryMission_AndEndActionsNavigate`,
+`MissionFlow_SessionTotals_UpdateAcrossTwoMissions`, plus one cascading failure in
+`PlaytestOverlay_Toggles_AndEventLogCapturesFlowEvents`) that jump straight to an arbitrary library
+mission mid-test and assert Next continues to the *next array entry*, not back to an unattempted
+showcase pick — i.e., today's simpler "just keep scanning forward" contract is itself already
+intentional, tested, shipped behavior, not an oversight. Combined with this task's own explicit
+"reuse `NextUnfinishedMissionIndex` semantics ... preserve it" instruction, that's a clear signal the
+showcase-exhaustion idea is a scope expansion this task didn't ask for, not a bug fix — reverted the
+production change back to the original scan-forward-from-current logic, and rewrote the test that had
+been written around the new behavior into one that pins the *real* shipped behavior instead (with the
+reasoning above in its own comment, so the idea isn't silently lost if a future task wants to revisit
+it as a deliberate design decision).
+- Session-summary's cleared-vs-attempted honesty (`SessionSummaryLabel`, `SessionUniqueMissionsCleared`
+  vs `SessionUniqueMissionsCompleted`) was not touched — confirmed by not editing
+  `RecordSessionResult` or either label-builder at all, only reading them.
+- **Tests:** new `PostClearRoutingPlayModeTests.cs` (4 tests, using `ForceGameOver()` — a universal,
+  per-mission-choreography-free way to mark a mission "attempted" — since routing only cares about
+  attempt status, not clear status, which is already covered separately by
+  `SessionResetPlayModeTests.SessionUniqueMissionsCleared_OnlyCountsActualClearsNotAttempts`):
+  a fresh session's "Next" walks all five showcase missions in order via `ChooseNextMission`, correctly
+  detouring through the 3-unique session-summary milestone screen exactly once along the way, then
+  continues into the first library mission; picking a late showcase mission manually and hitting Next
+  continues in array order (the rejected-alternative test above); replaying an already-attempted
+  mission and hitting Next (via `ContinueSession`, since three uniques were already attempted and
+  `ChooseNextMission` would otherwise divert to the summary screen) correctly skips other
+  already-attempted missions; attempting all 23 missions and hitting Next via `ChooseNextMission`
+  specifically (the existing `FailingEveryMission_DoesNotOfferVictoryLap` test already covered this
+  via `ContinueSession`) wraps cleanly to the first mission instead of stalling. First full-suite run:
+  5 failures (4 from the reverted routing change, 1 test-authoring bug in my own new test forgetting
+  the session-summary milestone gate at exactly 3 uniques) — all fixed, reran clean.
+- Full PlayMode suite: **659/659 passed, 0 failed, 0 skipped** (655 baseline from F4.1 + 4 new),
+  `unity/playmode-results.xml`, SHA-256
+  `4c472c381b5b8bb44542aa27148ca945c978a5a1091d2ffa96eb512ec54770fc`, 2026-07-19 16:58 EDT. No dev
+  build/smoke/art-review capture — zero rendering or resource changes, same reasoning V3.5 and F4.1
+  used for pure-logic/test-only changes; a final combined build+smoke closes out this whole
+  five-task run instead (see below).
 
 ### F4.3 — Briefing accuracy audit
 **Goal:** every mission's "YOUR TEAM PLAN" (≤4 beats) matches the *current* asymmetric mechanics.
