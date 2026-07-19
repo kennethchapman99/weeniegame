@@ -190,8 +190,10 @@ namespace CheddarAndCocoa.Game
         public void Init(GameManager game) => _game = game;
         public void WarmGeneratedHudSkinForTests() => LoadGeneratedHudSkin();
 
-        private int PauseOptionCount => _game != null && _game.ActionTutorialAvailable ? 7 : 6;
-        private int PauseResumeIndex => _game != null && _game.ActionTutorialAvailable ? 4 : 3;
+        private bool PauseHasActionRow =>
+            _game != null && (_game.ActionTutorialAvailable || _game.FirstMissionControlStripVisible);
+        private int PauseOptionCount => PauseHasActionRow ? 7 : 6;
+        private int PauseResumeIndex => PauseHasActionRow ? 4 : 3;
 
         private void Update()
         {
@@ -239,6 +241,15 @@ namespace CheddarAndCocoa.Game
                     {
                         if (_game.ShowActionTutorial) _game.SkipActionTutorial();
                         else _game.ReplayActionTutorial();
+                        return;
+                    }
+                    index++;
+                }
+                else if (_game.FirstMissionControlStripVisible)
+                {
+                    if (option == index)
+                    {
+                        _game.SkipFirstMissionControlStrip();
                         return;
                     }
                     index++;
@@ -379,6 +390,7 @@ namespace CheddarAndCocoa.Game
 
             DrawProductionGameplayHud();
             if (_game.ShowActionTutorial) DrawActionTutorial();
+            else if (_game.FirstMissionControlStripVisible) DrawFirstMissionControlStrip();
         }
 
         private void DrawOpeningPresentationOverlay()
@@ -573,6 +585,67 @@ namespace CheddarAndCocoa.Game
                 : $"{playerLabel}  •  {actionName}\nPAD {glyphLetter}  /  {keyLabel}", _promptText);
         }
 
+        /// <summary>
+        /// F4.1: a stranger's first mission of the session — whichever mission that turns out to be
+        /// — gets this compact fading reminder instead of Backyard Rescue's full progressive
+        /// tutorial (the two are mutually exclusive per GameManager.FirstMissionControlStripVisible,
+        /// so they never draw in the same frame). Reuses DrawPadButton/DrawKey verbatim - the exact
+        /// glyph rendering the briefing card's DrawControlGuide already uses - just laid out compact.
+        /// </summary>
+        private void DrawFirstMissionControlStrip()
+        {
+            float alpha = _game.FirstMissionControlStripAlpha;
+            if (alpha <= 0f) return;
+
+            Color previousColor = GUI.color;
+            GUI.color = new Color(1f, 1f, 1f, alpha);
+
+            float w = Mathf.Min(920f, VirtualWidth - 32f);
+            const float h = 140f;
+            var box = new Rect((VirtualWidth - w) * 0.5f, VirtualHeight - h - 94f, w, h);
+            DrawHudOverlay(box);
+            DrawTintedRect(box, new Color(0.015f, 0.025f, 0.03f, 0.92f));
+            GUI.Label(new Rect(box.x + 16f, box.y + 6f, box.width - 32f, 26f), "YOUR CONTROLS", _tutorialHeading);
+
+            var verbList = new (string glyph, string label, Color color, GameManager.TutorialActionStep action)[]
+            {
+                ("Y", "BARK", GlyphBark, GameManager.TutorialActionStep.Bark),
+                ("X", "USE", GlyphInteract, GameManager.TutorialActionStep.Interact),
+                ("A", "JUMP", GlyphJump, GameManager.TutorialActionStep.Jump),
+                ("B", "PLAY", GlyphWrestle, GameManager.TutorialActionStep.Wrestle),
+            };
+
+            const float btnSize = 42f;
+            const float btnGap = 24f;
+            float rowY = box.y + 38f;
+            float totalBtnWidth = btnSize * verbList.Length + btnGap * (verbList.Length - 1);
+            float btnStartX = box.x + (box.width - totalBtnWidth) * 0.5f;
+            for (int i = 0; i < verbList.Length; i++)
+            {
+                var verb = verbList[i];
+                bool done = _game.IsFirstMissionVerbUsed(verb.action);
+                var rect = new Rect(btnStartX + i * (btnSize + btnGap), rowY, btnSize, btnSize);
+                DrawPadButton(rect, done ? "OK" : verb.glyph, verb.label,
+                    done ? new Color(0.25f, 0.82f, 0.4f, 0.95f) : verb.color);
+            }
+
+            float keyRowY = rowY + btnSize + 26f;
+            float keyGap = 8f;
+            float keyWidth = (box.width - 32f - keyGap * 7f) / 8f;
+            string[] cheddarKeys = { "SPACE", "E", "L-SHIFT", "Q" };
+            string[] cocoaKeys = { "ENTER", "R-SHIFT", "R-CTRL", "R-ALT" };
+            for (int i = 0; i < verbList.Length; i++)
+            {
+                DrawTintedRect(new Rect(box.x + 16f + i * (keyWidth + keyGap), keyRowY, keyWidth, 30f), verbList[i].color);
+                GUI.Label(new Rect(box.x + 16f + i * (keyWidth + keyGap), keyRowY, keyWidth, 30f), cheddarKeys[i], _small);
+                float x2 = box.x + 16f + (i + 4) * (keyWidth + keyGap);
+                DrawTintedRect(new Rect(x2, keyRowY, keyWidth, 30f), verbList[i].color);
+                GUI.Label(new Rect(x2, keyRowY, keyWidth, 30f), cocoaKeys[i], _small);
+            }
+
+            GUI.color = previousColor;
+        }
+
         private void DrawMissionBriefing()
         {
             var layout = BuildMissionBriefingLayout(VirtualWidth, VirtualHeight);
@@ -688,6 +761,12 @@ namespace CheddarAndCocoa.Game
             {
                 string tutorialLabel = _game.ShowActionTutorial ? "Skip Tutorial" : "Replay Tutorial";
                 if (DrawPauseButton(new Rect(buttonX, box.y + 194f, buttonWidth, 40f), tutorialLabel, actionIndex))
+                    ActivatePauseOption(actionIndex);
+                actionIndex++;
+            }
+            else if (_game.FirstMissionControlStripVisible)
+            {
+                if (DrawPauseButton(new Rect(buttonX, box.y + 194f, buttonWidth, 40f), "Skip Control Reminder", actionIndex))
                     ActivatePauseOption(actionIndex);
                 actionIndex++;
             }

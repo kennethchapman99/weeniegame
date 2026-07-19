@@ -13,6 +13,11 @@ namespace CheddarAndCocoa.Game
             if (MissionActive()) TickGuidance(seconds);
         }
 
+        /// <summary>Rewinds the F4.1 first-mission control strip's deadline so tests can hit its
+        /// timeout deterministically instead of a real ~20s wait.</summary>
+        public void ForceFirstMissionControlStripElapsed(float seconds) =>
+            _firstMissionControlStripUntil -= seconds;
+
         public void ForceGateHold(bool held = true)
         {
             if (MissionActive()) GateCrashController?.ForceGateHold(held);

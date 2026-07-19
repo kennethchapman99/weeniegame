@@ -398,6 +398,60 @@ namespace CheddarAndCocoa.Game
             ResetActionTutorialProgress();
             LogPlaytestEvent("Tutorial", "replayed from Bark");
         }
+
+        // F4.1: a compact, roster-wide control reminder for a stranger's first mission of the
+        // session, whatever that mission turns out to be. Backyard Rescue's own progressive
+        // ActionTutorial above already covers this need in more depth when it happens to be
+        // mission one, so this strip only activates for every OTHER first mission - see BeginRound.
+        private const float FirstMissionControlStripSeconds = 20f;
+        private const float FirstMissionControlStripFadeSeconds = 2f;
+        private bool _firstMissionControlStripPending = true;
+        private bool _firstMissionControlStripActive;
+        private bool _firstMissionControlStripSkipped;
+        private float _firstMissionControlStripUntil;
+        private readonly bool[] _firstMissionVerbUsed = new bool[TutorialActionCount];
+
+        public bool FirstMissionControlStripVisible =>
+            _firstMissionControlStripActive && !_firstMissionControlStripSkipped &&
+            Time.time < _firstMissionControlStripUntil && !AllFirstMissionVerbsUsed();
+
+        /// <summary>1 while fully shown, ramping to 0 over the last few seconds before it times out.</summary>
+        public float FirstMissionControlStripAlpha
+        {
+            get
+            {
+                if (!FirstMissionControlStripVisible) return 0f;
+                float remaining = _firstMissionControlStripUntil - Time.time;
+                return remaining < FirstMissionControlStripFadeSeconds
+                    ? Mathf.Clamp01(remaining / FirstMissionControlStripFadeSeconds)
+                    : 1f;
+            }
+        }
+
+        public bool IsFirstMissionVerbUsed(TutorialActionStep action) =>
+            action != TutorialActionStep.Complete && _firstMissionVerbUsed[(int)action];
+
+        private bool AllFirstMissionVerbsUsed()
+        {
+            for (int i = 0; i < _firstMissionVerbUsed.Length; i++)
+                if (!_firstMissionVerbUsed[i]) return false;
+            return true;
+        }
+
+        private void RecordFirstMissionVerbUsed(TutorialActionStep action)
+        {
+            if (!_firstMissionControlStripActive || action == TutorialActionStep.Complete) return;
+            _firstMissionVerbUsed[(int)action] = true;
+        }
+
+        /// <summary>Pause-menu escape hatch, mirrors SkipActionTutorial.</summary>
+        public void SkipFirstMissionControlStrip()
+        {
+            if (!FirstMissionControlStripVisible) return;
+            _firstMissionControlStripSkipped = true;
+            LogPlaytestEvent("FirstMissionControlStrip", "skipped");
+        }
+
         public float MissionDurationSeconds => CurrentFlow == FlowState.MissionSelect ? 0f : Mathf.Clamp(roundDuration - TimeRemaining, 0f, roundDuration);
 
         /// <summary>Test/dev seam: fixed lead-in length in seconds; null uses briefing + sniff tuning.</summary>
@@ -863,6 +917,10 @@ namespace CheddarAndCocoa.Game
             System.Array.Clear(_sessionBestByMission, 0, _sessionBestByMission.Length);
             SessionSummaryLabel = "Session Summary: no missions played yet.";
             SessionRanksEarnedLabel = "Ranks: none yet.";
+            _firstMissionControlStripPending = true;
+            _firstMissionControlStripActive = false;
+            _firstMissionControlStripSkipped = false;
+            System.Array.Clear(_firstMissionVerbUsed, 0, _firstMissionVerbUsed.Length);
             LogPlaytestEvent("SessionReset", "fresh session");
         }
 
@@ -1300,6 +1358,24 @@ namespace CheddarAndCocoa.Game
             FailedInteractions = 0;
             ObjectiveChangeCount = 0;
             ResetActionTutorialProgress();
+            if (_firstMissionControlStripPending)
+            {
+                _firstMissionControlStripPending = false;
+                if (_mission.Variant != MissionVariant.BackyardRescue)
+                {
+                    _firstMissionControlStripActive = true;
+                    _firstMissionControlStripSkipped = false;
+                    _firstMissionControlStripUntil = Time.time + FirstMissionControlStripSeconds;
+                    System.Array.Clear(_firstMissionVerbUsed, 0, _firstMissionVerbUsed.Length);
+                    LogPlaytestEvent("FirstMissionControlStrip", "shown");
+                }
+            }
+            else
+            {
+                // Every later BeginRound() (a genuinely new second mission, or a replay of the
+                // session's first one) must not re-show the strip - it already had its one turn.
+                _firstMissionControlStripActive = false;
+            }
             _guidance.Configure(_mission.GuidanceTierCap, _mission.GuidanceTier1Seconds,
                 _mission.GuidanceTier2Seconds, _mission.GuidanceTier3Seconds);
             _guidance.Reset();
@@ -1895,6 +1971,7 @@ namespace CheddarAndCocoa.Game
                 return;
             }
             bool tutorialDiscovery = TryRecordTutorialAction(dogId, TutorialActionStep.Interact);
+            RecordFirstMissionVerbUsed(TutorialActionStep.Interact);
 
             // A deliberate interact during the sniff-around freeze means "we're ready" — start the
             // round without charging a missed-interaction against the players.
@@ -1985,6 +2062,7 @@ namespace CheddarAndCocoa.Game
                 return;
             }
             TryRecordTutorialAction(dogId, TutorialActionStep.Bark);
+            RecordFirstMissionVerbUsed(TutorialActionStep.Bark);
 
             int dogIndex = IndexOfDog(dogId);
             if (dogIndex < 0) return;
@@ -2064,6 +2142,7 @@ namespace CheddarAndCocoa.Game
         {
             if (!MissionActive()) return;
             TryRecordTutorialAction(dogId, TutorialActionStep.Wrestle);
+            RecordFirstMissionVerbUsed(TutorialActionStep.Wrestle);
 
             int dogIndex = IndexOfDog(dogId);
             if (dogIndex < 0 || _dogs.Length < 2) return;
@@ -2130,6 +2209,7 @@ namespace CheddarAndCocoa.Game
         {
             if (!MissionActive()) return;
             TryRecordTutorialAction(dogId, TutorialActionStep.Jump);
+            RecordFirstMissionVerbUsed(TutorialActionStep.Jump);
         }
 
         private void ScareSquirrel(float seconds, string cue, bool awardScore)

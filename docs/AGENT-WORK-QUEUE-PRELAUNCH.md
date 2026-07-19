@@ -47,7 +47,7 @@
 | V3.3 | Mission tile consistency | DONE (2026-07-19, see below) |
 | V3.4 | Indoor-fantasy staging audit | DONE (2026-07-19, see below) |
 | V3.5 | HUD + end-card copy/style pass | DONE (2026-07-19, see below) |
-| F4.1 | Universal first-mission control reminder | OPEN |
+| F4.1 | Universal first-mission control reminder | DONE (2026-07-19, see below) |
 | F4.2 | Post-clear flow + session summary | OPEN |
 | F4.3 | Briefing accuracy audit | OPEN |
 | S5.1 | Audio for new signals | OPEN |
@@ -1154,6 +1154,82 @@ identity chips for the first ~20s of the session's first mission (or until each 
 then fade. Per-session, not per-mission; skippable the same way the tutorial is.
 **Tests:** strip shows on session's first mission only; fades on timer and on all-verbs-used;
 replay/second mission shows none; tutorial mission unaffected.
+
+**Done (2026-07-19):** No session concept existed anywhere in the codebase for this
+(`ResetSession()` never touched tutorial state, and Backyard Rescue's own tutorial is
+per-mission-attempt, not per-session — reset in `BeginRound()` for every start/replay). Built one
+from scratch, scoped as narrowly as this task needs (a single "has the session's first mission been
+decided yet" flag), rather than a general session-lifecycle system:
+
+- `GameManager` gained `_firstMissionControlStripPending` (inline `= true` default so cold boot
+  works without an explicit `ResetSession()` call first — confirmed necessary by reading how
+  `ActionTutorialPlayModeTests`' own boot rig never calls `ResetSession()` before its first
+  `StartMission()`), consumed by the *first* `BeginRound()` call after boot or after a session
+  reset. If that first mission is Backyard Rescue, the strip never activates (its own
+  `ShowActionTutorial` owns the moment instead); for any other mission, it activates a 20s window
+  (`FirstMissionControlStripSeconds`) with a bool per verb (`_firstMissionVerbUsed`, reusing the
+  existing `TutorialActionStep` enum's first four values rather than adding a parallel one).
+  `FirstMissionControlStripVisible` is a live-computed property (active && not skipped && before
+  the deadline && not all four verbs used yet) — no separate "hide it now" mutation path needed,
+  matching `ShowActionTutorial`'s own established shape.
+- **Real bug caught by the test suite, not shipped:** the first version only ever set
+  `_firstMissionControlStripActive = true` inside the pending-consumption branch and never
+  explicitly cleared it afterward, so once the strip activated on mission one it stayed logically
+  "active" forever (`FirstMissionControlStripVisible` still checks the deadline/verbs, but the
+  deadline is ~20s in the future and a fresh mission 2 resets none of the mission-scoped markers
+  it depends on) — `ASecondDifferentMission_NeverShowsTheStrip` failed on the first run, showing the
+  strip re-appearing on mission 2. Fixed with an explicit `else { _firstMissionControlStripActive =
+  false; }` alongside the pending-check, so every `BeginRound()` after the session's first either
+  activates (never again) or explicitly deactivates.
+- Unlike Backyard Rescue's tutorial (which requires **both** dogs to individually demonstrate each
+  verb), this is a lighter-touch reminder: **either** dog performing a verb once checks it off —
+  confirmed as a deliberate scope difference, not a shortcut, since the task calls it a "reminder,"
+  not a graded lesson.
+- The last 2 seconds (`FirstMissionControlStripFadeSeconds`) ramp `FirstMissionControlStripAlpha`
+  from 1 to 0 instead of an instant cut, satisfying "fading" literally; hitting the all-verbs-used
+  exit is an immediate hide (that's an earned dismissal, not a timeout, so no fade needed there).
+  A test bug here too, caught before the fix above even mattered: the first assertion checked for
+  partial alpha at 17s elapsed (3s remaining) — outside the 2s fade window by design, so alpha was
+  still exactly 1 and the *test's* expectation was wrong, not the implementation; fixed the test's
+  timing instead of loosening the fade window.
+- **Rendering** (`ArenaHud.DrawFirstMissionControlStrip`) reuses `DrawPadButton`/`DrawKey` verbatim
+  — the same glyph-rendering primitives `DrawControlGuide` already uses on the briefing card — laid
+  out as a compact two-row strip (4 pad-glyph chips on top, 8 keyboard-key chips below, one set per
+  dog) in the exact box position `DrawActionTutorial` already uses (`VirtualHeight - h - 94`,
+  confirmed by reading the formula this clears the bottom identity-chip row). The two draw calls are
+  `else if`-chained in `DrawGameplayHud()`, so they structurally can never render in the same frame,
+  not just conventionally. Verb chips that have already been used swap to the tutorial's established
+  green "OK" done-state color, giving live progress feedback toward the "all four used" exit
+  condition (a "Readable chaos" call, not required by the task text, but cheap given the color/state
+  plumbing already existed for `AllFirstMissionVerbsUsed`).
+- **Skippable the same way the tutorial is**, literally reusing its pause-menu slot: since
+  `ActionTutorialAvailable` (Backyard Rescue only) and `FirstMissionControlStripVisible` (never
+  Backyard Rescue) are mutually exclusive, the existing conditional pause-menu row
+  (`PauseOptionCount`/`PauseResumeIndex`/`ActivatePauseOption`/`DrawPauseMenu`'s single "action slot"
+  at index 3) gained an `else if` sibling branch offering "Skip Control Reminder" →
+  `GameManager.SkipFirstMissionControlStrip()`, rather than inserting a new row and having to
+  renumber every option after it.
+- **Tests:** new `FirstMissionControlStripPlayModeTests.cs` (10 tests, reusing
+  `ActionTutorialPlayModeTests`' proven `ArenaBootstrap` boot-rig pattern, generalized to start
+  whichever mission the test wants as "session's first"): non-tutorial mission shows the strip and
+  not the tutorial; Backyard Rescue shows the tutorial and not the strip; partial verb progress
+  keeps it visible while all four hides it; either dog can satisfy a verb; the forced-elapsed timeout
+  hides it with a fading `Alpha` in the final 2s; manual skip hides it immediately; replaying the
+  first mission does not re-show it; a genuinely different second mission does not show it (this is
+  the one that caught the real bug above); Backyard-Rescue-first does not leave it available on
+  mission two either; `ResetSession()` re-arms it for the next mission (couch-test "New Session"
+  path). First run: 2 failures (the real production bug and the test-timing bug above), both fixed,
+  reran clean.
+- Full PlayMode suite: **655/655 passed, 0 failed, 0 skipped** (645 baseline from V3.5 + 10 new),
+  `unity/playmode-results.xml`, SHA-256
+  `b4ecb4a62690b92da3ac95f043068e257af0f7fec272649b4d6b184a3a31f94b`, 2026-07-19 16:38 EDT. Dev
+  player rebuilt at HEAD, executable SHA-256
+  `84c8d026a43d808a9a6a185963cf0ee625053d66812cd23aa6db7a7bf942472b`; smoke passed. No art-review
+  capture — this is new IMGUI layout code with proven-safe positioning (reuses `DrawActionTutorial`'s
+  exact box formula and existing draw primitives; the internal row math was checked by hand for
+  overlap/overflow against the box's own bounds before landing), not new art assets; same reasoning
+  V3.5 used to skip capture for a pure-logic/layout change. Whoever next has a real display should
+  still eyeball it once on a fresh session's first non-Backyard-Rescue mission.
 
 ### F4.2 — Post-clear flow + session summary
 **Goal:** momentum for new players: clearing a mission offers the next showcase-order mission.
