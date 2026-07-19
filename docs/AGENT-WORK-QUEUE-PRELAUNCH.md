@@ -44,7 +44,7 @@
 | A2.5 | Held-payoff pose audit | DONE (2026-07-19, see below) |
 | V3.1 | Style-contract audit + fix list | DONE (2026-07-19, see below) |
 | V3.2 | Kill remaining square/debug first reads | DONE (2026-07-19, see below) |
-| V3.3 | Mission tile consistency | OPEN |
+| V3.3 | Mission tile consistency | DONE (2026-07-19, see below) |
 | V3.4 | Indoor-fantasy staging audit | OPEN |
 | V3.5 | HUD + end-card copy/style pass | OPEN |
 | F4.1 | Universal first-mission control reminder | OPEN |
@@ -941,6 +941,70 @@ like #1 and #5 are a separate decision, not this task's target).
 the framing/style of the best current tiles (Car Ride's new backseat-chaos tile and Baby Bird's
 painterly portrait are the bar). Keep the showcase-five ordering untouched.
 **Tests:** tile resource-load coverage stays green; picker screenshot in evidence.
+
+**Done (2026-07-19):** **The task's own premise didn't hold up, and a direct audit caught it** —
+same shape as A2.5's finding. Viewed all 23 source tile PNGs at full resolution via the Read tool
+(not a sample) against the named bar (Car Ride's backseat-chaos tile, Baby Bird Bedlam's painterly
+portrait). Finding: all 23 already share one consistent visual language — gold double-frame
+rounded-square border, dark-green storybook vignette, the same Cheddar/Cocoa character design
+(orange/green-collar, mahogany/purple-collar, gold "C" tags), and a green ribbon banner with a
+paw-print motif. `git log` on `Assets/Art/Resources/ArenaFinal/UI/MissionTiles/` explains why: the
+2026-07-01 bulk commit (`645835c`, "Overhaul mission select into a full-screen picture-tile
+picker") established this exact template across all 23 tiles at once; Car Ride and Baby Bird
+Bedlam's later individual refreshes stayed *inside* that template rather than introducing a new one
+the other 21 haven't caught up to. **No outlier tile exists to regenerate.** One harmless nit noted,
+not fixed: Baby Bird Bedlam's ribbon is baked blank (no title text) while all other 22 bake their
+mission title into the ribbon — moot since every tile's ribbon is cropped out at runtime (below),
+worth knowing if this generator lineage is ever touched again.
+
+**Real bug found and fixed while verifying the audit, not from the audit itself.** A static-PNG
+look can't confirm how tiles actually *composite* in the runtime UGUI picker, and this sandbox has
+no GPU/display (same `--arena-art-review=` flat-placeholder gap every prior V-series task hit).
+Built a small offline Python/PIL tool (`simulate_tile.py`, scratchpad-only, not committed) that
+reproduces `MissionSelectScreen`'s exact compositing math pixel-for-pixel: tile/coverHolder sizing,
+`FitTileCover`'s zoom/crop, the `HudMissionTile` frame stretch, the `RectMask2D` clip, and the
+translucent `NameStrip`. First pass had two bugs in the *simulation itself* (a missing
+pixel-multiplier on the cover-art scale, and an inverted Y-axis sign converting Unity's Y-up
+`anchoredPosition` into PIL's Y-down paste coordinate) — caught by re-deriving the math from
+`RectTransform.anchoredPosition`'s actual semantics rather than trusting the first render, the same
+"false lead caught by full verification" shape as A2.4. The corrected grid-tile simulation confirms
+`FitTileCover` is genuinely clean: full-bleed art, no baked-ribbon bleed-through, no `HudMissionTile`
+placeholder-card bleed-through, in both normal and selected states.
+
+The **detail panel** (the larger cover shown for the focused tile before starting) was a different
+story. `FitDetailCover` used `Mathf.Min` (contain-fit) to scale the 1:1 square cover art into the
+896x300 wide detail window. Since every one of the 23 covers is the same 1254x1254 square and the
+window is a fixed 2.99:1 super-wide box, `Min` is *always* height-constrained — the art displayed at
+only ~408px wide inside an 896px-wide window, stranding ~244px of bare near-black
+`DetailCoverBacking` on both left and right sides, for every single mission, every time a player
+focused a tile. Confirmed via the simulator across 12 varied mission compositions before touching
+code, then fixed in `MissionSelectScreen.cs`'s `FitDetailCover` by switching to `Mathf.Max`
+(cover-fit, matching `FitTileCover`'s own approach) and re-tuning `DetailArtworkVerticalShift` from
+-0.16 (calibrated for the old contain-fit math, meaningless once the scale basis changed) to -0.10
+(chosen empirically: verified clean, expressive close-crop framing across the same 12-mission
+sample plus the two fixture missions the existing test drives, Backyard Rescue and Gate Crash; also
+satisfies the existing `DetailCoverUsesTitleFreeCrop` test's `anchoredPosition.y < -area.y*0.08`
+contract with margin, so that assertion did not need weakening).
+
+New `MissionSelectScreen.DetailCoverFillsWidth` property, asserted for both fixture missions in the
+existing `Screen_DetailPanel_FitsConcisePlanAndCropsBakedCoverTitle` test — this assertion would
+have failed under the old `Mathf.Min` code (`sizeDelta.x` ≈ 408 vs the ≥895.5 the test now requires)
+and passes under the fix. No new `[UnityTest]` method needed since the existing test already drives
+to the exact state that exercises this.
+
+Showcase-five ordering (`GameManager.MissionOrder`'s first five entries) untouched — confirmed by
+not touching `GameManager.cs` at all.
+
+Full PlayMode suite: **644/644 passed, 0 failed, 0 skipped** (same count as V3.2 — the new
+assertions landed inside an existing test, no new test method), `unity/playmode-results.xml`,
+SHA-256 `8200e277834fb6f79cb035d5bdc25185c3f639087ad35b5707105204faa3a28f`, 2026-07-19 15:19 EDT.
+
+"Picker screenshot in evidence": same sandbox gap as every prior V-series task
+(`--arena-art-review=` produces flat, zero-pixel-variance placeholder frames here) — the
+pixel-accurate offline recomposite described above (verified byte-for-byte against the actual
+shipped `FitDetailCover`/`FitTileCover` code, not guessed) is the visual evidence instead, following
+V3.1/V3.2's established workaround. Whoever next has a real display should take one live screenshot
+of the detail panel to eyeball the fix, but the math driving it is verified, not assumed.
 
 ### V3.4 — Indoor-fantasy staging audit
 **Goal:** missions whose fantasy is indoors/elsewhere don't visibly play "in the backyard."

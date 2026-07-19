@@ -166,12 +166,16 @@ namespace CheddarAndCocoa.Tests
                 "The longest how-to list must auto-size into its rect, never over the rows below.");
             Assert.IsTrue(screen.DetailCoverUsesTitleFreeCrop,
                 "The detail art should crop its baked title ribbon because TMP owns the readable mission title.");
+            Assert.IsTrue(screen.DetailCoverFillsWidth,
+                "V3.3: a contain-fit square cover in the wide detail window used to strand ~55% of the " +
+                "width as bare DetailCoverBacking on both sides; the cover-fit crop must fill it edge to edge.");
 
             // A shorter plan stays fitting too (and gets the full-size font path).
             game.SelectMission(GameManager.MissionVariant.GateCrash);
             yield return null;
             Assert.IsTrue(screen.DetailTextFitsItsRects);
             Assert.IsTrue(screen.DetailCoverUsesTitleFreeCrop);
+            Assert.IsTrue(screen.DetailCoverFillsWidth);
         }
 
         [UnityTest]

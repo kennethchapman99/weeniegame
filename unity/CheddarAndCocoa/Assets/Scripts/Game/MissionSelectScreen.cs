@@ -38,7 +38,7 @@ namespace CheddarAndCocoa.Game
         private const float TileArtworkZoom = 1.35f;
         private const float TileArtworkVerticalShift = -0.12f;
         private const float DetailArtworkZoom = 1.36f;
-        private const float DetailArtworkVerticalShift = -0.16f;
+        private const float DetailArtworkVerticalShift = -0.10f;
         private const float DetailTextMinimumSize = 19f;
 
         private sealed class TileSlot
@@ -137,6 +137,14 @@ namespace CheddarAndCocoa.Game
                        _detailCover.rectTransform.anchoredPosition.y < -_detailCoverArea.y * 0.08f;
             }
         }
+
+        /// <summary>
+        /// V3.3: the detail pane is a wide 896x300 window holding a 1:1 square cover. A cover-fit
+        /// scale must fill the full window width so no DetailCoverBacking void shows on either side.
+        /// </summary>
+        public bool DetailCoverFillsWidth =>
+            _detailCover != null && _detailCover.sprite != null &&
+            _detailCover.rectTransform.sizeDelta.x >= _detailCoverArea.x - 0.5f;
 
         public int ActiveTileCount
         {
@@ -576,14 +584,19 @@ namespace CheddarAndCocoa.Game
             cover.rectTransform.anchoredPosition = new Vector2(0f, area.y * TileArtworkVerticalShift);
         }
 
-        // The detail pane keeps the square composition large enough to read, but masks the same
-        // baked title ribbon so the title directly below is not repeated.
+        // V3.3: the detail pane is a wide 896x300 letterbox holding a 1:1 square cover. The original
+        // Mathf.Min ("contain") scale fit the whole square inside the shorter dimension (height),
+        // leaving the square's full width (~408px) stranded in the middle of the 896px-wide window
+        // with DetailCoverBacking's near-black fill exposed on both sides - never caught because this
+        // sandbox has no GPU/display to actually render the picker. Mathf.Max ("cover", matching
+        // FitTileCover's own approach) fills the width and crops top/bottom instead, verified against
+        // a pixel-accurate offline recomposite of this exact math across a dozen mission covers.
         private static void FitDetailCover(Image cover, Sprite sprite, Vector2 area)
         {
             cover.enabled = sprite != null;
             if (sprite == null) return;
             cover.sprite = sprite;
-            float scale = Mathf.Min(area.x / sprite.rect.width, area.y / sprite.rect.height) * DetailArtworkZoom;
+            float scale = Mathf.Max(area.x / sprite.rect.width, area.y / sprite.rect.height) * DetailArtworkZoom;
             cover.rectTransform.sizeDelta = new Vector2(sprite.rect.width * scale, sprite.rect.height * scale);
             cover.rectTransform.anchoredPosition = new Vector2(0f, area.y * DetailArtworkVerticalShift);
         }
