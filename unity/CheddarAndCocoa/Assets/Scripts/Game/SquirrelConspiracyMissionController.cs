@@ -127,7 +127,7 @@ namespace CheddarAndCocoa.Game
                 _state.AddHerd();
                 _context.SetFeedback(GameManager.FeedbackKind.TugNeedsPartner);
                 _context.SetCue("Cheddar pushed the squirrel, but it escaped - Cocoa must HOLD the glowing cutoff first!");
-                _context.SetActorState(_context.SquirrelObject, "HERDED - NEEDS COCOA CUTOFF!", new Color(0.9f, 0.58f, 0.16f), 0.24f);
+                _context.SetActorState(_context.SquirrelObject, "SQUIRREL HERDED - NEEDS COCOA CUTOFF!", new Color(0.9f, 0.58f, 0.16f), 0.24f);
                 _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "NEEDS CUTOFF!");
                 _context.SpawnWorldPop(_context.SquirrelObject.transform.position, "COCOA: HOLD CUTOFF!", new Color(1f, 0.66f, 0.22f));
                 _context.LogEvent("SquirrelHerdEscaped", $"solo herds {_state.Herds}; controls {_state.ControlCount}/{RequiredControls}");
@@ -146,7 +146,7 @@ namespace CheddarAndCocoa.Game
             int cocoa = _context.IndexOfDog(DogId.Cocoa);
             if (cocoa >= 0) _context.CreditDog(cocoa);
             _context.SetCue("Perfect handoff! Cheddar herded the squirrel into Cocoa's cutoff.");
-            _context.SetActorState(_context.SquirrelObject, $"ROUTE {_state.RouteIndex + 1} / CONTROLS {_state.ControlCount}/{RequiredControls}", new Color(0.85f, 0.55f, 0.12f), 0.28f);
+            _context.SetActorState(_context.SquirrelObject, $"SQUIRREL ROUTE {_state.RouteIndex + 1} / CONTROLS {_state.ControlCount}/{RequiredControls}", new Color(0.85f, 0.55f, 0.12f), 0.28f);
             _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, scoreEvent.Label);
             _context.SpawnWorldPop(_context.SquirrelObject.transform.position, "CUTOFF!", new Color(1f, 0.9f, 0.25f));
             _context.RequestAudioCue(ArenaFeedbackCatalog.TugRescueSuccess);
@@ -159,7 +159,7 @@ namespace CheddarAndCocoa.Game
                 SetMissionProp(_context.SquirrelObject, FinalGameplayArt.SquirrelConspiracyStashRevealed, 0.013f, 31);
                 _context.AddScore(ScoreEventCatalog.DoubleBarkBlock.Points, ScoreEventCatalog.DoubleBarkBlock.Label);
                 _context.SquirrelObject.transform.position = _stashPosition + Vector2.left * 1.2f;
-                _context.SetActorState(_context.SquirrelObject, "STASH REVEALED - SNIFF + INTERACT!", new Color(1f, 0.72f, 0.18f), 0.34f);
+                _context.SetActorState(_context.SquirrelObject, "SQUIRREL STASH REVEALED - SNIFF + INTERACT!", new Color(1f, 0.72f, 0.18f), 0.34f);
                 _context.SetCue("The squirrel stash is exposed! Get a dog to the stash and interact.");
                 _context.LogEvent("SquirrelStashRevealed", "The squirrel stash is exposed.");
             }
@@ -253,7 +253,7 @@ namespace CheddarAndCocoa.Game
             _context.AddScore(ScoreEventCatalog.StashFound.Points, ScoreEventCatalog.StashFound.Label);
             _context.AddScore(ScoreEventCatalog.ConspiracyCracked.Points, ScoreEventCatalog.ConspiracyCracked.Label);
             _context.SetCue($"{_context.Dogs[dogIndex].name} found the stash. The conspiracy is cracked!");
-            _context.SetActorState(_context.SquirrelObject, "CONSPIRACY CRACKED!", new Color(0.3f, 1f, 0.35f), 0.12f);
+            _context.SetActorState(_context.SquirrelObject, "SQUIRREL CONSPIRACY CRACKED!", new Color(0.3f, 1f, 0.35f), 0.12f);
             _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "STASH FOUND!");
             _context.SpawnWorldPop(_stashPosition, "STASH FOUND!", new Color(0.5f, 1f, 0.45f));
             foreach (var feedback in _context.DogFeedback)
@@ -275,7 +275,7 @@ namespace CheddarAndCocoa.Game
             _context.SquirrelObject.transform.position = _route[_state.RouteIndex];
             _context.SetFeedback(GameManager.FeedbackKind.SquirrelStoleFood);
             _context.SetCue($"The squirrel taunted the dogs ({_state.Taunts}/{MaxTaunts}). Cut it off before yard gossip wins.");
-            _context.SetActorState(_context.SquirrelObject, $"TAUNT {_state.Taunts}/{MaxTaunts} - CUT OFF!", Color.gray, 0.3f);
+            _context.SetActorState(_context.SquirrelObject, $"SQUIRREL TAUNT {_state.Taunts}/{MaxTaunts} - CUT OFF!", Color.gray, 0.3f);
             _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "SQUIRREL TAUNT!");
             _context.RequestAudioCue(ArenaFeedbackCatalog.SquirrelStealMiss);
             _context.LogEvent("SquirrelTaunt", $"taunts {_state.Taunts}/{MaxTaunts}");

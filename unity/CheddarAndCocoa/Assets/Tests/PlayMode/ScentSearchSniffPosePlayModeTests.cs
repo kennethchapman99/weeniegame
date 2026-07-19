@@ -9,10 +9,9 @@ using CheddarAndCocoa.Game;
 namespace CheddarAndCocoa.Tests
 {
     /// <summary>
-    /// A2.3 (code-side prep only - see the class-level note on DogReadabilityFeedback.Pose.Sniff for
-    /// why no authored art exists yet): Scent Search's Sniff() verb now drives a real
-    /// DogReadabilityFeedback.Pose.Sniff read on both dogs' tracking beats, distinct from the actual
-    /// discovery celebration (ShowProudBrief), so the wiring is ready the moment real art lands.
+    /// A2.3/A2.4: Scent Search's Sniff() verb drives a real DogReadabilityFeedback.Pose.Sniff read
+    /// on both dogs' tracking beats, distinct from the actual discovery celebration
+    /// (ShowProudBrief). A2.4 (2026-07-18) added authored E/S motion strips for it.
     /// </summary>
     public sealed class ScentSearchSniffPosePlayModeTests
     {
@@ -30,7 +29,7 @@ namespace CheddarAndCocoa.Tests
 
             Assert.AreEqual(DogReadabilityFeedback.Pose.Sniff, cheddarFeedback.CurrentPose);
             Assert.IsTrue(cheddarFeedback.UsesAuthoredPoseArt,
-                "With no Sniff art yet, this must still render the graceful idle-image fallback, not go blank.");
+                "Sniff has authored motion frames now; this must not silently fall back to a static image.");
         }
 
         [UnityTest]

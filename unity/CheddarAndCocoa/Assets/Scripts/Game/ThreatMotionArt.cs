@@ -74,16 +74,21 @@ namespace CheddarAndCocoa.Game
 
             if (actor == Actor.Squirrel)
             {
+                // Deliberately gated on the literal word, not just defaultActor: the shared squirrel
+                // actor gets repurposed as a non-squirrel marker in other missions (Coyotes Fence's
+                // dirt/weak-spot, Eagle Shadow Panic's ally-huddle marker), and those must keep
+                // falling back to the static placeholder rather than idle-breathing like a squirrel.
+                // Every genuine Squirrel Conspiracy/Backyard Rescue/Snack Heist label says the word.
                 if (!upper.Contains("SQUIRREL"))
                 {
                     clip = default;
                     return false;
                 }
-                clip = upper.Contains("STEAL") || upper.Contains("HEIST") || upper.Contains("STOLE")
+                clip = upper.Contains("STEAL") || upper.Contains("HEIST") || upper.Contains("STOLE") || upper.Contains("WEENIE")
                     ? Clip.Steal
-                    : upper.Contains("SCARED") || upper.Contains("DROPPED") || upper.Contains("FAKE") || upper.Contains("TAUNT")
+                    : upper.Contains("SCARED") || upper.Contains("DROPPED") || upper.Contains("FAKE")
                         ? Clip.Scared
-                        : upper.Contains("ROUTE") || upper.Contains("HERD") || upper.Contains("CONSPIRACY")
+                        : upper.Contains("ROUTE") || upper.Contains("HERD") || upper.Contains("CONSPIRACY") || upper.Contains("TAUNT")
                             ? Clip.Run
                             : Clip.Idle;
                 return true;
@@ -99,9 +104,10 @@ namespace CheddarAndCocoa.Game
 
             if (actor == Actor.Coyote)
             {
-                clip = upper.Contains("DRIVEN BACK") || upper.Contains("BLOCKED")
+                clip = upper.Contains("DRIVEN BACK") || upper.Contains("BLOCKED") || upper.Contains("RETREAT")
                     ? Clip.Retreat
-                    : upper.Contains("BARK") || upper.Contains("PRESSURE") || upper.Contains("BREACH") || upper.Contains("LURE")
+                    : upper.Contains("BARK") || upper.Contains("PRESSURE") || upper.Contains("BREACH") ||
+                      upper.Contains("LURE") || upper.Contains("BAIT")
                         ? Clip.Threaten
                         : Clip.Patrol;
                 return true;

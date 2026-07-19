@@ -40,7 +40,7 @@
 | A2.1 | Animation coverage audit | DONE (2026-07-18, see below) |
 | A2.2 | Interact micro-animation | DONE (2026-07-18, see below) |
 | A2.3 | Signal-critical verb strips (dig/sniff/carry) | DONE (2026-07-18, code-side prep only — see below) |
-| A2.4 | Threat/NPC acting gaps | OPEN |
+| A2.4 | Threat/NPC acting gaps | DONE (2026-07-18, see below) |
 | A2.5 | Held-payoff pose audit | OPEN |
 | V3.1 | Style-contract audit + fix list | OPEN |
 | V3.2 | Kill remaining square/debug first reads | OPEN |
@@ -639,6 +639,74 @@ prep only"** over waiting/blocking or a lower-fidelity placeholder-art option.
 `stash guard` if still partial, and any Teenager/human state the audit flags. Same pipeline, same
 fallback rule.
 **Tests:** resource-load + state-mapping assertions per new strip; suite green.
+
+**Done (2026-07-18):** Traced every coyote/squirrel `SetActorState` label the mission controllers
+actually send through `ThreatMotionArt.TryInfer`'s keyword table (ground truth, not the task's
+literal wording) and found real bugs beyond what the task named:
+
+- **Coyote fake-snack lure and the final "coyote retreats" defeat state were both falling all the
+  way to Patrol**, not reusing Threaten as the catalog assumed — `"FAKE SNACK BAIT..."` and
+  `"COYOTE RETREATS..."` didn't contain the literal keywords the table checked for. Fixed by adding
+  `"BAIT"` and `"RETREAT"` keywords.
+- **Squirrel taunt reused the cowering Scared clip for what is a gleeful successful escape** — moved
+  `"TAUNT"` from the Scared bucket to the Run bucket (bounding scurry reads right; cowering read
+  backwards).
+- **A false lead, caught by a full-suite regression, not skipped past:** first instinct was to
+  remove the squirrel branch's `!upper.Contains("SQUIRREL")` guard, since 5 of
+  `SquirrelConspiracyMissionController`'s own 6 labels never say "squirrel" and were silently
+  disabling that mission's authored motion almost entirely (falling back to the static placeholder).
+  Removing it broke two already-green tests in `FinalArtIntegrationPlayModeTests.cs` — the guard is
+  intentional, keeping Coyotes Fence's repurposed shared-squirrel-actor "weak spot" marker from
+  idle-breathing like a live squirrel. Correct fix: added the literal word "SQUIRREL" to those 5
+  label strings in `SquirrelConspiracyMissionController.cs` instead (also clearer on-screen copy for
+  players), leaving the guard untouched. New
+  `RepurposedSquirrelActorMarkerLabels_StillFallBackInstead_OfIdleBreathingLikeASquirrel` test pins
+  that non-regression explicitly.
+- Also fixed a keyword-coverage cousin: `"SQUIRREL GOT A WEENIE!"` (BackyardRescue's theft-success
+  beat) fell to Idle instead of the grabby Steal clip its sibling `"SQUIRREL STOLE A SNACK!"`
+  correctly gets — added `"WEENIE"` to the Steal keywords.
+- "Stash guard" needed no separate fix once the label-text fix landed — the only matching state,
+  `"SQUIRREL STASH REVEALED..."`, resolves to Idle (watchful perky-perch), a legitimate read.
+  Human/Teenager NPCs have zero `ThreatReadabilityAnimator` at all (`Actor.Unknown`, static cutout
+  full stop) — flagged as the largest remaining gap, out of scope here since it needs a new
+  `Actor`/`Clip` case and authored art, not a keyword fix.
+- New `ThreatLabelInferencePlayModeTests.cs` (10 tests) pins every real production label string
+  against its correct clip, both the fixed cases and the intentional guard-clause behavior.
+- **Bonus scope beyond the task: closed A2.3's own flagged Sniff art gap.** The owner produced
+  `cheddar_sniff_east_south_v01.png`/`cocoa_sniff_east_south_v01.png` (external image generation,
+  matching the existing dig boards' 2×4 E/S grid format) and supplied them mid-task. Wrote
+  `tools/art/export_character_sniff.py` (mirrors `export_character_dig.py`), added the manifest
+  entry, ran the extraction. Found and fixed a real extraction bug in the process: 2 of 16 frames
+  came out with a small disconnected fur-wisp artifact (a neighboring cell's ear/tail tip bleeding
+  past the crop boundary) — fixed generically with a largest-connected-component filter in the new
+  script rather than hand-tuning crop margins. `Pose.Sniff` now renders real authored motion instead
+  of the Swim/Jump-style static fallback; updated the now-stale "no art yet" comments in
+  `DogReadabilityFeedback.cs` and the sniff PlayMode test accordingly.
+- **The `-arena-art-review=` capture would not complete in this sandbox this session — reported
+  honestly rather than faked.** First found a real, fixable cause (an orphaned Unity player process
+  leaked from an earlier smoke-test in this same session, Friday, 14+ hours old, 82% CPU, holding a
+  resource/license) and cleared it with the owner's confirmation. That did NOT fix it: two further
+  attempts after the cleanup (one unbounded, one with a 240s hard watchdog kill) both hung at the
+  identical point every time — engine init completes, `Begin MonoManager ReloadAssembly` /
+  `Finished resetting the current domain` logs, then nothing; zero frames written; never reaches the
+  arena scene or gameplay code at all. Since PlayMode tests (run through the Editor's test runner,
+  not this packaged-player path), the dev build, `smoke-player.sh` (a different, simpler
+  `-batchmode -nographics` invocation with no `-arena-art-review` flag), and the motion-pack
+  validator are all green, this points at something specific to the `-arena-art-review=` + `-quit`
+  packaged-player combination in this sandbox today, not a regression from this task's code changes.
+  Stopped after 3 reproducible hangs rather than continuing to retry — this is the same
+  `docs/VISUAL-READABILITY-CONTRACT.md`/prior-session "known sandbox gap" this doc has flagged
+  before (headless/no-GPU capture has been unreliable in this environment), now worse than the
+  earlier "runs clean but produces flat placeholders" state. Whoever next has a real display or a
+  less contended sandbox should retry `<built-player> --arena-art-review=<path>` directly before
+  trusting this task's visuals were inspected — they were not, this time.
+- Full PlayMode suite: **643/643 passed, 0 skipped** (625 baseline from A2.3 + 18 new — 10 threat-label
+  + 8 coverage already existing verified unaffected via `ThreatMotionFidelityPlayModeTests`,
+  `unity/playmode-results.xml`, SHA-256
+  `28edb2cd8efc088dbab314a9012e26cea639f2370287bb9f7160edc4944d3fd1`, 2026-07-18 15:53 EDT).
+  `tools/art/validate_character_motion_pack.py`: 30/30 source boards, 186/360 runtime frames (up
+  from 170/336 after the new Sniff E/S frames). Dev build succeeded and `smoke-player.sh` passed;
+  the art-review capture did not complete (see above).
 
 ### A2.5 — Held-payoff pose audit
 **Goal:** every mission's held live payoff (the 1.15s pre-end-card beat) shows an animated

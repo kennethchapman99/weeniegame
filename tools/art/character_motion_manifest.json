@@ -32,7 +32,9 @@
     "cheddar_carry_directions_v02.png",
     "cocoa_carry_directions_v02.png",
     "cheddar_dig_east_south_v01.png",
-    "cocoa_dig_east_south_v01.png"
+    "cocoa_dig_east_south_v01.png",
+    "cheddar_sniff_east_south_v01.png",
+    "cocoa_sniff_east_south_v01.png"
   ],
   "clips": [
     { "name": "idle", "directions": "all", "frames": 4, "priority": "A" },
@@ -40,6 +42,7 @@
     { "name": "bark", "directions": "all", "frames": 4, "priority": "A" },
     { "name": "tug", "directions": ["e", "w"], "frames": 3, "priority": "A" },
     { "name": "dig", "directions": ["e", "s", "w"], "frames": 4, "priority": "B" },
+    { "name": "sniff", "directions": ["e", "s", "w"], "frames": 4, "priority": "B" },
     { "name": "carry", "directions": "all", "frames": 2, "priority": "B" },
     { "name": "herd", "directions": ["e", "se", "sw", "w"], "frames": 3, "priority": "B" },
     { "name": "hide", "directions": ["s", "n"], "frames": 2, "priority": "B" },

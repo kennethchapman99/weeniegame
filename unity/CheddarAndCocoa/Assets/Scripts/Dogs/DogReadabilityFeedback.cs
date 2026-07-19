@@ -30,11 +30,9 @@ namespace CheddarAndCocoa.Dogs
             Swim,
             Jump,
             /// <summary>
-            /// A2.3: wired into Scent Search's Sniff() verb. No authored art exists yet (needs a new
-            /// reference board through the external image-generation step this pass didn't have
-            /// access to - see docs/ANIMATION-STATE-CATALOG.md) - renders via the same
-            /// static-idle-fallback path Swim/Jump already use until real art lands, at which point
-            /// this Pose/Clip wiring needs no further changes.
+            /// A2.3: wired into Scent Search's Sniff() verb. A2.4 (2026-07-18) added authored E/S
+            /// motion strips (W covered by the existing E-facing mirror fallback) - see
+            /// docs/ANIMATION-STATE-CATALOG.md.
             /// </summary>
             Sniff
         }

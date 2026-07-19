@@ -44,7 +44,7 @@ sniff/hide/comfort art — the enum slot is already there).
 | swim | none | **static fallback (= plain idle image)** | `Pose.Swim` has no `Clip` mapping (`TryClip` returns false) and no `FinalDogPoseArt`/`ArenaDogPoseSprites` case — a swimming dog currently renders as a standing-idle sprite with zero visual distinction, even though the backyard pool mechanic is live gameplay. |
 | jump | none | **static fallback (= plain idle image)** | Same gap as swim — `Pose.Jump` renders as plain idle. |
 | interact (any mission's accept) | n/a | **fixed (A2.2, 2026-07-18)** | `GameManager.OnDogInteracted` now plays a squash-and-pop cosmetic tween on a genuine Interact acceptance, roster-wide, via one shared hook. Not a `Pose`/authored-art fix — a tween layered on top of whatever pose is already showing. |
-| sniff | n/a | **wired, no art yet (A2.3, 2026-07-18)** | `Pose.Sniff`/`Clip.Sniff` now exist and `ScentSearchMissionController.Sniff()` calls `ShowSniff()` on both dogs' tracking beats. Renders via the same static-idle fallback Swim/Jump already use (no authored strip exists) — the code path is ready, only the art is missing. See the A2.3 note below for why: producing it needs the external image-generation step that created every other board in `ReferenceOnly/GeneratedCharacterMotion/`, which this pass had no tool access to invoke. |
+| sniff | 4 × 2 (E, S) | **authored strip (A2.4, 2026-07-18)** | `Pose.Sniff`/`Clip.Sniff` exist and `ScentSearchMissionController.Sniff()` calls `ShowSniff()` on both dogs' tracking beats. A2.3 wired the code path with no art (owner-supplied reference boards weren't available that session); A2.4 got hand-produced `cheddar_sniff_east_south_v01.png`/`cocoa_sniff_east_south_v01.png` boards from the owner and extracted real E/S frames through a new `export_character_sniff.py` (W covered by the existing E-facing mirror, same pattern as dig). |
 | comfort (as a distinct gesture) | n/a | **missing (aliased)** | `ShowComfort()` calls `ForcePose(Pose.Proud, 0.5f)` — a real gameplay signal fires, but it visually reads as "proud," not "comforting." |
 | dramatic flop (Table Stealth) | n/a | **missing** | No `Pose.Flop`; Cocoa's belly-flop distraction has no distinct pose while `_flopEngaged` is true. |
 | beg | n/a | **missing** | No `Pose.Beg` anywhere in the roster. |
@@ -63,8 +63,8 @@ sniff/hide/comfort art — the enum slot is already there).
 1. **Interact** (A2.2's scope) — every one of the 23 missions' Interact-accept moments has zero
    distinct dog-side animation. Highest leverage: touches the entire roster through one shared
    input→controller acceptance path, not 23 call sites.
-2. **Sniff** — Scent Search's entire core verb has no visual read; the mission's whole premise is
-   invisible on the dog.
+2. **Sniff** — Scent Search's entire core verb had no visual read; the mission's whole premise was
+   invisible on the dog. **Resolved A2.4 (2026-07-18)** — see the outcomes note below.
 3. **Carry** — partial direction coverage (E/N/S only) is a smaller gap than the fully-missing verbs
    above but affects every carry-a-weenie/carry-a-bone beat across the roster.
 4. **Comfort** — currently aliased to Proud, actively misleading (a nuzzle reading as a celebration)
@@ -108,9 +108,83 @@ external tool and a matching `export_character_sniff.py` extractor is written (f
 `Pose.Sniff` renders via the same static-idle fallback `Pose.Swim`/`Pose.Jump` already use — a known,
 already-documented gap, not a new one. The moment art lands, no further code changes are needed.
 
+**Update, A2.4 (2026-07-18): the Sniff art gap above is now closed.** The owner produced
+`cheddar_sniff_east_south_v01.png`/`cocoa_sniff_east_south_v01.png` (hand-generated externally,
+matching the existing dig boards' 2×4 E/S grid format and character model) and dropped them into
+`ReferenceOnly/GeneratedCharacterMotion/`. Wrote `tools/art/export_character_sniff.py` (mirrors
+`export_character_dig.py`) to extract them, exactly as this note predicted would be needed. The
+extraction surfaced one real bug worth remembering for any future board: two of Cheddar's four
+east-facing cells came out with a small disconnected fur-wisp artifact in the corner (a neighboring
+cell's ear/tail tip bleeding past the crop boundary) — fixed generically in the new script with a
+largest-connected-component filter that zeroes any foreground blob that isn't the dominant one,
+rather than hand-tuning crop margins per frame. `Pose.Sniff` now renders real authored motion, no
+longer the Swim/Jump-style static fallback. `docs/AGENT-WORK-QUEUE-PRELAUNCH.md`'s A2.4 entry has
+full evidence.
+
 **Carry's missing NE/SE diagonals were not promoted** — same tooling gap, and lower priority than
 sniff per the ranked list above. `docs/AGENT-WORK-QUEUE-PRELAUNCH.md`'s A2.3 entry has the full
 evidence and should be consulted before anyone picks this back up to produce the actual art.
+
+### A2.4 outcomes (2026-07-18) — threat/NPC acting gaps
+
+Traced every `SetActorState(...)` label the coyote/squirrel mission controllers actually send
+through `ThreatMotionArt.TryInfer`'s keyword table (`ThreatReadabilityAnimator.SetLabelState` →
+`TryInfer`), not just the abstract state names in this doc. Ground truth turned out to differ from
+what the table above assumed:
+
+- **Coyote fake-snack lure was falling all the way to Patrol, not reusing Threaten as documented.**
+  `CoyotesFenceMissionController.TriggerFakeSnack()` sends `"FAKE SNACK BAIT - CHEDDAR, NO!"` /
+  `"...IGNORE IT!"` — neither contains the literal substring `"LURE"` the keyword table checked for,
+  so the coyote calmly patrol-paced during its most predatory bait moment. **Fixed**: added a
+  `"BAIT"` keyword alongside `"LURE"`.
+- **The final "coyote retreats" defeat state had the same bug.**
+  `CompleteFinalPressure()` sends `"COYOTE RETREATS - YARD DEFENDED!"`, which doesn't contain
+  `"DRIVEN BACK"` or `"BLOCKED"` (the only two Retreat keywords) — it also fell to Patrol, despite
+  the label saying "retreats." **Fixed**: added a `"RETREAT"` keyword to the Retreat branch.
+- **Squirrel taunt reused the cowering Scared clip for what is a gleeful, successful escape**, not a
+  scared reaction — `SquirrelConspiracyMissionController`'s taunt counter fires when the squirrel
+  evades a cutoff (3 taunts fails the mission), the mirror image of getting caught, not of being
+  startled. Reusing "cowering tremble" reads backwards, the same class of bug as A2.1's
+  Comfort-aliased-to-Proud finding. **Fixed**: moved `"TAUNT"` from the Scared bucket to the Run
+  bucket (bounding scurry) — reuses existing authored art, no new art needed.
+- **The headline finding, caught by a full-suite regression, not by inspection: the squirrel branch's
+  `!upper.Contains("SQUIRREL")` guard looked like a bug but turned out to be load-bearing.** The
+  guard returns `false` (no inference at all) unless the label literally contains the word
+  "squirrel." First instinct was to remove it, since Eagle's and Coyote's branches have no equivalent
+  guard and 5 of `SquirrelConspiracyMissionController`'s own 6 labels (`HERDED`, `ROUTE n/CONTROLS`,
+  `STASH REVEALED`, `CONSPIRACY CRACKED`, `TAUNT`) never said the word "squirrel" — so `TryInfer`
+  returned `false` and `ThreatReadabilityAnimator.SetAuthoredActive(false)` fired, silently disabling
+  the authored motion strip for nearly that entire mission and falling back to the static placeholder
+  cutout for most of its runtime. Removing the guard broke two *other* already-green tests in
+  `FinalArtIntegrationPlayModeTests.cs`: the guard is the intentional mechanism that keeps Coyotes
+  Fence's repurposed shared-squirrel-actor "dirt/weak-spot" marker from idle-breathing like a live
+  squirrel when it's really just a prop. **Correct fix, applied instead: added the literal word
+  "SQUIRREL" to those 5 label strings in `SquirrelConspiracyMissionController.cs`** (they're shown to
+  players as the actor's world-label text too, so this also makes the on-screen copy clearer, e.g.
+  "SQUIRREL HERDED - NEEDS COCOA CUTOFF!") — fixes the real mission bug at its source without
+  weakening a guard another mission genuinely depends on. Also fixed the same bug's cousin:
+  `"SQUIRREL GOT A WEENIE!"` (BackyardRescue's theft-success beat — does say "squirrel" so it wasn't
+  disabled, but didn't match the Steal keyword list) fell to Idle instead of the grabby Steal clip its
+  sibling `"SQUIRREL STOLE A SNACK!"` correctly gets — added `"WEENIE"` to the Steal keywords.
+- **"Stash guard" needed no separate fix once the label-text fix above landed.** The only call site
+  matching that concept, now `"SQUIRREL STASH REVEALED - SNIFF + INTERACT!"`, resolves to the default
+  Idle clip (perky perch, small breath-rise + tail-flick) — a legitimate "watchful guard" read, not a
+  mismatch, same category as A2.1's finding that Dig/Carry's E-mirror retry "still plays a real
+  animation everywhere." Before the fix it wasn't animating at all; now it correctly does.
+- **Human/Teenager NPCs have zero animated motion of any kind, not a keyword-mapping gap.**
+  `GameManager.AddThreatAnimator` only attaches `ThreatReadabilityAnimator` when `art.ObjectName` is
+  `"Squirrel"` or `"Predator Warning"` — any other actor gets `ThreatMotionArt.Actor.Unknown` and no
+  animator at all, so Table Stealth's human and Walk Campaign's teenager NPCs render as static
+  cutouts full stop. Fixing this for real needs a new `Actor` case, a new `Clip` set, and authored
+  reference boards through the same external image-generation step A2.3 couldn't reach — flagged as
+  the largest remaining threat/NPC gap, explicitly not attempted this pass (same tooling
+  constraint, not a keyword fix).
+- All four code fixes (coyote lure/retreat keywords, squirrel taunt remap, the squirrel guard-clause
+  removal, the weenie-theft keyword) reuse clips that already have authored art (Threaten, Retreat,
+  Run, Steal) — no new art, no tooling-gap decision point needed this time.
+- **Tests**: `ThreatLabelInferencePlayModeTests.cs` (new) pins `TryInfer` against the exact
+  production label strings (not synthetic keywords) for both the fixed and already-correct cases,
+  so a future label-text edit that silently breaks the mapping again gets caught.
 
 ## Dog Locomotion
 
@@ -180,8 +254,9 @@ to those strips until final animation boards exist.
 - retreat
 
 Current Unity first-test coverage: Resources-backed runtime strips exist for patrol, threaten, and
-retreat under `ArenaFinal/Characters/Coyote/Motion/`. Test-fence and lure reads currently reuse
-threaten.
+retreat under `ArenaFinal/Characters/Coyote/Motion/`. Test-fence reads correctly reuse threaten
+(**fixed, A2.4, 2026-07-18**: the fake-snack lure and the final defeated-retreat state were actually
+falling through to Patrol, not Threaten as this line assumed - see the A2.4 section below).
 
 ## Eagle
 
