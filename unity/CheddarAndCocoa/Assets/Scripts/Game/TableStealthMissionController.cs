@@ -38,6 +38,7 @@ namespace CheddarAndCocoa.Game
         private MissionActorFeedback _humanFeedback;
         private MissionPropArtAttachment _humanArt;
         private MissionPropArtAttachment _steakArt;
+        private MissionLevelAreaArt _levelAreaArt;
         private TextMesh _humanLabel;
         private TextMesh _steakLabel;
         private Vector2 _humanZone;
@@ -104,6 +105,7 @@ namespace CheddarAndCocoa.Game
             _successHoldRemaining = 0f;
             _humanZone = new Vector2(_context.Bounds.center.x - 10f, _context.Bounds.center.y);
             _stealZone = new Vector2(_context.Bounds.center.x + 10f, _context.Bounds.center.y);
+            _levelAreaArt = MissionLevelAreaArt.CreateTableStealthArea(_context.Bounds);
             SetSceneActive(true);
             MissionPropArt.SetSprite(_humanArt, FinalGameplayArt.TableStealthHumanWatching);
             MissionPropArt.SetSprite(_steakArt, FinalGameplayArt.TableStealthSteakAvailable);
@@ -227,7 +229,15 @@ namespace CheddarAndCocoa.Game
             return true;
         }
 
-        public void Cleanup() => SetSceneActive(false);
+        public void Cleanup()
+        {
+            SetSceneActive(false);
+            if (_levelAreaArt != null)
+            {
+                Object.Destroy(_levelAreaArt.gameObject);
+                _levelAreaArt = null;
+            }
+        }
 
         public void StageDogsForEntry()
         {

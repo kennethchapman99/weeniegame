@@ -25,6 +25,7 @@ namespace CheddarAndCocoa.Game
         private float _cocoaReassuranceUntil;
         private bool _comfortPrepared;
         private float _successHoldRemaining;
+        private MissionLevelAreaArt _levelAreaArt;
 
         public GameManager.MissionVariant Variant => GameManager.MissionVariant.ThunderstormComfort;
         public bool IsComplete => _cleared && _successHoldRemaining <= 0f;
@@ -83,6 +84,7 @@ namespace CheddarAndCocoa.Game
             _comfortPrepared = false;
             _successHoldRemaining = 0f;
             _nextClapAt = _context.Now() + ClapInterval;
+            _levelAreaArt = MissionLevelAreaArt.CreateThunderstormComfortArea(_context.Bounds);
             SetStormArt(FinalGameplayArt.ThunderstormCloudWaiting);
             if (_stormMarker != null)
             {
@@ -180,6 +182,11 @@ namespace CheddarAndCocoa.Game
         public void Cleanup()
         {
             if (_stormMarker != null) _stormMarker.SetActive(false);
+            if (_levelAreaArt != null)
+            {
+                Object.Destroy(_levelAreaArt.gameObject);
+                _levelAreaArt = null;
+            }
         }
 
         public void StageDogsForEntry()

@@ -670,6 +670,58 @@ namespace CheddarAndCocoa.Tests
                 "Switching to Car Ride should clean up the Kitchen area.");
         }
 
+        [UnityTest]
+        public IEnumerator MissionLevelAreaArt_StagesTableStealthChaosMachineThunderstormAndBlanketCatchIndoors()
+        {
+            // V3.4 indoor-fantasy staging audit: these four missions' fantasy is indoors (a dinner
+            // table, a den, a kitchen counter) but previously had no MissionLevelAreaArt plate at
+            // all, so their gameplay played out on the bare backyard lawn. One floor plate each is
+            // enough to fix the fantasy mismatch without competing with each controller's own
+            // markers (see MissionLevelAreaArt.cs's per-mission doc comments).
+            yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
+            yield return null;
+            yield return null;
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            Assert.IsNotNull(game);
+
+            game.StartMission(GameManager.MissionVariant.TableStealth);
+            yield return new WaitForSeconds(0.1f);
+            var tableStealth = GameObject.Find(MissionLevelAreaArt.TableStealthRootName);
+            Assert.IsNotNull(tableStealth, "Table Stealth should install a mission-owned dining-room level area.");
+            AssertLevelAreaPlate(tableStealth, "DiningRoomFloorPlate", "diningroom_floor_area", expectedMaxSortingOrder: -7);
+            AssertLevelAreaHasNoPrimitiveSquareMarkers(tableStealth);
+
+            game.StartMission(GameManager.MissionVariant.ChaosMachine);
+            yield return new WaitForSeconds(0.1f);
+            Assert.IsNull(GameObject.Find(MissionLevelAreaArt.TableStealthRootName),
+                "Switching to Chaos Machine should clean up the Table Stealth area.");
+            var chaosMachine = GameObject.Find(MissionLevelAreaArt.ChaosMachineRootName);
+            Assert.IsNotNull(chaosMachine, "Chaos Machine should install a mission-owned living-room level area.");
+            AssertLevelAreaPlate(chaosMachine, "LivingRoomFloorPlate", "livingroom_floor_area", expectedMaxSortingOrder: -7);
+            AssertLevelAreaHasNoPrimitiveSquareMarkers(chaosMachine);
+
+            game.StartMission(GameManager.MissionVariant.ThunderstormComfort);
+            yield return new WaitForSeconds(0.1f);
+            Assert.IsNull(GameObject.Find(MissionLevelAreaArt.ChaosMachineRootName),
+                "Switching to Thunderstorm Comfort should clean up the Chaos Machine area.");
+            var thunderstorm = GameObject.Find(MissionLevelAreaArt.ThunderstormComfortRootName);
+            Assert.IsNotNull(thunderstorm, "Thunderstorm Comfort should install a mission-owned living-room level area.");
+            AssertLevelAreaPlate(thunderstorm, "LivingRoomFloorPlate", "livingroom_floor_area", expectedMaxSortingOrder: -7);
+            AssertLevelAreaHasNoPrimitiveSquareMarkers(thunderstorm);
+
+            game.StartMission(GameManager.MissionVariant.BlanketCatch);
+            yield return new WaitForSeconds(0.1f);
+            Assert.IsNull(GameObject.Find(MissionLevelAreaArt.ThunderstormComfortRootName),
+                "Switching to Blanket Catch should clean up the Thunderstorm Comfort area.");
+            var blanketCatch = GameObject.Find(MissionLevelAreaArt.BlanketCatchRootName);
+            Assert.IsNotNull(blanketCatch, "Blanket Catch should install a mission-owned kitchen-counter level area.");
+            // Deliberately reuses Kitchen Falling Food Frenzy's own floor art: same kitchen, per both
+            // missions' briefing text ("food's teetering on the counter").
+            AssertLevelAreaPlate(blanketCatch, "KitchenFloorPlate", "kitchen_floor_area", expectedMaxSortingOrder: -7);
+            AssertLevelAreaHasNoPrimitiveSquareMarkers(blanketCatch);
+        }
+
         private static void AssertTreatProp(string expectedResourcePath)
         {
             foreach (var treat in Object.FindObjectsByType<Treat>(FindObjectsSortMode.None))

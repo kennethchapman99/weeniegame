@@ -45,7 +45,7 @@
 | V3.1 | Style-contract audit + fix list | DONE (2026-07-19, see below) |
 | V3.2 | Kill remaining square/debug first reads | DONE (2026-07-19, see below) |
 | V3.3 | Mission tile consistency | DONE (2026-07-19, see below) |
-| V3.4 | Indoor-fantasy staging audit | OPEN |
+| V3.4 | Indoor-fantasy staging audit | DONE (2026-07-19, see below) |
 | V3.5 | HUD + end-card copy/style pass | OPEN |
 | F4.1 | Universal first-mission control reminder | OPEN |
 | F4.2 | Post-clear flow + session summary | OPEN |
@@ -1016,6 +1016,62 @@ colliders, markers preserved, render-order above the yard plate — note Car Rid
 render-order-tie lesson in `ARENA-PLAYABLE.md`). Where the backyard is fine (most yard missions),
 record "backyard intentional" and move on.
 **Tests:** area-plate load + no-collider assertions per new plate; art-review frames as evidence.
+
+**Done (2026-07-19):** Audited the five named missions (plus confirmed no other V3.1 flag named a
+staging mismatch) by reading each controller's actual fantasy text (`MissionCatalog.cs` briefing +
+class doc comments) against whether it has any `MissionLevelAreaArt` plate today:
+
+| Mission | Fantasy | Had a plate? | Verdict |
+|---|---|---|---|
+| Table Stealth | Steak dropped under the dinner table, human watching | No | **Fixed** — dining room |
+| Great Escape | Escaping through the yard's own latched fence gate; all 4 stations sit at the yard's corners | No | **Backyard intentional** — this is a fence/gate escape, not an indoor scene; forcing an indoor plate would misrepresent it |
+| Chaos Machine | Rube Goldberg contraption; class doc says "the dogs pre-position at their junctions" with no location text, but its own mission-tile art depicts a den (bookshelf, lamp, wood floor, domino run) | No | **Fixed** — living room |
+| Blanket Catch | "Food's teetering on the counter!" — the same kitchen-counter fantasy as Kitchen Falling Food Frenzy | No | **Fixed** — reuses Kitchen's own floor art directly |
+| Thunderstorm Comfort | No location text in the briefing, but its mission-tile art is unambiguous: armchair, lamp, bookshelf, window showing the storm outside | No | **Fixed** — living room (shared pack with Chaos Machine) |
+
+Great Escape's tile art was also checked (not just its code) before ruling it backyard-intentional —
+it shows the same wooden yard gate the controller's station coordinates describe, confirming the
+fantasy genuinely is the yard, not a mislabeled indoor scene.
+
+**Generated two new floor plates**, not four, since Chaos Machine and Thunderstorm Comfort's brief
+art depicts the same den and Blanket Catch reuses Kitchen's art wholesale — no redundant near-duplicate
+assets. New `tools/art/generate_indoor_level_area_packs.py` mirrors `kitchen_floor_area.png`'s exact
+grammar (1024x768 rounded-rect canvas, ~14px outline matching the Style Contract's 4-12px-@512
+range, storybook palette) rather than inventing a new visual language: `diningroom_floor_area.png`
+(honey-wood planks + a warm burgundy rug) and `livingroom_floor_area.png` (cooler wood planks + a
+teal rug in Cocoa's cool-accent family + a low bookshelf silhouette). Deliberately **floor-only, no
+wall/furniture plate** for any of the three new missions — each mission's existing markers (human/
+steak, lever/junctions, storm cue) already carry their own art, and a wall or furniture plate risked
+visually competing with them rather than helping; the floor is what actually answers "does the
+backyard grass show," which is V3.4's real question.
+
+**Wired via the exact Kitchen/Car Ride pattern**, no new architecture: `MissionLevelAreaArt.cs`
+gained `CreateTableStealthArea`, `CreateChaosMachineArea`/`CreateThunderstormComfortArea` (both
+delegate to one private `CreateLivingRoomArea(rootName, bounds)` to avoid duplicating the plate-build
+call while keeping each mission's root GameObject independently named/destroyable), and
+`CreateBlanketCatchArea`. Each of the four controllers gained a `_levelAreaArt` field, a creation
+call in `StartMission()`, and a destroy-on-`Cleanup()` block — for `TableStealth`/`ChaosMachine`/
+`BlanketCatch` this meant converting their expression-bodied `Cleanup() => SetSceneActive(false);`
+into a full method body (mirroring Kitchen's `Cleanup()` exactly); `ThunderstormComfort`'s `Cleanup()`
+was already a full method, so it only gained the destroy block. All four plates render at
+`sortingOrder -7`, matching Kitchen's own already-verified-safe floor value (clears the shared
+backyard plate's `-8` with the same margin Kitchen uses, confirmed by reading
+`BackyardRescueArtEnhancer.AddPaintedBackyardPlate` rather than assumed). `FinalGameplayArt.cs` grew
+two new resource-path constants added to the existing `LevelAreaPropPack` array, which auto-enrolls
+them in that file's generic resource-load coverage test.
+
+**Tests:** new `MissionLevelAreaArt_StagesTableStealthChaosMachineThunderstormAndBlanketCatchIndoors`
+(`FinalArtIntegrationPlayModeTests.cs`) — mirrors the existing Kitchen/Car Ride test's exact shape:
+switches through all four missions in sequence, asserting each installs its named plate (correct
+sprite, `sortingOrder <= -7`, no `Collider2D`, no leftover primitive-square markers) and that
+switching missions destroys the previous mission's area. Passed on the first run. Full PlayMode
+suite: **645/645 passed, 0 failed, 0 skipped** (644 baseline + 1 new test method),
+`unity/playmode-results.xml`, SHA-256 `29ba5bf2552163638b33581b18a1cc850dca3b80e6011510e6f956cb4914cd8b`,
+2026-07-19 15:51 EDT. Dev player rebuilt at HEAD, executable SHA-256
+`e166e7fa30eeb2b1dc62a47be4081f0e4ad837af2b8781bfd56c100e0c8f2827`; smoke passed. Art-review capture:
+same known no-GPU/no-display sandbox gap as every prior V-series task — visual evidence for the two
+new plates came from directly viewing the generated PNGs via the Read tool instead (both shown
+in-conversation before being wired into any controller).
 
 ### V3.5 — HUD + end-card copy/style pass
 **Goal:** every player-facing string and card reads in one voice (dog-life comedy, short, sofa-legible).

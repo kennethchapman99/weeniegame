@@ -253,6 +253,8 @@ namespace CheddarAndCocoa.Game
         public const string EnvironmentPhotoHouseDeck = Root + "/Props/Environment/yard_photo_house_deck";
         public const string LevelAreaKitchenFloor = Root + "/Props/LevelAreas/kitchen_floor_area";
         public const string LevelAreaKitchenCounters = Root + "/Props/LevelAreas/kitchen_counter_wall";
+        public const string LevelAreaDiningRoomFloor = Root + "/Props/LevelAreas/diningroom_floor_area";
+        public const string LevelAreaLivingRoomFloor = Root + "/Props/LevelAreas/livingroom_floor_area";
         public const string BuildingHomeExterior = Root + "/Props/Buildings/home_exterior_facade";
         public const string BuildingBackPorchEntry = Root + "/Props/Buildings/back_porch_entry";
         public const string BuildingYardShedStorage = Root + "/Props/Buildings/yard_shed_storage";
@@ -298,7 +300,7 @@ namespace CheddarAndCocoa.Game
 
         public static readonly string[] LevelAreaPropPack =
         {
-            LevelAreaKitchenFloor, LevelAreaKitchenCounters
+            LevelAreaKitchenFloor, LevelAreaKitchenCounters, LevelAreaDiningRoomFloor, LevelAreaLivingRoomFloor
         };
 
         public static readonly string[] HudSkinPack =

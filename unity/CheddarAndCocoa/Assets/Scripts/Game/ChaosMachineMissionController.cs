@@ -36,6 +36,7 @@ namespace CheddarAndCocoa.Game
         private GameObject[] _junctions;
         private TextMesh[] _junctionLabels;
         private MissionPropArtAttachment[] _junctionArt;
+        private MissionLevelAreaArt _levelAreaArt;
         private int _stageSeen;
         private int _stallsSeen;
         private bool _failed;
@@ -102,6 +103,7 @@ namespace CheddarAndCocoa.Game
             _failed = false;
             _completionPresented = false;
             _successHoldRemaining = 0f;
+            _levelAreaArt = MissionLevelAreaArt.CreateChaosMachineArea(_context.Bounds);
             SetSceneActive(true);
             UpdateVisuals();
         }
@@ -188,7 +190,15 @@ namespace CheddarAndCocoa.Game
             return true;
         }
 
-        public void Cleanup() => SetSceneActive(false);
+        public void Cleanup()
+        {
+            SetSceneActive(false);
+            if (_levelAreaArt != null)
+            {
+                Object.Destroy(_levelAreaArt.gameObject);
+                _levelAreaArt = null;
+            }
+        }
 
         public void StageDogsForEntry()
         {

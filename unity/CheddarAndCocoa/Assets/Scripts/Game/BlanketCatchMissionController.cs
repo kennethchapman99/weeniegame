@@ -35,6 +35,7 @@ namespace CheddarAndCocoa.Game
         private bool _failed;
         private bool _waitingForCocoaBark;
         private float _successHoldRemaining;
+        private MissionLevelAreaArt _levelAreaArt;
 
         public GameManager.MissionVariant Variant => GameManager.MissionVariant.BlanketCatch;
         public bool IsComplete => _puzzle.Solved && _successHoldRemaining <= 0f;
@@ -81,6 +82,7 @@ namespace CheddarAndCocoa.Game
             _failed = false;
             _waitingForCocoaBark = false;
             _successHoldRemaining = 0f;
+            _levelAreaArt = MissionLevelAreaArt.CreateBlanketCatchArea(_context.Bounds);
             SetSceneActive(true);
             SpawnItem();
             UpdateVisuals();
@@ -174,7 +176,15 @@ namespace CheddarAndCocoa.Game
             return true;
         }
 
-        public void Cleanup() => SetSceneActive(false);
+        public void Cleanup()
+        {
+            SetSceneActive(false);
+            if (_levelAreaArt != null)
+            {
+                Object.Destroy(_levelAreaArt.gameObject);
+                _levelAreaArt = null;
+            }
+        }
 
         public void StageDogsForEntry()
         {

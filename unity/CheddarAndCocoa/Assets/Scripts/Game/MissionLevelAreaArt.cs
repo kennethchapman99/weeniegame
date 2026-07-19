@@ -10,6 +10,10 @@ namespace CheddarAndCocoa.Game
     {
         public const string KitchenRootName = "KitchenLevelArea";
         public const string CarRideRootName = "CarRideLevelArea";
+        public const string TableStealthRootName = "TableStealthLevelArea";
+        public const string ChaosMachineRootName = "ChaosMachineLevelArea";
+        public const string ThunderstormComfortRootName = "ThunderstormComfortLevelArea";
+        public const string BlanketCatchRootName = "BlanketCatchLevelArea";
 
         public int PlateCount { get; private set; }
 
@@ -82,6 +86,52 @@ namespace CheddarAndCocoa.Game
                 plate.transform.SetParent(scroller.transform, true);
                 plate.GetComponent<SpriteRenderer>().maskInteraction = SpriteMaskInteraction.VisibleInsideMask;
             }
+        }
+
+        /// <summary>
+        /// V3.4 indoor-fantasy staging audit: Table Stealth's dinner-table steak heist plays out on
+        /// a dining room floor instead of the bare backyard lawn. A single floor plate is enough -
+        /// the human/steak markers already carry their own art, so a wall/furniture plate risks
+        /// visually competing with them rather than helping.
+        /// </summary>
+        public static MissionLevelAreaArt CreateTableStealthArea(Rect bounds)
+        {
+            var area = CreateRoot(TableStealthRootName);
+            area.AddPlate("DiningRoomFloorPlate", FinalGameplayArt.LevelAreaDiningRoomFloor,
+                bounds.center, new Vector2(33f, 25f), -7, new Color(1f, 1f, 1f, 0.96f));
+            return area;
+        }
+
+        /// <summary>
+        /// V3.4: Chaos Machine's Rube Goldberg contraption and Thunderstorm Comfort's storm-shelter
+        /// huddle are both staged in the same cozy den in their briefing art, so they share one
+        /// living-room floor pack rather than each needing bespoke art.
+        /// </summary>
+        public static MissionLevelAreaArt CreateChaosMachineArea(Rect bounds) =>
+            CreateLivingRoomArea(ChaosMachineRootName, bounds);
+
+        public static MissionLevelAreaArt CreateThunderstormComfortArea(Rect bounds) =>
+            CreateLivingRoomArea(ThunderstormComfortRootName, bounds);
+
+        private static MissionLevelAreaArt CreateLivingRoomArea(string rootName, Rect bounds)
+        {
+            var area = CreateRoot(rootName);
+            area.AddPlate("LivingRoomFloorPlate", FinalGameplayArt.LevelAreaLivingRoomFloor,
+                bounds.center, new Vector2(33f, 25f), -7, new Color(1f, 1f, 1f, 0.96f));
+            return area;
+        }
+
+        /// <summary>
+        /// V3.4: Blanket Catch's briefing is explicit ("food's teetering on the counter") - the same
+        /// kitchen as Kitchen Falling Food Frenzy, so it reuses that pack's floor art directly rather
+        /// than generating a redundant near-duplicate.
+        /// </summary>
+        public static MissionLevelAreaArt CreateBlanketCatchArea(Rect bounds)
+        {
+            var area = CreateRoot(BlanketCatchRootName);
+            area.AddPlate("KitchenFloorPlate", FinalGameplayArt.LevelAreaKitchenFloor,
+                bounds.center, new Vector2(33f, 25f), -7, new Color(1f, 1f, 1f, 0.96f));
+            return area;
         }
 
         public void SetVisible(bool visible) => gameObject.SetActive(visible);
