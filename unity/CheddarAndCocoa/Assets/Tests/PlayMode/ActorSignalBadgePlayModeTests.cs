@@ -389,7 +389,10 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(StationSignaling(coach),
                 "Beat 1's watch pad must signal for Cheddar at any distance.");
 
-            _cocoa.transform.position = door.transform.position;
+            // CF1.6: the door-stare stimulus (and the cocoaAtDoor read this signal badge follows)
+            // now anchors to the doormat's floor position, not the door art's own tall-wall
+            // center - see PeeBreakMissionController.DoorStareAnchor's XML doc.
+            _cocoa.transform.position = _game.PeeBreakController.DoorStareAnchor;
             yield return null;
             yield return null;
 

@@ -43,6 +43,27 @@ the human **misread** (brings the wrong thing — leash → tennis ball → blan
 We escalate by **changing the required combo per beat** and **splitting which dog can apply which
 stimulus.**
 
+## Station map
+
+Physical anchors the dogs stand at/near for each beat's stimuli
+(`PeeBreakMissionController.BuildScene()`/`StartMission()`):
+
+- **Door (Cocoa's `DoorStare`, Beats 1/2/4).** CF1.6 (2026-07-20, finding #6 — "It's weird that the
+  door stare has to happen by climbing up the wall?",
+  `captures/2026-07-20/pee-break-door-stare-wall-climb.png`): the stimulus, the united-bark
+  "at the door" check, Cocoa's entry placement, her objective-arrow/breadcrumb target, and the
+  door label's proximity gate all anchor to `DoorStareAnchor` — the existing doormat prop's
+  floor-level world position (a child of the door art, offset toward its visual base) — instead
+  of `_doorPosition`, the door ART's own center drawn tall up the back wall (scale `(x, 4, 1)`).
+  Standing within `StationRange` of that center visually read as climbing the door; the doormat
+  sits roughly 2.5 units below it, comfortably more than `StationRange` (2.25), so this is a real
+  relocation, not a cosmetic tweak. The door ART itself — position, scale, open/closed swap — is
+  unchanged. Cocoa also gets a grounded, facing-the-door idle pose (the existing guidance-nudge
+  read, no new art) while she holds the stare.
+- **Leash (Cheddar's `PresentLeash`, Beats 2/4).** Unchanged — hangs on its hook left of the door.
+- **Hallway (Cheddar's `BlockHallway`, Beat 3 only).** Unchanged — mid-room choke point.
+- **Charger (Cocoa's `UnplugCharger`, Beat 3 only).** Unchanged — couch-side outlet.
+
 ## First-session flow (opening explainer → control card → sniff beat → Beat 1)
 
 Pee Break is the first mission with a controller-owned opening explainer (the 10-second MP4), so its

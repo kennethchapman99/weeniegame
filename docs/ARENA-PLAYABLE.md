@@ -117,6 +117,38 @@ pop by the Teenager and a flash of his "OH!" bubble even though nothing else on 
 it yet - that flourish must NOT repeat at the final door-open climax, which keeps its existing
 "RELIEF ZOOMIES!" payoff untouched.
 
+### Door stare anchors to the floor (CF1.6, 2026-07-20)
+
+The 2026-07-20 couch retest found (checklist #6, Unclear): "It's weird that the door stare has to
+happen by climbing up the wall?" - `captures/2026-07-20/pee-break-door-stare-wall-climb.png` shows
+both dogs rendered lying ON the door. `_doorPosition` is the door ART's own center, drawn tall up
+the back wall (scale `(x, 4, 1)`), so standing within `StationRange` of it visually read as climbing
+the door.
+
+The `DoorStare` stimulus (`BuildActiveSet`), the united-bark "at the door" proximity check
+(`HandleBark`), Cocoa's entry placement (`StageDogsForEntry`), her objective-arrow/breadcrumb target
+(`TryGetObjectiveTarget`), the `cocoaAtDoor` read that drives marker color/station badges/label copy,
+and the door label's proximity gate now all anchor to the new `PeeBreakMissionController.DoorStareAnchor`
+property - the existing doormat prop's world position (`_doorMat`, a child of the door art offset
+toward its visual base; its local Y offset against the door's fixed Y-scale of 4 keeps the anchor
+stable whether the door is open or closed). The door ART itself - position, scale, open/closed
+animation - is completely unchanged; only what point gameplay measures Cocoa's stare *from* moved.
+The gap between the old center and the new floor anchor is close to 2.5 units, comfortably more than
+`StationRange` (2.25), so this is a real relocation, not a cosmetic tweak. Cocoa also picks up a
+grounded, facing-the-door idle pose (reusing the existing `ShowGuidanceNudge` read - no new art)
+while she holds the stare.
+
+Two cosmetic text pops keyed to the door were judgment calls: the united-bark **WOOF + WOOF!**
+callout moved down to the new anchor (it co-occurs with both dogs actually standing there for the
+climax), while the door-open **RELIEF ZOOMIES!** pop and the post-clear celebration staging stay
+keyed to the door's own position, since by that point the dogs have already been explicitly staged
+well outside/below it for the payoff and neither reads as "at the stare spot" anymore either way.
+
+Manual acceptance check: start Operation Pee Break and walk Cocoa toward the door. She should settle
+at floor level in front of the door - not partway up its face - before the close-range **HOLD DOOR
+STARE** prompt appears and the door/arrow read as "on target." Confirm the same grounded read holds
+in Beat 2 (stare + leash) and Beat 4 (stare + leash + bark), where the door station is reused.
+
 ### Operation Pee Break couch-feedback response (2026-07-14)
 
 The latest human run found five usability gaps: unclear station order/reaction, abstract large-circle

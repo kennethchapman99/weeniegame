@@ -300,6 +300,19 @@ namespace CheddarAndCocoa.Game
         public CoopSocialManipulationPuzzle Puzzle => _puzzle;
         public SocialStimulus Required => _beatIndex < RequiredByBeat.Length ? RequiredByBeat[_beatIndex] : SocialStimulus.None;
         public Vector2 DoorPosition => _doorPosition;
+        /// <summary>
+        /// CF1.6 (finding #6, captures/2026-07-20/pee-break-door-stare-wall-climb.png): "It's
+        /// weird that the door stare has to happen by climbing up the wall?" _doorPosition above
+        /// is the door ART's own center - the door is drawn tall against the back wall (scale
+        /// (x, 4, 1)), so standing within StationRange of its center visually read as climbing it.
+        /// _doorMat is the existing doormat child built in BuildScene() (local Y offset -0.62
+        /// against the door's fixed Y-scale of 4, unaffected by the door's open/closed X-scale
+        /// swap), so its world position already sits at the door's visual base with no extra
+        /// math needed - Unity resolves the child transform every frame _door's own position is
+        /// set in UpdateScene(). This is the new anchor for the stare stimulus and related
+        /// gameplay checks; the door ART itself stays exactly where it was.
+        /// </summary>
+        public Vector2 DoorStareAnchor => _doorMat.transform.position;
         public Vector2 LeashPosition => _leashPosition;
         public Vector2 HallwayPosition => _hallwayPosition;
         public Vector2 ChargerPosition => _chargerPosition;
@@ -434,7 +447,16 @@ namespace CheddarAndCocoa.Game
             if (DoorOpen || dogIndex < 0 || _context.Dogs == null || dogIndex >= _context.Dogs.Length) return false;
             float now = _context.Now();
             _barkSignalUntil = now + UnitedBarkWindow;
-            if (Vector2.Distance(_context.Dogs[dogIndex].transform.position, _doorPosition) <= StationRange + 1f)
+            // CF1.6: "at the door" for the united-bark check now means the floor anchor, matching
+            // the stare stimulus check in BuildActiveSet - both dogs are down at the doormat for
+            // the climax, not up at the door's own center. The pad widens from the pre-CF1.6 +1f
+            // to +1.3f: moving the reference point ~2.48 units down (from _doorPosition to
+            // DoorStareAnchor) increased the distance from _leashPosition - Cheddar's real Beat-4
+            // bark spot while he holds PresentLeash - to this anchor from ~3.16 to ~3.30, which the
+            // old +1f pad (radius 3.25) no longer covered. +1.3f (radius 3.55) keeps both dogs'
+            // real climax positions inside this "near the door cluster" bark-timing check with a
+            // deliberate margin, without touching the frozen StationRange constant itself.
+            if (Vector2.Distance(_context.Dogs[dogIndex].transform.position, DoorStareAnchor) <= StationRange + 1.3f)
                 _lastDoorBarks[dogIndex] = now;
 
             if (_beatIndex == 3 && BothDoorBarksRecent(now))
@@ -443,7 +465,11 @@ namespace CheddarAndCocoa.Game
                 _context.SetFeedback(GameManager.FeedbackKind.UnitedBark);
                 _context.SetJuice(GameManager.JuiceFeedbackKind.BarkBurst, "UNITED BARK!");
                 _context.RequestRumble("pee_break_united_bark", 0.35f, 0.65f, 0.22f);
-                _context.SpawnWorldPop(_doorPosition, "WOOF + WOOF!", new Color(1f, 0.92f, 0.35f));
+                // CF1.6: this pop co-occurs with both dogs actually standing at the (now grounded)
+                // anchor, so keep it visually attached to them - offset up like the other
+                // above-a-dog pops in this file (e.g. the role-flip pops in AdvanceBeat()) instead
+                // of floating at the door's own, now visually disconnected, center height.
+                _context.SpawnWorldPop(DoorStareAnchor + new Vector2(0f, 1.1f), "WOOF + WOOF!", new Color(1f, 0.92f, 0.35f));
             }
             return true;
         }
@@ -459,7 +485,8 @@ namespace CheddarAndCocoa.Game
             int cheddar = _context.IndexOfDog(DogId.Cheddar);
             int cocoa = _context.IndexOfDog(DogId.Cocoa);
             if (cheddar >= 0) _context.Dogs[cheddar].transform.position = _cheddarCoachPosition + new Vector2(-3f, -1f);
-            if (cocoa >= 0) _context.Dogs[cocoa].transform.position = _doorPosition + new Vector2(-4f, 1f);
+            // CF1.6: stage Cocoa near the grounded floor anchor, not the door art's own center.
+            if (cocoa >= 0) _context.Dogs[cocoa].transform.position = DoorStareAnchor + new Vector2(-4f, 1f);
             foreach (var dog in _context.Dogs)
                 if (dog != null && dog.TryGetComponent<Rigidbody2D>(out var body)) body.linearVelocity = Vector2.zero;
         }
@@ -473,15 +500,17 @@ namespace CheddarAndCocoa.Game
             switch (CurrentBeat)
             {
                 case Beat.DoorStare:
-                    target = cheddar ? _cheddarCoach.transform : _door.transform;
+                    // CF1.6: guide Cocoa's arrow/beacon/breadcrumb to the floor anchor, not up the
+                    // door art itself (_doorMat is a real GameObject/Transform, same as _door).
+                    target = cheddar ? _cheddarCoach.transform : _doorMat.transform;
                     copy = cheddar ? "WATCH COCOA / NO BARK" : "HOLD DOOR STARE";
                     break;
                 case Beat.LeashMessage:
-                    target = cheddar ? _leash.transform : _door.transform;
+                    target = cheddar ? _leash.transform : _doorMat.transform;
                     copy = cheddar ? "PRESENT LEASH" : "HOLD DOOR STARE";
                     break;
                 case Beat.UnitedBark:
-                    target = cheddar ? _leash.transform : _door.transform;
+                    target = cheddar ? _leash.transform : _doorMat.transform;
                     copy = cheddar ? "LEASH + BARK!" : "STARE + BARK!";
                     break;
                 case Beat.ChargerGambit:
@@ -548,7 +577,9 @@ namespace CheddarAndCocoa.Game
             bool CocoaAt(Vector2 p) => cocoa >= 0 && Vector2.Distance(_context.Dogs[cocoa].transform.position, p) <= StationRange;
 
             SocialStimulus active = SocialStimulus.None;
-            if (CocoaAt(_doorPosition)) active |= SocialStimulus.DoorStare;
+            // CF1.6: anchor the stare check to the doormat's floor position, not the door art's
+            // own tall-wall center - see DoorStareAnchor's XML doc for the full rationale.
+            if (CocoaAt(DoorStareAnchor)) active |= SocialStimulus.DoorStare;
             if (CheddarAt(_leashPosition)) active |= SocialStimulus.PresentLeash;
             if (CheddarAt(_hallwayPosition)) active |= SocialStimulus.BlockHallway;
             if (CocoaAt(_chargerPosition)) active |= SocialStimulus.UnplugCharger;
@@ -1235,12 +1266,17 @@ namespace CheddarAndCocoa.Game
             _cheddarCoach.transform.position = _cheddarCoachPosition;
             _hallway.transform.position = _hallwayPosition;
             _charger.transform.position = _chargerPosition;
-            bool cocoaAtDoor = DogAt(DogId.Cocoa, _doorPosition);
+            // CF1.6: every downstream use of cocoaAtDoor below (marker color, station badges,
+            // door/leash/teenager label copy, TeenPresentationState) now reads from the same
+            // grounded anchor as the stimulus check, so they can never disagree about whether
+            // Cocoa is "at the door."
+            bool cocoaAtDoor = DogAt(DogId.Cocoa, DoorStareAnchor);
             bool cheddarAtLeash = DogAt(DogId.Cheddar, _leashPosition);
             bool cheddarAtCoach = DogAt(DogId.Cheddar, _cheddarCoachPosition);
             bool cheddarAtHallway = DogAt(DogId.Cheddar, _hallwayPosition);
             bool cocoaAtCharger = DogAt(DogId.Cocoa, _chargerPosition);
             UpdateTeenPresentationState(cocoaAtDoor, cheddarAtLeash, cheddarAtHallway, cocoaAtCharger);
+            UpdateDoorStarePose(cocoaAtDoor);
             // Distance signal: each beat's required stations raise a command badge until their dog
             // is actually holding the spot (held is the resolved state, like the escape gap).
             ActorSignalBadge.SetStationSignal(_door,
@@ -1496,7 +1532,11 @@ namespace CheddarAndCocoa.Game
         {
             bool debug = _context.DebugPresentationEnabled();
             bool doorRelevant = !DoorOpen && CurrentBeat != Beat.ChargerGambit;
-            SetMarkerPrompt(_door, _doorLabel, doorRelevant && (debug || AnyDogNear(_doorPosition)));
+            // CF1.6: gate the door prompt off the same floor anchor the stimulus now uses. Left
+            // keyed to the old _doorPosition, the label could hide right as a dog stands exactly
+            // where the (now grounded) stare actually registers - PromptRange (2.6) is close
+            // enough to the anchor/center gap (~2.48) that the two could disagree at the edges.
+            SetMarkerPrompt(_door, _doorLabel, doorRelevant && (debug || AnyDogNear(DoorStareAnchor)));
             SetMarkerPrompt(_leash, _leashLabel, !DoorOpen && (_beatIndex == 1 || _beatIndex == 3) && (debug || AnyDogNear(_leashPosition)));
             SetMarkerPrompt(_cheddarCoach, _cheddarCoachLabel, !DoorOpen && _beatIndex == 0 && (debug || AnyDogNear(_cheddarCoachPosition)));
             SetMarkerPrompt(_hallway, _hallwayLabel, !DoorOpen && _beatIndex == 2 && (debug || AnyDogNear(_hallwayPosition)));
@@ -1560,6 +1600,28 @@ namespace CheddarAndCocoa.Game
                     : current ? new Color(1f, 0.88f, 0.28f, 0.96f)
                     : new Color(0.16f, 0.2f, 0.22f, 0.86f));
             }
+        }
+
+        /// <summary>
+        /// CF1.6 (finding #6): grounding the stimulus anchor fixes WHERE Cocoa has to stand, but
+        /// she still just stood there passively. Give her a readable "waiting on the human"
+        /// presentation using an existing pose only - a prior audit (A2.1) found Beg/Sit sprite
+        /// strips don't exist in this project, so this reuses the idle-facing-door read already
+        /// exposed by DogReadabilityFeedback.ShowGuidanceNudge (Tier-1 guidance already uses the
+        /// same call for a different trigger - GameManager.cs's stall-aware nudge - so this is not
+        /// a new mechanism, just a second, gameplay-driven reason to invoke it). Only applies while
+        /// DoorStare is actually part of the current beat's required combo (Beats 1/2/4, not the
+        /// charger gambit), and only refreshes the forced pose while she is actually holding the
+        /// spot - refreshed every tick so the 0.7s forced-pose window never lapses mid-hold.
+        /// </summary>
+        private void UpdateDoorStarePose(bool cocoaAtDoor)
+        {
+            if (DoorOpen || !cocoaAtDoor || (Required & SocialStimulus.DoorStare) == 0) return;
+            int cocoa = _context.IndexOfDog(DogId.Cocoa);
+            if (cocoa < 0 || _context.Dogs == null || cocoa >= _context.Dogs.Length || _context.Dogs[cocoa] == null) return;
+            if (_context.DogFeedback == null || cocoa >= _context.DogFeedback.Length || _context.DogFeedback[cocoa] == null) return;
+            Vector2 faceDoor = _doorPosition - (Vector2)_context.Dogs[cocoa].transform.position;
+            _context.DogFeedback[cocoa].ShowGuidanceNudge(faceDoor);
         }
 
         private void UpdateTeenPresentationState(bool cocoaAtDoor, bool cheddarAtLeash, bool cheddarAtHallway, bool cocoaAtCharger)

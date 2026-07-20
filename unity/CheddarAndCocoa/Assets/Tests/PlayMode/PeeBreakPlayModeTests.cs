@@ -261,7 +261,7 @@ namespace CheddarAndCocoa.Tests
             Assert.Greater(teenagerBounds.size.y, dogBounds.size.y * 1.2f,
                 "The seated Teenager should still read at unmistakable human scale beside the dachshunds.");
             var cocoa = FindDog(DogId.Cocoa);
-            cocoa.transform.position = Controller.DoorPosition;
+            cocoa.transform.position = Controller.DoorStareAnchor;
             _game.ForcePeeBreakAdvance(SocialStimulus.DoorStare, 0.01f);
             Assert.IsTrue(WorldLabelVisible("PeeBreakDoor"),
                 "The door prompt should appear only once a dog is in interaction range.");
@@ -269,6 +269,69 @@ namespace CheddarAndCocoa.Tests
                 "Normal play should keep the large target circle hidden even when its nearby text prompt appears.");
             Assert.Greater(Controller.SignalReactionCount, 0,
                 "Entering the correct station should trigger a prop/Teenager reaction animation.");
+        }
+
+        /// <summary>
+        /// CF1.6 (finding #6, FAIL/Unclear): "It's weird that the door stare has to happen by
+        /// climbing up the wall?" See captures/2026-07-20/pee-break-door-stare-wall-climb.png -
+        /// both dogs rendered lying ON the door art. _doorPosition is the door's own tall-wall
+        /// center (scale (x, 4, 1)); DoorStareAnchor is the doormat child's floor-level position.
+        /// Proves directly against a real per-position Tick() (not a Force* bypass, so the fix is
+        /// exercised through the same BuildActiveSet() path live play uses): the stimulus now
+        /// fires at the new floor anchor and does NOT fire at the old door-center height, and the
+        /// vertical gap between them is meaningfully larger than StationRange - not a few
+        /// centimeters - so grounding it is a real behavior change, not a cosmetic no-op.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator DoorStareStimulusAnchorsToTheFloorNotTheDoorCenter()
+        {
+            yield return LoadMission();
+            var cocoa = FindDog(DogId.Cocoa);
+
+            float verticalGap = Controller.DoorPosition.y - Controller.DoorStareAnchor.y;
+            Assert.Greater(verticalGap, 2.25f,
+                "CF1.6: the doormat anchor must sit meaningfully below the door art's own center " +
+                "(beyond StationRange) or grounding the stimulus would be a cosmetic no-op.");
+
+            cocoa.transform.position = Controller.DoorStareAnchor;
+            Controller.Tick(0.05f, Time.time);
+            Assert.IsTrue((Controller.Puzzle.Active & SocialStimulus.DoorStare) != 0,
+                "Standing at the floor anchor (the doormat's position) should register the door-stare stimulus.");
+
+            cocoa.transform.position = Controller.DoorPosition;
+            Controller.Tick(0.05f, Time.time);
+            Assert.IsTrue((Controller.Puzzle.Active & SocialStimulus.DoorStare) == 0,
+                "Standing at the old door-center height must no longer satisfy the door-stare stimulus " +
+                "(captures/2026-07-20/pee-break-door-stare-wall-climb.png).");
+        }
+
+        /// <summary>
+        /// CF1.6 follow-up: the objective arrow/breadcrumb target and the in-mission pose must
+        /// agree with the anchor fix above, or the fix would be inconsistent - arrows pointing up
+        /// the wall while the stimulus itself reads at the floor, or the stimulus grounded but the
+        /// dog still just standing there with no "waiting on the human" read. TryGetObjectiveTarget
+        /// index 1 is Cocoa (matches the established ObjectiveArrows[1] "HOLD DOOR STARE" convention
+        /// used elsewhere in this suite, e.g. StartState_IsControllerOwnedReadableAndLowPressure).
+        /// </summary>
+        [UnityTest]
+        public IEnumerator DoorStareObjectiveTargetAndPoseGroundCocoaAtTheAnchor()
+        {
+            yield return LoadMission();
+            var cocoa = FindDog(DogId.Cocoa);
+            var cocoaFeedback = cocoa.GetComponent<DogReadabilityFeedback>();
+
+            Assert.IsTrue(Controller.TryGetObjectiveTarget(1, out var target, out var copy, out _));
+            Assert.That(copy, Does.Contain("DOOR STARE"),
+                "Index 1 must be Cocoa's door-stare objective, matching ObjectiveArrows[1] elsewhere in this suite.");
+            Assert.AreEqual((Vector2)Controller.DoorStareAnchor, (Vector2)target.position,
+                "Cocoa's objective arrow/breadcrumb must guide her to the floor anchor, not the door's own center.");
+
+            // Approach from a known side (to the anchor's right) so the facing read is unambiguous:
+            // the door is up and to her left from here, so she should turn to face left.
+            cocoa.transform.position = Controller.DoorStareAnchor + Vector2.right * 1.5f;
+            Controller.Tick(0.05f, Time.time);
+            Assert.AreEqual("FacingLeft", cocoaFeedback.FacingIntentLabel,
+                "Cocoa should turn to face the door while holding the grounded stare, not just stand idle.");
         }
 
         /// <summary>
@@ -292,7 +355,7 @@ namespace CheddarAndCocoa.Tests
                 "Comprehension has not accrued yet at mission start.");
 
             var cocoa = FindDog(DogId.Cocoa);
-            cocoa.transform.position = Controller.DoorPosition;
+            cocoa.transform.position = Controller.DoorStareAnchor;
             _game.ForcePeeBreakAdvance(SocialStimulus.DoorStare, 0.3f);
             Assert.Greater(hud.ProgressNormalized, 0f,
                 "Holding the exact beat-1 job should visibly fill the screen-space meter, not only the world-anchored one.");
@@ -327,7 +390,7 @@ namespace CheddarAndCocoa.Tests
             // route the winning barks through DogController.Bark() -> GameManager.OnDogBarked,
             // not a Force* bypass (Known trap #2).
             FindDog(DogId.Cheddar).transform.position = Controller.LeashPosition;
-            FindDog(DogId.Cocoa).transform.position = Controller.DoorPosition;
+            FindDog(DogId.Cocoa).transform.position = Controller.DoorStareAnchor;
             FindDog(DogId.Cheddar).Bark();
             FindDog(DogId.Cocoa).Bark();
             SetTimeRemaining(_game, 0.0001f);
@@ -469,8 +532,8 @@ namespace CheddarAndCocoa.Tests
             var cocoa = GameObject.Find("Cocoa");
             Assert.IsNotNull(cheddar);
             Assert.IsNotNull(cocoa);
-            cocoa.transform.position = Controller.DoorPosition;
-            cheddar.transform.position = Controller.DoorPosition + Vector2.left * 6f;
+            cocoa.transform.position = Controller.DoorStareAnchor;
+            cheddar.transform.position = Controller.DoorStareAnchor + Vector2.left * 6f;
             _game.ForcePeeBreakAdvance(SocialStimulus.DoorStare, 0.1f);
             yield return null;
 
@@ -556,8 +619,8 @@ namespace CheddarAndCocoa.Tests
             Time.timeScale = 8f;
             try
             {
-                yield return MoveDogTo(cocoa, Controller.DoorPosition);
-                yield return MoveDogTo(cheddar, Controller.DoorPosition + Vector2.left * 8f);
+                yield return MoveDogTo(cocoa, Controller.DoorStareAnchor);
+                yield return MoveDogTo(cheddar, Controller.DoorStareAnchor + Vector2.left * 8f);
                 Assert.That(WorldLabel("PeeBreakDoor"), Does.Contain("COCOA STARE LOCKED"));
                 Assert.That(_game.ObjectiveArrows[0].Label, Does.Contain("WATCH COCOA"));
                 Assert.That(_game.ObjectiveArrows[1].Label, Does.Contain("HOLD DOOR STARE"));
@@ -637,7 +700,7 @@ namespace CheddarAndCocoa.Tests
                 Assert.IsTrue(FindLoadedObject("PeeBreakChargerUnpluggedEnd").activeSelf,
                     "After the charger gambit, the plug should visibly be out.");
 
-                yield return MoveDogTo(cocoa, Controller.DoorPosition);
+                yield return MoveDogTo(cocoa, Controller.DoorStareAnchor);
                 Assert.That(WorldLabel("PeeBreakDoor"), Does.Contain("COCOA STARE LOCKED"));
                 Assert.That(_game.ObjectiveArrows[0].Label, Does.Contain("LEASH + BARK"));
                 Assert.That(_game.ObjectiveArrows[1].Label, Does.Contain("STARE + BARK"));
@@ -703,19 +766,19 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(leash);
             Assert.IsNotNull(teenager);
 
-            cocoa.transform.position = Controller.DoorPosition;
-            cheddar.transform.position = Controller.DoorPosition + Vector2.left * 6f;
+            cocoa.transform.position = Controller.DoorStareAnchor;
+            cheddar.transform.position = Controller.DoorStareAnchor + Vector2.left * 6f;
             _game.ForcePeeBreakAdvance(SocialStimulus.DoorStare, 0.1f);
             Assert.That(WorldLabel("PeeBreakTeenager"), Does.Contain("NEEDS LEASH TOO"));
             Assert.That(WorldLabel("PeeBreakDoor"), Does.Contain("NEEDS CHEDDAR LEASH"));
 
-            cocoa.transform.position = Controller.DoorPosition + Vector2.left * 6f;
+            cocoa.transform.position = Controller.DoorStareAnchor + Vector2.left * 6f;
             cheddar.transform.position = Controller.LeashPosition;
             _game.ForcePeeBreakAdvance(SocialStimulus.PresentLeash, 0.1f);
             Assert.That(WorldLabel("PeeBreakTeenager"), Does.Contain("NEEDS STARE TOO"));
             Assert.That(WorldLabel("PeeBreakLeash"), Does.Contain("NEEDS COCOA STARE"));
 
-            cocoa.transform.position = Controller.DoorPosition;
+            cocoa.transform.position = Controller.DoorStareAnchor;
             _game.ForcePeeBreakAdvance(SocialStimulus.DoorStare | SocialStimulus.PresentLeash, 0.1f);
             Assert.That(WorldLabel("PeeBreakTeenager"), Does.Contain("GETTING IT"));
         }
@@ -749,19 +812,19 @@ namespace CheddarAndCocoa.Tests
             yield return null;
 
             Assert.AreEqual(PeeBreakMissionController.Beat.UnitedBark, Controller.CurrentBeat);
-            cocoa.transform.position = Controller.DoorPosition;
-            cheddar.transform.position = Controller.DoorPosition + Vector2.left * 7f;
+            cocoa.transform.position = Controller.DoorStareAnchor;
+            cheddar.transform.position = Controller.DoorStareAnchor + Vector2.left * 7f;
             _game.ForcePeeBreakAdvance(SocialStimulus.DoorStare, 0.1f);
             Assert.That(WorldLabel("PeeBreakDoor"), Does.Contain("NEEDS CHEDDAR LEASH"));
             Assert.That(WorldLabel("PeeBreakTeenager"), Does.Contain("NEEDS LEASH + BARK"));
 
-            cocoa.transform.position = Controller.DoorPosition + Vector2.left * 7f;
+            cocoa.transform.position = Controller.DoorStareAnchor + Vector2.left * 7f;
             cheddar.transform.position = Controller.LeashPosition;
             _game.ForcePeeBreakAdvance(SocialStimulus.PresentLeash, 0.1f);
             Assert.That(WorldLabel("PeeBreakLeash"), Does.Contain("NEEDS COCOA STARE"));
             Assert.That(WorldLabel("PeeBreakTeenager"), Does.Contain("NEEDS STARE + BARK"));
 
-            cocoa.transform.position = Controller.DoorPosition;
+            cocoa.transform.position = Controller.DoorStareAnchor;
             _game.ForcePeeBreakAdvance(SocialStimulus.DoorStare | SocialStimulus.PresentLeash, 0.1f);
             Assert.That(WorldLabel("PeeBreakDoor"), Does.Contain("BARK TOGETHER"));
             Assert.That(WorldLabel("PeeBreakLeash"), Does.Contain("BARK TOGETHER"));
@@ -996,7 +1059,7 @@ namespace CheddarAndCocoa.Tests
             Controller.ForceAdvance(Controller.Required, 2.249f);
             Assert.IsFalse(Controller.DoorOpen);
             FindDog(DogId.Cheddar).transform.position = Controller.LeashPosition;
-            FindDog(DogId.Cocoa).transform.position = Controller.DoorPosition;
+            FindDog(DogId.Cocoa).transform.position = Controller.DoorStareAnchor;
             FindDog(DogId.Cheddar).Bark();
             FindDog(DogId.Cocoa).Bark();
             SetTimeRemaining(_game, 0.0001f);
@@ -1205,7 +1268,7 @@ namespace CheddarAndCocoa.Tests
             // and controller position/bark path earn the final sliver. Timeout used to run first
             // and turn this visibly completed last-second team action into a failure.
             FindDog(DogId.Cheddar).transform.position = Controller.LeashPosition;
-            FindDog(DogId.Cocoa).transform.position = Controller.DoorPosition;
+            FindDog(DogId.Cocoa).transform.position = Controller.DoorStareAnchor;
             FindDog(DogId.Cheddar).Bark();
             FindDog(DogId.Cocoa).Bark();
             SetTimeRemaining(_game, 0.0001f);
