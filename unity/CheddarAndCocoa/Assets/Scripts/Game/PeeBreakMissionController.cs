@@ -30,6 +30,25 @@ namespace CheddarAndCocoa.Game
             ImpatientFail
         }
 
+        /// <summary>
+        /// CF1.4 (finding #8b: "after each phase, the teenager looks a little different, or
+        /// shifts positions to indicate we're on the 'next subproblem'"). A distinct baseline
+        /// "look" per beat (1:1 with _beatIndex, clamped), layered UNDER TeenState's
+        /// moment-to-moment reactions in the per-part render block inside UpdateScene() - so the
+        /// same TeenState (e.g. DistractedIdle) still reads differently beat to beat. Exposed
+        /// read-only purely so a test can assert a distinct presentation per beat without
+        /// reaching into private transforms.
+        /// </summary>
+        public enum TeenagerBeatLook
+        {
+            PhoneAbsorbedIdle,      // Beat 1 - DoorStare: unchanged pre-CF1.4 baseline.
+            PhoneLoweredStillFeet,  // Beat 2 - LeashMessage: phone held lower, foot wiggle stops.
+            UprightBatteryPanic,    // Beat 3 - ChargerGambit: sits upright; own posture (not just
+                                    // the phone-mounted props) shows the battery panic.
+            HalfStandingDoorGlance  // Beat 4 - UnitedBark: half-standing, glancing at the door
+                                    // between phone checks.
+        }
+
         private const float StationRange = 2.25f;
         private const float UnitedBarkWindow = 0.8f;
         private const float PromptRange = StationRange + 0.35f;
@@ -42,6 +61,9 @@ namespace CheddarAndCocoa.Game
         private const float MisreadOfferDistance = 1.5f;
         private const float MisreadEscalatedOfferDistance = 2.4f;
         private const float MisreadBubblePulseSeconds = 0.6f;
+        // CF1.4 (finding #8b): one-shot beat-transition flourish tuning. Presentation-only, same
+        // as the CF1.3 tuning above - this never feeds Misreads/scoring/rank/beat progression.
+        private const float BeatTransitionOhBubbleSeconds = 0.6f;
         public const float OpeningExplainerDurationSeconds = 10.042f;
         public const string OpeningComprehensionCorrectionLabel = "TEENAGER COMPREHENSION";
         private const float OpeningExplainerSafetyTimeoutSeconds = 18f;
@@ -174,9 +196,20 @@ namespace CheddarAndCocoa.Game
         private float _misreadGagT;
         private bool _misreadEscalated;
         private float _misreadBubblePulseUntil = float.NegativeInfinity;
+        // CF1.4: one-shot window (set in AdvanceBeat(), read in UpdateScene()) so the Oh bubble
+        // also flashes briefly at the exact moment a beat completes, not only during its existing
+        // steady-state condition. Field initializer guards the first construction; StartMission()
+        // also resets it explicitly for replays (trap #7 - never rely on the 0-default alone).
+        private float _beatTransitionOhBubbleUntil = float.NegativeInfinity;
         private TextMesh _teenagerQuestionBubbleText;
 
         public TeenPresentationState TeenState { get; private set; }
+        // CF1.4: read-only presentation summary for determinism (queue doc explicitly authorizes
+        // this) - a test can assert a distinct value per beat without reaching into transforms.
+        // This is the SAME value the per-beat baseline helpers below and the render block use, so
+        // the summary and the actual visuals can never drift apart (same guarantee CF1.2 already
+        // established for ProgressNormalized).
+        public TeenagerBeatLook BeatLook => (TeenagerBeatLook)Mathf.Clamp(_beatIndex, 0, 3);
         public GameManager.MissionVariant Variant => GameManager.MissionVariant.OperationPeeBreak;
         public Beat CurrentBeat => (Beat)Mathf.Clamp(_beatIndex, 0, 4);
         public int CompletedBeats => Mathf.Clamp(_beatIndex, 0, 4);
@@ -212,6 +245,18 @@ namespace CheddarAndCocoa.Game
         public Color ProgressColor => Color.Lerp(new Color(0.3f, 0.7f, 1f), new Color(0.45f, 1f, 0.35f), ProgressNormalized);
         private float ComprehensionNeededForCurrentBeat =>
             _beatIndex < ComprehensionByBeat.Length ? ComprehensionByBeat[_beatIndex] : 1f;
+
+        // CF1.4 (finding #8b): per-beat baseline deltas computed from BeatLook, layered UNDER
+        // TeenState's moment-to-moment reactions in the per-part render block inside UpdateScene()
+        // below. Presentation-only - none of these read or change Comprehension/Confusion/
+        // Misreads/beat progression.
+        private float BeatPhoneHeightOffset => BeatLook == TeenagerBeatLook.PhoneAbsorbedIdle ? 0f : -0.18f;
+        private float BeatHoodieUprightStretch => BeatLook switch
+        {
+            TeenagerBeatLook.UprightBatteryPanic => 1.12f,
+            TeenagerBeatLook.HalfStandingDoorGlance => 1.18f,
+            _ => 1f
+        };
 
         public int ToyKickCount { get; private set; }
         public int SignalReactionCount { get; private set; }
@@ -287,6 +332,7 @@ namespace CheddarAndCocoa.Game
             _lastDoorBarks[0] = _lastDoorBarks[1] = float.NegativeInfinity;
             _barkSignalUntil = float.NegativeInfinity;
             _unitedBarkSignalUntil = float.NegativeInfinity;
+            _beatTransitionOhBubbleUntil = float.NegativeInfinity;
             ConfigureBeat();
             SetSceneActive(true);
             _playBall.transform.position = _context.Bounds.center + new Vector2(-8f, -4.5f);
@@ -591,6 +637,16 @@ namespace CheddarAndCocoa.Game
             if (completedChargerGambit) PhoneBattery = 0f;
 
             ConfigureBeat();
+
+            // CF1.4 (finding #8b): "after each phase, the teenager looks a little different... to
+            // indicate we're on the next subproblem" - BeatLook's per-beat baseline (used in
+            // UpdateScene() below) is the new steady state; this is the one-shot moment so
+            // advancing itself reads, distinct from the door-open RELIEF ZOOMIES flourish above
+            // (which already returned early for the _beatIndex >= 4 case, so this never runs for
+            // it - no redundant/clashing pop on the actual climax). Set AFTER ConfigureBeat() so
+            // its per-beat reset above can never race with or clobber the timer this line starts.
+            _context.SpawnWorldPop(_teenager.transform.position + new Vector3(0f, 1.3f, 0f), "NEXT!", new Color(0.55f, 1f, 0.45f));
+            _beatTransitionOhBubbleUntil = _context.Now() + BeatTransitionOhBubbleSeconds;
         }
 
         private void StageDogsForDoorOpenPayoff()
@@ -1190,21 +1246,40 @@ namespace CheddarAndCocoa.Game
                 bool phoneInHand = TeenState != TeenPresentationState.StandingSuccess;
                 _teenagerThumbs.SetActive(phoneInHand);
                 if (phoneInHand)
-                    _teenagerThumbs.transform.localPosition = new Vector3(0.28f + Mathf.Sin(Time.time * 16f) * 0.04f, 0.03f, -0.02f);
+                    // CF1.4: BeatPhoneHeightOffset holds the phone lower from Beat 2 onward - a
+                    // per-beat baseline layered under the existing per-frame tap jitter (unchanged).
+                    _teenagerThumbs.transform.localPosition = new Vector3(0.28f + Mathf.Sin(Time.time * 16f) * 0.04f, 0.03f + BeatPhoneHeightOffset, -0.02f);
             }
             if (_teenagerHead != null)
             {
                 float glance = TeenState == TeenPresentationState.AnnoyedReacting || TeenState == TeenPresentationState.StandingSuccess ? -0.08f : 0f;
-                _teenagerHead.transform.localPosition = new Vector3(glance + Mathf.Sin(Time.time * 2.2f) * 0.018f,
+                // CF1.4: two beat-only baselines layered under the existing TeenState glance and
+                // idle sway above (both unchanged). Beat 3's tension grows with the actual battery
+                // drain so the Teenager's own body - not just the phone-mounted props - shows the
+                // panic; Beat 4 periodically glances toward the door between phone checks.
+                float batteryTension = BeatLook == TeenagerBeatLook.UprightBatteryPanic
+                    ? Mathf.Sin(Time.time * 9f) * 0.02f * (1f - PhoneBattery) : 0f;
+                float doorGlance = BeatLook == TeenagerBeatLook.HalfStandingDoorGlance
+                    ? Mathf.Max(0f, Mathf.Sin(Time.time * 1.3f)) * -0.1f : 0f;
+                _teenagerHead.transform.localPosition = new Vector3(glance + batteryTension + doorGlance + Mathf.Sin(Time.time * 2.2f) * 0.018f,
                     0.42f + Mathf.Sin(Time.time * 1.7f) * 0.016f, -0.01f);
             }
             if (_teenagerHoodie != null)
             {
-                float standStretch = TeenState == TeenPresentationState.StandingSuccess ? 1.26f : 1f;
+                // CF1.4: BeatHoodieUprightStretch is the new per-beat baseline (Beat 3 sits
+                // upright, Beat 4 half-standing). StandingSuccess keeps its own 1.26f exactly as
+                // before, overriding rather than stacking with the beat baseline, per the "keep
+                // StandingSuccess exactly as-is" constraint.
+                float standStretch = TeenState == TeenPresentationState.StandingSuccess ? 1.26f : BeatHoodieUprightStretch;
                 _teenagerHoodie.transform.localScale = new Vector3(0.82f, (0.82f + Mathf.Sin(Time.time * 1.7f) * 0.018f) * standStretch, 1f);
             }
             if (_teenagerFootWiggle != null)
-                _teenagerFootWiggle.transform.localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(Time.time * 10.5f) * 14f);
+            {
+                // CF1.4: the idle foot-tap only continues through Beat 1; it holds still from
+                // Beat 2 onward as part of the escalating "next subproblem" body language.
+                float wiggle = BeatLook == TeenagerBeatLook.PhoneAbsorbedIdle ? Mathf.Sin(Time.time * 10.5f) * 14f : 0f;
+                _teenagerFootWiggle.transform.localRotation = Quaternion.Euler(0f, 0f, wiggle);
+            }
             if (_couchBlanketSlump != null)
                 _couchBlanketSlump.transform.localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(Time.time * 1.35f) * 3f);
             if (_straySockA != null)
@@ -1326,7 +1401,15 @@ namespace CheddarAndCocoa.Game
                 float bubbleScale = 0.82f * (1f + pulseT * 0.6f);
                 _teenagerQuestionBubble.transform.localScale = new Vector3(bubbleScale, bubbleScale, 1f);
             }
-            if (_teenagerOhBubble != null) _teenagerOhBubble.SetActive(!DoorOpen && (CurrentBeat == Beat.UnitedBark || PhoneBattery <= 0.08f));
+            if (_teenagerOhBubble != null)
+            {
+                // CF1.4: the steady-state rule above is unchanged; OR in a short one-shot window
+                // right at each beat transition (_beatTransitionOhBubbleUntil, set in
+                // AdvanceBeat()) so the Oh bubble also flashes as the "next subproblem" moment
+                // itself, not only during its existing UnitedBark/dead-phone conditions.
+                bool beatTransitionFlourish = _context.Now() <= _beatTransitionOhBubbleUntil;
+                _teenagerOhBubble.SetActive(!DoorOpen && (CurrentBeat == Beat.UnitedBark || PhoneBattery <= 0.08f || beatTransitionFlourish));
+            }
             if (_chargerPluggedEnd != null) _chargerPluggedEnd.SetActive(!DoorOpen && CurrentBeat == Beat.ChargerGambit && PhoneBattery > 0.08f);
             if (_chargerUnpluggedEnd != null) _chargerUnpluggedEnd.SetActive(CurrentBeat == Beat.UnitedBark || PhoneBattery <= 0.08f);
             if (_doorOutdoorView != null) _doorOutdoorView.SetActive(DoorOpen);

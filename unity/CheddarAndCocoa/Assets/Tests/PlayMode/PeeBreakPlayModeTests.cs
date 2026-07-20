@@ -881,6 +881,133 @@ namespace CheddarAndCocoa.Tests
                 "Misreads - even the escalated one - must never fail or end the mission.");
         }
 
+        /// <summary>
+        /// CF1.4 (finding #8b): "after each phase, the teenager looks a little different, or
+        /// shifts positions to indicate we're on the 'next subproblem'." Steps through all four
+        /// beats via the same proven ForcePeeBreakAdvance beat-completion path other tests already
+        /// use (ExactCombosAdvanceAndChangeRoleLocks, AdvanceToCharger, the Climax test) and
+        /// asserts both the read-only BeatLook summary and the concrete transform deltas it drives,
+        /// so the summary can never drift from what actually renders (same guarantee CF1.2
+        /// established for ProgressNormalized). Beat 1 is pinned to the unchanged pre-CF1.4
+        /// baseline, matching the task's explicit "Beat 1 - as today, no change" constraint (also
+        /// independently covered by the pre-existing
+        /// PeeBreakCharacterAndRoomDetailsAnimateWithoutGameplayColliders test, which still passes
+        /// because none of the new per-beat terms contribute anything at Beat 1).
+        /// </summary>
+        [UnityTest]
+        public IEnumerator TeenagerBeatLookGivesADistinctPresentationPerBeatLayeredUnderTeenState()
+        {
+            yield return LoadMission();
+            var thumbs = FindLoadedObject("PeeBreakTeenagerThumbs");
+            var hoodie = FindLoadedObject("PeeBreakTeenagerHoodie");
+            var footWiggle = FindLoadedObject("PeeBreakTeenagerFootWiggle");
+            Assert.IsNotNull(thumbs);
+            Assert.IsNotNull(hoodie);
+            Assert.IsNotNull(footWiggle);
+
+            Assert.AreEqual(PeeBreakMissionController.TeenagerBeatLook.PhoneAbsorbedIdle, Controller.BeatLook,
+                "Beat 1 should be the unchanged pre-CF1.4 baseline look.");
+            float beat1ThumbsY = thumbs.transform.localPosition.y;
+            float beat1HoodieY = hoodie.transform.localScale.y;
+
+            // Beat 1 -> Beat 2 (LeashMessage): phone held lower, foot wiggle stops.
+            _game.ForcePeeBreakAdvance(SocialStimulus.DoorStare, 1f);
+            Assert.AreEqual(PeeBreakMissionController.Beat.LeashMessage, Controller.CurrentBeat);
+            Assert.AreEqual(PeeBreakMissionController.TeenagerBeatLook.PhoneLoweredStillFeet, Controller.BeatLook,
+                "Beat 2 should read as a distinct look from Beat 1.");
+            Assert.Less(thumbs.transform.localPosition.y, beat1ThumbsY,
+                "Beat 2 should visibly hold the phone lower than Beat 1.");
+            Assert.AreEqual(0f, footWiggle.transform.localRotation.eulerAngles.z, 0.001f,
+                "The idle foot-tap should stop from Beat 2 onward.");
+            Assert.AreEqual(beat1HoodieY, hoodie.transform.localScale.y, 0.0001f,
+                "Beat 2's hoodie stretch baseline should still match Beat 1 - only Beat 3/4 sit up straighter.");
+
+            // Beat 2 -> Beat 3 (ChargerGambit): sits upright; the Teenager's own posture shows the
+            // phone-battery panic (not just the existing phone-mounted battery props).
+            _game.ForcePeeBreakAdvance(SocialStimulus.DoorStare | SocialStimulus.PresentLeash, 2.1f);
+            Assert.AreEqual(PeeBreakMissionController.Beat.ChargerGambit, Controller.CurrentBeat);
+            Assert.AreEqual(PeeBreakMissionController.TeenagerBeatLook.UprightBatteryPanic, Controller.BeatLook);
+            Assert.Greater(hoodie.transform.localScale.y, beat1HoodieY,
+                "Beat 3 should sit visibly more upright than the Beat 1/2 baseline.");
+            Assert.AreEqual(0f, footWiggle.transform.localRotation.eulerAngles.z, 0.001f,
+                "The foot-tap should remain stopped through Beat 3.");
+            float beat3HoodieY = hoodie.transform.localScale.y;
+
+            // Beat 3 -> Beat 4 (UnitedBark): half-standing - even more upright than Beat 3.
+            _game.ForcePeeBreakAdvance(Controller.Required, 2.6f);
+            Assert.AreEqual(PeeBreakMissionController.Beat.UnitedBark, Controller.CurrentBeat);
+            Assert.AreEqual(PeeBreakMissionController.TeenagerBeatLook.HalfStandingDoorGlance, Controller.BeatLook);
+            Assert.Greater(hoodie.transform.localScale.y, beat3HoodieY,
+                "Beat 4's half-standing posture should sit even more upright than Beat 3.");
+            Assert.AreEqual(0f, footWiggle.transform.localRotation.eulerAngles.z, 0.001f,
+                "The foot-tap should remain stopped through Beat 4.");
+
+            // The beat baseline is layered UNDER TeenState, not a replacement of it - StandingSuccess
+            // is untouched by CF1.4 (proven elsewhere, e.g. ClimaxOpensDoorClearsAndReplayResetsEverything)
+            // and has not fired yet since the door has not opened.
+            Assert.AreNotEqual(PeeBreakMissionController.TeenPresentationState.StandingSuccess, Controller.TeenState);
+        }
+
+        /// <summary>
+        /// CF1.4 (finding #8b): "the moment of advancing must read, not just the new steady
+        /// state." Proves the one-shot transition flourish (a "NEXT!" world pop plus a timed
+        /// Oh-bubble window) fires exactly at a beat transition - not at mission start (trap #7:
+        /// a new timer field must not fire spuriously on frame 1) - decays back to the unchanged
+        /// steady-state Oh-bubble rule after BeatTransitionOhBubbleSeconds, and never fires again
+        /// on the real door-open climax, which already has its own distinct RELIEF ZOOMIES
+        /// flourish (firing both would clash/duplicate, per the task's explicit warning).
+        /// </summary>
+        [UnityTest]
+        public IEnumerator BeatTransitionFiresOneShotWorldPopAndOhBubbleDistinctFromDoorOpenClimax()
+        {
+            yield return LoadMission();
+
+            // Trap #7: nothing should have fired yet at mission start / frame 1.
+            Assert.IsFalse(HasWorldPop("NEXT!"), "The transition flourish must not fire before any beat completes.");
+            Assert.IsFalse(FindLoadedObject("PeeBreakTeenagerOhBubble").activeSelf,
+                "The Oh bubble's one-shot window must not be active before any beat completes.");
+
+            _game.ForcePeeBreakAdvance(SocialStimulus.DoorStare, 1f);
+            Assert.AreEqual(PeeBreakMissionController.Beat.LeashMessage, Controller.CurrentBeat);
+            Assert.IsTrue(HasWorldPop("NEXT!"), "Completing a beat should spawn the transition world pop.");
+            Assert.IsTrue(FindLoadedObject("PeeBreakTeenagerOhBubble").activeSelf,
+                "The Oh bubble should flash at the exact beat-transition moment, even though neither " +
+                "of its existing steady-state conditions (UnitedBark / dead phone) is true in Beat 2.");
+
+            // Prove it is a genuine one-shot, not a permanent change to the existing visibility rule.
+            yield return LiveSeconds(1.2f);
+            Assert.IsFalse(FindLoadedObject("PeeBreakTeenagerOhBubble").activeSelf,
+                "The transition flourish must decay back to the unchanged steady-state rule.");
+
+            _game.ForcePeeBreakAdvance(SocialStimulus.DoorStare | SocialStimulus.PresentLeash, 2.1f);
+            Assert.AreEqual(PeeBreakMissionController.Beat.ChargerGambit, Controller.CurrentBeat);
+            _game.ForcePeeBreakAdvance(Controller.Required, 2.6f);
+            Assert.AreEqual(PeeBreakMissionController.Beat.UnitedBark, Controller.CurrentBeat);
+
+            // Let the earlier "NEXT!" pop(s) fully expire (ArenaArtCatalog.WorldPop.LifeSeconds ==
+            // 1.05f) before the real door-open climax, so its absence afterward is unambiguous.
+            yield return LiveSeconds(1.3f);
+            Assert.IsFalse(HasWorldPop("NEXT!"), "Earlier transition pops should have already expired.");
+
+            // Same real-dispatch completion path as ClimaxOpensDoorClearsAndReplayResetsEverything:
+            // pre-build comprehension to just under Beat 4's threshold via the deterministic hook,
+            // then let one real frame of dog-position + genuine DogController.Bark() dispatch (not
+            // a Force bypass - Known trap #2) supply the final sliver.
+            Controller.ForceAdvance(Controller.Required, 2.249f);
+            Assert.IsFalse(Controller.DoorOpen);
+            FindDog(DogId.Cheddar).transform.position = Controller.LeashPosition;
+            FindDog(DogId.Cocoa).transform.position = Controller.DoorPosition;
+            FindDog(DogId.Cheddar).Bark();
+            FindDog(DogId.Cocoa).Bark();
+            SetTimeRemaining(_game, 0.0001f);
+            yield return null;
+            Assert.IsTrue(Controller.DoorOpen);
+            Assert.IsFalse(HasWorldPop("NEXT!"),
+                "The final door-open transition must not fire the beat-transition flourish - it " +
+                "already has its own distinct RELIEF ZOOMIES pop.");
+            Assert.IsTrue(HasWorldPop("RELIEF ZOOMIES!"), "The existing door-open flourish must still fire untouched.");
+        }
+
         [UnityTest]
         public IEnumerator ColdReadQuestionMarkerRecordsCurrentBeatAndResetsOnReplay()
         {
@@ -1227,6 +1354,16 @@ namespace CheddarAndCocoa.Tests
         {
             foreach (string entry in _game.PlaytestEvents)
                 if (entry.Contains(text)) return true;
+            return false;
+        }
+
+        // CF1.4: same idiom as CarRidePlayModeTests.HasWorldPop - MissionWorldPop.Label exposes the
+        // spawned pop's text directly, cheaper and more precise than deriving GameObject.Find's
+        // sanitized name from the source string.
+        private static bool HasWorldPop(string text)
+        {
+            foreach (var pop in Object.FindObjectsByType<MissionWorldPop>(FindObjectsSortMode.None))
+                if (pop.Label.Contains(text)) return true;
             return false;
         }
 

@@ -78,6 +78,45 @@ during any beat - the top bar must keep showing both **BLADDER EMERGENCY** and *
 (BEAT n/4)** stacked, non-overlapping, matching the world-anchored meter above the Teenager whenever
 he is also on-screen. The beat-progress row must disappear once the door opens.
 
+### Teenager reflects beat progression (CF1.4, 2026-07-20)
+
+The 2026-07-20 couch retest found (checklist #8b): "Ideally after each phase, the teenager looks a
+little different, or shifts positions to indicate we're on the 'next subproblem'."
+`UpdateTeenPresentationState` already drove `TeenState` from moment-to-moment dog signals (misread,
+confusion, partial combo, `DoorOpen`), but never read `_beatIndex`, so the Teenager's steady-state
+look was identical in Beat 1 and Beat 3.
+
+A new read-only `PeeBreakMissionController.BeatLook` enum (`PhoneAbsorbedIdle`,
+`PhoneLoweredStillFeet`, `UprightBatteryPanic`, `HalfStandingDoorGlance` - one per beat, clamped)
+drives a per-beat baseline layered **under** the existing `TeenState` deltas in the same per-part
+render block (`_teenagerThumbs`/`_teenagerHead`/`_teenagerHoodie`/`_teenagerFootWiggle`) - both
+still combine exactly as the task required, and `TeenState.StandingSuccess`'s existing 1.26x hoodie
+stretch is untouched (it overrides the beat baseline instead of stacking with it):
+
+- **Beat 1 (DoorStare):** unchanged from before this change.
+- **Beat 2 (LeashMessage):** the phone sits visibly lower in his hands; the idle foot-tap stops.
+- **Beat 3 (ChargerGambit):** he sits more upright, and his own hoodie/head posture visibly tenses
+  as the phone battery actually drains - not only the existing phone-mounted
+  `_phoneBatteryFill`/`_phoneChargeBolt`/`_phoneDeadSlash` props.
+- **Beat 4 (UnitedBark):** half-standing (more upright again), periodically glancing toward the
+  door between phone checks.
+
+Completing a beat (`AdvanceBeat()`) also fires a one-shot transition flourish so the *moment* of
+advancing reads, not just the new steady state: a `"NEXT!"` world pop at the Teenager plus a brief
+timed window (`_beatTransitionOhBubbleUntil`, `BeatTransitionOhBubbleSeconds` = 0.6s) that flashes
+the existing `"OH!"` bubble even outside its normal UnitedBark/dead-phone conditions. Both are
+skipped on the final beat-4-completing-the-mission transition, which already has its own distinct
+`RELIEF ZOOMIES!` pop/juice/rumble sequence - no redundant or clashing flourish fires on the actual
+climax.
+
+Manual acceptance check: start Operation Pee Break and step through all four beats. The Teenager's
+phone should sit noticeably lower from Beat 2 on and his idle foot-tap should stop; entering Beat 3
+he should sit up straighter and visibly tense as the phone dies; in Beat 4 he should sit half-up and
+glance toward the door between phone checks. Each time a beat completes, watch for a brief "NEXT!"
+pop by the Teenager and a flash of his "OH!" bubble even though nothing else on screen justifies
+it yet - that flourish must NOT repeat at the final door-open climax, which keeps its existing
+"RELIEF ZOOMIES!" payoff untouched.
+
 ### Operation Pee Break couch-feedback response (2026-07-14)
 
 The latest human run found five usability gaps: unclear station order/reaction, abstract large-circle
