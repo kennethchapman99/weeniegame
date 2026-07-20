@@ -271,6 +271,72 @@ namespace CheddarAndCocoa.Tests
                 "Entering the correct station should trigger a prop/Teenager reaction animation.");
         }
 
+        /// <summary>
+        /// CF1.2 (finding #8, FAIL): "The progress meter disappears when the dogs move to bottom
+        /// part of screen." The world-anchored Teenager comprehension meter is a child of the
+        /// Teenager, so the camera can scroll it off-screen. IMissionBeatProgressHud mirrors the
+        /// same value into the screen-space HUD; this proves the mirror tracks
+        /// _puzzle.Comprehension across a beat (matching the world-anchored fill exactly, not
+        /// just approximately) and hides once the door opens.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator BeatProgressHud_MirrorsComprehensionAcrossBeatsAndHidesOnDoorOpen()
+        {
+            yield return LoadMission();
+            Assert.IsInstanceOf<IMissionBeatProgressHud>(Controller,
+                "Pee Break must mirror its beat-progress meter into the screen-space HUD (CF1.2).");
+            var hud = (IMissionBeatProgressHud)Controller;
+            Assert.IsTrue(hud.ProgressVisible);
+            Assert.That(hud.ProgressLabel, Does.Contain("BEAT 1/4"));
+            Assert.AreEqual(0f, hud.ProgressNormalized, 0.001f,
+                "Comprehension has not accrued yet at mission start.");
+
+            var cocoa = FindDog(DogId.Cocoa);
+            cocoa.transform.position = Controller.DoorPosition;
+            _game.ForcePeeBreakAdvance(SocialStimulus.DoorStare, 0.3f);
+            Assert.Greater(hud.ProgressNormalized, 0f,
+                "Holding the exact beat-1 job should visibly fill the screen-space meter, not only the world-anchored one.");
+            Assert.LessOrEqual(hud.ProgressNormalized, 1f);
+            // Beat 1 needs ComprehensionByBeat[0] == 0.65f comprehension (PeeBreakMissionController.cs).
+            Assert.AreEqual(Mathf.Clamp01(Controller.Puzzle.Comprehension / 0.65f), hud.ProgressNormalized, 0.001f,
+                "The HUD readout must track the exact same comprehension/required ratio driving the world-anchored fill.");
+
+            // The world-anchored fill's localScale.x is Mathf.Lerp(0.04f, 0.98f, comprehension)
+            // (UpdateTeenagerProgressRead()). Inverting it cross-checks that the world track and
+            // the new screen-space HUD reflect the identical underlying value, not two readings
+            // that merely happen to agree right now.
+            var comprehensionFill = FindLoadedObject("PeeBreakTeenagerComprehensionFill");
+            float worldComprehension = (comprehensionFill.transform.localScale.x - 0.04f) / (0.98f - 0.04f);
+            Assert.AreEqual(worldComprehension, hud.ProgressNormalized, 0.01f,
+                "CF1.2: the screen-space mirror must track the same value driving the world-anchored track.");
+
+            AdvanceToCharger();
+            Assert.That(hud.ProgressLabel, Does.Contain("BEAT 3/4"),
+                "The screen-space label should advance with the beat, matching the (n = _beatIndex + 1) contract.");
+            Assert.IsTrue(hud.ProgressVisible);
+
+            _game.ForcePeeBreakAdvance(Controller.Required, 2.6f);
+            Assert.AreEqual(PeeBreakMissionController.Beat.UnitedBark, Controller.CurrentBeat);
+            Assert.That(hud.ProgressLabel, Does.Contain("BEAT 4/4"));
+
+            Controller.ForceAdvance(Controller.Required, 2.249f);
+            Assert.IsFalse(Controller.DoorOpen);
+            Assert.IsTrue(hud.ProgressVisible, "The meter must stay visible through the final beat, right up until the door opens.");
+
+            // Same real-dispatch completion path as ClimaxOpensDoorClearsAndReplayResetsEverything:
+            // route the winning barks through DogController.Bark() -> GameManager.OnDogBarked,
+            // not a Force* bypass (Known trap #2).
+            FindDog(DogId.Cheddar).transform.position = Controller.LeashPosition;
+            FindDog(DogId.Cocoa).transform.position = Controller.DoorPosition;
+            FindDog(DogId.Cheddar).Bark();
+            FindDog(DogId.Cocoa).Bark();
+            SetTimeRemaining(_game, 0.0001f);
+            yield return null;
+            Assert.IsTrue(Controller.DoorOpen);
+            Assert.IsFalse(hud.ProgressVisible,
+                "CF1.2: the screen-space progress meter must hide once the door opens, same as the world-anchored track.");
+        }
+
         [UnityTest]
         public IEnumerator PeeBreakCharacterAndRoomDetailsAnimateWithoutGameplayColliders()
         {

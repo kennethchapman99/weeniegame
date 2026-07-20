@@ -138,6 +138,32 @@ namespace CheddarAndCocoa.Game
         public static Rect BuildPressureMeterRect(Rect topBar) =>
             new(topBar.xMax - 408f, topBar.y + 48f, 378f, 38f);
 
+        /// <summary>
+        /// CF1.2: rect for a lone screen-space beat-progress meter (no simultaneous pressure
+        /// meter visible). Wider than <see cref="BuildPressureMeterRect"/> because progress
+        /// labels carry a beat counter ("TEENAGER GETS IT (BEAT n/4)") that needs more room than
+        /// "BLADDER EMERGENCY" to stay on one readable line.
+        /// </summary>
+        public static Rect BuildBeatProgressMeterRect(Rect topBar) =>
+            new(topBar.xMax - 510f, topBar.y + 48f, 480f, 38f);
+
+        /// <summary>
+        /// CF1.2: compact top-bar slot for the pressure meter when a mission shows two meters at
+        /// once (Operation Pee Break: bladder pressure is always on, beat progress is visible
+        /// until the door opens). Stacking two full-size <see cref="BuildPressureMeterRect"/>
+        /// meters would push past the Visual Readability Contract's fixed-height top bar
+        /// (pinned by ActionTutorialPlayModeTests), so both meters render shorter and wider
+        /// instead - the pair still fits entirely inside the unchanged
+        /// <see cref="BuildGameplayHudLayout"/> top bar. Stacks directly above
+        /// <see cref="BuildStackedProgressMeterRect"/>.
+        /// </summary>
+        public static Rect BuildStackedPressureMeterRect(Rect topBar) =>
+            new(topBar.xMax - 550f, topBar.y + 40f, 520f, 27f);
+
+        /// <summary>CF1.2: stacks directly below <see cref="BuildStackedPressureMeterRect"/>.</summary>
+        public static Rect BuildStackedProgressMeterRect(Rect topBar) =>
+            new(topBar.xMax - 550f, topBar.y + 70f, 520f, 27f);
+
         public readonly struct ResultOverlayLayout
         {
             public readonly Rect Backdrop;
@@ -432,11 +458,32 @@ namespace CheddarAndCocoa.Game
                 : string.Empty;
             GUI.Label(layout.Status, $"{progress}{secs}s  •  SCORE {_game.Score}", _statusHud);
             Rect objectiveRect = layout.Objective;
-            if (_game.ActiveMissionController is IMissionPressureHud pressureHud && pressureHud.PressureVisible)
+            var pressureHud = _game.ActiveMissionController as IMissionPressureHud;
+            var progressHud = _game.ActiveMissionController as IMissionBeatProgressHud;
+            bool pressureVisible = pressureHud != null && pressureHud.PressureVisible;
+            bool progressVisible = progressHud != null && progressHud.ProgressVisible;
+            if (pressureVisible && progressVisible)
+            {
+                // CF1.2: a mission can show both meters at once (Pee Break's always-on bladder
+                // pressure plus its beat-progress readout) - stack compact rects instead of the
+                // full-size solo rect so the pair still fits the unchanged top bar.
+                Rect pressureMeter = BuildStackedPressureMeterRect(layout.TopBar);
+                Rect progressMeter = BuildStackedProgressMeterRect(layout.TopBar);
+                objectiveRect.width = Mathf.Max(1f, pressureMeter.x - objectiveRect.x - 18f);
+                DrawPressureMeter(pressureMeter, pressureHud, 280f);
+                DrawBeatProgressMeter(progressMeter, progressHud);
+            }
+            else if (pressureVisible)
             {
                 Rect meter = BuildPressureMeterRect(layout.TopBar);
                 objectiveRect.width = Mathf.Max(1f, meter.x - objectiveRect.x - 18f);
                 DrawPressureMeter(meter, pressureHud);
+            }
+            else if (progressVisible)
+            {
+                Rect meter = BuildBeatProgressMeterRect(layout.TopBar);
+                objectiveRect.width = Mathf.Max(1f, meter.x - objectiveRect.x - 18f);
+                DrawBeatProgressMeter(meter, progressHud);
             }
             string objectiveText = _game.ObjectiveLabel;
             if (_game.GuidanceRescueActive)
@@ -665,15 +712,33 @@ namespace CheddarAndCocoa.Game
             DrawControlGuide(layout.Controls);
         }
 
-        private void DrawPressureMeter(Rect rect, IMissionPressureHud pressureHud)
+        private void DrawPressureMeter(Rect rect, IMissionPressureHud pressureHud, float labelWidth = 178f) =>
+            DrawMeterBar(rect, pressureHud.PressureLabel, pressureHud.PressureNormalized, pressureHud.PressureColor, labelWidth);
+
+        /// <summary>CF1.2: screen-space mirror of a controller's beat-progress readout.</summary>
+        private void DrawBeatProgressMeter(Rect rect, IMissionBeatProgressHud progressHud, float labelWidth = 280f) =>
+            DrawMeterBar(rect, progressHud.ProgressLabel, progressHud.ProgressNormalized, progressHud.ProgressColor, labelWidth);
+
+        /// <summary>
+        /// Shared label+fill-track body for the top-bar pressure/progress meters (CF1.2 extracted
+        /// this out of the former DrawPressureMeter so the new beat-progress meter reuses the
+        /// same idiom). Track inset/height scale with rect.height so the existing 38px solo
+        /// meters and the compact 27px stacked pair (BuildStackedPressureMeterRect /
+        /// BuildStackedProgressMeterRect, used when a mission shows two meters at once) share one
+        /// drawing path. At the original labelWidth (178) and rect height (38) this reproduces
+        /// the pre-CF1.2 fixed pixel offsets exactly - existing single-pressure-meter missions
+        /// render pixel-identical to before.
+        /// </summary>
+        private void DrawMeterBar(Rect rect, string label, float normalized, Color fillColor, float labelWidth)
         {
             DrawTintedRect(rect, new Color(0.02f, 0.035f, 0.045f, 0.96f));
-            GUI.Label(new Rect(rect.x + 10f, rect.y - 1f, 178f, rect.height), pressureHud.PressureLabel, _small);
-            var track = new Rect(rect.x + 184f, rect.y + 9f, rect.width - 196f, 20f);
+            GUI.Label(new Rect(rect.x + 10f, rect.y - 1f, labelWidth, rect.height), label, _small);
+            var track = new Rect(rect.x + labelWidth + 6f, rect.y + rect.height * (9f / 38f),
+                Mathf.Max(1f, rect.width - labelWidth - 18f), rect.height * (20f / 38f));
             DrawTintedRect(track, new Color(0.12f, 0.16f, 0.18f, 0.96f));
-            float fill = Mathf.Clamp01(pressureHud.PressureNormalized);
-            DrawTintedRect(new Rect(track.x + 3f, track.y + 3f, Mathf.Max(0f, (track.width - 6f) * fill), track.height - 6f),
-                pressureHud.PressureColor);
+            float fill = Mathf.Clamp01(normalized);
+            DrawTintedRect(new Rect(track.x + 3f, track.y + 3f, Mathf.Max(0f, (track.width - 6f) * fill), Mathf.Max(1f, track.height - 6f)),
+                fillColor);
         }
 
         private void DrawControlGuide(Rect rect)

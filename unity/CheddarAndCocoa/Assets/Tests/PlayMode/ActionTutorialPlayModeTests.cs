@@ -85,6 +85,42 @@ namespace CheddarAndCocoa.Tests
             Assert.That(ArenaHud.PlayerIdentityLabel, Does.Contain("P2 COCOA"));
         }
 
+        /// <summary>
+        /// CF1.2: a mission can expose both a pressure meter (IMissionPressureHud) and a
+        /// beat-progress meter (IMissionBeatProgressHud) at once - Operation Pee Break's
+        /// always-on bladder pressure plus its beat-progress readout, which used to be
+        /// world-anchored on the Teenager and scrolled off-screen when the dogs moved to the
+        /// bottom of the room. Both compact meters must fit inside the SAME top bar height this
+        /// class already pins above, never grow it, never overlap each other, and stay ordered
+        /// pressure-then-progress top-to-bottom.
+        /// </summary>
+        [Test]
+        public void StackedTopBarMeters_FitInsideTheUnchangedTopBarAndDoNotOverlap()
+        {
+            var layout = ArenaHud.BuildGameplayHudLayout(1920f, 1080f);
+
+            Rect soloProgress = ArenaHud.BuildBeatProgressMeterRect(layout.TopBar);
+            Assert.GreaterOrEqual(soloProgress.xMin, layout.TopBar.xMin);
+            Assert.LessOrEqual(soloProgress.xMax, layout.TopBar.xMax);
+            Assert.GreaterOrEqual(soloProgress.yMin, layout.TopBar.yMin);
+            Assert.LessOrEqual(soloProgress.yMax, layout.TopBar.yMax,
+                "A lone beat-progress meter should remain inside the compact top HUD, exactly like the pressure meter.");
+
+            Rect pressureSlot = ArenaHud.BuildStackedPressureMeterRect(layout.TopBar);
+            Rect progressSlot = ArenaHud.BuildStackedProgressMeterRect(layout.TopBar);
+            Assert.GreaterOrEqual(pressureSlot.xMin, layout.TopBar.xMin);
+            Assert.LessOrEqual(progressSlot.xMax, layout.TopBar.xMax);
+            Assert.GreaterOrEqual(pressureSlot.yMin, layout.TopBar.yMin,
+                "CF1.2 must not grow the top bar upward to fit two meters.");
+            Assert.LessOrEqual(progressSlot.yMax, layout.TopBar.yMax,
+                "CF1.2 must not grow the top bar downward to fit two meters - both stay inside the height already pinned above.");
+            Assert.LessOrEqual(pressureSlot.yMax, progressSlot.yMin,
+                "The pressure meter must stack strictly above the progress meter with no vertical overlap.");
+            Assert.AreEqual(pressureSlot.x, progressSlot.x, 0.01f,
+                "Stacked meters should share the same left edge so the pair reads as one dashboard readout.");
+            Assert.AreEqual(pressureSlot.width, progressSlot.width, 0.01f);
+        }
+
         [UnityTest]
         public IEnumerator BackyardRescue_StartsWithTutorialVisibleAndNothingLearnedYet()
         {

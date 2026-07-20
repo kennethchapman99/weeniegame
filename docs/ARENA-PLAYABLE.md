@@ -44,6 +44,40 @@ this auto-dismissed at 5s; it no longer does). Press Bark or Interact - the card
 Bark/Interact during that countdown still fires `GO!` instantly and starts the timer, same as
 before.
 
+### Comprehension meter mirrored in screen-space HUD (CF1.2, 2026-07-20)
+
+The 2026-07-20 couch retest found (checklist #8, FAIL): "The progress meter disappears when the
+dogs move to bottom part of screen." The `TEENAGER GETS IT` comprehension meter was a child of the
+Teenager sprite; the shared camera follows the dogs, so moving toward the room's lower half scrolled
+the Teenager and his meter off-screen exactly when players most needed to see whether their signal
+was landing.
+
+`IMissionBeatProgressHud` (`IMissionController.cs`, modeled on the existing `IMissionPressureHud`)
+lets a controller mirror a beat-progress readout into the compact top-bar HUD the same way Pee
+Break's `BLADDER EMERGENCY` pressure meter already does. `PeeBreakMissionController` implements it:
+label `TEENAGER GETS IT (BEAT n/4)`, value the same clamped `_puzzle.Comprehension / <that beat's
+required comprehension>` ratio that already drives the world-anchored fill (`ArenaHud` and the
+controller now share one property, `ProgressNormalized` - `UpdateTeenagerProgressRead()` reads it
+instead of recomputing the ratio locally, so the two readouts cannot drift apart), hidden once the
+door opens. The world-anchored track is unchanged and still renders when visible; this is a mirror,
+not a replacement.
+
+Pee Break is also the only mission where two top-bar meters are visible at once (bladder pressure
+never turns off; beat progress stays visible for the whole mission until the door opens). Rather
+than grow the shared 102px top bar - pinned by `ActionTutorialPlayModeTests`'s
+`ProductionHud_KeepsObjectiveAndPlayerIdentityReadableWithoutCoveringThePlayfield` and the Visual
+Readability Contract's Shared Player-Facing HUD Rule - `ArenaHud` renders both meters at a shorter,
+wider compact size (`BuildStackedPressureMeterRect`/`BuildStackedProgressMeterRect`: 27px tall each
+with a 3px gap, versus the normal 38px solo meter) that still fits entirely inside the unchanged top
+bar. A single meter of either kind (every other mission on the current roster) keeps the original
+full-size layout and renders pixel-identical to before this change; only Pee Break's simultaneous-
+pair case uses the compact pair.
+
+Manual acceptance check: start Operation Pee Break and move both dogs toward the bottom of the room
+during any beat - the top bar must keep showing both **BLADDER EMERGENCY** and **TEENAGER GETS IT
+(BEAT n/4)** stacked, non-overlapping, matching the world-anchored meter above the Teenager whenever
+he is also on-screen. The beat-progress row must disappear once the door opens.
+
 ### Operation Pee Break couch-feedback response (2026-07-14)
 
 The latest human run found five usability gaps: unclear station order/reaction, abstract large-circle

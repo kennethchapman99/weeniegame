@@ -10,7 +10,7 @@ namespace CheddarAndCocoa.Game
     /// to convince the Teenager to open the door. Misreads reset the current attempt, never the run.
     /// </summary>
     public sealed class PeeBreakMissionController : IMissionController, IMissionSuccessPresentationController,
-        IMissionInteractionController, IMissionPressureHud, IMissionOpeningPresentationController
+        IMissionInteractionController, IMissionPressureHud, IMissionBeatProgressHud, IMissionOpeningPresentationController
     {
         public enum Beat
         {
@@ -186,6 +186,20 @@ namespace CheddarAndCocoa.Game
         public bool PressureVisible => true;
         public float PressureNormalized => Bladder;
         public Color PressureColor => Color.Lerp(new Color(0.3f, 0.78f, 1f), new Color(1f, 0.24f, 0.12f), Bladder);
+
+        // CF1.2: screen-space HUD mirror of the world-anchored Teenager comprehension meter
+        // (captures/2026-07-20/pee-break-misreads-ticker-teenager.png - the couch-test finding
+        // was that the meter scrolled off-screen once the dogs moved toward the bottom of the
+        // room). ProgressNormalized is the exact same clamped value UpdateTeenagerProgressRead()
+        // feeds the world-space fill (that method now reads this property instead of
+        // recomputing it), so the two readouts can never drift apart.
+        public string ProgressLabel => $"TEENAGER GETS IT (BEAT {_beatIndex + 1}/4)";
+        public bool ProgressVisible => !DoorOpen;
+        public float ProgressNormalized => DoorOpen ? 1f : Mathf.Clamp01(_puzzle.Comprehension / ComprehensionNeededForCurrentBeat);
+        public Color ProgressColor => Color.Lerp(new Color(0.3f, 0.7f, 1f), new Color(0.45f, 1f, 0.35f), ProgressNormalized);
+        private float ComprehensionNeededForCurrentBeat =>
+            _beatIndex < ComprehensionByBeat.Length ? ComprehensionByBeat[_beatIndex] : 1f;
+
         public int ToyKickCount { get; private set; }
         public int SignalReactionCount { get; private set; }
         public Vector2 PlayBallPosition => _playBall != null ? _playBall.transform.position : Vector2.zero;
@@ -1289,9 +1303,11 @@ namespace CheddarAndCocoa.Game
 
         private void UpdateTeenagerProgressRead()
         {
-            float comprehensionNeeded = _beatIndex < ComprehensionByBeat.Length ? ComprehensionByBeat[_beatIndex] : 1f;
             float confusionMax = _beatIndex < ConfusionByBeat.Length ? ConfusionByBeat[_beatIndex] : 1f;
-            float comprehension = DoorOpen ? 1f : Mathf.Clamp01(_puzzle.Comprehension / comprehensionNeeded);
+            // CF1.2: ProgressNormalized (IMissionBeatProgressHud) computes this same clamped
+            // ratio; reusing it here instead of a second local calculation is what guarantees
+            // the world-anchored track and the screen-space HUD mirror never drift apart.
+            float comprehension = ProgressNormalized;
             float confusion = DoorOpen ? 0f : Mathf.Clamp01(_puzzle.Confusion / confusionMax);
 
             if (_comprehensionTrack != null)

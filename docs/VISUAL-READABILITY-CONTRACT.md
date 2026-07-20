@@ -74,6 +74,20 @@ reveals Bark, Interact, Jump, and Wrestle one at a time; Cheddar and Cocoa have 
 the next verb cannot appear until both players complete the current one. Pause must expose
 skip/replay plus Audio, Rumble, and Camera Shake controls using controller navigation.
 
+**Screen-space progress meter (CF1.2, 2026-07-20).** A controller may mirror a beat/comprehension
+readout into that same compact top bar through the optional `IMissionBeatProgressHud` interface
+(`IMissionController.cs`), modeled exactly on the existing `IMissionPressureHud`. It exists for
+missions whose "real" meter is a world-anchored object the camera can scroll off-screen - the
+couch-test finding was Operation Pee Break's Teenager-mounted `TEENAGER GETS IT` comprehension fill
+disappearing once the dogs moved toward the bottom of the room. The world-anchored track stays as
+good diegetic feedback when visible; the HUD mirror is the always-visible fallback, not a
+replacement. When a controller exposes only one top-bar meter (pressure or progress), `ArenaHud`
+renders it at the existing full size and position. When a controller exposes both at once (Pee
+Break: bladder pressure never turns off, beat progress is visible until the door opens), `ArenaHud`
+stacks two shorter/wider compact meters (`BuildStackedPressureMeterRect`/
+`BuildStackedProgressMeterRect`) instead of growing the top bar past the fixed height this section
+already pins - both compact meters still fit entirely inside the unchanged bar.
+
 Diagnostic state, readiness gates, event history, full world-label maps, and control walls are not
 part of the production first read. They remain behind the explicit F1/backquote observer overlay.
 The bottom-left diagnostics toggle may appear only after that overlay has already been requested.

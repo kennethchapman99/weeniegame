@@ -94,6 +94,23 @@ namespace CheddarAndCocoa.Game
     }
 
     /// <summary>
+    /// Optional controller-owned screen-space mirror of a beat/comprehension progress readout
+    /// (CF1.2), modeled exactly on <see cref="IMissionPressureHud"/>. Exists for missions whose
+    /// "real" progress meter is a world-anchored object (e.g. Operation Pee Break's Teenager-
+    /// mounted comprehension fill): the shared camera follows the dogs, so a world-anchored meter
+    /// can scroll off-screen exactly when players most need to see whether their signal is
+    /// landing. The world-anchored track should stay as good diegetic feedback when visible; this
+    /// is the always-on HUD fallback, not a replacement.
+    /// </summary>
+    public interface IMissionBeatProgressHud
+    {
+        bool ProgressVisible { get; }
+        string ProgressLabel { get; }
+        float ProgressNormalized { get; }
+        Color ProgressColor { get; }
+    }
+
+    /// <summary>
     /// Optional hook for hard-handoff co-op puzzles that already track a single current actor
     /// internally (e.g. an alternating-step sequence) but only expose it through per-dog copy text
     /// in <see cref="IMissionController.TryGetObjectiveTarget"/> - that call returns true for BOTH
