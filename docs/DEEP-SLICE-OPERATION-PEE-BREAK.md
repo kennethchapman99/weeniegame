@@ -82,9 +82,21 @@ frozen. Bark/Interact again — `GO!` fires and Beat 1 begins.
 - Required: `DoorStare + PresentLeash`. Cocoa holds the stare; **Cheddar** must drag the leash off
   its hook (a `CarriedItem`) to the door spot. Neither dog can do both — the lock is split.
 - Bladder meter now rises on a timer; `Confusion` ticks if only one signal is up.
-- **Funny failure:** if Cheddar drops the leash en route (Cheddar drops things — chaos puppy),
-  Confusion climbs; at max the Teenager "misreads" and lobs a **tennis ball** ("you wanna play?").
-  The dogs must reset the combo. Gag, not death.
+- **Funny failure (CF1.3, 2026-07-20):** if Cheddar drops the leash en route (Cheddar drops
+  things — chaos puppy), Confusion climbs; at max the Teenager "misreads" and lobs a **tennis
+  ball** ("you wanna play?"). The dogs must reset the combo. Gag, not death. The 2026-07-20
+  couch-test finding (#11, FAIL: "Nothing really funny happens" at a session-ending **MISREADS
+  35**) was that this stayed mechanically correct but silent — a generic penalty beep and a label,
+  no reaction. The payoff is now: the Teenager half-rises and *offers* the wrong item toward the
+  dogs (a brief tween off his rest spot, not a teleport — `PeeBreakMissionController.MisreadOfferPosition`),
+  his question bubble gets a fresh emphatic scale-pulse on top of its existing visibility rule,
+  both dogs turn to react (`DogReadabilityFeedback.ShowGuidanceNudge`), and a distinct
+  `ArenaFeedbackCatalog.SquirrelStunned` "dazed/wrong guess" cue plays alongside the `ScorePenalty`
+  warning beep that already fired for the same event (kept last so it remains the audible
+  penalty cue). Three-plus misreads in the *same* beat (a beat's own `_beatMisreadsSeen` count, not
+  the session total) add one bigger flourish — the accent forces on, the label reads
+  "+ EVERYTHING?!", and the question bubble goes "???" — while Misreads, Comprehension, Confusion,
+  and rank thresholds stay exactly as before; this is presentation only.
 
 ### Beat 3 — TWIST / ROLE-FLIP: "The charger gambit"
 - The Teenager's phone is the boss. New required combo: `UnplugCharger + BlockHallway`.

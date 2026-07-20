@@ -98,7 +98,7 @@ task; they show exactly what the owner saw.
 |---|---|---|---|
 | CF1.1 | Control card waits for explicit accept | — | DONE (2026-07-20, 664 green (662→664, 2 new tests); `_briefingAwaitingAccept` gates `MissionBriefingVisible` and the lead-in freeze, accept hands off into unchanged `LeadInSniffSeconds` beat) |
 | CF1.2 | Comprehension meter mirrored in screen-space HUD | — | DONE (2026-07-20, 666 green (664→666, 2 new tests); `IMissionBeatProgressHud` mirrors `_puzzle.Comprehension` into the top bar via a shared `ProgressNormalized` property also consumed by the world-anchored track; stacked compact meters (27px, unchanged 102px top bar) when paired with the always-on bladder pressure meter) |
-| CF1.3 | Misread comedy payoff | — | OPEN |
+| CF1.3 | Misread comedy payoff | — | DONE (2026-07-20, 668 green (666→668, 2 new tests); `TriggerMisreadGag` moves `_misreadProp` from the Teenager toward the dogs via a `_misreadGagT` tween (not a teleport), pulses the question bubble, plays a distinct `SquirrelStunned` cue (kept ahead of the existing `ScorePenalty` call so `LastAudioCueRequested` is unchanged), and nudges both dogs with `ShowGuidanceNudge`; 3+ misreads in one beat (existing per-beat `_beatMisreadsSeen`) escalate the flourish only; misread count/Comprehension/Confusion/beat/outcome proven bit-for-bit unchanged) |
 | CF1.4 | Teenager reflects beat progression | — | OPEN |
 | CF1.5 | Beat-3 role flip readable on-screen | — | OPEN |
 | CF1.6 | Door stare anchors to the floor | — | OPEN |

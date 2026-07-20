@@ -791,6 +791,96 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(Color.white, accent.GetComponent<SpriteRenderer>().color);
         }
 
+        /// <summary>
+        /// CF1.3 (finding #11, FAIL): the gag template's "fires when the condition holds, stays
+        /// quiet when it doesn't" shape, adapted from a cooldown trigger to the misread-count
+        /// trigger this mission actually has. Negative case first (an exact-match tick - the
+        /// correct dog job - must never start the comedy beat), then the positive case (an actual
+        /// misread starts the Teenager's offer tween, a distinct audio cue, and both dogs turning
+        /// to react), then confirms the tween settles without a second misread.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator MisreadTriggersComedicGagButStaysQuietOnExactMatch()
+        {
+            yield return LoadMission();
+            var cheddar = FindDog(DogId.Cheddar);
+            var cocoa = FindDog(DogId.Cocoa);
+            var teenager = FindLoadedObject("PeeBreakTeenager");
+            // Opposite sides of the Teenager so a genuine per-dog "face the reaction" nudge is
+            // distinguishable from any coincidental default facing.
+            cheddar.transform.position = (Vector2)teenager.transform.position + Vector2.left * 5f;
+            cocoa.transform.position = (Vector2)teenager.transform.position + Vector2.right * 5f;
+            var cheddarFeedback = cheddar.GetComponent<DogReadabilityFeedback>();
+            var cocoaFeedback = cocoa.GetComponent<DogReadabilityFeedback>();
+
+            // Negative case: the exact-match dog job must never fire the comedic gag.
+            _game.ForcePeeBreakAdvance(SocialStimulus.DoorStare, 0.2f);
+            Assert.AreEqual(0, Controller.Misreads);
+            Assert.AreEqual(0f, Controller.MisreadGagProgress, 0.001f,
+                "The offer tween must stay at rest until an actual misread happens.");
+            Assert.That(_game.AudioCueRequests, Does.Not.Contain(ArenaFeedbackCatalog.SquirrelStunned),
+                "The comedic cue must stay quiet when nothing funny has happened yet.");
+
+            // Positive case: build confusion right up to (but not past) the threshold, then cross
+            // it with a small final tick so the offer tween's mid-flight state is directly
+            // observable (proves a brief lerp toward the dogs, not a teleport).
+            _game.ForcePeeBreakAdvance(SocialStimulus.BarkRhythm, 3.2f);
+            Assert.AreEqual(0, Controller.Misreads, "Setup: confusion should not have crossed the threshold yet.");
+            _game.ForcePeeBreakAdvance(SocialStimulus.BarkRhythm, 0.14f);
+            Assert.AreEqual(1, Controller.Misreads);
+            Assert.Greater(Controller.MisreadGagProgress, 0f, "The offer tween should have started...");
+            Assert.Less(Controller.MisreadGagProgress, 1f, "...but not teleported straight to the offered position.");
+            Assert.That(_game.AudioCueRequests, Does.Contain(ArenaFeedbackCatalog.SquirrelStunned),
+                "A distinct comedic cue, not just the generic ScorePenalty, should play on a misread.");
+            Assert.AreEqual("FacingRight", cheddarFeedback.FacingIntentLabel,
+                "Cheddar (to the Teenager's left) should turn to face the misread reaction.");
+            Assert.AreEqual("FacingLeft", cocoaFeedback.FacingIntentLabel,
+                "Cocoa (to the Teenager's right) should turn to face the misread reaction from the other side.");
+
+            // The tween should settle at the fully-offered position without causing a second misread.
+            _game.ForcePeeBreakAdvance(SocialStimulus.None, 1f);
+            Assert.AreEqual(1, Controller.Misreads, "The settling tick must not itself cause a second misread.");
+            Assert.AreEqual(1f, Controller.MisreadGagProgress, 0.001f);
+        }
+
+        /// <summary>
+        /// CF1.3 done-criterion: a direct behavioral proof that misread MECHANICS are unchanged by
+        /// the comedy layer - same Misreads count and puzzle state CoopSocialManipulationPuzzle.
+        /// Advance() has always produced (reset Comprehension/Confusion to 0, Misreads += 1 per
+        /// crossing), independent of whether the escalation flourish (3+ misreads in one beat)
+        /// fired. That escalation flourish itself is asserted here too.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator MisreadEscalatesAfterThreeInOneBeatWithoutChangingMechanics()
+        {
+            yield return LoadMission();
+
+            _game.ForcePeeBreakAdvance(SocialStimulus.BarkRhythm, 3.4f);
+            Assert.AreEqual(1, Controller.Misreads);
+            Assert.IsFalse(Controller.MisreadEscalated, "A single misread must not trigger the bigger flourish.");
+
+            _game.ForcePeeBreakAdvance(SocialStimulus.BarkRhythm, 3.4f);
+            Assert.AreEqual(2, Controller.Misreads);
+            Assert.IsFalse(Controller.MisreadEscalated, "Two misreads in one beat still must not escalate.");
+
+            _game.ForcePeeBreakAdvance(SocialStimulus.BarkRhythm, 3.4f);
+            Assert.AreEqual(3, Controller.Misreads);
+            Assert.IsTrue(Controller.MisreadEscalated, "The third misread in the SAME beat should trip the bigger flourish.");
+            Assert.That(WorldLabel("PeeBreakMisreadProp"), Does.Contain("EVERYTHING"),
+                "The escalation beat should read as a bigger flourish than a normal misread.");
+            var accent = FindLoadedObject("PeeBreakMisreadAccent");
+            Assert.IsTrue(accent.activeSelf,
+                "Escalation should force the accent flourish regardless of which wrong item cycled up.");
+
+            Assert.AreEqual(3, Controller.Puzzle.Misreads);
+            Assert.AreEqual(0f, Controller.Puzzle.Comprehension, 0.001f);
+            Assert.AreEqual(0f, Controller.Puzzle.Confusion, 0.001f);
+            Assert.AreEqual(PeeBreakMissionController.Beat.DoorStare, Controller.CurrentBeat,
+                "Misreads - even the escalated one - must never advance the beat.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome,
+                "Misreads - even the escalated one - must never fail or end the mission.");
+        }
+
         [UnityTest]
         public IEnumerator ColdReadQuestionMarkerRecordsCurrentBeatAndResetsOnReplay()
         {

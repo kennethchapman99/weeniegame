@@ -36,6 +36,12 @@ namespace CheddarAndCocoa.Game
         private const float DoorOpenPayoffSeconds = 1.15f;
         private const float ToyInteractRange = 2.8f;
         private const float ToyKickSpeed = 7.5f;
+        // CF1.3 (finding #11, FAIL - "Nothing really funny happens" despite MISREADS 35): comedic
+        // misread payoff tuning. Presentation-only - none of these feed Misreads/scoring/rank.
+        private const float MisreadOfferSeconds = 0.45f;
+        private const float MisreadOfferDistance = 1.5f;
+        private const float MisreadEscalatedOfferDistance = 2.4f;
+        private const float MisreadBubblePulseSeconds = 0.6f;
         public const float OpeningExplainerDurationSeconds = 10.042f;
         public const string OpeningComprehensionCorrectionLabel = "TEENAGER COMPREHENSION";
         private const float OpeningExplainerSafetyTimeoutSeconds = 18f;
@@ -162,6 +168,13 @@ namespace CheddarAndCocoa.Game
         private int _beatMisreadsSeen;
         private string _latestMisreadThing = string.Empty;
         private float _openingExplainerElapsed;
+        // CF1.3: 0 = wrong item still at the Teenager, 1 = fully offered toward the dogs; advanced
+        // each tick in AdvancePuzzle so UpdateScene() can lerp _misreadProp's position instead of
+        // repositioning it to a fixed offset every frame (a tween, not a teleport).
+        private float _misreadGagT;
+        private bool _misreadEscalated;
+        private float _misreadBubblePulseUntil = float.NegativeInfinity;
+        private TextMesh _teenagerQuestionBubbleText;
 
         public TeenPresentationState TeenState { get; private set; }
         public GameManager.MissionVariant Variant => GameManager.MissionVariant.OperationPeeBreak;
@@ -202,6 +215,10 @@ namespace CheddarAndCocoa.Game
 
         public int ToyKickCount { get; private set; }
         public int SignalReactionCount { get; private set; }
+        // CF1.3: read-only test hooks for the misread comedy payoff (see TriggerMisreadGag). Purely
+        // presentation state - neither one feeds Misreads, Comprehension, Confusion, or the beat.
+        public float MisreadGagProgress => _misreadGagT;
+        public bool MisreadEscalated => _misreadEscalated;
         public Vector2 PlayBallPosition => _playBall != null ? _playBall.transform.position : Vector2.zero;
         public Vector2 SqueakyToyPosition => _squeakyToy != null ? _squeakyToy.transform.position : Vector2.zero;
         public bool IsComplete => DoorOpen && _successHoldRemaining <= 0f;
@@ -479,13 +496,46 @@ namespace CheddarAndCocoa.Game
                 _context.SetCue($"Teenager misunderstood: {wrongThing} Funny, but not outside. Reset the marked jobs.");
                 _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, $"MISREAD: {wrongThing}");
                 _context.SpawnWorldPop(_teenager.transform.position, wrongThing, new Color(1f, 0.55f, 0.35f));
+                // CF1.3: comedic payoff, presentation-only. _beatMisreadsSeen already IS the
+                // per-beat misread count (ConfigureBeat()/_puzzle.Configure() both reset it every
+                // beat change), so 3+ here means the SAME beat, not the whole run.
+                bool escalated = _beatMisreadsSeen >= 3;
+                TriggerMisreadGag(escalated);
+                // ScorePenalty stays the LAST audio cue requested in this block so LastAudioCueRequested
+                // is unchanged for existing callers - the comedic cue above is a distinct, earlier beat.
                 _context.RequestAudioCue(ArenaFeedbackCatalog.ScorePenalty);
                 _context.LogEvent("PeeBreakMisread", wrongThing);
-                ShowMisreadProp(wrongThing);
+                ShowMisreadProp(wrongThing, escalated);
             }
+
+            if (_misreadProp != null && _misreadProp.activeSelf)
+                _misreadGagT = Mathf.Clamp01(_misreadGagT + deltaTime / MisreadOfferSeconds);
 
             if (_puzzle.Solved) AdvanceBeat();
             UpdateScene();
+        }
+
+        /// <summary>
+        /// CF1.3 (finding #11, FAIL): 35 silent misreads with "nothing really funny" happening.
+        /// Presentation-only reaction layered on the misread branch above - Misreads, Comprehension,
+        /// Confusion, and the beat are already fully computed by the time this runs and are never
+        /// touched here. Starts the offer tween UpdateScene() reads for _misreadProp's position,
+        /// gives the question bubble a fresh emphatic pulse, nudges both dogs to react (reusing the
+        /// existing guidance-nudge read, no new art), and plays a cue distinct from the generic
+        /// ScorePenalty warning the caller still fires afterward.
+        /// </summary>
+        private void TriggerMisreadGag(bool escalated)
+        {
+            _misreadGagT = 0f;
+            _misreadEscalated = escalated;
+            _misreadBubblePulseUntil = _context.Now() + MisreadBubblePulseSeconds;
+            if (_teenagerQuestionBubbleText != null) _teenagerQuestionBubbleText.text = escalated ? "???" : "?";
+
+            _context.RequestAudioCue(ArenaFeedbackCatalog.SquirrelStunned);
+
+            Vector2 teenagerPosition = _teenager.transform.position;
+            foreach (var feedback in _context.DogFeedback)
+                if (feedback != null) feedback.ShowGuidanceNudge(teenagerPosition - (Vector2)feedback.transform.position);
         }
 
         private void ReactToNewSignals(SocialStimulus active)
@@ -589,6 +639,11 @@ namespace CheddarAndCocoa.Game
             _unitedBarkSignalUntil = float.NegativeInfinity;
             if (_misreadProp != null) _misreadProp.SetActive(false);
             if (_misreadAccent != null) _misreadAccent.SetActive(false);
+            // CF1.3: a fresh beat means a fresh misread comedy read, same as the mechanics above.
+            _misreadGagT = 0f;
+            _misreadEscalated = false;
+            _misreadBubblePulseUntil = float.NegativeInfinity;
+            if (_teenagerQuestionBubbleText != null) _teenagerQuestionBubbleText.text = "?";
         }
 
         private void BuildScene()
@@ -750,7 +805,7 @@ namespace CheddarAndCocoa.Game
             _teenagerDoorBeam = NewChildScenery(_teenager, "PeeBreakTeenagerDoorAttentionBeam", new Color(1f, 0.92f, 0.35f, 0.32f), new Vector3(3.3f, 0.08f, 1f), new Vector3(1.65f, -0.35f, -0.04f), 2);
             _teenagerQuestionBubble = NewChildSignal(_teenager, "PeeBreakTeenagerQuestionBubble", new Color(1f, 1f, 1f, 0.92f), new Vector3(0.82f, 0.82f, 1f), new Vector3(-2.3f, 2.55f, -0.05f), 17);
             _teenagerOhBubble = NewChildSignal(_teenager, "PeeBreakTeenagerOhBubble", new Color(1f, 0.92f, 0.36f, 0.96f), new Vector3(1.15f, 1.15f, 1f), new Vector3(-2.2f, 2.7f, -0.05f), 17);
-            AddBubbleText(_teenagerQuestionBubble, "?", 52, new Color(0.12f, 0.16f, 0.2f), 18);
+            _teenagerQuestionBubbleText = AddBubbleText(_teenagerQuestionBubble, "?", 52, new Color(0.12f, 0.16f, 0.2f), 18);
             AddBubbleText(_teenagerOhBubble, "OH!", 34, new Color(0.18f, 0.12f, 0.04f), 18);
             _comprehensionTrack = NewChildScenery(_teenager, "PeeBreakTeenagerComprehensionTrack", new Color(0.02f, 0.04f, 0.05f, 0.76f), new Vector3(4.2f, 0.24f, 1f), new Vector3(0f, 3.1f, -0.04f), 17);
             _comprehensionFill = NewChildScenery(_comprehensionTrack, "PeeBreakTeenagerComprehensionFill", new Color(0.3f, 1f, 0.55f, 0.94f), new Vector3(0.04f, 0.64f, 1f), Vector3.zero, 19);
@@ -953,9 +1008,9 @@ namespace CheddarAndCocoa.Game
             return marker;
         }
 
-        private static void AddBubbleText(GameObject bubble, string copy, int fontSize, Color color, int sortingOrder)
+        private static TextMesh AddBubbleText(GameObject bubble, string copy, int fontSize, Color color, int sortingOrder)
         {
-            if (bubble == null) return;
+            if (bubble == null) return null;
             var textObject = new GameObject("IconText");
             textObject.transform.SetParent(bubble.transform);
             textObject.transform.localPosition = new Vector3(0f, 0f, -0.05f);
@@ -967,6 +1022,7 @@ namespace CheddarAndCocoa.Game
             text.alignment = TextAlignment.Center;
             text.color = color;
             if (text.TryGetComponent<MeshRenderer>(out var renderer)) renderer.sortingOrder = sortingOrder;
+            return text;
         }
 
         private GameObject NewMarker(string name, Color color, string label, Vector3 scale)
@@ -1081,7 +1137,11 @@ namespace CheddarAndCocoa.Game
             _chargerCord.transform.localScale = new Vector3(Mathf.Max(0.5f, cordDelta.magnitude), 0.16f, 1f);
             _chargerCord.transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(cordDelta.y, cordDelta.x) * Mathf.Rad2Deg);
             _bladderMeter.transform.position = _doorPosition + new Vector2(0f, -3.2f);
-            _misreadProp.transform.position = (Vector2)_teenager.transform.position + new Vector2(2f, -1.3f);
+            // CF1.3: "he half-rises and offers the wrong item toward the dogs" - lerp from the
+            // Teenager-anchored rest spot toward the dogs by _misreadGagT (advanced in
+            // AdvancePuzzle) instead of pinning the prop to a fixed offset every frame.
+            Vector2 misreadRestPosition = (Vector2)_teenager.transform.position + new Vector2(2f, -1.3f);
+            _misreadProp.transform.position = Vector2.Lerp(misreadRestPosition, MisreadOfferPosition(misreadRestPosition), _misreadGagT);
 
             _door.transform.localScale = DoorOpen ? new Vector3(0.35f, 4f, 1f) : new Vector3(2.4f, 4f, 1f);
             float pulse = 1f + Mathf.Sin(Time.time * 7.5f) * 0.04f;
@@ -1253,7 +1313,19 @@ namespace CheddarAndCocoa.Game
             _leash.SetActive(!DoorOpen && (_beatIndex == 1 || _beatIndex == 3));
             if (_teenagerPhoneBeam != null) _teenagerPhoneBeam.SetActive(!DoorOpen && PhoneBattery > 0.08f && CurrentBeat != Beat.ChargerGambit);
             if (_teenagerDoorBeam != null) _teenagerDoorBeam.SetActive(!DoorOpen && (cocoaAtDoor || cheddarAtLeash || CurrentBeat == Beat.UnitedBark || PhoneBattery <= 0.08f));
-            if (_teenagerQuestionBubble != null) _teenagerQuestionBubble.SetActive(!DoorOpen && CurrentBeat != Beat.UnitedBark && PhoneBattery > 0.08f);
+            if (_teenagerQuestionBubble != null)
+            {
+                bool questionVisible = !DoorOpen && CurrentBeat != Beat.UnitedBark && PhoneBattery > 0.08f;
+                _teenagerQuestionBubble.SetActive(questionVisible);
+                // CF1.3: the bubble was "already up most of the mission" (ambient visibility rule
+                // above, unchanged) - layer a fresh emphatic pulse on top exactly at a misread
+                // instead of adding a second, competing visibility rule.
+                float pulseT = questionVisible
+                    ? Mathf.Clamp01((_misreadBubblePulseUntil - _context.Now()) / MisreadBubblePulseSeconds)
+                    : 0f;
+                float bubbleScale = 0.82f * (1f + pulseT * 0.6f);
+                _teenagerQuestionBubble.transform.localScale = new Vector3(bubbleScale, bubbleScale, 1f);
+            }
             if (_teenagerOhBubble != null) _teenagerOhBubble.SetActive(!DoorOpen && (CurrentBeat == Beat.UnitedBark || PhoneBattery <= 0.08f));
             if (_chargerPluggedEnd != null) _chargerPluggedEnd.SetActive(!DoorOpen && CurrentBeat == Beat.ChargerGambit && PhoneBattery > 0.08f);
             if (_chargerUnpluggedEnd != null) _chargerUnpluggedEnd.SetActive(CurrentBeat == Beat.UnitedBark || PhoneBattery <= 0.08f);
@@ -1417,7 +1489,7 @@ namespace CheddarAndCocoa.Game
             if (art != null && art.TryGetComponent<SpriteRenderer>(out var renderer)) renderer.color = color;
         }
 
-        private void ShowMisreadProp(string wrongThing)
+        private void ShowMisreadProp(string wrongThing, bool escalated)
         {
             _latestMisreadThing = wrongThing;
             if (_misreadProp == null) return;
@@ -1425,9 +1497,47 @@ namespace CheddarAndCocoa.Game
             _misreadProp.SetActive(true);
             _misreadProp.transform.localScale = tennisBall ? Vector3.one * 1.35f : Vector3.one * 1.1f;
             SetMarkerColor(_misreadProp, tennisBall ? new Color(0.55f, 1f, 0.28f) : new Color(1f, 0.48f, 0.2f));
-            if (_misreadAccent != null) _misreadAccent.SetActive(tennisBall);
+            // CF1.3: 3+ misreads in one beat forces the accent flourish regardless of which wrong
+            // item cycled up, reading as the bigger "brings everything out" escalation beat.
+            if (_misreadAccent != null) _misreadAccent.SetActive(tennisBall || escalated);
             if (_misreadLabel != null)
-                _misreadLabel.text = $"{wrongThing}\nWRONG IDEA\nTRY DOG JOBS";
+                _misreadLabel.text = escalated
+                    ? $"{wrongThing} + EVERYTHING?!\n???\nTRY DOG JOBS"
+                    : $"{wrongThing}\nWRONG IDEA\nTRY DOG JOBS";
+        }
+
+        /// <summary>
+        /// CF1.3: "he half-rises and offers the wrong item toward the dogs" - a point leaning from
+        /// the Teenager's rest spot toward wherever the dogs currently are (their live midpoint),
+        /// reached over MisreadOfferSeconds by _misreadGagT. Reuses _latestMisreadThing (already
+        /// the Misreads % 3 cycle the label uses - see AdvancePuzzle) to vary how far the offer
+        /// reaches per wrong item instead of adding a second independent cycle. Escalated misreads
+        /// (3+ in one beat) reach further, reading as the bigger "brings everything out" flourish.
+        /// </summary>
+        private Vector2 MisreadOfferPosition(Vector2 restPosition)
+        {
+            if (_context.Dogs == null) return restPosition;
+            Vector2 sum = Vector2.zero;
+            int count = 0;
+            foreach (var dog in _context.Dogs)
+            {
+                if (dog == null) continue;
+                sum += (Vector2)dog.transform.position;
+                count++;
+            }
+            if (count == 0) return restPosition;
+
+            Vector2 towardDogs = sum / count - restPosition;
+            if (towardDogs.sqrMagnitude < 0.0001f) return restPosition;
+
+            float itemReach = _latestMisreadThing switch
+            {
+                "TENNIS BALL?" => 1f,
+                "BLANKET?" => 0.75f,
+                _ => 1.2f
+            };
+            float distance = (_misreadEscalated ? MisreadEscalatedOfferDistance : MisreadOfferDistance) * itemReach;
+            return restPosition + towardDogs.normalized * distance;
         }
     }
 }
