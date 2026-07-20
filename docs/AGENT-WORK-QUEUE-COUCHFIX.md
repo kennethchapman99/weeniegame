@@ -96,7 +96,7 @@ task; they show exactly what the owner saw.
 
 | ID | Task | Depends on | Status |
 |---|---|---|---|
-| CF1.1 | Control card waits for explicit accept | — | OPEN |
+| CF1.1 | Control card waits for explicit accept | — | DONE (2026-07-20, 664 green (662→664, 2 new tests); `_briefingAwaitingAccept` gates `MissionBriefingVisible` and the lead-in freeze, accept hands off into unchanged `LeadInSniffSeconds` beat) |
 | CF1.2 | Comprehension meter mirrored in screen-space HUD | — | OPEN |
 | CF1.3 | Misread comedy payoff | — | OPEN |
 | CF1.4 | Teenager reflects beat progression | — | OPEN |

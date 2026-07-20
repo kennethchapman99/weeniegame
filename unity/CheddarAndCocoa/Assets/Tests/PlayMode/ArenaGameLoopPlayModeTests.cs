@@ -338,7 +338,13 @@ namespace CheddarAndCocoa.Tests
             Assert.That(game.ActiveMissionReadinessLabel, Does.Contain("Readability gate: READY"));
             Assert.That(game.ActiveMissionReadinessLabel, Does.Contain("Rescue + bait-and-switch"));
             Assert.That(game.MissionBanner, Does.Contain("protect the weenies"));
-            Assert.IsTrue(game.MissionBriefingVisible, "The opening goal card must remain visible long enough to orient first-time players.");
+            // CF1.1: the assembly-wide LeadInSecondsOverride=0 default now also auto-accepts the
+            // briefing card (see GameManager.LeadInOverrideSkipsBriefing) so this and every other
+            // legacy deterministic test reaches live play on the same frame as before - previously
+            // this asserted the card was still visible here, but that was the same "card ignores
+            // the override" quirk CF1.1 fixes (the freeze itself was already skipped at this point).
+            Assert.IsFalse(game.MissionBriefingVisible,
+                "The zero-second test seam should skip straight past the card, same as it already skips the freeze.");
             Assert.That(game.ObjectiveLabel, Does.Contain("Save weenies"));
             Assert.AreEqual(GameManager.FeedbackKind.Intro, game.LastFeedback);
             Assert.AreEqual(GameManager.JuiceFeedbackKind.None, game.LastJuiceFeedback);

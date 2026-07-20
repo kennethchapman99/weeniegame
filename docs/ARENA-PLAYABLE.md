@@ -16,6 +16,34 @@ For current global character art direction, read `docs/ART-DIRECTION.md`. Backya
 playable proof of that direction, not the only place the direction applies. For future external
 sprite/audio collection before Unity import, use `docs/ASSET-CATALOG.md`.
 
+### Control card waits for explicit accept (CF1.1, 2026-07-20)
+
+The 2026-07-20 couch retest found the fixed-duration card (checklist #4/#5): "The control card
+dismisses itself after a period of time - I need time to look at it and accept it."
+`MissionBriefingVisible` is no longer time-based. The card now stays up - game fully frozen, the
+same freeze the sniff beat already used - until either player presses Bark or Interact, or grabs
+the first collectible ("accept"). Accepting drops the card and hands off into the existing timed
+sniff-around beat unchanged (`LeadInSniffSeconds`, 2.5s), which still ends early on any further
+deliberate dog verb exactly as before - accept never skips straight to live play by itself. The
+card's own footer now reads **BARK OR INTERACT WHEN READY** instead of "...TO START EARLY" (there
+is no longer a timer to beat). This supersedes the "Bark during the card" line of the
+"Sniff-around lead-in pacing beat (2026-07-04)" acceptance check below and the "five-second
+opening card" / "normal duration" card mentions in the Operation Pee Break entry just below this
+one - all now describe the same uncapped accept-then-sniff hand-off, not a fixed 5s window.
+
+`GameManager.LeadInSecondsOverride` (the test/dev seam) additionally auto-accepts the card whenever
+its value is `<= 0`, mirroring how that same value already force-skips the opening presentation, so
+the legacy deterministic PlayMode suite (which defaults the seam to 0) still reaches live play on
+the same frame as before. A positive override (used by `LeadInPlayModeTests` to pin the freeze
+contract itself) still requires a real accept input before the card drops.
+
+Manual acceptance check: start any mission and wait at least 10-15 seconds doing nothing - the card
+must still be up, the timer must not move, and the yard/props must stay visibly parked (pre-CF1.1
+this auto-dismissed at 5s; it no longer does). Press Bark or Interact - the card drops and the
+`SNIFF AROUND! GO IN n - BARK TO GO NOW` countdown begins with the game still frozen. A second
+Bark/Interact during that countdown still fires `GO!` instantly and starts the timer, same as
+before.
+
 ### Operation Pee Break couch-feedback response (2026-07-14)
 
 The latest human run found five usability gaps: unclear station order/reaction, abstract large-circle
@@ -644,6 +672,15 @@ this arena not having that system yet (noted above). Covered by
 green at `529/529`.
 
 ### Sniff-around lead-in pacing beat (2026-07-04)
+
+> Historical note: the "briefing card is up (`IntroPromptSeconds`, 5s)" framing and the "Bark during
+> the card: card drops instantly, `GO!` pops... and the timer starts" acceptance line below record
+> the 2026-07-04 fix's fixed-duration card. The "Control card waits for explicit accept (CF1.1,
+> 2026-07-20)" entry above supersedes both: the card no longer expires on a timer, and a bark/interact
+> while it is up now only accepts it (drops the card, hands off into the still-frozen sniff beat)
+> rather than firing `GO!` and starting the timer immediately. The sniff-beat mechanics described
+> below (discovery aids, the countdown label, the frozen mission clock, `LeadInSecondsOverride`) are
+> otherwise unchanged.
 
 Couch test #4 feedback: levels started "hot" — the briefing card covered the yard for its first
 five seconds while timers and threats were already running underneath it. Every mission now opens

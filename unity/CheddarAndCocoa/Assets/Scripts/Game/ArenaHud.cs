@@ -701,8 +701,10 @@ namespace CheddarAndCocoa.Game
             DrawPadButton(new Rect(cx, cy - 70f, 42f, 42f), "X", "INTERACT", GlyphInteract);
             DrawPadButton(new Rect(cx + 50f, cy - 22f, 42f, 42f), "A", "JUMP", GlyphJump);
             DrawPadButton(new Rect(cx, cy + 26f, 42f, 42f), "B", "WRESTLE", GlyphWrestle);
+            // CF1.1: the card no longer auto-dismisses on a timer, so this is now the only way it
+            // closes - say what accept does, not "early" (there's no longer a timer to beat).
             GUI.Label(new Rect(padPanel.x + 14f, padPanel.yMax - 44f, padPanel.width - 28f, 34f),
-                "BARK / INTERACT TO START EARLY", _small);
+                "BARK OR INTERACT WHEN READY", _small);
         }
 
         private void DrawKeyboardPlayer(Rect panel, float y, string player, string move, string bark, string interact, string jump, string wrestle)

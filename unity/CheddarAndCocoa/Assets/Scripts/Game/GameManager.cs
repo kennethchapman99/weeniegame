@@ -278,7 +278,12 @@ namespace CheddarAndCocoa.Game
         public string ActiveMissionReadinessLabel => _mission != null ? MissionReadinessLabelFor(_mission.Variant) : SelectedMissionReadinessLabel;
         public bool MissionOpeningPresentationVisible => MissionActive() &&
             _activeMissionController is IMissionOpeningPresentationController opening && opening.IsPresentingOpening;
-        public bool MissionBriefingVisible => MissionActive() && Time.time < _introPromptUntil;
+        /// <summary>
+        /// CF1.1: state-based, not time-based - the card stays up until a deliberate bark/interact
+        /// ("accept") clears <c>_briefingAwaitingAccept</c>. No code path may hide it on elapsed
+        /// time alone.
+        /// </summary>
+        public bool MissionBriefingVisible => MissionActive() && _briefingAwaitingAccept;
         public string MissionBanner { get; private set; } = string.Empty;
         public string EndRank { get; private set; } = "Needs More Bark";
         public string EndHeadlineLabel => !EndScreenVisible ? string.Empty : IsLevelClear ? "MISSION COMPLETE" : "MISSION FAILED";
@@ -454,8 +459,21 @@ namespace CheddarAndCocoa.Game
 
         public float MissionDurationSeconds => CurrentFlow == FlowState.MissionSelect ? 0f : Mathf.Clamp(roundDuration - TimeRemaining, 0f, roundDuration);
 
-        /// <summary>Test/dev seam: fixed lead-in length in seconds; null uses briefing + sniff tuning.</summary>
+        /// <summary>
+        /// Test/dev seam: fixed lead-in length in seconds; null uses briefing + sniff tuning.
+        /// CF1.1: a value &lt;= 0 also auto-accepts the briefing card (which normally waits for a
+        /// deliberate bark/interact/grab) so the ~650 legacy deterministic tests that rely on this
+        /// seam still reach live play on the same frame as before - mirroring how BeginRound already
+        /// uses this same &lt;= 0 check to force-skip the opening presentation. A positive override
+        /// (the long values LeadInPlayModeTests uses) leaves the card gated on real input so its
+        /// freeze contract stays inspectable, and simply bounds the post-accept sniff beat to this
+        /// many seconds instead of ArenaMissionTuning.LeadInSniffSeconds.
+        /// </summary>
         public static float? LeadInSecondsOverride;
+
+        /// <summary>CF1.1: true when the seam should skip straight past the briefing-card accept gate.</summary>
+        private static bool LeadInOverrideSkipsBriefing =>
+            LeadInSecondsOverride.HasValue && LeadInSecondsOverride.Value <= 0f;
 
         /// <summary>True while the round is inside the frozen sniff-around discovery window.</summary>
         public bool LeadInActive => _leadInRemaining > 0f && Phase == State.Playing;
@@ -599,6 +617,8 @@ namespace CheddarAndCocoa.Game
         private float _nextSquirrelScareScoreAt;
         private Treat _squirrelTarget;
         private bool _squirrelHasStarted;
+        /// <summary>CF1.1: true while the briefing card is up, waiting for a bark/interact accept.</summary>
+        private bool _briefingAwaitingAccept;
         private float _introPromptUntil;
         private float _leadInRemaining;
         private bool _openingPresentationWasActive;
@@ -746,9 +766,12 @@ namespace CheddarAndCocoa.Game
         {
             if (!MissionActive() || treat == null) return;
 
-            // Scooping the first collectible mid-sniff counts as starting to play: end the freeze
-            // so the discovery window can't be farmed, then bank the grab normally.
-            if (_leadInRemaining > 0f) EndLeadIn($"{DogName(dog)} grabbed the first collectible");
+            // Scooping the first collectible during the freeze counts as "we're ready" so the
+            // discovery window can't be farmed, then bank the grab normally. Mid-briefing this only
+            // accepts the card (CF1.1) and hands off into the sniff beat; mid-sniff it still ends
+            // the freeze early exactly as before.
+            if (_briefingAwaitingAccept) AcceptBriefing($"{DogName(dog)} grabbed the first collectible");
+            else if (_leadInRemaining > 0f) EndLeadIn($"{DogName(dog)} grabbed the first collectible");
 
             int collectorIndex = dog != null && dog.TryGetComponent<DogIdentity>(out var collectorIdentity)
                 ? IndexOfDog(collectorIdentity.Id)
@@ -1393,7 +1416,7 @@ namespace CheddarAndCocoa.Game
             _rng = new System.Random(_missionSeed);
             ActiveModifier = (RoundModifier)_rng.Next(0, 3);
             ActivateMissionController(_mission.Variant);
-            if (LeadInSecondsOverride.HasValue && LeadInSecondsOverride.Value <= 0f &&
+            if (LeadInOverrideSkipsBriefing &&
                 _activeMissionController is IMissionOpeningPresentationController testOpening)
                 testOpening.SkipOpeningPresentation();
             _openingPresentationWasActive = MissionOpeningPresentationVisible;
@@ -1412,6 +1435,7 @@ namespace CheddarAndCocoa.Game
             _squirrelHasStarted = false;
             _introPromptUntil = Time.time + _tuning.IntroPromptSeconds;
             _leadInRemaining = Mathf.Max(0f, LeadInSecondsOverride ?? (_tuning.IntroPromptSeconds + _tuning.LeadInSniffSeconds));
+            _briefingAwaitingAccept = !LeadInOverrideSkipsBriefing;
             _squirrelTimer = SquirrelDelay();
             _predatorTimer = _mission.RequiresPredator ? _tuning.PredatorWarningAt : float.PositiveInfinity;
             _predatorTarget = -1;
@@ -1495,6 +1519,7 @@ namespace CheddarAndCocoa.Game
                     _introPromptUntil = Time.time + _tuning.IntroPromptSeconds;
                     _leadInRemaining = Mathf.Max(0f, LeadInSecondsOverride ??
                         (_tuning.IntroPromptSeconds + _tuning.LeadInSniffSeconds));
+                    _briefingAwaitingAccept = !LeadInOverrideSkipsBriefing;
                     MissionBanner = MissionIntroPrompt;
                     LogPlaytestEvent("OpeningPresentation", "explainer complete; controls card shown");
                 }
@@ -1502,9 +1527,12 @@ namespace CheddarAndCocoa.Game
 
             MissionBanner = Time.time < _introPromptUntil ? MissionIntroPrompt : string.Empty;
 
-            // Sniff-around lead-in: the yard is visible and the dogs can roam, but the round
-            // clock, threats, and controller schedules hold still until the discovery beat ends.
-            if (_leadInRemaining > 0f)
+            // Briefing-card accept (CF1.1) + sniff-around lead-in: the yard is visible and the dogs
+            // can roam, but the round clock, threats, and controller schedules hold still across
+            // both. _briefingAwaitingAccept gates the first, input-only phase (the card); once that
+            // clears, _leadInRemaining continues to gate the existing timed sniff beat exactly as
+            // before. TickLeadIn is the single freeze mechanism for both phases.
+            if (_briefingAwaitingAccept || _leadInRemaining > 0f)
             {
                 TickLeadIn();
                 return;
@@ -1542,14 +1570,21 @@ namespace CheddarAndCocoa.Game
         private void TickLeadIn()
         {
             _missionClockOffset += Time.deltaTime;
-            _leadInRemaining -= Time.deltaTime;
-            if (_leadInRemaining <= 0f)
+            // CF1.1: while the card is still awaiting accept it never expires on its own - only
+            // AcceptBriefing (bark/interact/grab) clears _briefingAwaitingAccept. Once accepted,
+            // _leadInRemaining resumes gating the existing timed sniff beat exactly as before.
+            if (!_briefingAwaitingAccept)
             {
-                EndLeadIn("sniff timer");
-                return;
+                _leadInRemaining -= Time.deltaTime;
+                if (_leadInRemaining <= 0f)
+                {
+                    EndLeadIn("sniff timer");
+                    return;
+                }
             }
 
-            // Discovery aids stay live so the look-around actually teaches the level.
+            // Discovery aids stay live so the look-around actually teaches the level, whether the
+            // freeze is currently the card-accept wait or the post-accept sniff beat.
             UpdateObjectiveArrows();
             UpdateTravelAssists();
             UpdateInteractionRanges();
@@ -1575,10 +1610,29 @@ namespace CheddarAndCocoa.Game
             LogPlaytestEvent("OpeningPresentation", "skipped by player");
         }
 
+        /// <summary>
+        /// CF1.1: bark/interact/first-grab while the briefing card is still up means "we're ready" -
+        /// it dismisses the card and hands off into the existing timed sniff-around beat, exactly
+        /// like a fresh mission start would once the card is gone. It must NOT skip straight to live
+        /// play; only ending the sniff beat itself (EndLeadIn) does that.
+        /// </summary>
+        private void AcceptBriefing(string reason)
+        {
+            _briefingAwaitingAccept = false;
+            _leadInRemaining = Mathf.Max(0f, LeadInSecondsOverride ?? _tuning.LeadInSniffSeconds);
+            // Keep the (currently unrendered) MissionBanner intro-prompt text in step with the card
+            // instead of lingering up to IntroPromptSeconds past the moment the card was dismissed.
+            _introPromptUntil = Mathf.Min(_introPromptUntil, Time.time);
+            LogPlaytestEvent("MissionBriefing", $"accepted ({reason})");
+        }
+
         private void EndLeadIn(string reason)
         {
             _leadInRemaining = 0f;
-            // An early skip can land while the briefing card is still up; drop card and banner with it.
+            // By the time the sniff beat ends the briefing card has already been accepted
+            // (AcceptBriefing always runs first - see the three call sites), so this only needs to
+            // make sure a stray natural-timer path can never leave the flag stuck true.
+            _briefingAwaitingAccept = false;
             _introPromptUntil = Mathf.Min(_introPromptUntil, Time.time);
             _nextZoomiesPulseAt = Time.time + 6f;
             LastCue = $"GO! {MissionIntroPrompt}";
@@ -1973,8 +2027,14 @@ namespace CheddarAndCocoa.Game
             bool tutorialDiscovery = TryRecordTutorialAction(dogId, TutorialActionStep.Interact);
             RecordFirstMissionVerbUsed(TutorialActionStep.Interact);
 
-            // A deliberate interact during the sniff-around freeze means "we're ready" — start the
-            // round without charging a missed-interaction against the players.
+            // A deliberate interact during the freeze means "we're ready" - never charged as a
+            // missed interaction. Mid-briefing this only accepts the card (CF1.1) and hands off
+            // into the sniff beat; mid-sniff it still ends the freeze early exactly as before.
+            if (_briefingAwaitingAccept)
+            {
+                AcceptBriefing($"{dogId} interacted");
+                return;
+            }
             if (_leadInRemaining > 0f)
             {
                 EndLeadIn($"{dogId} interacted");
@@ -2067,15 +2127,19 @@ namespace CheddarAndCocoa.Game
             int dogIndex = IndexOfDog(dogId);
             if (dogIndex < 0) return;
 
-            // "Bark when ready": during the sniff-around freeze a bark just starts the round.
-            if (_leadInRemaining > 0f)
+            // "Bark when ready": during the freeze a bark always counts as a used bark with the
+            // usual audio/rumble/log, but what it DOES depends on the phase. Mid-briefing (CF1.1)
+            // it only accepts the card and hands off into the sniff beat; mid-sniff it still starts
+            // the round early exactly as before.
+            if (_briefingAwaitingAccept || _leadInRemaining > 0f)
             {
                 BarksUsed++;
                 _lastBarks[dogIndex] = Time.time;
                 RequestAudioCue(ArenaFeedbackCatalog.Bark);
                 RequestRumble("bark", 0.08f, 0.18f, 0.08f);
                 LogPlaytestEvent("Bark", DogName(_dogs[dogIndex]));
-                EndLeadIn($"{DogName(_dogs[dogIndex])} barked ready");
+                if (_briefingAwaitingAccept) AcceptBriefing($"{DogName(_dogs[dogIndex])} barked ready");
+                else EndLeadIn($"{DogName(_dogs[dogIndex])} barked ready");
                 return;
             }
 
@@ -2274,6 +2338,10 @@ namespace CheddarAndCocoa.Game
         private void EndRound(bool clear)
         {
             _leadInRemaining = 0f;
+            // Defensive: MissionActive() already goes false below, which alone makes
+            // MissionBriefingVisible false, but a forced end (e.g. ForceGameOver) can land while
+            // still awaiting accept - clear the flag explicitly so nothing stale survives a replay.
+            _briefingAwaitingAccept = false;
             Phase = clear ? State.LevelClear : State.GameOver;
             CurrentFlow = FlowState.EndScreen;
             Outcome = clear ? MissionOutcome.Clear : MissionOutcome.Failed;
@@ -2655,6 +2723,7 @@ namespace CheddarAndCocoa.Game
         private void ShowMissionSelect()
         {
             _leadInRemaining = 0f;
+            _briefingAwaitingAccept = false;
             CurrentFlow = FlowState.MissionSelect;
             Phase = State.Intro;
             Outcome = MissionOutcome.InProgress;

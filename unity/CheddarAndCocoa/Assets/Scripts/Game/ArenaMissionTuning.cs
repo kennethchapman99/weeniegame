@@ -19,12 +19,18 @@ namespace CheddarAndCocoa.Game
     /// </summary>
     public sealed class ArenaMissionTuning
     {
+        /// <summary>
+        /// CF1.1: no longer the briefing card's own display timer - the card now waits for a
+        /// deliberate bark/interact ("accept") instead of expiring on a clock. Still folds into the
+        /// pre-accept LeadInRemaining/LeadInActive reporting value and how long the (currently
+        /// unrendered) MissionBanner intro-prompt text lingers after GO.
+        /// </summary>
         public float IntroPromptSeconds = 5f;
 
         /// <summary>
-        /// Open-yard discovery beat after the briefing card drops and before the round clock and
-        /// threats start. Total lead-in freeze = IntroPromptSeconds + this; any bark/interact/grab
-        /// skips straight to GO.
+        /// Open-yard discovery beat that runs after the briefing card is explicitly accepted
+        /// (CF1.1) and before the round clock and threats start. Any bark/interact/grab during THIS
+        /// beat still skips straight to GO, same as before.
         /// </summary>
         public float LeadInSniffSeconds = 2.5f;
 

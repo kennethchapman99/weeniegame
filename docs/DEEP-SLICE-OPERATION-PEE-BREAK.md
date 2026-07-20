@@ -43,6 +43,32 @@ the human **misread** (brings the wrong thing — leash → tennis ball → blan
 We escalate by **changing the required combo per beat** and **splitting which dog can apply which
 stimulus.**
 
+## First-session flow (opening explainer → control card → sniff beat → Beat 1)
+
+Pee Break is the first mission with a controller-owned opening explainer (the 10-second MP4), so its
+cold-start sequence has more steps than the rest of the roster:
+
+1. **Opening explainer** (skippable, either player's Bark or Interact) — the mission clock and dogs
+   stay locked the whole time (`IMissionOpeningPresentationController`).
+2. **Control card** (CF1.1, 2026-07-20) — once the explainer ends or is skipped, the shared
+   briefing/control card appears and the game is fully frozen underneath it. The card no longer
+   expires on a timer; it waits for either player to press Bark or Interact, or grab the first
+   collectible ("accept"). This is shared `GameManager`/`ArenaHud` behavior, not Pee-Break-specific,
+   but Pee Break is the mission most affected since it is the only one with a preceding video the
+   players have already sat through — the couch-test finding ("the control card dismisses itself
+   after a period of time - I need time to look at it and accept it") happened on this mission.
+3. **Sniff-around beat** — accepting the card drops it and starts the existing `LeadInSniffSeconds`
+   (2.5s) open-yard freeze; the yard is visible and dogs can roam, but the bladder meter, Teenager
+   state machine, and phone battery all stay frozen. A further Bark/Interact, or scooping the first
+   collectible, ends this early exactly as before CF1.1.
+4. **GO → Beat 1 (TEACH)** — the round clock and Beat 1's `DoorStare` requirement go live exactly as
+   described below.
+
+Manual check: start Operation Pee Break, let the explainer play out, and confirm the control card
+then stays up with zero input for well past the old 5-second window — the bladder meter, Teenager,
+and phone battery must not move. Bark or Interact — the card drops into the sniff countdown, still
+frozen. Bark/Interact again — `GO!` fires and Beat 1 begins.
+
 ## The four beats (Teach → Explore → Twist → Climax)
 
 ### Beat 1 — TEACH: "Make eye contact" (single stimulus, ~30s, no fail)
