@@ -18,6 +18,9 @@ These documents govern current decisions and work:
 - [Couch Playtest — 2026-07-20 — Pee Break](COUCH-PLAYTEST-2026-07-20-PEE-BREAK.md) — deep-slice
   acceptance-gate results (PARTIAL), fix list, and roster-wide themes to audit. Source docx archived
   in `captures/2026-07-20/`.
+- [Couch-Fix Agent Work Queue](AGENT-WORK-QUEUE-COUCHFIX.md) — **the active execution queue**:
+  9 Pee Break fixes (CF1) + 8 roster theme audits (CF2) + retest handoff (CF3), one commit-sized
+  task per agent run with file/line anchors, traps, and evidence requirements.
 - [Game Design Bible](GAME-DESIGN-BIBLE.md) — creative north star; level list is an idea bank.
 - [Deep Slice: Operation Pee Break](DEEP-SLICE-OPERATION-PEE-BREAK.md) — only authorized new slice.
 - [Gameplay-First Greybox Pivot](GAMEPLAY-FIRST-GREYBOX-PIVOT.md) — generated Unity primitives
