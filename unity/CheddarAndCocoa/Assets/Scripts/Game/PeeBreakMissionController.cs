@@ -1325,9 +1325,18 @@ namespace CheddarAndCocoa.Game
             PlaceGeneratedArt(_openDoorArt, _doorFrame.transform.position + new Vector3(0.25f, 0f, -0.25f), 2.75f,
                 DoorOpen && !hasSuccessPlate);
             bool leashRelevant = _beatIndex == 1 || _beatIndex == 3;
+            // CF1.7 (finding #13: "Pretty good - the leash needs to be animated though, maybe
+            // carried around in mouth?"). The pre-CF1.7 build placed _leashArt at _leash's fixed
+            // station every tick regardless of whether Cheddar was actually there - "sits static."
+            // The attention-pulse scale below (unchanged) already only plays while !cheddarAtLeash
+            // ("come pick me up"); now that the art also visually relocates to the physical hook
+            // when not presenting, the two reads reinforce each other instead of fighting: pulsing
+            // AND sitting on the hook prop reads as "waiting to be grabbed," and going flat-scale
+            // AND riding Cheddar's muzzle reads as "currently being carried."
             float leashScale = leashRelevant ? 1.04f + (!cheddarAtLeash ? Mathf.Sin(Time.time * 7f) * 0.05f : 0f) : 0.76f;
-            PlaceGeneratedArt(_leashArt, _leash.transform.position + new Vector3(0.05f, 0f, -0.25f), leashScale,
-                !DoorOpen && (_beatIndex == 1 || _beatIndex == 3 || _beatIndex == 0));
+            Vector3 leashArtPosition = ResolveLeashArtPosition(cheddarAtLeash, out float leashArtSway);
+            PlaceGeneratedArt(_leashArt, leashArtPosition, leashScale,
+                !DoorOpen && (_beatIndex == 1 || _beatIndex == 3 || _beatIndex == 0), leashArtSway);
             SetGeneratedArtTint(_leashArt, leashRelevant ? Color.white : new Color(0.68f, 0.76f, 0.78f, 0.62f));
             PlaceGeneratedArt(_hydrantArt, _doorPosition + new Vector2(2.25f, -0.75f), 1.4f, DoorOpen,
                 Mathf.Sin(Time.time * 6f) * 3f);
@@ -1775,6 +1784,56 @@ namespace CheddarAndCocoa.Game
             };
             float distance = (_misreadEscalated ? MisreadEscalatedOfferDistance : MisreadOfferDistance) * itemReach;
             return restPosition + towardDogs.normalized * distance;
+        }
+
+        /// <summary>
+        /// CF1.7 (finding #13: "Pretty good - the leash needs to be animated though, maybe carried
+        /// around in mouth?"). _leash (the station marker TryGetObjectiveTarget/
+        /// ActorSignalBadge.SetStationSignal/the label prompt still target) and _leashPosition
+        /// (BuildActiveSet's PresentLeash stimulus check) are unchanged - they are the mechanic.
+        /// Only _leashArt's rendered position/rotation is presentation: while Cheddar actually
+        /// holds the stimulus (cheddarAtLeash, computed once in UpdateScene() from the same DogAt/
+        /// StationRange check the stimulus itself uses), the art tracks his muzzle on his facing
+        /// side with a small dangle-sway; otherwise it rests on the physical _leashHook prop
+        /// instead of the empty station-center air the pre-CF1.7 build always drew it at.
+        /// </summary>
+        private Vector3 ResolveLeashArtPosition(bool cheddarAtLeash, out float swayDegrees)
+        {
+            swayDegrees = 0f;
+            if (cheddarAtLeash)
+            {
+                int cheddarIndex = _context.IndexOfDog(DogId.Cheddar);
+                if (cheddarIndex >= 0 && _context.Dogs != null && cheddarIndex < _context.Dogs.Length && _context.Dogs[cheddarIndex] != null)
+                {
+                    Vector2 facing = CheddarFacingDirection(cheddarIndex);
+                    // Dangling from the mouth: a gentle rotational sway, same sin-wobble shape as
+                    // the misread tennis ball / hydrant relief animations above, just smaller.
+                    swayDegrees = Mathf.Sin(Time.time * 6f) * 6f;
+                    Vector2 muzzle = (Vector2)_context.Dogs[cheddarIndex].transform.position + facing * 0.45f + new Vector2(0f, -0.2f);
+                    return new Vector3(muzzle.x, muzzle.y, -0.25f);
+                }
+            }
+            Vector2 hookRest = (Vector2)_leashHook.transform.position + new Vector2(0.05f, 0f);
+            return new Vector3(hookRest.x, hookRest.y, -0.25f);
+        }
+
+        /// <summary>
+        /// CF1.7: DogReadabilityFeedback.FacingDirection (its existing _lastIntentDir field, newly
+        /// exposed read-only) is this codebase's one persistent per-dog facing signal - it is what
+        /// already flips the authored sprite (DogReadabilityFeedback.AnimatePose) and survives
+        /// Cheddar standing still to present the leash, unlike DogController.CurrentVelocity, which
+        /// reads zero the instant he stops moving. Falls back to a fixed facing only if the shared
+        /// feedback component is ever unavailable (defensive; always populated in real play).
+        /// </summary>
+        private Vector2 CheddarFacingDirection(int cheddarIndex)
+        {
+            if (_context.DogFeedback != null && cheddarIndex >= 0 && cheddarIndex < _context.DogFeedback.Length &&
+                _context.DogFeedback[cheddarIndex] != null)
+            {
+                Vector2 facing = _context.DogFeedback[cheddarIndex].FacingDirection;
+                if (facing.sqrMagnitude > 0.0001f) return facing.normalized;
+            }
+            return Vector2.right;
         }
     }
 }

@@ -335,6 +335,50 @@ namespace CheddarAndCocoa.Tests
         }
 
         /// <summary>
+        /// CF1.7 (finding #13: "Pretty good - the leash needs to be animated though, maybe carried
+        /// around in mouth?"). _leash (the station marker - TryGetObjectiveTarget,
+        /// ActorSignalBadge.SetStationSignal, the label prompt) and _leashPosition (the
+        /// PresentLeash stimulus check in BuildActiveSet) are unchanged; this proves only
+        /// _leashArt's rendered position moved. Cheddar is placed within StationRange of
+        /// _leashPosition but offset from its exact center, so "close to Cheddar" and "close to
+        /// the old fixed station" are two different points here - a fix that merely kept
+        /// rendering at the fixed station center would still coincidentally have Cheddar nearby
+        /// without actually tracking him, and this catches that.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator LeashArtFollowsCheddarsMuzzleWhilePresentingAndRestsAtHookOtherwise()
+        {
+            yield return LoadMission();
+            var cheddar = FindDog(DogId.Cheddar);
+            var leashArt = FindLoadedObject("PeeBreakGeneratedLeashArt");
+            var leashHook = FindLoadedObject("PeeBreakLeashHook");
+
+            // Not presenting: the art should rest at the physical hook prop, not float at the
+            // empty station center regardless of where Cheddar actually is.
+            cheddar.transform.position = Controller.LeashPosition + new Vector2(12f, 8f);
+            Controller.Tick(0.05f, Time.time);
+            Assert.LessOrEqual(Vector2.Distance(leashArt.transform.position, leashHook.transform.position), 0.1f,
+                "The leash art should rest at the hook when Cheddar is not presenting it.");
+            Assert.Greater(Vector2.Distance(leashArt.transform.position, cheddar.transform.position), 5f);
+
+            // Presenting: offset from _leashPosition's exact center (but still within
+            // StationRange) so this cannot pass by the art merely sitting at the old fixed
+            // station - it has to actually be near Cheddar's offset position.
+            cheddar.transform.position = Controller.LeashPosition + new Vector2(1.5f, 1.2f);
+            Controller.Tick(0.05f, Time.time);
+            Assert.LessOrEqual(Vector2.Distance(leashArt.transform.position, cheddar.transform.position), 1f,
+                "While Cheddar presents the leash, the art should follow his muzzle, not stay pinned to the fixed station center.");
+            Assert.Greater(Vector2.Distance(leashArt.transform.position, leashHook.transform.position), 0.5f,
+                "The art must actually move off the hook while Cheddar is carrying it.");
+
+            // Back away again: the art returns to resting at the hook.
+            cheddar.transform.position = Controller.LeashPosition + new Vector2(-14f, 6f);
+            Controller.Tick(0.05f, Time.time);
+            Assert.LessOrEqual(Vector2.Distance(leashArt.transform.position, leashHook.transform.position), 0.1f,
+                "The leash art should return to the hook once Cheddar stops presenting it.");
+        }
+
+        /// <summary>
         /// CF1.2 (finding #8, FAIL): "The progress meter disappears when the dogs move to bottom
         /// part of screen." The world-anchored Teenager comprehension meter is a child of the
         /// Teenager, so the camera can scroll it off-screen. IMissionBeatProgressHud mirrors the

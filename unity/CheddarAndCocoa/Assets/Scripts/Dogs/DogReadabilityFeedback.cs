@@ -74,6 +74,15 @@ namespace CheddarAndCocoa.Dogs
         public bool IdentityTextVisible => _labelRenderer != null && _labelRenderer.enabled;
         public string FacingIntentLabel => _lastIntentDir.x >= 0f ? "FacingRight" : "FacingLeft";
         public string DetailedFacingIntentLabel => $"Facing{CharacterMotionArt.FacingLabel(_lastIntentDir)}";
+        /// <summary>
+        /// CF1.7: read-only exposure of the same persistent facing signal that already drives the
+        /// authored-sprite flip (see AnimatePose below) and the two labels above - this dog's last
+        /// real movement direction, or an explicit override from ShowTug/ShowGuidanceNudge. Unlike
+        /// DogController.CurrentVelocity, this survives the dog standing still (e.g. holding a
+        /// station), which is exactly what a "which way is the dog facing right now" cosmetic
+        /// offset (a carried prop riding near the muzzle) needs.
+        /// </summary>
+        public Vector2 FacingDirection => _lastIntentDir;
         public string LastMovementJuiceLabel { get; private set; } = string.Empty;
         public float StrategicLabelScale { get; private set; } = 1f;
         public bool UsesAuthoredPoseArt => _authoredPose != null && _authoredPose.sprite != null;

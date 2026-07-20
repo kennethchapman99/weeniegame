@@ -60,7 +60,13 @@ Physical anchors the dogs stand at/near for each beat's stimuli
   relocation, not a cosmetic tweak. The door ART itself — position, scale, open/closed swap — is
   unchanged. Cocoa also gets a grounded, facing-the-door idle pose (the existing guidance-nudge
   read, no new art) while she holds the stare.
-- **Leash (Cheddar's `PresentLeash`, Beats 2/4).** Unchanged — hangs on its hook left of the door.
+- **Leash (Cheddar's `PresentLeash`, Beats 2/4).** CF1.7 (2026-07-20, finding #13 — "Pretty good -
+  the leash needs to be animated though, maybe carried around in mouth?"): the leash art now
+  follows Cheddar's muzzle on his facing side (with a small dangle sway) while he holds
+  `PresentLeash`, and rests back on its hook otherwise, instead of sitting fixed at the station
+  regardless of whether he's actually there. The station itself — the stimulus check
+  (`_leashPosition`), the objective-arrow/label target, and its fixed world position — is
+  unchanged; only the presentation of the art overlay moved.
 - **Hallway (Cheddar's `BlockHallway`, Beat 3 only).** Unchanged — mid-room choke point.
 - **Charger (Cocoa's `UnplugCharger`, Beat 3 only).** Unchanged — couch-side outlet.
 
