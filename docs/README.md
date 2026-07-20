@@ -15,6 +15,9 @@ These documents govern current decisions and work:
   implementing that plan; one task per agent run, status board inside.
 - [Baseline Couch Playtest — 2026-06-20](BASELINE-COUCH-PLAYTEST-2026-06-20.md) — technical evidence,
   cold-session protocol, findings, and current gate decision.
+- [Couch Playtest — 2026-07-20 — Pee Break](COUCH-PLAYTEST-2026-07-20-PEE-BREAK.md) — deep-slice
+  acceptance-gate results (PARTIAL), fix list, and roster-wide themes to audit. Source docx archived
+  in `captures/2026-07-20/`.
 - [Game Design Bible](GAME-DESIGN-BIBLE.md) — creative north star; level list is an idea bank.
 - [Deep Slice: Operation Pee Break](DEEP-SLICE-OPERATION-PEE-BREAK.md) — only authorized new slice.
 - [Gameplay-First Greybox Pivot](GAMEPLAY-FIRST-GREYBOX-PIVOT.md) — generated Unity primitives
