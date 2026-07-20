@@ -1008,6 +1008,77 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(HasWorldPop("RELIEF ZOOMIES!"), "The existing door-open flourish must still fire untouched.");
         }
 
+        /// <summary>
+        /// CF1.5 (finding #12): "Not sure what this means - but i finished the level this time" -
+        /// the beat 3 role flip (Cocoa stare->charger, Cheddar leash->hallway) was invisible to
+        /// players. Steps through beats via the same proven ForcePeeBreakAdvance path
+        /// BeatTransitionFires...OhBubble... and TeenagerBeatLook... already use, and proves the
+        /// flip presentation (banner juice, a world pop naming each dog's actual NEW job, a
+        /// symmetric pulse above each dog, both dogs' own S5.1 handoff chimes) fires exactly once
+        /// at the Beat 2 -> Beat 3 transition - not before, and not again on the Beat 3 -> Beat 4
+        /// transition. Also proves it deliberately does NOT go through
+        /// MissionContext.SignalRoleHandoff: RoleHandoffPlayModeTests' class docstring documents
+        /// why G1.4 left this beat unwired (a simultaneous both-dogs re-assignment to two NEW jobs
+        /// is not a fromDog->toDog handoff of the SAME job), and this test locks that decision in.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator Beat3RoleFlipFiresOnceWithBothDogsPopsAndIsNotASignalRoleHandoff()
+        {
+            yield return LoadMission();
+
+            // Trap #7: nothing should have fired yet at mission start / frame 1.
+            Assert.AreEqual(0, Controller.RoleFlipSignalCount, "Nothing should fire before Beat 3 is entered.");
+            Assert.IsFalse(HasWorldPop("NEW JOB"), "No role-flip pop should exist before Beat 3.");
+            var cheddarPulse = FindLoadedObject("PeeBreakCheddarRoleFlipPulse");
+            var cocoaPulse = FindLoadedObject("PeeBreakCocoaRoleFlipPulse");
+            Assert.IsNotNull(cheddarPulse);
+            Assert.IsNotNull(cocoaPulse);
+            Assert.IsFalse(cheddarPulse.activeSelf, "The swap pulse must not show before Beat 3.");
+            Assert.IsFalse(cocoaPulse.activeSelf, "The swap pulse must not show before Beat 3.");
+
+            // Beat 1 -> Beat 2 (LeashMessage) is not the role-flip beat.
+            _game.ForcePeeBreakAdvance(SocialStimulus.DoorStare, 1f);
+            Assert.AreEqual(PeeBreakMissionController.Beat.LeashMessage, Controller.CurrentBeat);
+            Assert.AreEqual(0, Controller.RoleFlipSignalCount, "Beat 1 -> Beat 2 is not the role-flip beat.");
+
+            // Beat 2 -> Beat 3 (ChargerGambit) is the role-flip transition.
+            _game.ForcePeeBreakAdvance(SocialStimulus.DoorStare | SocialStimulus.PresentLeash, 2.1f);
+            Assert.AreEqual(PeeBreakMissionController.Beat.ChargerGambit, Controller.CurrentBeat);
+            Assert.AreEqual(1, Controller.RoleFlipSignalCount,
+                "Entering Beat 3 should fire the role-flip presentation exactly once.");
+            Assert.IsTrue(HasWorldPop("CHEDDAR: NEW JOB - BLOCK HALLWAY!"), "Cheddar's new-job pop must fire.");
+            Assert.IsTrue(HasWorldPop("COCOA: NEW JOB - UNPLUG CHARGER!"), "Cocoa's new-job pop must fire.");
+            Assert.IsTrue(cheddarPulse.activeSelf, "The swap pulse should show at Cheddar right when Beat 3 begins.");
+            Assert.IsTrue(cocoaPulse.activeSelf, "The swap pulse should show at Cocoa right when Beat 3 begins.");
+
+            // Both dogs get their own identity-distinct chime - unlike a normal single-dog handoff,
+            // both jobs here are brand new, so both dogs are "receiving."
+            Assert.That(_game.AudioCueRequests, Does.Contain(ArenaFeedbackCatalog.HandoffChimeCheddar));
+            Assert.That(_game.AudioCueRequests, Does.Contain(ArenaFeedbackCatalog.HandoffChimeCocoa));
+
+            // G1.4 deliberately left this beat unwired from the shared fromDog->toDog handoff
+            // flourish (see RoleHandoffPlayModeTests' class docstring) - prove that decision holds.
+            Assert.AreEqual(0, _game.HandoffSignalCount,
+                "Beat 3's simultaneous double-reassignment must not be presented as a SignalRoleHandoff.");
+            Assert.IsNull(_game.LastHandoffFromDog);
+            Assert.IsNull(_game.LastHandoffToDog);
+
+            // The beat-3 objective copy already names both new jobs in one line (unchanged by CF1.5;
+            // CF1.5 only adds the transition moment, not the steady-state copy).
+            Assert.That(_game.ObjectiveLabel, Does.Contain("BLOCK HALLWAY"));
+            Assert.That(_game.ObjectiveLabel, Does.Contain("UNPLUG CHARGER"));
+
+            // Prove the swap pulse is a genuine one-shot, not a permanent addition to the scene.
+            yield return LiveSeconds(1.8f);
+            Assert.IsFalse(cheddarPulse.activeSelf, "The swap pulse must decay after the banner window.");
+            Assert.IsFalse(cocoaPulse.activeSelf, "The swap pulse must decay after the banner window.");
+
+            // Exactly once: must not refire on the Beat 3 -> Beat 4 transition.
+            _game.ForcePeeBreakAdvance(Controller.Required, 2.6f);
+            Assert.AreEqual(PeeBreakMissionController.Beat.UnitedBark, Controller.CurrentBeat);
+            Assert.AreEqual(1, Controller.RoleFlipSignalCount, "The role flip must not refire on later beat transitions.");
+        }
+
         [UnityTest]
         public IEnumerator ColdReadQuestionMarkerRecordsCurrentBeatAndResetsOnReplay()
         {

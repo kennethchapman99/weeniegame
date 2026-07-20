@@ -108,6 +108,18 @@ frozen. Bark/Interact again — `GO!` fires and Beat 1 begins.
   charger* — which is progress-ish chaos (they wander, dogs must re-herd). Off-message stimulus here
   (e.g. an excited `BarkRhythm` too early) spikes Confusion 1.5×, risking a misread (blanket: "are
   you cold?").
+- **CF1.5 (2026-07-20) role-flip presentation moment:** the swap used to be entirely silent — the
+  couch-test finding (#12) was "Not sure what this means - but i finished the level this time."
+  Entering this beat now fires a one-shot banner, layered on top of CF1.4's generic beat-transition
+  flourish: a `SetJuice` ping ("NEW JOBS - SWAP!"), a world-pop callout at each dog naming their
+  actual new job ("CHEDDAR: NEW JOB - BLOCK HALLWAY!" over Cheddar, "COCOA: NEW JOB - UNPLUG
+  CHARGER!" over Cocoa), a symmetric same-shaped pulse above each dog, and both dogs' own S5.1
+  handoff chimes (`HandoffChimeCheddar`/`HandoffChimeCocoa`). It deliberately does **not** use a
+  directional swoosh between the two dogs (`DogHandoffSwoosh`) or `MissionContext.SignalRoleHandoff`
+  — both would misread as "one dog's job moving to the other," which is wrong here: this is a
+  simultaneous double-reassignment to two brand-new jobs, not a fromDog→toDog handoff of the same
+  job. Fires exactly once per beat-3 entry (`PeeBreakMissionController.RoleFlipSignalCount`); the
+  existing beat-3 objective copy already names both new jobs in one line and did not need to change.
 
 ### Beat 4 — CLIMAX: "United bark, the door" (set-piece payoff)
 - Bladder meter is near max — visible, urgent, funny (crossed-legs dog dance animation).

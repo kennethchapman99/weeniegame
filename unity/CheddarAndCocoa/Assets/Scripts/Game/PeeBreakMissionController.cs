@@ -64,6 +64,12 @@ namespace CheddarAndCocoa.Game
         // CF1.4 (finding #8b): one-shot beat-transition flourish tuning. Presentation-only, same
         // as the CF1.3 tuning above - this never feeds Misreads/scoring/rank/beat progression.
         private const float BeatTransitionOhBubbleSeconds = 0.6f;
+        // CF1.5 (finding #12: "Not sure what this means - but i finished the level this time" -
+        // beat 3's silent role flip). Presentation-only banner/pulse tuning - entering
+        // Beat.ChargerGambit (_beatIndex == 2, post-increment) is already a natural one-shot event
+        // inside AdvanceBeat(), so this only controls how long the banner/pulse stay up, not a
+        // re-trigger guard.
+        private const float RoleFlipBannerSeconds = 1.1f;
         public const float OpeningExplainerDurationSeconds = 10.042f;
         public const string OpeningComprehensionCorrectionLabel = "TEENAGER COMPREHENSION";
         private const float OpeningExplainerSafetyTimeoutSeconds = 18f;
@@ -79,6 +85,13 @@ namespace CheddarAndCocoa.Game
 
         private static readonly float[] ComprehensionByBeat = { 0.65f, 2f, 2.5f, 2.25f };
         private static readonly float[] ConfusionByBeat = { 5f, 3f, 2.5f, 3f };
+
+        // CF1.5: matches GameManager's GuidanceBeaconCheddarColor/GuidanceBeaconCocoaColor (the
+        // "Cheddar orange / Cocoa brown" role-identity colors docs/VISUAL-READABILITY-CONTRACT.md
+        // already establishes for RoleTurnBeacon) so the role-flip banner reads as the same
+        // "whose job is this" language instead of introducing a new ad hoc color pairing.
+        private static readonly Color RoleFlipCheddarColor = new(1f, 0.55f, 0.1f);
+        private static readonly Color RoleFlipCocoaColor = new(0.42f, 0.27f, 0.14f);
 
         private readonly CoopSocialManipulationPuzzle _puzzle = new();
         private MissionContext _context;
@@ -123,6 +136,14 @@ namespace CheddarAndCocoa.Game
         private GameObject _shoeRight;
         private GameObject _cheddarUrgencyCue;
         private GameObject _cocoaUrgencyCue;
+        // CF1.5: standalone per-dog "swap" pulse companions - deliberately NOT a single directional
+        // swoosh between the two dogs (that would misread as "one dog's job moving to the other",
+        // which is exactly wrong here - both dogs get brand-new, non-swapped jobs at once). Built
+        // once, repositioned per-frame above each dog only while _roleFlipBannerUntil is live -
+        // never parented to a dog transform (trap #5) and never attached to GameManager's or a
+        // dog's own GameObject (trap #1).
+        private GameObject _cheddarRoleFlipPulse;
+        private GameObject _cocoaRoleFlipPulse;
         private GameObject _teenagerHead;
         private GameObject _teenagerHoodie;
         private GameObject _teenagerThumbs;
@@ -201,6 +222,10 @@ namespace CheddarAndCocoa.Game
         // steady-state condition. Field initializer guards the first construction; StartMission()
         // also resets it explicitly for replays (trap #7 - never rely on the 0-default alone).
         private float _beatTransitionOhBubbleUntil = float.NegativeInfinity;
+        // CF1.5: same one-shot-with-decay shape as _beatTransitionOhBubbleUntil above, driving how
+        // long the beat-3 role-flip banner/pulse-pair stay up. Field initializer guards
+        // construction; StartMission() also resets it explicitly for replays (trap #7).
+        private float _roleFlipBannerUntil = float.NegativeInfinity;
         private TextMesh _teenagerQuestionBubbleText;
 
         public TeenPresentationState TeenState { get; private set; }
@@ -264,6 +289,11 @@ namespace CheddarAndCocoa.Game
         // presentation state - neither one feeds Misreads, Comprehension, Confusion, or the beat.
         public float MisreadGagProgress => _misreadGagT;
         public bool MisreadEscalated => _misreadEscalated;
+        // CF1.5: read-only test hook proving the beat-3 role-flip presentation fired - increments
+        // exactly once at the Beat 2 -> Beat 3 transition (see AdvanceBeat()) and never again for
+        // the rest of the mission/replay. Purely presentation state - does not feed Misreads,
+        // Comprehension, Confusion, RequiredByBeat, or scoring.
+        public int RoleFlipSignalCount { get; private set; }
         public Vector2 PlayBallPosition => _playBall != null ? _playBall.transform.position : Vector2.zero;
         public Vector2 SqueakyToyPosition => _squeakyToy != null ? _squeakyToy.transform.position : Vector2.zero;
         public bool IsComplete => DoorOpen && _successHoldRemaining <= 0f;
@@ -333,6 +363,8 @@ namespace CheddarAndCocoa.Game
             _barkSignalUntil = float.NegativeInfinity;
             _unitedBarkSignalUntil = float.NegativeInfinity;
             _beatTransitionOhBubbleUntil = float.NegativeInfinity;
+            _roleFlipBannerUntil = float.NegativeInfinity;
+            RoleFlipSignalCount = 0;
             ConfigureBeat();
             SetSceneActive(true);
             _playBall.transform.position = _context.Bounds.center + new Vector2(-8f, -4.5f);
@@ -647,6 +679,36 @@ namespace CheddarAndCocoa.Game
             // its per-beat reset above can never race with or clobber the timer this line starts.
             _context.SpawnWorldPop(_teenager.transform.position + new Vector3(0f, 1.3f, 0f), "NEXT!", new Color(0.55f, 1f, 0.45f));
             _beatTransitionOhBubbleUntil = _context.Now() + BeatTransitionOhBubbleSeconds;
+
+            // CF1.5 (finding #12): beat 3's role flip was invisible - "Not sure what this means -
+            // but i finished the level this time." _beatIndex is already the NEW beat here (post-
+            // increment, post-ConfigureBeat() above), so == 2 means we just entered
+            // Beat.ChargerGambit: Cocoa moves stare->charger, Cheddar moves leash->hallway - BOTH
+            // getting brand-new jobs simultaneously, neither taking over the other's prior job.
+            // That is exactly why MissionContext.SignalRoleHandoff stays unwired here (see its XML
+            // doc and RoleHandoffPlayModeTests' docstring) - its fromDog/toDog shape only fits a
+            // single job passing from one dog to the other. A directional DogHandoffSwoosh between
+            // the two dogs would carry that same wrong "A's job is now B's" reading even spawned
+            // standalone, so this uses the doc's allowed symmetric fallback instead: one banner
+            // juice ping, one world-pop callout of the actual new job AT each dog, and a same-
+            // shaped pulse above each dog - nothing travels or arcs between them.
+            if (_beatIndex == 2)
+            {
+                RoleFlipSignalCount++;
+                _roleFlipBannerUntil = _context.Now() + RoleFlipBannerSeconds;
+                _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "NEW JOBS - SWAP!");
+                int cheddarIndex = _context.IndexOfDog(DogId.Cheddar);
+                int cocoaIndex = _context.IndexOfDog(DogId.Cocoa);
+                if (cheddarIndex >= 0 && _context.Dogs[cheddarIndex] != null)
+                    _context.SpawnWorldPop(_context.Dogs[cheddarIndex].transform.position + new Vector3(0f, 1.1f, 0f),
+                        "CHEDDAR: NEW JOB - BLOCK HALLWAY!", RoleFlipCheddarColor);
+                if (cocoaIndex >= 0 && _context.Dogs[cocoaIndex] != null)
+                    _context.SpawnWorldPop(_context.Dogs[cocoaIndex].transform.position + new Vector3(0f, 1.1f, 0f),
+                        "COCOA: NEW JOB - UNPLUG CHARGER!", RoleFlipCocoaColor);
+                _context.RequestAudioCue(ArenaFeedbackCatalog.HandoffChimeCheddar);
+                _context.RequestAudioCue(ArenaFeedbackCatalog.HandoffChimeCocoa);
+                _context.LogEvent("PeeBreakRoleFlip", "beat 3 simultaneous role flip presented");
+            }
         }
 
         private void StageDogsForDoorOpenPayoff()
@@ -746,6 +808,8 @@ namespace CheddarAndCocoa.Game
             _misreadAccent = NewChildMarker(_misreadProp, "PeeBreakMisreadAccent", Color.white, new Vector3(0.16f, 1.4f, 1f), new Vector3(0f, 0f, -0.05f), 4);
             _cheddarUrgencyCue = NewScenery("PeeBreakCheddarUrgencyCue", new Color(1f, 0.9f, 0.22f, 0.82f), new Vector3(0.28f, 0.78f, 1f), 21);
             _cocoaUrgencyCue = NewScenery("PeeBreakCocoaUrgencyCue", new Color(0.55f, 0.95f, 1f, 0.82f), new Vector3(0.28f, 0.78f, 1f), 21);
+            _cheddarRoleFlipPulse = NewSignalScenery("PeeBreakCheddarRoleFlipPulse", RoleFlipCheddarColor, Vector3.one * 0.4f, 22);
+            _cocoaRoleFlipPulse = NewSignalScenery("PeeBreakCocoaRoleFlipPulse", RoleFlipCocoaColor, Vector3.one * 0.4f, 22);
             BuildRecognizableRoomDetails();
             BuildGeneratedPropArt();
             BuildOpeningExplainer();
@@ -1123,6 +1187,7 @@ namespace CheddarAndCocoa.Game
                 _couchBack, _couchSeat, _sideTable, _phoneGlow, _chargerCord, _doorFrame, _closedDoorSlab, _openSunbeam,
                 _leashHook, _hallwayRug, _door, _leash, _hallway, _charger, _cheddarCoach, _teenager, _phone,
                 _bladderMeter, _misreadProp, _misreadAccent, _cheddarUrgencyCue, _cocoaUrgencyCue,
+                _cheddarRoleFlipPulse, _cocoaRoleFlipPulse,
                 _couchArt, _teenagerArt, _phoneArt, _openDoorArt,
                 _leashArt, _hydrantArt, _bladderArt, _misreadTennisBallArt,
                 _playBall, _playBallArt, _squeakyToy
@@ -1134,6 +1199,8 @@ namespace CheddarAndCocoa.Game
             if (active && _openSunbeam != null) _openSunbeam.SetActive(false);
             if (active && _hydrantArt != null) _hydrantArt.SetActive(false);
             if (active && _hallwayRug != null) _hallwayRug.SetActive(false);
+            if (active && _cheddarRoleFlipPulse != null) _cheddarRoleFlipPulse.SetActive(false);
+            if (active && _cocoaRoleFlipPulse != null) _cocoaRoleFlipPulse.SetActive(false);
             if (active) UpdateScene();
         }
 
@@ -1332,6 +1399,8 @@ namespace CheddarAndCocoa.Game
             }
             UpdateDogUrgencyCue(DogId.Cheddar, _cheddarUrgencyCue, 0f);
             UpdateDogUrgencyCue(DogId.Cocoa, _cocoaUrgencyCue, 1.3f);
+            UpdateRoleFlipPulse(DogId.Cheddar, _cheddarRoleFlipPulse, 0f);
+            UpdateRoleFlipPulse(DogId.Cocoa, _cocoaRoleFlipPulse, 1.4f);
             if (_doorLabel != null)
                 _doorLabel.text = DoorOpen ? "DOOR OPEN"
                     : CurrentBeat == Beat.ChargerGambit ? "DOOR WAITING"
@@ -1532,6 +1601,29 @@ namespace CheddarAndCocoa.Game
             cue.transform.localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(Time.time * 13f + phase) * 18f);
             if (Bladder >= 0.72f && _context.DogFeedback != null && index < _context.DogFeedback.Length)
                 _context.DogFeedback[index]?.ShowPanic();
+        }
+
+        /// <summary>
+        /// CF1.5: symmetric "swap" pulse above each dog while _roleFlipBannerUntil is live - the
+        /// task's explicitly-allowed fallback to a single DogHandoffSwoosh, which would always read
+        /// as directional motion from one dog to the other (wrong: Beat 3 is a simultaneous double-
+        /// reassignment, not a handoff of one job). Same per-frame-follow, never-parented companion-
+        /// object shape as UpdateDogUrgencyCue above (trap #5).
+        /// </summary>
+        private void UpdateRoleFlipPulse(DogId dogId, GameObject pulse, float phase)
+        {
+            if (pulse == null) return;
+            int index = _context.IndexOfDog(dogId);
+            bool active = _context.Now() <= _roleFlipBannerUntil && index >= 0 &&
+                _context.Dogs != null && index < _context.Dogs.Length && _context.Dogs[index] != null;
+            pulse.SetActive(active);
+            if (!active) return;
+
+            var dog = _context.Dogs[index];
+            float remaining = Mathf.Clamp01((_roleFlipBannerUntil - _context.Now()) / RoleFlipBannerSeconds);
+            float pop = 1f + Mathf.Sin(Time.time * 14f + phase) * 0.24f * remaining;
+            pulse.transform.position = dog.transform.position + new Vector3(0f, 1.3f, -0.2f);
+            pulse.transform.localScale = Vector3.one * Mathf.Lerp(0.3f, 0.95f, remaining) * pop;
         }
 
         private bool AnyDogNear(Vector2 position)
