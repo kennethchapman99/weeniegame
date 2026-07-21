@@ -1298,6 +1298,61 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(0, Controller.CompletedBeats);
         }
 
+        /// <summary>
+        /// CF1.8 (finding #10, UNVERIFIED: "Didn't see this working or not..." - the batting toys
+        /// exist but nobody found them). Scoped mission-wide, not per-toy: "first time either dog
+        /// comes within range of a toy... fires once... never fires again" reads as one reassuring
+        /// "these are just for fun" beat, not a repeated nag every time a dog wanders near a prop -
+        /// approaching the SECOND toy afterward must not re-fire it either.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator ToyDiscoveryPopFiresOnceMissionWideAndNeverAgain()
+        {
+            yield return LoadMission();
+            var cheddar = FindDog(DogId.Cheddar);
+            Assert.AreEqual(0, Controller.ToyDiscoveryPopCount);
+
+            cheddar.transform.position = Controller.PlayBallPosition + Vector2.left * 0.5f;
+            Controller.Tick(0.05f, Time.time);
+            Assert.AreEqual(1, Controller.ToyDiscoveryPopCount,
+                "First approach within ToyInteractRange + 1 of a toy should fire the one-shot discovery pop.");
+
+            Controller.Tick(0.05f, Time.time);
+            Controller.Tick(0.05f, Time.time);
+            Assert.AreEqual(1, Controller.ToyDiscoveryPopCount,
+                "Staying near the same toy across more ticks must not re-fire the discovery pop.");
+
+            cheddar.transform.position = Controller.SqueakyToyPosition + Vector2.left * 0.5f;
+            Controller.Tick(0.05f, Time.time);
+            Assert.AreEqual(1, Controller.ToyDiscoveryPopCount,
+                "Approaching the OTHER toy afterward must not fire a second discovery pop - it's one mission-wide moment.");
+        }
+
+        /// <summary>
+        /// CF1.8: the periodic idle wobble/glint (AdvanceToyDiscovery) must never touch a toy's
+        /// real position - AdvanceToy above is the only thing ever allowed to move a toy, and only
+        /// while it's actually mid-kick-physics. Ticks well past four ambient-wobble cadences
+        /// (~10s each) with both dogs left at their far-away mission-start positions (no approach,
+        /// no kick), then asserts both toy positions are bit-for-bit unchanged and no kick was ever
+        /// registered by the passive tick.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator ToyAmbientWobbleNeverMovesTheToys()
+        {
+            yield return LoadMission();
+            Vector2 ballBefore = Controller.PlayBallPosition;
+            Vector2 squeakyBefore = Controller.SqueakyToyPosition;
+
+            for (int i = 0; i < 400; i++) Controller.Tick(0.1f, Time.time); // 40s simulated
+
+            Assert.AreEqual(ballBefore, Controller.PlayBallPosition,
+                "The ambient idle wobble must never move the tennis ball - cosmetic scale/tint only.");
+            Assert.AreEqual(squeakyBefore, Controller.SqueakyToyPosition,
+                "The ambient idle wobble must never move the squeaky toy - cosmetic scale/tint only.");
+            Assert.AreEqual(0, Controller.ToyKickCount,
+                "No kick should ever be registered by the passive ambient tick.");
+        }
+
         [UnityTest]
         public IEnumerator ClimaxOpensDoorClearsAndReplayResetsEverything()
         {

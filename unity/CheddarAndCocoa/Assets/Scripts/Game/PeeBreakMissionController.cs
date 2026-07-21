@@ -55,6 +55,13 @@ namespace CheddarAndCocoa.Game
         private const float DoorOpenPayoffSeconds = 1.15f;
         private const float ToyInteractRange = 2.8f;
         private const float ToyKickSpeed = 7.5f;
+        // CF1.8 (finding #10, UNVERIFIED: "Didn't see this working or not..." - the batting toys
+        // exist but nobody found them). Presentation-only discoverability tuning - see
+        // AdvanceToyDiscovery below. Never feeds scoring/objectives/misreads; toys stay exactly as
+        // mechanically inert as they were before this pass, only more visually noticeable.
+        private const float ToyDiscoveryRange = ToyInteractRange + 1f;
+        private const float ToyAmbientWobbleIntervalSeconds = 10f;
+        private const float ToyAmbientWobbleSeconds = 0.6f;
         // CF1.3 (finding #11, FAIL - "Nothing really funny happens" despite MISREADS 35): comedic
         // misread payoff tuning. Presentation-only - none of these feed Misreads/scoring/rank.
         private const float MisreadOfferSeconds = 0.45f;
@@ -206,6 +213,15 @@ namespace CheddarAndCocoa.Game
         private float _signalReactionUntil;
         private Vector2 _playBallVelocity;
         private Vector2 _squeakyToyVelocity;
+        // CF1.8: deltaTime-accumulated (not _context.Now()-based) so the ~10s ambient cadence is
+        // driven purely by Tick's own deltaTime, same as AdvanceToy's velocity decay above - a
+        // test can fast-forward it with repeated Tick() calls instead of waiting on real wall time.
+        // Trap #7: a countdown defaulting to 0 would immediately read <= 0 and fire on frame 1, so
+        // StartMission() explicitly seeds it to the full interval, not the field-initializer 0.
+        private float _toyAmbientWobbleCountdown;
+        private float _playBallAmbientWobbleRemaining;
+        private float _squeakyToyAmbientWobbleRemaining;
+        private bool _toyDiscoveryTriggered;
         private SocialStimulus _lastActiveSet;
         private int _beatIndex;
         private int _beatMisreadsSeen;
@@ -284,6 +300,11 @@ namespace CheddarAndCocoa.Game
         };
 
         public int ToyKickCount { get; private set; }
+        // CF1.8: read-only test hook proving the mission-wide discovery pop fired - increments
+        // exactly once the first time either dog gets within ToyDiscoveryRange of either toy, and
+        // never again for the rest of the mission/replay. Purely presentation state - does not
+        // feed Misreads, Comprehension, Confusion, RequiredByBeat, or scoring.
+        public int ToyDiscoveryPopCount { get; private set; }
         public int SignalReactionCount { get; private set; }
         // CF1.3: read-only test hooks for the misread comedy payoff (see TriggerMisreadGag). Purely
         // presentation state - neither one feeds Misreads, Comprehension, Confusion, or the beat.
@@ -369,6 +390,14 @@ namespace CheddarAndCocoa.Game
             _playBallVelocity = Vector2.zero;
             _squeakyToyVelocity = Vector2.zero;
             ToyKickCount = 0;
+            // CF1.8 (trap #7): seed the countdown to the full interval here, in the same method
+            // that positions the toys below - a 0 default would read as "already elapsed" and pop
+            // the ambient wobble on the very first Tick() instead of ~10s in.
+            _toyAmbientWobbleCountdown = ToyAmbientWobbleIntervalSeconds;
+            _playBallAmbientWobbleRemaining = 0f;
+            _squeakyToyAmbientWobbleRemaining = 0f;
+            _toyDiscoveryTriggered = false;
+            ToyDiscoveryPopCount = 0;
             SignalReactionCount = 0;
             TeenState = TeenPresentationState.DistractedIdle;
             _latestMisreadThing = string.Empty;
@@ -411,6 +440,7 @@ namespace CheddarAndCocoa.Game
                 return;
             }
             AdvanceToys(deltaTime);
+            AdvanceToyDiscovery(deltaTime);
             AdvanceSimulation(BuildActiveSet(now), deltaTime);
         }
 
@@ -568,6 +598,68 @@ namespace CheddarAndCocoa.Game
             toy.transform.Rotate(0f, 0f, spinSpeed * deltaTime * Mathf.Clamp01(velocity.magnitude / ToyKickSpeed));
             velocity = Vector2.MoveTowards(velocity, Vector2.zero, deltaTime * 4.4f);
         }
+
+        /// <summary>
+        /// CF1.8 (finding #10, UNVERIFIED): a separate concern from AdvanceToys/AdvanceToy above,
+        /// which own a KICKED toy's physics decay - this only ever touches presentation (a
+        /// one-shot mission-wide discovery pop + a periodic idle wobble/glint on whichever toy is
+        /// currently untouched), never toy position/velocity, and never feeds
+        /// scoring/objectives/misreads.
+        /// </summary>
+        private void AdvanceToyDiscovery(float deltaTime)
+        {
+            CheckToyDiscovery();
+
+            _playBallAmbientWobbleRemaining = Mathf.Max(0f, _playBallAmbientWobbleRemaining - deltaTime);
+            _squeakyToyAmbientWobbleRemaining = Mathf.Max(0f, _squeakyToyAmbientWobbleRemaining - deltaTime);
+
+            _toyAmbientWobbleCountdown -= deltaTime;
+            if (_toyAmbientWobbleCountdown > 0f) return;
+            _toyAmbientWobbleCountdown += ToyAmbientWobbleIntervalSeconds;
+            // Never wobble a toy that's currently mid-kick-physics - AdvanceToy owns its motion
+            // until it settles back near zero velocity.
+            if (_playBallVelocity.sqrMagnitude <= 0.001f) _playBallAmbientWobbleRemaining = ToyAmbientWobbleSeconds;
+            if (_squeakyToyVelocity.sqrMagnitude <= 0.001f) _squeakyToyAmbientWobbleRemaining = ToyAmbientWobbleSeconds;
+        }
+
+        /// <summary>
+        /// "First time either dog comes within range of a toy... fires once... never fires again"
+        /// reads most naturally as one mission-wide discovery beat rather than one per toy: the
+        /// point is teaching "these are just for fun, not the mission," and repeating that once
+        /// per prop would read as nagging rather than a single reassuring aside.
+        /// </summary>
+        private void CheckToyDiscovery()
+        {
+            if (_toyDiscoveryTriggered) return;
+            GameObject foundToy = NearbyUndiscoveredToy();
+            if (foundToy == null) return;
+
+            _toyDiscoveryTriggered = true;
+            ToyDiscoveryPopCount++;
+            _context.SpawnWorldPop(foundToy.transform.position + new Vector3(0f, 0.6f, 0f), "TOYS! (just for fun)",
+                new Color(0.6f, 1f, 0.35f));
+            _context.Pulse(foundToy, 0.3f);
+            if (foundToy == _playBall) _playBallAmbientWobbleRemaining = ToyAmbientWobbleSeconds;
+            else _squeakyToyAmbientWobbleRemaining = ToyAmbientWobbleSeconds;
+        }
+
+        private GameObject NearbyUndiscoveredToy()
+        {
+            if (_context.Dogs == null) return null;
+            foreach (var dog in _context.Dogs)
+            {
+                if (dog == null) continue;
+                Vector2 dogPosition = dog.transform.position;
+                if (_playBall != null && Vector2.Distance(dogPosition, _playBall.transform.position) <= ToyDiscoveryRange)
+                    return _playBall;
+                if (_squeakyToy != null && Vector2.Distance(dogPosition, _squeakyToy.transform.position) <= ToyDiscoveryRange)
+                    return _squeakyToy;
+            }
+            return null;
+        }
+
+        private static float ToyWobbleFactor(float remainingSeconds) =>
+            remainingSeconds <= 0f ? 0f : Mathf.Sin(Mathf.Clamp01(remainingSeconds / ToyAmbientWobbleSeconds) * Mathf.PI);
 
         private SocialStimulus BuildActiveSet(float now)
         {
@@ -1344,8 +1436,25 @@ namespace CheddarAndCocoa.Game
                 Mathf.Lerp(0.34f, 0.66f, Bladder), !DoorOpen, Mathf.Sin(Time.time * 8f) * Mathf.Lerp(0f, 7f, Bladder));
             PlaceGeneratedArt(_misreadTennisBallArt, _misreadProp.transform.position + new Vector3(0f, 0.25f, -0.25f),
                 0.55f, _misreadProp.activeSelf && _latestMisreadThing == "TENNIS BALL?", Mathf.Sin(Time.time * 9f) * 8f);
+            // CF1.8: idle wobble/glint reads as "interactive at rest" even before discovery -
+            // scale/tint only. AdvanceToyDiscovery above never sets these while a toy is
+            // mid-kick-physics (nonzero velocity), so this can never fight AdvanceToy's rotation/
+            // position ownership of a toy that's actually in motion.
+            float ballWobble = ToyWobbleFactor(_playBallAmbientWobbleRemaining);
             PlaceGeneratedArt(_playBallArt, _playBall.transform.position + new Vector3(0f, 0.08f, -0.25f),
-                0.46f, !DoorOpen, _playBall.transform.eulerAngles.z);
+                0.46f * (1f + ballWobble * 0.18f), !DoorOpen, _playBall.transform.eulerAngles.z);
+            SetGeneratedArtTint(_playBallArt, Color.Lerp(Color.white, new Color(1f, 1f, 0.55f), ballWobble * 0.6f));
+            if (_playBallArt == null)
+            {
+                // No generated art loaded (e.g. headless test environment) - _playBall's own
+                // fallback silhouette is the visible sprite, so wobble it directly instead.
+                _playBall.transform.localScale = Vector3.one * (0.72f * (1f + ballWobble * 0.18f));
+                SetGeneratedArtTint(_playBall, Color.Lerp(new Color(0.55f, 1f, 0.28f), Color.white, ballWobble * 0.6f));
+            }
+
+            float squeakyWobble = ToyWobbleFactor(_squeakyToyAmbientWobbleRemaining);
+            _squeakyToy.transform.localScale = new Vector3(0.95f, 0.46f, 1f) * (1f + squeakyWobble * 0.18f);
+            SetGeneratedArtTint(_squeakyToy, Color.Lerp(new Color(1f, 0.65f, 0.16f), Color.white, squeakyWobble * 0.6f));
             if (_squeakyToyHandle != null)
                 _squeakyToyHandle.transform.localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(Time.time * 5.4f) * 8f);
             if (_context.Now() <= _signalReactionUntil && _teenagerArt != null)

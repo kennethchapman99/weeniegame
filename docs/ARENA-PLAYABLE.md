@@ -1431,6 +1431,16 @@ dog can use Interact near the tennis ball or squeaky toy to bat it across the ro
 score or mission-state effect. The normal HUD reads bladder pressure as a persistent colored
 **BLADDER EMERGENCY** bar without a percentage.
 
+**CF1.8 (finding #10, UNVERIFIED: "Didn't see this working or not...")** made the toys
+discoverable without giving them any mechanical weight: the first time either dog gets within
+`ToyInteractRange + 1` of either toy (whichever is approached first, once per mission), a one-shot
+world pop reads **"TOYS! (just for fun)"** with a wiggle pulse on that toy, and it never fires
+again that mission - it is one reassuring aside, not a repeated nag per prop. Independently, an
+untouched toy (not currently mid-kick) gets a gentle idle scale/tint wobble roughly every 10
+seconds so both toys read as interactive at rest even before that discovery moment. Both cues are
+purely cosmetic - they never touch toy position/velocity, and a kicked toy's physics (from
+`AdvanceToy`) always takes priority over the idle wobble.
+
 Manual acceptance check: arrow-select **Operation Pee Break** with two local players and keep the F1
 playtest overlay off for the first cold read. Confirm Beat 1 reads from the seated phone-absorbed
 Teenager, the base plate's closed door, and hanging leash before any large label appears, with no
@@ -1455,9 +1465,11 @@ base room swaps cleanly to the authored success plate with its open doorway and 
 plus the sunbeam, grass/hydrant relief gag, and celebratory sparkles. The mission clears, the end card
 shows Pee Break-specific result copy plus dog contribution credit, and replay resets beat, bladder,
 battery, misreads, and door state. The open-door/hydrant scene must remain live long enough to read
-before the end card replaces it. Before solving, have each dog bat one of the two toys and confirm it
-moves without advancing a beat. Confirm the top HUD bladder bar fills without showing a changing
-percentage in the objective, and confirm the opening card makes both keyboard layouts and the
+before the end card replaces it. Before solving, walk a dog near either toy for the first time and confirm the one-shot **"TOYS!
+(just for fun)"** pop and wiggle appear, then confirm it does not repeat on later approaches to
+either toy; also confirm an untouched toy gets a subtle idle wobble/glint after sitting still a
+while. Have each dog bat one of the two toys and confirm it moves without advancing a beat.
+Confirm the top HUD bladder bar fills without showing a changing percentage in the objective, and confirm the opening card makes both keyboard layouts and the
 Switch-style Y/X/A/B mapping understandable without verbal coaching.
 
 Automated pre-couch gate: run both Pee Break PlayMode rehearsals before handing controllers to
