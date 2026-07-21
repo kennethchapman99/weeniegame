@@ -178,6 +178,40 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(screen.DetailCoverFillsWidth);
         }
 
+        /// <summary>
+        /// CF1.9 (couch-test freeform finding: title-card art "seems to crop down most of the
+        /// image... detail is lost"). Pins the new, less-cropped FitDetailCover math: at the old
+        /// V3.3 constants (300px letterbox, 1.36 zoom) the visible fraction of the square cover's
+        /// area was ~18% (verified offline with a pixel-accurate PIL simulation of this exact
+        /// cover-fit math); the new constants recover roughly double that. This would fail if the
+        /// crop constants regressed back toward the old values.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator Screen_DetailCoverCropIsReducedFromV33Baseline()
+        {
+            yield return LoadArena();
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            var screen = Object.FindFirstObjectByType<MissionSelectScreen>();
+
+            game.SelectMission(GameManager.MissionVariant.OperationPeeBreak);
+            yield return null;
+
+            Sprite sprite = screen.DetailCoverSprite;
+            Assert.IsNotNull(sprite);
+            Vector2 displaySize = screen.DetailCoverDisplaySize;
+            Vector2 area = screen.DetailCoverAreaSize;
+
+            float visibleWidthFraction = area.x / displaySize.x;
+            float visibleHeightFraction = area.y / displaySize.y;
+            float visibleAreaFraction = visibleWidthFraction * visibleHeightFraction;
+
+            Assert.Greater(visibleAreaFraction, 0.30f,
+                "CF1.9: the detail cover should show more than 30% of the square art's area - the " +
+                "old V3.3 constants (300px/1.36 zoom) only showed ~18%, matching the couch-test " +
+                "complaint that most of the image was cropped away.");
+        }
+
         [UnityTest]
         public IEnumerator Screen_HidesDuringMissionsAndRefreshesOnReturn()
         {
@@ -226,6 +260,111 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(GameManager.FlowState.Playing, game.CurrentFlow,
                 "The start button must start the selected mission.");
             Assert.AreEqual(GameManager.MissionVariant.SnackHeist, game.ActiveMissionVariant);
+        }
+
+        /// <summary>
+        /// CF1.9 (couch-test freeform finding: "the Team plan should ideally show little visual
+        /// clips of what things will actually look like on-screen"). Operation Pee Break is the
+        /// first mission wired with team-plan chips - one real on-screen prop sprite per bullet,
+        /// loaded from the same FinalGameplayArt resources gameplay itself uses.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator Screen_TeamPlanChips_PeeBreakShowsFourSignalChips()
+        {
+            yield return LoadArena();
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            var screen = Object.FindFirstObjectByType<MissionSelectScreen>();
+
+            game.SelectMission(GameManager.MissionVariant.OperationPeeBreak);
+            yield return null;
+
+            Assert.IsFalse(screen.DetailHowToVisible,
+                "A mission with chip data replaces the single opaque text block with per-bullet rows.");
+
+            string[] expectedSprites =
+            {
+                FinalGameplayArt.PeeBreakOpenDoor,
+                FinalGameplayArt.PeeBreakLeash,
+                FinalGameplayArt.PeeBreakPhoneCharger,
+                FinalGameplayArt.BarkBurst,
+            };
+
+            Assert.AreEqual(4, screen.TeamPlanChipRowCapacity);
+            for (int row = 0; row < expectedSprites.Length; row++)
+            {
+                Assert.IsTrue(screen.TeamPlanChipRowActiveAt(row), $"Row {row} should be active.");
+                Assert.IsTrue(screen.TeamPlanChipIconEnabledAt(row), $"Row {row} should show its icon.");
+                Sprite expected = FinalGameplayArt.Load(expectedSprites[row]);
+                Assert.IsNotNull(expected, $"Expected sprite for row {row} should exist on disk.");
+                Sprite actual = screen.TeamPlanChipSpriteAt(row);
+                Assert.IsNotNull(actual, $"Row {row} should have loaded a sprite.");
+                Assert.AreEqual(expected.name, actual.name,
+                    $"Row {row} chip should show the real on-screen prop art gameplay itself uses.");
+
+                Vector2 iconSize = screen.TeamPlanChipIconSizeAt(row);
+                Assert.Greater(iconSize.x, 0f);
+                Assert.Greater(iconSize.y, 0f);
+            }
+
+            Assert.That(screen.TeamPlanChipTextAt(0), Does.Contain("door stare"));
+            Assert.That(screen.TeamPlanChipTextAt(1), Does.Contain("presents the leash"));
+            Assert.That(screen.TeamPlanChipTextAt(2), Does.Contain("Swap roles"));
+            Assert.That(screen.TeamPlanChipTextAt(3), Does.Contain("bark together"));
+            for (int row = 0; row < expectedSprites.Length; row++)
+                Assert.That(screen.TeamPlanChipTextAt(row), Does.StartWith("•  "));
+
+            // Rows read top-to-bottom in bullet order: each row's anchored Y sits strictly below
+            // (more negative, since Place() stores -y in a top-left-pivoted rect) the previous one.
+            for (int row = 1; row < expectedSprites.Length; row++)
+            {
+                Assert.Less(screen.TeamPlanChipIconAnchoredPositionAt(row).y,
+                    screen.TeamPlanChipIconAnchoredPositionAt(row - 1).y,
+                    $"Row {row} should sit below row {row - 1}.");
+            }
+
+            // DetailHowToPlayText/DetailHowToFontFloor stay correct even while hidden - existing
+            // tests read these directly and must keep working regardless of chip mode.
+            Assert.AreEqual(MissionSelectScreen.BuildHowToPlayText(GameManager.MissionVariant.OperationPeeBreak),
+                screen.DetailHowToPlayText);
+            Assert.GreaterOrEqual(screen.DetailHowToFontFloor, 19f);
+        }
+
+        /// <summary>
+        /// CF1.9 fallback contract CF2.8 depends on: a mission with no chip data yet renders its
+        /// team plan exactly as it did before this task - plain text bullets, no icons, no layout
+        /// change.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator Screen_TeamPlanChips_ChipLessMissionRendersTextOnly()
+        {
+            yield return LoadArena();
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            var screen = Object.FindFirstObjectByType<MissionSelectScreen>();
+
+            game.SelectMission(GameManager.MissionVariant.GateCrash);
+            yield return null;
+
+            Assert.IsTrue(screen.DetailHowToVisible,
+                "A chip-less mission must keep showing the single text block, exactly as before CF1.9.");
+            Assert.AreEqual(MissionSelectScreen.BuildHowToPlayText(GameManager.MissionVariant.GateCrash),
+                screen.DetailHowToPlayText);
+            for (int row = 0; row < screen.TeamPlanChipRowCapacity; row++)
+            {
+                Assert.IsFalse(screen.TeamPlanChipRowActiveAt(row),
+                    $"Row {row} must stay hidden for a mission with no chip data.");
+            }
+
+            // Switching from a chip mission back to a chip-less one must fully clear chip state.
+            game.SelectMission(GameManager.MissionVariant.OperationPeeBreak);
+            yield return null;
+            Assert.IsFalse(screen.DetailHowToVisible);
+            game.SelectMission(GameManager.MissionVariant.KitchenFoodFrenzy);
+            yield return null;
+            Assert.IsTrue(screen.DetailHowToVisible);
+            for (int row = 0; row < screen.TeamPlanChipRowCapacity; row++)
+                Assert.IsFalse(screen.TeamPlanChipRowActiveAt(row));
         }
     }
 }

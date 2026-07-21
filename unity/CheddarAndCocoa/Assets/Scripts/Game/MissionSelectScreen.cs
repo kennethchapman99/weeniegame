@@ -34,12 +34,29 @@ namespace CheddarAndCocoa.Game
         private const float PageLabelHeight = 30f;
         private const float DetailX = 998f;
         private const float DetailWidth = 896f;
-        private const float DetailCoverHeight = 300f;
+        // CF1.9 (2026-07-20, freeform finding: title-card art "crops down most of the image"):
+        // was 300f/1.36f. A PIL offline simulation of this exact cover-fit math (see the task's
+        // commit message for the measured numbers) showed the old 300/1.36 combination only
+        // showed ~18% of the square cover art's area - the extra 36% overzoom beyond the minimum
+        // cover-fit was pure unnecessary crop, and 300px left little vertical room besides. Taller
+        // height (steals 40px from the text pane below, verified the "how to play" text still
+        // fits at its font floor) plus a near-1.0 zoom (small 5% margin so no backing strip can
+        // show through a rounding edge) together roughly double the visible art (~34%) with zero
+        // change to DetailCoverFillsWidth/DetailCoverUsesTitleFreeCrop, both of which have large
+        // margin to spare at these values.
+        private const float DetailCoverHeight = 340f;
         private const float TileArtworkZoom = 1.35f;
         private const float TileArtworkVerticalShift = -0.12f;
-        private const float DetailArtworkZoom = 1.36f;
+        private const float DetailArtworkZoom = 1.05f;
         private const float DetailArtworkVerticalShift = -0.10f;
         private const float DetailTextMinimumSize = 19f;
+
+        // CF1.9: small icon chips shown next to team-plan bullets that have chip art
+        // (MissionInstructionCatalog-adjacent data, see TeamPlanChipsFor below). Sized to sit
+        // comfortably inside one bullet row of the shared howTo area.
+        private const float ChipIconSize = 30f;
+        private const float ChipIconGap = 10f;
+        private const int MaxTeamPlanChipRows = 4;
 
         private sealed class TileSlot
         {
@@ -54,6 +71,13 @@ namespace CheddarAndCocoa.Game
             public TextMeshProUGUI Name;
             public TextMeshProUGUI Status;
             public GameManager.MissionVariant Variant;
+        }
+
+        private sealed class TeamPlanChipRow
+        {
+            public GameObject Root;
+            public Image Icon;
+            public TextMeshProUGUI Text;
         }
 
         private GameManager _game;
@@ -82,6 +106,8 @@ namespace CheddarAndCocoa.Game
         private Button _startButton;
         private TextMeshProUGUI _startLabel;
         private Button _recommendedButton;
+        private readonly List<TeamPlanChipRow> _chipRows = new List<TeamPlanChipRow>();
+        private float _howToAreaX, _howToAreaY, _howToAreaWidth, _howToAreaHeight;
 
         public void Init(GameManager game) => _game = game;
 
@@ -102,6 +128,33 @@ namespace CheddarAndCocoa.Game
         public float DetailDescriptionFontFloor => _detailDescription != null ? _detailDescription.fontSizeMin : 0f;
         public float DetailHowToFontFloor => _detailHowTo != null ? _detailHowTo.fontSizeMin : 0f;
         public Sprite DetailCoverSprite => _detailCover != null ? _detailCover.sprite : null;
+
+        /// <summary>CF1.9: the fixed 896-wide letterbox mask size the cover art is cropped into.</summary>
+        public Vector2 DetailCoverAreaSize => _detailCoverArea;
+
+        /// <summary>CF1.9: the cover-fit-scaled display size of the current cover sprite (pre-crop).</summary>
+        public Vector2 DetailCoverDisplaySize =>
+            _detailCover != null ? _detailCover.rectTransform.sizeDelta : Vector2.zero;
+
+        /// <summary>
+        /// CF1.9: true whenever the picker renders the single opaque team-plan text block (every
+        /// mission without chip data - the unchanged legacy path). False when per-bullet chip rows
+        /// are showing instead (their text is still mirrored into <see cref="DetailHowToPlayText"/>
+        /// so existing content assertions keep working either way).
+        /// </summary>
+        public bool DetailHowToVisible => _detailHowTo != null && _detailHowTo.gameObject.activeSelf;
+
+        /// <summary>Fixed pool size regardless of how many rows a given mission actually uses.</summary>
+        public int TeamPlanChipRowCapacity => _chipRows.Count;
+        public bool TeamPlanChipRowActiveAt(int row) => _chipRows[row].Root.activeSelf;
+        public bool TeamPlanChipIconEnabledAt(int row) => _chipRows[row].Icon.enabled;
+        public Sprite TeamPlanChipSpriteAt(int row) => _chipRows[row].Icon.sprite;
+        public string TeamPlanChipTextAt(int row) => _chipRows[row].Text.text;
+        public Vector2 TeamPlanChipIconSizeAt(int row) => _chipRows[row].Icon.rectTransform.sizeDelta;
+        public Vector2 TeamPlanChipIconAnchoredPositionAt(int row) =>
+            _chipRows[row].Icon.rectTransform.anchoredPosition;
+        public Vector2 TeamPlanChipTextAnchoredPositionAt(int row) =>
+            _chipRows[row].Text.rectTransform.anchoredPosition;
 
         /// <summary>
         /// Couch test #4 contract: the description and how-to blocks must render inside their own
@@ -376,6 +429,14 @@ namespace CheddarAndCocoa.Game
             Place(_detailHowTo.rectTransform, x, y, innerWidth, howToHeight);
             EnableShrinkToFit(_detailHowTo, 22f, DetailTextMinimumSize);
 
+            // CF1.9: chip rows share this exact rect. Only one of _detailHowTo (no chip data) or
+            // the chip row pool (chip data present) is active at a time - see SyncTeamPlanChips.
+            _howToAreaX = x;
+            _howToAreaY = y;
+            _howToAreaWidth = innerWidth;
+            _howToAreaHeight = howToHeight;
+            BuildTeamPlanChipRows();
+
             _detailChallenge = NewText("DetailChallenge", _canvasRoot.transform, 19f,
                 new Color(0.9f, 0.95f, 1f), TextAlignmentOptions.TopLeft);
             Place(_detailChallenge.rectTransform, x, challengeY, innerWidth, 28f);
@@ -392,6 +453,27 @@ namespace CheddarAndCocoa.Game
             _startButton = BuildButton("StartButton", x + innerWidth - startWidth, buttonY, startWidth, buttonHeight,
                 string.Empty, out _startLabel);
             _startButton.onClick.AddListener(() => _game.StartSelectedMission());
+        }
+
+        // CF1.9: a fixed pool of MaxTeamPlanChipRows (icon + text) rows, built once and reused
+        // across missions/syncs. Inactive by default so a chip-less mission's picker is byte-for-
+        // byte identical to before this task - only SyncTeamPlanChips activates rows, and only for
+        // a mission with chip data.
+        private void BuildTeamPlanChipRows()
+        {
+            for (int i = 0; i < MaxTeamPlanChipRows; i++)
+            {
+                RectTransform root = NewRect($"TeamPlanChipRow_{i}", _canvasRoot.transform);
+                root.gameObject.SetActive(false);
+                var row = new TeamPlanChipRow { Root = root.gameObject };
+
+                row.Icon = NewImage("ChipIcon", root, Color.white);
+                row.Text = NewText("ChipText", root, 22f, new Color(0.94f, 0.97f, 1f),
+                    TextAlignmentOptions.TopLeft);
+                EnableShrinkToFit(row.Text, 22f, DetailTextMinimumSize);
+
+                _chipRows.Add(row);
+            }
         }
 
         private Button BuildButton(string name, float x, float y, float width, float height,
@@ -537,7 +619,12 @@ namespace CheddarAndCocoa.Game
                 : string.Empty;
             _detailMeta.text = $"{recommendation}{_game.MissionSelectDetailsFor(variant)} • {_game.MissionSelectStatusFor(variant)}";
             _detailDescription.text = MissionInstructionCatalog.DescriptionFor(variant);
+            // Always kept in sync, even when the chip rows are what's actually on screen (below):
+            // DetailHowToPlayText/DetailHowToFontFloor are read directly off this component by
+            // existing tests regardless of its visibility, so its content/sizing must never depend
+            // on whether chips are active for the current mission.
             _detailHowTo.text = BuildHowToPlayText(variant);
+            SyncTeamPlanChips(variant);
             _detailChallenge.text = _game.SelectedMissionChallengeLabel;
 
             const float pad = 26f;
@@ -557,6 +644,79 @@ namespace CheddarAndCocoa.Game
                 Place(_startButton.GetComponent<RectTransform>(), x + innerWidth - startWidth, buttonY, startWidth, 64f);
                 _startLabel.text = $"Start {_game.SelectedMissionName}";
             }
+        }
+
+        /// <summary>
+        /// CF1.9: renders team-plan chips - a small icon of the real on-screen signal object next
+        /// to a bullet, loaded from the same <see cref="FinalGameplayArt"/> resources gameplay
+        /// itself uses - when <see cref="TeamPlanChipsFor"/> has data for the current mission. A
+        /// mission with no chip data (everything but Operation Pee Break today) leaves every row
+        /// inactive and the single <see cref="_detailHowTo"/> block active, i.e. renders exactly
+        /// as it did before this task. This is the fallback CF2.8's roster-wide rollout depends on.
+        /// </summary>
+        private void SyncTeamPlanChips(GameManager.MissionVariant variant)
+        {
+            string[] steps = PreviewStepsFor(variant);
+            string[] chipSprites = TeamPlanChipsFor(variant);
+            bool useChips = chipSprites != null && chipSprites.Length > 0;
+            _detailHowTo.gameObject.SetActive(!useChips);
+
+            for (int row = 0; row < _chipRows.Count; row++)
+            {
+                bool rowActive = useChips && row < steps.Length;
+                _chipRows[row].Root.SetActive(rowActive);
+                if (!rowActive) continue;
+
+                float rowHeight = _howToAreaHeight / steps.Length;
+                float rowY = _howToAreaY + row * rowHeight;
+
+                string spritePath = row < chipSprites.Length ? chipSprites[row] : null;
+                Sprite iconSprite = string.IsNullOrEmpty(spritePath) ? null : FinalGameplayArt.Load(spritePath);
+                bool showIcon = iconSprite != null;
+
+                Image icon = _chipRows[row].Icon;
+                icon.enabled = showIcon;
+                float reservedIconWidth = 0f;
+                if (showIcon)
+                {
+                    icon.sprite = iconSprite;
+                    float iconSize = Mathf.Min(ChipIconSize, rowHeight - 4f);
+                    Place(icon.rectTransform, _howToAreaX, rowY + (rowHeight - iconSize) * 0.5f,
+                        iconSize, iconSize);
+                    reservedIconWidth = ChipIconSize + ChipIconGap;
+                }
+
+                TextMeshProUGUI text = _chipRows[row].Text;
+                Place(text.rectTransform, _howToAreaX + reservedIconWidth, rowY,
+                    _howToAreaWidth - reservedIconWidth, rowHeight);
+                text.text = "•  " + MissionInstructionCatalog.HighlightOnScreenLabels(steps[row]);
+            }
+        }
+
+        /// <summary>
+        /// CF1.9 chip data contract: one sprite-path entry per <see cref="PreviewStepsFor"/> bullet
+        /// (null/empty entries render text-only - "just the important ones"), or null for a mission
+        /// with no chip data at all (renders exactly as before this task). CF2.8 rolls this same
+        /// shape out roster-wide by adding one case per mission below.
+        /// </summary>
+        private static string[] TeamPlanChipsFor(GameManager.MissionVariant variant)
+        {
+            if (variant == GameManager.MissionVariant.OperationPeeBreak)
+            {
+                return new[]
+                {
+                    FinalGameplayArt.PeeBreakOpenDoor,     // Beat 1: Cocoa's door stare
+                    FinalGameplayArt.PeeBreakLeash,        // Beat 2: Cheddar presents the leash
+                    FinalGameplayArt.PeeBreakPhoneCharger, // Beat 3: Cocoa unplugs the charger
+                    // Beat 4 is the united-bark finish at the door; Pee Break has no dedicated
+                    // bark-burst prop sprite, so this reuses the shared VFX/bark_burst art gameplay
+                    // itself plays on every bark (see DogReadabilityFeedback/ArenaFeedbackCatalog) -
+                    // a real on-screen thing players already recognize, not a placeholder guess.
+                    FinalGameplayArt.BarkBurst,
+                };
+            }
+
+            return null;
         }
 
         private Sprite CoverSpriteFor(GameManager.MissionVariant variant)

@@ -149,6 +149,68 @@ at floor level in front of the door - not partway up its face - before the close
 STARE** prompt appears and the door/arrow read as "on target." Confirm the same grounded read holds
 in Beat 2 (stare + leash) and Beat 4 (stare + leash + bark), where the door station is reused.
 
+### Title-card crop + team-plan visual chips (CF1.9, 2026-07-20)
+
+The 2026-07-20 couch retest's freeform feedback on `pee-break-title-card.png`: the mission-select
+detail cover "seems to crop down most of the image... detail is lost," and "the Team plan should
+ideally show little visual clips of what things will actually look like on-screen if possible, just
+the important ones."
+
+**Crop.** `FitDetailCover`'s cover-fit math was unchanged (still `Mathf.Max` "cover" fit, still fills
+the 896-wide letterbox edge to edge - the V3.3 no-backing-strip contract is untouched), but its two
+tuning constants were needlessly aggressive: `DetailArtworkZoom` overzoomed the already-covering
+scale by 36%, and `DetailCoverHeight` (300px) left little vertical letterbox to begin with. Verified
+offline first (this sandbox has no GPU to render the picker) with a throwaway PIL script that
+reproduces the exact scale/anchoredPosition math - including the `Mathf.Max` cover-fit, the zoom
+applied to that same cover scale (not a separate bolt-on multiplier), and the Y-axis flip converting
+Unity's Y-up `anchoredPosition` to PIL's Y-down paste offset - rendered against the real generated
+cover art for Operation Pee Break plus five other missions (Kitchen Falling Food Frenzy, Car Ride,
+Baby Bird Bedlam, Gate Crash, Backyard Rescue). The old 300px/1.36x combination showed only ~18% of
+the square cover art's area (matching the couch-test screenshot almost pixel-for-pixel, including
+the "TOP SECRET / BATHROOM MISSION" sign cropped mid-word at both edges); `DetailArtworkZoom` down to
+1.05 (a small 5% margin above the exact cover-fit scale, so no bare backing strip can show through a
+rounding edge) plus `DetailCoverHeight` up to 340 (taller by 40px, stolen from the text pane below -
+`Screen_DetailPanel_FitsConcisePlanAndCropsBakedCoverTitle`'s existing text-fit assertion for
+Backyard Rescue's longest plan still passes at the new, smaller how-to-play rect) together show ~34%
+of the art - almost double, verified for all six rendered missions. `DetailCoverFillsWidth` and
+`DetailCoverUsesTitleFreeCrop` both keep large margin at the new values; neither needed to change.
+`FitTileCover`'s small grid-tile constants are untouched - the tile viewport is already close to
+square (unlike the wide detail letterbox), so it was never the severe crop the owner saw, and its
+own title-free-crop margin has much less headroom to spare.
+
+**Team-plan chips.** The detail panel's "YOUR TEAM PLAN" block used to be a single opaque TMP text
+block for every mission. `MissionSelectScreen` now also holds a fixed pool of four (icon + text) chip
+rows sharing that same rect. A new data-driven lookup, `TeamPlanChipsFor(variant)` (parallel to the
+existing `PreviewStepsFor` bullet array; null/empty entries mean "no chip for this bullet," a
+non-null array with at least one entry means "this mission uses chips"), returns null for every
+mission except Operation Pee Break today. When a mission has chip data, the single text block hides
+and the per-bullet rows show instead - one small icon per bullet loaded from the same
+`FinalGameplayArt` resources gameplay itself uses, plus that bullet's own text at the same font-floor
+policy. When a mission has no chip data (all 22 others, unchanged), the single text block stays
+active and every chip row stays inactive - pixel-identical to before this task. Operation Pee Break's
+four chips: the door (`PeeBreakOpenDoor`, Beat 1 door stare), the leash (`PeeBreakLeash`, Beat 2
+presented leash), the phone charger (`PeeBreakPhoneCharger`, Beat 3 unplug), and the shared
+`BarkBurst` VFX sprite for Beat 4's united-bark finish - Pee Break has no dedicated bark-prop art, but
+`BarkBurst` is not a placeholder guess: it's the exact sprite `BarkEffect.Spawn()` renders over a dog
+every time any dog barks in any mission, including Pee Break's own climax, so it is already a
+recognized on-screen object by the time a player reaches Beat 4. `DetailHowToPlayText`/
+`DetailHowToFontFloor` (read by existing tests) stay correct regardless of which path is showing,
+since the underlying text component's content/sizing is set unconditionally before the chip-vs-text
+choice is made.
+
+Covered by three new `MissionSelectScreenPlayModeTests`: a crop-regression test pinning the new,
+larger visible-area fraction; a chip test asserting all four Pee Break rows are active with the
+correct sprite, text, and top-to-bottom order; and a fallback test asserting a chip-less mission
+(Gate Crash, then Kitchen Falling Food Frenzy after round-tripping through Pee Break) renders
+text-only with every chip row inactive. Full suite green at `679/679` (676 -> 679).
+
+Manual acceptance check: open mission select on Operation Pee Break - the detail cover should show
+noticeably more of the illustration (the "TOP SECRET BATHROOM MISSION" sign and the glowing paw path
+should both be fully readable, not cut off at the edges), and the team plan should show four small
+icons (door, leash, charger, bark burst) beside their matching bullet lines instead of plain text.
+Select any other mission (e.g. Gate Crash) and confirm its team plan is plain text with no icons, as
+before this task.
+
 ### Operation Pee Break couch-feedback response (2026-07-14)
 
 The latest human run found five usability gaps: unclear station order/reaction, abstract large-circle
@@ -851,7 +913,10 @@ in `MissionFlow_Select_StartsEveryMission_AndEndActionsNavigate`.
 
 Current manual acceptance check: open mission select — the zoomed cover must keep its primary dogs/
 scene readable while cropping the baked title ribbon, the description and **YOUR TEAM PLAN** text
-must be comfortably readable, and the Start button must be large. Start any mission — every line of the
+must be comfortably readable, and the Start button must be large. (The "Title-card crop + team-plan
+visual chips (CF1.9, 2026-07-20)" entry above reduced how much of the cover this crop actually
+removes and added icon chips to Operation Pee Break's team plan; both are refinements of this same
+zoomed-cover/team-plan contract, not a replacement of it.) Start any mission — every line of the
 top HUD block and the objective block must sit on a dark band and read clearly over the yard, and
 the mission briefing must be an opaque card with nothing spilling past its edges. Start Backyard Rescue — the yard should
 show only the painted plate plus real props (no X panel, no trapezoid lanes, no scent dots), and
