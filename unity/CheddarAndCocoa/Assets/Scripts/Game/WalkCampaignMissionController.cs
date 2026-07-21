@@ -398,7 +398,7 @@ namespace CheddarAndCocoa.Game
             }
             if (_leash != null)
             {
-                _leash.transform.position = _leashZone;
+                _leash.transform.position = ResolveLeashPosition();
                 if (_leashArt != null)
                 {
                     bool presented = (_puzzle.Active & SocialStimulus.PresentLeash) != 0;
@@ -409,6 +409,49 @@ namespace CheddarAndCocoa.Game
                     if (presented) _leashArt.Pulse(0.12f, 0.04f);
                 }
             }
+        }
+
+        /// <summary>
+        /// CF2.5 (roster carry-visual audit): pre-fix, the leash sat fixed at _leashZone regardless
+        /// of whether Cheddar was actually presenting it - the same "static prop that's logically
+        /// held" gap CF1.7 fixed for Pee Break's leash (this task's reference implementation). While
+        /// Cheddar is actively presenting (_leashPresented, which Tick() already clears the instant
+        /// he leaves StationRange of _leashZone - see the `_leashPresented && !cheddarAtLeash` reset
+        /// above), the leash art follows his snout; otherwise it rests at the fixed station. A
+        /// standalone position assignment recomputed every call, never a SetParent (trap #5) -
+        /// mirrors WeenieRoundupMissionController._carriedMarkers and
+        /// PeeBreakMissionController.ResolveLeashArtPosition.
+        /// </summary>
+        private Vector2 ResolveLeashPosition()
+        {
+            if (_leashPresented)
+            {
+                int cheddarIndex = _context.IndexOfDog(DogId.Cheddar);
+                if (cheddarIndex >= 0 && _context.Dogs != null && cheddarIndex < _context.Dogs.Length &&
+                    _context.Dogs[cheddarIndex] != null)
+                {
+                    Vector2 cheddarPos = _context.Dogs[cheddarIndex].transform.position;
+                    Vector2 facing = CheddarFacingDirection(cheddarIndex);
+                    return cheddarPos + facing * 0.5f + new Vector2(0f, -0.15f);
+                }
+            }
+            return _leashZone;
+        }
+
+        /// <summary>
+        /// Same persistent facing signal CF1.7 exposed for Pee Break's leash-in-mouth fix
+        /// (DogReadabilityFeedback.FacingDirection, its existing _lastIntentDir field) - survives
+        /// Cheddar standing still to present the leash, unlike DogController.CurrentVelocity.
+        /// </summary>
+        private Vector2 CheddarFacingDirection(int cheddarIndex)
+        {
+            if (_context.DogFeedback != null && cheddarIndex >= 0 && cheddarIndex < _context.DogFeedback.Length &&
+                _context.DogFeedback[cheddarIndex] != null)
+            {
+                Vector2 facing = _context.DogFeedback[cheddarIndex].FacingDirection;
+                if (facing.sqrMagnitude > 0.0001f) return facing.normalized;
+            }
+            return Vector2.right;
         }
 
         /// <summary>

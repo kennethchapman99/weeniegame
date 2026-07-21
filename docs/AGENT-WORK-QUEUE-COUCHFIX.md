@@ -109,7 +109,7 @@ task; they show exactly what the owner saw.
 | CF2.2 | Roster audit: HUD/meter occlusion | CF1.2 | DONE (2026-07-21, 686 green (685->686, 1 new roster-wide test); audited all 23 controllers - every other mission already mirrors its mid-play progress number into the screen-space `ObjectiveLabel` top bar, so none has Pee Break's pre-CF1.2 shape (a continuously-updating value that exists ONLY on a fixed world object); no new HUD interface implementations needed. Follow-up per coordinator request: `ObjectiveLabelProgressEchoPlayModeTests.cs` encodes the invariant itself - loops all 23 missions, pokes one small deterministic Force* hook per mission, asserts `ObjectiveLabel` changes - so a future mission that adds a load-bearing counter without echoing it into ObjectiveLabel fails this test instead of waiting for the next couch test) |
 | CF2.3 | Roster audit: per-beat world-state progression | CF1.4 | DONE (2026-07-21, 689 green (686→689, 3 new tests); audited all 23 controllers for sequential-phase/beat structure - most multi-phase and repeated-cycle missions already carry the beat forward into persistent per-station/per-object world art (Great Escape, Chaos Machine, Leash Walk, Coyotes Fence, Eagle Shadow Panic, Squirrel Conspiracy, Scent Search, Weenie Roundup); fixed the worst 3 genuine gaps where the ONLY place overall mission-level progress was visible was HUD text - Baby Bird Bedlam's nest, Car Ride's dashboard, and Bone Relay's scent post now each carry a persistent progress baseline using only existing sprites/tints) |
 | CF2.4 | Roster audit: funny-failure promises vs actual gags | CF1.3 | DONE (2026-07-21, 691 green (689→691, 2 new tests); swept `MissionInstructionCatalog.cs`/mission `IntroPrompt`s/`docs/GAME-DESIGN-BIBLE.md` for comedy claims - only ONE genuine silent gap found (WalkCampaign's misread, which reused the roster-wide generic `ThreatWarning` cue and a static sprite/label swap, no distinct cue or dog reaction); fixed it with `TriggerMisreadGag` (human leans toward the dogs holding the wrong item via `_misreadGagT`, a distinct `SquirrelStunned` cue kept ahead of the existing `ThreatWarning` call, both dogs `ShowGuidanceNudge`, third/mission-ending misread snaps to the full offer as a freeze-frame); honestly reported fewer than 3 fixes since the broader sweep found no other in-scope gaps - see findings table below) |
-| CF2.5 | Roster audit: carried-object visuals | CF1.7 | OPEN |
+| CF2.5 | Roster audit: carried-object visuals | CF1.7 | DONE (2026-07-21, 692 green (691→692, 1 new test); audited all 23 controllers for dog-carries-an-object mechanics — Weenie Roundup, Baby Bird Bedlam, and Blanket Catch already track the carrying dog(s) correctly (two arrived at the reference idiom independently of this audit); fixed the one genuine gap, Walk Campaign's leash, which sat fixed at its station regardless of `_leashPresented` — now follows Cheddar's position via `ResolveLeashPosition()`, the same standalone per-tick-follow idiom as CF1.7/`_carriedMarkers`, never `SetParent` (trap #5)) |
 | CF2.6 | Roster audit: wall-station perspective | CF1.6 | OPEN |
 | CF2.7 | Roster audit: briefing beats self-verifying in-game | CF1.5 | OPEN |
 | CF2.8 | Roster pass: title cards + team-plan chips | CF1.9 | OPEN |
@@ -685,6 +685,58 @@ bones, socks, blanket corners, rope, chicks…) and how it renders during the ca
 Roundup's `_carriedMarkers` and CF1.7's leash are the reference idiom (per-frame follow, never
 SetParent — trap #5). Fix gaps where an object visibly teleports or floats unheld; sway/dangle
 polish is a bonus, not required.
+
+**Findings table** (all 23 controllers read in full per trap #4; grepped every `*MissionController.cs`
+for pickup/carry/drag/deliver/hold verbs, then hand-traced each hit to see whether it's an actual
+"dog carries a prop through space" mechanic or a same-spot interact/dig/collect that only looks like
+one from the label text):
+
+| Mission | Carried object? | Current render during the carry | Verdict |
+|---|---|---|---|
+| Operation Pee Break | Leash, in Cheddar's mouth while presenting | `_leashArt` follows Cheddar's muzzle via `ResolveLeashArtPosition` (CF1.7, shipped reference) | **Pass** (reference) |
+| Weenie Roundup | Loose weenies, carried to the home bowl | `_carriedMarkers[i].transform.position = dog.position + Vector3.up*0.6f` every tick while `_dogCarrying[i]` (`Tick()` line ~124); standalone objects, never parented (reference idiom) | **Pass** (reference) |
+| Baby Bird Bedlam | A grabbed chick, held in Cheddar's mouth while he shakes it down | `TickHeldChick()` sets `_chickX/_chickY` to Cheddar's position + a snout offset every tick while `ChickState.Held`; `UpdateChickVisuals()` applies that to `_chickObj.transform.position` — already the correct per-tick-follow idiom, independently arrived at before this audit | **Pass** (already correct) |
+| Blanket Catch | The blanket, held taut between both dogs' hands | `_blanketObj.transform.position` = the live midpoint of both dogs' X positions every tick (`_puzzle.MidpointX`), width = their live separation — a two-dog dynamic stretch, not a single-dog carry, but the same "tracks the actual holder(s), never a fixed spot" principle | **Pass** |
+| Walk Campaign | Leash, presented toward the human while Cheddar stands at the leash station | **Pre-fix:** `_leash.transform.position = _leashZone` unconditionally, every frame, regardless of whether `_leashPresented` was true — the leash visual (and its label) sat dead at the fixed station the whole mission, the same static-prop gap CF1.7 fixed for Pee Break | **FAIL → FIXED** (see below) |
+| Bone Relay | Bones, found in the ground at fixed mounds | Bones are found-in-place (dig, credit, done) — never picked up and walked anywhere; no carry phase exists to render | **N/A** — not a carry mechanic |
+| Sock Panic, Snack Heist, Kitchen Food Frenzy | Socks / snacks / plates, collected by a dog | All route through the shared `Treat`/`HandleTreatCollected` flow: touch → instantly scored → `RecoverCollectible` (hidden/consumed same frame) — there is no in-between "carrying it somewhere" state to render | **N/A** — instant collect, not carry |
+| Great Escape, Chaos Machine | Station/lever/junction actions | Fixed-position sequential interactions; nothing is picked up or moved by a dog | **N/A** |
+| Squirrel Switcheroo, Squirrel Conspiracy | Decoy/stash/route props | Fixed zones the dogs act on in place (bark-bait, interact-raid); no object ever leaves its zone | **N/A** |
+| Eagle Shadow Panic | Cheddar himself, snatched by the eagle | `TickRescue()` pins Cheddar's own transform to the fixed `_snatchPosition` every tick while held (not a prop a dog carries — the DOG is what's held, by the eagle, in the air above one spot). Deliberately static-in-place per the mechanic (both dogs must converge there); not the "object floats away from where it's held" bug this theme targets | **N/A** — different mechanic shape, not a dog-carries-object case |
+| Leash Walk | (no physical leash prop) | The "leash" here is an abstract max-distance constraint between the two dogs (`MaxLeash`), not a rendered object | **N/A** |
+| Bone Relay's scent post, Mark The Yard's zones, Scent Search's dig spots, Coyotes Fence's gaps, Table Stealth, Thunderstorm Comfort, Car Ride, Gate Crash, Backyard Rescue | No dog-carried prop | Reviewed for completeness; all are fixed-station interactions, pressure meters, or (Backyard Rescue) a squirrel — not a dog — moving a `Treat` toward itself | **N/A** |
+
+**Conclusion: one genuine gap found, not a roster-wide pattern.** Per the task's own "don't force
+fixes where none are needed" guidance: Weenie Roundup, Baby Bird Bedlam, Blanket Catch, and Pee Break
+already implement the reference idiom correctly (two of them — Weenie Roundup and Baby Bird Bedlam —
+arrived at it independently of this audit, confirming it's the codebase's natural default once a
+mission actually has a carry mechanic). The other 18 controllers have no dog-carries-an-object beat
+at all — their objects are either fixed-station interactions, instant-collect treats, or (Eagle
+Shadow Panic) a dog being held rather than holding something — so there is nothing to fix there.
+
+**Fix shipped — Walk Campaign's leash now follows Cheddar while presenting
+(`WalkCampaignMissionController.cs`).** Presentation-only; the `_leashPresented`/`_leashZone`
+mechanics, `StationRange` gating, and puzzle state are bit-for-bit unchanged. Added
+`ResolveLeashPosition()`: while `_leashPresented` is true, returns Cheddar's live position plus a
+snout offset along his facing direction (`CheddarFacingDirection`, mirroring CF1.7's
+`DogReadabilityFeedback.FacingDirection` read); otherwise returns the fixed `_leashZone` rest
+position. `UpdateLabels()`'s one line (`_leash.transform.position = _leashZone;`) now calls this
+instead — a standalone position assignment recomputed every call, never a `SetParent` (trap #5),
+identical in shape to `WeenieRoundupMissionController._carriedMarkers` and Pee Break's
+`ResolveLeashArtPosition`. `_leash.transform` also carries the "LEASH" label and interaction badge,
+so both now visually travel with the presented leash too — arguably an improvement over Pee Break's
+own split (where the label stays at the station while only the separate generated-art sprite moves).
+No sway/dangle added (explicitly a bonus per the task, not required; tabled as future polish).
+
+**Test:** `Walk_LeashVisualFollowsCheddarWhilePresenting_AndRestsAtStationOtherwise` in
+`CoopWalkCampaignPlayModeTests.cs`, driven through the real position + `Interact()` dispatch path
+(not `ForceWalkCampaign`, which is a puzzle-level-only shortcut that never sets `_leashPresented` —
+proven necessary by checking `ForceWalkCampaign`'s body, which never touches that field). Asserts:
+(1) before Cheddar engages, the leash sits exactly at `WalkLeashZone`; (2) once Cheddar interacts
+from an off-center spot within `StationRange`, the leash visibly moves to within ~1 unit of his
+position and away from the old fixed spot; (3) once he walks the leash far out of range, `Tick()`'s
+existing `_leashPresented && !cheddarAtLeash` reset drops the flag and the leash snaps back to rest
+exactly at `WalkLeashZone`.
 
 ### CF2.6 — Wall-station perspective
 **Theme:** interaction anchors centered on tall wall-drawn art make dogs look like they're

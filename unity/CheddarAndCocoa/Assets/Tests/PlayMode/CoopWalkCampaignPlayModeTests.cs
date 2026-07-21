@@ -323,6 +323,57 @@ namespace CheddarAndCocoa.Tests
             Assert.IsFalse(_game.WalkCampaignPuzzle.ExactMatch);
         }
 
+        /// <summary>
+        /// CF2.5 (roster carry-visual audit): the leash used to sit fixed at LeashZone regardless of
+        /// whether Cheddar was actually presenting it - the same "static prop that's logically held"
+        /// gap CF1.7 fixed for Pee Break's leash (this task's reference implementation). Drives the
+        /// REAL position+Interact path (mirrors Walk_PositionDriven_BothDogsMustInteractThenHoldTheir
+        /// Stations above), not ForceWalkCampaign, because ForceWalkCampaign is a puzzle-level-only
+        /// test shortcut that never sets _leashPresented - the field the fixed ResolveLeashPosition()
+        /// actually reads.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator Walk_LeashVisualFollowsCheddarWhilePresenting_AndRestsAtStationOtherwise()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.WalkCampaign);
+            yield return null;
+
+            var leash = GameObject.Find("WalkCampaignLeash");
+            Assert.IsNotNull(leash);
+            Vector2 leashZone = _game.WalkLeashZone;
+            Assert.AreEqual(leashZone, (Vector2)leash.transform.position,
+                "Before Cheddar engages, the leash should rest at its fixed station.");
+
+            // Stand Cheddar off-center within StationRange (not exactly on the zone) so a followed
+            // position is unambiguously distinguishable from the old fixed-station position.
+            Vector2 presentSpot = leashZone + Vector2.up * 1.5f;
+            _cheddar.transform.position = presentSpot;
+            var cheddarBody = _cheddar.GetComponent<Rigidbody2D>();
+            if (cheddarBody != null) cheddarBody.linearVelocity = Vector2.zero;
+            yield return null;
+            _cheddar.Interact();
+            yield return null;
+
+            Assert.IsTrue(_game.WalkCampaignController.LeashPresented);
+            float followedDistance = Vector2.Distance(leash.transform.position, presentSpot);
+            Assert.Less(followedDistance, 1f,
+                "While Cheddar presents, the leash art should follow near his position, not stay pinned to the fixed station.");
+            Assert.Greater(Vector2.Distance(leash.transform.position, leashZone), 0.5f,
+                "The followed leash position should visibly differ from the old fixed-station spot.");
+
+            // Cheddar walks the leash far away - Tick() should drop _leashPresented and the leash
+            // should return to resting exactly at the fixed station, not linger at his last spot.
+            _cheddar.transform.position = leashZone + Vector2.right * 40f;
+            if (cheddarBody != null) cheddarBody.linearVelocity = Vector2.zero;
+            yield return null;
+            yield return null;
+
+            Assert.IsFalse(_game.WalkCampaignController.LeashPresented);
+            Assert.AreEqual(leashZone, (Vector2)leash.transform.position,
+                "Once Cheddar drops the presentation, the leash must rest back at the fixed station.");
+        }
+
         private IEnumerator LoadArena()
         {
             _game = null; _cheddar = null; _cocoa = null;
