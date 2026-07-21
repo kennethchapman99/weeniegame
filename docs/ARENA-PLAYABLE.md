@@ -211,6 +211,40 @@ icons (door, leash, charger, bark burst) beside their matching bullet lines inst
 Select any other mission (e.g. Gate Crash) and confirm its team plan is plain text with no icons, as
 before this task.
 
+### Roster audit: auto-dismissing info UI (CF2.1, 2026-07-21)
+
+The CF1.1 briefing-card fix only covered one surface; this roster-wide audit (
+`docs/AGENT-WORK-QUEUE-COUCHFIX.md`'s CF2.1 section has the full findings table) checked every
+OTHER mission-facing surface that could gate comprehension on a timer. Backyard Rescue's
+`ActionTutorial` already passes (completion-gated, no timer at all, existing pause Skip/Replay);
+the mission-start `MissionBanner` string turned out to be unrendered dead code (no `ArenaHud` code
+ever displays it - test-only state left over from before the CF1.1 card took over); Operation Pee
+Break's opening video explainer ends on its own natural completion (or an explicit skip), not a
+comprehension-gating timer.
+
+One genuine gap: the F4.1 first-mission control strip (20s + 2s fade, an intentionally *ambient*
+reminder, not a required read) had no way back once it timed out, was skipped, or had all four
+verbs used - a permanent dead end for the rest of the session. `GameManager` gained
+`FirstMissionControlStripAvailable` (true for any active mission other than Backyard Rescue,
+independent of whether the strip is currently showing) and `ReplayFirstMissionControlStrip()`
+(re-arms a fresh 20s window, clears prior verb-used marks). The pause menu's control-strip row now
+uses `FirstMissionControlStripAvailable` to decide whether to show at all, and toggles between
+**Skip Control Reminder** (while showing) and **Show Control Reminder** (once gone) - the same
+toggle shape the Backyard Rescue tutorial row already used for Skip/Replay Tutorial.
+
+Covered by six new tests: five in `FirstMissionControlStripPlayModeTests.cs` (availability gating
+against Backyard Rescue's own tutorial slot; re-summon after skip, after natural timeout, and after
+all verbs used; a no-op guard so a stray call can never override Backyard Rescue's tutorial slot)
+plus one in the new `FirstMissionControlStripPauseMenuPlayModeTests.cs` driving the fix through
+real pause-menu input (an injected keyboard device navigating and confirming through `ArenaHud`'s
+actual `Update()`/`ActivatePauseOption`, not a direct method call). Full suite green at `685/685`
+(679→685).
+
+Manual acceptance check: start any mission other than Backyard Rescue, let the control-strip
+reminder time out (or press **Skip Control Reminder** from pause), then open pause again - a
+**Show Control Reminder** button should now be there instead; selecting it brings the strip back
+at full strength (not a stale fade), with no verbs pre-marked used.
+
 ### Operation Pee Break couch-feedback response (2026-07-14)
 
 The latest human run found five usability gaps: unclear station order/reaction, abstract large-circle

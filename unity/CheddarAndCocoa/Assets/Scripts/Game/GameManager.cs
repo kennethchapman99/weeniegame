@@ -420,6 +420,19 @@ namespace CheddarAndCocoa.Game
             _firstMissionControlStripActive && !_firstMissionControlStripSkipped &&
             Time.time < _firstMissionControlStripUntil && !AllFirstMissionVerbsUsed();
 
+        /// <summary>
+        /// CF2.1: whether the pause menu should offer the control-reminder row at all - either to
+        /// skip it while it is showing, or to bring it back once it has timed out, been skipped, or
+        /// had every verb already used. The roster-wide auto-dismissing-info-UI audit found this
+        /// ambient reminder (unlike the CF1.1 briefing card) had no way back once gone. Mirrors
+        /// <see cref="ActionTutorialAvailable"/>'s role for the Backyard Rescue tutorial slot - the
+        /// two stay mutually exclusive in the pause menu exactly as before (see
+        /// <c>ArenaHud.PauseHasActionRow</c>). Deliberately not limited to literally the session's
+        /// first mission: a couch player who missed the one automatic showing should still be able
+        /// to ask for the control legend back on any later mission, not hit a permanent dead end.
+        /// </summary>
+        public bool FirstMissionControlStripAvailable => MissionActive() && !ActionTutorialAvailable;
+
         /// <summary>1 while fully shown, ramping to 0 over the last few seconds before it times out.</summary>
         public float FirstMissionControlStripAlpha
         {
@@ -455,6 +468,21 @@ namespace CheddarAndCocoa.Game
             if (!FirstMissionControlStripVisible) return;
             _firstMissionControlStripSkipped = true;
             LogPlaytestEvent("FirstMissionControlStrip", "skipped");
+        }
+
+        /// <summary>
+        /// CF2.1: pause-menu re-summon, mirrors ReplayActionTutorial. Brings the ambient control
+        /// reminder back at full strength (fresh 20s window, no verbs pre-marked used) regardless of
+        /// why it went away - natural timeout, an explicit skip, or every verb already being used.
+        /// </summary>
+        public void ReplayFirstMissionControlStrip()
+        {
+            if (!FirstMissionControlStripAvailable) return;
+            _firstMissionControlStripActive = true;
+            _firstMissionControlStripSkipped = false;
+            _firstMissionControlStripUntil = Time.time + FirstMissionControlStripSeconds;
+            System.Array.Clear(_firstMissionVerbUsed, 0, _firstMissionVerbUsed.Length);
+            LogPlaytestEvent("FirstMissionControlStrip", "replayed");
         }
 
         public float MissionDurationSeconds => CurrentFlow == FlowState.MissionSelect ? 0f : Mathf.Clamp(roundDuration - TimeRemaining, 0f, roundDuration);

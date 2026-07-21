@@ -105,7 +105,7 @@ task; they show exactly what the owner saw.
 | CF1.7 | Leash carried in mouth | — | DONE (2026-07-20, 674 green (673→674, 1 new test); `_leashArt` now follows Cheddar's muzzle (`_context.Dogs[cheddarIndex].transform.position + facing * 0.45f + (0,-0.2f)`, small sin-based dangle sway) while `cheddarAtLeash` is true, and rests on `_leashHook` otherwise, instead of sitting fixed at `_leash`'s station regardless of Cheddar; facing signal is `DogReadabilityFeedback.FacingDirection`, a new read-only exposure of the existing persistent `_lastIntentDir` field (survives standing still, unlike `DogController.CurrentVelocity`); `_leash`/`_leashPosition`/the `PresentLeash` stimulus check/objective target are unchanged; test proven to fail against pre-fix code (1.16-unit gap, matching the hook-vs-station offset) before the fix restored it green) |
 | CF1.8 | Toys discoverable (cosmetic only) | — | DONE (2026-07-20, 676 green (674→676, 2 new tests); mission-wide one-shot `"TOYS! (just for fun)"` world pop + `_context.Pulse` fires the first time either dog comes within `ToyInteractRange + 1` of either toy and never again that mission (scoped mission-wide, not per-toy - the finding's "fires once... never fires again" phrasing reads as one reassuring aside, not a per-prop nag); an untouched toy also gets a deltaTime-accumulated ~10s idle scale/tint wobble (`AdvanceToyDiscovery`, `ToyWobbleFactor`) gated off whenever that toy's kick velocity is non-trivial so it never fights `AdvanceToy`'s physics; both cues proven to never alter toy position/velocity) |
 | CF1.9 | Title-card crop + team-plan visual chips | — | DONE (2026-07-20, 679 green (676→679, 3 new tests); PIL offline simulation across 6 missions measured the old 300px/1.36x `FitDetailCover` constants showed only ~18% of the square cover art's area, new 340px/1.05x constants show ~34% (+90% relative, nearly double) with `DetailCoverFillsWidth`/`DetailCoverUsesTitleFreeCrop` both keeping large margin; data-driven `TeamPlanChipsFor(variant)` (parallel array to `PreviewStepsFor`, null = no chip data = renders exactly as before) adds 4 icon chips to Operation Pee Break's team plan (door/leash/charger/`BarkBurst` - the real shared bark VFX sprite, not a placeholder) via a fixed 4-row chip pool that swaps in for the single text block only when chip data exists; every other mission verified still text-only) |
-| CF2.1 | Roster audit: auto-dismissing info UI | CF1.1 | OPEN |
+| CF2.1 | Roster audit: auto-dismissing info UI | CF1.1 | DONE (2026-07-21, 685 green (679→685, 6 new tests); audited every timed/state-based instructional surface roster-wide - ActionTutorial and the CF1.1 card already pass, MissionBanner is unrendered (N/A), Pee Break's opening video isn't timer-gated - and fixed the one real gap: the F4.1 control strip had no way back once spent, now re-summonable from pause via `FirstMissionControlStripAvailable`/`ReplayFirstMissionControlStrip`, proven through real pause-menu input dispatch) |
 | CF2.2 | Roster audit: HUD/meter occlusion | CF1.2 | OPEN |
 | CF2.3 | Roster audit: per-beat world-state progression | CF1.4 | OPEN |
 | CF2.4 | Roster audit: funny-failure promises vs actual gags | CF1.3 | OPEN |
@@ -349,14 +349,56 @@ method before declaring a gap (trap #4), and check the shared dispatch layers
 UI-disabled audio) before calling a moment "silent."
 
 ### CF2.1 — Auto-dismissing info UI
-**Theme:** timed instructional UI fails slow readers.
-**Note:** CF1.1's fix is in shared `GameManager`/`ArenaHud` code, so the briefing card is fixed
-roster-wide already. This audit sweeps for OTHER timed instructional surfaces: the Backyard
-Rescue per-dog tutorial steps (`GameManager.cs:334` area), the F4.1 first-mission control strip
-(20s fade), mission-start banners, and anything else gating comprehension on a timer.
-**Rule to apply:** *blocking* instruction (players can't reasonably proceed without reading it)
-must be player-paced or re-summonable; *ambient* reminders (control strip, banners) may stay
-timed but must be re-summonable (e.g. from pause). Fix what fails the rule; table everything.
+**Theme:** timed instructional UI fails slow readers - the owner's exact complaint about Pee
+Break's briefing card (fixed roster-wide by CF1.1). This audit sweeps every OTHER mission-facing
+surface that could gate comprehension on a timer.
+**Rule applied:** a *blocking* instruction (players genuinely cannot proceed / are meant to read it
+before acting) must be player-paced (waits for input) or re-summonable. An *ambient* reminder (one
+that doesn't gate actual comprehension) may stay timed, but must still be re-summonable (e.g. from
+pause) even if it can auto-dismiss on its own.
+
+**Findings table** (surveyed via `GameManager.cs`/`ArenaHud.cs` full-method reads per trap #4, plus
+a codebase-wide grep for `Time.time <`-gated `*Visible` properties and `...Seconds` constants tied
+to instructional/explainer text):
+
+| Surface | Classification | Current dismiss behavior | Pass/Fail | Notes |
+|---|---|---|---|---|
+| Mission briefing/controls card (`MissionBriefingVisible`) | Blocking | Player-paced (`_briefingAwaitingAccept`, waits for bark/interact/grab) | **Pass** | CF1.1's shipped fix; out of this task's scope, unchanged. |
+| Backyard Rescue `ActionTutorial` (`ShowActionTutorial`/`CurrentTutorialAction`) | Blocking | Completion-gated only - each dog must actually perform Bark→Interact→Jump→Wrestle in order; **no timer anywhere in the enclosing method** (`TutorialActionDoneForAll`/`TryRecordTutorialAction`, `GameManager.cs:990-3018`, read in full). Pause exposes both **Skip Tutorial** and **Replay Tutorial** (`SkipActionTutorial`/`ReplayActionTutorial`, wired in `ArenaHud.ActivatePauseOption`). | **Pass** | Confirms the task doc's suspicion: this is stronger than the rule requires (it demands action, not just a read), plus it already has a working pause re-summon. No change needed. |
+| F4.1 first-mission control strip (`FirstMissionControlStripVisible`) | Ambient (explicitly documented as a reminder, not a required read - the ActionTutorial covers the same ground in more depth whenever it's mission one) | Timed: 20s + 2s fade, or all 4 verbs used once, or explicit pause **Skip**. Once gone (timeout, skip, or all-verbs-used) there was **no way back** for the rest of the session - not even a fresh mission re-arms it (by design, it's a once-per-session reminder). | **FAIL → FIXED** | Genuine gap: ambient reminders must stay re-summonable and this one was a permanent dead end once spent. See fix below. |
+| Mission-start banner (`MissionBanner`, driven by `_introPromptUntil`) | N/A - not a UI surface at all | Set to timed text in `GameManager.cs`, but **grepped roster-wide and confirmed unrendered**: no `ArenaHud`/UGUI code reads `MissionBanner` for on-screen display (`ArenaHud.cs` never references it). It exists purely as test-observable state (`ArenaGameLoopPlayModeTests`/`KitchenFoodFrenzyPlayModeTests` assert its clear/fail text) - a leftover from before CF1.1's card took over the player-facing role. The code comment at `GameManager.cs:1623` already calls it "(currently unrendered)". | **N/A** | Nothing to fix - there is no player-visible timer to gate comprehension on, since nothing reaches the screen. Flagging here so a future reader doesn't mistake the `_introPromptUntil` gate on this string for a live UI bug. |
+| Operation Pee Break opening video explainer (`IMissionOpeningPresentationController`/`IsPresentingOpening`) | Ambient/skippable, single-mission today | Plays to its natural video-completion event (`OnOpeningExplainerFinished`), an explicit per-player skip (`SkipMissionOpeningPresentation`), or an 18s safety-timeout fail-safe (`OpeningExplainerSafetyTimeoutSeconds`) miles past the video's own ~10s runtime, guarding only against a stuck/broken video player. | **Pass** | Already passed the couch test itself (checklist #2/#3 both Pass); it isn't the comprehension gate (the player-paced briefing card that follows is), and it's the only mission with this interface today, so there's no roster-wide instance to fix. |
+| One-shot world-pop juice (misread gag, beat-transition "NEXT!"/Oh-bubble, beat-3 role-flip banner, toy-discovery pop, handoff chip flash, score pop) | Ambient/decorative reinforcement | Each fires once and fades on its own short timer; none is any mission's sole way to learn a required mechanic - all are supplementary flourish layered on already-visible HUD/world state. | **Pass** | Not "instructional UI" in the sense this theme targets (nothing is being read here that isn't otherwise available); no re-summon expectation applies to a flourish reacting to something that already happened. |
+| Mission-select "YOUR TEAM PLAN" panel (`DetailHowToVisible`) | N/A | State-based (visible whenever the mission-select detail panel is open), no timer at all. | **Pass** | Not in scope for this theme; CF2.7/CF2.8 territory. |
+
+**Fix — F4.1 control strip is now re-summonable from pause.** Added
+`GameManager.FirstMissionControlStripAvailable` (`GameManager.cs:434`, mirrors
+`ActionTutorialAvailable`'s role: true for any active mission other than Backyard Rescue,
+deliberately not limited to literally the session's first mission, so a player who missed the one
+automatic showing is never stuck) and `GameManager.ReplayFirstMissionControlStrip()`
+(`GameManager.cs:478`, mirrors `ReplayActionTutorial` - re-arms a fresh 20s window and clears prior
+verb-used marks). `ArenaHud`'s pause menu (`PauseHasActionRow`, `ActivatePauseOption`,
+`DrawPauseMenu`) now gates the control-strip row on `FirstMissionControlStripAvailable` instead of
+`FirstMissionControlStripVisible`, so the row stays present even after the strip is gone; the same
+row toggles its action and label between **Skip Control Reminder** (while showing) and **Show
+Control Reminder** (once gone) exactly like the Tutorial row already toggles Skip/Replay. The two
+rows remain mutually exclusive, unchanged.
+
+Covered by five new tests in `FirstMissionControlStripPlayModeTests.cs` (availability gating vs.
+Backyard Rescue's own tutorial slot; re-summon after skip, after natural timeout, and after all
+verbs used, each restoring full-strength alpha and clearing prior verb marks; a no-op guard during
+Backyard Rescue) plus one new file, `FirstMissionControlStripPauseMenuPlayModeTests.cs`, driving the
+fix through **real pause-menu input** (`InputTestFixture` keyboard device, actual
+`ArenaHud.Update()` D-pad/keyboard navigation and `ActivatePauseOption` dispatch, not a direct
+`GameManager` method call) per trap #2. Verified the new tests fail to compile against the
+pre-fix source (temporarily reverted `GameManager.cs`/`ArenaHud.cs` only, kept the new tests) before
+restoring the fix. Full suite green at `685/685` (679→685, 6 new tests), reproduced clean on three
+consecutive runs.
+
+Manual acceptance check: start any non-Backyard-Rescue mission, let the control-strip reminder
+fade out (or press Skip from pause), then open pause again - a **Show Control Reminder** button
+should now appear where **Skip Control Reminder** used to be; selecting it brings the strip back at
+full strength.
 
 ### CF2.2 — HUD/meter occlusion
 **Theme:** world-anchored meters/labels that camera-follow can push off-screen.

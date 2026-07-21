@@ -217,7 +217,7 @@ namespace CheddarAndCocoa.Game
         public void WarmGeneratedHudSkinForTests() => LoadGeneratedHudSkin();
 
         private bool PauseHasActionRow =>
-            _game != null && (_game.ActionTutorialAvailable || _game.FirstMissionControlStripVisible);
+            _game != null && (_game.ActionTutorialAvailable || _game.FirstMissionControlStripAvailable);
         private int PauseOptionCount => PauseHasActionRow ? 7 : 6;
         private int PauseResumeIndex => PauseHasActionRow ? 4 : 3;
 
@@ -271,11 +271,14 @@ namespace CheddarAndCocoa.Game
                     }
                     index++;
                 }
-                else if (_game.FirstMissionControlStripVisible)
+                else if (_game.FirstMissionControlStripAvailable)
                 {
                     if (option == index)
                     {
-                        _game.SkipFirstMissionControlStrip();
+                        // CF2.1: same row toggles between Skip (while showing) and re-summon
+                        // (once it is gone) - mirrors the ActionTutorial Skip/Replay toggle above.
+                        if (_game.FirstMissionControlStripVisible) _game.SkipFirstMissionControlStrip();
+                        else _game.ReplayFirstMissionControlStrip();
                         return;
                     }
                     index++;
@@ -831,9 +834,13 @@ namespace CheddarAndCocoa.Game
                     ActivatePauseOption(actionIndex);
                 actionIndex++;
             }
-            else if (_game.FirstMissionControlStripVisible)
+            else if (_game.FirstMissionControlStripAvailable)
             {
-                if (DrawPauseButton(new Rect(buttonX, box.y + 194f, buttonWidth, 40f), "Skip Control Reminder", actionIndex))
+                // CF2.1: label follows the same state the row acts on - "Skip" while it is up,
+                // "Show" once it has timed out/been skipped/had every verb used, so this ambient
+                // reminder is never a permanent dead end.
+                string stripLabel = _game.FirstMissionControlStripVisible ? "Skip Control Reminder" : "Show Control Reminder";
+                if (DrawPauseButton(new Rect(buttonX, box.y + 194f, buttonWidth, 40f), stripLabel, actionIndex))
                     ActivatePauseOption(actionIndex);
                 actionIndex++;
             }

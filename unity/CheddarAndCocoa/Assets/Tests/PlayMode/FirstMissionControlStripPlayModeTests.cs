@@ -206,5 +206,106 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(rig.Game.FirstMissionControlStripVisible,
                 "A fresh session (e.g. the 'New Session' button) should treat the next mission as first again.");
         }
+
+        // CF2.1 — roster audit ("timed auto-dismissing info UI"): CF1.1 already made the mission
+        // briefing card player-paced roster-wide. This strip is the one OTHER timed instructional
+        // surface the audit found, and unlike the briefing card it is legitimately allowed to stay
+        // timed (it is documented as an "ambient reminder," not a blocking instruction) - but the
+        // rule still requires it be re-summonable once gone, which it previously was not: once
+        // skipped or timed out it stayed gone for the rest of the session with no way back. These
+        // tests cover the fix: FirstMissionControlStripAvailable (the new pause-menu gate) and
+        // ReplayFirstMissionControlStrip (the new re-summon action).
+
+        [UnityTest]
+        public IEnumerator Available_TrueOutsideBackyardRescue_FalseDuringItsOwnTutorial()
+        {
+            var rig = new Rig();
+            yield return Boot(rig, GameManager.MissionVariant.SnackHeist);
+            Assert.IsTrue(rig.Game.FirstMissionControlStripAvailable,
+                "Any non-Backyard-Rescue mission should offer the pause-menu control-reminder row.");
+
+            rig.Game.StartMission(GameManager.MissionVariant.BackyardRescue);
+            yield return null;
+
+            Assert.IsFalse(rig.Game.FirstMissionControlStripAvailable,
+                "Backyard Rescue owns the pause menu's action row via its own progressive ActionTutorial - " +
+                "the two must stay mutually exclusive, exactly like the existing Skip/Replay row.");
+            Assert.IsTrue(rig.Game.ActionTutorialAvailable);
+        }
+
+        [UnityTest]
+        public IEnumerator Skipped_CanBeReplayedBackToFullStrength()
+        {
+            var rig = new Rig();
+            yield return Boot(rig, GameManager.MissionVariant.SnackHeist);
+
+            rig.Game.SkipFirstMissionControlStrip();
+            Assert.IsFalse(rig.Game.FirstMissionControlStripVisible, "Precondition: skipped away.");
+
+            rig.Game.ReplayFirstMissionControlStrip();
+
+            Assert.IsTrue(rig.Game.FirstMissionControlStripVisible,
+                "A skipped ambient reminder must be re-summonable, not a permanent dead end.");
+            Assert.AreEqual(1f, rig.Game.FirstMissionControlStripAlpha,
+                "Re-summoning should restart at full strength, not resume a stale fade.");
+            Assert.IsFalse(rig.Game.IsFirstMissionVerbUsed(GameManager.TutorialActionStep.Bark),
+                "Re-summoning is a fresh reminder, not a continuation of prior verb progress.");
+        }
+
+        [UnityTest]
+        public IEnumerator TimedOut_CanBeReplayedBackToFullStrength()
+        {
+            var rig = new Rig();
+            yield return Boot(rig, GameManager.MissionVariant.SnackHeist);
+
+            rig.Game.ForceFirstMissionControlStripElapsed(FirstMissionControlStripSecondsForTest + 1f);
+            Assert.IsFalse(rig.Game.FirstMissionControlStripVisible, "Precondition: timed out.");
+
+            rig.Game.ReplayFirstMissionControlStrip();
+
+            Assert.IsTrue(rig.Game.FirstMissionControlStripVisible,
+                "A naturally-timed-out ambient reminder must be just as re-summonable as a skipped one.");
+            Assert.AreEqual(1f, rig.Game.FirstMissionControlStripAlpha);
+        }
+
+        [UnityTest]
+        public IEnumerator AllVerbsUsed_CanStillBeReplayed()
+        {
+            var rig = new Rig();
+            yield return Boot(rig, GameManager.MissionVariant.SnackHeist);
+
+            rig.Cheddar.Bark();
+            rig.Cheddar.Interact();
+            rig.Cheddar.Jump();
+            rig.Cheddar.Wrestle();
+            yield return null;
+            Assert.IsFalse(rig.Game.FirstMissionControlStripVisible, "Precondition: every verb already used.");
+
+            rig.Game.ReplayFirstMissionControlStrip();
+            yield return null;
+
+            Assert.IsTrue(rig.Game.FirstMissionControlStripVisible);
+            Assert.IsFalse(rig.Game.IsFirstMissionVerbUsed(GameManager.TutorialActionStep.Bark),
+                "Re-summoning clears prior verb-used marks so the reminder can retire naturally again.");
+        }
+
+        [UnityTest]
+        public IEnumerator ReplayDuringBackyardRescue_IsANoOp()
+        {
+            var rig = new Rig();
+            yield return Boot(rig, GameManager.MissionVariant.BackyardRescue);
+            Assert.IsFalse(rig.Game.FirstMissionControlStripAvailable);
+
+            // Even if a caller ignored the availability gate, replay must not force the strip
+            // visible over Backyard Rescue's own tutorial slot.
+            rig.Game.ReplayFirstMissionControlStrip();
+
+            Assert.IsFalse(rig.Game.FirstMissionControlStripVisible);
+            Assert.IsTrue(rig.Game.ShowActionTutorial, "Backyard Rescue's own tutorial must stay in charge.");
+        }
+
+        // Mirrors the private FirstMissionControlStripSeconds constant in GameManager (20f) without
+        // exposing it - this test only needs "comfortably past the deadline", not the exact value.
+        private const float FirstMissionControlStripSecondsForTest = 20f;
     }
 }
