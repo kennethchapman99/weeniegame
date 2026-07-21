@@ -19,6 +19,12 @@ namespace CheddarAndCocoa.Game
         private const float HumanReactionSeconds = 0.65f;
         private const float SuccessHoldSeconds = 1.15f;
         private const SocialStimulus RequiredMessage = SocialStimulus.DoorStare | SocialStimulus.PresentLeash;
+        // CF2.4: misread comedy-gag tuning (see TriggerMisreadGag). MisreadGagSeconds is how long a
+        // recoverable misread's offer takes to ease in; the two distances are how far the human
+        // leans toward the dogs for a normal vs. the mission-ending (escalated) misread.
+        private const float MisreadGagSeconds = 0.4f;
+        private const float MisreadOfferDistance = 1.4f;
+        private const float MisreadEscalatedOfferDistance = 2.2f;
 
         private static readonly Color HumanConfusedColor = new(0.9f, 0.8f, 0.5f);
         private static readonly Color HumanGettingItColor = new(0.5f, 0.85f, 0.55f);
@@ -37,6 +43,8 @@ namespace CheddarAndCocoa.Game
         private Vector2 _doorZone;
         private Vector2 _leashZone;
         private int _misreadsSeen;
+        private bool _misreadEscalated;
+        private float _misreadGagT;
         private bool _gettingItScored;
         private bool _creditedSolve;
         private bool _failed;
@@ -64,6 +72,10 @@ namespace CheddarAndCocoa.Game
         public float SuccessHoldRemaining => _successHoldRemaining;
         public bool DoorStareEngaged => _doorStareEngaged;
         public bool LeashPresented => _leashPresented;
+        // CF2.4: read-only test hooks for the misread comedy payoff (see TriggerMisreadGag). Purely
+        // observational - nothing here feeds back into puzzle/mechanics state.
+        public float MisreadGagProgress => _misreadGagT;
+        public bool MisreadEscalated => _misreadEscalated;
 
         public string ObjectiveLabel => IsPresentingSuccessfulOutcome
             ? "WALKIES! Cocoa held the stare and Cheddar made the leash impossible to ignore!"
@@ -82,6 +94,8 @@ namespace CheddarAndCocoa.Game
         {
             _puzzle.Configure(RequiredMessage, ComprehendNeeded, ConfusionMax);
             _misreadsSeen = 0;
+            _misreadEscalated = false;
+            _misreadGagT = 0f;
             _gettingItScored = false;
             _creditedSolve = false;
             _failed = false;
@@ -135,6 +149,13 @@ namespace CheddarAndCocoa.Game
                 active |= SocialStimulus.PresentLeash;
             _puzzle.SetActiveSet(active);
             _puzzle.Advance(deltaTime);
+            // CF2.4: ease the misread-gag offer in over MisreadGagSeconds while a recoverable
+            // (non-escalated) misread's reaction window is live; the escalated/mission-ending
+            // misread snaps straight to 1 in TriggerMisreadGag instead (see its XML doc). Gated on
+            // the reaction-window deadline (not just "T < 1") so a freshly-reset T of 0 after the
+            // window closes does not spuriously restart the ease.
+            if (!_misreadEscalated && _context.Now() < _humanReactionUntil && _misreadGagT < 1f)
+                _misreadGagT = Mathf.Clamp01(_misreadGagT + deltaTime / MisreadGagSeconds);
 
             HandleProgress();
             if (_failed) return;
@@ -268,10 +289,18 @@ namespace CheddarAndCocoa.Game
                 _context.SetCue($"Mixed signals! The human brought {wrongThing}. ({_puzzle.Misreads}/{MaxMisreads})");
                 _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "CONFUSED!");
                 if (_human != null) _context.SpawnWorldPop(_human.transform.position, wrongThing.ToUpperInvariant(), new Color(0.95f, 0.6f, 0.25f));
+                // CF2.4: comedic payoff, presentation-only. The catalog's WalkCampaign HowToPlay step
+                // promises this makes the human "fetch a funny wrong item," but pre-fix the branch only
+                // swapped a label/sprite and fired the same ThreatWarning cue every other mission's
+                // generic warning-miss uses - no different from a beep. TriggerMisreadGag fires BEFORE
+                // ThreatWarning below so ThreatWarning stays the LAST cue requested and
+                // LastAudioCueRequested is unchanged for the existing pinned test.
+                bool escalated = _puzzle.Misreads >= MaxMisreads;
+                TriggerMisreadGag(escalated);
                 _context.RequestAudioCue(ArenaFeedbackCatalog.ThreatWarning);
                 _context.RequestRumble("walk_misread", 0.16f, 0.34f, 0.12f);
                 _context.LogEvent("WalkMisread", $"{_puzzle.Misreads}/{MaxMisreads}");
-                if (_puzzle.Misreads >= MaxMisreads)
+                if (escalated)
                 {
                     _failed = true;
                     SetHumanState("HUMAN GAVE UP - MIXED SIGNALS!", HumanFailColor, 0.16f,
@@ -347,7 +376,7 @@ namespace CheddarAndCocoa.Game
             ActorSignalBadge.SetStationSignal(_leash, live && (_puzzle.Active & SocialStimulus.PresentLeash) == 0);
             if (_human != null)
             {
-                _human.transform.position = _doorZone;
+                _human.transform.position = _doorZone + MisreadGagOffset();
                 if (_puzzle.Solved)
                     SetHumanState("HUMAN GRABBED THE LEASH - WALKIES!", HumanSuccessColor, 0.14f,
                         new Color(0.75f, 1f, 0.78f, 1f), FinalGameplayArt.WalkCampaignHumanWalkies);
@@ -355,12 +384,17 @@ namespace CheddarAndCocoa.Game
                     SetHumanState("HUMAN GAVE UP - MIXED SIGNALS!", HumanFailColor, 0.16f,
                         new Color(1f, 0.58f, 0.52f, 1f), FinalGameplayArt.WalkCampaignHumanGaveUp);
                 else if (_context.Now() >= _humanReactionUntil)
+                {
+                    // CF2.4: the reaction window closed - snap the offer back to rest before
+                    // reverting to the steady CONFUSED/GETTING IT pose below.
+                    _misreadGagT = 0f;
                     SetHumanState(
                         _puzzle.ExactMatch ? "HUMAN GETTING IT!" : "HUMAN CONFUSED",
                         _puzzle.ExactMatch ? HumanGettingItColor : HumanConfusedColor,
                         _puzzle.ExactMatch ? 0.09f : 0.03f,
                         _puzzle.ExactMatch ? new Color(0.78f, 1f, 0.78f, 1f) : Color.white,
                         _puzzle.ExactMatch ? FinalGameplayArt.WalkCampaignHumanGettingIt : FinalGameplayArt.WalkCampaignHumanConfused);
+                }
             }
             if (_leash != null)
             {
@@ -375,6 +409,61 @@ namespace CheddarAndCocoa.Game
                     if (presented) _leashArt.Pulse(0.12f, 0.04f);
                 }
             }
+        }
+
+        /// <summary>
+        /// CF2.4 (finding: WalkCampaign's HowToPlay step promises the misread "makes the human fetch
+        /// a funny wrong item," but the branch above only swapped a label/sprite and fired the same
+        /// ThreatWarning cue every other mission's generic warning-miss uses - no different from a
+        /// beep). Presentation-only reaction layered on the misread branch in HandleProgress() -
+        /// Misreads/Comprehension/Confusion/_failed are already fully computed by the time this runs
+        /// and are never touched here. The human leans toward wherever the dogs actually are (holding
+        /// out the wrong item) and both dogs turn to react, reusing the existing guidance-nudge read
+        /// (no new art). A distinct SquirrelStunned cue fires here, before the generic ThreatWarning
+        /// the caller still fires right after, so LastAudioCueRequested stays unchanged for the
+        /// existing pinned test. The escalated (mission-ending, third) misread snaps straight to the
+        /// full offer instead of easing in over MisreadGagSeconds like a recoverable one does -
+        /// Tick() stops calling UpdateLabels() the instant _failed is set this same frame (see
+        /// Tick()'s "if (_failed) return;"), so there are no more frames left to ease through; this
+        /// reads as a held freeze-frame at the game-over beat instead.
+        /// </summary>
+        private void TriggerMisreadGag(bool escalated)
+        {
+            _misreadEscalated = escalated;
+            _misreadGagT = escalated ? 1f : 0f;
+            _context.RequestAudioCue(ArenaFeedbackCatalog.SquirrelStunned);
+            if (escalated && _human != null)
+                _human.transform.position = _doorZone + MisreadGagOffset();
+
+            Vector2 humanPosition = _human != null ? (Vector2)_human.transform.position : _doorZone;
+            foreach (var feedback in _context.DogFeedback)
+                if (feedback != null) feedback.ShowGuidanceNudge(humanPosition - (Vector2)feedback.transform.position);
+        }
+
+        /// <summary>How far (0..1, via _misreadGagT) and which direction the human currently leans
+        /// toward the dogs while holding out the misread's wrong item. At rest (no active misread
+        /// reaction) this is Vector2.zero, so it composes onto _doorZone as a no-op.</summary>
+        private Vector2 MisreadGagOffset()
+        {
+            if (_misreadGagT <= 0f) return Vector2.zero;
+            float distance = _misreadEscalated ? MisreadEscalatedOfferDistance : MisreadOfferDistance;
+            return MisreadDirectionTowardDogs() * distance * _misreadGagT;
+        }
+
+        private Vector2 MisreadDirectionTowardDogs()
+        {
+            if (_context.Dogs == null || _context.Dogs.Length == 0) return Vector2.zero;
+            Vector2 sum = Vector2.zero;
+            int count = 0;
+            foreach (var dog in _context.Dogs)
+            {
+                if (dog == null) continue;
+                sum += (Vector2)dog.transform.position;
+                count++;
+            }
+            if (count == 0) return Vector2.zero;
+            Vector2 toward = sum / count - _doorZone;
+            return toward.sqrMagnitude < 0.0001f ? Vector2.zero : toward.normalized;
         }
 
         private void SetHumanState(string label, Color fallbackColor, float pulseAmount, Color artTint, string spritePath)

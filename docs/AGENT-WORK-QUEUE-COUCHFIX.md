@@ -108,7 +108,7 @@ task; they show exactly what the owner saw.
 | CF2.1 | Roster audit: auto-dismissing info UI | CF1.1 | DONE (2026-07-21, 685 green (679→685, 6 new tests); audited every timed/state-based instructional surface roster-wide - ActionTutorial and the CF1.1 card already pass, MissionBanner is unrendered (N/A), Pee Break's opening video isn't timer-gated - and fixed the one real gap: the F4.1 control strip had no way back once spent, now re-summonable from pause via `FirstMissionControlStripAvailable`/`ReplayFirstMissionControlStrip`, proven through real pause-menu input dispatch) |
 | CF2.2 | Roster audit: HUD/meter occlusion | CF1.2 | DONE (2026-07-21, 686 green (685->686, 1 new roster-wide test); audited all 23 controllers - every other mission already mirrors its mid-play progress number into the screen-space `ObjectiveLabel` top bar, so none has Pee Break's pre-CF1.2 shape (a continuously-updating value that exists ONLY on a fixed world object); no new HUD interface implementations needed. Follow-up per coordinator request: `ObjectiveLabelProgressEchoPlayModeTests.cs` encodes the invariant itself - loops all 23 missions, pokes one small deterministic Force* hook per mission, asserts `ObjectiveLabel` changes - so a future mission that adds a load-bearing counter without echoing it into ObjectiveLabel fails this test instead of waiting for the next couch test) |
 | CF2.3 | Roster audit: per-beat world-state progression | CF1.4 | DONE (2026-07-21, 689 green (686→689, 3 new tests); audited all 23 controllers for sequential-phase/beat structure - most multi-phase and repeated-cycle missions already carry the beat forward into persistent per-station/per-object world art (Great Escape, Chaos Machine, Leash Walk, Coyotes Fence, Eagle Shadow Panic, Squirrel Conspiracy, Scent Search, Weenie Roundup); fixed the worst 3 genuine gaps where the ONLY place overall mission-level progress was visible was HUD text - Baby Bird Bedlam's nest, Car Ride's dashboard, and Bone Relay's scent post now each carry a persistent progress baseline using only existing sprites/tints) |
-| CF2.4 | Roster audit: funny-failure promises vs actual gags | CF1.3 | OPEN |
+| CF2.4 | Roster audit: funny-failure promises vs actual gags | CF1.3 | DONE (2026-07-21, 691 green (689→691, 2 new tests); swept `MissionInstructionCatalog.cs`/mission `IntroPrompt`s/`docs/GAME-DESIGN-BIBLE.md` for comedy claims - only ONE genuine silent gap found (WalkCampaign's misread, which reused the roster-wide generic `ThreatWarning` cue and a static sprite/label swap, no distinct cue or dog reaction); fixed it with `TriggerMisreadGag` (human leans toward the dogs holding the wrong item via `_misreadGagT`, a distinct `SquirrelStunned` cue kept ahead of the existing `ThreatWarning` call, both dogs `ShowGuidanceNudge`, third/mission-ending misread snaps to the full offer as a freeze-frame); honestly reported fewer than 3 fixes since the broader sweep found no other in-scope gaps - see findings table below) |
 | CF2.5 | Roster audit: carried-object visuals | CF1.7 | OPEN |
 | CF2.6 | Roster audit: wall-station perspective | CF1.6 | OPEN |
 | CF2.7 | Roster audit: briefing beats self-verifying in-game | CF1.5 | OPEN |
@@ -610,6 +610,73 @@ reaction actually fires (S5.2 already verified *audio* coverage — this audit i
 result is a GAG, not a beep). CF1.3 is the reference implementation and
 `BackyardRescueArtEnhancer.cs` holds the five-gag template. Fix the three worst silent-comedy
 spots; table the rest.
+
+**Findings table** (grepped `MissionInstructionCatalog.cs` for `funny|hilarious|comedic|comedy|gag`,
+cross-checked every `IntroPrompt` in `MissionCatalog.cs` the same way — zero hits there — and every
+`### N.` level-idea-bank entry in `docs/GAME-DESIGN-BIBLE.md`, then filtered to claims that (a) are
+about a FAILURE, not a success payoff, and (b) are tied to one of the 23 shipped
+`*MissionController.cs` files, not an unbuilt idea-bank entry):
+
+| Claim found | Location | Failure or success? | Shipped mission? | Verdict |
+|---|---|---|---|---|
+| "One signal held alone eventually makes the human fetch a funny wrong item." | `MissionInstructionCatalog.HowToPlayStepsFor`, WalkCampaign step | Failure (misread) | Yes — `WalkCampaignMissionController.cs` | **FAIL → FIXED.** Traced the misread branch (`HandleProgress()`, then ~lines 280-312): pre-fix it only did `AddScore` (penalty), `SetCue`/`SetJuice`/`SpawnWorldPop` (text), a `SetHumanState` sprite/label swap, and `RequestAudioCue(ArenaFeedbackCatalog.ThreatWarning)` — the SAME generic cue nearly every other mission's warning-miss/breach/exposure moment already uses (confirmed via `grep -rn "ArenaFeedbackCatalog.ThreatWarning"` — 15+ other call sites across Coyotes Fence, Eagle Shadow Panic, Car Ride, Chaos Machine, etc., all serious "uh oh" moments, none comedic). A label/sprite swap plus the roster's stock danger cue does not read as "funny" to a couch-test player any more than Pee Break's pre-CF1.3 misread did. Fixed below. |
+| "Barking too early just gets misread with a funny gag — it doesn't fail the run." | `MissionInstructionCatalog.HowToPlayStepsFor`, OperationPeeBreak step | Failure (misread) | Yes — `PeeBreakMissionController.cs` | **Pass (already shipped).** This is exactly the claim CF1.3 fixed (`TriggerMisreadGag`, shipped commit history above) — confirmed the shipped code still does the offer-tween/distinct-cue/dog-nudge/escalation described in the CF1.3 status-board row. Nothing to re-fix; explicitly out of this task's scope per the queue's own framing. |
+| "Secure the steak before four exposures; the stolen-steak gag holds in the live world before the result card." | `MissionInstructionCatalog.HowToPlayStepsFor`, TableStealth step | **Success payoff**, not failure | Yes — `TableStealthMissionController.cs` | **Out of scope.** This describes the completed-objective payoff ("the stolen-steak gag holds... before the result card"), not a promise that a MISTAKE is funny — the theme and CF1.3's reference are specifically about the failure/misread case. Not audited further per the task's own explicit carve-out for this exact line. |
+| "Boss gag: fake snack lure that Cheddar absolutely believes." | `docs/GAME-DESIGN-BIBLE.md` level-idea-bank entry "3. Coyotes at the Fence" | Ambiguous — reads like flavor, not a promised failure reaction | Yes, the mission is shipped (`CoyotesFenceMissionController.cs`) and the lure IS implemented (`_state.FakeSnackActive`, `TriggerFakeSnack()`) | **Out of scope — no failure branch exists to gag on.** Traced `PatrolDefenseMissionState.cs` and the controller in full: the fake-snack beat only ever RESOLVES via the same bark-pin action that handles the coyote (`TryPin()` → `_state.ResolveFakeSnack()`); there is no timeout, no "Cheddar actually eats it" branch, and no separate failure state tied to it at all (a dead `PlayerStatsAccumulator.RecordFakeSnackEaten()`/`FakeSnacksEaten` stat exists but is never called anywhere — confirmed via `grep -rn "RecordFakeSnackEaten"`, zero call sites). The bible line is flavor text about the temptation in the original idea-bank entry, not a shipped "if you fail here, it's funny" promise with a silent reaction to fix. |
+| "Multi-stage comedic horror" (Vet Appointment: The Betrayal, idea #12); "Comedy movement level" (Halloween Costume Escape, idea #19) | `docs/GAME-DESIGN-BIBLE.md` | N/A | **No** — neither has a shipped controller (`ls *MissionController.cs` confirms no VetAppointment/HalloweenCostume file) | **Out of scope, per `docs/README.md`'s DEFERRED section and the task's own instruction** — these are unbuilt idea-bank entries, not live mission behavior to audit. |
+| General design-principle mentions of "funny failure"/"comedy" (CLAUDE.md-style build philosophy, `docs/GAME-DESIGN-BIBLE.md` lines ~25, 37, 44-45, 58, 70, 84, 109, 154, 159, 177, 602, 615) | `docs/GAME-DESIGN-BIBLE.md` | N/A | N/A | **Out of scope** — roster-wide design doctrine, not a claim about one mission's specific failure branch. |
+
+**Conclusion: exactly ONE genuine silent-comedy gap found, not three.** Per the task's own explicit
+guidance ("if fewer than three spots genuinely need fixing, say so explicitly rather than forcing
+three"), the honest result of this sweep is one fix, not three. Every other comedy claim tied to a
+shipped mission's failure branch was either already fixed (Pee Break, by CF1.3), describes a success
+payoff rather than a failure (Table Stealth), or has no actual failure branch to gag on in the first
+place (Coyotes Fence's fake-snack flavor text) or no shipped mission at all (Vet Appointment,
+Halloween Costume Escape — both still in the idea bank).
+
+**Fix shipped — WalkCampaign's misread now has a real gag
+(`WalkCampaignMissionController.cs`).** Presentation-only, reusing the CF1.3 gag-template shape:
+- **State + timer:** `_misreadGagT` (0→1 offer progress) and `_misreadEscalated` (bool), both reset
+  in `StartMission()` (trap #7).
+- **Trigger method:** `TriggerMisreadGag(bool escalated)` — called from the misread branch in
+  `HandleProgress()` BEFORE the existing `RequestAudioCue(ArenaFeedbackCatalog.ThreatWarning)` call,
+  so `ThreatWarning` stays the LAST cue requested and the pre-existing pinned assertion
+  (`Walk_SingleMisread_CoachesRecoverably_AndTheCorrectComboStillWorks`'s
+  `Assert.AreEqual(ArenaFeedbackCatalog.ThreatWarning, _game.LastAudioCueRequested, ...)`) is
+  unchanged. Fires a distinct `ArenaFeedbackCatalog.SquirrelStunned` cue (the same one CF1.3 picked
+  for Pee Break's misread — an existing, authored, non-invented cue per trap #9) and nudges both
+  dogs via the existing `DogReadabilityFeedback.ShowGuidanceNudge` (no new art).
+- **Tick/ease branch:** for a recoverable (non-final) misread, `Tick()` eases `_misreadGagT` from 0
+  toward 1 over `MisreadGagSeconds` (0.4f) while the existing post-misread reaction window
+  (`_humanReactionUntil`) is live; `UpdateLabels()` composes the resulting `MisreadGagOffset()` onto
+  the human's position so it visibly leans toward wherever the dogs currently are, holding out the
+  wrong item, then snaps back to rest when the window closes and the sprite reverts to
+  CONFUSED/GETTING IT.
+- **Escalation:** the third, mission-ending misread snaps `_misreadGagT` straight to 1 (full offer)
+  inside `TriggerMisreadGag` itself, rather than easing — `Tick()` stops calling `UpdateLabels()` the
+  instant `_failed` is set that same frame, so there are no further frames to ease through; this
+  reads as a held freeze-frame at the game-over beat instead of a cut-off tween.
+- **Why `SquirrelStunned` and not a new cue:** it's the exact cue CF1.3 already established roster-wide
+  as "the funny stunned reaction," distinct from every mission's generic `ThreatWarning`/`ScorePenalty`
+  danger cues (confirmed both resolve to real clips in `AuthoredAudioCatalog`, trap #9) — reusing it
+  keeps one consistent "that was a gag, not a real failure" audio signature instead of inventing a
+  second one for a single mission.
+
+**Tests:** two new deterministic PlayMode tests in `CoopWalkCampaignPlayModeTests.cs`, mirroring
+CF1.3's two-assertion shape:
+1. `Walk_SingleMisread_TriggersComedicGagButStaysQuietBeforehand` — negative case (holding the
+   correct combo, no misread yet) proves the gag stays quiet (`MisreadGagProgress == 0`, no
+   `SquirrelStunned` cue requested); positive case (one misread) proves `SquirrelStunned` fired,
+   `ThreatWarning` is still the last cue requested (mechanics/audio-ordering unchanged), both dogs'
+   `FacingIntentLabel` turned toward the human from opposite sides, and (after one real frame) the
+   offer progress is strictly between 0 and 1 — a lerp, not a teleport — without that settling frame
+   causing a second misread.
+2. `Walk_ThirdMisread_EscalatesGagWithoutChangingFailMechanics` — drives all three misreads, asserts
+   the first two do NOT escalate, the third does (`MisreadEscalated == true`,
+   `MisreadGagProgress == 1`), and that `Outcome`/`Phase`/`EndSummaryLabel` (the fail mechanics the
+   pre-existing `Walk_FailPath_TooManyMixedSignals` test already pins) are bit-for-bit unchanged.
+
+Full suite green at 691/691 (689→691, 2 new tests), no flaky-test reruns needed this pass.
 
 ### CF2.5 — Carried-object visuals
 **Theme:** logically-held objects rendered as static/floating break the fantasy.

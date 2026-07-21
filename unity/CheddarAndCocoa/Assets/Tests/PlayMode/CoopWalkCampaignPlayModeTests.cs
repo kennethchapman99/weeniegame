@@ -134,6 +134,95 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(_game.WalkCampaignPuzzle.Solved);
         }
 
+        /// <summary>
+        /// CF2.4 (funny-failure audit): the catalog's WalkCampaign HowToPlay step promises a misread
+        /// "makes the human fetch a funny wrong item," but pre-fix the branch only swapped a label/
+        /// sprite and played the same ThreatWarning cue every other mission's generic warning-miss
+        /// uses - no different from a beep. Mirrors CF1.3's gag-template test shape: negative case
+        /// first (no misread yet -> stays quiet), then the positive case (an actual misread starts
+        /// the human's offer-lean toward the dogs, a distinct audio cue, and both dogs turning to
+        /// react), read through a real frame so the tween's mid-flight state (not a teleport) is
+        /// directly observable.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator Walk_SingleMisread_TriggersComedicGagButStaysQuietBeforehand()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.WalkCampaign);
+            yield return null;
+            var human = GameObject.Find("WalkCampaignHuman");
+            Assert.IsNotNull(human);
+            // Opposite sides of the human so a genuine per-dog "face the reaction" nudge is
+            // distinguishable from any coincidental default facing.
+            _cheddar.transform.position = (Vector2)human.transform.position + Vector2.left * 5f;
+            _cocoa.transform.position = (Vector2)human.transform.position + Vector2.right * 5f;
+            var cheddarFeedback = _cheddar.GetComponent<DogReadabilityFeedback>();
+            var cocoaFeedback = _cocoa.GetComponent<DogReadabilityFeedback>();
+
+            // Negative case: holding the correct combo (no misread) must never fire the comedic gag.
+            _game.ForceWalkCampaign(0.2f, doorStare: true, presentLeash: true);
+            Assert.AreEqual(0, _game.WalkCampaignPuzzle.Misreads);
+            Assert.AreEqual(0f, _game.WalkCampaignController.MisreadGagProgress, 0.001f,
+                "The offer-lean must stay at rest until an actual misread happens.");
+            Assert.That(_game.AudioCueRequests, Does.Not.Contain(ArenaFeedbackCatalog.SquirrelStunned),
+                "The comedic cue must stay quiet when nothing funny has happened yet.");
+
+            // Positive case: an incomplete combo held long enough to misread once.
+            _game.ForceWalkCampaign(3f, doorStare: true, presentLeash: false);
+            Assert.AreEqual(1, _game.WalkCampaignPuzzle.Misreads);
+            Assert.IsFalse(_game.WalkCampaignController.MisreadEscalated, "A single misread must not trigger the bigger flourish.");
+            Assert.That(_game.AudioCueRequests, Does.Contain(ArenaFeedbackCatalog.SquirrelStunned),
+                "A distinct comedic cue, not just the generic ThreatWarning, should play on a misread.");
+            Assert.AreEqual(ArenaFeedbackCatalog.ThreatWarning, _game.LastAudioCueRequested,
+                "The comedic cue must fire BEFORE the existing ThreatWarning coach beat, not replace it.");
+            Assert.AreEqual("FacingRight", cheddarFeedback.FacingIntentLabel,
+                "Cheddar (to the human's left) should turn to face the misread reaction.");
+            Assert.AreEqual("FacingLeft", cocoaFeedback.FacingIntentLabel,
+                "Cocoa (to the human's right) should turn to face the misread reaction from the other side.");
+
+            // Let one real frame tick so the eased offer-lean is directly observable mid-flight
+            // (proves a brief lerp toward the dogs, not a teleport) without crossing another misread
+            // threshold (Confusion resets to 0 on a misread and a single small frame can't refill it).
+            yield return null;
+            Assert.Greater(_game.WalkCampaignController.MisreadGagProgress, 0f, "The offer-lean should have started...");
+            Assert.Less(_game.WalkCampaignController.MisreadGagProgress, 1f, "...but not teleported straight to the offered position.");
+            Assert.AreEqual(1, _game.WalkCampaignPuzzle.Misreads, "The settling frame must not itself cause a second misread.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, _game.Outcome);
+        }
+
+        /// <summary>
+        /// CF2.4 done-criterion: a direct behavioral proof that misread MECHANICS are unchanged by
+        /// the comedy layer - same Misreads count, fail threshold, and outcome CoopSocialManipulation-
+        /// Puzzle.Advance() has always produced - and that the escalation flourish (the third,
+        /// mission-ending misread) fires without altering any of it.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator Walk_ThirdMisread_EscalatesGagWithoutChangingFailMechanics()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.WalkCampaign);
+            yield return null;
+
+            _game.ForceWalkCampaign(3f, doorStare: true, presentLeash: false);
+            Assert.AreEqual(1, _game.WalkCampaignPuzzle.Misreads);
+            Assert.IsFalse(_game.WalkCampaignController.MisreadEscalated);
+
+            _game.ForceWalkCampaign(3f, doorStare: true, presentLeash: false);
+            Assert.AreEqual(2, _game.WalkCampaignPuzzle.Misreads);
+            Assert.IsFalse(_game.WalkCampaignController.MisreadEscalated, "Two misreads still must not escalate.");
+
+            _game.ForceWalkCampaign(3f, doorStare: true, presentLeash: false);
+            Assert.AreEqual(3, _game.WalkCampaignPuzzle.Misreads);
+            Assert.IsTrue(_game.WalkCampaignController.MisreadEscalated, "The third (mission-ending) misread should trip the bigger flourish.");
+            Assert.AreEqual(1f, _game.WalkCampaignController.MisreadGagProgress, 0.001f,
+                "The escalated misread snaps straight to the full offer - there are no more frames left to ease through.");
+
+            // Mechanics unchanged: same fail threshold/outcome the pre-existing Walk_FailPath test pins.
+            Assert.AreEqual(GameManager.MissionOutcome.Failed, _game.Outcome);
+            Assert.AreEqual(GameManager.State.GameOver, _game.Phase);
+            Assert.That(_game.EndSummaryLabel, Does.Contain("Mixed Signals"));
+        }
+
         [UnityTest]
         public IEnumerator Walk_HumanActorStatesShowConfusionComprehensionMisreadAndOutcome()
         {
