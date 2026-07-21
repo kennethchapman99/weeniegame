@@ -291,6 +291,65 @@ namespace CheddarAndCocoa.Tests
                 "The gag should stay quiet while the gate is actually held open.");
         }
 
+        /// <summary>
+        /// CF2.6 (roster audit of CF1.6's finding #6, applied to Gate Crash's own tall gate art -
+        /// scale (1.4, 4, 1) in BuildScene(), the same shape as Pee Break's pre-CF1.6 door).
+        /// Unlike Pee Break's door (StationRange 2.25 was smaller than the ~2.48-unit gap, making
+        /// the true floor spot mechanically unreachable), Gate Crash's HoldRange (4f) was always
+        /// generous enough to tolerate a floor-level stand, so this is primarily a guidance/
+        /// consistency fix rather than a "mechanically impossible" one - the couch-test-shaped bug
+        /// here is Cocoa's arrow/breadcrumb (TryGetObjectiveTarget) pointing straight at the gate's
+        /// own tall-center transform (_gate, == GateHoldZone), pulling her toward the halfway-up-
+        /// the-gate spot even though the hold check itself would have tolerated the floor. This
+        /// proves the guidance now targets the floor anchor instead (a distinct, meaningfully lower
+        /// point that did NOT equal the old target before this fix), and that holding the anchor
+        /// from that floor spot - not the tall center - is what the checks actually measure.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator GateCrash_AnchorGuidanceAndHoldAnchorToTheFloorNotTheTallGateCenter()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.GateCrash);
+            yield return null;
+
+            var controller = _game.GateCrashController;
+            float verticalGap = _game.GateHoldZone.y - controller.GateFloorAnchor.y;
+            Assert.Greater(verticalGap, 2f,
+                "CF2.6: the gate's floor anchor must sit meaningfully below the gate art's own " +
+                "tall center (scale (1.4, 4, 1)), matching CF1.6's doormat ratio, or grounding it " +
+                "would be a cosmetic no-op.");
+
+            // Find Cocoa's objective-target index by her distinctive "ANCHOR" copy, rather than
+            // assuming which slot FindObjectsByType handed back for _cocoa.
+            int cocoaIndex = -1;
+            for (int i = 0; i < 2; i++)
+            {
+                Assert.IsTrue(controller.TryGetObjectiveTarget(i, out _, out var copy, out _));
+                if (copy.Contains("ANCHOR")) { cocoaIndex = i; break; }
+            }
+            Assert.AreNotEqual(-1, cocoaIndex, "Should find Cocoa's anchor-objective index.");
+
+            Assert.IsTrue(controller.TryGetObjectiveTarget(cocoaIndex, out var target, out var anchorCopy, out _));
+            Assert.That(anchorCopy, Does.Contain("ANCHOR"));
+            Assert.AreEqual((Vector2)controller.GateFloorAnchor, (Vector2)target.position,
+                "Cocoa's objective arrow/breadcrumb must guide her to the gate's floor anchor, not " +
+                "the gate's own tall-center transform.");
+            Assert.AreNotEqual((Vector2)_game.GateHoldZone, (Vector2)target.position,
+                "The guidance target must have actually moved off the gate's rendered (tall) position " +
+                "- this is the assertion that fails against the pre-CF2.6 code.");
+
+            // The hold check itself: standing exactly at the floor anchor (not the tall art
+            // center) must be enough to engage and sustain the anchor through real Interact()
+            // dispatch (trap #2), proving the checks measure against GateFloorAnchor.
+            _cocoa.transform.position = controller.GateFloorAnchor;
+            _cocoa.Interact();
+            Assert.IsTrue(controller.AnchorEngaged,
+                "Standing at the grounded floor anchor should be enough for Cocoa to engage the gate.");
+            controller.Tick(0.05f, Time.time);
+            Assert.IsTrue(controller.Puzzle.Held,
+                "The hold should sustain while Cocoa stays at the floor anchor.");
+        }
+
         private IEnumerator LoadArena()
         {
             _game = null; _cheddar = null; _cocoa = null;

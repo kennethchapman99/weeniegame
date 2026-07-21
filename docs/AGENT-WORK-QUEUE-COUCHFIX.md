@@ -110,7 +110,7 @@ task; they show exactly what the owner saw.
 | CF2.3 | Roster audit: per-beat world-state progression | CF1.4 | DONE (2026-07-21, 689 green (686→689, 3 new tests); audited all 23 controllers for sequential-phase/beat structure - most multi-phase and repeated-cycle missions already carry the beat forward into persistent per-station/per-object world art (Great Escape, Chaos Machine, Leash Walk, Coyotes Fence, Eagle Shadow Panic, Squirrel Conspiracy, Scent Search, Weenie Roundup); fixed the worst 3 genuine gaps where the ONLY place overall mission-level progress was visible was HUD text - Baby Bird Bedlam's nest, Car Ride's dashboard, and Bone Relay's scent post now each carry a persistent progress baseline using only existing sprites/tints) |
 | CF2.4 | Roster audit: funny-failure promises vs actual gags | CF1.3 | DONE (2026-07-21, 691 green (689→691, 2 new tests); swept `MissionInstructionCatalog.cs`/mission `IntroPrompt`s/`docs/GAME-DESIGN-BIBLE.md` for comedy claims - only ONE genuine silent gap found (WalkCampaign's misread, which reused the roster-wide generic `ThreatWarning` cue and a static sprite/label swap, no distinct cue or dog reaction); fixed it with `TriggerMisreadGag` (human leans toward the dogs holding the wrong item via `_misreadGagT`, a distinct `SquirrelStunned` cue kept ahead of the existing `ThreatWarning` call, both dogs `ShowGuidanceNudge`, third/mission-ending misread snaps to the full offer as a freeze-frame); honestly reported fewer than 3 fixes since the broader sweep found no other in-scope gaps - see findings table below) |
 | CF2.5 | Roster audit: carried-object visuals | CF1.7 | DONE (2026-07-21, 692 green (691→692, 1 new test); audited all 23 controllers for dog-carries-an-object mechanics — Weenie Roundup, Baby Bird Bedlam, and Blanket Catch already track the carrying dog(s) correctly (two arrived at the reference idiom independently of this audit); fixed the one genuine gap, Walk Campaign's leash, which sat fixed at its station regardless of `_leashPresented` — now follows Cheddar's position via `ResolveLeashPosition()`, the same standalone per-tick-follow idiom as CF1.7/`_carriedMarkers`, never `SetParent` (trap #5)) |
-| CF2.6 | Roster audit: wall-station perspective | CF1.6 | OPEN |
+| CF2.6 | Roster audit: wall-station perspective | CF1.6 | DONE (2026-07-21, 693 green (692→693, 1 new test); audited all 23 controllers' `NewMarker`/`NewScenery` scale calls for tall (Y>>X) wall-drawn art - only Gate Crash's gate and Coyotes Fence's fence gaps qualify as architecture, plus 3 tall-but-non-architectural markers (a squirrel decoy, two human characters) correctly excluded; fixed Gate Crash's gate (a HOLD-type station, the mission's namesake, flagged high-risk) with a `GateFloorAnchor` child transform (same -0.62 ratio as Pee Break's doormat) now driving the hold check, engage check, and Cocoa's guidance arrow, plus a grounded pose via the existing `ShowGuidanceNudge`; tabled Coyotes Fence's tighter-margin fence-gap repair check because it's brief-touch, not sustained, per the task's own prioritization) |
 | CF2.7 | Roster audit: briefing beats self-verifying in-game | CF1.5 | OPEN |
 | CF2.8 | Roster pass: title cards + team-plan chips | CF1.9 | OPEN |
 | CF3.1 | Evidence refresh + retest handoff | all above | OPEN |
@@ -745,6 +745,73 @@ climbing.
 fences, counters, tables, windows) and check whether the dog's required standing position
 overlaps the art's upper body. CF1.6's floor-anchor pattern is the fix. Prioritize any station a
 dog must HOLD (sustained overlap reads worst); table brief-touch stations.
+
+**Survey method (matches the task's own instruction):** grepped every `*MissionController.cs` for
+`NewMarker`/`NewScenery`/`localScale =` calls whose `Vector3` scale has Y meaningfully larger than
+X (the signature of a marker drawn tall against a back wall, per CF1.6's door - scale (2.4, 4, 1)).
+Confirmed via `MissionPropArtAttachment`/`ArtSpriteOverlay.Init` (`ActualArtOverlay` is a CHILD of
+the marker and inherits its non-uniform `lossyScale`) that this scale genuinely dictates on-screen
+tallness regardless of the source PNG's own aspect ratio - every `FinalGameplayArt` PNG actually
+shipped is roughly square-to-landscape (checked all of them, tallest is 1.23:1), so a marker's own
+scale is the ONLY source of "drawn tall" in this codebase. Also confirmed the four shared actors
+(`ArenaArtCatalog.ActorKind.Squirrel/Predator/Rope/LaundryBasket`, used by Sock Panic, Snack Heist,
+Coyotes Fence's predator, Eagle Shadow Panic's predator, etc.) all use `ActorVisualSlot`'s single
+uniform `rootScale` float, not an asymmetric `Vector3` - so no shared actor can produce this bug
+class by construction, and Sock Panic's laundry basket (a named candidate in this task) is
+confirmed NOT tall (uniform scale 1.1).
+
+**Findings table** (every `NewMarker`/`NewScenery`/`localScale` call across all 23 controllers with
+Y >= 1.8 and Y >= 1.3x X; Pee Break's own door/window/charger-cord markers are the already-fixed
+CF1.6 reference and excluded below):
+
+| Mission / marker | Scale (X, Y) | Is it architecture (door/gate/fence/counter/table/window)? | Station-check math | HOLD or brief-touch? | Verdict |
+|---|---|---|---|---|---|
+| Gate Crash — `GateCrashGate` | (1.4, 4) | **Yes** - the mission's namesake gate | Anchor-engage (`HandleInteract`) and the sustained hold (`Tick`'s `anchorInRange`) both measured distance to `_holdZone`, the gate marker's own tall-center position; `TryGetObjectiveTarget` pointed Cocoa's arrow at `_gate.transform` (same point) | **HOLD** - Cocoa must stay anchored the entire squeeze, the worst-case "sustained overlap" shape this task calls out | **FAIL → FIXED** (see below) |
+| Coyotes Fence — `FenceGap_i` | (1.2, 2.4) | **Yes** - fence weak-spot markers | `TryRepair`'s distance check measures to `_activeGapPosition`, the SAME point used for the tall gap marker's position; margin is tighter than Gate Crash's (repair range 2f vs a ~1.49-unit floor offset at the same -0.62 ratio CF1.6/this task use = only ~0.51 units of slack, versus Gate Crash's ~1.52) | **Brief-touch** - `TryRepair` is a single instantaneous `Interact()` credit, not a sustained hold (the mission's actual HOLD mechanic, bark-pinning the coyote, is anchored to the mobile predator actor's own position, not the fence) | **Tabled** - genuinely tighter margin than Gate Crash, worth a future look, but per the task's own explicit prioritization ("table brief-touch stations") this is lower priority than a HOLD station and was not fixed this pass |
+| Squirrel Switcheroo — `SwitcherooDecoy` | (1.6, 3) | **No** - a squirrel decoy/lure prop, not wall-drawn set-dressing | `BaitRange` = 4f vs a ~1.86-unit floor offset - generous slack (~2.14 units), and it is a free-standing yard prop rather than something drawn flush against a wall | HOLD (baiter must sustain proximity), but excluded on the architecture criterion, not the hold/brief-touch one | **N/A** - out of this theme's scope (matches the "doors, gates, fences, counters, tables, windows" list; not a wall element) |
+| Table Stealth — `TableStealthHuman` | (1.6, 4) | **No** - a standing human character actor (the mission's "HUMAN"), not architecture | `DistractRange` = 4f vs a ~2.48-unit floor offset - generous slack (~1.52 units) | HOLD (Cocoa must sustain the distraction), but excluded on the architecture criterion | **N/A** - a bipedal character sprite is expected to be tall (body proportions), the same reason Pee Break's own Teenager character was correctly left out of CF1.6's fix; approaching a character at roughly chest height reads as "standing near a person," not "climbing a wall" |
+| Walk Campaign — `WalkCampaignHuman` | (1.8, 3.4) | **No** - same as Table Stealth's human | N/A - not a required standing/interaction anchor at all (the human is the puzzle's signal-reading target, not a station dogs must reach) | N/A | **N/A** - same character-actor exclusion as Table Stealth |
+| All other 21 controllers | — | — | Read every `NewMarker`/`NewScenery`/`localScale` call in each file (trap #4); Great Escape, Chaos Machine, Kitchen Food Frenzy, Backyard Rescue, Eagle Shadow Panic use either `FinalGameplayArt`-only stations with near-square placeholder scale (1.7×1.3 or narrower), a wide flat range marker (Kitchen's counter, 2.4x radius × 1.1), or uniform-scale radius markers (Backyard Rescue's trap gap, Eagle Shadow Panic's cover circles - both `Vector3.one * radius`) | N/A | N/A | **Pass** - no tall (Y >> X) marker exists in these controllers at all, so there is no "climbing" geometry to check |
+
+**Conclusion: one genuine HOLD-type gap found and fixed, one tighter-margin brief-touch gap
+tabled, and three tall-but-non-architectural markers correctly excluded on the theme's own
+criterion.** Per the task's explicit prioritization ("prioritize stations a dog must HOLD... table
+brief-touch stations"), Gate Crash's gate - the mission literally named after a gate, flagged
+"high risk" by this task's own candidate list - was the one worth fixing this pass. Unlike Pee
+Break's door (where `StationRange` 2.25 was smaller than the ~2.48-unit gap, making the true floor
+spot mechanically *unreachable*), Gate Crash's `HoldRange` (4f) was always generous enough that a
+dog standing at the true floor spot would already satisfy the old center-anchored check - so this
+was not a "mechanically impossible" bug like Pee Break's, but a **guidance/consistency** one: the
+arrow/breadcrumb (`TryGetObjectiveTarget`) pointed straight at the gate's own tall-center
+transform, pulling Cocoa toward the halfway-up-the-gate spot that produces the couch-test-style
+"climbing" read, even though the hold check itself would have tolerated her standing at the base.
+That distinction is recorded honestly in the fix and its test below, not glossed over.
+
+**Fix shipped — Gate Crash's anchor-engage/hold now grounds to the gate's floor
+(`GateCrashMissionController.cs`).** Presentation/guidance-only; `HoldRange`, `CrossRange`, the
+puzzle's snap/cross mechanics, and the gate ART's own position (`_gate`, `_holdZone`) are
+bit-for-bit unchanged. Added `_gateFloorAnchor`: a bare child `GameObject` (no `SpriteRenderer` -
+no new art) parented to `_gate` at local Y -0.62, the identical ratio Pee Break's doormat uses
+(CF1.6), so its world position sits ~2.48 units below the gate's own tall center at the gate's
+visual base. `GateFloorAnchor` (a new read-only `Vector2` property) is now the anchor for: (1) the
+sustained hold check in `Tick()` (`anchorInRange`), (2) the initial engage-distance check in
+`HandleInteract()`, and (3) Cocoa's `TryGetObjectiveTarget` arrow/breadcrumb (now points at
+`_gateFloorAnchor.transform` instead of `_gate.transform`). A new `UpdateGateAnchorPose()` (called
+from `Tick()` whenever the anchor is actually held) gives Cocoa a grounded "holding the gate" read
+via the existing `DogReadabilityFeedback.ShowGuidanceNudge` - the same idiom CF1.6 used for the
+door stare, refreshed every tick so its 0.7s forced-pose window never lapses mid-hold, no new art.
+The cosmetic "door outrage" gag (`TrySpawnDoorOutrage`, Cheddar's running "every closed door is a
+personal attack" joke) deliberately keeps checking `_holdZone` unchanged - it is flavor, not a
+required station, and its existing shipped test places Cheddar exactly at `_holdZone` with a
+tighter 2.2-unit radius that retargeting would have broken for no required-behavior gain.
+
+**Test:** `GateCrash_AnchorGuidanceAndHoldAnchorToTheFloorNotTheTallGateCenter` in
+`CoopGateCrashPlayModeTests.cs`. Asserts (1) the floor anchor sits >2 units below the gate's own
+center (the CF1.6-style "meaningful gap" proof); (2) Cocoa's objective-target position now equals
+`GateFloorAnchor` and is no longer equal to `GateHoldZone` - the two assertions that actually fail
+against the pre-fix code, since the arrow previously pointed exactly at `GateHoldZone`; (3)
+engaging and sustaining the hold from the floor anchor itself (through real `Interact()` dispatch,
+trap #2) succeeds. Full suite green at 693/693 (692→693, 1 new test).
 
 ### CF2.7 — Briefing beats self-verifying in-game
 **Theme:** a player read "beat 3 role flip" in the plan and still didn't recognize it happening.

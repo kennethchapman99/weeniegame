@@ -24,6 +24,7 @@ namespace CheddarAndCocoa.Game
         private readonly CoopHoldReleasePuzzle _puzzle = new();
         private MissionContext _context;
         private GameObject _gate;
+        private GameObject _gateFloorAnchor;
         private GameObject _toy;
         private MissionPropArtAttachment _gateArt;
         private MissionPropArtAttachment _toyArt;
@@ -51,6 +52,19 @@ namespace CheddarAndCocoa.Game
             : null;
         public CoopHoldReleasePuzzle Puzzle => _puzzle;
         public Vector2 HoldZone => _holdZone;
+        /// <summary>
+        /// CF2.6 (roster audit of CF1.6's finding #6): the gate marker (_holdZone) is drawn tall
+        /// against the yard's back fence line the same way Pee Break's original door was (scale
+        /// (1.4, 4, 1) - see BuildScene()) - Cocoa's required brace spot centered on that point
+        /// visually reads as bracing halfway up the gate, and this is a HOLD station (Cocoa must
+        /// stay anchored the whole squeeze, not a brief touch), the worst-case shape per the
+        /// couch-fix queue's own prioritization. _gateFloorAnchor is an invisible child at local Y
+        /// -0.62 (identical ratio to Pee Break's doormat anchor from CF1.6, no new art - just a
+        /// bare Transform), so its world position sits ~2.48 units below the gate's own center at
+        /// the gate's visual base. This is the anchor for the anchor-engage/hold checks and
+        /// Cocoa's guidance target below; the gate ART itself (_gate, _holdZone) is untouched.
+        /// </summary>
+        public Vector2 GateFloorAnchor => _gateFloorAnchor.transform.position;
         public Vector2 CrossZone => _crossZone;
         public Vector2 EntryTarget => _context.Bounds.center;
         public string OutcomeSummary => MissionOutcomeSummaryBuilder.BuildGateCrashSummary(_puzzle);
@@ -114,13 +128,16 @@ namespace CheddarAndCocoa.Game
             int crosser = _context.IndexOfDog(DogId.Cheddar);
             if (anchor < 0 || crosser < 0) return;
 
-            bool anchorInRange = Vector2.Distance(_context.Dogs[anchor].transform.position, _holdZone) <= HoldRange;
+            // CF2.6: anchor the hold check to the gate's floor position, not the tall gate art's
+            // own center - see GateFloorAnchor's XML doc for the full rationale.
+            bool anchorInRange = Vector2.Distance(_context.Dogs[anchor].transform.position, GateFloorAnchor) <= HoldRange;
             if (_anchorEngaged && !anchorInRange) _anchorEngaged = false;
             bool held = _anchorEngaged && anchorInRange;
             _puzzle.SetHeld(held);
             if (Vector2.Distance(_context.Dogs[crosser].transform.position, _crossZone) <= CrossRange)
                 _puzzle.Advance(deltaTime);
 
+            UpdateGateAnchorPose(held);
             HandleSnaps();
             if (_failed) return;
             UpdateLabels();
@@ -147,7 +164,9 @@ namespace CheddarAndCocoa.Game
                 return true;
             }
 
-            if (Vector2.Distance(_context.Dogs[dogIndex].transform.position, _holdZone) > HoldRange)
+            // CF2.6: same floor anchor as the Tick() hold check - Cocoa engages from the gate's
+            // base, not its tall art center.
+            if (Vector2.Distance(_context.Dogs[dogIndex].transform.position, GateFloorAnchor) > HoldRange)
             {
                 _context.MarkFailedInteraction(dogId, "get closer to the gate before anchoring it");
                 _context.SetCue("Cocoa needs paws on the gate - reach the GATE marker and Interact.");
@@ -199,7 +218,10 @@ namespace CheddarAndCocoa.Game
             hideDistance = HoldRange;
             if (_context.IndexOfDog(DogId.Cocoa) == dogIndex)
             {
-                target = _gate != null ? _gate.transform : null;
+                // CF2.6: guide Cocoa's arrow/beacon/breadcrumb to the floor anchor, not up the
+                // gate art itself (_gateFloorAnchor is a real GameObject/Transform, same idiom as
+                // Pee Break's _doorMat).
+                target = _gateFloorAnchor != null ? _gateFloorAnchor.transform : null;
                 copy = _puzzle.Held ? "STAY ANCHORED" : "INTERACT TO ANCHOR";
             }
             else
@@ -260,6 +282,24 @@ namespace CheddarAndCocoa.Game
             DoorOutrageCount++;
         }
 
+        /// <summary>
+        /// CF2.6 (roster audit of CF1.6's finding #6): grounding the anchor-engage check fixes
+        /// WHERE Cocoa has to stand, but she still just stood there passively while bracing. Give
+        /// her a readable "holding the gate" presentation using an existing pose only - the same
+        /// idiom CF1.6 used for the door stare (DogReadabilityFeedback.ShowGuidanceNudge, forces
+        /// Idle facing the gate for 0.7s, refreshed every tick while actually held so the window
+        /// never lapses mid-hold).
+        /// </summary>
+        private void UpdateGateAnchorPose(bool held)
+        {
+            if (!held) return;
+            int cocoa = _context.IndexOfDog(DogId.Cocoa);
+            if (cocoa < 0 || _context.Dogs == null || cocoa >= _context.Dogs.Length || _context.Dogs[cocoa] == null) return;
+            if (_context.DogFeedback == null || cocoa >= _context.DogFeedback.Length || _context.DogFeedback[cocoa] == null) return;
+            Vector2 faceGate = GateFloorAnchor - (Vector2)_context.Dogs[cocoa].transform.position;
+            _context.DogFeedback[cocoa].ShowGuidanceNudge(faceGate);
+        }
+
         private void HandleSnaps()
         {
             if (_puzzle.Solved && !_creditedSolve)
@@ -304,6 +344,12 @@ namespace CheddarAndCocoa.Game
             // Identity-only close-range text: the badge alternation, held/snap sprites, and the
             // HUD objective line carry who-does-what-now (couch-test-#4-era signal recipe).
             _gate = NewMarker("GateCrashGate", GateIdleColor, "GATE", new Vector3(1.4f, 4f, 1f), out _);
+            // CF2.6: bare Transform, no renderer - no new art, just a floor-level anchor point at
+            // local Y -0.62 against the gate's own Y-scale (4), the same ratio Pee Break's doormat
+            // uses (CF1.6). See GateFloorAnchor's XML doc above.
+            _gateFloorAnchor = new GameObject("GateCrashGateFloorAnchor");
+            _gateFloorAnchor.transform.SetParent(_gate.transform, false);
+            _gateFloorAnchor.transform.localPosition = new Vector3(0f, -0.62f, 0f);
             _toy = NewMarker("GateCrashToy", new Color(0.6f, 0.8f, 1f), "TOY", Vector3.one * 1.2f, out _);
             _gateArt = MissionPropArt.AttachObject(_gate, FinalGameplayArt.GateCrashGateClosed, 0.013f, 18, true);
             _toyArt = MissionPropArt.AttachObject(_toy, FinalGameplayArt.GateCrashToyWaiting, 0.012f, 18, true);
