@@ -153,6 +153,51 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator Bedlam_Nest_CarriesPersistentDepletionBaselineAcrossChicks()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.BabyBirdBedlam);
+            yield return null;
+
+            var controller = _game.BabyBirdBedlamController;
+            var nest = FindLoadedObject("BedlamNest");
+            Assert.IsNotNull(nest);
+            var nestLabel = nest.GetComponentInChildren<TextMesh>();
+            Assert.IsNotNull(nestLabel, "The nest needs a label to carry the CF2.3 depletion tally.");
+            var nestOverlay = nest.GetComponent<ArtSpriteOverlay>();
+            Assert.IsNotNull(nestOverlay, "The nest's authored shade-tree art must expose its tint for the depletion baseline.");
+
+            Assert.AreEqual(0f, controller.NestDepletion, "The nest should read as full before any chick is eaten.");
+            Color startTint = nestOverlay.CurrentTint;
+            Assert.That(nestLabel.text, Does.Contain("0/4"));
+
+            int shakes = _game.FeastGuardPuzzle.ShakesNeeded;
+            _game.ForceChickLand(0f);
+            _game.ForceChickGrab();
+            for (int s = 0; s < shakes; s++) _game.ForceChickShake();
+
+            Assert.AreEqual(1, _game.FeastGuardPuzzle.ChicksEaten);
+            Assert.Greater(controller.NestDepletion, 0f,
+                "Gulping a chick should visibly move the nest's world-space depletion baseline, " +
+                "not just the HUD's chicks n/N count.");
+            Assert.That(nestLabel.text, Does.Contain("1/4"));
+            Assert.AreNotEqual(startTint, nestOverlay.CurrentTint,
+                "The nest's authored-art tint should reflect overall feast progress, distinct from the " +
+                "parent bird's own moment-to-moment dive/repel reactions.");
+
+            for (int chick = 1; chick < _game.FeastGuardPuzzle.ChicksNeeded; chick++)
+            {
+                _game.ForceChickLand(0f);
+                _game.ForceChickGrab();
+                for (int s = 0; s < shakes; s++) _game.ForceChickShake();
+            }
+
+            Assert.IsTrue(_game.FeastGuardPuzzle.Solved);
+            Assert.AreEqual(1f, controller.NestDepletion, "A fully eaten nest should read as completely depleted.");
+            Assert.That(nestLabel.text, Does.Contain("4/4"));
+        }
+
+        [UnityTest]
         public IEnumerator Bedlam_AppearsInMissionSelectRotation()
         {
             yield return LoadArena();

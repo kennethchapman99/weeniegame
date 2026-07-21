@@ -32,6 +32,14 @@ namespace CheddarAndCocoa.Game
         private const float SuccessHoldSeconds = 1.15f;
         private const float ReactionHoldSeconds = 0.72f;
 
+        // CF2.3: the nest itself is the one always-visible fixed prop for this mission's whole
+        // ChicksEaten/ChicksNeeded arc (chicks, dogs, and the parent all move around; the nest
+        // doesn't) - the same "one static object nobody looks away from" role Pee Break's Teenager
+        // played for its beat baseline. It goes from full/lived-in to bare/emptied as the run
+        // progresses, layered UNDER the existing per-drop moment-to-moment reactions.
+        private static readonly Color NestFullColor = new(0.5f, 0.35f, 0.18f);
+        private static readonly Color NestEmptiedColor = new(0.78f, 0.7f, 0.58f);
+
         private readonly CoopFeastGuardPuzzle _puzzle = new();
         private MissionContext _context;
         private GameObject _chickObj;
@@ -41,6 +49,8 @@ namespace CheddarAndCocoa.Game
         private string _currentChickArtPath;
         private GameObject _nestObj;
         private MissionPropArtAttachment _nestArt;
+        private TextMesh _nestLabel;
+        private SpriteRenderer _nestFallbackRenderer;
         private MissionPropArtAttachment _parentArt;
         private SpriteRenderer _parentFallbackRenderer;
         private bool _parentFallbackWasEnabled;
@@ -69,6 +79,10 @@ namespace CheddarAndCocoa.Game
             : null;
         public Vector2 EntryTarget => new(0f, GroundY);
         public string OutcomeSummary => MissionOutcomeSummaryBuilder.BuildFeastGuardSummary(_puzzle);
+
+        /// <summary>CF2.3 read-only presentation summary (mirrors CF1.4's pattern): how bare the
+        /// nest looks right now, 0 at mission start to 1 once every required chick is gulped.</summary>
+        public float NestDepletion => ChicksNeeded > 0 ? Mathf.Clamp01((float)_puzzle.ChicksEaten / ChicksNeeded) : 0f;
 
         public string ObjectiveLabel
         {
@@ -109,6 +123,7 @@ namespace CheddarAndCocoa.Game
             _nestObj?.SetActive(true);
             _chickObj?.SetActive(false);
             StageParentAtPerch("PARENT BIRDS CIRCLING THE NEST");
+            UpdateNestPresentation();
         }
 
         public void Tick(float deltaTime, float now)
@@ -469,6 +484,7 @@ namespace CheddarAndCocoa.Game
                 _nextDropAt = _context.Now() + RespawnDelay;
                 _nextDiveAt = 0f;
                 if (diveWasActive) StageParentAtPerch("PARENT BIRD PULLED UP - TOO SLOW!");
+                UpdateNestPresentation();
                 if (_puzzle.Solved) CompleteFeast();
                 else _context.LogObjectiveChanged();
                 return;
@@ -592,6 +608,25 @@ namespace CheddarAndCocoa.Game
             SetParentArt(FinalGameplayArt.BabyBirdMotherCircling);
         }
 
+        /// <summary>
+        /// CF2.3 fix: the nest itself carries a per-run baseline so the mission's WORLD shows how
+        /// far into the feast the dogs are, not just the HUD's "chicks n/N" text - the same gap
+        /// CF1.4 closed for Pee Break's Teenager. Reuses only the nest's existing sprite/tint;
+        /// no new art. Deliberately independent of the reactive parent-bird state machine (dive/
+        /// repel/rescue), which keeps driving its own moment-to-moment presentation untouched.
+        /// </summary>
+        private void UpdateNestPresentation()
+        {
+            float depletion = NestDepletion;
+            // Tint the authored shade-tree overlay (the actually-visible art) toward the emptied
+            // color - NOT the near-invisible generated fallback square behind it (DimGeneratedFallback
+            // already caps that quad to ~10% alpha in BuildScene; overwriting its color here would
+            // undo that dim and pop an opaque rectangle back over the authored art).
+            _nestArt?.SetTint(Color.Lerp(Color.white, NestEmptiedColor, depletion));
+            if (_nestLabel != null)
+                _nestLabel.text = $"THE NEST ({_puzzle.ChicksEaten}/{ChicksNeeded})";
+        }
+
         private void UpdateChickVisuals()
         {
             if (_chickObj == null) return;
@@ -631,11 +666,11 @@ namespace CheddarAndCocoa.Game
             _nestObj = new GameObject("BedlamNest");
             _nestObj.transform.position = new Vector3(0f, PerchY + 1.2f, 0f);
             _nestObj.transform.localScale = new Vector3(3.2f, 1.4f, 1f);
-            var nsr = _nestObj.AddComponent<SpriteRenderer>();
-            if (_context.ActorSprite != null) nsr.sprite = _context.ActorSprite;
-            nsr.color = new Color(0.5f, 0.35f, 0.18f);
-            nsr.sortingOrder = 2;
-            _context.AddWorldLabel(_nestObj, "THE NEST", Vector3.up * 1.1f, 12, Color.white);
+            _nestFallbackRenderer = _nestObj.AddComponent<SpriteRenderer>();
+            if (_context.ActorSprite != null) _nestFallbackRenderer.sprite = _context.ActorSprite;
+            _nestFallbackRenderer.color = NestFullColor;
+            _nestFallbackRenderer.sortingOrder = 2;
+            _nestLabel = _context.AddWorldLabel(_nestObj, "THE NEST", Vector3.up * 1.1f, 12, Color.white);
             // Reuse the authored shade-tree silhouette as the oak beneath the controller-owned
             // nest. It makes the first objective readable before the first chick drops without
             // adding collision or a new gameplay target.

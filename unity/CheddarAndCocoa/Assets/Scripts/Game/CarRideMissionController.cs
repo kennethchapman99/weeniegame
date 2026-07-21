@@ -84,6 +84,10 @@ namespace CheddarAndCocoa.Game
         public bool DriverEased => _driverEased;
         public bool CheddarTuckedForBrake => _cheddarTuckedForBrake;
         public bool IsDogBraced(int dogIndex) => BraceActive(dogIndex, _context.Now());
+        /// <summary>CF2.3 read-only presentation summary: how far into the scripted ride home we
+        /// are, 0 at the start to 1 once every road event is resolved.</summary>
+        public float RideProgress => _state.RequiredEvents > 0
+            ? Mathf.Clamp01((float)_state.EventsResolved / _state.RequiredEvents) : 0f;
         public string PressureLabel => "SLIDE FORCE";
         public bool PressureVisible => !IsPresentingSuccessfulOutcome;
         public float PressureNormalized => Mathf.Clamp01(Mathf.Abs(_visualTilt) / CabinTiltDegrees);
@@ -391,6 +395,12 @@ namespace CheddarAndCocoa.Game
 
         // ---------------------------------------------------------------- internals
         private static readonly Color DriverTint = new(0.45f, 0.42f, 0.4f);
+        // CF2.3: the dashboard is the one fixed prop for this mission's whole road-script arc (the
+        // cabin tilts, obstacles slide, dogs move - the driver doesn't). Warming its calm-phase tint
+        // and copy toward "almost home" as EventsResolved climbs gives the WORLD a baseline that
+        // tracks overall ride progress, layered under the existing per-event telegraph/turn/brake
+        // presentation (untouched). Same pattern CF1.4 used for Pee Break's Teenager.
+        private static readonly Color DriverAlmostHomeTint = new(0.55f, 0.72f, 0.5f);
 
         private void BeginTelegraph(float now, RoadEventKind kind)
         {
@@ -671,8 +681,14 @@ namespace CheddarAndCocoa.Game
             _context.Dogs[dogIndex] != null && _context.Dogs[dogIndex].TryGetComponent<DogIdentity>(out var identity)
                 ? identity.Id : DogId.Cheddar;
 
-        private void SetDriverCalm() =>
-            _context.SetActorState(_dashboard, "DRIVER: cruising - watch the mirror", DriverTint, 0.12f);
+        private void SetDriverCalm()
+        {
+            int remaining = Mathf.Max(0, _state.RequiredEvents - _state.EventsResolved);
+            string copy = remaining <= 1
+                ? "DRIVER: cruising - almost home!"
+                : $"DRIVER: cruising - {remaining} stops from home";
+            _context.SetActorState(_dashboard, copy, Color.Lerp(DriverTint, DriverAlmostHomeTint, RideProgress), 0.12f);
+        }
 
         private void ClearEventLatches()
         {

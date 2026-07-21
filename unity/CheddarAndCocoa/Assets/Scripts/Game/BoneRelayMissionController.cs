@@ -21,6 +21,7 @@ namespace CheddarAndCocoa.Game
         private int _seed;
         private GameObject _scentPost;
         private MissionPropArtAttachment _scentPostArt;
+        private TextMesh _scentPostLabel;
         private GameObject[] _mounds;
         private MissionPropArtAttachment[] _moundArt;
         private string[] _moundOverrideArt;
@@ -47,6 +48,12 @@ namespace CheddarAndCocoa.Game
         public Vector2 MoundSpot(int index) => index >= 0 && index < MoundSpots.Length ? MoundSpots[index] : Vector2.zero;
         public Vector2 EntryTarget => ScentZonePos;
         public string OutcomeSummary => MissionOutcomeSummaryBuilder.BuildBoneRelaySummary(_puzzle);
+
+        /// <summary>CF2.3 read-only presentation summary: mounds are individually reused across the
+        /// relay's random target sequence, so their found/wrong art is deliberately timed rather than
+        /// permanent (see <see cref="SetMoundOverride"/>). This tracks the fraction of the WHOLE
+        /// relay done so the fixed scent post can carry a persistent baseline instead.</summary>
+        public float RelayProgress => FindsNeeded > 0 ? Mathf.Clamp01((float)_puzzle.Finds / FindsNeeded) : 0f;
 
         public string ObjectiveLabel
         {
@@ -275,6 +282,17 @@ namespace CheddarAndCocoa.Game
             MissionPropArt.SetSprite(_scentPostArt, _puzzle.Known
                 ? FinalGameplayArt.BoneRelayScentPostCalled
                 : FinalGameplayArt.BoneRelayScentPostIdle);
+            // CF2.3: mounds revert their found/wrong art on a timer because the same mound can be
+            // re-called later (see SetMoundOverride) - so nothing in the world shows overall relay
+            // progress once a call fades. The scent post is the one fixed prop that's always in
+            // frame regardless of which mound is live; give it a persistent tally + warming tint
+            // layered under its existing idle/called reactive state (reuses the same sprites/tint,
+            // no new art), the same "baseline under the reactive state" pattern CF1.4 shipped.
+            _scentPostArt?.SetTint(Color.Lerp(Color.white, new Color(1f, 0.9f, 0.55f), RelayProgress));
+            if (_scentPostLabel != null)
+                _scentPostLabel.text = _puzzle.Solved
+                    ? "SCENT POST"
+                    : $"SCENT POST ({_puzzle.Finds}/{FindsNeeded} FOUND)";
         }
 
         private void RevealFromCocoaBark(int readerIndex)
@@ -333,9 +351,10 @@ namespace CheddarAndCocoa.Game
             var psr = _scentPost.AddComponent<SpriteRenderer>();
             if (_context.ActorSprite != null) psr.sprite = _context.ActorSprite;
             psr.color = new Color(0.7f, 0.6f, 0.95f);
-            // Identity-only close-range text: idle/called sprites, the badge while a sniff is owed,
-            // and the HUD objective line carry the sniff-then-dig relay instruction.
-            _context.AddWorldLabel(_scentPost, "SCENT POST", Vector3.up * 1.5f, 11, Color.white);
+            // Idle/called sprites, the badge while a sniff is owed, and the HUD objective line
+            // carry the sniff-then-dig relay instruction; the label itself now also carries the
+            // CF2.3 persistent found tally (see UpdateMoundVisuals).
+            _scentPostLabel = _context.AddWorldLabel(_scentPost, "SCENT POST", Vector3.up * 1.5f, 11, Color.white);
             _scentPostArt = MissionPropArt.AttachObject(_scentPost, FinalGameplayArt.BoneRelayScentPostIdle, 0.012f, 18, true);
             _scentPost.SetActive(false);
         }

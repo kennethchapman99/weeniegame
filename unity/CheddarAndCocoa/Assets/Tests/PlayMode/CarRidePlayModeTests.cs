@@ -76,6 +76,39 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator CarRide_Driver_CarriesPersistentRideProgressBaselineBetweenEvents()
+        {
+            yield return LoadArena();
+            var game = _game;
+
+            game.StartMission(GameManager.MissionVariant.CarRide);
+            yield return null;
+            var controller = (CarRideMissionController)game.ActiveMissionController;
+            int required = game.RuntimeSnapshot.ObjectiveGoal;
+            Assert.Greater(required, 2, "This test needs at least one event resolved and one remaining.");
+
+            var dashboard = GameObject.Find("Car Ride Driver");
+            Assert.IsNotNull(dashboard);
+            var feedback = dashboard.GetComponent<MissionActorFeedback>();
+            Assert.IsNotNull(feedback, "The driver needs a MissionActorFeedback to carry its calm-phase label.");
+
+            Assert.AreEqual(0f, controller.RideProgress, "Ride progress should read 0 before any event resolves.");
+            string beforeLabel = feedback.Label;
+            Assert.That(beforeLabel, Does.Contain("stops from home"),
+                "The calm-phase dashboard baseline should show the world how far the ride has left.");
+
+            game.ForceCarEventSurvived();
+            yield return null;
+
+            Assert.Greater(controller.RideProgress, 0f,
+                "Resolving a road event should move the persistent ride-progress baseline.");
+            string afterLabel = feedback.Label;
+            Assert.AreNotEqual(beforeLabel, afterLabel,
+                "The dashboard's calm-phase copy must change once the world reflects more ride progress, " +
+                "not just the HUD's EventsResolved/RequiredEvents count.");
+        }
+
+        [UnityTest]
         public IEnumerator CarRide_FailPath_TooManyTumbles()
         {
             yield return LoadArena();

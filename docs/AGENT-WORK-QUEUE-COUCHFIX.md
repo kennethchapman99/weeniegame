@@ -107,7 +107,7 @@ task; they show exactly what the owner saw.
 | CF1.9 | Title-card crop + team-plan visual chips | — | DONE (2026-07-20, 679 green (676→679, 3 new tests); PIL offline simulation across 6 missions measured the old 300px/1.36x `FitDetailCover` constants showed only ~18% of the square cover art's area, new 340px/1.05x constants show ~34% (+90% relative, nearly double) with `DetailCoverFillsWidth`/`DetailCoverUsesTitleFreeCrop` both keeping large margin; data-driven `TeamPlanChipsFor(variant)` (parallel array to `PreviewStepsFor`, null = no chip data = renders exactly as before) adds 4 icon chips to Operation Pee Break's team plan (door/leash/charger/`BarkBurst` - the real shared bark VFX sprite, not a placeholder) via a fixed 4-row chip pool that swaps in for the single text block only when chip data exists; every other mission verified still text-only) |
 | CF2.1 | Roster audit: auto-dismissing info UI | CF1.1 | DONE (2026-07-21, 685 green (679→685, 6 new tests); audited every timed/state-based instructional surface roster-wide - ActionTutorial and the CF1.1 card already pass, MissionBanner is unrendered (N/A), Pee Break's opening video isn't timer-gated - and fixed the one real gap: the F4.1 control strip had no way back once spent, now re-summonable from pause via `FirstMissionControlStripAvailable`/`ReplayFirstMissionControlStrip`, proven through real pause-menu input dispatch) |
 | CF2.2 | Roster audit: HUD/meter occlusion | CF1.2 | DONE (2026-07-21, 686 green (685->686, 1 new roster-wide test); audited all 23 controllers - every other mission already mirrors its mid-play progress number into the screen-space `ObjectiveLabel` top bar, so none has Pee Break's pre-CF1.2 shape (a continuously-updating value that exists ONLY on a fixed world object); no new HUD interface implementations needed. Follow-up per coordinator request: `ObjectiveLabelProgressEchoPlayModeTests.cs` encodes the invariant itself - loops all 23 missions, pokes one small deterministic Force* hook per mission, asserts `ObjectiveLabel` changes - so a future mission that adds a load-bearing counter without echoing it into ObjectiveLabel fails this test instead of waiting for the next couch test) |
-| CF2.3 | Roster audit: per-beat world-state progression | CF1.4 | OPEN |
+| CF2.3 | Roster audit: per-beat world-state progression | CF1.4 | DONE (2026-07-21, 689 green (686→689, 3 new tests); audited all 23 controllers for sequential-phase/beat structure - most multi-phase and repeated-cycle missions already carry the beat forward into persistent per-station/per-object world art (Great Escape, Chaos Machine, Leash Walk, Coyotes Fence, Eagle Shadow Panic, Squirrel Conspiracy, Scent Search, Weenie Roundup); fixed the worst 3 genuine gaps where the ONLY place overall mission-level progress was visible was HUD text - Baby Bird Bedlam's nest, Car Ride's dashboard, and Bone Relay's scent post now each carry a persistent progress baseline using only existing sprites/tints) |
 | CF2.4 | Roster audit: funny-failure promises vs actual gags | CF1.3 | OPEN |
 | CF2.5 | Roster audit: carried-object visuals | CF1.7 | OPEN |
 | CF2.6 | Roster audit: wall-station perspective | CF1.6 | OPEN |
@@ -516,6 +516,89 @@ list from controllers), record what visibly changes in the world when a phase co
 (Teenager deltas) is the reference. Fix the worst 3-5 using existing art/props only — a prop
 state change, an NPC posture shift, a lighting/sunbeam change. No new art in this task; table the
 rest as future art asks.
+
+**Findings table** (all 23 controllers read in full per trap #4; "sequential/multi-phase?" separates
+missions with Pee-Break-shaped distinct beats or a repeated find/deliver/catch cycle from missions
+that are one continuous puzzle with no phase boundaries at all):
+
+| Mission | Sequential/multi-phase? | What already changes in the WORLD per phase | Verdict |
+|---|---|---|---|
+| Operation Pee Break | Yes — 4 distinct beats | CF1.4 (done): per-beat Teenager posture baseline + one-shot "NEXT!" pop | **Pass** (reference) |
+| Great Escape | Yes — 4 distinct station actions, alternating owner | Each station's sprite/tint persists waiting→active→done (or fumble/settle flash), label flips to "DONE" | **Pass** |
+| Chaos Machine | Yes — 3 distinct junction actions | Each junction's sprite/tint persists fired/stalled/active, lever sprite flips ready↔running | **Pass** |
+| Leash Walk | Yes — 4 sequential checkpoints, alternating scout | Reached checkpoints get a permanent "Reached" sprite then deactivate; remaining checkpoints visibly shrink in count | **Pass** |
+| Eagle Shadow Panic | Yes — hide phase → rescue phase → united-front phase | Predator's label/tint/position changes at every phase boundary (sweep→spotted→snatch-teleport→retreat); geometrically forces both dogs together during rescue | **Pass** |
+| Squirrel Conspiracy | Yes — herd/control phase → stash phase | Squirrel prop's sprite permanently flips idle→stash-revealed→stash-cracked | **Pass** |
+| Coyotes Fence | Yes — repeated gap-repair cycle across 5 gaps | Each gap's repaired/breached sprite is set once and PERSISTS (doesn't revert) — the fence itself shows the whole campaign's history | **Pass**, arguably the roster's best example |
+| Scent Search | Yes — repeated dig cycle across 6 spots | Correctly-dug spots deactivate (a permanent "hole filled"); wrongly-dug spots keep a persistent "cold" sprite even after a new spot is chosen | **Pass** |
+| Weenie Roundup | Yes — repeated pickup/deliver cycle + a final "jumbo" beat | Home bowl sprite persists empty→progress→full across the whole delivery count; final jumbo marker gets distinct art/label | **Pass** |
+| Snack Heist | Repeated steal-guard cycle | Each plate's targeted/stashed/stolen sprite persists; the final snack gets an explicit "watched" gate distinct from the rest | **Pass** |
+| Mark The Yard | Order-independent (not sequential, but multi-object) | Each of the 5 zones individually and permanently shows claimed/unclaimed/reclaimed | **Pass** |
+| Squirrel Switcheroo | Repeated bait/raid cycle (single decoy+stash pair) | Decoy/stash sprites react per hit/whiff/backfire, but the reaction is TIMED (~0.55s) and reverts — no persistent trace of overall Hits/HitsNeeded in the world | Minor gap, tabled (see below) |
+| Sock Panic | Repeated tip/dive cycle (single basket) | Basket open/closed state reacts per dive; no accumulation display (small ObjectiveGoal, low severity) | Minor gap, tabled |
+| Blanket Catch | Repeated catch cycle (single blanket + falling item) | Blanket taut/slack/rip state and the falling item's caught/splat reaction are both TIMED per catch; no persistent "N caught" trace beyond HUD | Minor gap, tabled |
+| **Bone Relay** | Repeated call/dig cycle across 4 mounds, 3 finds | Mound found/wrong sprite is DELIBERATELY timed (1s) and reverts, because the same mound can be re-called later (`CoopScentRelayPuzzle`'s random sequence allows repeats) — so nothing in the world shows overall Finds/FindsNeeded once the flash fades | **FIXED** (see below) |
+| **Baby Bird Bedlam** | Repeated grab/shake/gulp cycle across 4 chicks | The nest and parent bird react moment-to-moment (dive/warning/attacking/rescue) but the nest itself looks identical at chick 1 and chick 4 — no world trace of the mission's overall ChicksEaten/ChicksNeeded arc | **FIXED** (see below) |
+| **Car Ride** | Yes — 7-event scripted road sequence (turn/turn/brake…) | The dashboard reacts moment-to-moment per event (cruising/telegraph/turning/brake-settle) but never reflects how many of the 7 events are behind the ride — "getting closer to home" only ever existed as HUD text | **FIXED** (see below) |
+| Table Stealth | No — one continuous distraction/sneak puzzle, not discrete beats | N/A (out of theme scope; already the CF2.2-reference `IMissionPressureHud` shape) | **N/A**, single-phase |
+| Walk Campaign | No — one continuous comprehension puzzle | N/A | **N/A**, single-phase |
+| Backyard Rescue, Gate Crash, Thunderstorm Comfort | No — one continuous pressure meter each | N/A | **N/A**, single-phase |
+| Kitchen Food Frenzy | No — one continuous catch loop, no phase boundaries | N/A | **N/A**, single-phase |
+
+**Why only 3 fixed, not 5:** per the task's own "don't over-invest equally" guidance, the honest
+result is that most of the roster already does this well — 10 of the 23 controllers already carry
+a PERSISTENT per-object/per-station world change through their whole sequence (that's the load-
+bearing difference from Pee Break's original bug: a *persistent* trace, not just a momentary
+reaction). Three repeated-single-prop missions (Squirrel Switcheroo, Sock Panic, Blanket Catch)
+have the same "timed reaction, no persistent trace" shape as Bone Relay, but each centers on a
+single shared prop rather than multiple discrete objects, so a good fix would need either new art
+(a small accumulating tally prop) or restructuring the existing single-object reaction timing in a
+way that risks fighting the puzzle's own reuse logic — tabled as **future art asks**, not fixed
+badly. The three shipped fixes were chosen because they are the closest structural match to Pee
+Break's actual bug (a value that matters for "how close to done" the mission is, that existed
+NOWHERE in the world, only in HUD text) and each had an obvious, safe, existing-art-only fix using
+one already-present, always-visible fixed prop (nest / dashboard / scent post).
+
+**Fixes shipped (all presentation-only; puzzle mechanics, scoring, and reactive per-event feedback
+are bit-for-bit unchanged):**
+
+1. **Baby Bird Bedlam** (`BabyBirdBedlamMissionController.cs`) — the nest is the one fixed prop for
+   the mission's whole ChicksEaten/ChicksNeeded arc (chicks, dogs, and the parent bird all move;
+   the nest doesn't). New `NestDepletion` read-only property (0→1) drives `UpdateNestPresentation()`:
+   the nest's existing shade-tree art overlay tints from white toward a washed-out "emptied" color
+   as chicks are gulped, and its existing world label persistently reads
+   `"THE NEST (n/4)"` instead of the static `"THE NEST"`. Called once from `StartMission()` (reset)
+   and once from `HandleShake()` right after a chick is credited. Layered under, not replacing, the
+   parent bird's existing per-dive reactive state machine.
+2. **Car Ride** (`CarRideMissionController.cs`) — the dashboard is the one fixed prop for the whole
+   7-event road script. New `RideProgress` read-only property (`EventsResolved`/`RequiredEvents`)
+   feeds `SetDriverCalm()` (previously a hardcoded string+color every cruise phase): the calm-phase
+   copy now reads `"DRIVER: cruising - N stops from home"` (or "almost home" on the last stretch),
+   and its tint warms from the existing `DriverTint` toward a new `DriverAlmostHomeTint` — both via
+   the same `_context.SetActorState` call already wired to the dashboard's `MissionActorFeedback`.
+   Only the calm/cruise-phase presentation changed; the per-event telegraph/turn/brake-settle
+   copy and tint are untouched.
+3. **Bone Relay** (`BoneRelayMissionController.cs`) — mounds keep their existing 1-second timed
+   found/wrong override (deliberately, since `CoopScentRelayPuzzle`'s random sequence can re-call
+   the same mound), so nothing about that mechanic changed. Instead the scent post — the one fixed
+   prop Cocoa always returns to — now carries a persistent `RelayProgress`-driven tint (its existing
+   art overlay warms toward gold as `Finds`/`FindsNeeded` climbs) and its existing world label now
+   persistently reads `"SCENT POST (n/3 FOUND)"` instead of the static `"SCENT POST"`, surviving
+   past the per-mound override's revert.
+
+**Tabled as future art asks (timed single-prop reaction, no persistent world trace — would need new
+art or a puzzle-timing-sensitive restructure to fix well, not attempted here):**
+- Squirrel Switcheroo — stash zone's raided flash fades; nothing shows overall Hits/HitsNeeded.
+- Sock Panic — basket's open/closed flash doesn't accumulate (low severity, small goal count).
+- Blanket Catch — blanket/falling-item reaction is per-catch only, no running "N caught" world trace.
+
+**Tests:** three new deterministic PlayMode tests, one per fix, each stepping the mission through
+its existing `Force*` hooks and asserting the new read-only presentation property plus the actual
+rendered world state (label text and, for Baby Bird Bedlam, the authored art overlay's tint via
+`ArtSpriteOverlay.CurrentTint`) moves — and, for Bone Relay, that the persistent scent-post tally
+survives past the timed per-mound override's 1-second revert window (the exact trap this fix
+closes). See `CoopBabyBirdBedlamPlayModeTests.cs`, `CarRidePlayModeTests.cs`,
+`CoopBoneRelayPlayModeTests.cs`.
 
 ### CF2.4 — Funny-failure promises vs actual gags
 **Theme:** 35 silent misreads. If a briefing, HowToPlay step, or design doc promises a failure is

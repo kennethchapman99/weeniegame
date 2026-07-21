@@ -209,6 +209,45 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator Bone_ScentPost_CarriesPersistentFoundTallyAcrossTimedMoundReverts()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.BoneRelay);
+            yield return null;
+
+            var controller = _game.BoneRelayController;
+            var postObj = GameObject.Find("ScentPost");
+            Assert.IsNotNull(postObj);
+            var postLabel = postObj.GetComponentInChildren<TextMesh>();
+            Assert.IsNotNull(postLabel, "The scent post needs a label to carry the CF2.3 found tally.");
+
+            Assert.AreEqual(0f, controller.RelayProgress,
+                "Relay progress should read 0 before any bone is found.");
+            Assert.That(postLabel.text, Does.Contain("0/3"),
+                "The scent post should show the overall relay tally even before the first find.");
+
+            _game.ForceBoneReveal();
+            _game.ForceBoneDig(controller.Puzzle.CorrectTarget);
+            Assert.AreEqual(1, controller.Puzzle.Finds);
+            Assert.That(postLabel.text, Does.Contain("1/3"),
+                "The scent post's tally must persist the overall find count.");
+            Assert.AreEqual(1f / 3f, controller.RelayProgress, 0.001f);
+
+            // The per-mound Found sprite is deliberately timed (a mound can be re-called later), so
+            // it fades - but the CF2.3 fix is the scent post's tally, which must NOT fade with it.
+            yield return new WaitForSecondsRealtime(1.1f);
+            yield return null;
+            Assert.That(postLabel.text, Does.Contain("1/3"),
+                "The persistent relay tally must survive past the timed per-mound override window.");
+
+            _game.ForceBoneReveal();
+            _game.ForceBoneDig(controller.Puzzle.CorrectTarget);
+            Assert.AreEqual(2, controller.Puzzle.Finds);
+            Assert.That(postLabel.text, Does.Contain("2/3"));
+            Assert.Greater(controller.RelayProgress, 1f / 3f);
+        }
+
+        [UnityTest]
         public IEnumerator Bone_PositionDriven_ReadAtPostThenDigTheCall()
         {
             yield return LoadArena();
