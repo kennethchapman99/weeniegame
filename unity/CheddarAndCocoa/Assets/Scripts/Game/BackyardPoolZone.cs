@@ -378,6 +378,12 @@ namespace CheddarAndCocoa.Game
             BackyardArtVfxPulse.Spawn(new Vector3(pos.x, pos.y + 0.5f, 0f),
                 RuntimeArtSpriteFactory.RuntimeSpriteId.FailPuff,
                 new Vector3(0.035f, 0.035f, 1f), 41, new Color(0.75f, 0.92f, 1f, 0.85f), 0.5f, 40f);
+            // CF2.7: BackyardRescue's briefing bullet promises "fall in and you swim" but before this
+            // fix the whole splash/swim/shake loop was pure VFX with zero on-screen text - a player
+            // could read the bullet, fall in, and have nothing confirm "yes, this is the thing the
+            // plan meant." Echoes the bullet's own verb ("swim"), same shape as CF1.5's beat-3 pops.
+            if (_game != null) _game.SpawnSharedWorldPop(pos + Vector2.up * 0.6f, "SPLASH! SWIMMING!",
+                new Color(0.65f, 0.9f, 1f));
         }
 
         private void StartShake(DogController dog, Vector2 pos)
@@ -387,6 +393,9 @@ namespace CheddarAndCocoa.Game
             BackyardArtVfxPulse.Spawn(new Vector3(pos.x, pos.y + 0.8f, 0f),
                 RuntimeArtSpriteFactory.RuntimeSpriteId.BarkBurst,
                 new Vector3(0.04f, 0.04f, 1f), 41, new Color(0.8f, 0.94f, 1f, 0.9f), ShakeSeconds, 30f);
+            // CF2.7: echoes the bullet's other half, "you shake off at the deck" - same fix as above.
+            if (_game != null) _game.SpawnSharedWorldPop(pos + Vector2.up * 0.9f, "SHAKE OFF!",
+                new Color(0.8f, 0.94f, 1f));
         }
     }
 }

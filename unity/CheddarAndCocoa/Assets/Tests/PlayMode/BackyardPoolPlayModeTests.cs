@@ -317,6 +317,67 @@ namespace CheddarAndCocoa.Tests
                 "in a mission with no pool at all.");
         }
 
+        // ---- CF2.7: the briefing bullet's own words must be recognizable in the world ----
+
+        [UnityTest]
+        public IEnumerator PoolZone_SplashAndShake_EchoTheBriefingBulletsOwnWords()
+        {
+            // The BackyardRescue bullet promises "run the floaties, fall in and you swim, and you
+            // shake off at the deck" - before this fix the whole loop was pure VFX with zero
+            // on-screen text, so a player who read the plan had nothing confirming the moment when
+            // it actually happened (the same silent-moment shape CF1.5 fixed for Pee Break's beat 3).
+            // Mechanically ties the fix to the catalog text instead of an eyeballed "looks related":
+            // the pool bullet must actually contain "swim" and "shake off" for these assertions to
+            // mean anything, and the fired pop text must actually contain those same words.
+            string poolBullet = System.Array.Find(
+                MissionInstructionCatalog.HowToPlayStepsFor(GameManager.MissionVariant.BackyardRescue),
+                step => step.ToLowerInvariant().Contains("pool"));
+            Assert.IsNotNull(poolBullet, "BackyardRescue's briefing must still have a pool bullet.");
+            Assert.That(poolBullet.ToLowerInvariant(), Does.Contain("swim"));
+            Assert.That(poolBullet.ToLowerInvariant(), Does.Contain("shake off"));
+
+            yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
+            yield return null;
+            yield return null;
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            Assert.IsNotNull(game);
+            var pool = Object.FindFirstObjectByType<BackyardPoolZone>();
+            Assert.IsNotNull(pool);
+            pool.BuildNow();
+
+            game.StartMission(GameManager.MissionVariant.BackyardRescue);
+            yield return null;
+            yield return null;
+
+            var dog = Object.FindObjectsByType<DogController>(FindObjectsSortMode.None)[0];
+            dog.SetMode(MovementMode.Free);
+
+            Assert.IsFalse(HasWorldPop("SWIMMING"), "No pop should exist before the dog ever gets wet.");
+
+            Vector2 openWater = FindOpenWaterPoint(pool);
+            dog.transform.position = openWater;
+            yield return null;
+            yield return null;
+            Assert.AreEqual(MovementMode.Swimming, dog.Mode);
+            Assert.IsTrue(HasWorldPop("SWIMMING"),
+                "Falling into the pool must fire a world pop echoing the bullet's own 'swim' word.");
+
+            dog.transform.position = new Vector2(BackyardPoolZone.WaterRect.xMax + 1.5f, openWater.y);
+            yield return null;
+            yield return null;
+            Assert.AreEqual(MovementMode.Shaking, dog.Mode);
+            Assert.IsTrue(HasWorldPop("SHAKE OFF"),
+                "Reaching the deck must fire a world pop echoing the bullet's own 'shake off' phrase.");
+        }
+
+        private static bool HasWorldPop(string text)
+        {
+            foreach (var pop in Object.FindObjectsByType<MissionWorldPop>(FindObjectsSortMode.None))
+                if (pop.Label.Contains(text)) return true;
+            return false;
+        }
+
         private static Vector2 FindOpenWaterPoint(BackyardPoolZone pool)
         {
             // Scan the water rect for a spot clear of every drifting floatie.

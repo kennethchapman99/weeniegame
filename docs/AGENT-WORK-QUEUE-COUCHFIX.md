@@ -111,7 +111,7 @@ task; they show exactly what the owner saw.
 | CF2.4 | Roster audit: funny-failure promises vs actual gags | CF1.3 | DONE (2026-07-21, 691 green (689→691, 2 new tests); swept `MissionInstructionCatalog.cs`/mission `IntroPrompt`s/`docs/GAME-DESIGN-BIBLE.md` for comedy claims - only ONE genuine silent gap found (WalkCampaign's misread, which reused the roster-wide generic `ThreatWarning` cue and a static sprite/label swap, no distinct cue or dog reaction); fixed it with `TriggerMisreadGag` (human leans toward the dogs holding the wrong item via `_misreadGagT`, a distinct `SquirrelStunned` cue kept ahead of the existing `ThreatWarning` call, both dogs `ShowGuidanceNudge`, third/mission-ending misread snaps to the full offer as a freeze-frame); honestly reported fewer than 3 fixes since the broader sweep found no other in-scope gaps - see findings table below) |
 | CF2.5 | Roster audit: carried-object visuals | CF1.7 | DONE (2026-07-21, 692 green (691→692, 1 new test); audited all 23 controllers for dog-carries-an-object mechanics — Weenie Roundup, Baby Bird Bedlam, and Blanket Catch already track the carrying dog(s) correctly (two arrived at the reference idiom independently of this audit); fixed the one genuine gap, Walk Campaign's leash, which sat fixed at its station regardless of `_leashPresented` — now follows Cheddar's position via `ResolveLeashPosition()`, the same standalone per-tick-follow idiom as CF1.7/`_carriedMarkers`, never `SetParent` (trap #5)) |
 | CF2.6 | Roster audit: wall-station perspective | CF1.6 | DONE (2026-07-21, 693 green (692→693, 1 new test); audited all 23 controllers' `NewMarker`/`NewScenery` scale calls for tall (Y>>X) wall-drawn art - only Gate Crash's gate and Coyotes Fence's fence gaps qualify as architecture, plus 3 tall-but-non-architectural markers (a squirrel decoy, two human characters) correctly excluded; fixed Gate Crash's gate (a HOLD-type station, the mission's namesake, flagged high-risk) with a `GateFloorAnchor` child transform (same -0.62 ratio as Pee Break's doormat) now driving the hold check, engage check, and Cocoa's guidance arrow, plus a grounded pose via the existing `ShowGuidanceNudge`; tabled Coyotes Fence's tighter-margin fence-gap repair check because it's brief-touch, not sustained, per the task's own prioritization) |
-| CF2.7 | Roster audit: briefing beats self-verifying in-game | CF1.5 | OPEN |
+| CF2.7 | Roster audit: briefing beats self-verifying in-game | CF1.5 | DONE (2026-07-21, 694 green (693→694, 1 new test); audited all 22 other missions' moment-shaped briefing bullets against their controllers' fired `SetCue`/`SpawnWorldPop`/`SetActorState` text - 21 already echo their bullet's own words at the exact transition (a stronger result than CF2.1-CF2.6, since CF1.3/CF1.4/CF1.5's shipped patterns were already the roster norm by the time most missions were written); the one genuine gap, BackyardRescue's "fall in and you swim, and you shake off at the deck" bullet, had zero on-screen text at either moment (pure VFX) and no gold-caps tokens for F4.3's own check to have caught it - fixed via a new `GameManager.SpawnSharedWorldPop` public seam so the non-controller `BackyardPoolZone` can fire "SPLASH! SWIMMING!"/"SHAKE OFF!" pops echoing the bullet verbatim) |
 | CF2.8 | Roster pass: title cards + team-plan chips | CF1.9 | OPEN |
 | CF3.1 | Evidence refresh + retest handoff | all above | OPEN |
 
@@ -822,6 +822,104 @@ on-screen text/pop/banner use the same words? Where the moment passes unnamed, a
 juice line echoing the briefing's phrasing at the transition (CF1.5 is the reference). Keep copy
 in the mission's existing voice; verify gold-caps quoting mechanically (grep the literal string)
 per the F4.3 method.
+
+**Audit method:** walked every one of the other 22 missions' `MissionInstructionCatalog
+.HowToPlayStepsFor` bullets (Pee Break excluded per the task's own scope — CF1.5 already fixed it
+and is the reference shape) and, per the task's own prioritization, filtered to bullets describing
+a distinct, nameable IN-GAME MOMENT (a role swap, a phase transition, a specific one-time trigger)
+rather than standing/ambient instructions with no single event to echo. For each moment bullet,
+grepped the mission's controller (and, where the mechanic is shared, `GameManager.cs`) for the
+actual `SetCue`/`SpawnWorldPop`/`SetActorState`/`SetJuice` text fired at that exact transition and
+compared it against the bullet's own key words — not "conceptually related," a real shared-word
+match, the same bar F4.3 used for gold-caps labels. Per F4.3's own finding (already re-confirmed
+here), ALL-CAPS gold-highlighted bullet phrases are already reliably real on-screen label text
+roster-wide, so this audit's incremental value is specifically the PROSE-phrased moment bullets
+gold-caps wouldn't have flagged.
+
+**Findings table** (moment bullets only; a mission's ambient/continuous instruction bullets are
+omitted since the task explicitly deprioritizes them — every full bullet list lives in
+`MissionInstructionCatalog.cs`):
+
+| Mission | Moment bullet (key words) | On-screen echo found at that transition | Verdict |
+|---|---|---|---|
+| Backyard Rescue | "roles reverse for pass two" | `HandleWeenieRecovery`'s first recovery fires `SpawnWorldPop(... , "SWAP ROLES!", ...)` exactly on the pass-1→pass-2 transition | **Pass** |
+| Backyard Rescue | "the pool is open: run the floaties, fall in and you **swim**, and you **shake off** at the deck" | **Nothing** — `BackyardPoolZone.SplashIn`/`StartShake` were pure VFX particle pulses, zero on-screen text; no gold-caps in this bullet either, so F4.3's own check never covered it | **FAIL → FIXED** (see below) |
+| Snack Heist | "safe stealing window" / "harmless snack audit" | `"Cocoa scared the squirrel! Cheddar has a safe snack-stealing window!"` / `"QUALITY CONTROL"` pop | **Pass** |
+| Sock Panic | "the basket flops shut" | `SetBasketClosed("LAUNDRY BASKET - TIP AGAIN!")` fires on the flop | **Pass** |
+| Squirrel Conspiracy | "reveal the hidden stash" | `"The squirrel stash is exposed!"` cue fires exactly on `RevealStash()` | **Pass** |
+| Eagle Shadow Panic | "eagle then snatches Cheddar" / "WIGGLE" / "PULL" / "united-front finish" | `"The eagle SNATCHED Cheddar!"` cue; `"WIGGLE!"`/`"GRIP CRACKED - COCOA PULL NOW!"` juice+labels; `"UNITED FRONT!"` pop | **Pass** |
+| Coyotes Fence | "bark together to block the final push" / "opening closes" | `"...bark down the final coyote push."` cue on the ready-for-final-pressure edge; `"Cocoa's bark opening closed..."` cue on pin expiry | **Pass** |
+| Weenie Roundup | "the JUMBO is a team haul" / "separation makes the jumbo fumble" | `"JUMBO READY!"` pop + `"JUMBO READY - COCOA STEADY + CHEDDAR GRAB"` label on jumbo unlock; `"The jumbo wobbled loose..."` cue + `"FUMBLE!"` pop on separation-drop | **Pass** |
+| Scent Search | "COLD / WARM / RED HOT" / "broad compass direction" | `Sniff()` pops the literal heat word and the literal compass direction at the dog's position | **Pass** |
+| Thunderstorm Comfort | "COMFORT READY" / "missed order... separation spikes panic" | `SetActorState(..., "COMFORT READY - HOLD THE HUDDLE", ...)`; `"The clap caught them apart..."` / `"TOO FAR!"` pop | **Pass** |
+| Mark The Yard | "a stolen mark can be reclaimed" | `"The squirrel re-marked a zone!..."` cue on `ReclaimZone()` | **Pass** |
+| Leash Walk | "named scout alternates each checkpoint" / "bank it" | `ObjectiveLabel`+world label switch to `FOLLOW {NAME}`/`BARK ROUTE CALL` per checkpoint; `"CHECKPOINT!"` pop on bank | **Pass** |
+| Car Ride | "Cocoa plants first... Cheddar tucks" / "driver eases up" | `"COCOA PLANTS!"`/`"CHEDDAR HUNKERS!"` pops; `"...eases off the gas!"` cue on united bark | **Pass** |
+| Gate Crash | "the gate snaps shut" | `"The gate snapped shut!"` cue + `"SNAP!"` pop, literal match | **Pass** |
+| Table Stealth | "leaving a flop ends that hold" | `"Cocoa got up - the human is turning back..."` cue fires exactly when the flop is left | **Pass** |
+| Squirrel Switcheroo | "over-baiting makes the squirrel wise up" / "a guarded raid bonks harmlessly" | `"WISED UP!"` pop; `"BONK!"` pop | **Pass** |
+| Walk Campaign | "the two deliberate poses overlap" | `"The human's getting it - hold the door-stare and the leash together!"` cue fires exactly on the both-signals-held edge | **Pass** |
+| Bone Relay | "three finds expose the stash" | `"...uncovered the whole stash."` cue + `"THREE BONES!"` pop on the 3rd find | **Pass** |
+| Great Escape | "Cocoa paws the latch, Cheddar shoulders the gate..." (role-order chain) / "harmless, readable CLANK" | Persistent per-station world label = `Actions[i]` verbatim (`"1. Cocoa: PAW THE LATCH"`); `"Wrong dog - CLANK!"` cue on a wrong-dog attempt | **Pass** |
+| Chaos Machine | "a towel drop, a tipped basket, and a launched toy" cascade | Junction labels = `Actions[i]` verbatim; `"...hit the towel-drop junction..."` cue; `"TOY LAUNCHED!"` pop | **Pass** |
+| Blanket Catch | "too far RIPS" | `"Over-stretched! The blanket ripped."` cue + `"RIP!"` juice | **Pass** |
+| Baby Bird Bedlam | "PARENT BIRD DIVE flashes" / "the last shake is the GULP" | `SetActorState(parent, "PARENT BIRD DIVE - SNATCH INBOUND!", ...)`; `"GULP!"` pop on the 3rd shake | **Pass** |
+| Kitchen Food Frenzy | "survive the DINNER RUSH finale" | `"DINNER RUSH!"` pop (already the subject of F4.3's own fix) | **Pass** |
+
+**Conclusion: one genuine gap found, not a roster-wide pattern.** 21 of the 22 audited missions
+already echo their moment bullets' own key words at the exact transition — a stronger, more
+consistent result than CF2.1-CF2.6 found for their respective themes, and it explains why: CF1.3's
+gag template, CF1.4's per-beat deltas, and CF1.5's role-flip banner all shipped roster-adjacent
+patterns (`SetCue`/`SpawnWorldPop` fired exactly on a state-machine edge, worded close to the
+catalog text) well before this audit, and most mission authors independently wrote their `SetCue`
+strings to already read like the bullet they matched — likely because both were written against
+the same real mechanic at the same time, not because of a prior self-verifying audit pass. Per the
+task's own explicit allowance ("if fewer than 3-5 genuinely need fixing, say so honestly rather
+than forcing changes" — CF2.4's own precedent), one real, well-justified gap is reported here
+rather than manufacturing 2-4 more from bullets that already pass.
+
+**The one gap has the same shape as Pee Break's pre-CF1.5 bug and was missed by every prior
+audit/test for a specific reason:** BackyardRescue's briefing ends with "The pool is open: run the
+floaties, fall in and you swim, and you shake off at the deck" — a real, distinct pair of in-game
+moments (falling into open water; reaching the deck and starting the rooted shake). Before this
+fix, `BackyardPoolZone.SplashIn()`/`StartShake()` (both called from `TickDog()`) fired only
+`BackyardArtVfxPulse.Spawn(...)` particle VFX — no `SetCue`, `SpawnWorldPop`, or `SetActorState`
+anywhere in either method. This bullet has **no gold-caps tokens at all** ("pool", "floaties",
+"swim", "shake off" are all lowercase prose), so F4.3's own gold-caps mechanical check — the exact
+verification method this task's own instructions point to as "a strong existing signal" — had
+nothing to grep and never covered it. `BackyardPoolPlayModeTests.HowToPlaySteps_BackyardRescue
+_ShowsOnScreenLabelsVerbatim` only asserted the bullet *mentions* the pool, never that the pool
+experience echoes back.
+
+**Fix shipped — the splash/shake moments now echo the bullet's own words.**
+`BackyardPoolZone` is a standalone shared `MonoBehaviour` (not an `IMissionController`), active
+across all 11 yard missions (`YardMissions`), so it has no `MissionContext.SpawnWorldPop` to reach
+through the way mission controllers do. Added one narrow public seam,
+`GameManager.SpawnSharedWorldPop(Vector2, string, Color)` (`GameManager.cs`, next to the existing
+private `SpawnWorldPop`), a pure pass-through with no mission-specific branching — the same shared
+world-pop UI mission controllers already use, just reachable from outside the controller boundary.
+`BackyardPoolZone.SplashIn()` now also fires `"SPLASH! SWIMMING!"` (echoing the bullet's own "you
+swim") and `StartShake()` fires `"SHAKE OFF!"` (echoing "you shake off at the deck") — both
+presentation-only, layered under the existing VFX pulses, no physics/timer/mode changes. Since the
+pool mechanic itself is shared across all 11 yard missions but only BackyardRescue's briefing
+names it, the pop fires whenever any yard mission's dog splashes/shakes (consistent with the
+mechanic being identical regardless of which mission is active), not gated to one
+`MissionVariant` — so no new `GameManager` mission-specific branch was added, per this queue's
+absolute scope limits.
+
+**Test:** `BackyardPoolPlayModeTests.PoolZone_SplashAndShake_EchoTheBriefingBulletsOwnWords`
+mechanically ties the fix to the catalog text rather than eyeballing it: it first asserts
+BackyardRescue's own pool bullet literally contains "swim" and "shake off" (so the test would fail
+loudly if a future edit changed the bullet's wording out from under it), then drives a real dog
+through the real `ArenaScene` water rect (same fixture/idiom as the pre-existing
+`PoolZone_DogFallsIn_SwimsShakesAndComesOutWet`) and asserts no matching pop exists beforehand,
+`"SWIMMING"` fires the instant the dog's `Mode` flips to `Swimming`, and `"SHAKE OFF"` fires the
+instant it flips to `Shaking`. Full suite: **694/694 passed, 0 failed, 0 skipped** (693→694, 1 new
+test). One run hit the pre-flagged known flaky
+`PeeBreakPlayModeTests.BeatTransitionFiresOneShotWorldPopAndOhBubbleDistinctFromDoorOpenClimax`
+(real-time-based, thin margin, already flagged for CF3.1 and explicitly out of scope here); a clean
+re-run came back 694/694 with zero failures, confirming the fix and its test are solid and the
+flake is unrelated to this change.
 
 ### CF2.8 — Title cards + team-plan chips, roster pass
 **Do:** apply CF1.9's crop settings and chip system to all 23 missions: author the per-mission

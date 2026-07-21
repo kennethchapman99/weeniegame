@@ -3688,6 +3688,17 @@ namespace CheddarAndCocoa.Game
             if (go != null && go.TryGetComponent<MissionActorFeedback>(out var feedback)) feedback.Pulse(amount);
         }
 
+        /// <summary>
+        /// CF2.7: public seam so shared world systems that sit OUTSIDE the per-mission controller
+        /// boundary (mission controllers reach this through MissionContext.SpawnWorldPop instead -
+        /// see the spawnWorldPop wiring above) can still fire the same on-screen world-pop UI.
+        /// BackyardPoolZone is the first caller: it is a standalone MonoBehaviour shared across every
+        /// yard mission, not an IMissionController, so it has no MissionContext to reach through.
+        /// Pure presentation pass-through, no mission state read or written.
+        /// </summary>
+        public void SpawnSharedWorldPop(Vector2 position, string text, Color color) =>
+            SpawnWorldPop(position, text, color);
+
         private void SpawnWorldPop(Vector3 position, string text, Color color)
         {
             var art = ArenaArtCatalog.WorldPop;
