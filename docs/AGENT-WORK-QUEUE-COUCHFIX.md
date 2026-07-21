@@ -106,7 +106,7 @@ task; they show exactly what the owner saw.
 | CF1.8 | Toys discoverable (cosmetic only) | — | DONE (2026-07-20, 676 green (674→676, 2 new tests); mission-wide one-shot `"TOYS! (just for fun)"` world pop + `_context.Pulse` fires the first time either dog comes within `ToyInteractRange + 1` of either toy and never again that mission (scoped mission-wide, not per-toy - the finding's "fires once... never fires again" phrasing reads as one reassuring aside, not a per-prop nag); an untouched toy also gets a deltaTime-accumulated ~10s idle scale/tint wobble (`AdvanceToyDiscovery`, `ToyWobbleFactor`) gated off whenever that toy's kick velocity is non-trivial so it never fights `AdvanceToy`'s physics; both cues proven to never alter toy position/velocity) |
 | CF1.9 | Title-card crop + team-plan visual chips | — | DONE (2026-07-20, 679 green (676→679, 3 new tests); PIL offline simulation across 6 missions measured the old 300px/1.36x `FitDetailCover` constants showed only ~18% of the square cover art's area, new 340px/1.05x constants show ~34% (+90% relative, nearly double) with `DetailCoverFillsWidth`/`DetailCoverUsesTitleFreeCrop` both keeping large margin; data-driven `TeamPlanChipsFor(variant)` (parallel array to `PreviewStepsFor`, null = no chip data = renders exactly as before) adds 4 icon chips to Operation Pee Break's team plan (door/leash/charger/`BarkBurst` - the real shared bark VFX sprite, not a placeholder) via a fixed 4-row chip pool that swaps in for the single text block only when chip data exists; every other mission verified still text-only) |
 | CF2.1 | Roster audit: auto-dismissing info UI | CF1.1 | DONE (2026-07-21, 685 green (679→685, 6 new tests); audited every timed/state-based instructional surface roster-wide - ActionTutorial and the CF1.1 card already pass, MissionBanner is unrendered (N/A), Pee Break's opening video isn't timer-gated - and fixed the one real gap: the F4.1 control strip had no way back once spent, now re-summonable from pause via `FirstMissionControlStripAvailable`/`ReplayFirstMissionControlStrip`, proven through real pause-menu input dispatch) |
-| CF2.2 | Roster audit: HUD/meter occlusion | CF1.2 | DONE (2026-07-21, 685 green, unchanged; audited all 23 controllers - every other mission already mirrors its mid-play progress number into the screen-space `ObjectiveLabel` top bar, so none has Pee Break's pre-CF1.2 shape (a continuously-updating value that exists ONLY on a fixed world object); no new HUD interface implementations needed) |
+| CF2.2 | Roster audit: HUD/meter occlusion | CF1.2 | DONE (2026-07-21, 686 green (685->686, 1 new roster-wide test); audited all 23 controllers - every other mission already mirrors its mid-play progress number into the screen-space `ObjectiveLabel` top bar, so none has Pee Break's pre-CF1.2 shape (a continuously-updating value that exists ONLY on a fixed world object); no new HUD interface implementations needed. Follow-up per coordinator request: `ObjectiveLabelProgressEchoPlayModeTests.cs` encodes the invariant itself - loops all 23 missions, pokes one small deterministic Force* hook per mission, asserts `ObjectiveLabel` changes - so a future mission that adds a load-bearing counter without echoing it into ObjectiveLabel fails this test instead of waiting for the next couch test) |
 | CF2.3 | Roster audit: per-beat world-state progression | CF1.4 | OPEN |
 | CF2.4 | Roster audit: funny-failure promises vs actual gags | CF1.3 | OPEN |
 | CF2.5 | Roster audit: carried-object visuals | CF1.7 | OPEN |
@@ -487,6 +487,25 @@ either interface on a controller that doesn't need it would itself violate the "
 don't add unnecessary surface area" rule stated in this same task's instructions. Full suite
 reconfirmed green at 685/685 (unchanged - no behavior changed, so no new tests were warranted this
 run; see the report for why this deviates from the "total > 685" default expectation).
+
+**Follow-up (2026-07-21) - regression-guard test.** The audit's conclusion rests on a real invariant
+(every mission's load-bearing progress counter is echoed into the screen-space `ObjectiveLabel`, so
+camera-follow can never fully hide it) that nothing was previously asserting in code - a future
+mission could silently regress it. `Assets/Tests/PlayMode/ObjectiveLabelProgressEchoPlayModeTests.cs`
+encodes it directly: one `[UnityTest]` loops all 23 `GameManager.MissionVariant` values, starts each
+mission, pokes one small deterministic step of progress through that controller's own existing
+`Force*`/compat hook (reusing `GameManager.ControllerHooks.cs`'s forwarding methods - no new
+plumbing), and asserts `ObjectiveLabel` is non-empty both before and after and that it visibly
+changed. Getting this green surfaced two real hook-selection bugs worth recording as a caution for
+future test authors on this codebase: (1) some controllers' `Tick()` recomputes hold/anchor state
+from the (unrelated, still out-of-range) real dog positions every frame and will silently clobber a
+forced value on the next frame - the fix was reading `ObjectiveLabel` synchronously right after the
+poke with no intervening `yield return null`, not adding dog positioning; (2) a couple of Force hooks
+resolve a puzzle step and immediately reset it within the same call (`SnackHeistMissionController.
+ForceSteal()`; `SquirrelSwitcheroo`'s bait puzzle overbait-backfires if driven for a full second) -
+picking the hook/parameter that leaves state changed, not just touched, mattered. 686 green
+(685->686; one new test method covering all 23 missions in a single roster-wide loop), reproduced
+clean on two consecutive runs.
 
 ### CF2.3 — Per-beat world-state progression
 **Theme:** multi-phase missions should change something visible in the WORLD per phase — HUD
