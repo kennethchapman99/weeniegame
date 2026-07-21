@@ -106,7 +106,7 @@ task; they show exactly what the owner saw.
 | CF1.8 | Toys discoverable (cosmetic only) | — | DONE (2026-07-20, 676 green (674→676, 2 new tests); mission-wide one-shot `"TOYS! (just for fun)"` world pop + `_context.Pulse` fires the first time either dog comes within `ToyInteractRange + 1` of either toy and never again that mission (scoped mission-wide, not per-toy - the finding's "fires once... never fires again" phrasing reads as one reassuring aside, not a per-prop nag); an untouched toy also gets a deltaTime-accumulated ~10s idle scale/tint wobble (`AdvanceToyDiscovery`, `ToyWobbleFactor`) gated off whenever that toy's kick velocity is non-trivial so it never fights `AdvanceToy`'s physics; both cues proven to never alter toy position/velocity) |
 | CF1.9 | Title-card crop + team-plan visual chips | — | DONE (2026-07-20, 679 green (676→679, 3 new tests); PIL offline simulation across 6 missions measured the old 300px/1.36x `FitDetailCover` constants showed only ~18% of the square cover art's area, new 340px/1.05x constants show ~34% (+90% relative, nearly double) with `DetailCoverFillsWidth`/`DetailCoverUsesTitleFreeCrop` both keeping large margin; data-driven `TeamPlanChipsFor(variant)` (parallel array to `PreviewStepsFor`, null = no chip data = renders exactly as before) adds 4 icon chips to Operation Pee Break's team plan (door/leash/charger/`BarkBurst` - the real shared bark VFX sprite, not a placeholder) via a fixed 4-row chip pool that swaps in for the single text block only when chip data exists; every other mission verified still text-only) |
 | CF2.1 | Roster audit: auto-dismissing info UI | CF1.1 | DONE (2026-07-21, 685 green (679→685, 6 new tests); audited every timed/state-based instructional surface roster-wide - ActionTutorial and the CF1.1 card already pass, MissionBanner is unrendered (N/A), Pee Break's opening video isn't timer-gated - and fixed the one real gap: the F4.1 control strip had no way back once spent, now re-summonable from pause via `FirstMissionControlStripAvailable`/`ReplayFirstMissionControlStrip`, proven through real pause-menu input dispatch) |
-| CF2.2 | Roster audit: HUD/meter occlusion | CF1.2 | OPEN |
+| CF2.2 | Roster audit: HUD/meter occlusion | CF1.2 | DONE (2026-07-21, 685 green, unchanged; audited all 23 controllers - every other mission already mirrors its mid-play progress number into the screen-space `ObjectiveLabel` top bar, so none has Pee Break's pre-CF1.2 shape (a continuously-updating value that exists ONLY on a fixed world object); no new HUD interface implementations needed) |
 | CF2.3 | Roster audit: per-beat world-state progression | CF1.4 | OPEN |
 | CF2.4 | Roster audit: funny-failure promises vs actual gags | CF1.3 | OPEN |
 | CF2.5 | Roster audit: carried-object visuals | CF1.7 | OPEN |
@@ -408,6 +408,85 @@ whether the camera (which follows the dogs, clamped to `ArenaBounds` by
 implementing CF1.2's `IMissionBeatProgressHud` (or `IMissionPressureHud` if it's pressure-shaped);
 decorative ones just get a table row. Check `WorldLabelVisibility` proximity gating too — a label
 that only appears near the object AND off-screen is doubly invisible.
+
+**Camera mechanics confirmed (re-verified against current code, not assumed from the task title):**
+`SharedCameraController` (`Assets/Scripts/Camera/SharedCameraController.cs`) follows the midpoint of
+the two dogs and zooms to frame both plus a fixed margin (`horizontalMargin`/`verticalMargin`),
+clamped between `minOrthoSize` (7.5) and an effective max derived from `levelBounds`
+(`IsClampedToBounds`/`LevelBounds`, ~34-38 depending on aspect). `ArenaBootstrap.Start()` calls
+`Configure(..., clamp: true, bounds)` with the SAME `Rect` `GameManager` exposes as `ArenaBounds`
+(120x68 world units, `ArenaMissionTuning.BackyardWidth/Height`) — so the task doc's "clamped to
+ArenaBounds" description is accurate; the camera's position is a function of where the two DOGS are,
+never of any third fixed object. At the tightest zoom (dogs close together, `minOrthoSize` 7.5) the
+visible half-extents are only ~7.5 units vertically / ~13.3 horizontally (16:9) around the dogs'
+midpoint — comfortably smaller than several missions' station spread (e.g. LeashWalk's checkpoints
+sit at the four corners of the full 120x68 arena). A world-anchored object that ISN'T one of the two
+dogs, and isn't guaranteed to be near one of them, can absolutely fall outside that frame. That is
+exactly Pee Break's pre-CF1.2 bug: the Teenager (a fixed third object) carried the ONLY copy of a
+continuously-updating comprehension value, off in his own part of the room while the actual beat
+work (door/leash/phone) happened elsewhere.
+
+**Findings table** (all 23 controllers re-verified directly — file/line reads, not the pre-survey
+assumption; `ObjectiveLabel` column confirms whether the same info the world-anchored cue carries is
+ALSO in the always-on screen-space top bar, since `GameManager.BuildObjectiveLabel()` returns
+`_activeMissionController.ObjectiveLabel` verbatim and `ArenaHud.DrawProductionGameplayHud` renders
+it in the fixed 102px top bar regardless of camera position):
+
+| Mission | Meter/label(s) players need mid-play | Anchor | Also in screen-space `ObjectiveLabel`? | Camera occlusion risk | Verdict |
+|---|---|---|---|---|---|
+| Backyard Rescue | TEAM TUG progress | `IMissionPressureHud` | N/A - already HUD | none (pre-existing) | **Pass** (already screen-space) |
+| Baby Bird Bedlam | Chick "SHAKE n/N"/"GRAB IT", parent-bird dive state | Chick actor (dog must be holding/grabbing it) + parent bird near the one fixed nest | Yes (`chicks n/N, pecks n/N`) | Low - single-nest mission, chick label only matters while a dog is directly interacting with the chick | **Pass** - co-located + duplicated |
+| Blanket Catch | Blanket taut/rip state, falling-item state | Blanket midpoint + falling item, both inherently between the two catching dogs | Yes (`caught n/N, rips n/N`) | Low - the catch mechanic itself requires the two dogs to be close together under the drop point | **Pass** |
+| Bone Relay | Scent-post/mound "called" state | Relay mounds (Cocoa's heat-search targets) | Yes (`bones n/N, wasted n/N`) | Low - arrow/breadcrumb already routes Cheddar to the called mound; heat feedback reads at the dog, not a fixed object | **Pass** |
+| Car Ride | SLIDE FORCE tilt | `IMissionPressureHud` | N/A - already HUD | none (pre-existing) | **Pass** |
+| Chaos Machine | Lever + 3 junction labels ("i. ACTION"/"FIRED") | Junctions spread ~28 world units apart (`(-14,-7)`→`(14,7)`) | Yes (`junctions n/N, misfires n/N`); `IMissionRoleOwner` also drives the screen-independent `RoleTurnBeacon` at the live junction | Low - only the CURRENT junction matters, and the mechanic requires a dog to pre-position there before the cascade arrives | **Pass** |
+| Coyotes Fence | Predator "COYOTE BREACH n/N", weak-spot "WEAK SPOT FILLED n/N" | Predator + squirrel(weak-spot) actors, both driven to the SAME active fence gap each round | Yes (`repairs n/N, breaches n/N`) | Low - Cocoa (bark-pin) and Cheddar (fill dirt) must both be at that one gap for their actions to register | **Pass** |
+| Eagle Shadow Panic | "HIDES n/N"/"EXPOSURE n/N", rescue-window "GRIP CRACKED"/"TALON GRIP" | Predator (sweep) + squirrel-actor (talon rescue, fixed `_snatchPosition` near arena center) | Hides/exposures/pulls yes; the open/closed window flip is NOT echoed in `ObjectiveLabel` text | Structurally none - during the rescue beat the held dog is teleport-pinned to `_snatchPosition` and the free dog must be within 3.5u to act, so both dogs (and the badge) are forced together regardless of camera zoom | **Pass** - one un-echoed value, but geometrically impossible to occlude |
+| Gate Crash | SQUEEZE THROUGH progress | `IMissionPressureHud` | N/A - already HUD | none (pre-existing) | **Pass** |
+| Great Escape | 4 station labels ("i. Action"/"DONE") | Sequential stations, alternating Cocoa/Cheddar/Cocoa/Cheddar | Yes (`step n/N, botched n/N`); `IMissionRoleOwner` beacon | Low - same "only the current station matters, and a dog must already be there to act" pattern as Chaos Machine | **Pass** |
+| Kitchen Food Frenzy | Counter ready/barked state, drop telegraph | Counter + safe-zone, ~13 units apart (single kitchen-scale room) | Yes (`caught n/N, combo`, finale count) | Low - well within even the tightest camera frame | **Pass** |
+| Leash Walk | 4 corner "CHECKPOINT" markers + distance-signal badge | Checkpoints at the four corners of the full 120x68 arena | Yes (`reach checkpoint n/N`, `snaps n/N`) | The markers themselves are WAYPOINTS, not a progress meter - the shared arrow/breadcrumb system (already screen-independent-safe by design) is how players find them, and the count they need is in the HUD | **Pass** - wayfinding, not a meter; duplicated anyway |
+| Mark The Yard | 5 zone "CLAIM" markers, squirrel re-mark state | 5 zones incl. all 4 yard corners | Yes (`n/N marked`, `steals n`) | Same wayfinding argument as Leash Walk | **Pass** |
+| Operation Pee Break | Beat/comprehension progress, bladder pressure | `IMissionBeatProgressHud` + `IMissionPressureHud` (CF1.2, this task's reference fix) | N/A - already HUD | none (fixed) | **Pass** (reference implementation) |
+| Scent Search | 6 dig-spot markers, HOT/WARM/COLD calls | Dig spots spread across the yard; heat text is a `SpawnWorldPop` **at the acting dog's own position**, not a fixed object | Yes (`bones n/N, cold digs n/N`) | Low - the transient heat pop is guaranteed on-camera because it spawns where a dog already is; the called-spot marker is the arrow's target | **Pass** |
+| Snack Heist | Squirrel-thief state ("SNACK HEIST - BARK!") | The mobile squirrel actor dogs are actively chasing/guarding | Yes (`Stash snacks n/N`) | Low - it's the thing being chased, so it's wherever the chase currently is | **Pass** |
+| Sock Panic | Basket hold/dive state | One laundry basket (single station) | Yes (`n/N returned`, `fumbles n`) | None - single-station mission | **Pass** |
+| Squirrel Conspiracy | Squirrel route/taunt state, cutoff-zone label | Mobile squirrel actor + cutoff zones along its route | Yes (`Route n/N, controls n/N, taunts n/N`) | Low - same "chased actor" argument as Snack Heist | **Pass** |
+| Squirrel Switcheroo | Decoy/stash zone labels | Decoy and stash ~20 units apart | Yes (`raids n/N, backfires n/N`) | Low - each zone only matters while the dog responsible for that sub-step is standing there | **Pass** |
+| Table Stealth | STEAK SNEAK progress | `IMissionPressureHud` | N/A - already HUD | none (pre-existing) | **Pass** |
+| Thunderstorm Comfort | PANIC meter | `IMissionPressureHud` | N/A - already HUD | none (pre-existing) | **Pass** |
+| Walk Campaign | HUMAN GETS IT comprehension | `IMissionPressureHud` | N/A - already HUD | none (pre-existing) | **Pass** |
+| Weenie Roundup | HOME BOWL "n/N" delivery counter, loose-marker labels | Fixed bowl (one corner) + 5 loose spots scattered across the yard | Yes (`ObjectiveLabel` carries `{Delivered}/{RequiredDeliveries}` in every branch) | The bowl's world label CAN scroll off-screen while a dog is out collecting a far loose weenie - but the exact same count is already in the top bar every frame | **Pass** - redundant, not load-bearing |
+
+**Conclusion: no roster-wide fix required beyond CF1.2 (already shipped).** The audit's honest
+result is a clean sweep, for a structural reason worth recording rather than a coincidence: every
+other controller already funnels its numeric mid-play progress into `ObjectiveLabel`
+(`GameManager.BuildObjectiveLabel()` → `_activeMissionController.ObjectiveLabel`), which
+`ArenaHud.DrawProductionGameplayHud` renders in the fixed screen-space top bar every frame
+regardless of camera position. World-anchored `SetActorState`/`AddWorldLabel` text on props and
+actors is consistently a DIEGETIC ECHO of that same number, not its only copy - and reactive
+one-shot feedback (`SpawnWorldPop`) fires at the acting dog's own position, which is on-camera by
+construction since the camera follows the dogs. Pee Break's pre-fix bug was the one place a
+continuously-updating value (comprehension) existed ONLY on a fixed third object (the Teenager) with
+zero HUD echo, while the actual beat work happened at spatially separate stations (door/leash/phone).
+No other controller has that shape: the 7 pre-existing `IMissionPressureHud` missions (Backyard
+Rescue, Car Ride, Gate Crash, Table Stealth, Thunderstorm Comfort, Walk Campaign, plus Pee Break's
+own pressure meter) already mirror their one continuous value to the HUD, and every other controller
+re-verified above (16 controllers, full `ObjectiveLabel` property + station-geometry read, not a
+grep-only pass) either has no continuous fill at all (only discrete counts, already duplicated) or
+has action geometry that forces the dogs to stand where the cue lives. The one un-echoed boolean
+found (Eagle Shadow Panic's rescue-window flip) is safe for a different, verified reason: the
+mechanic itself teleport-pins both dogs to the same point while it's active, so camera occlusion is
+geometrically impossible, not just unlikely.
+
+Per the task's own explicit guidance ("DECORATIVE meters/labels... just get a table row, no fix
+required" and "Don't force every mission to have a screen-space meter... Use judgment"), this audit
+therefore ships as a doc-only commit: no new `IMissionBeatProgressHud`/`IMissionPressureHud`
+implementations, because none of the 16 audited controllers has a genuine gap to close. Implementing
+either interface on a controller that doesn't need it would itself violate the "optional interface,
+don't add unnecessary surface area" rule stated in this same task's instructions. Full suite
+reconfirmed green at 685/685 (unchanged - no behavior changed, so no new tests were warranted this
+run; see the report for why this deviates from the "total > 685" default expectation).
 
 ### CF2.3 — Per-beat world-state progression
 **Theme:** multi-phase missions should change something visible in the WORLD per phase — HUD
