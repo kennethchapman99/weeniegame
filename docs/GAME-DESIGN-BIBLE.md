@@ -195,8 +195,23 @@ groom pass. First used in Tick Invasion (#21).
 
 > **DEFERRED:** These concepts remain creative inventory. Do not interpret their numbering or
 > detail as permission to build them before the active deep-slice gate passes.
+>
+> **Status tags (added 2026-07-22):** the numbering here is pitch order, not a build tracker — some
+> of these were built long ago and just never got marked. Each entry below now carries one of:
+> - **[BUILT]** — shipped as a mission in the current 23-mission roster (see
+>   [`LEVEL-READINESS-SCORES.md`](LEVEL-READINESS-SCORES.md)); named where the shipped mechanic
+>   evolved from the pitch.
+> - **[DEFERRED]** — not built; still fair game once the roster unfreezes.
+>
+> Built-but-unlabeled note: several *other* shipped missions (Snack Heist, Sock Panic, Weenie
+> Roundup, Mark the Yard, Gate Crash, Table Stealth, Squirrel Switcheroo, Bone Relay, Great Escape,
+> Chaos Machine, Blanket Catch, Baby Bird Bedlam) do not correspond to any pitch below — they were
+> invented during implementation, not drawn from this list.
 
 ### 1. The Great Backyard Squirrel Conspiracy
+
+**[BUILT]** — shipped as `SquirrelConspiracy` / "The Great Backyard Squirrel Conspiracy" mission;
+also tracked as a completed Codex goal ([`CODEX-GOAL-SQUIRREL-CONSPIRACY.md`](CODEX-GOAL-SQUIRREL-CONSPIRACY.md)).
 
 Co-op chase/herding level.
 
@@ -211,6 +226,9 @@ Core verbs: chase, bark, herd, defend.
 
 ### 2. Eagle Shadow Panic
 
+**[BUILT]** — shipped as `EagleShadowPanic`; also tracked as a completed Codex goal
+([`CODEX-GOAL-EAGLE-SHADOW.md`](CODEX-GOAL-EAGLE-SHADOW.md)).
+
 Survival/rescue level.
 
 - A shadow sweeps over the yard.
@@ -222,6 +240,9 @@ Survival/rescue level.
 Core verbs: hide, rescue, bark, defend.
 
 ### 3. Coyotes at the Fence
+
+**[BUILT]** — shipped as `CoyotesFence`; also tracked as a completed Codex goal
+([`CODEX-GOAL-COYOTES-FENCE.md`](CODEX-GOAL-COYOTES-FENCE.md)).
 
 Defensive patrol level.
 
@@ -236,6 +257,10 @@ Core verbs: defend, rescue, bark, distract.
 
 ### 4. Pool Floaty Disaster
 
+**[DEFERRED]** — not built as its own mission. Backyard Rescue has picked up generic wet/mud beats
+(see [`LEVEL-READINESS-SCORES.md`](LEVEL-READINESS-SCORES.md) row 1), but the floaty/noodle
+platforming puzzle below has not been implemented.
+
 Precision/platforming level.
 
 - Dogs hop between floaties, towels, pool noodles, deck chairs.
@@ -247,6 +272,8 @@ Precision/platforming level.
 Core verbs: balance, rescue, carry, shake.
 
 ### 5. The Forbidden Pool Toy
+
+**[DEFERRED]** — not built.
 
 Toy retrieval mission.
 
@@ -261,6 +288,9 @@ Core verbs: retrieve, balance, push, rescue.
 
 ### 6. Cleaning Day Invasion
 
+**[DEFERRED]** — explicitly held back (see "Running gags" below: "a full new mission idea, not an
+ambient gag; stays in the level-idea bank above until the roster unfreezes").
+
 Stealth/chaos level.
 
 - Avoid vacuum, mop, bucket, moved chairs.
@@ -274,6 +304,10 @@ Stealth/chaos level.
 Core verbs: hide, steal, distract, rescue.
 
 ### 7. Operation Pee Break: Teenager Phone Rescue
+
+**[BUILT]** — shipped as `OperationPeeBreak`, the current active deep slice (see
+[`DEEP-SLICE-OPERATION-PEE-BREAK.md`](DEEP-SLICE-OPERATION-PEE-BREAK.md)); this is the mission the
+roster freeze is gating on.
 
 Co-op human-manipulation puzzle.
 
@@ -294,6 +328,9 @@ Co-op puzzle upgrade: one dog manipulates the charger/phone attention while the 
 Core verbs: distract, carry, bark, manipulate.
 
 ### 8. Kitchen Falling Food Frenzy
+
+**[BUILT]** — shipped as `KitchenFoodFrenzy`, the first behavior-preserving mission-controller
+extraction.
 
 Arcade collection with danger filtering.
 
@@ -323,6 +360,10 @@ Core verbs: catch, dodge, communicate, score.
 
 ### 9. Dinner Table Begging Boss Fight
 
+**[DEFERRED]** — not built as pitched. The shipped `TableStealth` mission is a different loop
+(steal-a-steak sneak while the human is distracted, not begging/pity-mode softening), so it does
+not count as this idea being built.
+
 Social stealth.
 
 - Maximize snack drops without getting banished.
@@ -336,6 +377,9 @@ Core verbs: distract, beg, sneak, time.
 
 ### 10. The Dog Couch War
 
+**[DEFERRED]** — not built. (Considered as a running-gag flourish for Pee Break and explicitly
+declined for that mission — see "Running gags" below — but never built as its own level.)
+
 Territory-control level/minigame.
 
 - Dog couch is sacred land.
@@ -348,6 +392,10 @@ Territory-control level/minigame.
 Core verbs: hold, steal, wrestle, defend.
 
 ### 11. The Great Toy Search
+
+**[DEFERRED]** — not built as pitched. The shipped `ScentSearch` mission uses the same track+dig
+core verb but a different premise (find a bone among dig mounds via hot/cold calls, not a hidden
+named toy with scent-trail decoys), so it does not count as this idea being built.
 
 House exploration/scent mission.
 
@@ -369,6 +417,8 @@ Core verbs: sniff, search, carry, steal.
 
 ### 12. Vet Appointment: The Betrayal
 
+**[DEFERRED]** — not built.
+
 Multi-stage comedic horror.
 
 Stages:
@@ -384,6 +434,8 @@ Core verbs: calm, distract, escape, rescue.
 
 ### 13. Nail Clip Nightmare
 
+**[DEFERRED]** — not built.
+
 Boss/minigame.
 
 - One dog is held.
@@ -395,6 +447,9 @@ Boss/minigame.
 Core verbs: distract, rescue, rhythm, panic.
 
 ### 14. Car Ride Chaos
+
+**[BUILT]** — shipped as `CarRide` / "Car Ride Chaos", redesigned 2026-07-14 into a full backseat
+stage (see [`ARENA-PLAYABLE.md`](ARENA-PLAYABLE.md) "Car Ride Chaos").
 
 Balance/window-smell level.
 
@@ -410,6 +465,10 @@ Core verbs: balance, bark, collect, dodge.
 
 ### 15. Walkies: Leash Entanglement Simulator
 
+**[BUILT]** — shipped as `LeashWalk` / "Walkies on the Leash", evolved into a tethered
+checkpoint-scout-and-call mission rather than literal tree/pole wrap-and-unwrap (see
+[`ARENA-PLAYABLE.md`](ARENA-PLAYABLE.md) "Walkies on the Leash").
+
 Movement puzzle.
 
 - Dogs connected by leash physics.
@@ -422,6 +481,10 @@ Movement puzzle.
 Core verbs: pull, untangle, bark, sniff.
 
 ### 16. Thunderstorm Blanket Fort
+
+**[BUILT]** — shipped as `ThunderstormComfort`, evolved into an active reassure/answer/huddle
+mission rather than a blanket-gathering fort (see [`ARENA-PLAYABLE.md`](ARENA-PLAYABLE.md)
+"Thunderstorm Comfort").
 
 Comfort/co-regulation level.
 
@@ -436,6 +499,8 @@ Core verbs: hide, comfort, carry, survive.
 
 ### 17. Amazon Delivery Defense
 
+**[DEFERRED]** — not built.
+
 Doorbell chaos level.
 
 - Doorbell triggers frenzy.
@@ -447,6 +512,8 @@ Doorbell chaos level.
 Core verbs: bark, defend, control, chase.
 
 ### 18. Dog Ramp / Back-Safety Challenge
+
+**[DEFERRED]** — not built.
 
 Movement discipline level.
 
@@ -460,6 +527,8 @@ Core verbs: navigate, wait, time, protect.
 
 ### 19. Halloween Costume Escape
 
+**[DEFERRED]** — not built.
+
 Comedy movement level.
 
 - Dogs escape costumes or use costume powers.
@@ -472,6 +541,8 @@ Core verbs: wiggle, escape, use, chase.
 
 ### 20. Secret Ravine / Dog Dream Adventure
 
+**[DEFERRED]** — not built.
+
 Fantasy expansion.
 
 - Backyard opens into a magical ravine/dog imagination world.
@@ -483,6 +554,9 @@ Fantasy expansion.
 Core verbs: adventure, chase, rescue, defend.
 
 ### 21. Tick Invasion: The Backyard Is Lost
+
+**[DEFERRED]** — not built; remains deferred until the second couch-playtest gate passes (see
+"Current production priority" below).
 
 The backyard has exploded with ticks. They crawl onto both dogs continuously and the infestation
 level climbs fast — the only way to fight back is for each dog to groom the other one, picking
@@ -527,6 +601,70 @@ Cocoa sitting perfectly still, absolutely furious, while the meter maxes.
 in to get clean, immediately regrets it.
 
 Core verbs: groom, comfort, rescue, carry, position.
+
+### 22. Skunk Blast Mayhem
+
+**[DEFERRED]** — newly earmarked 2026-07-22; not built.
+
+A skunk has planted itself in the backyard, guarding something the dogs desperately want — a
+prized **dead bird** (a treasure of the highest order). The dogs can't just charge in: the skunk
+faces whoever it hears, and the moment its **tail lifts**, anything in front of it is about to get
+blasted. The only way to the treasure is a two-dog con: one dog **lures** the skunk's attention
+away while the other **snatches** the prize during the opening. Botch the timing and a dog gets
+hilariously **skunked** — and now the mission stops being about the bird and becomes about getting
+that dog clean before anyone can try again.
+
+**Dog fantasy:** The forbidden backyard treasure guarded by a walking stink-bomb, plus the specific
+domestic comedy of a skunked dog frantically rubbing itself all over the clean laundry while its
+partner runs supply. Every dog owner has lived some version of "the dog found something dead and
+also got sprayed." This makes both halves of that nightmare into mechanics.
+
+**What Cheddar does differently:** Chaos-puppy energy makes him the natural **bait** — loud,
+reckless, great at yanking the skunk's attention, but he over-commits and is far more likely to
+still be in the blast cone when the tail goes up. High draw, high risk.
+
+**What Cocoa does differently:** Veteran composure — Cocoa reads the skunk's tail tells earliest and
+is the reliable **snatcher** (clean grab, gets out before the window closes). She also drags laundry
+with authority. The grown-up runs the heist; the puppy runs the distraction.
+
+**Co-op puzzle beat (the heist):** The skunk turns to face the **louder** dog. The lure dog has to
+hold its attention (bark/movement) while the grab dog approaches from behind — but the **tail-lift
+telegraph** is a shared danger clock: when it rises, *both* dogs must read it and bail, or whoever's
+in the cone eats the spray. The prize only comes free if the lure holds *and* the grab lands inside
+the same safe window. Pure "call it out / trust your partner" pressure.
+
+**Co-op puzzle beat (the de-skunk scramble — the twist):** A sprayed dog becomes **STINKY**: slowed,
+and the skunk can smell them coming, so they're useless as a lure until clean. They have to run
+**into the house** and **rub/wrestle a laundry pile** to de-skunk — but each rub **uses up** that
+laundry (it goes from fresh to funky). The **clean** dog becomes the supply line, **dragging fresh
+laundry** out of the basket to the rubbing spot faster than the stinky dog burns through it. Roles
+fully reverse: the hero grabber is now hauling towels while the disaster puppy scrubs. Only once
+clean can the pair re-attempt the skunk.
+
+**Mechanics sketch:**
+- Skunk faces the loudest dog; **facing cone** is the danger zone. **Tail-lift telegraph** →
+  short windup → **spray** (a cloud that skunks anything in the cone).
+- Guarded object (dead bird) can only be grabbed while the skunk is turned away and not winding up.
+- **Stinky** status: movement debuff + "skunk can smell you" (can't lure) + a visible stink meter
+  per dog. Cleared only by rubbing on fresh laundry.
+- **Laundry economy:** piles/basket of fresh laundry that deplete as they're rubbed; the clean dog
+  drags fresh pieces from the basket to the stinky dog. Run out and you're stuck airing out slowly.
+- Fail-forward, not game-over: getting skunked costs the de-skunk detour, not the run.
+
+**Funny fail state:** Both dogs skunked at once, the whole yard a stink cloud, and the two of them
+inside frantically rolling in the last towel while the laundry runs out — Cheddar belly-rubbing with
+his legs in the air, Cocoa grimly grinding her shoulder into a sock like it's her job.
+
+**Running gag tie-ins:** "Dropped food has religious significance" (the dead bird is sacred
+treasure); "every toy becomes valuable only when the other dog wants it" (both suddenly need the
+bird the instant the skunk guards it).
+
+**Why it's a strong build candidate:** clear verbs, a readable shared telegraph (tail lift), a funny
+recoverable failure that *becomes* the second co-op puzzle, hard role-reversal between lure/grab and
+scrubber/supplier, and a fail loop that forces communication both ways. Fits the idea-bank
+acceptance bar below.
+
+Core verbs: distract, steal, rescue, carry, wrestle.
 
 ## 1v1 minigames
 

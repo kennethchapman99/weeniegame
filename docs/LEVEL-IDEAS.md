@@ -7,6 +7,12 @@ Future round/level concepts captured for later. These are **post-M8** unless pro
 the build plan. The data-driven scene + (M7) room-schema seams are designed so a new level is
 mostly a `SceneDef` + painter + a few systems, not engine surgery.
 
+> **Newest ideas live in the design bible's idea bank**
+> ([`GAME-DESIGN-BIBLE.md`](GAME-DESIGN-BIBLE.md), "Level and chapter ideas"), including
+> **#22 Skunk Blast Mayhem** (2026-07-22) — a skunk guards a dead-bird treasure; lure/grab heist
+> with a tail-lift spray telegraph, and a getting-skunked fail that turns into a laundry-rubbing
+> de-skunk co-op scramble. A second earmarked level is still TBD (owner to name it).
+
 ---
 
 ## 🍗 The Kitchen — "food drop"
