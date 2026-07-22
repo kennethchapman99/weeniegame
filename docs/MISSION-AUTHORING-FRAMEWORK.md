@@ -1,8 +1,8 @@
 # Mission Authoring Framework
 
-> **Status: ACTIVE ARCHITECTURE REFERENCE.** New mission authoring is frozen until the deep-slice
-> couch-playtest gate passes. This document defines the structure used by the Kitchen extraction
-> and Operation Pee Break.
+> **Status: ACTIVE ARCHITECTURE REFERENCE.** New mission authoring is open (unfrozen 2026-07-22,
+> owner decision). This document defines the structure used by the Kitchen extraction and Operation
+> Pee Break, and applies to every mission built after them.
 
 ## Authoring model
 
@@ -68,5 +68,5 @@ failure, clear/fail paths, cleanup, replay reset, snapshot state, and session-fl
 Migration is one mission at a time; run the full PlayMode suite and restore green before continuing.
 
 Kitchen is the first behavior-preserving extraction. Operation Pee Break is the first new deep
-slice authored entirely through the controller structure. No other mission work begins before its
-second human couch-playtest gate passes.
+slice authored entirely through the controller structure. Every mission since follows this same
+authoring model.

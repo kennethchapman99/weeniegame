@@ -30,7 +30,8 @@ Fun readiness is blocked on human couch playtesting:
 
 Operation Pee Break is not accepted because tests pass. The deep-slice gate passes only when the
 human session validates its teach/explore/twist/climax flow, funny failures, role reversal, and
-cathartic payoff. Keep the mission roster frozen until then.
+cathartic payoff. The mission roster is **not frozen** on this (2026-07-22, owner decision) — new
+missions can be built in parallel with, not after, that validation.
 
 ## Public distribution readiness
 

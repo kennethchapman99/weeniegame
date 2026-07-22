@@ -191,7 +191,8 @@ through the proven structure, not the first extraction.
 4. Juice: Teenager emote sprites, phone/battery/bladder HUD bars, door-open set-piece, united-bark
    camera+rumble. Placeholder-but-cohesive is fine; readability over realism.
 5. Keep the full PlayMode suite green at each migration step, then run the second human couch
-   playtest as the deep-slice acceptance gate. Keep the mission roster frozen until it passes.
+   playtest to validate the deep slice's feel. The roster is not frozen on this (2026-07-22, owner
+   decision); new missions can proceed in parallel.
 
 ## Test hooks (matches `MISSION-AUTHORING-FRAMEWORK.md` + existing suite style)
 

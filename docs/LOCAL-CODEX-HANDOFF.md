@@ -18,15 +18,12 @@
 Do not select a `CODEX-GOAL-*.md` file as active work; those files record completed historical
 missions.
 
-## Canonical work sequence
+## Production history
 
-1. Run a baseline two-player couch playtest of the existing slices.
-2. Address critical playtest findings.
-3. Define `IMissionController` and a narrow `MissionContext`.
-4. Extract the existing Kitchen mission first, keeping all PlayMode tests green.
-5. Build Operation Pee Break entirely through the new controller structure.
-6. Run a second couch playtest as the deep-slice acceptance gate.
-7. Keep the mission roster frozen until that gate passes.
+Completed: baseline couch playtest → critical-findings pass → `IMissionController`/`MissionContext`
+definition → Kitchen mission extracted first → Operation Pee Break built through the new controller
+structure → second couch playtest. The mission roster is **not frozen** (unfrozen 2026-07-22, owner
+decision) — new missions can be built whenever asked.
 
 ## Hard rules
 

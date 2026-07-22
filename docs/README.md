@@ -1,8 +1,9 @@
 # Documentation Status Index
 
 Use this index before following instructions in older documents. The Unity project is the only
-active codebase. The mission roster is frozen until Operation Pee Break passes its second
-two-player couch playtest.
+active codebase. The mission roster is **not frozen** (2026-07-22, owner decision) — new missions
+and idea-bank levels can be built whenever asked; couch-test opportunistically rather than gating
+new work on a formal retest.
 
 ## ACTIVE
 
@@ -58,14 +59,15 @@ not override the active sequence or authorize mission expansion:
   [Character Motion Pack](CHARACTER-MOTION-PACK.md),
   [Character Motion Generation](CHARACTER-MOTION-GENERATION.md), [Audio Direction](AUDIO-DIRECTION.md)
 
-## DEFERRED
+## BACKLOG (not blocked, not scheduled)
 
-Preserve these as future inventory. Do not execute them until the deep-slice couch gate passes:
+Future inventory — pull items in whenever asked; nothing here needs a gate to unlock:
 
 - [Agent Implementation Queue](AGENT-IMPLEMENTATION-QUEUE.md),
   [Production Backlog](PRODUCTION-BACKLOG.md), [Campaign Progression](CAMPAIGN-PROGRESSION.md),
   [Progression System](PROGRESSION-SYSTEM.md), [Launch Vertical Slice](LAUNCH-VERTICAL-SLICE.md)
-- [Level Ideas](LEVEL-IDEAS.md), [Boss Design](BOSS-DESIGN-FRAMEWORK.md),
+- [Level Ideas](LEVEL-IDEAS.md) — idea bank, open for building now,
+  [Boss Design](BOSS-DESIGN-FRAMEWORK.md),
   [Content Variants](CONTENT-VARIANTS-SYSTEM.md), [Difficulty](DIFFICULTY-FRAMEWORK.md),
   [Meta Game Loop](META-GAME-LOOP.md), [Minigame Framework](MINIGAME-FRAMEWORK.md),
   [NPC Human Framework](NPC-HUMAN-FRAMEWORK.md)

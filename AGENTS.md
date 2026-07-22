@@ -62,18 +62,13 @@ source-aware operating rules inside this repo:
 - Completion audit: do not call the task done until evidence covers the explicit request and project
   guardrails.
 
-## Canonical work sequence
+## Production history
 
-Do not skip or reorder these gates:
+The controller migration ran through these steps (all complete): baseline couch playtest →
+critical-findings pass → `IMissionController`/`MissionContext` definition → Kitchen mission
+extracted first → Operation Pee Break built through the new controller structure → second couch
+playtest. Its goal was ownership clarity, not an arbitrary `GameManager` line count.
 
-1. Run a baseline two-player couch playtest of the existing slices.
-2. Address critical playtest findings.
-3. Define `IMissionController` and a narrow `MissionContext`.
-4. Extract the existing Kitchen mission first, keeping all PlayMode tests green.
-5. Build Operation Pee Break entirely through the new controller structure.
-6. Run a second couch playtest as the deep-slice acceptance gate.
-7. Keep the mission roster frozen until that gate passes.
-
-The controller migration is incremental and must remain test-green after every extraction. Its goal
-is ownership clarity, not an arbitrary `GameManager` line count. Broad roadmaps and mission ideas are
-deferred inventory until the second couch-playtest gate passes.
+The mission roster is **not frozen** (unfrozen 2026-07-22, owner decision) — broad roadmaps and
+mission ideas from the idea bank can be built whenever asked; couch-test opportunistically rather
+than gating new work on it.

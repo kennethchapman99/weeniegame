@@ -1,7 +1,7 @@
 # Mission System
 
-> **Status: ACTIVE.** The mission roster is frozen until Operation Pee Break passes its second
-> two-player couch playtest.
+> **Status: ACTIVE.** The mission roster is **not frozen** (unfrozen 2026-07-22, owner decision) —
+> new missions can be built through this controller structure whenever asked.
 
 ## Runtime boundary
 

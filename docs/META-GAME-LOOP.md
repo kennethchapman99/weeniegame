@@ -1,7 +1,8 @@
 # Meta Game Loop
 
-> **Status: DEFERRED.** Meta-game expansion is frozen until Operation Pee Break passes its second
-> two-player couch-playtest gate. This document remains future design reference only.
+> **Status: BACKLOG.** Meta-game expansion is not scheduled by default, but is not gated either
+> (unfrozen 2026-07-22, owner decision) — pull it in whenever asked. This document remains design
+> reference until then.
 
 The game should reward replay without becoming a progression treadmill.
 

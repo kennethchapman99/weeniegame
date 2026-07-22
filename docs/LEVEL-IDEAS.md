@@ -1,11 +1,11 @@
-# Level Ideas (queued — not yet built)
+# Level Ideas (idea bank — open for building)
 
-> **Status: DEFERRED IDEA BANK.** The queue language below is historical. Do not promote or build a
-> level until Operation Pee Break passes its second couch-playtest gate.
+> **Status: OPEN IDEA BANK** (unfrozen 2026-07-22, owner decision). Roster expansion no longer
+> waits on a couch-playtest gate; pull any idea below into the Unity project whenever asked, same
+> "done" bar as any other mission (compile-clean, PlayMode coverage, manual acceptance notes).
 
-Future round/level concepts captured for later. These are **post-M8** unless promoted into
-the build plan. The data-driven scene + (M7) room-schema seams are designed so a new level is
-mostly a `SceneDef` + painter + a few systems, not engine surgery.
+Round/level concepts captured for later. The data-driven scene + (M7) room-schema seams are
+designed so a new level is mostly a `SceneDef` + painter + a few systems, not engine surgery.
 
 > **Newest ideas live in the design bible's idea bank**
 > ([`GAME-DESIGN-BIBLE.md`](GAME-DESIGN-BIBLE.md), "Level and chapter ideas"), including

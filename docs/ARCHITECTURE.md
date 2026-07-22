@@ -206,7 +206,7 @@ not an architecture acceptance criterion.
 - Snapshots must be controller-produced; `GameManager` may wrap them with shared session data.
 - Deterministic test hooks must advance the same state machine used by live play.
 - Registry contract tests must keep controller factories, definitions, and variant identities in
-  sync, and must explicitly preserve the set of migrated missions while the roster is frozen.
+  sync as missions are added or migrated.
 - Never move to a second extraction while the first leaves the PlayMode suite red.
 
 ---

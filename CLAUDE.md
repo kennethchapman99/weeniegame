@@ -62,19 +62,14 @@ Every meaningful mechanic should answer:
 
 Core dog verbs to prefer: chase, rescue, steal, distract, defend, comfort, carry, tug, hide, sniff, bark.
 
-## Canonical work sequence
+## Production history
 
-Do not skip or reorder these gates:
+The controller migration ran through these steps (all complete): baseline couch playtest →
+critical-findings pass → `IMissionController`/`MissionContext` extraction → Kitchen mission
+extracted first → Operation Pee Break built on the controller structure → second couch playtest.
+The mission roster is **not frozen** — new missions and idea-bank levels can be built whenever
+asked; couch-test opportunistically rather than gating new work on it (2026-07-22, owner decision).
 
-1. Run a baseline two-player couch playtest of the existing slices.
-2. Address critical playtest findings.
-3. Define `IMissionController` and a narrow `MissionContext`.
-4. Extract the existing Kitchen mission first, keeping all PlayMode tests green.
-5. Build Operation Pee Break entirely through the new controller structure.
-6. Run a second couch playtest as the deep-slice acceptance gate.
-7. Keep the mission roster frozen until that gate passes.
-
-The mission-controller migration is incremental and test-green after every extracted mission.
 `GameManager` ultimately owns orchestration, mission selection, session flow, and shared-service
 wiring. Do not use a target line count as the definition of done.
 
