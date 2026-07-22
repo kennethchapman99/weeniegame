@@ -1,10 +1,14 @@
 # Couch-Fix Agent Work Queue — 2026-07-20 findings
 
-> **Status: OPEN.** Written 2026-07-20 in response to the Operation Pee Break couch retest
-> (`docs/COUCH-PLAYTEST-2026-07-20-PEE-BREAK.md`, gate verdict PARTIAL). Phase CF1 fixes the nine
-> Pee Break findings; Phase CF2 audits the eight roster-wide themes the owner flagged; CF3.1 closes
-> with an evidence refresh and retest handoff. Successor to the completed
-> `docs/AGENT-WORK-QUEUE-PRELAUNCH.md` — same working rules, same evidence bar.
+> **Status: COMPLETE.** Written 2026-07-20 in response to the Operation Pee Break couch retest
+> (`docs/COUCH-PLAYTEST-2026-07-20-PEE-BREAK.md`, gate verdict PARTIAL). Phase CF1 fixed the nine
+> Pee Break findings; Phase CF2 audited the eight roster-wide themes the owner flagged; CF3.1
+> closed with an evidence refresh and retest handoff. All rows below are DONE. Full PlayMode suite
+> green at 698/698 (0 failed, 0 skipped), reproduced clean on three consecutive runs; fresh dev
+> build and packaged-player smoke test both passed. The refreshed retest sheet is
+> `docs/OPERATION-PEE-BREAK-COUCH-RETEST-2026-07-14.md`; the gate now awaits the next human
+> two-player cold session. Successor to the completed `docs/AGENT-WORK-QUEUE-PRELAUNCH.md` — same
+> working rules, same evidence bar.
 
 ## Authorization scope
 
@@ -113,7 +117,7 @@ task; they show exactly what the owner saw.
 | CF2.6 | Roster audit: wall-station perspective | CF1.6 | DONE (2026-07-21, 693 green (692→693, 1 new test); audited all 23 controllers' `NewMarker`/`NewScenery` scale calls for tall (Y>>X) wall-drawn art - only Gate Crash's gate and Coyotes Fence's fence gaps qualify as architecture, plus 3 tall-but-non-architectural markers (a squirrel decoy, two human characters) correctly excluded; fixed Gate Crash's gate (a HOLD-type station, the mission's namesake, flagged high-risk) with a `GateFloorAnchor` child transform (same -0.62 ratio as Pee Break's doormat) now driving the hold check, engage check, and Cocoa's guidance arrow, plus a grounded pose via the existing `ShowGuidanceNudge`; tabled Coyotes Fence's tighter-margin fence-gap repair check because it's brief-touch, not sustained, per the task's own prioritization) |
 | CF2.7 | Roster audit: briefing beats self-verifying in-game | CF1.5 | DONE (2026-07-21, 694 green (693→694, 1 new test); audited all 22 other missions' moment-shaped briefing bullets against their controllers' fired `SetCue`/`SpawnWorldPop`/`SetActorState` text - 21 already echo their bullet's own words at the exact transition (a stronger result than CF2.1-CF2.6, since CF1.3/CF1.4/CF1.5's shipped patterns were already the roster norm by the time most missions were written); the one genuine gap, BackyardRescue's "fall in and you swim, and you shake off at the deck" bullet, had zero on-screen text at either moment (pure VFX) and no gold-caps tokens for F4.3's own check to have caught it - fixed via a new `GameManager.SpawnSharedWorldPop` public seam so the non-controller `BackyardPoolZone` can fire "SPLASH! SWIMMING!"/"SHAKE OFF!" pops echoing the bullet verbatim) |
 | CF2.8 | Roster pass: title cards + team-plan chips | CF1.9 | DONE (2026-07-21, 698 green (694→698, 4 new tests); PIL-verified crop for all 23 missions - uniform 28.3%-64.5% visible band, no per-mission bias needed; chip data authored for 21/22 non-Pee-Break missions (22/23 total incl. Pee Break), Backyard Rescue stays the one text-only holdout) |
-| CF3.1 | Evidence refresh + retest handoff | all above | OPEN |
+| CF3.1 | Evidence refresh + retest handoff | all above | DONE (2026-07-21, 698 green, unchanged count — widened the known flaky test's real-time margin (1.3s→2.5s wait vs a 1.05s pop lifetime), no new test needed since only a timing constant changed; reproduced clean on three consecutive full-suite runs; fresh dev build + packaged-player smoke both passed; refreshed `docs/OPERATION-PEE-BREAK-COUCH-RETEST-2026-07-14.md`, `docs/COUCH-PLAYTEST-2026-07-20-PEE-BREAK.md`'s gate banner, and this file's status header) |
 
 ---
 
@@ -1005,3 +1009,56 @@ jobs"), and add new watch-fors from CF2 findings. Update
 `docs/COUCH-PLAYTEST-2026-07-20-PEE-BREAK.md`'s gate banner to note the fix queue completed and
 the gate awaits the next human session. Update this file's status header to COMPLETE. Run full
 suite + dev build + smoke and record the evidence here.
+
+**Done (2026-07-21).**
+
+**1. Flaky-test fix.** `PeeBreakPlayModeTests.BeatTransitionFiresOneShotWorldPopAndOhBubbleDistinctFromDoorOpenClimax`
+(`Assets/Tests/PlayMode/PeeBreakPlayModeTests.cs`, the assertion right after the beat-3→beat-4
+transition) waited `LiveSeconds(1.3f)` — 1.3 real seconds — for the earlier "NEXT!" world pop
+(`ArenaArtCatalog.WorldPop.LifeSeconds` = 1.05f, confirmed in `MissionWorldPop.cs`, both the test's
+`LiveSeconds` helper and the pop's own `Update()` accumulate real elapsed time via `Time.deltaTime`)
+to fully expire before asserting its absence. That left only a ~0.25s/24% real-time buffer — thin
+enough to occasionally lose the race under sandbox frame-time jitter, matching the "passes the large
+majority of runs, fails roughly 1 in 5-10" pattern flagged throughout CF2. Widened the wait to
+`LiveSeconds(2.5f)` (~1.45s/138% buffer over the pop's lifetime) — a timing-margin-only change; the
+assertion itself, the mechanic it proves (the transition flourish is a genuine one-shot, not a
+permanent state change, and never fires again on the real door-open climax), and every other
+assertion in the test are untouched. No new test was added or needed since no new behavior was
+introduced, only a real-time constant widened.
+
+**2. Evidence.**
+- Full suite: **698/698 passed, 0 failed, 0 skipped**, reproduced clean on **three consecutive
+  runs** (2026-07-21, ~78-82s each) — the flaky test passed all three times, giving real confidence
+  the margin fix resolved it rather than getting lucky once.
+- `unity/playmode-results.xml` SHA-256 (from the third clean run):
+  `8f44f109d3e6310480427478cf35de7420cb395625f2ff4c19d8b7ae996bbce9`.
+- `./unity/build-dev.sh`: succeeded. `unity/builds/dev/CheddarAndCocoa-Arena.app`, built 2026-07-21
+  with Unity 6000.4.2f1 (667,738,444 bytes). Executable
+  (`Contents/MacOS/Cheddar and Cocoa`) SHA-256:
+  `10369474d158a3d7ef0d7c8dbd9d38f012bacddbc0e10e4e70c75aee55336418`.
+- `./unity/smoke-player.sh` against the fresh build: **passed** ("Packaged player startup smoke
+  passed").
+- Packaged explainer MP4 (`Assets/StreamingAssets/OperationPeeBreak/operation_pee_break_intro.mp4`)
+  rehashed directly to confirm it is still unchanged since 2026-07-16:
+  `280de2f463f2f64d337937a16673c549a970e99a6d1c2bb3774a05b34d002e63` (matches the prior doc value).
+
+**3. Docs refreshed.** `docs/OPERATION-PEE-BREAK-COUCH-RETEST-2026-07-14.md` — new preflight
+evidence block (hashes/date/counts above), a full CF1.1-CF1.9 + CF2.1-CF2.8 change summary, the
+16-item checklist regenerated (items 1/2/3/7/9/14/15/16 kept verbatim per the 2026-07-20 session's
+own clean passes on those; items 4/5/6/8/10/11/12/13 rewritten to check the specific CF1.1/CF1.2/
+CF1.3/CF1.4/CF1.5/CF1.6/CF1.7/CF1.8 fixes by their concrete observable behavior), plus a new
+"Additional watch-fors from the CF2 roster audits" sub-list (mission-select crop+chips from
+CF1.9/CF2.8, and the CF2.1 control-strip pause re-summon) — both chosen because a normal single-
+mission session naturally passes through mission select and pause, unlike most other CF2 findings
+which are roster-wide but not something this specific Pee Break session would surface. All
+session-specific fields (players/controllers/display/observer/session times) and the live-log
+tables were confirmed still blank/pending — this doc is the template for the next session, not a
+record of one that already happened. Verdict section re-confirmed as **NOT CALLED**.
+`docs/COUCH-PLAYTEST-2026-07-20-PEE-BREAK.md`'s gate banner updated to note the fix queue is
+COMPLETE and the gate awaits the next human session; the historical findings/checklist below the
+banner are untouched. This file's own status header updated to **COMPLETE** and every status-board
+row confirmed DONE (no prior task's work was reopened or second-guessed).
+
+**Nothing flagged as out-of-scope-but-notable was found while reading through** — all CF1/CF2
+writeups read as internally consistent with their own evidence, and the three full-suite runs this
+task required surfaced no other flakiness.

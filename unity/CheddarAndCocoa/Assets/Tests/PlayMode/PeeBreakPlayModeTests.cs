@@ -1093,7 +1093,10 @@ namespace CheddarAndCocoa.Tests
 
             // Let the earlier "NEXT!" pop(s) fully expire (ArenaArtCatalog.WorldPop.LifeSeconds ==
             // 1.05f) before the real door-open climax, so its absence afterward is unambiguous.
-            yield return LiveSeconds(1.3f);
+            // CF3.1: widened from 1.3f (only a ~0.25s/24% real-time buffer over the 1.05f pop
+            // lifetime - thin enough to flake under sandbox frame-time jitter) to 2.5f, giving a
+            // ~1.45s/138% buffer. Timing margin only; the assertion and what it proves are unchanged.
+            yield return LiveSeconds(2.5f);
             Assert.IsFalse(HasWorldPop("NEXT!"), "Earlier transition pops should have already expired.");
 
             // Same real-dispatch completion path as ClimaxOpensDoorClearsAndReplayResetsEverything:

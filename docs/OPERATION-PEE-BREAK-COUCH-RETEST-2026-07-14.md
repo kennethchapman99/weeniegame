@@ -6,25 +6,71 @@
 ## Locked preflight evidence
 
 - Player: `unity/builds/dev/CheddarAndCocoa-Arena.app`
-- Player executable built: 2026-07-19 with Unity 6000.4.2f1
-- Player executable SHA-256: `ba57952c534ce679497c676fd0efe84c006721fbea63a4190932708837ea6a9e`
+- Player executable built: 2026-07-21 with Unity 6000.4.2f1
+- Player executable SHA-256: `10369474d158a3d7ef0d7c8dbd9d38f012bacddbc0e10e4e70c75aee55336418`
 - Packaged explainer SHA-256: `280de2f463f2f64d337937a16673c549a970e99a6d1c2bb3774a05b34d002e63` (unchanged
-  since 2026-07-16 - the video asset itself was not touched by the pre-launch queue)
-- Full PlayMode result: 662/662 passed, 0 failed, 0 skipped, 2026-07-19
+  since 2026-07-16 — the video asset itself was not touched by the couch-fix queue either;
+  re-verified by rehashing `Assets/StreamingAssets/OperationPeeBreak/operation_pee_break_intro.mp4`
+  directly during this refresh)
+- Full PlayMode result: 698/698 passed, 0 failed, 0 skipped, 2026-07-21 — reproduced clean on
+  **three consecutive runs** (this is the one task in the whole couch-fix queue where repeat runs
+  were explicitly worth doing, because it also verifies the flaky-test fix below)
 - PlayMode result: `unity/playmode-results.xml`
-- PlayMode result SHA-256: `95b2ac18d567225294b4b1adad40bd7d536cc29f6e3473c839dfc4d66c7dc17c`
-- Packaged-player startup smoke: passed after this rebuild
-- **This build now also includes the full 2026-07-17..07-19 pre-launch queue** (see
-  `docs/AGENT-WORK-QUEUE-PRELAUNCH.md`, all rows DONE): the stall-aware guidance escalation ladder
-  (Tier 0-3), role-turn beacons, handoff flip flourish, a roster-wide wrong-role coaching audit,
-  animation coverage fixes (interact micro-animation, sniff pose, threat/NPC acting, held-payoff
-  poses), an art-consistency sweep (baked-text removal, mission-tile detail-panel fix, indoor staging
-  for 3 missions, HUD/end-card copy pass), a universal first-mission control-reminder strip and
-  post-clear routing audit, a briefing-accuracy audit (23/23 checked), and named audio cues for the
-  new signals plus a feedback-slot coverage sweep (9 previously-silent moments fixed). None of this
-  changed Pee Break's own beats, tuning, or fail conditions - the checklist below is unaffected by any
-  of it except that the new signals (ladder tiers, beacons, handoff chimes, control strip) are now
-  live during this same session and worth watching for, not just the original response-pass items.
+- PlayMode result SHA-256: `8f44f109d3e6310480427478cf35de7420cb395625f2ff4c19d8b7ae996bbce9`
+  (from the third of the three clean runs)
+- Packaged-player startup smoke: passed against this rebuild
+- **This build now also includes the full 2026-07-20..07-21 couch-fix queue**
+  (`docs/AGENT-WORK-QUEUE-COUCHFIX.md`, all rows DONE, status header COMPLETE), which answers the
+  2026-07-20 couch playtest (`docs/COUCH-PLAYTEST-2026-07-20-PEE-BREAK.md`, gate PARTIAL) on top of
+  the 2026-07-19 pre-launch-queue build this sheet previously referenced:
+  - **Phase CF1 — nine Operation Pee Break fixes**, one per playtest finding: the control/keyboard
+    card no longer auto-dismisses on a timer, it waits for either player's bark/interact and the
+    mission stays frozen the entire time (CF1.1); the beat-progress ("TEENAGER GETS IT") meter is
+    now also mirrored into the always-on screen-space HUD so it can't scroll off with the camera
+    (CF1.2); an early/misread signal now gets a real physical-comedy beat — the Teenager half-rises
+    and offers the wrong item toward the dogs with a distinct cue and both dogs reacting, escalating
+    after 3+ misreads in a beat (CF1.3); the Teenager's posture/props now visibly shift per beat plus
+    a one-shot "NEXT!" transition pop, so advancing reads as a moment, not just a new steady state
+    (CF1.4); Beat 3's simultaneous role flip now fires an on-screen banner, a named "NEW JOB" pop at
+    each dog, and both dogs' own handoff chimes (CF1.5); the door-stare station now anchors to the
+    doormat's floor position instead of the door art's tall wall-center, so the correct stare spot no
+    longer reads as "climbing the door" (CF1.6); the leash now visibly follows Cheddar's muzzle while
+    he's presenting it instead of sitting static at its station (CF1.7); both optional toys now get a
+    one-shot discovery pop plus a periodic idle wobble so players actually notice them, with zero
+    change to their "never affects mission state" design intent (CF1.8); and the mission-select
+    detail cover crops less of the tile art, plus the "YOUR TEAM PLAN" panel now shows small icon
+    chips (door/leash/charger/bark-burst) next to its text bullets (CF1.9).
+  - **Phase CF2 — eight roster-wide theme audits**, each checking whether the same failure class
+    Pee Break had exists anywhere else in the other 22 missions, fixing genuine gaps only: the F4.1
+    first-mission control-strip reminder is now re-summonable from the pause menu even after it's
+    been skipped/timed out/fully used, closing the one real "no way back" gap found roster-wide
+    (CF2.1); a roster-wide audit of HUD/meter camera occlusion found no other mission has Pee
+    Break's pre-fix shape (every other controller already echoes its progress into the always-on
+    top bar), so this shipped as a clean-sweep doc-only pass plus one new regression-guard test that
+    loops all 23 missions (CF2.2); three missions whose only progress signal lived in HUD text —
+    Baby Bird Bedlam's nest, Car Ride's dashboard, Bone Relay's scent post — now also carry a
+    persistent per-mission-progress world-prop tint/label (CF2.3); Walk Campaign's misread (the one
+    other mission whose briefing promised a "funny" wrong-guess failure with none shipped) now gets
+    the same comedic gag treatment as CF1.3 (CF2.4); Walk Campaign's leash (the one other
+    dog-carries-an-object gap found) now follows Cheddar the same way Pee Break's does (CF2.5);
+    Gate Crash's gate — the one other HOLD-type wall station with the same "climbing" geometry —
+    now anchors its hold-check and Cocoa's guidance arrow to the gate's floor base (CF2.6);
+    Backyard Rescue's pool splash/shake moments (the one other briefing beat with zero on-screen
+    echo) now pop "SPLASH! SWIMMING!"/"SHAKE OFF!" text matching the briefing's own wording (CF2.7);
+    and all 23 missions' title cards were re-verified under the CF1.9 crop math (uniform ~34%
+    visible band roster-wide, no per-mission bias needed) with team-plan icon chips authored for
+    21 of the other 22 missions — Backyard Rescue stays the one text-only holdout because its
+    bullets don't have enough distinct matching sprites (CF2.8).
+  - **CF3.1 (this evidence refresh)** additionally fixed a known low-frequency flaky test —
+    `PeeBreakPlayModeTests.BeatTransitionFiresOneShotWorldPopAndOhBubbleDistinctFromDoorOpenClimax`
+    was waiting only 1.3 real seconds for a 1.05-second-lifetime world pop to expire (~0.25s/24%
+    buffer); the wait was widened to 2.5 real seconds (~1.45s/138% buffer). Only the real-time
+    margin changed — the assertions, the mechanic under test, and what it proves are untouched. The
+    fix was verified with three consecutive full-suite runs, all 698/698 green.
+  - None of this changed Pee Break's own beats, tuning, scoring, or fail conditions — every change
+    above is presentation/guidance-only. The checklist below has been rewritten specifically to
+    watch for whether these fixes read correctly to a live human pair, not just whether the old
+    complaints are gone.
 - Human players: pending
 - Physical controllers: pending
 - Shared display / couch distance: pending
@@ -48,24 +94,39 @@ PlayMode suite before treating this sheet as evidence for that build.
 
 Use `PASS`, `FAIL`, or `NOT SEEN`. A pass requires a direct human/runtime observation.
 
-| Requirement | Result | Human evidence / exact observation |
-| --- | --- | --- |
-| Two physical controllers remain independently bound to Cheddar and Cocoa |  |  |
-| Ten-second opening explainer plays before control card |  |  |
-| Either player can skip the explainer; skip is understood |  |  |
-| Visual keyboard/controller card is readable without verbal control coaching |  |  |
-| Mission time and dog movement remain frozen through explainer/card |  |  |
-| Players discover the station sequence in the intended order |  |  |
-| Large station/debug circles remain hidden with F1 off |  |  |
-| Dog arrows, command signals, labels, props, and Teenager reactions communicate progress |  |  |
-| BLADDER EMERGENCY reads as a number-free visible meter |  |  |
-| Both optional toys can be batted and do not advance mission state |  |  |
-| Early/incomplete signals produce a funny, understandable, recoverable mistake |  |  |
-| Beat 3 role flip creates understandable two-player coordination |  |  |
-| Door/leash setup plus both barks produces the united-bark climax |  |  |
-| Open-door/hydrant payoff remains visible before the end card |  |  |
-| Earned success does not time out during the payoff hold |  |  |
-| Replay resets beat, bladder, phone/battery, misreads, toys, and door state |  |  |
+| # | Requirement | Result | Human evidence / exact observation |
+| --- | --- | --- | --- |
+| 1 | Two physical controllers remain independently bound to Cheddar and Cocoa |  |  |
+| 2 | Ten-second opening explainer plays before control card |  |  |
+| 3 | Either player can skip the explainer; skip is understood |  |  |
+| 4 | The control card waits for a deliberate bark/interact press — it does **not** disappear on its own after a few seconds |  |  |
+| 5 | Mission time and dog movement stay completely frozen the entire time the control card is up, until that press |  |  |
+| 6 | The door-stare station reads as sitting/standing at the door's floor level — dogs do not appear to climb or lie on the door art |  |  |
+| 7 | Large station/debug circles remain hidden with F1 off |  |  |
+| 8 | The beat-progress meter stays visible on screen even when the dogs move to the bottom of the play area, **and** the Teenager visibly looks/sits differently by Beat 3-4 than Beat 1 |  |  |
+| 9 | BLADDER EMERGENCY reads as a number-free visible meter |  |  |
+| 10 | The toys are noticeably discoverable (a pop the first time a dog gets close, a periodic idle wobble) and still never affect mission progress |  |  |
+| 11 | A misread produces a visible/audible comedic beat, not just a warning sound — you should laugh or smile at least once at a misread |  |  |
+| 12 | The exact moment jobs swap at Beat 3 is called out on screen (both dogs' new jobs named) — you should be able to point to the moment it happened, not just infer it after finishing |  |  |
+| 13 | The leash visibly moves with / is held by Cheddar while he's presenting it, rather than sitting static at one spot |  |  |
+| 14 | Open-door/hydrant payoff remains visible before the end card |  |  |
+| 15 | Earned success does not time out during the payoff hold |  |  |
+| 16 | Replay resets beat, bladder, phone/battery, misreads, toys, and door state |  |  |
+
+### Additional watch-fors from the CF2 roster audits
+
+Worth a human eyeball this same session even though the underlying fixes are roster-wide, not
+Pee-Break-only — both are things a normal single-mission session will naturally pass through
+(mission select, and pause):
+
+- **Mission-select detail cover + team plan (CF1.9/CF2.8).** Before launching, glance at Operation
+  Pee Break's tile in mission select: the detail cover should show noticeably more of the artwork
+  than before (less top/bottom crop), and the "YOUR TEAM PLAN" panel should show small icon chips
+  (door / leash / charger / bark-burst) next to its text bullets, not text alone.
+- **Control-strip reminder is re-summonable from pause (CF2.1).** If the first-mission control-strip
+  reminder fades out (or either player skips it) before it's fully read, open pause — a
+  **Show Control Reminder** option should now be available to bring it back, instead of it being
+  gone for the rest of the session.
 
 ## Live confusion, coaching, failures, and reactions
 

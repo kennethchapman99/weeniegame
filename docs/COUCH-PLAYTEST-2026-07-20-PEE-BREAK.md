@@ -1,13 +1,17 @@
 # Couch Playtest — 2026-07-20 — Operation Pee Break
 
-> **Gate status: PARTIAL.** The deep-slice acceptance couch test ran on 2026-07-20 and the
-> mission was completed ("i finished the level this time"). 9 of 16 watch-for items passed
-> cleanly, but 1 failed, 1 was partial, and 5 were unverified or unclear to the players. The
-> gate is not cleanly passed until the fix list below is addressed and re-verified.
+> **Gate status: PARTIAL — fix queue COMPLETE, awaiting next human session.** The deep-slice
+> acceptance couch test ran on 2026-07-20 and the mission was completed ("i finished the level
+> this time"). 9 of 16 watch-for items passed cleanly, but 1 failed, 1 was partial, and 5 were
+> unverified or unclear to the players. The findings below are historical and unchanged.
 >
-> **Execution queue:** every finding below is now an implementation-ready task in
-> `docs/AGENT-WORK-QUEUE-COUCHFIX.md` (CF1.x = Pee Break fixes, CF2.x = roster theme audits).
-> Work from that queue, not from this report.
+> **Execution queue:** `docs/AGENT-WORK-QUEUE-COUCHFIX.md` (CF1.1-CF1.9 Pee Break fixes,
+> CF2.1-CF2.8 roster theme audits, CF3.1 evidence refresh) is now **COMPLETE** — every row DONE,
+> full suite green (698/698, three consecutive clean runs), fresh dev build and packaged-player
+> smoke test both passed. The refreshed preflight/watch-for sheet is
+> `docs/OPERATION-PEE-BREAK-COUCH-RETEST-2026-07-14.md`, rewritten to check the specific fixes
+> just shipped. This gate now awaits the next human two-player cold retest session; no code
+> changes belong here until that session reports back.
 
 Source of truth: `captures/2026-07-20/CouchTest 7.20.docx` (owner's annotated checklist with
 embedded screenshots, extracted alongside it as PNGs). This file is the faithful transcription.
