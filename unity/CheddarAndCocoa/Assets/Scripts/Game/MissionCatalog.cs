@@ -81,6 +81,8 @@ namespace CheddarAndCocoa.Game
                     return new MissionPresentationProfile("Cocoa stares, Cheddar carries/blocks, then both unite-bark the door open.", "Social manipulation", "Couch, phone, leash, charger, door, and relief payoff", dogs, ReadabilityRequirement.WarningVisible);
                 case GameManager.MissionVariant.BabyBirdBedlam:
                     return new MissionPresentationProfile("Cheddar grabs and shake-gulps each chick; Cocoa bark-repels the diving parents.", "Feast + fend", "Oak nest, falling chicks, and parent dive lane", threats, ReadabilityRequirement.WarningVisible);
+                case GameManager.MissionVariant.SkunkBlastMayhem:
+                    return new MissionPresentationProfile("Cheddar loudly lures the skunk's attention; Cocoa reads the tail tells and makes the clean snatch.", "Lure + snatch heist", "Backyard skunk guard post and an indoor laundry-pile de-skunk station", threats, ReadabilityRequirement.WarningVisible);
                 default:
                     return new MissionPresentationProfile("Cheddar and Cocoa use their shared dog verbs together.", "Co-op dog mission", "Readable greybox arena with objective markers", dogs);
             }
@@ -856,6 +858,68 @@ namespace CheddarAndCocoa.Game
                 ItemAccentColor = new Color(1f, 0.75f, 0.2f),
                 ItemSecondaryColor = new Color(0.55f, 0.4f, 0.2f),
                 ItemPopColor = new Color(0.5f, 0.95f, 0.55f)
+            };
+        }
+
+        internal static GameManager.MissionDefinition BuildSkunkBlastMayhemDefinition(ArenaMissionTuning tuning)
+        {
+            const GameManager.MissionVariant variant = GameManager.MissionVariant.SkunkBlastMayhem;
+            var balance = tuning.BalanceFor(variant);
+            return new GameManager.MissionDefinition
+            {
+                Variant = variant,
+                Name = "Skunk Blast Mayhem",
+                IntroPrompt = "A skunk has planted itself on top of a prized dead bird and it faces whoever it hears. Cheddar barks loud to hold its attention while Cocoa sneaks in for the clean snatch - but the moment the tail lifts, both dogs must bail before the spray. Get skunked and that dog is STINKY until they rub clean at the laundry pile, with the other hauling fresh laundry from the basket to keep the pile from running dry.",
+                ReadyScoreLabel = "READY FOR THE HEIST",
+                ItemRootName = "Bird",
+                ItemObjectName = "Dead Bird",
+                ItemWorldLabel = "Snatch!",
+                ItemArrowLabel = "BIRD",
+                ItemCollectCueNoun = "the prized dead bird",
+                CollectObjectiveFormat = "Snatch the guarded bird {0}/{1}",
+                CollectedScoreLabel = "BIRD SECURED",
+                ItemScore = balance.ItemScore,
+                SpawnedItemCount = balance.SpawnedItemCount,
+                ItemGoal = balance.ItemGoal,
+                RoundSeconds = balance.RoundSeconds,
+                PawfectScore = balance.PawfectScore,
+                HeroScore = balance.HeroScore,
+                SurvivorScore = balance.SurvivorScore,
+                UsesSquirrel = false,
+                RequiresPredator = false,
+                RequiresTug = false,
+                MaxStolenFood = balance.MaxStolenFood,
+                SquirrelPenalty = balance.SquirrelPenalty,
+                SquirrelScareScore = balance.SquirrelScareScore,
+                SquirrelObjectiveText = "Lure the skunk, then snatch the bird",
+                SquirrelStealingCue = "The skunk's tail is lifting - bail now!",
+                SquirrelStoleCue = "SKUNKED! Rub clean at the laundry pile before trying again.",
+                SquirrelStealScoreLabel = "SKUNKED",
+                SquirrelScareScoreLabel = "CLEAN BAIL",
+                SquirrelStealingActorLabel = "SKUNK",
+                SquirrelDroppedActorLabel = "CLEAN BAIL",
+                SquirrelStoleActorLabel = "SKUNKED!",
+                SquirrelMissPopLabel = "SKUNKED!",
+                SquirrelStealJuiceLabel = "SKUNKED!",
+                SquirrelScareJuiceLabel = "CLEAN BAIL!",
+                TugObjectiveText = "Cheddar lures, Cocoa snatches",
+                WaitingObjectiveText = "Cheddar, bark near the skunk to hold its attention",
+                ClearObjectiveText = "Bird secured - replay Skunk Blast Mayhem",
+                ClearBannerPrefix = "P.U.!",
+                ClearScoreLabel = "SKUNK BLAST MAYHEM CLEAR",
+                ReplayPrompt = "Press R / Enter / Start to replay Skunk Blast Mayhem",
+                FailObjectiveText = "Mission failed - replay Skunk Blast Mayhem",
+                GenericFailReason = "The skunk still owns the bird.",
+                TimeFailReason = "Time ran out before the dogs finished airing out and finished the heist.",
+                StolenFailReason = "Too many sprays kept the dogs busy scrubbing instead of stealing.",
+                PredatorFailReason = "The skunk is the predator here, and it knows it.",
+                PawfectClearReason = "Cheddar held the lure and Cocoa snatched the bird without a single dog getting sprayed.",
+                HeroClearReason = "They got skunked once but still walked off with the bird.",
+                BasicClearReason = "They got the bird home, laundry-pile detours and all.",
+                ItemColor = new Color(0.32f, 0.28f, 0.24f),
+                ItemAccentColor = new Color(0.55f, 0.75f, 0.2f),
+                ItemSecondaryColor = new Color(0.75f, 0.85f, 1f),
+                ItemPopColor = new Color(1f, 0.86f, 0.28f)
             };
         }
 

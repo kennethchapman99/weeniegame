@@ -177,6 +177,9 @@ namespace CheddarAndCocoa.Tests
             GameManager.MissionVariant.BlanketCatch => ScoreEventCatalog.WeenieDelivered.Points * 5, // CatchesNeeded
             GameManager.MissionVariant.BabyBirdBedlam => (ScoreEventCatalog.ChickNabbed.Points + ScoreEventCatalog.ChickGulped.Points) * 4 // ChicksNeeded
                 + ScoreEventCatalog.NestFeastComplete.Points,
+            // A flawless run can grab the bird the moment the first lure lands, before any tail-lift
+            // telegraph even fires - so the only *guaranteed* extra is the clear payoff itself.
+            GameManager.MissionVariant.SkunkBlastMayhem => ScoreEventCatalog.BirdSecured.Points,
             // Full 5-catch combo chain (70+95+120+145+170) plus the dinner-rush start bonus.
             GameManager.MissionVariant.KitchenFoodFrenzy => 600 + 100,
             _ => 0

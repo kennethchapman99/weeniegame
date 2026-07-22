@@ -163,6 +163,12 @@ namespace CheddarAndCocoa.Tests
                 case GameManager.MissionVariant.OperationPeeBreak:
                     game.ForcePeeBreakAdvance(SocialStimulus.DoorStare, 2.6f);
                     break;
+                case GameManager.MissionVariant.SkunkBlastMayhem:
+                    // Cheddar's bark near the skunk (the shared predator actor) sets LureActive,
+                    // the first observable ObjectiveLabel change - no spray/tail-lift setup needed.
+                    cheddar.transform.position = game.PredatorObject.transform.position;
+                    cheddar.Bark();
+                    break;
                 default:
                     Assert.Fail($"No progress poke wired for {variant} - add one so this guard covers the full roster.");
                     break;

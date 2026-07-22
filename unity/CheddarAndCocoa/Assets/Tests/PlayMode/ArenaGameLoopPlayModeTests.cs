@@ -301,7 +301,7 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(game);
             Assert.IsTrue(game.MissionSelectVisible);
             Assert.AreEqual(GameManager.FlowState.MissionSelect, game.CurrentFlow);
-            Assert.AreEqual(23, game.MissionSelectOptionCount);
+            Assert.AreEqual(24, game.MissionSelectOptionCount);
             Assert.AreEqual(GameManager.MissionVariant.OperationPeeBreak, game.SelectedMissionVariant);
             Assert.AreEqual("Operation Pee Break", game.SelectedMissionName);
             Assert.That(game.SelectedMissionReadinessLabel, Does.Contain("Readability gate: READY"));
@@ -971,8 +971,9 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(1, game.SelectedMissionPage);
             game.SelectMission(GameManager.MissionVariant.BoneRelay); // index 19: page 1, row 1, col 3
             game.SelectMissionBelow();
-            Assert.AreEqual(GameManager.MissionVariant.BlanketCatch, game.SelectedMissionVariant, // clamps to index 22
-                "Stepping into the missing corner of the short last page should clamp to the final mission.");
+            Assert.AreEqual(GameManager.MissionVariant.SkunkBlastMayhem, game.SelectedMissionVariant, // index 23
+                "Skunk Blast Mayhem's append filled what used to be the short last page's missing " +
+                "bottom-right corner, so this now resolves directly instead of clamping back.");
             Assert.AreEqual(2, game.MissionSelectPageCount);
             game.SelectCouchTestFocusMission();
             Assert.AreEqual(GameManager.MissionVariant.OperationPeeBreak, game.SelectedMissionVariant,
@@ -1057,7 +1058,7 @@ namespace CheddarAndCocoa.Tests
 
             Assert.AreEqual(GameManager.FlowState.MissionSelect, game.CurrentFlow);
             Assert.IsTrue(game.MissionSelectVisible);
-            Assert.AreEqual(23, game.MissionSelectOptionCount);
+            Assert.AreEqual(24, game.MissionSelectOptionCount);
             Assert.That(game.ObjectiveLabel, Does.Contain("Choose a mission"));
             Assert.IsTrue(LogContains(game, "MissionSelect: Operation Pee Break"));
 

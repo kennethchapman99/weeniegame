@@ -4,6 +4,26 @@
 
 ## Current status
 
+### Skunk Blast Mayhem shipped as mission #24 (2026-07-22)
+
+Owner lifted the mission-roster freeze and authorized building idea-bank #22 (Skunk Blast Mayhem)
+from `docs/GAME-DESIGN-BIBLE.md`. Shipped as `SkunkBlastMayhemMissionController` /
+`CoopSkunkHeistPuzzle`: Cheddar's bark lures the guarding skunk's attention (role-locked - only his
+bark counts), Cocoa makes the clean snatch on the guarded dead bird (role-locked - only her Interact
+counts) while the skunk is turned away and its tail is down. The tail-lift telegraph is a shared
+danger clock (mirrored in the HUD via `IMissionPressureHud`) that fires on its own timer regardless of
+who is luring; whoever is still in blast range when it resolves gets SKUNKED (Cheddar's blast radius
+is wider than Cocoa's, matching his over-committing chaos-puppy identity vs. her earlier tail-tell
+reads). A skunked dog goes STINKY and can't lure/snatch until it rubs clean at a laundry pile, while
+the clean partner hauls fresh laundry from a basket to keep the pile stocked; running the whole
+laundry economy dry still clears eventually via a slow passive air-dry trickle. Getting skunked (even
+both dogs at once) is fail-forward - the only hard fail condition is the shared round timeout.
+Deterministic PlayMode suite went `725/725` (698 baseline + `CoopSkunkHeistPuzzleUnitTests` +
+`CoopSkunkBlastMayhemPlayModeTests`, 27 new tests total across both files), plus small fixes to five
+pre-existing roster-wide audits that hardcode counts/handling per mission (mission-select paging
+corner, cold-start objective-arrow staging, cold-start promoted-prop audit, team-plan chip counts, and
+the objective-label progress-echo poke switch).
+
 ### Operation Pee Break couch-test response (2026-07-14)
 
 The Ken/Sue Operation Pee Break run did not accept the deep-slice gate. The players reported that
@@ -71,9 +91,10 @@ art-review harness with 69 `1920x1080` frames plus its manifest and no logged ex
 The final Pee Break captures confirm the leak-prevention foundation hides yard props at camera
 overscan and the two dogs are staged below, rather than over, the standing Teenager during payoff.
 
-The mission roster remains frozen at its current 23 variants. Step 6 is still open: automated tests,
-builds, and art captures can verify implementation safety, but only the Ken/Sue end-to-end Operation
-Pee Break playthrough and laugh log can accept or reject the deep slice.
+The mission roster is **not frozen** (unfrozen 2026-07-22, owner decision) — new missions can be
+built whenever asked. Step 6 (Ken/Sue end-to-end Operation Pee Break playthrough + laugh log) is
+still the best way to validate the deep slice's feel, but it's no longer a precondition for other
+work.
 
 Kitchen Falling Food Frenzy is implemented and playtest-ready. Its behavior was extracted behind
 `IMissionController` on 2026-06-21 with the full 333-test PlayMode suite green. The baseline
@@ -257,9 +278,11 @@ that as a date-stamped warning, not a permanent metric or a line-count target.
    green before proceeding.
 5. Build Operation Pee Break entirely through the new controller structure described in
    `DEEP-SLICE-OPERATION-PEE-BREAK.md`.
-6. Run a second two-player couch playtest. This is the deep-slice acceptance gate; automated tests
-   cannot substitute for it.
-7. Keep the mission roster frozen until that gate passes.
+6. Run a second two-player couch playtest to validate the deep slice's feel; automated tests are
+   useful evidence but not a substitute for playing it.
+
+The mission roster is **not frozen** (unfrozen 2026-07-22, owner decision) — steps above are
+history, not a gate on new work; couch-test opportunistically instead.
 
 ## Couch test #4 runbook (the open acceptance gate, hardened 2026-07-13)
 
@@ -308,7 +331,7 @@ running throughout — not just a defect list, every laugh/surprise/quote in the
 united bark, confirm the open-door/hydrant relief scene remains live for a readable beat before the
 end card and cannot time out during that earned-success hold. Then call it, one of:
 
-- **ACCEPTED** — record the date here and the roster/roadmap freeze lifts, or
+- **ACCEPTED** — record the date here and note the deep slice validated, or
 - **REJECTED** — list exactly what failed; that list becomes the next work queue.
 
 Verdict: **REJECTED FOR THIS BUILD (2026-07-14)** — the run exposed unclear station order/feedback,
@@ -589,8 +612,8 @@ stayed in sync throughout, one shared build with both the new audio system and t
 - Migration is one mission at a time and test-green after every extraction.
 - Completion is defined by ownership and behavior, not an arbitrary line-count target.
 
-Broad roadmaps, backlog items, progression work, and additional mission ideas are deferred until
-the second couch-playtest gate passes.
+Broad roadmaps, backlog items, progression work, and additional mission ideas are open — build
+them whenever asked (unfrozen 2026-07-22, owner decision).
 
 ### Roster-wide screen shake wired up (2026-07-05)
 

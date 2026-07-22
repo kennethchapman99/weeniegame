@@ -2,19 +2,17 @@
 
 This document is the durable creative source of truth for the Cheddar & Cocoa couch co-op game. Claude, Codex, and any future implementation agent should read this before proposing or implementing new gameplay.
 
-> **Status: ACTIVE CREATIVE NORTH STAR.** The level and mechanic libraries below are idea banks,
-> not an active production queue. The mission roster is frozen until Operation Pee Break passes its
-> second two-player couch playtest. Current execution order lives in `NEXT-PRODUCTION-SLICE.md`.
+> **Status: ACTIVE CREATIVE NORTH STAR.** The level and mechanic libraries below are idea banks.
+> The mission roster is **not frozen** (unfrozen 2026-07-22, owner decision) — pull any idea into
+> the Unity project whenever asked. Current execution order lives in `NEXT-PRODUCTION-SLICE.md`.
 
-## Active depth-first sequence
+## Production history
 
-1. Run a baseline two-player couch playtest of the existing slices.
-2. Address critical playtest findings.
-3. Define `IMissionController` and a narrow `MissionContext`.
-4. Extract the existing Kitchen mission first, keeping all PlayMode tests green.
-5. Build Operation Pee Break entirely through the new controller structure.
-6. Run a second couch playtest as the deep-slice acceptance gate.
-7. Keep the mission roster frozen until that gate passes.
+The controller migration ran through this sequence (all complete): baseline two-player couch
+playtest → critical-findings pass → `IMissionController`/`MissionContext` definition → Kitchen
+mission extracted first, PlayMode-green → Operation Pee Break built entirely through the new
+controller structure → second couch playtest. Roster expansion no longer waits on a playtest gate;
+couch-test opportunistically instead.
 
 Architecture work is deliberately narrow and incremental. `GameManager` retains orchestration,
 mission selection, session flow, and shared-service wiring; controllers own mission-specific
@@ -191,17 +189,17 @@ reduces the target's status but slightly transfers it to the groomer — players
 so neither gets overwhelmed. Bark from the clean dog holds the dirty dog still for a wider/faster
 groom pass. First used in Tick Invasion (#21).
 
-## Level and chapter ideas (deferred idea bank)
+## Level and chapter ideas (idea bank)
 
-> **DEFERRED:** These concepts remain creative inventory. Do not interpret their numbering or
-> detail as permission to build them before the active deep-slice gate passes.
+> **OPEN:** These concepts are creative inventory, open for building whenever asked (unfrozen
+> 2026-07-22). The numbering is pitch order, not a priority order or a build tracker.
 >
-> **Status tags (added 2026-07-22):** the numbering here is pitch order, not a build tracker — some
-> of these were built long ago and just never got marked. Each entry below now carries one of:
-> - **[BUILT]** — shipped as a mission in the current 23-mission roster (see
+> **Status tags (added 2026-07-22):** some of these were built long ago and just never got marked.
+> Each entry below carries one of:
+> - **[BUILT]** — shipped as a mission in the current 24-mission roster (see
 >   [`LEVEL-READINESS-SCORES.md`](LEVEL-READINESS-SCORES.md)); named where the shipped mechanic
 >   evolved from the pitch.
-> - **[DEFERRED]** — not built; still fair game once the roster unfreezes.
+> - **[DEFERRED]** — not yet built; fair game to pick up any time.
 >
 > Built-but-unlabeled note: several *other* shipped missions (Snack Heist, Sock Panic, Weenie
 > Roundup, Mark the Yard, Gate Crash, Table Stealth, Squirrel Switcheroo, Bone Relay, Great Escape,
@@ -288,8 +286,8 @@ Core verbs: retrieve, balance, push, rescue.
 
 ### 6. Cleaning Day Invasion
 
-**[DEFERRED]** — explicitly held back (see "Running gags" below: "a full new mission idea, not an
-ambient gag; stays in the level-idea bank above until the roster unfreezes").
+**[DEFERRED]** — not yet built (see "Running gags" below: a full new mission idea, not an ambient
+gag, so it wasn't shoehorned in as a cosmetic flourish).
 
 Stealth/chaos level.
 
@@ -306,8 +304,8 @@ Core verbs: hide, steal, distract, rescue.
 ### 7. Operation Pee Break: Teenager Phone Rescue
 
 **[BUILT]** — shipped as `OperationPeeBreak`, the current active deep slice (see
-[`DEEP-SLICE-OPERATION-PEE-BREAK.md`](DEEP-SLICE-OPERATION-PEE-BREAK.md)); this is the mission the
-roster freeze is gating on.
+[`DEEP-SLICE-OPERATION-PEE-BREAK.md`](DEEP-SLICE-OPERATION-PEE-BREAK.md)); this was the mission the
+controller-migration acceptance gate was built around.
 
 Co-op human-manipulation puzzle.
 
@@ -555,8 +553,7 @@ Core verbs: adventure, chase, rescue, defend.
 
 ### 21. Tick Invasion: The Backyard Is Lost
 
-**[DEFERRED]** — not built; remains deferred until the second couch-playtest gate passes (see
-"Current production priority" below).
+**[DEFERRED]** — not yet built (see "Current production priority" below).
 
 The backyard has exploded with ticks. They crawl onto both dogs continuously and the infestation
 level climbs fast — the only way to fight back is for each dog to groom the other one, picking
@@ -604,7 +601,7 @@ Core verbs: groom, comfort, rescue, carry, position.
 
 ### 22. Skunk Blast Mayhem
 
-**[DEFERRED]** — newly earmarked 2026-07-22; not built.
+**[BUILT]** — shipped as `SkunkBlastMayhem` (`SkunkBlastMayhemMissionController`), 2026-07-22.
 
 A skunk has planted itself in the backyard, guarding something the dogs desperately want — a
 prized **dead bird** (a treasure of the highest order). The dogs can't just charge in: the skunk
@@ -698,12 +695,12 @@ mechanic effect), each on a cooldown so they read as personality, not noise. See
   future home-repair/construction-themed mission).
 - The squirrel has villain monologues nobody understands. **Implemented**: `BackyardRescueArtEnhancer.TrySpawnSquirrelMumble()`.
 - Cleaning day is an enemy invasion. Deliberately deferred — a full new mission idea, not an ambient
-  gag; stays in the level-idea bank above until the roster unfreezes.
+  gag; stays in the level-idea bank above as its own build candidate.
 - The pool is both terrifying and fascinating. **Implemented**: `BackyardRescueArtEnhancer.TrySpawnPoolFascination()`.
 - The couch is sacred land. Considered for Operation Pee Break (which has real, unused decorative couch
   scenery) and declined: the teenager sits almost exactly on top of the couch's position, so a
-  couch-claim gag would be visually indistinguishable from a teenager-approach gag, and Pee Break is
-  the frozen couch-test-#4 acceptance-gate mission — not worth the risk there for a cosmetic flourish.
+  couch-claim gag would be visually indistinguishable from a teenager-approach gag — not worth the
+  visual confusion there for a cosmetic flourish.
 - Dropped food has religious significance. **Implemented**: `BackyardRescueArtEnhancer.TrySpawnTreatReverence()`.
 - Every walk is an intelligence-gathering mission. **Implemented**: `LeashWalkMissionController.TrySpawnIntelGathered()`.
 - A phone-absorbed teenager is an NPC with broken AI. Already the core premise of Operation Pee Break
@@ -712,14 +709,10 @@ mechanic effect), each on a cooldown so they read as personality, not noise. See
 
 ## Current production priority
 
-The active order is the seven-step depth-first sequence at the top of this document. Kitchen Falling
-Food Frenzy is already implemented; it is the first behavior-preserving controller extraction, not
-the next mission to build. Operation Pee Break is the only authorized new deep slice after that
-extraction is green.
-
-Juice, identity, readability, and co-op-puzzle improvements are driven by critical findings from
-the baseline couch playtest. Cleaning Day, Tick Invasion, other level ideas, broad content passes,
-and mission roster expansion remain deferred until the second couch-playtest gate passes.
+The controller-migration sequence at the top of this document (baseline playtest → Kitchen
+extraction → Operation Pee Break → second playtest) is complete history, not a gate on new work.
+Roster expansion — Cleaning Day, Tick Invasion, Skunk Blast Mayhem, other level ideas, and broad
+content passes — is open; build whichever idea is asked for next.
 
 ## Implementation guardrails for agents
 

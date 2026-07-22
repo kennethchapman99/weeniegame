@@ -2,6 +2,10 @@
 
 Status date: 2026-07-19
 
+Roster-unfreeze update (2026-07-22): the owner lifted the mission-roster freeze and Skunk Blast
+Mayhem (idea-bank #22) shipped as the 24th mission (`SkunkBlastMayhemMissionController`). It is
+appended as row 24 below without touching any prior row's rating or reasoning.
+
 Pre-launch queue update (2026-07-17..07-19): the full `docs/AGENT-WORK-QUEUE-PRELAUNCH.md` (all rows
 DONE) landed on top of the scores below without touching mission rules, tuning, or the frozen 23-
 mission roster. Highlights that raise the roster's *couch-readiness* floor without changing any
@@ -125,6 +129,7 @@ Scale:
 | 21 | Kitchen Falling Food Frenzy | 5 | 4 | 4 | Strong extracted slice with clear role split and dinner-rush chaos; food/kitchen assets are serviceable and now clear the asset floor. |
 | 22 | Operation Pee Break | 5 | 4 | 4 | Best current deep-slice candidate: readable roles, yard route, pressure, recovery, replay hooks, and generated cartoon prop coverage for its couch/door/phone/leash beats; still needs the second human couch pass. |
 | 23 | Baby Bird Bedlam | 4 | 4 | 4 | Authored chick/parent states and the nest landmark carry a hard feast/fend split; wrong-role and distant-defense inputs now coach players back into the still-live dive window. |
+| 24 | Skunk Blast Mayhem | 4 | 3 | 3 | Hard-locked lure/snatch roles, a shared tail-lift danger clock mirrored in the HUD pressure meter, and a fail-forward de-skunk/laundry-economy detour give it a genuinely distinct co-op puzzle; the skunk still borrows the generic predator body shape (no skunk-specific silhouette yet) and the mission tile is a generated greybox placeholder, not painterly art. |
 
 ## Ranking Snapshot
 

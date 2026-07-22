@@ -926,6 +926,20 @@ namespace CheddarAndCocoa.Game
                         FinalGameplayArt.BabyBirdChickPecked,    // "An un-repelled dive PECKS"
                     };
 
+                // SkunkBlastMayhemMissionController reuses Sock Panic's authored laundry-basket art
+                // for its own basket/pile (both are literally laundry baskets in-fiction), which is a
+                // genuine match for the last two previewed bullets. The lure/snatch beat and the
+                // tail-lift telegraph both play out on the shared generated predator body (no
+                // FinalGameplayArt override), so those two rows stay text-only rather than guessing.
+                case GameManager.MissionVariant.SkunkBlastMayhem:
+                    return new[]
+                    {
+                        null,
+                        null,
+                        FinalGameplayArt.SockPanicBasketOpen,   // "Interact at the laundry pile to rub off the stink"
+                        FinalGameplayArt.SockPanicBasketClosed, // "hauls fresh laundry from the basket"
+                    };
+
                 default:
                     return null;
             }

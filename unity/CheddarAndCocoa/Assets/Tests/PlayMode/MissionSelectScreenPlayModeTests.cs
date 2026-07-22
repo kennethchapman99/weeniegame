@@ -94,14 +94,15 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(screen.TileIsSelectedAt(5), "The selected mission's tile should highlight.");
             Assert.IsFalse(screen.TileIsSelectedAt(0));
 
-            // Blanket Catch sits on page 2, in the short page of remainders.
+            // Blanket Catch sits on page 2 (now a full page of remainders since Skunk Blast Mayhem's
+            // append landed the roster on an exact multiple of the tile-per-page count).
             game.SelectMission(GameManager.MissionVariant.BlanketCatch);
             yield return null;
             int blanketSlot = game.SelectedMissionIndex - GameManager.MissionSelectTilesPerPage;
             Assert.AreEqual(1, game.SelectedMissionPage);
             Assert.That(screen.PageLabelText, Does.Contain("Page 2 of 2"));
             Assert.AreEqual(game.MissionSelectOptionCount - GameManager.MissionSelectTilesPerPage,
-                screen.ActiveTileCount, "The short last page should only show the remaining missions.");
+                screen.ActiveTileCount, "The last page should only show the remaining missions.");
             Assert.AreEqual(GameManager.MissionVariant.BlanketCatch, screen.TileVariantAt(blanketSlot));
             Assert.IsTrue(screen.TileIsSelectedAt(blanketSlot));
 
@@ -434,8 +435,10 @@ namespace CheddarAndCocoa.Tests
             }
 
             // CF2.8's audit result: 22 missions with chip data (Pee Break from CF1.9 + 21 from this
-            // roster pass) and exactly one documented text-only holdout (Backyard Rescue).
-            Assert.AreEqual(22, chippedCount, "Expected 22 missions to render team-plan chips.");
+            // roster pass) and exactly one documented text-only holdout (Backyard Rescue). Skunk
+            // Blast Mayhem (2026-07-22) added a 23rd chipped mission, reusing Sock Panic's authored
+            // laundry-basket art for its own basket/pile rows.
+            Assert.AreEqual(23, chippedCount, "Expected 23 missions to render team-plan chips.");
             Assert.AreEqual(1, textOnlyCount, "Expected exactly one mission (Backyard Rescue) to stay text-only.");
         }
 

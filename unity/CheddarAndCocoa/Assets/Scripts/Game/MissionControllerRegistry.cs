@@ -96,6 +96,9 @@ namespace CheddarAndCocoa.Game
                 [GameManager.MissionVariant.BabyBirdBedlam] = new Registration(
                     () => new BabyBirdBedlamMissionController(),
                     MissionCatalog.BuildBabyBirdBedlamDefinition),
+                [GameManager.MissionVariant.SkunkBlastMayhem] = new Registration(
+                    () => new SkunkBlastMayhemMissionController(),
+                    MissionCatalog.BuildSkunkBlastMayhemDefinition),
             };
 
         public static IEnumerable<GameManager.MissionVariant> RegisteredVariants => Registrations.Keys;

@@ -58,6 +58,8 @@ namespace CheddarAndCocoa.Game
                     return "The Teenager is glued to the phone and somebody really needs to go outside. Cheddar and Cocoa escalate through four signal beats to finally get that door open.";
                 case GameManager.MissionVariant.BabyBirdBedlam:
                     return "Chicks are tumbling out of the big oak nest and dinner is falling from the sky. Cheddar shake-gulps each one down while Cocoa bark-repels the furious parent birds dive-bombing the feast.";
+                case GameManager.MissionVariant.SkunkBlastMayhem:
+                    return "A skunk is guarding a prized dead bird in the yard. Cheddar barks loud to hold its attention while Cocoa sneaks in for the clean snatch - but when the tail lifts, both dogs must bail before the spray.";
                 default:
                     return string.Empty;
             }
@@ -252,6 +254,14 @@ namespace CheddarAndCocoa.Game
                         "Cheddar then shakes it down (Tug/Rescue x3) - the last shake is the GULP. He can't defend himself while shaking.",
                         "When PARENT BIRD DIVE flashes, Cocoa gets under the diving parent and BARKS to repel it.",
                         "An un-repelled dive PECKS Cheddar and the chick escapes - three pecks fail the mission. Eat 4 chicks to clear."
+                    };
+                case GameManager.MissionVariant.SkunkBlastMayhem:
+                    return new[]
+                    {
+                        "Cheddar barks near the skunk to hold its attention (LURED!) so Cocoa can sneak in and Interact on the guarded dead bird for the clean snatch.",
+                        "Watch the TAIL UP telegraph - both dogs must clear the blast range before the window closes or they get SKUNKED.",
+                        "A skunked dog goes STINKY and can't lure/snatch until clean - Interact at the laundry pile to rub off the stink.",
+                        "The clean partner hauls fresh laundry from the basket to the pile to keep the stinky dog's scrub-clean supply stocked."
                     };
                 case GameManager.MissionVariant.KitchenFoodFrenzy:
                     return new[]

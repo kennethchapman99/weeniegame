@@ -422,6 +422,25 @@ namespace CheddarAndCocoa.Game
             SurvivorScore = 350
         };
 
+        // Single-grab heist (ItemGoal=1): the puzzle's own score events (lure/bail/skunk/de-skunk/
+        // haul) carry most of the run, with BirdSecured (500) as the guaranteed clear anchor - the
+        // ceiling on a flawless zero-spray run is 500 (BirdSecured) + 500 (ClearScore) + 200
+        // (FlawlessBonus) + 300 (60% of 100s round * 5 time-bonus mult) = 1500. Pawfect sits under
+        // that with margin; Hero still clears after at least one detour to the laundry pile.
+        public MissionBalance SkunkBlastMayhem = new MissionBalance
+        {
+            RoundSeconds = 100f,
+            SpawnedItemCount = 0,
+            ItemGoal = 1,
+            ItemScore = 0,
+            MaxStolenFood = 3,
+            SquirrelPenalty = 60,
+            SquirrelScareScore = 60,
+            PawfectScore = 1400,
+            HeroScore = 950,
+            SurvivorScore = 300
+        };
+
         public static ArenaMissionTuning CreateDefault() => new ArenaMissionTuning();
 
         public MissionBalance BalanceFor(GameManager.MissionVariant variant)
@@ -449,6 +468,7 @@ namespace CheddarAndCocoa.Game
                 GameManager.MissionVariant.BlanketCatch => BlanketCatch,
                 GameManager.MissionVariant.KitchenFoodFrenzy => KitchenFoodFrenzy,
                 GameManager.MissionVariant.BabyBirdBedlam => BabyBirdBedlam,
+                GameManager.MissionVariant.SkunkBlastMayhem => SkunkBlastMayhem,
                 _ => BackyardRescue
             };
         }

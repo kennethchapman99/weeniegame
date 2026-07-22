@@ -1662,6 +1662,46 @@ Ignore a grounded chick for 8 seconds and confirm the `AIRLIFTED!` gag. Fail wit
 confirm the end card reads **Pecked Out Of The Yard** with the dive-bomb fail reason; clear and
 confirm **Nest Feast** (or **Nest Feast, No Feathers Lost** flawless) plus MVP credit naming a dog.
 
+### Skunk Blast Mayhem
+
+Skunk Blast Mayhem (2026-07-22, idea-bank #22) is the roster's lure-and-snatch heist slice: a skunk
+guards a prized dead bird and the shared predator actor stands in for it (reusing its transform and
+collision the same way Baby Bird Bedlam's parent bird reused the eagle actor). Roles are hard-locked.
+**Cheddar is the lure** - only his bark within range holds the skunk's attention (`LureActive`);
+Cocoa barking there gets coached back into staying quiet. **Cocoa is the snatcher** - only she can
+Interact at the guarded bird to secure it, and only while the skunk is turned away (mid-lure) and its
+tail is down. The **tail-lift telegraph** is a shared danger clock, not a per-dog stat: it fires on
+its own clock regardless of who is luring, and whoever is still within blast range when the window
+closes gets **SKUNKED** - Cheddar's blast radius (3.4) is wider than Cocoa's (2.0), so he is
+mechanically the one more likely to still be in the cone if the pair reacts late. A skunked dog goes
+**STINKY**: it can no longer lure or snatch until it rubs itself clean at the laundry pile (`Interact`
+near the pile, `RubsToClean` = 3 hits), while the clean partner hauls fresh laundry from the basket to
+the pile to keep the supply from running dry. Run the whole economy (pile + basket) completely dry and
+a stinky dog still clears eventually through a slow passive air-dry trickle - a costly detour, never a
+dead end. Getting skunked, even both dogs at once, is fail-forward: the only hard fail condition is the
+shared round timeout. Scoring: `CLEAN BAIL` +60 (team), `SKUNKED` -60 per dog, `FRESH AGAIN` +80 (team,
+per dog cleaned), `LAUNDRY HAULED` +20 (team), `BIRD SECURED` +500 (team, clears the mission).
+Deterministic logic lives in `CoopSkunkHeistPuzzle` (telegraph/spray/grab/rub/haul/air-dry lifecycle)
+behind `SkunkBlastMayhemMissionController`; the tail-lift danger clock is also mirrored through the
+shared HUD pressure meter (`IMissionPressureHud`) so both dogs can read it without staring at the
+skunk's sprite. The mission-select tile is a generated greybox placeholder
+(`tools/art/generate_skunk_blast_mayhem_tile.py`) per the gameplay-first greybox pivot, not yet a
+painterly production portrait.
+
+Wrong-role inputs stay recoverable: Cocoa's bark near the skunk coaches her to stay quiet instead of
+lures; Cheddar's Interact on the guarded bird coaches him to let Cocoa make the grab; a stinky dog's
+bark/Interact for its old role coaches toward the laundry pile instead of silently failing.
+
+Manual acceptance check: select **Skunk Blast Mayhem** with two local players. Confirm the skunk,
+guarded bird, laundry basket, and laundry pile read cold, and Cheddar's arrow points at the skunk
+(`BARK TO LURE`) while Cocoa's tracks the bird (`WAIT FOR THE LURE` / `SNATCH THE BIRD`). Bark near the
+skunk with Cheddar and confirm the `LURED!` pop and Cocoa's arrow copy changing. Let the tail-lift
+telegraph fire once with both dogs clear of blast range and confirm the `CLEAN BAIL!` pop; let it fire
+again with a dog in range and confirm the `SKUNKED!` pop, the camera jolt, and that dog's arrow
+re-routing to the laundry pile. Rub clean at the pile and confirm the `FRESH AGAIN!` pop and the arrow
+returning to the heist. Complete a lure-then-snatch and confirm `BIRD SECURED!`, both dogs' proud pose,
+and MVP credit naming Cocoa.
+
 Historical automated baseline: Unity 6000.0.65f1 batch PlayMode run passed `400/400` tests on
 2026-07-01 after the generated P0 mission-state art pass. The targeted presentation
 coverage inside `PeeBreakPlayModeTests`, `BackyardEnvironmentPlayModeTests`,
@@ -2207,7 +2247,7 @@ starting point — the next couch test is the real calibration pass.
 
 LevelClear displays a 1-3 star rating based on final score, the center banner reads **BACKYARD SAVED! [rank]**, and both dogs hold a **PROUD!** pose. GameOver displays **MISSION FAILED! [rank]**, applies the game-over penalty, and both dogs hold a **SAD FLOP** pose. The end card includes `Outcome: Score - Rank`, one short funny `EndReasonLabel`, the last score swing, stars, session totals, and Replay / Next Mission / Mission Select actions.
 
-Manual score/replay readability check: during both clear and fail, confirm the final dog poses are still visible behind/around the end card, the score swing label remains signed and cause-first, the funny rank and reason line are readable, and Replay / Next Mission / Mission Select are all usable without a mouse. The MVP line should name Cheddar or Cocoa after any run with at least one successful beat in every mission — "MVP: awaiting dog heroics" on a scoring run means that mission's `CreditDog` wiring regressed (all 23 current missions credit successful actions; the original 22 were audited on 2026-07-10 and Baby Bird Bedlam followed the same controller boundary).
+Manual score/replay readability check: during both clear and fail, confirm the final dog poses are still visible behind/around the end card, the score swing label remains signed and cause-first, the funny rank and reason line are readable, and Replay / Next Mission / Mission Select are all usable without a mouse. The MVP line should name Cheddar or Cocoa after any run with at least one successful beat in every mission — "MVP: awaiting dog heroics" on a scoring run means that mission's `CreditDog` wiring regressed (all 24 current missions credit successful actions; the original 22 were audited on 2026-07-10, and Baby Bird Bedlam and Skunk Blast Mayhem each followed the same controller boundary since).
 
 ## Non-developer playtest script
 
