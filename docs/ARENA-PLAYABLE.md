@@ -182,11 +182,11 @@ own title-free-crop margin has much less headroom to spare.
 block for every mission. `MissionSelectScreen` now also holds a fixed pool of four (icon + text) chip
 rows sharing that same rect. A new data-driven lookup, `TeamPlanChipsFor(variant)` (parallel to the
 existing `PreviewStepsFor` bullet array; null/empty entries mean "no chip for this bullet," a
-non-null array with at least one entry means "this mission uses chips"), returns null for every
-mission except Operation Pee Break today. When a mission has chip data, the single text block hides
-and the per-bullet rows show instead - one small icon per bullet loaded from the same
-`FinalGameplayArt` resources gameplay itself uses, plus that bullet's own text at the same font-floor
-policy. When a mission has no chip data (all 22 others, unchanged), the single text block stays
+non-null array with at least one entry means "this mission uses chips"), returned null for every
+mission except Operation Pee Break at the time this section was first written. When a mission has
+chip data, the single text block hides and the per-bullet rows show instead - one small icon per
+bullet loaded from the same `FinalGameplayArt` resources gameplay itself uses, plus that bullet's own
+text at the same font-floor policy. When a mission has no chip data, the single text block stays
 active and every chip row stays inactive - pixel-identical to before this task. Operation Pee Break's
 four chips: the door (`PeeBreakOpenDoor`, Beat 1 door stare), the leash (`PeeBreakLeash`, Beat 2
 presented leash), the phone charger (`PeeBreakPhoneCharger`, Beat 3 unplug), and the shared
@@ -204,12 +204,34 @@ correct sprite, text, and top-to-bottom order; and a fallback test asserting a c
 (Gate Crash, then Kitchen Falling Food Frenzy after round-tripping through Pee Break) renders
 text-only with every chip row inactive. Full suite green at `679/679` (676 -> 679).
 
+**CF2.8 (2026-07-21) rolled this same system out roster-wide.** `TeamPlanChipsFor` now returns real
+chip data for 21 of the 22 other missions - every one whose `PreviewStepsFor` bullets matched 2+
+sprites already loaded by that mission's own `*MissionController.cs` (grepped per mission, not
+guessed, so each chip is a genuine preview of the real on-screen signal). Backyard Rescue is the one
+documented holdout: its previewed bullets (collect weenies / bark the squirrel / predator warning
+huddle / rope-tug finish) match only ONE existing sprite (`BackyardWeenieTargeted`) because the
+shared squirrel/predator/rope actors render with generated draft-art parts in this controller, never
+a promoted `FinalGameplayArt` override - fewer than 2 genuine matches, so per the fallback contract it
+stays text-only rather than padding out with invented icons. Because Gate Crash and Kitchen Food
+Frenzy now have real chip data too, `MissionSelectScreenPlayModeTests.Screen_TeamPlanChips_
+ChipLessMissionRendersTextOnly` now uses Backyard Rescue as the roster's canonical "stays text-only"
+example. Crop verification: a fresh throwaway PIL simulation of the same `FitDetailCover` math
+rendered all 23 missions' detail covers (not just 6) - every one lands in the identical 28.3%-64.5%
+vertical band of the square source art (the crop math is uniform regardless of image content) and
+every mission's two dogs read clearly centered in that band, so no per-mission crop-bias override was
+needed roster-wide. Full suite green at `698/698` (694 -> 698, 4 new tests: one roster-wide loop
+asserting every mission's chip rows resolve or gracefully fall back to text plus three per-mission
+spot checks - a fully-matched 4/4 mission (Sock Panic), a mission with a null in the MIDDLE of its
+chip array (Coyotes Fence), and a mission with a shorter-than-bullet-count chip array (Snack Heist)).
+
 Manual acceptance check: open mission select on Operation Pee Break - the detail cover should show
 noticeably more of the illustration (the "TOP SECRET BATHROOM MISSION" sign and the glowing paw path
 should both be fully readable, not cut off at the edges), and the team plan should show four small
 icons (door, leash, charger, bark burst) beside their matching bullet lines instead of plain text.
-Select any other mission (e.g. Gate Crash) and confirm its team plan is plain text with no icons, as
-before this task.
+Page through the rest of the roster - all missions except Backyard Rescue should now show 2-4 small
+icons beside their team-plan bullets, each a real prop/state sprite from that mission (e.g. Sock
+Panic's basket/sock states, Gate Crash's gate/toy states); Backyard Rescue alone should still show
+plain text with no icons.
 
 ### Roster audit: auto-dismissing info UI (CF2.1, 2026-07-21)
 

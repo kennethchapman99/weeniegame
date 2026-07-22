@@ -333,7 +333,13 @@ namespace CheddarAndCocoa.Tests
         /// <summary>
         /// CF1.9 fallback contract CF2.8 depends on: a mission with no chip data yet renders its
         /// team plan exactly as it did before this task - plain text bullets, no icons, no layout
-        /// change.
+        /// change. CF2.8 rolled chip data out to 21 of the 22 non-Pee-Break missions (every one
+        /// with 2+ genuinely load-bearing existing sprites for its previewed bullets); Backyard
+        /// Rescue is the one documented, deliberate holdout - its previewed bullets only match a
+        /// single distinct FinalGameplayArt sprite (the shared squirrel/predator/rope actors render
+        /// with generated draft art, never a promoted override, in this controller), so it is now
+        /// the roster's canonical "stays text-only" example instead of GateCrash/KitchenFoodFrenzy,
+        /// which CF2.8 gave real chips per this same audit.
         /// </summary>
         [UnityTest]
         public IEnumerator Screen_TeamPlanChips_ChipLessMissionRendersTextOnly()
@@ -343,12 +349,12 @@ namespace CheddarAndCocoa.Tests
             var game = Object.FindFirstObjectByType<GameManager>();
             var screen = Object.FindFirstObjectByType<MissionSelectScreen>();
 
-            game.SelectMission(GameManager.MissionVariant.GateCrash);
+            game.SelectMission(GameManager.MissionVariant.BackyardRescue);
             yield return null;
 
             Assert.IsTrue(screen.DetailHowToVisible,
                 "A chip-less mission must keep showing the single text block, exactly as before CF1.9.");
-            Assert.AreEqual(MissionSelectScreen.BuildHowToPlayText(GameManager.MissionVariant.GateCrash),
+            Assert.AreEqual(MissionSelectScreen.BuildHowToPlayText(GameManager.MissionVariant.BackyardRescue),
                 screen.DetailHowToPlayText);
             for (int row = 0; row < screen.TeamPlanChipRowCapacity; row++)
             {
@@ -360,11 +366,177 @@ namespace CheddarAndCocoa.Tests
             game.SelectMission(GameManager.MissionVariant.OperationPeeBreak);
             yield return null;
             Assert.IsFalse(screen.DetailHowToVisible);
-            game.SelectMission(GameManager.MissionVariant.KitchenFoodFrenzy);
+            game.SelectMission(GameManager.MissionVariant.BackyardRescue);
             yield return null;
             Assert.IsTrue(screen.DetailHowToVisible);
             for (int row = 0; row < screen.TeamPlanChipRowCapacity; row++)
                 Assert.IsFalse(screen.TeamPlanChipRowActiveAt(row));
+        }
+
+        /// <summary>
+        /// CF2.8 roster pass: every mission's team plan should either use real chips (an icon per
+        /// bullet loaded from that mission's own on-screen art, or - for a bullet with no matching
+        /// sprite - a graceful text-only row within the same chip block) or, for the one documented
+        /// holdout (Backyard Rescue), the original plain-text block. This loops the full roster
+        /// (not a hand-picked sample) so a future mission that regresses into a broken icon
+        /// reference or an inconsistent row count fails here instead of at a couch test.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator Screen_TeamPlanChips_RosterWide_EveryMissionResolvesOrGracefullyFallsBack()
+        {
+            yield return LoadArena();
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            var screen = Object.FindFirstObjectByType<MissionSelectScreen>();
+
+            int chippedCount = 0;
+            int textOnlyCount = 0;
+
+            foreach (GameManager.MissionVariant variant in System.Enum.GetValues(typeof(GameManager.MissionVariant)))
+            {
+                game.SelectMission(variant);
+                yield return null;
+
+                int previewedBullets = MissionSelectScreen.BuildHowToPlayText(variant).Split('\n').Length;
+
+                if (!screen.DetailHowToVisible)
+                {
+                    chippedCount++;
+                    for (int row = 0; row < previewedBullets; row++)
+                    {
+                        Assert.IsTrue(screen.TeamPlanChipRowActiveAt(row),
+                            $"{variant}: row {row} of {previewedBullets} previewed bullets should be an active chip row.");
+                        Assert.That(screen.TeamPlanChipTextAt(row), Does.StartWith("•  "),
+                            $"{variant}: chip row {row} should still carry the bullet's own text.");
+                        if (screen.TeamPlanChipIconEnabledAt(row))
+                        {
+                            Sprite icon = screen.TeamPlanChipSpriteAt(row);
+                            Assert.IsNotNull(icon, $"{variant}: row {row} enabled its icon but has no sprite.");
+                            Assert.AreNotSame(SpriteShapeCache.WhiteSquare, icon,
+                                $"{variant}: row {row}'s chip must not fall back to the runtime white square.");
+                        }
+                    }
+                    for (int row = previewedBullets; row < screen.TeamPlanChipRowCapacity; row++)
+                    {
+                        Assert.IsFalse(screen.TeamPlanChipRowActiveAt(row),
+                            $"{variant}: row {row} is beyond this mission's {previewedBullets} previewed bullets and must stay inactive.");
+                    }
+                }
+                else
+                {
+                    textOnlyCount++;
+                    for (int row = 0; row < screen.TeamPlanChipRowCapacity; row++)
+                    {
+                        Assert.IsFalse(screen.TeamPlanChipRowActiveAt(row),
+                            $"{variant}: a text-only mission must keep every chip row inactive.");
+                    }
+                }
+            }
+
+            // CF2.8's audit result: 22 missions with chip data (Pee Break from CF1.9 + 21 from this
+            // roster pass) and exactly one documented text-only holdout (Backyard Rescue).
+            Assert.AreEqual(22, chippedCount, "Expected 22 missions to render team-plan chips.");
+            Assert.AreEqual(1, textOnlyCount, "Expected exactly one mission (Backyard Rescue) to stay text-only.");
+        }
+
+        /// <summary>
+        /// CF2.8 spot check #1: a mission where every previewed bullet has a matching sprite (all 4
+        /// rows active with icons) - Sock Panic's basket/sock state art lines up cleanly with all
+        /// four of its bullets.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator Screen_TeamPlanChips_SockPanicShowsFourFullyMatchedChips()
+        {
+            yield return LoadArena();
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            var screen = Object.FindFirstObjectByType<MissionSelectScreen>();
+
+            game.SelectMission(GameManager.MissionVariant.SockPanic);
+            yield return null;
+
+            Assert.IsFalse(screen.DetailHowToVisible);
+            string[] expectedSprites =
+            {
+                FinalGameplayArt.SockPanicBasketClosed,
+                FinalGameplayArt.SockPanicSockExposed,
+                FinalGameplayArt.SockPanicBasketFumble,
+                FinalGameplayArt.SockPanicSockSaved,
+            };
+            for (int row = 0; row < expectedSprites.Length; row++)
+            {
+                Assert.IsTrue(screen.TeamPlanChipRowActiveAt(row));
+                Assert.IsTrue(screen.TeamPlanChipIconEnabledAt(row), $"Row {row} should show an icon.");
+                Sprite expected = FinalGameplayArt.Load(expectedSprites[row]);
+                Assert.IsNotNull(expected, $"Expected sprite for row {row} should exist on disk.");
+                Assert.AreEqual(expected.name, screen.TeamPlanChipSpriteAt(row).name,
+                    $"Row {row} should show Sock Panic's own on-screen state art.");
+            }
+        }
+
+        /// <summary>
+        /// CF2.8 spot check #2: a mission whose chip array has a deliberate null in the MIDDLE (not
+        /// just trailing) - Coyotes Fence's third bullet ("neither dog can perform both jobs...")
+        /// has no distinct sprite, so that row must render text-only while rows 0/1/3 around it
+        /// still show icons, proving index alignment survives an interior gap.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator Screen_TeamPlanChips_CoyotesFenceHandlesAnInteriorTextOnlyRow()
+        {
+            yield return LoadArena();
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            var screen = Object.FindFirstObjectByType<MissionSelectScreen>();
+
+            game.SelectMission(GameManager.MissionVariant.CoyotesFence);
+            yield return null;
+
+            Assert.IsFalse(screen.DetailHowToVisible);
+            Assert.IsTrue(screen.TeamPlanChipRowActiveAt(0));
+            Assert.IsTrue(screen.TeamPlanChipIconEnabledAt(0));
+            Assert.AreEqual(FinalGameplayArt.Load(FinalGameplayArt.CoyotesFenceGapPinned).name,
+                screen.TeamPlanChipSpriteAt(0).name);
+
+            Assert.IsTrue(screen.TeamPlanChipRowActiveAt(2), "Row 2 stays an active row (text-only).");
+            Assert.IsFalse(screen.TeamPlanChipIconEnabledAt(2), "Row 2 has no matching sprite - icon must stay off.");
+            Assert.That(screen.TeamPlanChipTextAt(2), Does.StartWith("•  "),
+                "Row 2 must still show its bullet text even without an icon.");
+
+            Assert.IsTrue(screen.TeamPlanChipRowActiveAt(3));
+            Assert.IsTrue(screen.TeamPlanChipIconEnabledAt(3));
+            Assert.AreEqual(FinalGameplayArt.Load(FinalGameplayArt.CoyotesFenceFakeSnack).name,
+                screen.TeamPlanChipSpriteAt(3).name);
+        }
+
+        /// <summary>
+        /// CF2.8 spot check #3: a mission with a SHORTER chip array than its previewed bullet count
+        /// (2 sprites for 4 bullets) - Snack Heist only has 2 genuinely load-bearing sprites, so
+        /// rows 2/3 must stay active-but-icon-less (graceful trailing fallback) rather than the
+        /// whole mission losing its chips.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator Screen_TeamPlanChips_SnackHeistHandlesAShorterChipArray()
+        {
+            yield return LoadArena();
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            var screen = Object.FindFirstObjectByType<MissionSelectScreen>();
+
+            game.SelectMission(GameManager.MissionVariant.SnackHeist);
+            yield return null;
+
+            Assert.IsFalse(screen.DetailHowToVisible);
+            Assert.IsTrue(screen.TeamPlanChipIconEnabledAt(0));
+            Assert.AreEqual(FinalGameplayArt.Load(FinalGameplayArt.SnackHeistPlateTargeted).name,
+                screen.TeamPlanChipSpriteAt(0).name);
+            Assert.IsTrue(screen.TeamPlanChipIconEnabledAt(1));
+            Assert.AreEqual(FinalGameplayArt.Load(FinalGameplayArt.SnackHeistGuardLane).name,
+                screen.TeamPlanChipSpriteAt(1).name);
+
+            Assert.IsTrue(screen.TeamPlanChipRowActiveAt(2), "Row 2 stays an active row (text-only).");
+            Assert.IsFalse(screen.TeamPlanChipIconEnabledAt(2));
+            Assert.IsTrue(screen.TeamPlanChipRowActiveAt(3), "Row 3 stays an active row (text-only).");
+            Assert.IsFalse(screen.TeamPlanChipIconEnabledAt(3));
         }
     }
 }

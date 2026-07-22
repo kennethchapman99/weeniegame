@@ -697,26 +697,238 @@ namespace CheddarAndCocoa.Game
         /// CF1.9 chip data contract: one sprite-path entry per <see cref="PreviewStepsFor"/> bullet
         /// (null/empty entries render text-only - "just the important ones"), or null for a mission
         /// with no chip data at all (renders exactly as before this task). CF2.8 rolls this same
-        /// shape out roster-wide by adding one case per mission below.
+        /// shape out roster-wide: every entry below is a sprite path already loaded by that exact
+        /// mission's own *MissionController.cs (grepped per mission, not guessed), so the chip is a
+        /// genuine preview of the real on-screen signal, matched to the bullet index it illustrates.
+        /// A mission is left returning null when fewer than 2 of its previewed bullets have a
+        /// clearly load-bearing existing sprite to point to (BackyardRescue below) - per the task's
+        /// own explicit fallback, this is not an oversight, it's "don't force coverage."
         /// </summary>
         private static string[] TeamPlanChipsFor(GameManager.MissionVariant variant)
         {
-            if (variant == GameManager.MissionVariant.OperationPeeBreak)
+            switch (variant)
             {
-                return new[]
-                {
-                    FinalGameplayArt.PeeBreakOpenDoor,     // Beat 1: Cocoa's door stare
-                    FinalGameplayArt.PeeBreakLeash,        // Beat 2: Cheddar presents the leash
-                    FinalGameplayArt.PeeBreakPhoneCharger, // Beat 3: Cocoa unplugs the charger
-                    // Beat 4 is the united-bark finish at the door; Pee Break has no dedicated
-                    // bark-burst prop sprite, so this reuses the shared VFX/bark_burst art gameplay
-                    // itself plays on every bark (see DogReadabilityFeedback/ArenaFeedbackCatalog) -
-                    // a real on-screen thing players already recognize, not a placeholder guess.
-                    FinalGameplayArt.BarkBurst,
-                };
-            }
+                case GameManager.MissionVariant.OperationPeeBreak:
+                    return new[]
+                    {
+                        FinalGameplayArt.PeeBreakOpenDoor,     // Beat 1: Cocoa's door stare
+                        FinalGameplayArt.PeeBreakLeash,        // Beat 2: Cheddar presents the leash
+                        FinalGameplayArt.PeeBreakPhoneCharger, // Beat 3: Cocoa unplugs the charger
+                        // Beat 4 is the united-bark finish at the door; Pee Break has no dedicated
+                        // bark-burst prop sprite, so this reuses the shared VFX/bark_burst art
+                        // gameplay itself plays on every bark (see DogReadabilityFeedback/
+                        // ArenaFeedbackCatalog) - a real on-screen thing players already recognize,
+                        // not a placeholder guess.
+                        FinalGameplayArt.BarkBurst,
+                    };
 
-            return null;
+                // CF2.8 audit: BackyardRescueMissionController.cs only ever loads
+                // BackyardTrapGap*/BackyardWeenie* sprites. The picker's 4 previewed bullets
+                // (collect weenies / bark the squirrel / predator warning huddle / rope-tug finish)
+                // only match ONE of those - the weenie-collection bullet - because the shared
+                // squirrel/predator/rope actors here render with their generated draft-art parts,
+                // never a FinalGameplayArt override (confirmed: no Eagle*/Squirrel*/Rope* load call
+                // anywhere in this controller). Fewer than 2 genuine matches - stays text-only
+                // rather than pairing a real weenie chip with two invented ones.
+                case GameManager.MissionVariant.BackyardRescue:
+                    return null;
+
+                case GameManager.MissionVariant.SnackHeist:
+                    return new[]
+                    {
+                        FinalGameplayArt.SnackHeistPlateTargeted, // "run him into snack plates"
+                        FinalGameplayArt.SnackHeistGuardLane,     // "Cocoa is the guard...bark"
+                        // Remaining two bullets (the watched-final-snack rule, wrong-role penalty)
+                        // have no distinct on-screen sprite of their own - left text-only.
+                    };
+
+                case GameManager.MissionVariant.SockPanic:
+                    return new[]
+                    {
+                        FinalGameplayArt.SockPanicBasketClosed, // "LAUNDRY BASKET" before the tip
+                        FinalGameplayArt.SockPanicSockExposed,  // "dive onto the exposed sock"
+                        FinalGameplayArt.SockPanicBasketFumble, // "the basket flops shut"
+                        FinalGameplayArt.SockPanicSockSaved,    // "Rescue 5 socks"
+                    };
+
+                case GameManager.MissionVariant.SquirrelConspiracy:
+                    return new[]
+                    {
+                        FinalGameplayArt.SquirrelConspiracyCutoffOpen,     // "glowing HOLD CUTOFF"
+                        FinalGameplayArt.SquirrelConspiracyCutoffHeld,     // "physically holding..."
+                        FinalGameplayArt.SquirrelConspiracyStashRevealed,  // "reveal the hidden stash"
+                        FinalGameplayArt.SquirrelConspiracyStashCracked,   // "Crack the case"
+                    };
+
+                case GameManager.MissionVariant.EagleShadowPanic:
+                    return new[]
+                    {
+                        FinalGameplayArt.EagleShadowCoverSafe,       // "inside HIDE HERE cover"
+                        FinalGameplayArt.EagleShadowTalonGripOpen,   // "WIGGLE the grip open"
+                        FinalGameplayArt.EagleShadowTalonGripFreed,  // "wiggle/pull handoff...finish"
+                        FinalGameplayArt.EagleShadowCoverSpotted,    // "exposures caught in the open"
+                    };
+
+                case GameManager.MissionVariant.CoyotesFence:
+                    return new[]
+                    {
+                        // CoyotesFenceMissionController applies GapPinned to the PREDATOR object
+                        // itself the instant a bark pins it (line-verified), so this is literally
+                        // what the coyote looks like during "BARK to pin it".
+                        FinalGameplayArt.CoyotesFenceGapPinned,
+                        FinalGameplayArt.CoyotesFenceGapOpen, // the active "WEAK SPOT"
+                        null, // "neither dog can perform both jobs..." - no distinct visual
+                        FinalGameplayArt.CoyotesFenceFakeSnack, // "the fake snack lure"
+                    };
+
+                case GameManager.MissionVariant.WeenieRoundup:
+                    return new[]
+                    {
+                        FinalGameplayArt.WeenieRoundupLoose,    // "walk into one to pick it up"
+                        FinalGameplayArt.WeenieRoundupCarried,  // "team haul...Cheddar grabs it"
+                        FinalGameplayArt.WeenieRoundupDropped,  // "the jumbo fumble"
+                        FinalGameplayArt.WeenieRoundupBowlFull, // "the live bowl-full payoff"
+                    };
+
+                case GameManager.MissionVariant.ScentSearch:
+                    return new[]
+                    {
+                        FinalGameplayArt.ScentSearchDigUnknown, // patches before a call lands
+                        FinalGameplayArt.ScentSearchScentHot,   // "a red-hot bark calls the mound"
+                        null, // "Cheddar follows Cocoa's call...glowing mound" - no distinct sprite
+                        FinalGameplayArt.ScentSearchBoneFound,  // "Find 3 bones"
+                    };
+
+                case GameManager.MissionVariant.ThunderstormComfort:
+                    return new[]
+                    {
+                        FinalGameplayArt.ThunderstormCloudWaiting, // calm "before each clap"
+                        FinalGameplayArt.ThunderstormComfortHuddle, // "steady reassurance"/huddle
+                        FinalGameplayArt.ThunderstormThunderclap,  // "Hold the...huddle" through claps
+                        FinalGameplayArt.ThunderstormStormCleared, // "the live storm-passed beat"
+                    };
+
+                case GameManager.MissionVariant.MarkTheYard:
+                    return new[]
+                    {
+                        FinalGameplayArt.MarkYardZoneUnclaimed,  // "a grey zone...mark it green"
+                        FinalGameplayArt.MarkYardSquirrelWatch,  // "the reclaim squirrel"
+                        FinalGameplayArt.MarkYardZoneClaimed,    // "reach another zone" success
+                        FinalGameplayArt.MarkYardZoneStolen,     // "A stolen mark"
+                    };
+
+                case GameManager.MissionVariant.LeashWalk:
+                    return new[]
+                    {
+                        // No physical leash prop in this mission (CF2.5 audit: it's an abstract
+                        // max-distance constraint, nothing rendered) - first bullet stays text-only.
+                        null,
+                        FinalGameplayArt.LeashWalkCheckpointWaiting, // "reach the marker"
+                        FinalGameplayArt.LeashWalkCheckpointReached, // "stand...together to bank it"
+                        FinalGameplayArt.LeashWalkSnapWarning,       // "the leash snaps taut"
+                    };
+
+                case GameManager.MissionVariant.CarRide:
+                    return new[]
+                    {
+                        FinalGameplayArt.CarDashboardDriver, // "Watch the driver: the dashboard"
+                        FinalGameplayArt.SeatCooler,         // "jump over the cooler and toy bin"
+                        // Brake-plant and the finishing "driver eases up" bullets don't have a
+                        // sprite distinct from the dashboard already shown above - left text-only.
+                    };
+
+                case GameManager.MissionVariant.GateCrash:
+                    return new[]
+                    {
+                        FinalGameplayArt.GateCrashGateClosed, // "the heavy gate" before anchoring
+                        FinalGameplayArt.GateCrashToyWaiting, // "squeezing through...toward the toy"
+                        FinalGameplayArt.GateCrashGateSnap,   // "the gate snaps shut"
+                        FinalGameplayArt.GateCrashToyClaimed, // "until Cheddar claims the toy"
+                    };
+
+                case GameManager.MissionVariant.TableStealth:
+                    return new[]
+                    {
+                        FinalGameplayArt.TableStealthHumanWatching,      // "a human is watching"
+                        FinalGameplayArt.TableStealthHumanDistracted,    // "choose the opening"
+                        FinalGameplayArt.TableStealthSteakSneakProgress, // "sneak progress"
+                        FinalGameplayArt.TableStealthHumanSpotted,       // "gets the pair spotted"
+                    };
+
+                case GameManager.MissionVariant.SquirrelSwitcheroo:
+                    return new[]
+                    {
+                        FinalGameplayArt.SwitcherooStashGuarded, // "guarding its buried stash"
+                        FinalGameplayArt.SwitcherooDecoyChased,  // "the squirrel commits"
+                        FinalGameplayArt.SwitcherooStashOpen,    // "that chase window...real stash"
+                        FinalGameplayArt.SwitcherooDecoyBackfire, // "over-baiting...wise up"
+                    };
+
+                case GameManager.MissionVariant.WalkCampaign:
+                    return new[]
+                    {
+                        FinalGameplayArt.WalkCampaignLeashPresented, // "presses Interact to present it"
+                        FinalGameplayArt.WalkCampaignHumanGettingIt, // "for the human to understand"
+                        FinalGameplayArt.WalkCampaignHumanMisread,   // "fetch a funny wrong item"
+                        FinalGameplayArt.WalkCampaignHumanWalkies,   // "the live WALKIES payoff"
+                    };
+
+                case GameManager.MissionVariant.BoneRelay:
+                    return new[]
+                    {
+                        FinalGameplayArt.BoneRelayMoundUnknown,     // "look-alike dirt mounds"
+                        FinalGameplayArt.BoneRelayScentPostCalled,  // "the scent post and BARKS"
+                        FinalGameplayArt.BoneRelayMoundCalled,      // "Cocoa's glowing call"
+                        FinalGameplayArt.BoneRelayMoundFound,       // "three finds expose the stash"
+                    };
+
+                case GameManager.MissionVariant.GreatEscape:
+                    return new[]
+                    {
+                        FinalGameplayArt.GreatEscapeStationWaiting,     // the contraption chain, idle
+                        FinalGameplayArt.GreatEscapeStationCocoaActive, // "the glowing station...owner"
+                        FinalGameplayArt.GreatEscapeStationFumble,      // "a harmless, readable CLANK"
+                        FinalGameplayArt.GreatEscapeStationCompleted,   // "the completed contraption"
+                    };
+
+                case GameManager.MissionVariant.ChaosMachine:
+                    return new[]
+                    {
+                        FinalGameplayArt.ChaosLeverReady,          // "reaches the lever"
+                        FinalGameplayArt.ChaosJunctionTowelDrop,   // "the glowing junction"
+                        FinalGameplayArt.ChaosJunctionBasketTip,   // "visibly jams at that...junction"
+                        FinalGameplayArt.ChaosJunctionToyLaunch,   // "a clean toy launch"
+                    };
+
+                case GameManager.MissionVariant.BlanketCatch:
+                    return new[]
+                    {
+                        FinalGameplayArt.BlanketCatchTaut,    // "pull the blanket taut"
+                        FinalGameplayArt.BlanketSnackFalling, // "call the next snack down"
+                        FinalGameplayArt.BlanketSnackCaught,  // "hold the catch together"
+                        FinalGameplayArt.BlanketCatchRipping, // "Rip the blanket too many times"
+                    };
+
+                case GameManager.MissionVariant.KitchenFoodFrenzy:
+                    return new[]
+                    {
+                        FinalGameplayArt.KitchenCounterReady,   // "reach the marked COUNTER route"
+                        FinalGameplayArt.KitchenSafeBowlCatch,  // "catch gold food in the SAFE BOWL"
+                        FinalGameplayArt.KitchenFoodGoodFalling, // "survive the DINNER RUSH...catch gold"
+                    };
+
+                case GameManager.MissionVariant.BabyBirdBedlam:
+                    return new[]
+                    {
+                        FinalGameplayArt.BabyBirdChickFalling,   // "Chicks drop from THE NEST"
+                        FinalGameplayArt.BabyBirdChickShaking,   // "shakes it down"
+                        FinalGameplayArt.BabyBirdMotherAttacking, // "PARENT BIRD DIVE flashes"
+                        FinalGameplayArt.BabyBirdChickPecked,    // "An un-repelled dive PECKS"
+                    };
+
+                default:
+                    return null;
+            }
         }
 
         private Sprite CoverSpriteFor(GameManager.MissionVariant variant)

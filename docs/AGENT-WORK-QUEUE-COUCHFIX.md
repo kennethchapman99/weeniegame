@@ -112,7 +112,7 @@ task; they show exactly what the owner saw.
 | CF2.5 | Roster audit: carried-object visuals | CF1.7 | DONE (2026-07-21, 692 green (691→692, 1 new test); audited all 23 controllers for dog-carries-an-object mechanics — Weenie Roundup, Baby Bird Bedlam, and Blanket Catch already track the carrying dog(s) correctly (two arrived at the reference idiom independently of this audit); fixed the one genuine gap, Walk Campaign's leash, which sat fixed at its station regardless of `_leashPresented` — now follows Cheddar's position via `ResolveLeashPosition()`, the same standalone per-tick-follow idiom as CF1.7/`_carriedMarkers`, never `SetParent` (trap #5)) |
 | CF2.6 | Roster audit: wall-station perspective | CF1.6 | DONE (2026-07-21, 693 green (692→693, 1 new test); audited all 23 controllers' `NewMarker`/`NewScenery` scale calls for tall (Y>>X) wall-drawn art - only Gate Crash's gate and Coyotes Fence's fence gaps qualify as architecture, plus 3 tall-but-non-architectural markers (a squirrel decoy, two human characters) correctly excluded; fixed Gate Crash's gate (a HOLD-type station, the mission's namesake, flagged high-risk) with a `GateFloorAnchor` child transform (same -0.62 ratio as Pee Break's doormat) now driving the hold check, engage check, and Cocoa's guidance arrow, plus a grounded pose via the existing `ShowGuidanceNudge`; tabled Coyotes Fence's tighter-margin fence-gap repair check because it's brief-touch, not sustained, per the task's own prioritization) |
 | CF2.7 | Roster audit: briefing beats self-verifying in-game | CF1.5 | DONE (2026-07-21, 694 green (693→694, 1 new test); audited all 22 other missions' moment-shaped briefing bullets against their controllers' fired `SetCue`/`SpawnWorldPop`/`SetActorState` text - 21 already echo their bullet's own words at the exact transition (a stronger result than CF2.1-CF2.6, since CF1.3/CF1.4/CF1.5's shipped patterns were already the roster norm by the time most missions were written); the one genuine gap, BackyardRescue's "fall in and you swim, and you shake off at the deck" bullet, had zero on-screen text at either moment (pure VFX) and no gold-caps tokens for F4.3's own check to have caught it - fixed via a new `GameManager.SpawnSharedWorldPop` public seam so the non-controller `BackyardPoolZone` can fire "SPLASH! SWIMMING!"/"SHAKE OFF!" pops echoing the bullet verbatim) |
-| CF2.8 | Roster pass: title cards + team-plan chips | CF1.9 | OPEN |
+| CF2.8 | Roster pass: title cards + team-plan chips | CF1.9 | DONE (2026-07-21, 698 green (694→698, 4 new tests); PIL-verified crop for all 23 missions - uniform 28.3%-64.5% visible band, no per-mission bias needed; chip data authored for 21/22 non-Pee-Break missions (22/23 total incl. Pee Break), Backyard Rescue stays the one text-only holdout) |
 | CF3.1 | Evidence refresh + retest handoff | all above | OPEN |
 
 ---
@@ -927,6 +927,70 @@ chip lists (2-4 chips each, only the load-bearing signals), and verify every mis
 cover under the new crop via the PIL simulation (render all 23, eyeball each — subjects centered,
 no important detail cropped). Fix per-mission crop bias where needed. This is the roster
 application of CF1.9, not a redesign.
+
+**Crop verification.** Rebuilt a fresh throwaway PIL simulation of the current HEAD `FitDetailCover`
+math (`DetailWidth`=896, `DetailCoverHeight`=340, `DetailArtworkZoom`=1.05,
+`DetailArtworkVerticalShift`=-0.10 — unchanged from CF1.9), re-verifying both named traps: the zoom
+is applied to the cover-fit scale itself (`scale = max(area.x/w, area.y/h) * zoom`), and the Unity
+Y-up → PIL Y-down sign flip (`pil_center_y = window_center_y - anchoredPosition.y`). Rendered all 23
+mission-tile covers (all 1254×1254 square source art) through that exact math. Because every source
+image is the same square shape and the crop constants are mission-independent, the visible band is
+mathematically identical for all 23: rows 28.3%–64.5% of the original image height, ~95.3% of width
+(centered), ~34.4% total area visible — matching CF1.9's own ~34% figure. Eyeballed all 23 rendered
+crops individually (not just a sample): in every one, both dogs (the load-bearing subject) read
+clearly centered within that band with no critical detail lost, so **no per-mission crop-bias
+override was needed roster-wide**. (The per-mission bias hook the task anticipated needing was not
+added, since nothing required it — adding an unused parameter would have been surface area for no
+behavior, contrary to this queue's own "don't add unnecessary surface area" guidance elsewhere.)
+
+**Chip data.** Grepped every `*MissionController.cs` for its own `FinalGameplayArt.*` sprite-loading
+calls (not guessed from the constant list) and matched them against that mission's `PreviewStepsFor`
+bullets by index (the same index `TeamPlanChipsFor`'s array is read at). Result: 21 of the 22
+non-Pee-Break missions had 2+ bullets with a genuinely matching, already-loaded sprite; those 21 now
+return real chip data from `TeamPlanChipsFor` (`MissionSelectScreen.cs`). Three missions
+(Snack Heist, Coyotes Fence, Scent Search, Leash Walk, Car Ride) have a shorter array or an
+interior `null` where a bullet has no matching sprite — the existing CF1.9 mechanism already
+handles both shapes (trailing entries beyond the array default to null; a `null` anywhere renders
+that one row text-only while sibling rows keep their icons), so no changes to the lookup/render
+mechanism itself were needed.
+
+| Mission | Chips (bullet order) | Notes |
+|---|---|---|
+| Backyard Rescue | *(none — stays text-only)* | Its 4 previewed bullets (weenies / bark the squirrel / predator huddle / rope-tug) match only ONE existing sprite (`BackyardWeenieTargeted`); the shared squirrel/predator/rope actors render generated draft-art parts in this controller, never a `FinalGameplayArt` override. Fewer than 2 genuine matches — left `null` per the task's own fallback. |
+| Snack Heist | PlateTargeted, GuardLane | Only 2 of 4 bullets have a distinct sprite; rows 2/3 render text-only. |
+| Sock Panic | BasketClosed, SockExposed, BasketFumble, SockSaved | All 4 bullets matched. |
+| Squirrel Conspiracy | CutoffOpen, CutoffHeld, StashRevealed, StashCracked | All 4 matched. |
+| Eagle Shadow Panic | CoverSafe, TalonGripOpen, TalonGripFreed, CoverSpotted | All 4 matched. |
+| Coyotes Fence | GapPinned, GapOpen, *null*, FakeSnack | `GapPinned` art is the sprite the mission itself renders ON the predator object the instant a bark pins it (verified in `CoyotesFenceMissionController.cs`) — a literal match for "BARK to pin it." Bullet 3 ("neither dog can perform both jobs...") has no distinct sprite. |
+| Weenie Roundup | Loose, Carried, Dropped, BowlFull | All 4 matched. |
+| Scent Search | DigUnknown, ScentHot, *null*, BoneFound | Bullet 3 ("Cheddar follows Cocoa's call...") has no distinct sprite beyond what rows 2/4 already show. |
+| Thunderstorm Comfort | CloudWaiting, ComfortHuddle, Thunderclap, StormCleared | All 4 matched. |
+| Mark The Yard | ZoneUnclaimed, SquirrelWatch, ZoneClaimed, ZoneStolen | All 4 matched. |
+| Leash Walk | *null*, CheckpointWaiting, CheckpointReached, SnapWarning | Bullet 1 ("share one leash") has no rendered sprite at all — CF2.5's own audit found Leash Walk's "leash" is an abstract distance constraint, nothing drawn. |
+| Car Ride | CarDashboardDriver, SeatCooler | Only 2 of 4 bullets matched; rows 2/3 render text-only. |
+| Gate Crash | GateClosed, ToyWaiting, GateSnap, ToyClaimed | All 4 matched. |
+| Table Stealth | HumanWatching, HumanDistracted, SteakSneakProgress, HumanSpotted | All 4 matched. |
+| Squirrel Switcheroo | StashGuarded, DecoyChased, StashOpen, DecoyBackfire | All 4 matched. |
+| Walk Campaign | LeashPresented, HumanGettingIt, HumanMisread, HumanWalkies | All 4 matched. |
+| Bone Relay | MoundUnknown, ScentPostCalled, MoundCalled, MoundFound | All 4 matched. |
+| Great Escape | StationWaiting, StationCocoaActive, StationFumble, StationCompleted | All 4 matched. |
+| Chaos Machine | LeverReady, JunctionTowelDrop, JunctionBasketTip, JunctionToyLaunch | All 4 matched. |
+| Blanket Catch | CatchTaut, SnackFalling, SnackCaught, CatchRipping | All 4 matched. |
+| Kitchen Food Frenzy | CounterReady, SafeBowlCatch, FoodGoodFalling | Only 3 bullets total (preview caps at the mission's own 3-step list); all 3 matched. |
+| Baby Bird Bedlam | ChickFalling, ChickShaking, MotherAttacking, ChickPecked | All 4 matched. |
+| Operation Pee Break | *(unchanged from CF1.9)* | OpenDoor, Leash, PhoneCharger, BarkBurst. |
+
+**Tests.** `MissionSelectScreenPlayModeTests.cs` gained four: a roster-wide loop (`Screen_TeamPlanChips
+_RosterWide_EveryMissionResolvesOrGracefullyFallsBack`) that selects all 23 missions and asserts every
+chip row either shows a real, non-placeholder sprite or gracefully falls back to text, and that
+exactly 22 missions show chips vs. 1 stays text-only; plus three targeted spot checks pinning exact
+sprite identity for a fully-matched mission (Sock Panic, 4/4), a mission with an interior `null`
+(Coyotes Fence), and a mission with a shorter-than-bullet-count array (Snack Heist). The existing
+CF1.9 fallback test (`Screen_TeamPlanChips_ChipLessMissionRendersTextOnly`) was retargeted from
+Gate Crash/Kitchen Food Frenzy (both of which now have real chip data) to Backyard Rescue, the
+roster's one remaining genuinely chip-less mission — not weakened, just pointed at the mission that
+is still actually true for. Full suite green at `698/698` (694→698, 4 new tests), one clean run, no
+flaky-test reruns needed this pass.
 
 ---
 
