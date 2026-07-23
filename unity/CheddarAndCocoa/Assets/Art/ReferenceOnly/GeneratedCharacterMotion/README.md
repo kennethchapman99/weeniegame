@@ -23,12 +23,23 @@ Generated first batch:
 - `cheddar_outcomes_east_v01.png` / `cocoa_outcomes_east_v01.png` — stunned/rescued/proud/sad pairs
 - `cheddar_carry_east_v01.png` / `cocoa_carry_east_v01.png` — prop-free persistent carry pair
 
+Active flat-storybook identity and locomotion boards:
+
+- `cheddar_storybook_model_sheet_v02.png`
+- `cocoa_storybook_model_sheet_v02.png`
+- `cheddar_storybook_run_east_v02.png`
+- `cocoa_storybook_run_east_v02.png`
+
+The V02 model sheets are the identity authority for new character art. The run boards use those
+sheets as hard references and the original pose sheets only for movement language. Cocoa's canonical
+coat is uniform deep chocolate with warm-brown points and no cream or white markings.
+
 See `docs/CHARACTER-MOTION-PACK.md` for approval gates and runtime export naming.
 
 Status: **reference-only / needs review**. The built-in generator returned RGB PNGs with a baked
 checkerboard instead of true alpha. Keep these boards out of ArenaFinal; use them to approve identity,
 angles, and pose language before per-frame generation/background extraction.
 
-The Tier-A boards deliberately use flat near-white backgrounds and are deterministic extraction
-sources. Their 146 normalized true-alpha cells are the generated motion art currently promoted to
-ArenaFinal.
+The V01 Tier-A boards deliberately use flat near-white backgrounds and remain deterministic
+extraction sources for the legacy directional fallback. V02 run boards are transparent review
+sources sliced by `tools/art/export_storybook_run.py`.

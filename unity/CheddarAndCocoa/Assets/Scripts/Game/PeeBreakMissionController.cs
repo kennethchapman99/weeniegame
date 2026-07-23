@@ -185,6 +185,7 @@ namespace CheddarAndCocoa.Game
         private GameObject _playBall;
         private GameObject _playBallArt;
         private GameObject _squeakyToy;
+        private GameObject _squeakyToyArt;
         private GameObject _squeakyToyHandle;
         private GameObject _comprehensionTrack;
         private GameObject _comprehensionFill;
@@ -1126,6 +1127,12 @@ namespace CheddarAndCocoa.Game
             _squeakyToy = NewScenery("PeeBreakSqueakyToy", new Color(1f, 0.65f, 0.16f), new Vector3(0.95f, 0.46f, 1f), 16);
             _squeakyToyHandle = NewChildScenery(_squeakyToy, "PeeBreakSqueakyToyHandle", new Color(0.8f, 0.18f, 0.16f),
                 new Vector3(0.34f, 1.5f, 1f), new Vector3(-0.52f, 0f, -0.02f), 17);
+            _squeakyToyArt = NewGeneratedProp("PeeBreakSqueakyToyArt", FinalGameplayArt.MissionSqueakyToy, 17);
+            if (_squeakyToyArt != null)
+            {
+                SetRendererEnabled(_squeakyToy, false);
+                SetRendererEnabled(_squeakyToyHandle, false);
+            }
             HideGeneratedBackedBlocks();
         }
 
@@ -1313,7 +1320,7 @@ namespace CheddarAndCocoa.Game
                 _cheddarRoleFlipPulse, _cocoaRoleFlipPulse,
                 _couchArt, _teenagerArt, _phoneArt, _openDoorArt,
                 _leashArt, _hydrantArt, _bladderArt, _misreadTennisBallArt,
-                _playBall, _playBallArt, _squeakyToy
+                _playBall, _playBallArt, _squeakyToy, _squeakyToyArt
             })
                 if (marker != null) marker.SetActive(active);
             if (active && _misreadProp != null) _misreadProp.SetActive(false);
@@ -1453,9 +1460,17 @@ namespace CheddarAndCocoa.Game
             }
 
             float squeakyWobble = ToyWobbleFactor(_squeakyToyAmbientWobbleRemaining);
-            _squeakyToy.transform.localScale = new Vector3(0.95f, 0.46f, 1f) * (1f + squeakyWobble * 0.18f);
-            SetGeneratedArtTint(_squeakyToy, Color.Lerp(new Color(1f, 0.65f, 0.16f), Color.white, squeakyWobble * 0.6f));
-            if (_squeakyToyHandle != null)
+            PlaceGeneratedArt(_squeakyToyArt, _squeakyToy.transform.position + new Vector3(0f, 0.08f, -0.25f),
+                0.58f * (1f + squeakyWobble * 0.18f), !DoorOpen, _squeakyToy.transform.eulerAngles.z);
+            SetGeneratedArtTint(_squeakyToyArt,
+                Color.Lerp(Color.white, new Color(1f, 0.88f, 0.55f), squeakyWobble * 0.55f));
+            if (_squeakyToyArt == null)
+            {
+                _squeakyToy.transform.localScale = new Vector3(0.95f, 0.46f, 1f) * (1f + squeakyWobble * 0.18f);
+                SetGeneratedArtTint(_squeakyToy,
+                    Color.Lerp(new Color(1f, 0.65f, 0.16f), Color.white, squeakyWobble * 0.6f));
+            }
+            if (_squeakyToyHandle != null && _squeakyToyArt == null)
                 _squeakyToyHandle.transform.localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(Time.time * 5.4f) * 8f);
             if (_context.Now() <= _signalReactionUntil && _teenagerArt != null)
             {

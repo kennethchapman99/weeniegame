@@ -16,7 +16,10 @@ Use case `stylized-concept`; reference-only 2.5D game character turnaround. Gene
 
 ### Cocoa turnaround
 
-Same turnaround contract, using one consistent dark-chocolate, long-low, long-haired miniature dachshund with subtle cream/spot identity and clearly visible teal-blue collar. Cocoa must read grounded, capable, and controlled. Avoid black featureless fur, golden drift, missing collar, generic anatomy, and inconsistent angles.
+Same turnaround contract, using one consistent dark-chocolate, long-low, long-haired miniature
+dachshund with subtle warm-brown muzzle/eyebrow/lower-paw points and a clearly visible teal-blue
+collar. Cocoa must read grounded, capable, and controlled. Avoid cream or white body markings,
+black featureless fur, golden drift, missing collar, generic anatomy, and inconsistent angles.
 
 ### Cheddar action key poses
 
@@ -69,3 +72,21 @@ methodical. Both boards are deliberately prop-free—Scent Search's live mound, 
 remain authoritative. `export_character_dig.py` promotes 16 frames, runtime mirrors east for west,
 and `DogReadabilityFeedback.ShowDig` now makes successful and cold digs display the authored loop
 before returning to normal locomotion.
+
+## V02 sheet-locked storybook generation
+
+On 2026-07-23 the built-in image-generation workflow produced neutral four-view model sheets for
+both dogs. These V02 sheets supersede runtime frames and V01 boards as the identity authority while
+retaining the owner portraits and pose sheets as the original source. The invariant matrix and
+review order live in `CHARACTER-ART-MODEL-SHEETS.md`.
+
+The first sheet-locked action is a four-pose east-facing run board for each dog. Prompts supplied the
+V02 sheet as the hard identity reference and the original pose sheet as movement reference only.
+Cheddar uses a contact, airborne stretch, compact landing, and push-off with loose head-led energy.
+Cocoa uses a lower, controlled version of the same phases with no cream/white markings.
+`export_storybook_run.py` produces eight 512×384 true-alpha runtime frames at baseline Y=360.
+
+Cocoa's two bark and two grooming frames were also regenerated in this workflow after contact-sheet
+review found noncanonical cream drift. Her V02 sheet was authoritative; the previous frames supplied
+pose only. Chroma-key removal used the imagegen helper with a soft matte and despill before the bark
+and grooming normalizers aligned the corrected cutouts.

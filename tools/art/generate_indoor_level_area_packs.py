@@ -20,6 +20,10 @@ ROOT = Path("unity/CheddarAndCocoa/Assets/Art/Resources/ArenaFinal/Props/LevelAr
 REF_ROOT = Path("unity/CheddarAndCocoa/Assets/Art/ReferenceOnly/GeneratedLevelAreas")
 SIZE = (1024, 768)
 OUTLINE = 14
+POLISHED_LIVING_ROOM_SOURCE = REF_ROOT / "livingroom_floor_area_storybook_v02.png"
+POLISHED_DINING_ROOM_SOURCE = REF_ROOT / "diningroom_floor_area_storybook_v02.png"
+POLISHED_KITCHEN_SOURCE = REF_ROOT / "kitchen_floor_area_storybook_v02.png"
+POLISHED_KITCHEN_COUNTER_SOURCE = REF_ROOT / "kitchen_counter_wall_storybook_v02.png"
 
 
 def rgba(hex_value: str, alpha: int = 255) -> tuple[int, int, int, int]:
@@ -85,10 +89,27 @@ def save(image: Image.Image, name: str):
     image.save(REF_ROOT / f"{name}.png")
     print(f"wrote {out}")
 
+def polished_or_fallback(source: Path, fallback: Image.Image) -> Image.Image:
+    if not source.exists():
+        return fallback
+    polished = Image.open(source).convert("RGBA")
+    return polished.resize(SIZE, Image.Resampling.LANCZOS) if polished.size != SIZE else polished
+
 
 def main():
-    save(diningroom_floor(), "diningroom_floor_area")
-    save(livingroom_floor(), "livingroom_floor_area")
+    save(polished_or_fallback(POLISHED_DINING_ROOM_SOURCE, diningroom_floor()),
+         "diningroom_floor_area")
+    # The deterministic geometry remains a safe fallback, but the runtime den now promotes the
+    # reviewed storybook paintover when it is present. Keeping the approved source beside the
+    # generated pack makes regeneration repeatable instead of silently reverting to draft blocks.
+    save(polished_or_fallback(POLISHED_LIVING_ROOM_SOURCE, livingroom_floor()),
+         "livingroom_floor_area")
+    if POLISHED_KITCHEN_SOURCE.exists():
+        save(polished_or_fallback(POLISHED_KITCHEN_SOURCE, Image.new("RGBA", SIZE)),
+             "kitchen_floor_area")
+    if POLISHED_KITCHEN_COUNTER_SOURCE.exists():
+        save(polished_or_fallback(POLISHED_KITCHEN_COUNTER_SOURCE, Image.new("RGBA", SIZE)),
+             "kitchen_counter_wall")
 
 
 if __name__ == "__main__":

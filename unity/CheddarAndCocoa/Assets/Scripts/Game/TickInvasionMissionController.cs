@@ -53,6 +53,8 @@ namespace CheddarAndCocoa.Game
         private MissionPropArtAttachment _poolArt;
         private TickInvasionArtFeedback _cheddarArt;
         private TickInvasionArtFeedback _cocoaArt;
+        private DogGroomAnimation _cheddarGroomAnimation;
+        private DogGroomAnimation _cocoaGroomAnimation;
         private float _successHoldRemaining;
         private DogId? _worstCalloutFiredFor;
 
@@ -61,6 +63,8 @@ namespace CheddarAndCocoa.Game
         public MissionPropArtAttachment PoolArt => _poolArt;
         public TickInvasionArtFeedback CheddarArt => _cheddarArt;
         public TickInvasionArtFeedback CocoaArt => _cocoaArt;
+        public DogGroomAnimation CheddarGroomAnimation => _cheddarGroomAnimation;
+        public DogGroomAnimation CocoaGroomAnimation => _cocoaGroomAnimation;
 
         public GameManager.MissionVariant Variant => GameManager.MissionVariant.TickInvasion;
         public bool IsComplete => _puzzle.Cleared && _successHoldRemaining <= 0f;
@@ -256,6 +260,11 @@ namespace CheddarAndCocoa.Game
             if (partnerIdx >= 0)
                 BackyardArtVfxPulse.Spawn(_context.Dogs[partnerIdx].transform.position + Vector3.up * 0.35f,
                     FinalGameplayArt.TickInvasionGroomBurst, Vector3.one * 0.31f, 62, Color.white, 0.68f, 26f);
+            DogGroomAnimation groomAnimation = dog == DogId.Cheddar
+                ? _cheddarGroomAnimation
+                : _cocoaGroomAnimation;
+            if (groomerIdx >= 0 && partnerIdx >= 0)
+                groomAnimation?.Play(_context.Dogs[partnerIdx].transform);
             UpdateTickLabels();
             UpdateTickArt();
             _context.LogEvent("TickGroom", $"{Name(dog)}->{Name(partner)}");
@@ -268,6 +277,8 @@ namespace CheddarAndCocoa.Game
             if (_poolObj != null) _poolObj.SetActive(false);
             _cheddarArt?.Hide();
             _cocoaArt?.Hide();
+            _cheddarGroomAnimation?.Hide();
+            _cocoaGroomAnimation?.Hide();
             _successHoldRemaining = 0f;
             _worstCalloutFiredFor = null;
         }
@@ -459,12 +470,16 @@ namespace CheddarAndCocoa.Game
                     _cheddarTickLabel = _context.AddWorldLabel(_context.Dogs[cheddarIdx].gameObject, "TICKS 0%", new Vector3(0f, -1.05f, -0.1f), 11, Color.white);
                     _cheddarArt = _context.Dogs[cheddarIdx].gameObject.AddComponent<TickInvasionArtFeedback>();
                     _cheddarArt.Init();
+                    _cheddarGroomAnimation = _context.Dogs[cheddarIdx].gameObject.AddComponent<DogGroomAnimation>();
+                    _cheddarGroomAnimation.Init();
                 }
                 if (cocoaIdx >= 0)
                 {
                     _cocoaTickLabel = _context.AddWorldLabel(_context.Dogs[cocoaIdx].gameObject, "TICKS 0%", new Vector3(0f, -1.05f, -0.1f), 11, Color.white);
                     _cocoaArt = _context.Dogs[cocoaIdx].gameObject.AddComponent<TickInvasionArtFeedback>();
                     _cocoaArt.Init();
+                    _cocoaGroomAnimation = _context.Dogs[cocoaIdx].gameObject.AddComponent<DogGroomAnimation>();
+                    _cocoaGroomAnimation.Init();
                 }
             }
         }

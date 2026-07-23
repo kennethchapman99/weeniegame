@@ -77,7 +77,8 @@ Cocoa:
 - Chocolate, grounded, expressive, capable, slightly over it.
 - Reads like control and judgment: steadier posture, cleaner stance, queenly markers.
 - Use a cool teal/blue collar or accent as the consistent player read.
-- Markings should emphasize spots, chest patch, velvet ear, tiny crown/queen marker when useful.
+- Markings stay tonal: warm-brown muzzle, eyebrow points, and lower paws against the deep-chocolate
+  coat. Do not add cream or white patches.
 - Cocoa should look competent even when annoyed. Her danger state should feel like "I warned you."
 
 ## Color And Accent Rules
@@ -85,7 +86,8 @@ Cocoa:
 - Cheddar body: golden/yellow-orange family.
 - Cheddar accents: red/orange collar, brighter yellow mood sparks, warm ear/tuft.
 - Cocoa body: dark chocolate/brown family.
-- Cocoa accents: teal/blue collar, cream chest, darker/lighter spots, small gold queen marker.
+- Cocoa accents: teal/blue collar, warm-brown tonal points, small gold queen marker when used as a
+  UI/role motif rather than a body marking.
 - UI arrows and dog-specific callouts should echo collar/accent colors when possible.
 - Do not make Cheddar and Cocoa differ only by label. Body color, collar, markings, and silhouette
   energy must all carry identity.
@@ -211,8 +213,9 @@ Current implementation rules:
 - Both dogs have generated heads, long snouts, floppy ears, tiny feet, tails, collars, and expression
   eyes.
 - Cheddar has a golden body, red collar, bright chaos tuft/flash, and "CHEDDAR CHAOS PUP" identity.
-- Cocoa has a chocolate body, teal collar, cream chest, spot markings, tiny crown marker, and
-  "COCOA SPOT QUEEN" identity.
+- Cocoa has a uniform chocolate body, teal collar, warm-brown tonal points, tiny crown marker, and
+  "COCOA SPOT QUEEN" identity. Older geometric fallbacks may retain a chest-patch shape, but new
+  authored art follows `CHARACTER-ART-MODEL-SHEETS.md`.
 - Cheddar and Cocoa currently also show small imported portrait badges behind their generated
   gameplay bodies. The badge is a readability/reference aid, not a replacement for final pose
   animation.
@@ -220,25 +223,26 @@ Current implementation rules:
   TUG, STUNNED, RESCUED, PROUD, SAD FLOP.
 - Objective arrows stay dog-accent colored and hide when the target is close.
 
-### Photo-Inspired Backyard Reskin Layer
+### Shared Backyard Plate
 
-The first real-yard reskin pass uses Ken/Sue backyard aerial references as source direction, but
-exports simplified transparent sprites instead of photo plates. The current kit lives under
-`unity/CheddarAndCocoa/Assets/Art/Resources/ArenaFinal/Props/Environment/`:
+The shared yard uses one full-opacity flat-cel storybook plate,
+`yard_backyard_plate_v02`, behind runtime characters and mission cues. Its approved source is
+`ReferenceOnly/GeneratedBackyardMegapass/yard_backyard_plate_storybook_v03.png`. The resource name
+remains V02 to preserve the existing runtime contract.
 
-- `yard_photo_lawn_stripes`
-- `yard_photo_pool_patio`
-- `yard_photo_hedge_run`
-- `yard_photo_patio_pavers`
-- `yard_photo_big_tree`
-- `yard_photo_wood_fence`
-- `yard_photo_garden_boxes`
-- `yard_photo_house_deck`
+- Preserve the exact 1672×941 footprint and landmark map: house stoop, perimeter fence and beds,
+  tree/swing, stepping stones, sandbox, picnic blanket, stone patio, hedges, and broad central lawn.
+- Keep foliage and materials in the same warm outlined, simplified two-tone language as indoor
+  room plates and mission props. Avoid realistic leaf microdetail and photo-crop collage layers.
+- Concentrate detail and saturation at the perimeter. Central and lower-center co-op lanes stay
+  quiet enough for dog silhouettes, threats, pickups, and world cues.
+- The plate is scenery only: no frozen dogs, people, squirrels, threats, collectibles, text, or UI.
+- Independent environment overlays remain collider-free and lower-priority than mission actors.
+  Retire any overlay that duplicates a landmark already painted into the plate or obscures play.
 
-`BackyardRescueArtEnhancer` layers these as decorative scenery only. They must stay collider-free,
-lower-priority than mission actors, and readable at the current orthographic couch camera. If a
-photo-inspired prop creates ambiguity, reduce opacity/scale or move it behind a district anchor
-before changing mission mechanics.
+The legacy `yard_photo_*` resource slots remain available for adventure thumbnails and the
+controller-owned pool water treatment, but `BackyardRescueArtEnhancer` must not rebuild the retired
+photo-crop yard collage from them.
 
 ## Backyard Prop Readability
 
@@ -295,6 +299,12 @@ replace runtime sprites until a human approves identity, camera, silhouette, and
   size.
 - Weenie/snack/sock props should remain small enough to collect cleanly with the current `0.6`
   trigger radius and large enough to read under objective arrows.
+- Indoor floor plates use a shared `48 x 36` Unity-unit stage envelope. Perimeter furniture may be
+  human-scale, but central lanes stay quiet and small dog toys should render roughly `0.55–1.6`
+  units wide so they still look carryable beside a roughly two-unit dog.
+- Mission-state illustrations that sit beside the dogs should normally remain `2–4` units wide.
+  Author important cues by world size rather than source-pixel scale so a regenerated 512/1024px
+  texture cannot vanish or become room-sized.
 - Squirrel, predator warning, and rope replacements should preserve their rough current gameplay
   scale: squirrel small thief, predator larger warning/shadow, rope horizontal shared-object.
 

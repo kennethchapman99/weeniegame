@@ -362,8 +362,10 @@ namespace CheddarAndCocoa.Game
             // the HUD objective line carry the flop/sneak instruction and the sneak percentage.
             _human = NewMarker("TableStealthHuman", HumanIdleColor, "HUMAN", new Vector3(1.6f, 4f, 1f), out _humanLabel);
             _steak = NewMarker("TableStealthSteak", new Color(0.6f, 0.8f, 1f), "STEAK", Vector3.one * 1.2f, out _steakLabel);
-            _humanArt = MissionPropArt.AttachObject(_human, FinalGameplayArt.TableStealthHumanWatching, 0.013f, 18, true);
-            _steakArt = MissionPropArt.AttachObject(_steak, FinalGameplayArt.TableStealthSteakAvailable, 0.012f, 18, true);
+            _humanArt = MissionPropArt.AttachObjectAtWorldWidth(
+                _human, FinalGameplayArt.TableStealthHumanWatching, 4.4f, 18, true);
+            _steakArt = MissionPropArt.AttachObjectAtWorldWidth(
+                _steak, FinalGameplayArt.TableStealthSteakAvailable, 1.8f, 18, true);
             _humanFeedback = _human.AddComponent<MissionActorFeedback>();
             _humanFeedback.Init(_human.GetComponent<SpriteRenderer>(), "HUMAN WATCHING TABLE", 0.03f, Vector3.forward * 12f);
         }

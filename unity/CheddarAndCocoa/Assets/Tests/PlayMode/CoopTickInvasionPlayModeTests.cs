@@ -111,6 +111,59 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator TickInvasion_GroomingUsesDistinctAuthoredCharacterKeyframes()
+        {
+            yield return LoadArena();
+
+            Assert.IsTrue(_controller.CheddarGroomAnimation.HasAuthoredFrames);
+            Assert.IsTrue(_controller.CocoaGroomAnimation.HasAuthoredFrames);
+            Assert.IsTrue(FinalGameplayArt.Has(CharacterMotionArt.ResourcePath(
+                DogId.Cheddar, CharacterMotionArt.Clip.Groom, CharacterMotionArt.Facing8.E, 0)));
+            Assert.IsTrue(FinalGameplayArt.Has(CharacterMotionArt.ResourcePath(
+                DogId.Cheddar, CharacterMotionArt.Clip.Groom, CharacterMotionArt.Facing8.E, 1)));
+            Assert.IsTrue(FinalGameplayArt.Has(CharacterMotionArt.ResourcePath(
+                DogId.Cocoa, CharacterMotionArt.Clip.Groom, CharacterMotionArt.Facing8.E, 0)));
+            Assert.IsTrue(FinalGameplayArt.Has(CharacterMotionArt.ResourcePath(
+                DogId.Cocoa, CharacterMotionArt.Clip.Groom, CharacterMotionArt.Facing8.E, 1)));
+
+            _controller.CheddarGroomAnimation.ShowFrameForTests(0);
+            string cheddarFirst = _controller.CheddarGroomAnimation.CurrentSpriteName;
+            _controller.CheddarGroomAnimation.ShowFrameForTests(1);
+            Assert.AreNotEqual(cheddarFirst, _controller.CheddarGroomAnimation.CurrentSpriteName,
+                "Cheddar's grooming beat needs two distinct authored silhouettes.");
+            _controller.CheddarGroomAnimation.Hide();
+
+            _controller.CocoaGroomAnimation.ShowFrameForTests(0);
+            string cocoaFirst = _controller.CocoaGroomAnimation.CurrentSpriteName;
+            _controller.CocoaGroomAnimation.ShowFrameForTests(1);
+            Assert.AreNotEqual(cocoaFirst, _controller.CocoaGroomAnimation.CurrentSpriteName,
+                "Cocoa's grooming beat needs two distinct authored silhouettes.");
+            _controller.CocoaGroomAnimation.Hide();
+        }
+
+        [UnityTest]
+        public IEnumerator TickInvasion_SuccessfulGroomTemporarilyOverridesTheGroomersPose()
+        {
+            yield return LoadArena();
+
+            Vector3 center = _game.ArenaBounds.center;
+            PlaceDog(_cheddar, center - Vector3.right * 0.5f);
+            PlaceDog(_cocoa, center + Vector3.right * 0.5f);
+            _controller.Tick(4f, Time.time);
+
+            Assert.IsTrue(_controller.HandleInteract(_cheddarIndex));
+            Assert.IsTrue(_controller.CheddarGroomAnimation.IsPlaying);
+            Assert.IsFalse(_controller.CocoaGroomAnimation.IsPlaying);
+            Assert.AreEqual("cheddar_groom_e_00", _controller.CheddarGroomAnimation.CurrentSpriteName);
+            Assert.IsTrue(_cheddar.GetComponent<DogReadabilityFeedback>().HasMissionArtOverride);
+
+            _controller.Cleanup();
+            Assert.IsFalse(_controller.CheddarGroomAnimation.IsPlaying);
+            Assert.IsFalse(_cheddar.GetComponent<DogReadabilityFeedback>().HasMissionArtOverride,
+                "Mission cleanup must restore the normal shared dog pose renderer.");
+        }
+
+        [UnityTest]
         public IEnumerator TickInvasion_SuperTickAndActionsUseDistinctAuthoredVisuals()
         {
             yield return LoadArena();

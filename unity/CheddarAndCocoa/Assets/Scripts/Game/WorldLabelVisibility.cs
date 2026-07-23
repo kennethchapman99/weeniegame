@@ -20,6 +20,7 @@ namespace CheddarAndCocoa.Game
         private SpriteRenderer _skinRenderer;
         private float _promptRange = DefaultPromptRange;
         private bool _visible;
+        private float _authoredWorldScale;
 
         public bool IsVisible => _visible;
         public float PromptRange => _promptRange;
@@ -64,6 +65,7 @@ namespace CheddarAndCocoa.Game
         {
             _label = label;
             _promptRange = Mathf.Max(0.2f, promptRange);
+            CaptureAuthoredWorldScale();
             CacheRenderers();
             ApplyVisibility();
         }
@@ -71,6 +73,7 @@ namespace CheddarAndCocoa.Game
         private void Awake()
         {
             if (_label == null) _label = GetComponent<TextMesh>();
+            CaptureAuthoredWorldScale();
             CacheRenderers();
             ApplyVisibility();
         }
@@ -85,6 +88,29 @@ namespace CheddarAndCocoa.Game
         {
             CacheRenderers();
             ApplyVisibility();
+            NormalizeWorldPose();
+        }
+
+        private void CaptureAuthoredWorldScale()
+        {
+            if (_authoredWorldScale > 0f) return;
+            _authoredWorldScale = Mathf.Max(0.001f, Mathf.Abs(transform.localScale.x));
+        }
+
+        /// <summary>
+        /// Generated marker roots often encode their interaction range as a large, non-uniform
+        /// transform scale. Text is guidance, not geometry: keep it a stable world size so labels
+        /// do not become room-wide banners or vertically squashed slivers.
+        /// </summary>
+        private void NormalizeWorldPose()
+        {
+            if (_authoredWorldScale <= 0f || transform.parent == null) return;
+            Vector3 parentScale = transform.parent.lossyScale;
+            transform.localScale = new Vector3(
+                _authoredWorldScale / Mathf.Max(0.001f, Mathf.Abs(parentScale.x)),
+                _authoredWorldScale / Mathf.Max(0.001f, Mathf.Abs(parentScale.y)),
+                1f);
+            transform.rotation = Quaternion.identity;
         }
 
         private static void RefreshAll()

@@ -37,6 +37,13 @@ namespace CheddarAndCocoa.Tests
             Assert.That(FinalGameplayArt.EnvironmentBackyardPlate, Does.Not.Contain("Cheddar").IgnoreCase);
             Assert.That(FinalGameplayArt.EnvironmentBackyardPlate, Does.Not.Contain("Cocoa").IgnoreCase);
 
+            var plate = FinalGameplayArt.Load(FinalGameplayArt.EnvironmentBackyardPlate);
+            Assert.IsNotNull(plate, "The reviewed backyard plate should load from its stable runtime path.");
+            Assert.AreEqual(1672, plate.texture.width,
+                "The storybook paintover must preserve the established backyard footprint.");
+            Assert.AreEqual(941, plate.texture.height,
+                "The storybook paintover must preserve the established backyard footprint.");
+
             Assert.That(FinalGameplayArt.SquirrelIdle, Does.Contain("Characters/Squirrel"));
             Assert.That(FinalGameplayArt.EagleThreat, Does.Contain("Characters/Eagle"));
             Assert.That(FinalGameplayArt.SquirrelIdle, Does.Not.Contain("Environment"));

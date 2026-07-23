@@ -16,6 +16,7 @@ namespace CheddarAndCocoa.Game
         private GameManager _game;
         private string _outputDirectory;
         private Vector2? _focusOverride;
+        private float? _orthoSizeOverride;
 
         public static bool TryAttach(GameManager game)
         {
@@ -57,9 +58,21 @@ namespace CheddarAndCocoa.Game
             foreach (GameManager.MissionVariant variant in Enum.GetValues(typeof(GameManager.MissionVariant)))
             {
                 _focusOverride = null;
+                _orthoSizeOverride = null;
                 string slug = Slug(variant.ToString());
                 _game.StartMission(variant);
                 yield return new WaitForSecondsRealtime(0.25f);
+                // The Pee Break explainer renders on CameraNearPlane, so leaving it active makes
+                // all three "art review" frames grade the pre-rendered video instead of the live
+                // room, dogs, props, indicators, and scale relationships this harness exists to
+                // inspect. Normal players still see the skippable explainer; the opt-in diagnostic
+                // capture deliberately advances to gameplay before taking its first frame.
+                if (variant == GameManager.MissionVariant.OperationPeeBreak &&
+                    _game.MissionOpeningPresentationVisible)
+                {
+                    _game.SkipMissionOpeningPresentation();
+                    yield return null;
+                }
                 FocusCameraOnActiveMission(variant);
                 yield return new WaitForSecondsRealtime(0.08f);
                 string start = $"{index:00}-{slug}-start.ppm";
@@ -94,8 +107,19 @@ namespace CheddarAndCocoa.Game
             switch (variant)
             {
                 case GameManager.MissionVariant.BackyardRescue:
-                case GameManager.MissionVariant.SnackHeist:
                     _game.ForceSquirrelStealAttempt();
+                    if (BarkDog(DogId.Cheddar, out Vector2 barkPosition))
+                    {
+                        _focusOverride = barkPosition;
+                        _orthoSizeOverride = 4.5f;
+                    }
+                    break;
+                case GameManager.MissionVariant.SnackHeist:
+                    if (RunDogForReview(DogId.Cocoa, Vector2.right * 4f, out Vector2 runPosition))
+                    {
+                        _focusOverride = runPosition;
+                        _orthoSizeOverride = 4.5f;
+                    }
                     break;
                 case GameManager.MissionVariant.SockPanic:
                     _game.ForceSockBasketTip(DogId.Cocoa);
@@ -182,6 +206,8 @@ namespace CheddarAndCocoa.Game
                 case GameManager.MissionVariant.TickInvasion:
                     StageDogsAround(_game.ArenaBounds.center);
                     _game.TickInvasionController?.Tick(15f, Time.time);
+                    _game.TickInvasionController?.HandleInteract(
+                        _game.TickInvasionController.DogIndexOf(DogId.Cocoa));
                     break;
             }
         }
@@ -306,7 +332,8 @@ namespace CheddarAndCocoa.Game
             if (rig != null) rig.enabled = false;
 
             bool peeBreak = variant == GameManager.MissionVariant.OperationPeeBreak;
-            float orthoSize = peeBreak ? 8.5f : 8f;
+            float orthoSize = _orthoSizeOverride ?? (peeBreak ? 8.5f : 8f);
+            _orthoSizeOverride = null;
 
             Vector2 focus = _game.ArenaBounds.center;
             if (_focusOverride.HasValue)
@@ -384,6 +411,50 @@ namespace CheddarAndCocoa.Game
                 dogs[i].transform.position = point + new Vector2(side * 1.1f, -0.65f);
                 if (dogs[i].TryGetComponent<Rigidbody2D>(out var body)) body.linearVelocity = Vector2.zero;
             }
+        }
+
+        private static bool BarkDog(DogId dog, out Vector2 position)
+        {
+            position = Vector2.zero;
+            foreach (var identity in FindObjectsByType<DogIdentity>(FindObjectsSortMode.None))
+            {
+                if (identity.Id != dog || !identity.TryGetComponent<DogController>(out var controller)) continue;
+                position = identity.transform.position;
+                controller.Bark();
+                return true;
+            }
+            return false;
+        }
+
+        private bool RunDogForReview(DogId dog, Vector2 velocity, out Vector2 position)
+        {
+            position = Vector2.zero;
+            foreach (var identity in FindObjectsByType<DogIdentity>(FindObjectsSortMode.None))
+            {
+                if (identity.Id != dog || !identity.TryGetComponent<Rigidbody2D>(out var body)) continue;
+                position = identity.transform.position;
+                identity.TryGetComponent<GamepadPlayerInput>(out var input);
+                StartCoroutine(HoldReviewVelocity(body, input, velocity));
+                return true;
+            }
+            return false;
+        }
+
+        private static IEnumerator HoldReviewVelocity(
+            Rigidbody2D body,
+            GamepadPlayerInput input,
+            Vector2 velocity)
+        {
+            bool restoreInput = input != null && input.enabled;
+            if (input != null) input.enabled = false;
+            float end = Time.realtimeSinceStartup + 0.45f;
+            while (body != null && Time.realtimeSinceStartup < end)
+            {
+                body.linearVelocity = velocity;
+                yield return null;
+            }
+            if (body != null) body.linearVelocity = Vector2.zero;
+            if (input != null) input.enabled = restoreInput;
         }
 
         private static string Slug(string value)

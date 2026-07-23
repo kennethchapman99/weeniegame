@@ -32,8 +32,8 @@ sniff/hide/comfort art — the enum slot is already there).
 | State | Frames × directions on disk | Classification | Notes |
 |---|---|---|---|
 | idle | 4 × 5 (E,N,NE,S,SE) | **authored strip** | Full coverage; W/NW/SW covered by `flipX` mirror of E/NE/SE — effectively 8/8. |
-| run | 4 × 5 (E,N,NE,S,SE) | **authored strip** | Same full coverage as idle. |
-| bark | 4 × 5 (E,N,NE,S,SE) | **authored strip** | Same full coverage; frame-capped at index 3 regardless of elapsed time. |
+| run | 4 × 1 storybook primary; 4 × 5 legacy fallback | **authored storybook strip (2026-07-23)** | `Pose.Run` maps to `Clip.RunStorybook`: V02-sheet-locked E poses mirrored west, with 10 fps Cheddar / 8 fps Cocoa timing. Missing storybook art retries the complete prior directional `Clip.Run` set. |
+| bark | 2 × 1 storybook primary; 4 × 5 legacy fallback | **authored storybook strip (2026-07-23)** | `Pose.Bark` now maps to `Clip.BarkStorybook`: a two-pose side-on cycle, mirrored west, with 10 fps Cheddar / 7 fps Cocoa timing. Missing storybook art retries the prior `Clip.Bark` directional frame. The legacy set remains complete and load-tested. |
 | dig | 4 × 2 (E,S) | **reused strip (E-facing, mirrored)** | N/NE/SE requests retry at E and mirror — still a real 4-frame dig animation, just not truly directional. Used by 1 mission controller (`ShowDig`, Scent Search / Bone Relay dig verb). |
 | carry | 2 × 3 (E,N,S) | **reused strip (E-facing, mirrored)** | NE/SE reuse E, mirrored. `SetCarrying(true)` used in 2 controllers. |
 | tug | 3 × 1 (E only) | **reused strip (E-facing, mirrored)** | Every non-E facing reuses the same 3 E frames, mirrored for west-facing. Used in 2 controllers (shared rope-tug + `ShowTug(faceDir)` two-dog-flank variant). |
@@ -45,6 +45,7 @@ sniff/hide/comfort art — the enum slot is already there).
 | jump | none | **static fallback (= plain idle image)** | Same gap as swim — `Pose.Jump` renders as plain idle. |
 | interact (any mission's accept) | n/a | **fixed (A2.2, 2026-07-18)** | `GameManager.OnDogInteracted` now plays a squash-and-pop cosmetic tween on a genuine Interact acceptance, roster-wide, via one shared hook. Not a `Pose`/authored-art fix — a tween layered on top of whatever pose is already showing. |
 | sniff | 4 × 2 (E, S) | **authored strip (A2.4, 2026-07-18)** | `Pose.Sniff`/`Clip.Sniff` exist and `ScentSearchMissionController.Sniff()` calls `ShowSniff()` on both dogs' tracking beats. A2.3 wired the code path with no art (owner-supplied reference boards weren't available that session); A2.4 got hand-produced `cheddar_sniff_east_south_v01.png`/`cocoa_sniff_east_south_v01.png` boards from the owner and extracted real E/S frames through a new `export_character_sniff.py` (W covered by the existing E-facing mirror, same pattern as dig). |
+| groom (Tick Invasion) | 2 × 1 (E only) | **authored mission clip (2026-07-23 sheet correction)** | `CharacterMotionArt.Clip.Groom` is driven by controller-owned `DogGroomAnimation` after a successful mutual groom. It temporarily overrides the shared dog-art renderer rather than adding a global `Pose.Groom`; W is mirrored. Cheddar plays at 7 fps and Cocoa at 5.5 fps. Cocoa's pair was regenerated against her V02 sheet to remove noncanonical cream markings. |
 | comfort (as a distinct gesture) | n/a | **missing (aliased)** | `ShowComfort()` calls `ForcePose(Pose.Proud, 0.5f)` — a real gameplay signal fires, but it visually reads as "proud," not "comforting." |
 | dramatic flop (Table Stealth) | n/a | **missing** | No `Pose.Flop`; Cocoa's belly-flop distraction has no distinct pose while `_flopEngaged` is true. |
 | beg | n/a | **missing** | No `Pose.Beg` anywhere in the roster. |

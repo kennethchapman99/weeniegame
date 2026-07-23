@@ -1287,6 +1287,17 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(FindLoadedObject("PeeBreakPlayBall"));
             Assert.IsNotNull(FindLoadedObject("PeeBreakPlayBallArt"));
             Assert.IsNotNull(FindLoadedObject("PeeBreakSqueakyToy"));
+            var squeakyArt = FindLoadedObject("PeeBreakSqueakyToyArt");
+            AssertGeneratedPeeBreakArt("PeeBreakSqueakyToyArt");
+            Assert.IsTrue(squeakyArt.activeInHierarchy,
+                "The optional squeaky toy should use the same authored prop language as mission objectives.");
+            Assert.IsFalse(FindLoadedObject("PeeBreakSqueakyToy").GetComponent<SpriteRenderer>().enabled,
+                "Loaded toy art should replace, not stack over, the stretched rectangle fallback.");
+            Assert.IsFalse(FindLoadedObject("PeeBreakSqueakyToyHandle").GetComponent<SpriteRenderer>().enabled,
+                "Loaded toy art already includes a handle and must not retain the block-built duplicate.");
+            float toyWidth = squeakyArt.GetComponent<SpriteRenderer>().bounds.size.x;
+            Assert.That(toyWidth, Is.InRange(0.55f, 1.6f),
+                "A floor toy should stay near dog-mouth scale, not read as furniture or a tiny UI icon.");
 
             Vector2 before = Controller.PlayBallPosition;
             cheddar.transform.position = before + Vector2.left * 0.4f;
@@ -1484,6 +1495,10 @@ namespace CheddarAndCocoa.Tests
                 FindLoadedObject("PeeBreakGeneratedHydrantReliefArt"),
                 FindLoadedObject("PeeBreakGeneratedBladderMeterArt"),
                 FindLoadedObject("PeeBreakGeneratedMisreadTennisBallArt"),
+                FindLoadedObject("PeeBreakPlayBall"),
+                FindLoadedObject("PeeBreakPlayBallArt"),
+                FindLoadedObject("PeeBreakSqueakyToy"),
+                FindLoadedObject("PeeBreakSqueakyToyArt"),
                 FindLoadedObject("PeeBreakRoomWall"),
                 FindLoadedObject("PeeBreakRoomWoodFloor"),
                 FindLoadedObject("PeeBreakRoomBaseboard"),

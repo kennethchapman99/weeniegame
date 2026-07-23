@@ -73,8 +73,34 @@ requests, and the separate rumble request path.
 The Tick Invasion production-art pass replaces its dog-bowl pool stand-in with an authored top-down
 kiddie pool, adds pressure-driven infestation/Super Tick overlays to both dogs, and gives successful
 groom and rinse interactions distinct transient VFX. The dated repo-wide audit and remaining ranked
-needs are recorded in `ART-PRODUCTION-AUDIT-2026-07-22.md`. Its focused PlayMode suite passes 19/19,
-the macOS arena dev build succeeds, and the updated 25-mission review harness writes 75/75 frames.
+needs are recorded in `ART-PRODUCTION-AUDIT-2026-07-22.md`. A follow-on character pass adds two
+flat-storybook grooming keyframes per dog, with faster Cheddar and steadier Cocoa timing, using a
+mission-local override of the existing dog-art renderer. Its focused PlayMode suite passes 21/21;
+the fresh macOS arena dev build succeeds, and the current 26-mission review harness writes 78/78
+frames with a real successful Cocoa groom staged in Tick Invasion's main-interaction capture. The
+full shared-renderer regression suite passes 811/811.
+
+The next character pass promotes a separate two-frame flat-storybook bark clip for both dogs across
+the full roster. Cheddar's cycle is quicker and more explosive; Cocoa's is slower and authoritative.
+The existing five-direction bark pack remains on disk and is retried automatically if the new
+side-on clip cannot load. Generated cutouts are normalized to the shared 512×384 motion canvas and
+Y=360 baseline by `tools/art/normalize_storybook_bark.py`. Focused final-art coverage passes 13/13,
+the full PlayMode suite passes 811/811, the macOS dev build succeeds, and the 78-frame review pass
+includes a real close-review Cheddar bark.
+
+The V02 convergence pass establishes explicit four-view flat-storybook model sheets for both dogs,
+then promotes a four-frame E-facing storybook run for each. `Pose.Run` prefers the new sheet-locked
+clip at 10 fps for Cheddar and 8 fps for Cocoa, mirrors it west, and retries the previous complete
+directional run set if a new resource is absent. Cocoa's bark and grooming frames were regenerated
+against her V02 sheet to remove accidental cream/white markings; Cheddar retains his canonical
+cream chest/toe identity. All run, bark, and grooming cutouts now share a 512×384 canvas and Y=360
+baseline.
+
+Focused final-art coverage passes 13/13 and the full PlayMode suite passes 811/811 after live run
+promotion. The fresh macOS dev build succeeds, and the 26-mission review harness writes 78/78
+frames. Snack Heist's main frame holds Cocoa at review velocity and 4.5-unit zoom, providing an
+unobstructed gameplay render of the new run while Backyard Rescue and Tick Invasion retain the bark
+and corrected grooming review beats.
 
 ## Sources and export
 
@@ -105,6 +131,9 @@ python3 tools/art/generate_world_label_skin_pack.py
 - UI sheets were inventoried but not exported; the integration pass prioritized Backyard Rescue
   readability. Further priorities come from the baseline couch playtest.
 - Expression sheets remain reference-only because full-body pose sheets produce more readable gameplay silhouettes.
+- The V02 model sheets are the active identity contract; V01 boards remain pose history.
+- Storybook run and bark are intentionally side-on and mirrored. Their previous five-direction
+  strips remain safe runtime fallbacks while additional V02 directions are authored.
 - `proud` and `rescued` currently use the same best available win pose for each dog.
 - `rope_tug` and `rope_complete` currently use the same source drawing; the separate runtime paths preserve a clean future replacement point.
 - Threat motion frames are derived from the approved transparent state sprites with small squash,

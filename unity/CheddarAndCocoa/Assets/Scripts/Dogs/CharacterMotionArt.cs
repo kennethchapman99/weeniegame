@@ -7,14 +7,20 @@ namespace CheddarAndCocoa.Dogs
     public static class CharacterMotionArt
     {
         public enum Facing8 { E, SE, S, SW, W, NW, N, NE }
-        public enum Clip { Idle, Run, Bark, Tug, Dig, Carry, Herd, Hide, Comfort, Stunned, Rescued, Proud, Sad, Sniff }
+        public enum Clip { Idle, Run, RunStorybook, Bark, BarkStorybook, Tug, Dig, Carry, Herd, Hide, Comfort, Groom, Stunned, Rescued, Proud, Sad, Sniff }
 
         public static string ResourcePath(DogId dog, Clip clip, Facing8 facing, int frame)
         {
             string dogName = dog == DogId.Cheddar ? "cheddar" : "cocoa";
             string folder = dog == DogId.Cheddar ? "Cheddar" : "Cocoa";
+            string clipName = clip switch
+            {
+                Clip.RunStorybook => "run_storybook",
+                Clip.BarkStorybook => "bark_storybook",
+                _ => clip.ToString().ToLowerInvariant()
+            };
             return $"{FinalGameplayArt.Root}/Characters/Dogs/{folder}/Motion/" +
-                   $"{dogName}_{clip.ToString().ToLowerInvariant()}_{facing.ToString().ToLowerInvariant()}_{Mathf.Max(0, frame):00}";
+                   $"{dogName}_{clipName}_{facing.ToString().ToLowerInvariant()}_{Mathf.Max(0, frame):00}";
         }
 
         public static Sprite Load(DogId dog, Clip clip, Facing8 facing, int frame) =>
@@ -31,8 +37,8 @@ namespace CheddarAndCocoa.Dogs
             switch (pose)
             {
                 case DogReadabilityFeedback.Pose.Idle: clip = Clip.Idle; return true;
-                case DogReadabilityFeedback.Pose.Run: clip = Clip.Run; return true;
-                case DogReadabilityFeedback.Pose.Bark: clip = Clip.Bark; return true;
+                case DogReadabilityFeedback.Pose.Run: clip = Clip.RunStorybook; return true;
+                case DogReadabilityFeedback.Pose.Bark: clip = Clip.BarkStorybook; return true;
                 case DogReadabilityFeedback.Pose.Tug: clip = Clip.Tug; return true;
                 case DogReadabilityFeedback.Pose.Dig: clip = Clip.Dig; return true;
                 case DogReadabilityFeedback.Pose.Carry: clip = Clip.Carry; return true;
@@ -51,10 +57,13 @@ namespace CheddarAndCocoa.Dogs
             {
                 Clip.Idle => dog == DogId.Cheddar ? 3.2f : 2.5f,
                 Clip.Run => dog == DogId.Cheddar ? 10f : 8.5f,
+                Clip.RunStorybook => dog == DogId.Cheddar ? 10f : 8f,
                 Clip.Bark => 11f,
+                Clip.BarkStorybook => dog == DogId.Cheddar ? 10f : 7f,
                 Clip.Tug => dog == DogId.Cheddar ? 9f : 7f,
                 Clip.Dig => dog == DogId.Cheddar ? 10f : 8f,
                 Clip.Carry => dog == DogId.Cheddar ? 5f : 4f,
+                Clip.Groom => dog == DogId.Cheddar ? 7f : 5.5f,
                 Clip.Stunned => 6f,
                 Clip.Rescued => dog == DogId.Cheddar ? 6f : 4.5f,
                 Clip.Proud => dog == DogId.Cheddar ? 5f : 3.5f,
@@ -65,6 +74,8 @@ namespace CheddarAndCocoa.Dogs
             int frame = Mathf.Max(0, Mathf.FloorToInt(Mathf.Max(0f, elapsedSeconds) * fps));
             if (clip == Clip.Bark) return Mathf.Min(3, frame);
             int frameCount = clip == Clip.Tug ? 3 :
+                clip == Clip.BarkStorybook ? 2 :
+                clip == Clip.Groom ? 2 :
                 clip == Clip.Carry || clip == Clip.Stunned || clip == Clip.Rescued || clip == Clip.Proud || clip == Clip.Sad ? 2 : 4;
             return frame % frameCount;
         }
@@ -96,7 +107,9 @@ namespace CheddarAndCocoa.Dogs
         private static DogReadabilityFeedback.Pose FallbackPose(Clip clip) => clip switch
         {
             Clip.Run => DogReadabilityFeedback.Pose.Run,
+            Clip.RunStorybook => DogReadabilityFeedback.Pose.Run,
             Clip.Bark => DogReadabilityFeedback.Pose.Bark,
+            Clip.BarkStorybook => DogReadabilityFeedback.Pose.Bark,
             Clip.Tug => DogReadabilityFeedback.Pose.Tug,
             Clip.Dig => DogReadabilityFeedback.Pose.Dig,
             Clip.Carry => DogReadabilityFeedback.Pose.Carry,

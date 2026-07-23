@@ -67,6 +67,7 @@ namespace CheddarAndCocoa.Dogs
         private DogProceduralAudio _proceduralAudio;
         private DogShowcasePolish _showcasePolish;
         private float _interactSquashStartedAt = -1f;
+        private bool _missionArtOverrideActive;
 
         public Pose CurrentPose { get; private set; } = Pose.Idle;
         public string CurrentPoseLabel => CurrentPose.ToString();
@@ -98,6 +99,7 @@ namespace CheddarAndCocoa.Dogs
         public string ArtDirectionSignature => _identity == null
             ? string.Empty
             : ArenaArtCatalog.Dog(_identity.Id).ArtDirectionSignature;
+        public bool HasMissionArtOverride => _missionArtOverrideActive;
 
         public static void SetDebugIdentityLabelsVisible(bool visible)
         {
@@ -198,6 +200,35 @@ namespace CheddarAndCocoa.Dogs
         {
             _forcedPoseUntil = 0f;
             if (_dog != null && _dog.Mode == MovementMode.Free) ApplyPose(Pose.Idle);
+        }
+
+        /// <summary>
+        /// Mission-local authored action seam. The override reuses the single dog art renderer, so
+        /// a bespoke action can replace the normal pose without exposing the hidden procedural body
+        /// or adding mission state to GameManager.
+        /// </summary>
+        public void SetMissionArtOverride(Sprite sprite, bool mirror, int frameIndex, string clipLabel)
+        {
+            if (_authoredPose == null || sprite == null) return;
+            _missionArtOverrideActive = true;
+            _authoredPose.sprite = sprite;
+            _authoredPose.flipX = mirror;
+            _authoredPose.transform.localScale = AuthoredMotionScale;
+            MotionFrameIndex = frameIndex;
+            MotionClipLabel = clipLabel ?? string.Empty;
+        }
+
+        public void ClearMissionArtOverride()
+        {
+            if (!_missionArtOverrideActive) return;
+            _missionArtOverrideActive = false;
+            if (_authoredPose != null)
+            {
+                _authoredPose.sprite = ArenaDogPoseSprites.For(_identity.Id, CurrentPose);
+                _authoredPose.transform.localScale = AuthoredFallbackScale;
+            }
+            ApplyPose(CurrentPose);
+            AnimateAuthoredMotion(CurrentPose);
         }
 
         private void OnDestroy()
@@ -303,7 +334,7 @@ namespace CheddarAndCocoa.Dogs
             if (CurrentPose == pose && _label != null && _label.text == expectedLabel) return;
             CurrentPose = pose;
 
-            if (_authoredPose != null)
+            if (_authoredPose != null && !_missionArtOverrideActive)
             {
                 _authoredPose.sprite = ArenaDogPoseSprites.For(_identity.Id, pose);
                 _authoredPose.transform.localScale = AuthoredFallbackScale;
@@ -430,6 +461,7 @@ namespace CheddarAndCocoa.Dogs
 
         private void AnimateAuthoredMotion(Pose pose)
         {
+            if (_missionArtOverrideActive) return;
             if (_authoredPose == null || !CharacterMotionArt.TryClip(pose, out var clip))
             {
                 MotionFrameIndex = -1;
@@ -437,7 +469,9 @@ namespace CheddarAndCocoa.Dogs
                 return;
             }
 
-            float elapsed = clip == CharacterMotionArt.Clip.Bark ? Time.time - _barkStartedAt : Time.time;
+            bool isBarkClip = clip == CharacterMotionArt.Clip.Bark ||
+                              clip == CharacterMotionArt.Clip.BarkStorybook;
+            float elapsed = isBarkClip ? Time.time - _barkStartedAt : Time.time;
             int frame = CharacterMotionArt.FrameAtTime(_identity.Id, clip, elapsed);
             CharacterMotionArt.Facing8 facing = CharacterMotionArt.FacingForDirection(_lastIntentDir, out bool mirror);
             Sprite sprite = CharacterMotionArt.Load(_identity.Id, clip, facing, frame);
@@ -445,6 +479,25 @@ namespace CheddarAndCocoa.Dogs
             {
                 mirror = _lastIntentDir.x < 0f;
                 sprite = CharacterMotionArt.Load(_identity.Id, clip, CharacterMotionArt.Facing8.E, frame);
+            }
+            // The prior five-direction sets stay live as nonblocking fallbacks while the
+            // flat-storybook clips begin with the strongest couch-readable side silhouette.
+            CharacterMotionArt.Clip legacyClip = clip switch
+            {
+                CharacterMotionArt.Clip.RunStorybook => CharacterMotionArt.Clip.Run,
+                CharacterMotionArt.Clip.BarkStorybook => CharacterMotionArt.Clip.Bark,
+                _ => clip
+            };
+            if (sprite == null && legacyClip != clip)
+            {
+                facing = CharacterMotionArt.FacingForDirection(_lastIntentDir, out mirror);
+                sprite = CharacterMotionArt.Load(_identity.Id, legacyClip, facing, frame);
+                if (sprite == null && facing != CharacterMotionArt.Facing8.E)
+                {
+                    mirror = _lastIntentDir.x < 0f;
+                    sprite = CharacterMotionArt.Load(_identity.Id, legacyClip,
+                        CharacterMotionArt.Facing8.E, frame);
+                }
             }
             if (sprite == null)
             {
@@ -457,7 +510,12 @@ namespace CheddarAndCocoa.Dogs
             _authoredPose.transform.localScale = AuthoredMotionScale;
             _authoredPose.flipX = mirror;
             MotionFrameIndex = frame;
-            MotionClipLabel = clip.ToString();
+            MotionClipLabel = clip switch
+            {
+                CharacterMotionArt.Clip.RunStorybook => "Run",
+                CharacterMotionArt.Clip.BarkStorybook => "Bark",
+                _ => clip.ToString()
+            };
         }
 
         private void ApplyPersonalityMotion(DogMotionPersonality.Sample personality)

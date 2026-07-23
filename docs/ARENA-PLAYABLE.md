@@ -2195,7 +2195,13 @@ Manual rumble/reconnect check with two gamepads:
   connect a replacement and confirm it controls the unbound dog without stealing the sibling's pad.
 - No controller connected is expected to be a safe no-op.
 
-Cheddar is the chaos puppy and Cocoa is the steadier veteran. The placeholder sprites are still simple generated shapes, but the dogs now have a reusable global identity direction proven in the arena: both read as long, low miniature dachshunds with visible head, long snout, floppy ear, tiny feet, tail, collar, and expression markers. Cheddar reads as **CHEDDAR CHAOS PUP** with a golden body, red collar, bright chaos tuft/flash, faster wag, and more explosive bark/proud motion. Cocoa reads as **COCOA SPOT QUEEN** with a chocolate body, teal collar, cream chest, spot markings, steadier expression, and tiny queen marker. Idle, run, bark, tug, stunned, rescued, proud, and sad states are exposed through body squash/rotation, tail/head/ear motion, color-shifted labels, and deterministic PlayMode assertions.
+Cheddar is the chaos puppy and Cocoa is the steadier veteran. Both read as long, low miniature
+dachshunds with visible head, long snout, floppy ear, tiny feet, tail, collar, and expression
+markers. Cheddar reads as **CHEDDAR CHAOS PUP** with a golden body, cream chest/toe identity,
+red-orange collar, faster wag, and more explosive motion. Cocoa reads as **COCOA SPOT QUEEN** with a
+uniform deep-chocolate body, warm-brown tonal points, teal collar, steadier expression, and tiny
+queen marker. V02 model sheets are the identity authority for new authored frames; older geometric
+fallbacks may retain their historical chest-patch shape.
 
 Current pose labels:
 
@@ -2487,7 +2493,9 @@ Use this after any placeholder-art, authored-art, or sprite import change:
 
 - Cheddar and Cocoa still read as different long, low dachshunds at gameplay zoom without relying
   only on text labels.
-- Cheddar keeps golden/red chaos reads, including the current generated chaos tuft/flash/bolt; Cocoa keeps chocolate/teal spot-queen reads, including the current generated cream chest, extra spot, and larger crown marker.
+- Cheddar keeps golden/red chaos reads and canonical cream chest/toe tips; Cocoa keeps a uniform
+  chocolate/teal read with warm-brown tonal points and no cream/white body patches. Historical
+  geometric fallbacks are not an identity reference.
 - Dog pose states are still distinct: idle, run, bark, tug, stunned, rescued, proud, sad.
 - Bark ring/text, generated objective cue arrows, score pops, and playtest overlay remain readable
   but do not hide the dogs or core mission objects.

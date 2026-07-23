@@ -76,6 +76,29 @@ namespace CheddarAndCocoa.Tests
                 Assert.IsNotNull(CharacterMotionArt.Load(dog, clip, CharacterMotionArt.Facing8.E, frame),
                     $"Missing Tier-A motion frame {dog}/{clip}/E/{frame}.");
             foreach (DogId dog in new[] { DogId.Cheddar, DogId.Cocoa })
+            foreach (int frame in new[] { 0, 1 })
+                Assert.IsNotNull(CharacterMotionArt.Load(dog, CharacterMotionArt.Clip.BarkStorybook,
+                    CharacterMotionArt.Facing8.E, frame), $"Missing storybook bark frame {dog}/{frame}.");
+            foreach (DogId dog in new[] { DogId.Cheddar, DogId.Cocoa })
+            foreach (int frame in new[] { 0, 1, 2, 3 })
+                Assert.IsNotNull(CharacterMotionArt.Load(dog, CharacterMotionArt.Clip.RunStorybook,
+                    CharacterMotionArt.Facing8.E, frame), $"Missing V02 storybook run frame {dog}/{frame}.");
+            foreach (DogId dog in new[] { DogId.Cheddar, DogId.Cocoa })
+            {
+                var runFrames = new Sprite[4];
+                for (int frame = 0; frame < runFrames.Length; frame++)
+                {
+                    runFrames[frame] = CharacterMotionArt.Load(dog, CharacterMotionArt.Clip.RunStorybook,
+                        CharacterMotionArt.Facing8.E, frame);
+                    Assert.AreEqual(512, runFrames[frame].rect.width);
+                    Assert.AreEqual(384, runFrames[frame].rect.height);
+                    for (int prior = 0; prior < frame; prior++)
+                        Assert.AreNotEqual(runFrames[prior].texture.imageContentsHash,
+                            runFrames[frame].texture.imageContentsHash,
+                            $"{dog}'s V02 run frames {prior} and {frame} must be distinct authored poses.");
+                }
+            }
+            foreach (DogId dog in new[] { DogId.Cheddar, DogId.Cocoa })
             foreach (int frame in new[] { 0, 1, 2 })
                 Assert.IsNotNull(CharacterMotionArt.Load(dog, CharacterMotionArt.Clip.Tug,
                     CharacterMotionArt.Facing8.E, frame), $"Missing tug frame {dog}/{frame}.");
@@ -118,7 +141,7 @@ namespace CheddarAndCocoa.Tests
                 Assert.IsNotNull(ThreatMotionArt.Load(ThreatMotionArt.Actor.Coyote, clip, frame),
                     $"Missing coyote motion frame {clip}/{frame}.");
 
-            Sprite motion = CharacterMotionArt.Load(DogId.Cheddar, CharacterMotionArt.Clip.Run,
+            Sprite motion = CharacterMotionArt.Load(DogId.Cheddar, CharacterMotionArt.Clip.RunStorybook,
                 CharacterMotionArt.Facing8.E, 0);
             Assert.AreEqual(512, motion.rect.width);
             Assert.AreEqual(384, motion.rect.height);
@@ -239,8 +262,18 @@ namespace CheddarAndCocoa.Tests
                 "ArenaFinal/Characters/Dogs/Cocoa/Motion/cocoa_bark_n_00",
                 CharacterMotionArt.ResourcePath(DogId.Cocoa, CharacterMotionArt.Clip.Bark,
                     CharacterMotionArt.Facing8.N, -4));
+            Assert.AreEqual(
+                "ArenaFinal/Characters/Dogs/Cocoa/Motion/cocoa_bark_storybook_e_01",
+                CharacterMotionArt.ResourcePath(DogId.Cocoa, CharacterMotionArt.Clip.BarkStorybook,
+                    CharacterMotionArt.Facing8.E, 1));
+            Assert.AreEqual(
+                "ArenaFinal/Characters/Dogs/Cheddar/Motion/cheddar_run_storybook_e_02",
+                CharacterMotionArt.ResourcePath(DogId.Cheddar, CharacterMotionArt.Clip.RunStorybook,
+                    CharacterMotionArt.Facing8.E, 2));
             Assert.AreEqual("cheddar_run_e_02", CharacterMotionArt.Load(DogId.Cheddar,
                 CharacterMotionArt.Clip.Run, CharacterMotionArt.Facing8.E, 2).name);
+            Assert.AreEqual("cocoa_run_storybook_e_03", CharacterMotionArt.Load(DogId.Cocoa,
+                CharacterMotionArt.Clip.RunStorybook, CharacterMotionArt.Facing8.E, 3).name);
             foreach (DogId dog in new[] { DogId.Cheddar, DogId.Cocoa })
             foreach (var facing in new[] { CharacterMotionArt.Facing8.SE, CharacterMotionArt.Facing8.NE,
                          CharacterMotionArt.Facing8.S, CharacterMotionArt.Facing8.N })
@@ -251,7 +284,16 @@ namespace CheddarAndCocoa.Tests
 
             Assert.AreEqual(0, CharacterMotionArt.FrameAtTime(DogId.Cheddar, CharacterMotionArt.Clip.Idle, 0f));
             Assert.AreEqual(2, CharacterMotionArt.FrameAtTime(DogId.Cheddar, CharacterMotionArt.Clip.Run, 0.2f));
+            Assert.AreEqual(2, CharacterMotionArt.FrameAtTime(DogId.Cheddar,
+                CharacterMotionArt.Clip.RunStorybook, 0.2f));
+            Assert.AreEqual(1, CharacterMotionArt.FrameAtTime(DogId.Cocoa,
+                CharacterMotionArt.Clip.RunStorybook, 0.2f),
+                "Cocoa's controlled gait should advance more slowly than Cheddar's springy run.");
             Assert.AreEqual(3, CharacterMotionArt.FrameAtTime(DogId.Cocoa, CharacterMotionArt.Clip.Bark, 10f));
+            Assert.AreEqual(1, CharacterMotionArt.FrameAtTime(DogId.Cheddar,
+                CharacterMotionArt.Clip.BarkStorybook, 0.1f));
+            Assert.AreEqual(0, CharacterMotionArt.FrameAtTime(DogId.Cocoa,
+                CharacterMotionArt.Clip.BarkStorybook, 2f / 7f));
             Assert.AreEqual(2, CharacterMotionArt.FrameAtTime(DogId.Cheddar, CharacterMotionArt.Clip.Tug, 2f / 9f));
             Assert.AreEqual(0, CharacterMotionArt.FrameAtTime(DogId.Cheddar, CharacterMotionArt.Clip.Tug, 1f / 3f));
             Assert.AreEqual(1, CharacterMotionArt.FrameAtTime(DogId.Cheddar, CharacterMotionArt.Clip.Proud, 0.2f));
@@ -329,7 +371,7 @@ namespace CheddarAndCocoa.Tests
             yield return new WaitForSeconds(0.14f);
             var cheddarMotion = cheddar.GetComponent<DogReadabilityFeedback>();
             Assert.AreEqual("Run", cheddarMotion.MotionClipLabel);
-            Assert.That(cheddarMotion.AuthoredPoseSpriteName, Does.StartWith("cheddar_run_e_"));
+            Assert.That(cheddarMotion.AuthoredPoseSpriteName, Does.StartWith("cheddar_run_storybook_e_"));
             Assert.IsFalse(cheddar.transform.Find("CheddarAuthoredPose").GetComponent<SpriteRenderer>().flipX);
             cheddarBody.linearVelocity = Vector2.left * 4f;
             yield return new WaitForSeconds(0.14f);
@@ -337,11 +379,12 @@ namespace CheddarAndCocoa.Tests
                 "West travel should mirror the approved east-facing strip until west art is promoted.");
             cheddarBody.linearVelocity = Vector2.up * 4f;
             yield return new WaitForSeconds(0.14f);
-            Assert.That(cheddarMotion.AuthoredPoseSpriteName, Does.StartWith("cheddar_run_n_"));
+            Assert.That(cheddarMotion.AuthoredPoseSpriteName, Does.StartWith("cheddar_run_storybook_e_"),
+                "The first V02 run release keeps its approved side silhouette for every travel axis.");
             Assert.IsFalse(cheddar.transform.Find("CheddarAuthoredPose").GetComponent<SpriteRenderer>().flipX);
             cheddarBody.linearVelocity = new Vector2(-4f, -4f);
             yield return new WaitForSeconds(0.14f);
-            Assert.That(cheddarMotion.AuthoredPoseSpriteName, Does.StartWith("cheddar_run_se_"));
+            Assert.That(cheddarMotion.AuthoredPoseSpriteName, Does.StartWith("cheddar_run_storybook_e_"));
             Assert.IsTrue(cheddar.transform.Find("CheddarAuthoredPose").GetComponent<SpriteRenderer>().flipX,
                 "Southwest travel should mirror the southeast strip.");
             cheddarBody.linearVelocity = Vector2.zero;
@@ -379,7 +422,9 @@ namespace CheddarAndCocoa.Tests
             Assert.That(cheddarMotion.AuthoredPoseSpriteName, Does.StartWith("cheddar_idle_n_"));
             cheddar.GetComponent<DogController>().Bark();
             yield return new WaitForSeconds(0.08f);
-            Assert.That(cheddarMotion.AuthoredPoseSpriteName, Does.StartWith("cheddar_bark_n_"));
+            Assert.That(cheddarMotion.AuthoredPoseSpriteName, Does.StartWith("cheddar_bark_storybook_e_"),
+                "Live bark should prefer the new side-on storybook clip over the legacy directional set.");
+            Assert.AreEqual("Bark", cheddarMotion.MotionClipLabel);
             Assert.IsFalse(cheddar.transform.Find("CheddarAuthoredPose").GetComponent<SpriteRenderer>().flipX);
             cheddarInput.enabled = true;
             var ring = GameObject.Find(ArenaArtCatalog.BarkFeedback.RingName);
@@ -501,6 +546,10 @@ namespace CheddarAndCocoa.Tests
             game.StartMission(GameManager.MissionVariant.ThunderstormComfort);
             yield return new WaitForSeconds(0.1f);
             AssertMissionProp("ThunderstormComfortCue", FinalGameplayArt.ThunderstormCloudWaiting);
+            var thunderCue = GameObject.Find("ThunderstormComfortCue")
+                .transform.Find("ActualArtOverlay").GetComponent<SpriteRenderer>();
+            Assert.That(thunderCue.bounds.size.x, Is.InRange(3.2f, 4.2f),
+                "Thunderstorm state art should read beside the dogs without becoming room-sized.");
             game.ForceThunderclap();
             yield return null;
             AssertMissionProp("ThunderstormComfortCue", FinalGameplayArt.ThunderstormThunderclap);
@@ -543,6 +592,10 @@ namespace CheddarAndCocoa.Tests
             yield return new WaitForSeconds(0.1f);
             AssertMissionProp("TableStealthHuman", FinalGameplayArt.TableStealthHumanWatching);
             AssertMissionProp("TableStealthSteak", FinalGameplayArt.TableStealthSteakAvailable);
+            AssertWorldWidthAndProportions("TableStealthHuman", 4.15f, 4.65f);
+            AssertWorldWidthAndProportions("TableStealthSteak", 1.65f, 1.95f);
+            Assert.AreEqual(0f, MissionPropArt.FindFallbackRenderer(GameObject.Find("TableStealthHuman")).color.a,
+                0.001f, "Table Stealth's generated human marker should stay hidden outside F1 debug geometry.");
             game.ForceTableFlop(true);
             AssertMissionProp("TableStealthHuman", FinalGameplayArt.TableStealthHumanDistracted);
             AssertMissionProp("TableStealthSteak", FinalGameplayArt.TableStealthSteakSneakProgress);
@@ -645,10 +698,14 @@ namespace CheddarAndCocoa.Tests
             yield return new WaitForSeconds(0.1f);
             var kitchen = GameObject.Find(MissionLevelAreaArt.KitchenRootName);
             Assert.IsNotNull(kitchen, "Kitchen should install a mission-owned indoor level area.");
+            AssertIndoorAreaSuppressesOutdoorVisuals();
             AssertLevelAreaPlate(kitchen, "KitchenFloorPlate", "kitchen_floor_area", expectedMaxSortingOrder: -5);
             AssertLevelAreaPlate(kitchen, "KitchenCounterWallPlate", "kitchen_counter_wall", expectedMaxSortingOrder: -3);
             AssertLevelAreaPlate(kitchen, "KitchenSafeBowlPreviewPlate", "kitchen_safe_bowl_empty", expectedMaxSortingOrder: -4);
             AssertLevelAreaHasNoPrimitiveSquareMarkers(kitchen);
+            var counterLabel = GameObject.Find("KitchenCounterRoute").GetComponentInChildren<TextMesh>();
+            Assert.AreEqual(counterLabel.transform.lossyScale.x, counterLabel.transform.lossyScale.y, 0.005f,
+                "World prompts should cancel non-uniform marker scale instead of stretching across the room.");
             Assert.IsNull(GameObject.Find(MissionLevelAreaArt.CarRideRootName),
                 "Starting Kitchen should not leave the car area visible.");
 
@@ -660,7 +717,7 @@ namespace CheddarAndCocoa.Tests
             AssertLevelAreaPlate(car, "BackseatBenchPlate", "backseat_bench", expectedMaxSortingOrder: 6);
             AssertLevelAreaPlate(car, "BackseatWindshieldScroller/BackseatWindshieldSceneryPlate_1",
                 "backseat_windshield_scenery", expectedMaxSortingOrder: 5);
-            var backyardPlate = GameObject.Find("ActualNoDogBackyardPlate");
+            var backyardPlate = FindTransformIncludingInactive("ActualNoDogBackyardPlate")?.gameObject;
             Assert.IsNotNull(backyardPlate);
             Assert.Greater(car.transform.Find("BackseatCabinShellPlate").GetComponent<SpriteRenderer>().sortingOrder,
                 backyardPlate.GetComponent<SpriteRenderer>().sortingOrder,
@@ -689,6 +746,7 @@ namespace CheddarAndCocoa.Tests
             yield return new WaitForSeconds(0.1f);
             var tableStealth = GameObject.Find(MissionLevelAreaArt.TableStealthRootName);
             Assert.IsNotNull(tableStealth, "Table Stealth should install a mission-owned dining-room level area.");
+            AssertIndoorAreaSuppressesOutdoorVisuals();
             AssertLevelAreaPlate(tableStealth, "DiningRoomFloorPlate", "diningroom_floor_area", expectedMaxSortingOrder: -7);
             AssertLevelAreaHasNoPrimitiveSquareMarkers(tableStealth);
 
@@ -720,6 +778,27 @@ namespace CheddarAndCocoa.Tests
             // missions' briefing text ("food's teetering on the counter").
             AssertLevelAreaPlate(blanketCatch, "KitchenFloorPlate", "kitchen_floor_area", expectedMaxSortingOrder: -7);
             AssertLevelAreaHasNoPrimitiveSquareMarkers(blanketCatch);
+        }
+
+        private static void AssertIndoorAreaSuppressesOutdoorVisuals()
+        {
+            Transform backyard = FindTransformIncludingInactive(ArenaArtCatalog.BackyardEnvironmentObjectName);
+            Transform poolVisuals = FindTransformIncludingInactive("PoolVisuals");
+            Assert.IsNotNull(backyard, "The shared backyard visual root should still exist.");
+            Assert.IsNotNull(poolVisuals, "The pool's visual-only child should still exist.");
+            Assert.IsFalse(backyard.gameObject.activeSelf,
+                "Indoor staging should hide decorative backyard art without destroying it.");
+            Assert.IsFalse(poolVisuals.gameObject.activeSelf,
+                "Indoor staging should hide pool art without disabling the pool gameplay component.");
+        }
+
+        private static Transform FindTransformIncludingInactive(string objectName)
+        {
+            foreach (var transform in Object.FindObjectsByType<Transform>(
+                         FindObjectsInactive.Include, FindObjectsSortMode.None))
+                if (transform.name == objectName)
+                    return transform;
+            return null;
         }
 
         private static void AssertTreatProp(string expectedResourcePath)
@@ -790,6 +869,21 @@ namespace CheddarAndCocoa.Tests
         {
             int slash = resourcePath.LastIndexOf('/');
             return slash >= 0 ? resourcePath.Substring(slash + 1) : resourcePath;
+        }
+
+        private static void AssertWorldWidthAndProportions(string objectName, float minWidth, float maxWidth)
+        {
+            var root = GameObject.Find(objectName);
+            Assert.IsNotNull(root);
+            var overlay = root.transform.Find("ActualArtOverlay");
+            Assert.IsNotNull(overlay);
+            var renderer = overlay.GetComponent<SpriteRenderer>();
+            Assert.IsNotNull(renderer);
+            Assert.That(renderer.bounds.size.x, Is.InRange(minWidth, maxWidth),
+                $"{objectName} should render at its authored gameplay width.");
+            Assert.AreEqual(renderer.sprite.bounds.size.x / renderer.sprite.bounds.size.y,
+                renderer.bounds.size.x / renderer.bounds.size.y, 0.08f,
+                $"{objectName} art should preserve its source aspect ratio under marker scaling.");
         }
 
         private static void AssertLevelAreaPlate(GameObject root, string childName, string expectedSpriteName,

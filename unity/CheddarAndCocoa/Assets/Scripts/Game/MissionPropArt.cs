@@ -29,6 +29,20 @@ namespace CheddarAndCocoa.Game
                 new Vector3(0f, 0.12f, -0.28f), shadow);
         }
 
+        /// <summary>
+        /// Attaches an object at a stable authored world width while cancelling any non-uniform
+        /// scale on its controller-owned marker. The marker stays responsible for gameplay shape;
+        /// the promoted sprite keeps its intended proportions.
+        /// </summary>
+        public static MissionPropArtAttachment AttachObjectAtWorldWidth(GameObject target, string resourcePath,
+            float worldWidth, int sortingOrder = 18, bool shadow = true)
+        {
+            if (!TryGetWorldWidthScale(target, resourcePath, worldWidth, out Vector3 localScale))
+                return null;
+            return Attach(target, resourcePath, localScale, sortingOrder, Color.white,
+                new Vector3(0f, 0.12f, -0.28f), shadow, true);
+        }
+
         public static MissionPropArtAttachment AttachPad(GameObject target, string resourcePath,
             float scale = 0.013f, int sortingOrder = 12)
         {
@@ -36,9 +50,40 @@ namespace CheddarAndCocoa.Game
                 new Color(1f, 1f, 1f, 0.92f), new Vector3(0f, 0.1f, -0.28f), false, true);
         }
 
+        /// <summary>
+        /// Attaches a pad/state cue at a stable authored world width, independent of source texture
+        /// resolution and the marker root's generated scale.
+        /// </summary>
+        public static MissionPropArtAttachment AttachPadAtWorldWidth(GameObject target, string resourcePath,
+            float worldWidth, int sortingOrder = 12)
+        {
+            if (!TryGetWorldWidthScale(target, resourcePath, worldWidth, out Vector3 localScale))
+                return null;
+            return Attach(target, resourcePath, localScale, sortingOrder,
+                new Color(1f, 1f, 1f, 0.92f), new Vector3(0f, 0.1f, -0.28f), false, true);
+        }
+
         public static void SetSprite(MissionPropArtAttachment attachment, string resourcePath)
         {
             if (attachment != null) attachment.SetResource(resourcePath);
+        }
+
+        private static bool TryGetWorldWidthScale(GameObject target, string resourcePath,
+            float worldWidth, out Vector3 localScale)
+        {
+            localScale = Vector3.one;
+            if (target == null) return false;
+            Sprite sprite = FinalGameplayArt.Load(resourcePath);
+            if (sprite == null) return false;
+
+            float worldScale = Mathf.Max(0.01f, worldWidth) /
+                Mathf.Max(0.01f, sprite.bounds.size.x);
+            Vector3 parentScale = target.transform.lossyScale;
+            localScale = new Vector3(
+                worldScale / Mathf.Max(0.01f, Mathf.Abs(parentScale.x)),
+                worldScale / Mathf.Max(0.01f, Mathf.Abs(parentScale.y)),
+                1f);
+            return true;
         }
 
         private static void DimGeneratedFallback(GameObject target, float maxAlpha)

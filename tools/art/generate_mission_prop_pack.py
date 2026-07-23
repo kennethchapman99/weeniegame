@@ -17,6 +17,7 @@ from PIL import Image, ImageDraw
 ROOT = Path("unity/CheddarAndCocoa/Assets/Art/Resources/ArenaFinal/Props/Missions")
 REF_ROOT = Path("unity/CheddarAndCocoa/Assets/Art/ReferenceOnly/GeneratedMissionProps")
 SIZE = 512
+POLISHED_SQUEAKY_SOURCE = REF_ROOT / "squeaky_toy_storybook_v02.png"
 
 
 def rgba(hex_value: str, alpha: int = 255) -> tuple[int, int, int, int]:
@@ -314,7 +315,10 @@ def write_readme():
         "`tools/art/generate_mission_prop_pack.py` on demand. These are couch-test "
         "runtime overlays for controller-owned Unity markers; they are not final "
         "hand-authored art.\n\n"
-        f"{names}\n",
+        f"{names}\n\n"
+        "`squeaky_toy_storybook_v02.png` is the approved 2026-07-23 paintover: a coral rubber "
+        "dachshund toy with gold ears/squeaker and a teal collar. The generator promotes it when "
+        "present so regeneration does not restore the earlier smiley-blob blockout.\n",
         encoding="utf-8",
     )
 
@@ -340,8 +344,13 @@ def main():
     REF_ROOT.mkdir(parents=True, exist_ok=True)
     rendered = []
     for name, drawer in sorted(DRAWERS.items()):
-        image, draw = canvas()
-        drawer(draw)
+        if name == "squeaky_toy" and POLISHED_SQUEAKY_SOURCE.exists():
+            image = Image.open(POLISHED_SQUEAKY_SOURCE).convert("RGBA")
+            if image.size != (SIZE, SIZE):
+                image = image.resize((SIZE, SIZE), Image.Resampling.LANCZOS)
+        else:
+            image, draw = canvas()
+            drawer(draw)
         image.save(ROOT / f"{name}.png")
         rendered.append((name, image))
     contact_sheet(rendered)

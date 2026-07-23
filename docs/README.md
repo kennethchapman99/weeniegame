@@ -56,6 +56,7 @@ not override the active sequence or authorize mission expansion:
   [Art Source Inventory](ART-SOURCE-INVENTORY.md), [Asset Catalog](ASSET-CATALOG.md),
   [Asset Production Catalog](ASSET-PRODUCTION-CATALOG.md)
 - [Animation State Catalog](ANIMATION-STATE-CATALOG.md),
+  [Character Art Model Sheets](CHARACTER-ART-MODEL-SHEETS.md),
   [Character Motion Pack](CHARACTER-MOTION-PACK.md),
   [Character Motion Generation](CHARACTER-MOTION-GENERATION.md), [Audio Direction](AUDIO-DIRECTION.md)
 

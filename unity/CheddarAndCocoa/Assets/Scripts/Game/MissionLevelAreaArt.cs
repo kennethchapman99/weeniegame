@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace CheddarAndCocoa.Game
@@ -8,6 +9,11 @@ namespace CheddarAndCocoa.Game
     /// </summary>
     public sealed class MissionLevelAreaArt : MonoBehaviour
     {
+        private static readonly Vector2 IndoorFloorWorldSize = new(48f, 36f);
+        private static readonly Dictionary<GameObject, int> OutdoorVisualSuppressionCounts = new();
+        private static readonly Dictionary<GameObject, bool> OutdoorVisualInitialStates = new();
+        private readonly List<GameObject> _suppressedOutdoorVisuals = new();
+
         public const string KitchenRootName = "KitchenLevelArea";
         public const string CarRideRootName = "CarRideLevelArea";
         public const string TableStealthRootName = "TableStealthLevelArea";
@@ -21,7 +27,7 @@ namespace CheddarAndCocoa.Game
         {
             var area = CreateRoot(KitchenRootName);
             area.AddPlate("KitchenFloorPlate", FinalGameplayArt.LevelAreaKitchenFloor,
-                bounds.center + Vector2.down * 0.3f, new Vector2(33f, 25f), -7, new Color(1f, 1f, 1f, 0.96f));
+                bounds.center + Vector2.down * 0.3f, IndoorFloorWorldSize, -7, new Color(1f, 1f, 1f, 0.96f));
             area.AddPlate("KitchenCounterWallPlate", FinalGameplayArt.LevelAreaKitchenCounters,
                 counterPosition + Vector2.up * 1.1f, new Vector2(28f, 9.2f), -4, Color.white);
             area.AddPlate("KitchenSafeBowlPreviewPlate", FinalGameplayArt.KitchenSafeBowlEmpty,
@@ -98,7 +104,7 @@ namespace CheddarAndCocoa.Game
         {
             var area = CreateRoot(TableStealthRootName);
             area.AddPlate("DiningRoomFloorPlate", FinalGameplayArt.LevelAreaDiningRoomFloor,
-                bounds.center, new Vector2(33f, 25f), -7, new Color(1f, 1f, 1f, 0.96f));
+                bounds.center, IndoorFloorWorldSize, -7, new Color(1f, 1f, 1f, 0.96f));
             return area;
         }
 
@@ -117,7 +123,7 @@ namespace CheddarAndCocoa.Game
         {
             var area = CreateRoot(rootName);
             area.AddPlate("LivingRoomFloorPlate", FinalGameplayArt.LevelAreaLivingRoomFloor,
-                bounds.center, new Vector2(33f, 25f), -7, new Color(1f, 1f, 1f, 0.96f));
+                bounds.center, IndoorFloorWorldSize, -7, new Color(1f, 1f, 1f, 0.96f));
             return area;
         }
 
@@ -130,7 +136,7 @@ namespace CheddarAndCocoa.Game
         {
             var area = CreateRoot(BlanketCatchRootName);
             area.AddPlate("KitchenFloorPlate", FinalGameplayArt.LevelAreaKitchenFloor,
-                bounds.center, new Vector2(33f, 25f), -7, new Color(1f, 1f, 1f, 0.96f));
+                bounds.center, IndoorFloorWorldSize, -7, new Color(1f, 1f, 1f, 0.96f));
             return area;
         }
 
@@ -143,7 +149,63 @@ namespace CheddarAndCocoa.Game
                 Object.Destroy(existing);
 
             var root = new GameObject(rootName);
-            return root.AddComponent<MissionLevelAreaArt>();
+            var area = root.AddComponent<MissionLevelAreaArt>();
+            area.SuppressOutdoorVisuals();
+            return area;
+        }
+
+        /// <summary>
+        /// Indoor missions share the large outdoor scene for gameplay infrastructure. Hide only its
+        /// decorative roots so pool/patio art, stepping stones, and route marks cannot paint over a
+        /// room; keep the pool component, colliders, camera, and mission systems alive.
+        ///
+        /// Reference counts handle a same-frame indoor-to-indoor mission switch: Unity destroys the
+        /// outgoing area at frame end, after the incoming area has already claimed the visuals.
+        /// </summary>
+        private void SuppressOutdoorVisuals()
+        {
+            foreach (var candidate in Object.FindObjectsByType<Transform>(
+                         FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
+                if (candidate == null ||
+                    (candidate.name != ArenaArtCatalog.BackyardEnvironmentObjectName &&
+                     candidate.name != "PoolVisuals"))
+                    continue;
+
+                GameObject visual = candidate.gameObject;
+                if (!OutdoorVisualSuppressionCounts.TryGetValue(visual, out int count))
+                {
+                    OutdoorVisualSuppressionCounts[visual] = 1;
+                    OutdoorVisualInitialStates[visual] = visual.activeSelf;
+                    visual.SetActive(false);
+                }
+                else
+                {
+                    OutdoorVisualSuppressionCounts[visual] = count + 1;
+                }
+                _suppressedOutdoorVisuals.Add(visual);
+            }
+        }
+
+        private void OnDestroy()
+        {
+            foreach (GameObject visual in _suppressedOutdoorVisuals)
+            {
+                if (ReferenceEquals(visual, null) ||
+                    !OutdoorVisualSuppressionCounts.TryGetValue(visual, out int count))
+                    continue;
+                if (count > 1)
+                {
+                    OutdoorVisualSuppressionCounts[visual] = count - 1;
+                    continue;
+                }
+
+                OutdoorVisualSuppressionCounts.Remove(visual);
+                bool restore = OutdoorVisualInitialStates.TryGetValue(visual, out bool wasActive) && wasActive;
+                OutdoorVisualInitialStates.Remove(visual);
+                if (visual != null) visual.SetActive(restore);
+            }
+            _suppressedOutdoorVisuals.Clear();
         }
 
         private GameObject AddPlate(string name, string resourcePath, Vector2 position, Vector2 worldSize,

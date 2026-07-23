@@ -70,7 +70,8 @@ namespace CheddarAndCocoa.Game
             renderer.color = new Color(0.42f, 0.5f, 0.82f, 0.18f);
             renderer.sortingOrder = 2;
             _context.AddWorldLabel(_stormMarker, "HUDDLE", Vector3.up * 0.9f, 13, Color.white);
-            _stormArt = MissionPropArt.AttachPad(_stormMarker, FinalGameplayArt.ThunderstormCloudWaiting, 0.012f, 18);
+            _stormArt = MissionPropArt.AttachPadAtWorldWidth(
+                _stormMarker, FinalGameplayArt.ThunderstormCloudWaiting, 3.6f, 18);
             _stormMarker.SetActive(false);
         }
 

@@ -12,9 +12,18 @@ This is the production contract for replacing single-pose dog sprites with direc
 
 Generated exploration lives under `Assets/Art/ReferenceOnly/GeneratedCharacterMotion/`. Approved runtime frames belong under `Assets/Art/Resources/ArenaFinal/Characters/Dogs/<Dog>/Motion/`. Never overwrite the existing eight-pose ArenaFinal set while a motion pack is under review.
 
-The initial four V01 boards are generated and intentionally remain reference-only. They establish a strong Cheddar/Cocoa identity and useful action silhouettes, but validation correctly rejects them as runtime sources because the generator baked a checkerboard into RGB output instead of producing true alpha. Direction ordering and Cocoa's comfort/hide props also need human review before any slicing.
+The initial four V01 boards remain reference-only pose history. The active identity authorities are
+the four-view flat-storybook V02 model sheets documented in `CHARACTER-ART-MODEL-SHEETS.md`. Every
+new frame must use its dog's V02 sheet as the identity reference; older frames may supply action
+only. This specifically prevents Cocoa from acquiring noncanonical cream or white markings.
 
-Tier A clips are generated separately against flat near-white backgrounds. The extraction pipeline exports normalized 512x384 true-alpha frames with a shared paw-baseline pivot. Live gameplay has complete eight-way idle, run, and bark coverage: east, southeast, south, northeast, and north are authored, with west-side angles mirrored. Tug and the stunned/rescued/proud/sad outcome loops are authored east and mirrored west. Persistent carry now has authored east, south, and north loops, with west mirroring the east frames; diagonal carry continues to use the safe east-facing fallback until its source row passes visual review. Dig has authored east and south four-frame loops, with west mirroring east. Remaining Tier B verbs retain the established single-pose fallback. Current completion is **170/336 source frames**, with symmetric runtime mirroring supplying the west angles.
+Tier A clips are generated separately and exported as normalized 512×384 true-alpha frames with a
+shared paw-baseline pivot. Live run and bark now prefer sheet-locked flat-storybook side silhouettes:
+run uses four poses and bark uses two, both mirrored for west. The previous five-direction strips
+remain complete, load-tested runtime fallbacks. Idle retains its five-direction authored set. Tug
+and the stunned/rescued/proud/sad outcome loops are authored east and mirrored west. Persistent
+carry has authored east, south, and north loops, with west mirroring east. Dig has authored east and
+south loops. Remaining Tier B verbs retain the established single-pose fallback.
 
 ## Camera and direction contract
 
@@ -29,8 +38,8 @@ The machine-readable source is `tools/art/character_motion_manifest.json`; it cu
 | Tier | Clip | Directions | Frames/direction | Gameplay read |
 | --- | --- | ---: | ---: | --- |
 | A | idle | 8 | 4 | breathing/tail personality |
-| A | run | 8 | 4 | traversal and facing |
-| A | bark | 8 | 4 | anticipation, bark pop, settle |
+| A | run | E/W storybook primary; 8-way legacy fallback | 4 | sheet-locked traversal personality |
+| A | bark | E/W storybook primary; 8-way legacy fallback | 2 | anticipation and bark pop |
 | A | tug | E/W | 3 | brace, pull, recover |
 | B | dig | E/S/W | 4 | sniff, paws, dirt kick, recover |
 | B | carry | 8 | 2 | readable held-object silhouette |
@@ -46,6 +55,7 @@ Cheddar motion should overshoot, lead with the head, and use loose ears/tail. Co
 `<dog>_<clip>_<direction>_<frame>.png`, lowercase snake case with zero-based two-digit frames. Examples:
 
 - `cheddar_run_se_02.png`
+- `cheddar_run_storybook_e_02.png`
 - `cocoa_bark_n_01.png`
 - `cheddar_tug_w_00.png`
 - `cocoa_comfort_e_02.png`
@@ -57,7 +67,8 @@ Cheddar motion should overshoot, lead with the head, and use loose ears/tail. Co
 - Transparent background with no sheet labels, dividers, neighboring poses, white halo, or clipped ears/tail.
 - Same apparent body volume and paw baseline across angles.
 - Cheddar remains golden with red/orange collar and eager forward energy.
-- Cocoa remains dark chocolate with teal collar, cream/spot identity, and grounded posture.
+- Cocoa remains uniform deep chocolate with teal collar, warm-brown muzzle/points, grounded posture,
+  and no cream or white bib, socks, toes, blaze, belly patch, or tail tip.
 - Snout direction is unambiguous in all eight angles.
 - A 1920x1080 local-camera and full-yard capture confirms each motion remains readable.
 - Human approval is required before a generated board is sliced or promoted into ArenaFinal runtime frames.
