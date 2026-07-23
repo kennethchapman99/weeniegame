@@ -58,7 +58,8 @@ namespace CheddarAndCocoa.Game
             MissionVariant.ChaosMachine,
             MissionVariant.BlanketCatch,
             MissionVariant.SkunkBlastMayhem,
-            MissionVariant.TickInvasion
+            MissionVariant.TickInvasion,
+            MissionVariant.BurrMaze
         };
 
         [Header("Mission selection")]
@@ -210,6 +211,8 @@ namespace CheddarAndCocoa.Game
         public CoopSkunkHeistPuzzle SkunkHeistPuzzle => SkunkBlastMayhemController?.Puzzle ?? _emptySkunkHeistPuzzle;
         public TickInvasionMissionController TickInvasionController => _activeMissionController as TickInvasionMissionController;
         public CoopTickInvasionPuzzle TickInvasionPuzzle => TickInvasionController?.Puzzle ?? _emptyTickInvasionPuzzle;
+        public BurrMazeMissionController BurrMazeController => _activeMissionController as BurrMazeMissionController;
+        public CoopBurrMazePuzzle BurrMazePuzzle => BurrMazeController?.Puzzle ?? _emptyBurrMazePuzzle;
         public MissionRuntimeSnapshot RuntimeSnapshot => BuildRuntimeSnapshot();
         public int CurrentMissionSeed => _missionSeed;
         public DemoReadinessResult DemoReadiness => DemoReadinessGate.Evaluate(DemoReadinessGate.RequiredForBackyardDemo);
@@ -636,6 +639,7 @@ namespace CheddarAndCocoa.Game
         private readonly CoopFeastGuardPuzzle _emptyFeastGuardPuzzle = new CoopFeastGuardPuzzle();
         private readonly CoopSkunkHeistPuzzle _emptySkunkHeistPuzzle = new CoopSkunkHeistPuzzle();
         private readonly CoopTickInvasionPuzzle _emptyTickInvasionPuzzle = new CoopTickInvasionPuzzle();
+        private readonly CoopBurrMazePuzzle _emptyBurrMazePuzzle = new CoopBurrMazePuzzle();
         private readonly CoopScentRelayPuzzle _emptyBoneRelayPuzzle = new CoopScentRelayPuzzle();
         // Mark the Yard now lives in MarkTheYardMissionController; this empty state backs the
         // compatibility accessor when the mission is not the active controller.
@@ -1190,6 +1194,7 @@ namespace CheddarAndCocoa.Game
                 MissionVariant.BabyBirdBedlam => "Challenge: eat all 4 chicks, zero pecks",
                 MissionVariant.SkunkBlastMayhem => "Challenge: snatch the bird, zero skunkings",
                 MissionVariant.TickInvasion => "Challenge: clear the round, neither dog ever erratic",
+                MissionVariant.BurrMaze => "Challenge: reach the maze end, never spotted",
                 _ => "Challenge: clear clean for FLAWLESS"
             };
         }

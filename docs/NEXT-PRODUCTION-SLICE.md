@@ -4,6 +4,40 @@
 
 ## Current status
 
+### Burr Maze shipped as mission #26 (2026-07-22)
+
+Owner authorized building idea-bank #23 (Burr Maze) from `docs/GAME-DESIGN-BIBLE.md`. Shipped as
+`BurrMazeMissionController` / `CoopBurrMazePuzzle`: the roster's first patrol AI with a
+facing-direction vision cone (angle + max distance geometry, `CoopBurrMazePuzzle.IsInCone`) built from
+scratch, since no prior mission had moving-patrol/line-of-sight logic to reuse (Coyotes Fence's
+"patrol" is flavor text on a static fence-gap mechanic; Table Stealth is a single fixed human, not a
+moving patrol). A dog lingering in the cone for a brief dwell gets SPOTTED - both dogs reset to the
+last banked checkpoint with zero burr penalty and no lost progress, a genuinely distinct third failure
+pattern in this roster (a pure stealth-retry loop, unlike Skunk Blast Mayhem's fail-forward detour or
+Tick Invasion's hard fail). Cheddar's reckless bramble charges cake him in burrs much faster (0.16/s vs
+Cocoa's 0.07/s) and his baseline notice-dwell accrues faster too (1.25x vs 1.0x, plus a shorter warning
+window); Cocoa's veteran read gives her an earlier "about to be spotted" telegraph and slower burr/
+notice accrual. A caked dog (burr >= 0.55) gets a REAL movement-speed penalty
+(`DogController.SetSpeedPenalty`, a new small generic overlay mirroring `TravelAssistMultiplier`'s
+shape but slow-only) plus a widened notice-dwell multiplier - a real status effect, never a fail
+condition alone. Burrs only come off via a partner-held burr-pick (`Interact`, gradual while held,
+mirroring Gate Crash's toggle-on/auto-release hold shape from `CoopHoldReleasePuzzle`): both dogs must
+stay stationary, in range, and unhidden, or the hold breaks, and a patrol detection interrupts it
+outright. Hiding bushes hard-reset a dog's in-progress notice-dwell; barking while not hidden lures the
+cat's attention toward the barker for a few seconds without resetting the barker's own dwell. A second,
+faster kitten patrol activates on its own real route (vertical vs the cat's horizontal lane) at the 20s
+mark, deterministic and also force-able via a test hook. Deterministic PlayMode suite went `800/800`
+(762 baseline + `CoopBurrMazePuzzleUnitTests` (23 tests) + `CoopBurrMazePlayModeTests` (23 tests), plus
+one new `DogController.SetSpeedPenalty` regression covered inside the mission's own PlayMode suite), and
+small fixes to the same categories of pre-existing roster-wide audits Skunk Blast Mayhem/Tick Invasion's
+appends needed (the roster's 25->26 `MissionSelectOptionCount` assertion across 22 test files, the
+objective-label progress-echo poke switch, the mission-challenge-label fallback guard, and the
+team-plan chip count audit - now 24 chipped missions, reusing the existing Bush/Grass backyard props for
+the hiding-spot/bramble-patch bullets). No new `MissionContext` fields were needed; the only shared-file
+change outside the mission's own files was the small, generic `DogController.SetSpeedPenalty` overlay
+(mirrors the existing `TravelAssistMultiplier` pattern, clamped to slow-only so it can never
+accidentally boost).
+
 ### Tick Invasion shipped as mission #25 (2026-07-22)
 
 Owner authorized building idea-bank #21 (Tick Invasion) from `docs/GAME-DESIGN-BIBLE.md`. Shipped as

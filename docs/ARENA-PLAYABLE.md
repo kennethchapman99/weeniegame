@@ -1746,6 +1746,55 @@ in both directions, and a pool dive clearing it. Let a dog's ticks max out and c
 reads a per-dog fail reason (Cheddar messy vs Cocoa dignified); clear a full round with steady mutual
 grooming and confirm `INFESTATION CLEARED!` plus MVP credit naming a dog.
 
+### Burr Maze
+
+Burr Maze (2026-07-22, idea-bank #23) is the roster's first patrol-stealth slice: a hedge maze at the
+back of the yard, patrolled by the neighbor's territorial cat (the shared predator actor, reused the
+same way Skunk Blast Mayhem's skunk and Baby Bird Bedlam's parent bird reused it). The cat sweeps a
+facing-direction **vision cone** (angle + max distance, `CoopBurrMazePuzzle.IsInCone`) along its patrol
+lane; a dog lingering in the cone for a brief dwell (not instant - `NoticeDwellThreshold`) gets
+**SPOTTED** - both dogs are swept back to the last banked checkpoint, with **zero burr penalty and no
+lost progress**. This is a genuine third failure pattern in this roster, distinct from Skunk Blast
+Mayhem's fail-forward de-skunk detour and Tick Invasion's hard fail: a pure stealth-retry loop.
+**Cheddar's** reckless bramble charges cake him in burrs much faster (0.16/s vs Cocoa's 0.07/s) and his
+baseline notice-dwell accrues faster too (louder, easier to spot, 1.25x vs 1.0x) with a shorter warning
+window before detection; **Cocoa's** veteran read gives her an earlier "about to be spotted" telegraph,
+and she accrues burrs and notice-dwell more slowly. A dog whose burr meter crosses 0.55 is **CAKED**: a
+real movement-speed penalty (`DogController.SetSpeedPenalty`, 0.6x) plus a widened notice-dwell
+accrual (1.6x) - a genuine status effect, never a fail condition on its own. Burrs only come off via a
+partner-held **burr-pick** (`Interact`, gradual while held, mirroring Gate Crash's toggle-on/
+auto-release hold shape): both dogs must stay stationary, in range, and unhidden, or the hold breaks -
+and a patrol detection interrupts it outright. Ducking into a **HIDE HERE** bush hard-resets a dog's
+in-progress notice-dwell, the core MGS-style tool. Barking while NOT hidden **lures** the cat's
+attention toward the barking dog's position for a few seconds, at the cost of that dog's own exposure -
+it deliberately does not reset the barker's own dwell. Partway through the round (20s) a second, faster
+**kitten** patrol activates on a distinct real route (vertical vs the cat's horizontal lane), forcing
+the pair to route around whichever patrol currently covers the "safe" path. Scoring: `CHECKPOINT
+REACHED` +90 (team, per checkpoint), `BURRS PICKED CLEAN` +60 (team), `MAZE CLEARED` +500 (team, clears
+the mission). Deterministic logic lives in `CoopBurrMazePuzzle` (cone-notice math, burr accrual/
+reduction, checkpoint state, patrol-route state) behind `BurrMazeMissionController`; both dogs' live
+burr percentages are mirrored through the shared HUD pressure meter (`IMissionPressureHud`, surfacing
+whichever dog reads worse, pre-empted by an "ABOUT TO BE SPOTTED!" callout when either dog nears
+detection). Hiding bushes reuse the existing `Bush` prop art (the same cover fiction Backyard Rescue's
+environment pass uses it for); bramble patches reuse the generic `Grass` patch art tinted into a
+bramble read (first use in the roster); the cat/kitten patrol on the shared/generated predator actor
+art with no bespoke sprite yet, and the mission-select tile is a generated greybox placeholder
+(`tools/art/generate_burr_maze_tile.py`) per the gameplay-first greybox pivot, not yet a painterly
+production portrait.
+
+Manual acceptance check: select **Burr Maze** with two local players. Confirm the cat patrol, its
+bushes, bramble patches, and hedge-corner checkpoints read cold, and both dogs' `BURRS 0%` labels show
+clean. Stand ahead of the cat's sweep and confirm the pressure HUD escalates to `ABOUT TO BE SPOTTED!`
+before a `SPOTTED!` pop sends both dogs back to the last checkpoint - not a mission fail. Duck into a
+`HIDE HERE` bush mid-sweep and confirm the notice resets. Walk Cheddar through a bramble patch and
+confirm his `BURRS` percentage climbs faster than Cocoa's under the same exposure; let him cross the
+caked threshold and confirm he visibly slows and rustles wider. Stand both dogs still and Interact to
+pick a caked partner clean and confirm the meter drops over a held few seconds; walking away or getting
+spotted mid-pick should cleanly interrupt it. Bark near the cat while not hidden and confirm the
+`LURED!` cue and the cat's attention visibly swinging that way. Reach the round's 20s mark and confirm
+the second, faster kitten patrol appears on its own route. Reach the final checkpoint and confirm
+`MAZE CLEARED!` plus MVP credit naming a dog.
+
 Historical automated baseline: Unity 6000.0.65f1 batch PlayMode run passed `400/400` tests on
 2026-07-01 after the generated P0 mission-state art pass. The targeted presentation
 coverage inside `PeeBreakPlayModeTests`, `BackyardEnvironmentPlayModeTests`,
@@ -2291,7 +2340,7 @@ starting point — the next couch test is the real calibration pass.
 
 LevelClear displays a 1-3 star rating based on final score, the center banner reads **BACKYARD SAVED! [rank]**, and both dogs hold a **PROUD!** pose. GameOver displays **MISSION FAILED! [rank]**, applies the game-over penalty, and both dogs hold a **SAD FLOP** pose. The end card includes `Outcome: Score - Rank`, one short funny `EndReasonLabel`, the last score swing, stars, session totals, and Replay / Next Mission / Mission Select actions.
 
-Manual score/replay readability check: during both clear and fail, confirm the final dog poses are still visible behind/around the end card, the score swing label remains signed and cause-first, the funny rank and reason line are readable, and Replay / Next Mission / Mission Select are all usable without a mouse. The MVP line should name Cheddar or Cocoa after any run with at least one successful beat in every mission — "MVP: awaiting dog heroics" on a scoring run means that mission's `CreditDog` wiring regressed (all 25 current missions credit successful actions; the original 22 were audited on 2026-07-10, and Baby Bird Bedlam, Skunk Blast Mayhem, and Tick Invasion each followed the same controller boundary since).
+Manual score/replay readability check: during both clear and fail, confirm the final dog poses are still visible behind/around the end card, the score swing label remains signed and cause-first, the funny rank and reason line are readable, and Replay / Next Mission / Mission Select are all usable without a mouse. The MVP line should name Cheddar or Cocoa after any run with at least one successful beat in every mission — "MVP: awaiting dog heroics" on a scoring run means that mission's `CreditDog` wiring regressed (all 26 current missions credit successful actions; the original 22 were audited on 2026-07-10, and Baby Bird Bedlam, Skunk Blast Mayhem, Tick Invasion, and Burr Maze each followed the same controller boundary since).
 
 ## Non-developer playtest script
 

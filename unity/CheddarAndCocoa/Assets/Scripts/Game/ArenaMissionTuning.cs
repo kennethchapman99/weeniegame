@@ -462,6 +462,25 @@ namespace CheddarAndCocoa.Game
             SurvivorScore = 300
         };
 
+        // Checkpoint-progress mission (ItemGoal=3: three checkpoint advances past the start reach
+        // the maze end). Same shape as Skunk/Tick: a single guaranteed 500 clear anchor
+        // (BurrMazeCleared) is the only *guaranteed* extra on a flawless run - ceiling on a flawless
+        // run is 500 (BurrMazeCleared) + 500 (ClearScore) + 200 (FlawlessBonus) + 300 (60% of 110s
+        // round * 5 time-bonus mult) = 1500. Pawfect/Hero mirror Skunk/Tick's numbers.
+        public MissionBalance BurrMaze = new MissionBalance
+        {
+            RoundSeconds = 110f,
+            SpawnedItemCount = 0,
+            ItemGoal = 3,
+            ItemScore = 0,
+            MaxStolenFood = 3,
+            SquirrelPenalty = 40,
+            SquirrelScareScore = 90,
+            PawfectScore = 1400,
+            HeroScore = 950,
+            SurvivorScore = 300
+        };
+
         public static ArenaMissionTuning CreateDefault() => new ArenaMissionTuning();
 
         public MissionBalance BalanceFor(GameManager.MissionVariant variant)
@@ -491,6 +510,7 @@ namespace CheddarAndCocoa.Game
                 GameManager.MissionVariant.BabyBirdBedlam => BabyBirdBedlam,
                 GameManager.MissionVariant.SkunkBlastMayhem => SkunkBlastMayhem,
                 GameManager.MissionVariant.TickInvasion => TickInvasion,
+                GameManager.MissionVariant.BurrMaze => BurrMaze,
                 _ => BackyardRescue
             };
         }

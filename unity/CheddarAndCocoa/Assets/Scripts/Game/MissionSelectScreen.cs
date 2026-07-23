@@ -940,6 +940,20 @@ namespace CheddarAndCocoa.Game
                         FinalGameplayArt.SockPanicBasketClosed, // "hauls fresh laundry from the basket"
                     };
 
+                // BurrMazeMissionController has no bespoke cat/cone/checkpoint art yet, but its
+                // hiding bushes and bramble patches genuinely reuse existing FinalGameplayArt props
+                // (Bush - the same "cover" fiction Backyard Rescue's environment pass uses it for -
+                // and Grass, tinted into a bramble read) - a real match for two of the four
+                // previewed bullets.
+                case GameManager.MissionVariant.BurrMaze:
+                    return new[]
+                    {
+                        FinalGameplayArt.Bush, // "duck into a HIDE HERE bush to break its notice"
+                        FinalGameplayArt.Grass, // "bramble patches cake a dog in burrs"
+                        null, // "SPOTTED! - both dogs reset to the last CHECKPOINT" - no distinct sprite
+                        null, // "bark to lure the cat's attention" - plays on the shared predator actor
+                    };
+
                 default:
                     return null;
             }

@@ -73,5 +73,9 @@ namespace CheddarAndCocoa.Game
         public static readonly ProductionScoreEvent PoolDiveRinse = new("POOL DIVE", 15, true);
         public static readonly ProductionScoreEvent SuperTickShaken = new("SUPER TICK SHAKEN OFF", 150, true);
         public static readonly ProductionScoreEvent InfestationCleared = new("INFESTATION CLEARED", 500, true);
+
+        public static readonly ProductionScoreEvent BurrMazeCheckpoint = new("CHECKPOINT REACHED", 90, true);
+        public static readonly ProductionScoreEvent BurrPickedClean = new("BURRS PICKED CLEAN", 60, true);
+        public static readonly ProductionScoreEvent BurrMazeCleared = new("MAZE CLEARED", 500, true);
     }
 }

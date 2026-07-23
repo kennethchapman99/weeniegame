@@ -196,7 +196,7 @@ groom pass. First used in Tick Invasion (#21).
 >
 > **Status tags (added 2026-07-22):** some of these were built long ago and just never got marked.
 > Each entry below carries one of:
-> - **[BUILT]** — shipped as a mission in the current 24-mission roster (see
+> - **[BUILT]** — shipped as a mission in the current 26-mission roster (see
 >   [`LEVEL-READINESS-SCORES.md`](LEVEL-READINESS-SCORES.md)); named where the shipped mechanic
 >   evolved from the pitch.
 > - **[DEFERRED]** — not yet built; fair game to pick up any time.
@@ -665,7 +665,7 @@ Core verbs: distract, steal, rescue, carry, wrestle.
 
 ### 23. Burr Maze
 
-**[DEFERRED]** — added to the idea bank 2026-07-22 (owner pitch); not built.
+**[BUILT]** — shipped as `BurrMaze` (`BurrMazeMissionController`), 2026-07-22.
 
 A top-down hedge-and-bramble maze at the back of the yard, thick with burr patches, and patrolled
 by the neighbor's territorial outdoor cat — the one threat these dogs have been trained their

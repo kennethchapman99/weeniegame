@@ -451,8 +451,12 @@ namespace CheddarAndCocoa.Tests
             // Blast Mayhem (2026-07-22) added a 23rd chipped mission, reusing Sock Panic's authored
             // laundry-basket art for its own basket/pile rows. Tick Invasion (2026-07-22) has no
             // bespoke groom/pool/erratic/Super-Tick art to reuse yet, so it stays text-only alongside
-            // Backyard Rescue rather than guessing at a mismatched icon.
-            Assert.AreEqual(23, chippedCount, "Expected 23 missions to render team-plan chips.");
+            // Backyard Rescue rather than guessing at a mismatched icon. Burr Maze (2026-07-22) added
+            // a 24th chipped mission, reusing the existing Bush and Grass backyard props for its
+            // hiding-spot and bramble-patch bullets (its cat patrol/cone and checkpoint-reset bullets
+            // stay text-only rows within that same chip block, same as Coyotes Fence/Scent Search's
+            // mixed null entries).
+            Assert.AreEqual(24, chippedCount, "Expected 24 missions to render team-plan chips.");
             Assert.AreEqual(2, textOnlyCount, "Expected Backyard Rescue and Tick Invasion to stay text-only.");
         }
 

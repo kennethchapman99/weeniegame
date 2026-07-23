@@ -85,6 +85,8 @@ namespace CheddarAndCocoa.Game
                     return new MissionPresentationProfile("Cheddar loudly lures the skunk's attention; Cocoa reads the tail tells and makes the clean snatch.", "Lure + snatch heist", "Backyard skunk guard post and an indoor laundry-pile de-skunk station", threats, ReadabilityRequirement.WarningVisible);
                 case GameManager.MissionVariant.TickInvasion:
                     return new MissionPresentationProfile("Cheddar and Cocoa groom each other clean, bark to calm an erratic partner, and dive the pool when overwhelmed.", "Mutual grooming survival", "Per-dog tick meters, an erratic panic state, a pool dive station, and a Super Tick twist", dogs, ReadabilityRequirement.WarningVisible);
+                case GameManager.MissionVariant.BurrMaze:
+                    return new MissionPresentationProfile("Cheddar barrels through bramble and can bark-lure the cat; Cocoa reads the patrol earliest and picks the clean route.", "Stealth patrol maze", "Hedge maze, a cat's sweeping vision cone, bramble patches, hiding bushes, and hedge-corner checkpoints", threats, ReadabilityRequirement.WarningVisible);
                 default:
                     return new MissionPresentationProfile("Cheddar and Cocoa use their shared dog verbs together.", "Co-op dog mission", "Readable greybox arena with objective markers", dogs);
             }
@@ -983,6 +985,68 @@ namespace CheddarAndCocoa.Game
                 ItemColor = new Color(0.62f, 0.42f, 0.18f),
                 ItemAccentColor = new Color(0.85f, 0.15f, 0.65f),
                 ItemSecondaryColor = new Color(0.3f, 0.65f, 0.95f),
+                ItemPopColor = new Color(0.42f, 0.85f, 0.5f)
+            };
+        }
+
+        internal static GameManager.MissionDefinition BuildBurrMazeDefinition(ArenaMissionTuning tuning)
+        {
+            const GameManager.MissionVariant variant = GameManager.MissionVariant.BurrMaze;
+            var balance = tuning.BalanceFor(variant);
+            return new GameManager.MissionDefinition
+            {
+                Variant = variant,
+                Name = "Burr Maze",
+                IntroPrompt = "The neighbor's territorial cat patrols the hedge maze at the back of the yard, and every instinct says chase it - don't. Watch its sweeping vision cone, duck into bushes to break its notice, and reach each hedge-corner checkpoint. Bramble patches cake a dog in burrs - slower and louder until the partner holds still to pick them clean. Getting spotted just sends both dogs back to the last safe checkpoint, not a hard fail.",
+                ReadyScoreLabel = "READY FOR THE MAZE",
+                ItemRootName = "Checkpoint",
+                ItemObjectName = "Hedge Checkpoint",
+                ItemWorldLabel = "Checkpoint!",
+                ItemArrowLabel = "CHECKPOINT",
+                ItemCollectCueNoun = "the maze checkpoints",
+                CollectObjectiveFormat = "Reach the maze checkpoints {0}/{1}",
+                CollectedScoreLabel = "MAZE CLEARED",
+                ItemScore = balance.ItemScore,
+                SpawnedItemCount = balance.SpawnedItemCount,
+                ItemGoal = balance.ItemGoal,
+                RoundSeconds = balance.RoundSeconds,
+                PawfectScore = balance.PawfectScore,
+                HeroScore = balance.HeroScore,
+                SurvivorScore = balance.SurvivorScore,
+                UsesSquirrel = false,
+                RequiresPredator = false,
+                RequiresTug = false,
+                MaxStolenFood = balance.MaxStolenFood,
+                SquirrelPenalty = balance.SquirrelPenalty,
+                SquirrelScareScore = balance.SquirrelScareScore,
+                SquirrelObjectiveText = "Sneak the cat's patrol - duck into bushes to break its notice",
+                SquirrelStealingCue = "About to be spotted - duck into a bush now!",
+                SquirrelStoleCue = "SPOTTED! Back to the last safe checkpoint - no burrs lost, just ground.",
+                SquirrelStealScoreLabel = "SPOTTED",
+                SquirrelScareScoreLabel = "CHECKPOINT",
+                SquirrelStealingActorLabel = "CAT",
+                SquirrelDroppedActorLabel = "CHECKPOINT",
+                SquirrelStoleActorLabel = "SPOTTED!",
+                SquirrelMissPopLabel = "SPOTTED!",
+                SquirrelStealJuiceLabel = "SPOTTED!",
+                SquirrelScareJuiceLabel = "CHECKPOINT!",
+                TugObjectiveText = "Sneak past the cat, pick burrs clean, reach the maze end",
+                WaitingObjectiveText = "Sneak past the cat's patrol to the next checkpoint",
+                ClearObjectiveText = "Maze cleared - replay Burr Maze",
+                ClearBannerPrefix = "CLEAR!",
+                ClearScoreLabel = "BURR MAZE CLEAR",
+                ReplayPrompt = "Press R / Enter / Start to replay Burr Maze",
+                FailObjectiveText = "Mission failed - replay Burr Maze",
+                GenericFailReason = "The cat kept the maze locked down.",
+                TimeFailReason = "Time ran out before the dogs slipped past both patrols.",
+                StolenFailReason = "Too many detections kept resetting the dogs' position.",
+                PredatorFailReason = "The cat's patrol is the threat here, and it knows every corner.",
+                PawfectClearReason = "Cheddar and Cocoa slipped past every patrol and never once got spotted.",
+                HeroClearReason = "They got spotted a time or two but still made it out the far hedge.",
+                BasicClearReason = "They made it through the maze, burrs and detours included.",
+                ItemColor = new Color(0.42f, 0.3f, 0.12f),
+                ItemAccentColor = new Color(0.2f, 0.45f, 0.2f),
+                ItemSecondaryColor = new Color(0.35f, 0.3f, 0.32f),
                 ItemPopColor = new Color(0.42f, 0.85f, 0.5f)
             };
         }

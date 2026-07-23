@@ -301,7 +301,7 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(game);
             Assert.IsTrue(game.MissionSelectVisible);
             Assert.AreEqual(GameManager.FlowState.MissionSelect, game.CurrentFlow);
-            Assert.AreEqual(25, game.MissionSelectOptionCount);
+            Assert.AreEqual(26, game.MissionSelectOptionCount);
             Assert.AreEqual(GameManager.MissionVariant.OperationPeeBreak, game.SelectedMissionVariant);
             Assert.AreEqual("Operation Pee Break", game.SelectedMissionName);
             Assert.That(game.SelectedMissionReadinessLabel, Does.Contain("Readability gate: READY"));
@@ -1060,7 +1060,7 @@ namespace CheddarAndCocoa.Tests
 
             Assert.AreEqual(GameManager.FlowState.MissionSelect, game.CurrentFlow);
             Assert.IsTrue(game.MissionSelectVisible);
-            Assert.AreEqual(25, game.MissionSelectOptionCount);
+            Assert.AreEqual(26, game.MissionSelectOptionCount);
             Assert.That(game.ObjectiveLabel, Does.Contain("Choose a mission"));
             Assert.IsTrue(LogContains(game, "MissionSelect: Operation Pee Break"));
 

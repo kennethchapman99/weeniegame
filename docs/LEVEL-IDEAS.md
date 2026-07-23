@@ -15,8 +15,8 @@ designed so a new level is mostly a `SceneDef` + painter + a few systems, not en
 >   de-skunk co-op scramble. Built 2026-07-22.
 > - **#23 Burr Maze** (2026-07-22, owner pitch) — top-down hedge maze thick with burrs, patrolled
 >   by the neighbor's cat Metal-Gear-Solid style (vision cones, patrol routes, hiding spots);
->   accumulated burrs slow/rustle a dog until the partner holds still to pick them clean. Not yet
->   built.
+>   accumulated burrs slow/rustle a dog until the partner holds still to pick them clean. Built
+>   2026-07-22 as `BurrMazeMissionController`.
 
 ---
 

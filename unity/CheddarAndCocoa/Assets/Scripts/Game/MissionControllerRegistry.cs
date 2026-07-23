@@ -102,6 +102,9 @@ namespace CheddarAndCocoa.Game
                 [GameManager.MissionVariant.TickInvasion] = new Registration(
                     () => new TickInvasionMissionController(),
                     MissionCatalog.BuildTickInvasionDefinition),
+                [GameManager.MissionVariant.BurrMaze] = new Registration(
+                    () => new BurrMazeMissionController(),
+                    MissionCatalog.BuildBurrMazeDefinition),
             };
 
         public static IEnumerable<GameManager.MissionVariant> RegisteredVariants => Registrations.Keys;

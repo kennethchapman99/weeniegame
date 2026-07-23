@@ -948,6 +948,7 @@ namespace CheddarAndCocoa.Game
                 GameManager.MissionVariant.BabyBirdBedlam => "BRD",
                 GameManager.MissionVariant.SkunkBlastMayhem => "SKN",
                 GameManager.MissionVariant.TickInvasion => "TIK",
+                GameManager.MissionVariant.BurrMaze => "BRM",
                 _ => "DOG"
             };
         }
@@ -981,6 +982,7 @@ namespace CheddarAndCocoa.Game
                 GameManager.MissionVariant.BabyBirdBedlam => new Color(0.55f, 0.72f, 0.92f, 0.92f),
                 GameManager.MissionVariant.SkunkBlastMayhem => new Color(0.58f, 0.42f, 0.68f, 0.92f),
                 GameManager.MissionVariant.TickInvasion => new Color(0.72f, 0.24f, 0.5f, 0.92f),
+                GameManager.MissionVariant.BurrMaze => new Color(0.4f, 0.34f, 0.2f, 0.92f),
                 _ => new Color(0.28f, 0.55f, 0.32f, 0.92f)
             };
         }

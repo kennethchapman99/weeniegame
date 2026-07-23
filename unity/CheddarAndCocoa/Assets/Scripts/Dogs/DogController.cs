@@ -73,6 +73,11 @@ namespace CheddarAndCocoa.Dogs
         public bool Zoomies { get; private set; }
         public bool TravelAssist { get; private set; }
         public float TravelAssistMultiplier { get; private set; } = 1f;
+        /// <summary>
+        /// Generic mission-owned speed debuff (e.g. Burr Maze's burr-caked "rustle" penalty).
+        /// Separate from <see cref="TravelAssistMultiplier"/>, which is boost-only (clamped >=1).
+        /// </summary>
+        public float SpeedPenaltyMultiplier { get; private set; } = 1f;
         private float _zoomiesUntil;
         public bool Immune { get; private set; }   // belly-rub power-up — blocks wrestle/predator
         private float _wetTimer;                    // dryT: slick render + AI avoids floaties
@@ -113,7 +118,11 @@ namespace CheddarAndCocoa.Dogs
             _wetTimer = 0f;
             _wrestleStunT = 0f;
             _wrestleCooldownUntil = 0f;
+            SpeedPenaltyMultiplier = 1f;
         }
+
+        /// <summary>Mission-owned slow debuff. Clamped below 1 so it can never accidentally boost.</summary>
+        public void SetSpeedPenalty(float multiplier) => SpeedPenaltyMultiplier = Mathf.Clamp(multiplier, 0.1f, 1f);
 
         public float MaxSpeedUnitsPerSecond => CurrentSpeed();
         public float AccelerationUnitsPerSecond => tuning != null ? tuning.acceleration : 0f;
@@ -267,7 +276,8 @@ namespace CheddarAndCocoa.Dogs
             float baseUnitsPerSec = tuning.baseSpeed / pixelsPerUnit * 60f;
             float speed = Zoomies ? baseUnitsPerSec * tuning.zoomiesMultiplier : baseUnitsPerSec;
             if (OnFloater) speed *= FloaterSpeedRatio; // prototype: slightly faster scampering on floaties
-            return TravelAssist ? speed * TravelAssistMultiplier : speed;
+            if (TravelAssist) speed *= TravelAssistMultiplier;
+            return speed * SpeedPenaltyMultiplier;
         }
 
         private float MovementResponse(Vector2 currentVelocity, Vector2 desiredVelocity)

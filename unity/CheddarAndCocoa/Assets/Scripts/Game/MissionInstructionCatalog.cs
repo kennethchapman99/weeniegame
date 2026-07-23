@@ -62,6 +62,8 @@ namespace CheddarAndCocoa.Game
                     return "A skunk is guarding a prized dead bird in the yard. Cheddar barks loud to hold its attention while Cocoa sneaks in for the clean snatch - but when the tail lifts, both dogs must bail before the spray.";
                 case GameManager.MissionVariant.TickInvasion:
                     return "The backyard has exploded with ticks and they're crawling onto both dogs nonstop. Cheddar and Cocoa become each other's first responders - grooming the ticks off one another before either one gets overwhelmed and goes erratic.";
+                case GameManager.MissionVariant.BurrMaze:
+                    return "The neighbor's territorial cat patrols the hedge maze at the back of the yard, and every instinct says chase it - don't. Cheddar and Cocoa sneak past its sweeping vision cone, duck into bushes, and pick burrs off each other before a bramble charge gets someone caked and rustling loud.";
                 default:
                     return string.Empty;
             }
@@ -272,6 +274,14 @@ namespace CheddarAndCocoa.Game
                         "A dog above the tick threshold goes ERRATIC and hard to lock down - bark to hold them still, then groom.",
                         "Either dog can Interact at the POOL for an instant reset, but comes out wet and picks up ticks twice as fast for a while.",
                         "A SUPER TICK will lock onto one dog - grooming can't touch it, so that dog must dive the pool while the other holds the line."
+                    };
+                case GameManager.MissionVariant.BurrMaze:
+                    return new[]
+                    {
+                        "Watch the cat's patrol and its vision cone sweep - stay out of it, or duck into a HIDE HERE bush to break its notice.",
+                        "Bramble patches cake a dog in burrs - too many means slower and louder. Interact on a caked partner to pick them clean (both hold still, unhidden).",
+                        "Caught in the cone too long triggers SPOTTED! - both dogs reset to the last CHECKPOINT, no burr penalty, just lost ground.",
+                        "Bark to lure the cat's attention away (it costs your own cover) - watch for the faster second patrol that joins partway through."
                     };
                 case GameManager.MissionVariant.KitchenFoodFrenzy:
                     return new[]

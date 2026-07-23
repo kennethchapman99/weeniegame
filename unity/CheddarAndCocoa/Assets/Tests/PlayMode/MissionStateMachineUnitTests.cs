@@ -186,6 +186,11 @@ namespace CheddarAndCocoa.Tests
             GameManager.MissionVariant.TickInvasion => ScoreEventCatalog.InfestationCleared.Points,
             // Full 5-catch combo chain (70+95+120+145+170) plus the dinner-rush start bonus.
             GameManager.MissionVariant.KitchenFoodFrenzy => 600 + 100,
+            // Reaching the maze end guarantees banking all 3 checkpoints (CheckpointOffsets.Length - 1)
+            // plus the clear payoff; a flawless run needs zero burr-picks (only checkpoint proximity
+            // is required by the state machine), so that isn't a fixed guaranteed count.
+            GameManager.MissionVariant.BurrMaze => ScoreEventCatalog.BurrMazeCheckpoint.Points * 3
+                + ScoreEventCatalog.BurrMazeCleared.Points,
             _ => 0
         };
 

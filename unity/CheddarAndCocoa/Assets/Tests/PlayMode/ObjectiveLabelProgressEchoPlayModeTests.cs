@@ -175,6 +175,12 @@ namespace CheddarAndCocoa.Tests
                     // ERRATIC callout - a discrete state change, not a raw percentage in the label.
                     game.TickInvasionPuzzle.Advance(24f);
                     break;
+                case GameManager.MissionVariant.BurrMaze:
+                    // ForceCheckpoint bumps the puzzle's own checkpoint index directly - no dog
+                    // positions or Tick() needed - which flips ObjectiveLabel's "checkpoint N of M"
+                    // count, the first observable change.
+                    game.BurrMazePuzzle.ForceCheckpoint(1);
+                    break;
                 default:
                     Assert.Fail($"No progress poke wired for {variant} - add one so this guard covers the full roster.");
                     break;
