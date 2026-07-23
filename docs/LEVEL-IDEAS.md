@@ -8,10 +8,15 @@ Round/level concepts captured for later. The data-driven scene + (M7) room-schem
 designed so a new level is mostly a `SceneDef` + painter + a few systems, not engine surgery.
 
 > **Newest ideas live in the design bible's idea bank**
-> ([`GAME-DESIGN-BIBLE.md`](GAME-DESIGN-BIBLE.md), "Level and chapter ideas"), including
-> **#22 Skunk Blast Mayhem** (2026-07-22) — a skunk guards a dead-bird treasure; lure/grab heist
-> with a tail-lift spray telegraph, and a getting-skunked fail that turns into a laundry-rubbing
-> de-skunk co-op scramble. A second earmarked level is still TBD (owner to name it).
+> ([`GAME-DESIGN-BIBLE.md`](GAME-DESIGN-BIBLE.md), "Level and chapter ideas"), including:
+> - **#21 Tick Invasion** — mutual-grooming survival mission; build in progress 2026-07-22.
+> - **#22 Skunk Blast Mayhem** (2026-07-22) — a skunk guards a dead-bird treasure; lure/grab heist
+>   with a tail-lift spray telegraph, and a getting-skunked fail that turns into a laundry-rubbing
+>   de-skunk co-op scramble. Built 2026-07-22.
+> - **#23 Burr Maze** (2026-07-22, owner pitch) — top-down hedge maze thick with burrs, patrolled
+>   by the neighbor's cat Metal-Gear-Solid style (vision cones, patrol routes, hiding spots);
+>   accumulated burrs slow/rustle a dog until the partner holds still to pick them clean. Not yet
+>   built.
 
 ---
 

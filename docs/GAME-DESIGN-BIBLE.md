@@ -663,6 +663,75 @@ acceptance bar below.
 
 Core verbs: distract, steal, rescue, carry, wrestle.
 
+### 23. Burr Maze
+
+**[DEFERRED]** — added to the idea bank 2026-07-22 (owner pitch); not built.
+
+A top-down hedge-and-bramble maze at the back of the yard, thick with burr patches, and patrolled
+by the neighbor's territorial outdoor cat — the one threat these dogs have been trained their
+entire lives to chase, and here the whole level is about NOT doing that. Every dog owner knows the
+walk that ends in twenty minutes of picking burrs out of fur at the door; this level turns that
+chore into the run itself, Metal Gear Solid style: vision cones, patrol routes, hiding spots, and a
+distraction bark used for stealth instead of a chase-starter.
+
+**Dog fantasy:** The backyard becomes hostile territory. Every instinct says "chase the cat," and
+the level is funniest exactly because that instinct is the failure state — patience and silence,
+not chaos, get the dogs through.
+
+**What Cheddar does differently:** Chaos puppy energy makes him barrel straight through bramble for
+the shortcut, picking up burrs fast and rustling loudly — reckless, noisy, high detection risk, but
+he clears ground quickly when the coast is clear.
+
+**What Cocoa does differently:** Veteran composure — she reads the cat's patrol pattern earliest,
+picks the clean (burr-free) route even if it's longer, and moves quietly enough to slip past a
+loose patrol gap Cheddar would blunder into.
+
+**Co-op puzzle beat (the maze):** The cat's vision cone sweeps a patrol route; getting spotted ends
+the attempt (back to the last safe hedge corner, not a hard fail). Cheddar's bark can lure the cat's
+attention down a side path while Cocoa slips the real route — but Cheddar has to break cover to bark
+loud enough, so the lure only works if Cocoa is already close enough to capitalize on the opening
+before the cat doubles back.
+
+**Co-op puzzle beat (the burr-pick — the twist):** Burrs accumulated from bramble patches are a
+visible per-dog meter: too many and that dog gets slower and audibly rustles (a widened detection
+radius, not a health bar). Burrs only come off when the partner holds still and picks them out —
+which takes a few seconds standing exposed in the open. Players must time the pick for a moment the
+patrol can't see that spot, or eat a detection. The burr-caked dog becomes a liability the pair has
+to actively manage, not just a fashion problem.
+
+**Mechanics sketch:**
+- Cat patrol: a fixed or looping route with a facing-direction vision cone; anything in the cone
+  when it "notices" (a brief dwell, not instant) triggers detection.
+- Detection consequence: both dogs are swept back to the last safe checkpoint/hedge corner, not a
+  hard mission fail — this is a stealth-retry loop, not a one-strike game over.
+- Burr patches: terrain tiles that add to a per-dog burr meter on contact; high burr count = slower
+  movement + a passive rustle that widens the cat's effective detection range around that dog.
+- Burr-pick: partner-held interaction, several seconds, both dogs stationary and exposed during it —
+  must be timed against the patrol's blind window.
+- Hiding spots: bushes/planters/tall grass a dog can duck into to hard-break the vision cone (reset
+  any partial "noticing" dwell), the core MGS-style tool for the whole level.
+- Bark-lure: draws the cat's attention/patrol toward the barking dog's position for a few seconds,
+  at the cost of breaking that dog's own cover.
+
+**Twist / complication:** A second, faster patrol (maybe the cat's kitten, or a motion-sensor
+sprinkler) covers the maze's short/clean route, forcing at least one full loop where the "safe"
+path Cocoa would normally read is temporarily the dangerous one — the dogs have to swap which of
+them takes point.
+
+**Funny fail state:** Cheddar, mid-detection-retreat, absolutely covered in burrs like a bramble
+yeti, still convinced the plan is going great. Cocoa, immaculate, silently judging him from a bush.
+
+**Running gag tie-in:** Every dog owner's post-walk burr-picking ritual, turned into the actual
+gameplay loop instead of an off-screen chore.
+
+**Why it's a strong build candidate:** a genuinely new mechanic family for this roster (patrol
+vision cones + hide-breaks-detection — no shipped mission does stealth this way; `TableStealth` is
+single-human-line-of-sight, not a patrolling AI with a route), a readable shared risk (the burr
+meter/rustle radius), and a clean asymmetry (reckless-fast-noisy vs. careful-slow-quiet) that maps
+directly onto existing Cheddar/Cocoa identity without new lore.
+
+Core verbs: sneak, hide, distract, groom, bark.
+
 ## 1v1 minigames
 
 Use 1v1 minigames to break up co-op without changing the heart of the game.
