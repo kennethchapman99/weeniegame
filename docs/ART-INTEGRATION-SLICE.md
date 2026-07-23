@@ -70,6 +70,12 @@ The generated arena-SFX pass gives `ArenaFeedbackCatalog` named procedural dog-l
 major event cues while preserving replaceable cue slots, the F2 audio toggle, event-driven cue
 requests, and the separate rumble request path.
 
+The Tick Invasion production-art pass replaces its dog-bowl pool stand-in with an authored top-down
+kiddie pool, adds pressure-driven infestation/Super Tick overlays to both dogs, and gives successful
+groom and rinse interactions distinct transient VFX. The dated repo-wide audit and remaining ranked
+needs are recorded in `ART-PRODUCTION-AUDIT-2026-07-22.md`. Its focused PlayMode suite passes 19/19,
+the macOS arena dev build succeeds, and the updated 25-mission review harness writes 75/75 frames.
+
 ## Sources and export
 
 All exports come from the corresponding pose, prop, backyard prop, or VFX sheets in `DRAFT assets/`. The extraction tool at `tools/art/export_arena_final.py` removes edge-connected pale backgrounds, trims alpha bounds, adds 12 pixels of transparent padding, and never modifies source sheets. Run it from the repository root with the bundled/runtime Python or any Python installation with Pillow:

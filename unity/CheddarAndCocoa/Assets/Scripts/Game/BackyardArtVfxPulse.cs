@@ -23,6 +23,20 @@ namespace CheddarAndCocoa.Game
             return pulse;
         }
 
+        public static BackyardArtVfxPulse Spawn(Vector3 position, string resourcePath, Vector3 scale,
+            int sortingOrder, Color tint, float duration, float spinSpeed = 0f)
+        {
+            Sprite sprite = FinalGameplayArt.Load(resourcePath);
+            if (sprite == null) return null;
+
+            var go = new GameObject($"ArtVfx_{sprite.name}");
+            go.transform.position = position;
+            go.transform.localScale = scale;
+            var pulse = go.AddComponent<BackyardArtVfxPulse>();
+            pulse.Init(sprite, sortingOrder, tint, duration, spinSpeed);
+            return pulse;
+        }
+
         private void Init(Sprite sprite, int sortingOrder, Color tint, float duration, float spinSpeed)
         {
             _baseScale = transform.localScale;

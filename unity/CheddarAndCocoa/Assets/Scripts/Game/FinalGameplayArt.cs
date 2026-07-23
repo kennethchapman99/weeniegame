@@ -268,6 +268,11 @@ namespace CheddarAndCocoa.Game
         public const string WorldLabelCommand = Root + "/UI/WorldLabels/world_label_command";
         public const string WorldLabelWarning = Root + "/UI/WorldLabels/world_label_warning";
         public const string WorldPopBurst = Root + "/UI/WorldLabels/world_pop_burst";
+        public const string TickInvasionPool = Root + "/Props/TickInvasion/tick_invasion_pool";
+        public const string TickInvasionSwarm = Root + "/Props/TickInvasion/tick_invasion_swarm";
+        public const string TickInvasionSuperTick = Root + "/Props/TickInvasion/tick_invasion_super_tick";
+        public const string TickInvasionGroomBurst = Root + "/VFX/TickInvasion/tick_invasion_groom_burst";
+        public const string TickInvasionRinseBurst = Root + "/VFX/TickInvasion/tick_invasion_rinse_burst";
 
         public static readonly string[] MissionPropPackPass2 =
         {
@@ -422,6 +427,12 @@ namespace CheddarAndCocoa.Game
             BlanketSnackSplat, KitchenCounterReady, KitchenCounterBarked,
             KitchenSafeBowlEmpty, KitchenSafeBowlCatch,
             KitchenFoodGoodFalling, KitchenFoodBadFalling, KitchenFoodSplat
+        };
+
+        public static readonly string[] TickInvasionArtPack =
+        {
+            TickInvasionPool, TickInvasionSwarm, TickInvasionSuperTick,
+            TickInvasionGroomBurst, TickInvasionRinseBurst
         };
 
         public static Sprite Load(string path) => string.IsNullOrEmpty(path) ? null : Resources.Load<Sprite>(path);

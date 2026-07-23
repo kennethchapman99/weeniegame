@@ -88,6 +88,51 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator TickInvasion_UsesAuthoredPoolAndInfestationArt()
+        {
+            yield return LoadArena();
+
+            foreach (string path in FinalGameplayArt.TickInvasionArtPack)
+                Assert.IsTrue(FinalGameplayArt.Has(path), $"Missing Tick Invasion production art: {path}");
+
+            Assert.IsNotNull(_controller.PoolArt);
+            Assert.IsTrue(_controller.PoolArt.HasRuntimeSprite);
+            Assert.AreEqual("tick_invasion_pool", _controller.PoolArt.RuntimeSpriteName);
+            Assert.IsTrue(_controller.CheddarArt.HasAuthoredArt);
+            Assert.IsTrue(_controller.CocoaArt.HasAuthoredArt);
+            Assert.IsFalse(_controller.CheddarArt.Visible,
+                "A clean dog should not start visually covered in ticks.");
+
+            _controller.Tick(10f, Time.time);
+            Assert.IsTrue(_controller.CheddarArt.Visible);
+            Assert.AreEqual("tick_invasion_swarm", _controller.CheddarArt.CurrentSpriteName);
+            Assert.Greater(_controller.CheddarArt.Pressure, _controller.CocoaArt.Pressure,
+                "Cheddar's faster accumulation should be visible as the stronger infestation read.");
+        }
+
+        [UnityTest]
+        public IEnumerator TickInvasion_SuperTickAndActionsUseDistinctAuthoredVisuals()
+        {
+            yield return LoadArena();
+
+            _controller.Puzzle.ForceSuperTick(DogId.Cheddar);
+            _controller.Tick(0.01f, Time.time);
+            Assert.AreEqual("tick_invasion_super_tick", _controller.CheddarArt.CurrentSpriteName);
+
+            PlaceDog(_cheddar, _controller.PoolObject.transform.position);
+            Assert.IsTrue(_controller.HandleInteract(_cheddarIndex));
+            Assert.IsNotNull(GameObject.Find("ArtVfx_tick_invasion_rinse_burst"),
+                "Pool success should produce a nonverbal rinse burst, not only HUD text.");
+
+            PlaceDog(_cheddar, _game.ArenaBounds.center);
+            PlaceDog(_cocoa, _game.ArenaBounds.center);
+            _controller.Tick(4f, Time.time);
+            Assert.IsTrue(_controller.HandleInteract(_cocoaIndex));
+            Assert.IsNotNull(GameObject.Find("ArtVfx_tick_invasion_groom_burst"),
+                "A successful groom should produce its authored brush-and-paws burst.");
+        }
+
+        [UnityTest]
         public IEnumerator TickInvasion_TickAccumulation_IsReadableThroughThePressureHud()
         {
             yield return LoadArena();

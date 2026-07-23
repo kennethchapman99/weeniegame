@@ -179,6 +179,10 @@ namespace CheddarAndCocoa.Game
                     _game.ForceChickGrab();
                     _game.ForceParentDive();
                     break;
+                case GameManager.MissionVariant.TickInvasion:
+                    StageDogsAround(_game.ArenaBounds.center);
+                    _game.TickInvasionController?.Tick(15f, Time.time);
+                    break;
             }
         }
 
@@ -279,6 +283,16 @@ namespace CheddarAndCocoa.Game
                     StageDogsAtCurrentObjective();
                     _game.ForceParentRepel();
                     for (int shake = 0; shake < 3; shake++) _game.ForceChickShake();
+                    break;
+                case GameManager.MissionVariant.TickInvasion:
+                    if (_game.TickInvasionController != null)
+                    {
+                        Vector2 pool = _game.TickInvasionController.PoolObject.transform.position;
+                        StageDogsAround(pool);
+                        _focusOverride = pool;
+                        _game.TickInvasionController.Puzzle.ForceSuperTick(DogId.Cheddar);
+                        _game.TickInvasionController.Tick(0.01f, Time.time);
+                    }
                     break;
             }
         }

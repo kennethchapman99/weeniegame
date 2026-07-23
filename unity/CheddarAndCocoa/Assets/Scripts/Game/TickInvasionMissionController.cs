@@ -50,11 +50,17 @@ namespace CheddarAndCocoa.Game
         private GameObject _poolObj;
         private TextMesh _cheddarTickLabel;
         private TextMesh _cocoaTickLabel;
+        private MissionPropArtAttachment _poolArt;
+        private TickInvasionArtFeedback _cheddarArt;
+        private TickInvasionArtFeedback _cocoaArt;
         private float _successHoldRemaining;
         private DogId? _worstCalloutFiredFor;
 
         public CoopTickInvasionPuzzle Puzzle => _puzzle;
         public GameObject PoolObject => _poolObj;
+        public MissionPropArtAttachment PoolArt => _poolArt;
+        public TickInvasionArtFeedback CheddarArt => _cheddarArt;
+        public TickInvasionArtFeedback CocoaArt => _cocoaArt;
 
         public GameManager.MissionVariant Variant => GameManager.MissionVariant.TickInvasion;
         public bool IsComplete => _puzzle.Cleared && _successHoldRemaining <= 0f;
@@ -135,6 +141,7 @@ namespace CheddarAndCocoa.Game
                 _context.SetActorState(_poolObj, "POOL - DIVE TO RINSE OFF!", PoolColor, 0.05f);
             }
             UpdateTickLabels();
+            UpdateTickArt();
         }
 
         public void Tick(float deltaTime, float now)
@@ -160,6 +167,7 @@ namespace CheddarAndCocoa.Game
 
             UpdateWorstInfestationCallout();
             UpdateTickLabels();
+            UpdateTickArt();
         }
 
         public bool HandleBark(int dogIndex)
@@ -173,6 +181,7 @@ namespace CheddarAndCocoa.Game
                 _context.SetJuice(GameManager.JuiceFeedbackKind.BarkBurst, "HOLD STILL!");
                 PopAtDog(partner, "CALMED!", SafeColor);
                 _context.RequestAudioCue(ArenaFeedbackCatalog.Bark);
+                UpdateTickArt();
                 _context.LogEvent("TickBarkCalm", $"{Name(dog)}->{Name(partner)}");
                 _context.LogObjectiveChanged();
                 return true;
@@ -203,7 +212,10 @@ namespace CheddarAndCocoa.Game
                 _context.RequestAudioCue(ArenaFeedbackCatalog.SnackSockCollect);
                 _context.RequestShake(0.15f);
                 if (_context.DogFeedback != null && dogIndex < _context.DogFeedback.Length) _context.DogFeedback[dogIndex]?.ShowProudBrief();
+                BackyardArtVfxPulse.Spawn(_context.Dogs[dogIndex].transform.position + Vector3.up * 0.35f,
+                    FinalGameplayArt.TickInvasionRinseBurst, Vector3.one * 0.34f, 62, Color.white, 0.75f, 18f);
                 UpdateTickLabels();
+                UpdateTickArt();
                 _context.LogEvent("TickPoolDive", Name(dog));
                 _context.LogObjectiveChanged();
                 return true;
@@ -241,7 +253,11 @@ namespace CheddarAndCocoa.Game
             _context.SetJuice(GameManager.JuiceFeedbackKind.ScoreDelta, $"+{ScoreEventCatalog.GroomLanded.Points} GROOMED");
             PopAtDog(partner, "GROOMED!", SafeColor);
             _context.RequestAudioCue(ArenaFeedbackCatalog.SnackSockCollect);
+            if (partnerIdx >= 0)
+                BackyardArtVfxPulse.Spawn(_context.Dogs[partnerIdx].transform.position + Vector3.up * 0.35f,
+                    FinalGameplayArt.TickInvasionGroomBurst, Vector3.one * 0.31f, 62, Color.white, 0.68f, 26f);
             UpdateTickLabels();
+            UpdateTickArt();
             _context.LogEvent("TickGroom", $"{Name(dog)}->{Name(partner)}");
             _context.LogObjectiveChanged();
             return true;
@@ -250,6 +266,8 @@ namespace CheddarAndCocoa.Game
         public void Cleanup()
         {
             if (_poolObj != null) _poolObj.SetActive(false);
+            _cheddarArt?.Hide();
+            _cocoaArt?.Hide();
             _successHoldRemaining = 0f;
             _worstCalloutFiredFor = null;
         }
@@ -348,6 +366,7 @@ namespace CheddarAndCocoa.Game
             _context.RequestAudioCue(ArenaFeedbackCatalog.MissionWin);
             _context.RequestRumble("tick_invasion_clear", 0.28f, 0.5f, 0.2f);
             UpdateTickLabels();
+            UpdateTickArt();
             _context.LogEvent("TickInvasionCleared", $"mistakes={_puzzle.Mistakes}");
         }
 
@@ -359,6 +378,7 @@ namespace CheddarAndCocoa.Game
             _context.SetFeedback(GameManager.FeedbackKind.PredatorAttack);
             _context.RequestAudioCue(ArenaFeedbackCatalog.ThreatWarning);
             _context.RequestShake(0.25f);
+            UpdateTickArt();
             _context.LogEvent("TickSuperTick", Name(dog));
             _context.LogObjectiveChanged();
         }
@@ -368,6 +388,7 @@ namespace CheddarAndCocoa.Game
             PopAtDog(dog, "MAXED OUT!", ErraticColor);
             ShowSadFor(dog);
             _context.RequestAudioCue(ArenaFeedbackCatalog.ThreatWarning);
+            UpdateTickArt();
             _context.LogEvent("TickInvasionFailed", Name(dog));
         }
 
@@ -399,6 +420,14 @@ namespace CheddarAndCocoa.Game
             }
         }
 
+        private void UpdateTickArt()
+        {
+            _cheddarArt?.SetState(_puzzle.CheddarTicks,
+                _puzzle.SuperTickTarget == DogId.Cheddar, _puzzle.IsCheddarWet);
+            _cocoaArt?.SetState(_puzzle.CocoaTicks,
+                _puzzle.SuperTickTarget == DogId.Cocoa, _puzzle.IsCocoaWet);
+        }
+
         private Color LabelColorFor(DogId dog)
         {
             if (_puzzle.SuperTickTarget == dog) return SuperTickColor;
@@ -415,10 +444,9 @@ namespace CheddarAndCocoa.Game
             renderer.color = new Color(PoolColor.r, PoolColor.g, PoolColor.b, 0.5f);
             renderer.sortingOrder = 2;
             _poolObj.transform.localScale = Vector3.one * 2.2f;
-            // No bespoke pool-dive art yet - reuse the existing dog bowl prop art as a stand-in
-            // basin (round vessel, reads as "something to dunk into"), matching Skunk Blast
-            // Mayhem's precedent of reusing an existing prop's art for new fiction.
-            MissionPropArt.AttachObject(_poolObj, FinalGameplayArt.DogBowl, 0.018f, 18, true);
+            _poolArt = MissionPropArt.Attach(_poolObj, FinalGameplayArt.TickInvasionPool,
+                Vector3.one * 0.36f, 18, Color.white, new Vector3(0f, 0.12f, -0.28f), false);
+            _poolArt?.SetProximityAffordance(true, PoolDiveRadius + 0.4f);
             _context.AddWorldLabel(_poolObj, "POOL", Vector3.up * 1.3f, 13, Color.white);
             _poolObj.SetActive(false);
 
@@ -427,9 +455,17 @@ namespace CheddarAndCocoa.Game
                 int cheddarIdx = _context.IndexOfDog(DogId.Cheddar);
                 int cocoaIdx = _context.IndexOfDog(DogId.Cocoa);
                 if (cheddarIdx >= 0)
+                {
                     _cheddarTickLabel = _context.AddWorldLabel(_context.Dogs[cheddarIdx].gameObject, "TICKS 0%", new Vector3(0f, -1.05f, -0.1f), 11, Color.white);
+                    _cheddarArt = _context.Dogs[cheddarIdx].gameObject.AddComponent<TickInvasionArtFeedback>();
+                    _cheddarArt.Init();
+                }
                 if (cocoaIdx >= 0)
+                {
                     _cocoaTickLabel = _context.AddWorldLabel(_context.Dogs[cocoaIdx].gameObject, "TICKS 0%", new Vector3(0f, -1.05f, -0.1f), 11, Color.white);
+                    _cocoaArt = _context.Dogs[cocoaIdx].gameObject.AddComponent<TickInvasionArtFeedback>();
+                    _cocoaArt.Init();
+                }
             }
         }
 
