@@ -66,7 +66,7 @@ namespace CheddarAndCocoa.Tests
 
             var game = Object.FindFirstObjectByType<GameManager>();
             Assert.IsNotNull(game);
-            Assert.AreEqual(24, game.MissionSelectOptionCount,
+            Assert.AreEqual(25, game.MissionSelectOptionCount,
                 "The roster stays frozen while the couch-readability pass is in progress.");
 
             for (int i = 0; i < game.MissionSelectOptionCount; i++)

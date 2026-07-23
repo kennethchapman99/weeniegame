@@ -441,6 +441,27 @@ namespace CheddarAndCocoa.Game
             SurvivorScore = 300
         };
 
+        // Survive-the-round mission (ItemGoal=1: the survive-seconds threshold flipping Cleared).
+        // Same shape as SkunkBlastMayhem: a single guaranteed 500 clear anchor (InfestationCleared)
+        // is the only *guaranteed* extra on a flawless run, since a truly flawless run needs zero
+        // groom actions to fire the score events tracked here (grooms are guaranteed to happen in
+        // practice, but not required by the conservative "excellent honest run" floor) - ceiling on
+        // a flawless run is 500 (InfestationCleared) + 500 (ClearScore) + 200 (FlawlessBonus) + 300
+        // (60% of 100s round * 5 time-bonus mult) = 1500. Pawfect/Hero mirror Skunk's numbers.
+        public MissionBalance TickInvasion = new MissionBalance
+        {
+            RoundSeconds = 100f,
+            SpawnedItemCount = 0,
+            ItemGoal = 1,
+            ItemScore = 0,
+            MaxStolenFood = 3,
+            SquirrelPenalty = 50,
+            SquirrelScareScore = 25,
+            PawfectScore = 1400,
+            HeroScore = 950,
+            SurvivorScore = 300
+        };
+
         public static ArenaMissionTuning CreateDefault() => new ArenaMissionTuning();
 
         public MissionBalance BalanceFor(GameManager.MissionVariant variant)
@@ -469,6 +490,7 @@ namespace CheddarAndCocoa.Game
                 GameManager.MissionVariant.KitchenFoodFrenzy => KitchenFoodFrenzy,
                 GameManager.MissionVariant.BabyBirdBedlam => BabyBirdBedlam,
                 GameManager.MissionVariant.SkunkBlastMayhem => SkunkBlastMayhem,
+                GameManager.MissionVariant.TickInvasion => TickInvasion,
                 _ => BackyardRescue
             };
         }

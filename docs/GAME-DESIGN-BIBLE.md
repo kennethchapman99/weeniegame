@@ -553,7 +553,7 @@ Core verbs: adventure, chase, rescue, defend.
 
 ### 21. Tick Invasion: The Backyard Is Lost
 
-**[DEFERRED]** — not yet built (see "Current production priority" below).
+**[BUILT]** — shipped as `TickInvasion` (`TickInvasionMissionController`), 2026-07-22.
 
 The backyard has exploded with ticks. They crawl onto both dogs continuously and the infestation
 level climbs fast — the only way to fight back is for each dog to groom the other one, picking

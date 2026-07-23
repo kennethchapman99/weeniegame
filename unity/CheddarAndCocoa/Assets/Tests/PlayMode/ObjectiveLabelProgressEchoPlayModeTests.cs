@@ -169,6 +169,12 @@ namespace CheddarAndCocoa.Tests
                     cheddar.transform.position = game.PredatorObject.transform.position;
                     cheddar.Bark();
                     break;
+                case GameManager.MissionVariant.TickInvasion:
+                    // Advancing the puzzle's own clock past Cheddar's erratic threshold (0.62 at
+                    // 0.026/s = ~24s) flips ObjectiveLabel from the default groom prompt to the
+                    // ERRATIC callout - a discrete state change, not a raw percentage in the label.
+                    game.TickInvasionPuzzle.Advance(24f);
+                    break;
                 default:
                     Assert.Fail($"No progress poke wired for {variant} - add one so this guard covers the full roster.");
                     break;

@@ -67,5 +67,11 @@ namespace CheddarAndCocoa.Game
         public static readonly ProductionScoreEvent SkunkDeSkunked = new("FRESH AGAIN", 80, true);
         public static readonly ProductionScoreEvent LaundryHauled = new("LAUNDRY HAULED", 20, true);
         public static readonly ProductionScoreEvent BirdSecured = new("BIRD SECURED", 500, true);
+
+        public static readonly ProductionScoreEvent GroomLanded = new("GROOMED CLEAN", 25, true);
+        public static readonly ProductionScoreEvent TickOverload = new("TICK OVERLOAD", -50);
+        public static readonly ProductionScoreEvent PoolDiveRinse = new("POOL DIVE", 15, true);
+        public static readonly ProductionScoreEvent SuperTickShaken = new("SUPER TICK SHAKEN OFF", 150, true);
+        public static readonly ProductionScoreEvent InfestationCleared = new("INFESTATION CLEARED", 500, true);
     }
 }

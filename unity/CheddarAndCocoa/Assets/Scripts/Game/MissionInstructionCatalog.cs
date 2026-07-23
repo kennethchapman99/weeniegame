@@ -60,6 +60,8 @@ namespace CheddarAndCocoa.Game
                     return "Chicks are tumbling out of the big oak nest and dinner is falling from the sky. Cheddar shake-gulps each one down while Cocoa bark-repels the furious parent birds dive-bombing the feast.";
                 case GameManager.MissionVariant.SkunkBlastMayhem:
                     return "A skunk is guarding a prized dead bird in the yard. Cheddar barks loud to hold its attention while Cocoa sneaks in for the clean snatch - but when the tail lifts, both dogs must bail before the spray.";
+                case GameManager.MissionVariant.TickInvasion:
+                    return "The backyard has exploded with ticks and they're crawling onto both dogs nonstop. Cheddar and Cocoa become each other's first responders - grooming the ticks off one another before either one gets overwhelmed and goes erratic.";
                 default:
                     return string.Empty;
             }
@@ -262,6 +264,14 @@ namespace CheddarAndCocoa.Game
                         "Watch the TAIL UP telegraph - both dogs must clear the blast range before the window closes or they get SKUNKED.",
                         "A skunked dog goes STINKY and can't lure/snatch until clean - Interact at the laundry pile to rub off the stink.",
                         "The clean partner hauls fresh laundry from the basket to the pile to keep the stinky dog's scrub-clean supply stocked."
+                    };
+                case GameManager.MissionVariant.TickInvasion:
+                    return new[]
+                    {
+                        "Both dogs pick up ticks nonstop - stand close to your partner and Interact to groom their ticks off (it transfers a few to you too).",
+                        "A dog above the tick threshold goes ERRATIC and hard to lock down - bark to hold them still, then groom.",
+                        "Either dog can Interact at the POOL for an instant reset, but comes out wet and picks up ticks twice as fast for a while.",
+                        "A SUPER TICK will lock onto one dog - grooming can't touch it, so that dog must dive the pool while the other holds the line."
                     };
                 case GameManager.MissionVariant.KitchenFoodFrenzy:
                     return new[]

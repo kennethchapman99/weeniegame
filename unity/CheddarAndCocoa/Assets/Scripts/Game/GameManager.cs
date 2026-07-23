@@ -57,7 +57,8 @@ namespace CheddarAndCocoa.Game
             MissionVariant.GreatEscape,
             MissionVariant.ChaosMachine,
             MissionVariant.BlanketCatch,
-            MissionVariant.SkunkBlastMayhem
+            MissionVariant.SkunkBlastMayhem,
+            MissionVariant.TickInvasion
         };
 
         [Header("Mission selection")]
@@ -207,6 +208,8 @@ namespace CheddarAndCocoa.Game
         public CoopFeastGuardPuzzle FeastGuardPuzzle => BabyBirdBedlamController?.Puzzle ?? _emptyFeastGuardPuzzle;
         public SkunkBlastMayhemMissionController SkunkBlastMayhemController => _activeMissionController as SkunkBlastMayhemMissionController;
         public CoopSkunkHeistPuzzle SkunkHeistPuzzle => SkunkBlastMayhemController?.Puzzle ?? _emptySkunkHeistPuzzle;
+        public TickInvasionMissionController TickInvasionController => _activeMissionController as TickInvasionMissionController;
+        public CoopTickInvasionPuzzle TickInvasionPuzzle => TickInvasionController?.Puzzle ?? _emptyTickInvasionPuzzle;
         public MissionRuntimeSnapshot RuntimeSnapshot => BuildRuntimeSnapshot();
         public int CurrentMissionSeed => _missionSeed;
         public DemoReadinessResult DemoReadiness => DemoReadinessGate.Evaluate(DemoReadinessGate.RequiredForBackyardDemo);
@@ -632,6 +635,7 @@ namespace CheddarAndCocoa.Game
         private readonly CoopStretchSpanPuzzle _emptyBlanketPuzzle = new CoopStretchSpanPuzzle();
         private readonly CoopFeastGuardPuzzle _emptyFeastGuardPuzzle = new CoopFeastGuardPuzzle();
         private readonly CoopSkunkHeistPuzzle _emptySkunkHeistPuzzle = new CoopSkunkHeistPuzzle();
+        private readonly CoopTickInvasionPuzzle _emptyTickInvasionPuzzle = new CoopTickInvasionPuzzle();
         private readonly CoopScentRelayPuzzle _emptyBoneRelayPuzzle = new CoopScentRelayPuzzle();
         // Mark the Yard now lives in MarkTheYardMissionController; this empty state backs the
         // compatibility accessor when the mission is not the active controller.
@@ -1185,6 +1189,7 @@ namespace CheddarAndCocoa.Game
                 MissionVariant.BlanketCatch => "Challenge: 5 catches, never rip the blanket",
                 MissionVariant.BabyBirdBedlam => "Challenge: eat all 4 chicks, zero pecks",
                 MissionVariant.SkunkBlastMayhem => "Challenge: snatch the bird, zero skunkings",
+                MissionVariant.TickInvasion => "Challenge: clear the round, neither dog ever erratic",
                 _ => "Challenge: clear clean for FLAWLESS"
             };
         }

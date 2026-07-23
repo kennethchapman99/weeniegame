@@ -24,7 +24,7 @@ namespace CheddarAndCocoa.Tests
         public IEnumerator Escape_AppearsInMissionSelectRotation()
         {
             yield return LoadArena();
-            Assert.AreEqual(24, _game.MissionSelectOptionCount);
+            Assert.AreEqual(25, _game.MissionSelectOptionCount);
 
             bool found = false;
             for (int i = 0; i < _game.MissionSelectOptionCount; i++)

@@ -4,6 +4,36 @@
 
 ## Current status
 
+### Tick Invasion shipped as mission #25 (2026-07-22)
+
+Owner authorized building idea-bank #21 (Tick Invasion) from `docs/GAME-DESIGN-BIBLE.md`. Shipped as
+`TickInvasionMissionController` / `CoopTickInvasionPuzzle`: both dogs accumulate ticks continuously and
+asymmetrically (Cheddar 0.026/s but grooms for more per hit; Cocoa 0.017/s but grooms from a wider
+2.6 radius vs Cheddar's 1.8). `Interact`-to-groom a nearby partner reduces their ticks and transfers a
+small amount to the groomer - the resource-transfer pressure the design calls for. A dog past the
+0.62 erratic threshold resists a normal groom until the partner barks them still (opens a hold window
+so the next groom connects) or their ticks drop back under the threshold. Either dog can `Interact` at
+the pool for an instant reset, but emerges wet - double tick accumulation for a per-dog recovery
+window (Cocoa 6s, Cheddar 10s) during which they can't effectively groom. A Super Tick locks onto one
+dog partway through the round (deterministic: fixed elapsed-time trigger, plus a `ForceSuperTick` test
+hook), immune to grooming from either direction, resolved only by a pool dive. Unlike Skunk Blast
+Mayhem, this is a real hard fail: either dog maxing out ends the run immediately with a distinct
+per-dog reason (Cheddar messy, Cocoa dignified); clearing means surviving 82 of the shared 100s round
+without either dog maxing out. Both dogs' live tick percentages are mirrored through the shared HUD
+pressure meter (`IMissionPressureHud`, surfacing whichever dog reads worse) plus small per-dog world
+labels. Deterministic PlayMode suite went `762/762` (725 baseline + `CoopTickInvasionPuzzleUnitTests`
+(20 tests) + `CoopTickInvasionPlayModeTests` (17 tests), 37 new tests total across both files), plus
+small fixes to the same categories of pre-existing roster-wide audits Skunk Blast Mayhem's append
+needed (mission-select paging - a new short third page opened at index 24 - cold-start promoted-prop
+audit, the objective-label progress-echo poke switch, the mission-challenge-label fallback guard, and
+the roster's 24->25 `MissionSelectOptionCount` assertion across 20 test files). No new
+`MissionContext` fields were needed; the per-dog tick meter, wet state, and Super Tick are all owned
+inside `CoopTickInvasionPuzzle` rather than force-fit onto the shared single-value `PanicMeter` (whose
+shape - one shared meter driven by cuddle-radius proximity - doesn't match a per-dog resource-transfer
+meter). The pool marker reuses the existing dog-bowl prop art rather than inventing a new art surface;
+the mission stayed text-only (alongside Backyard Rescue) in the mission-select team-plan chips rather
+than guessing at a mismatched icon.
+
 ### Skunk Blast Mayhem shipped as mission #24 (2026-07-22)
 
 Owner lifted the mission-roster freeze and authorized building idea-bank #22 (Skunk Blast Mayhem)

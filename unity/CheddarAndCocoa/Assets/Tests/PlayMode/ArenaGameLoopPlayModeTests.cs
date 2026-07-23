@@ -301,7 +301,7 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(game);
             Assert.IsTrue(game.MissionSelectVisible);
             Assert.AreEqual(GameManager.FlowState.MissionSelect, game.CurrentFlow);
-            Assert.AreEqual(24, game.MissionSelectOptionCount);
+            Assert.AreEqual(25, game.MissionSelectOptionCount);
             Assert.AreEqual(GameManager.MissionVariant.OperationPeeBreak, game.SelectedMissionVariant);
             Assert.AreEqual("Operation Pee Break", game.SelectedMissionName);
             Assert.That(game.SelectedMissionReadinessLabel, Does.Contain("Readability gate: READY"));
@@ -974,7 +974,9 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(GameManager.MissionVariant.SkunkBlastMayhem, game.SelectedMissionVariant, // index 23
                 "Skunk Blast Mayhem's append filled what used to be the short last page's missing " +
                 "bottom-right corner, so this now resolves directly instead of clamping back.");
-            Assert.AreEqual(2, game.MissionSelectPageCount);
+            // Tick Invasion's append (index 24) opened a new, short third page - the roster count no
+            // longer sits on the exact-multiple boundary Skunk Blast Mayhem had landed it on.
+            Assert.AreEqual(3, game.MissionSelectPageCount);
             game.SelectCouchTestFocusMission();
             Assert.AreEqual(GameManager.MissionVariant.OperationPeeBreak, game.SelectedMissionVariant,
                 "The couch-test focus shortcut should make the active deep slice one action away from cold start.");
@@ -1058,7 +1060,7 @@ namespace CheddarAndCocoa.Tests
 
             Assert.AreEqual(GameManager.FlowState.MissionSelect, game.CurrentFlow);
             Assert.IsTrue(game.MissionSelectVisible);
-            Assert.AreEqual(24, game.MissionSelectOptionCount);
+            Assert.AreEqual(25, game.MissionSelectOptionCount);
             Assert.That(game.ObjectiveLabel, Does.Contain("Choose a mission"));
             Assert.IsTrue(LogContains(game, "MissionSelect: Operation Pee Break"));
 

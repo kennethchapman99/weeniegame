@@ -1702,6 +1702,50 @@ re-routing to the laundry pile. Rub clean at the pile and confirm the `FRESH AGA
 returning to the heist. Complete a lure-then-snatch and confirm `BIRD SECURED!`, both dogs' proud pose,
 and MVP credit naming Cocoa.
 
+### Tick Invasion
+
+Tick Invasion (2026-07-22, idea-bank #21) is the roster's mutual-grooming survival slice: the
+backyard has exploded with ticks and both dogs accumulate them continuously and asymmetrically -
+**Cheddar's chaos-puppy energy** attracts ticks faster (0.026/s) but his groom action clears more per
+hit (high risk, high output); **Cocoa's veteran composure** accumulates slower (0.017/s) and her
+groom reaches from a wider radius (2.6 vs Cheddar's 1.8 - long-dog advantage). The only defense is
+`Interact`-to-groom a nearby partner: it reduces their ticks and transfers a small amount to the
+groomer, the resource-transfer pressure the design calls for. A dog whose ticks cross the erratic
+threshold (0.62) goes **ERRATIC** and resists a normal groom until the calm partner barks them still
+(opens a brief hold window so the very next groom connects) or their ticks drop back under the
+threshold on their own. Either dog can `Interact` at the backyard **pool** for an instant reset to
+zero, but emerges wet: double tick accumulation for a per-dog recovery window during which they
+cannot effectively groom anyone - Cocoa's window (6s) is shorter than Cheddar's (10s; he belly-flops
+and is useless for longer). Partway through the round a **Super Tick** locks onto one dog exclusively:
+grooming cannot touch it from either direction (the targeted dog is too overwhelmed to groom their
+partner either, so the partner has zero groom relief during the window), and only a pool dive clears
+it. Unlike Skunk Blast Mayhem, this mission has a real hard fail: either dog's ticks maxing out ends
+the run immediately, with a distinct per-dog reason (Cheddar's messy zoomie collapse vs Cocoa's
+dignified, furious stillness). Clearing means surviving the full round (82 of the shared 100s) without
+either dog ever maxing out. Scoring: `GROOMED CLEAN` +25 (team, per landed groom), `TICK OVERLOAD` -50
+per erratic crossing, `POOL DIVE` +15 (team), `SUPER TICK SHAKEN OFF` +150 (team), `INFESTATION
+CLEARED` +500 (team, clears the mission). Deterministic logic lives in `CoopTickInvasionPuzzle`
+(tick accumulation/groom/bark/pool-dive/Super-Tick/survive lifecycle) behind
+`TickInvasionMissionController`; both dogs' live tick percentages are mirrored through the shared HUD
+pressure meter (`IMissionPressureHud`, surfacing whichever dog currently reads worse) plus small
+per-dog world labels so the meter never depends on staring at one sprite. A readable "worst
+infestation" callout (Cocoa's veteran read spotting the more-covered dog first, per her queen-composure
+trait) fires whenever the two dogs' tick levels diverge enough to matter. The pool marker reuses the
+existing dog-bowl prop art (no bespoke groom/pool/Super-Tick art yet) and the mission-select tile is a
+generated greybox placeholder (`tools/art/generate_tick_invasion_tile.py`) per the gameplay-first
+greybox pivot, not yet a painterly production portrait.
+
+Manual acceptance check: select **Tick Invasion** with two local players. Confirm both dogs' tick
+labels read `TICKS 0%` cold and the pressure HUD reads `Cheddar TICKS 0%`. Stand close and Interact to
+groom and confirm the target's percentage visibly drops while the groomer's ticks up slightly. Let a
+dog's ticks climb unchecked (no grooming) until `ERRATIC!` pops and confirm a bare groom attempt is
+coached back ("too erratic to lock down"); bark near the erratic dog and confirm the groom now lands.
+Dive the pool and confirm the instant reset pop and the wet tint on that dog's tick label. Let the
+round reach its Super Tick trigger and confirm the `SUPER TICK!` pop, that dog's groom attempts failing
+in both directions, and a pool dive clearing it. Let a dog's ticks max out and confirm the end card
+reads a per-dog fail reason (Cheddar messy vs Cocoa dignified); clear a full round with steady mutual
+grooming and confirm `INFESTATION CLEARED!` plus MVP credit naming a dog.
+
 Historical automated baseline: Unity 6000.0.65f1 batch PlayMode run passed `400/400` tests on
 2026-07-01 after the generated P0 mission-state art pass. The targeted presentation
 coverage inside `PeeBreakPlayModeTests`, `BackyardEnvironmentPlayModeTests`,
@@ -2247,7 +2291,7 @@ starting point — the next couch test is the real calibration pass.
 
 LevelClear displays a 1-3 star rating based on final score, the center banner reads **BACKYARD SAVED! [rank]**, and both dogs hold a **PROUD!** pose. GameOver displays **MISSION FAILED! [rank]**, applies the game-over penalty, and both dogs hold a **SAD FLOP** pose. The end card includes `Outcome: Score - Rank`, one short funny `EndReasonLabel`, the last score swing, stars, session totals, and Replay / Next Mission / Mission Select actions.
 
-Manual score/replay readability check: during both clear and fail, confirm the final dog poses are still visible behind/around the end card, the score swing label remains signed and cause-first, the funny rank and reason line are readable, and Replay / Next Mission / Mission Select are all usable without a mouse. The MVP line should name Cheddar or Cocoa after any run with at least one successful beat in every mission — "MVP: awaiting dog heroics" on a scoring run means that mission's `CreditDog` wiring regressed (all 24 current missions credit successful actions; the original 22 were audited on 2026-07-10, and Baby Bird Bedlam and Skunk Blast Mayhem each followed the same controller boundary since).
+Manual score/replay readability check: during both clear and fail, confirm the final dog poses are still visible behind/around the end card, the score swing label remains signed and cause-first, the funny rank and reason line are readable, and Replay / Next Mission / Mission Select are all usable without a mouse. The MVP line should name Cheddar or Cocoa after any run with at least one successful beat in every mission — "MVP: awaiting dog heroics" on a scoring run means that mission's `CreditDog` wiring regressed (all 25 current missions credit successful actions; the original 22 were audited on 2026-07-10, and Baby Bird Bedlam, Skunk Blast Mayhem, and Tick Invasion each followed the same controller boundary since).
 
 ## Non-developer playtest script
 

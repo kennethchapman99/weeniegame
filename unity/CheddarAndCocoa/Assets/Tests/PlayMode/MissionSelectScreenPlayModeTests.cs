@@ -90,21 +90,33 @@ namespace CheddarAndCocoa.Tests
 
             game.SelectMission(GameManager.MissionVariant.BackyardRescue);
             yield return null;
-            Assert.That(screen.PageLabelText, Does.Contain("Page 1 of 2"));
+            Assert.That(screen.PageLabelText, Does.Contain("Page 1 of 3"));
             Assert.IsTrue(screen.TileIsSelectedAt(5), "The selected mission's tile should highlight.");
             Assert.IsFalse(screen.TileIsSelectedAt(0));
 
-            // Blanket Catch sits on page 2 (now a full page of remainders since Skunk Blast Mayhem's
-            // append landed the roster on an exact multiple of the tile-per-page count).
+            // Blanket Catch sits on page 2, which is a full page again now that Tick Invasion's
+            // append pushed the short last page out to page 3 (Skunk Blast Mayhem had briefly
+            // landed the roster on an exact multiple of the tile-per-page count).
             game.SelectMission(GameManager.MissionVariant.BlanketCatch);
             yield return null;
             int blanketSlot = game.SelectedMissionIndex - GameManager.MissionSelectTilesPerPage;
             Assert.AreEqual(1, game.SelectedMissionPage);
-            Assert.That(screen.PageLabelText, Does.Contain("Page 2 of 2"));
-            Assert.AreEqual(game.MissionSelectOptionCount - GameManager.MissionSelectTilesPerPage,
-                screen.ActiveTileCount, "The last page should only show the remaining missions.");
+            Assert.That(screen.PageLabelText, Does.Contain("Page 2 of 3"));
+            Assert.AreEqual(GameManager.MissionSelectTilesPerPage,
+                screen.ActiveTileCount, "Page 2 is a full page again now that the short page moved to page 3.");
             Assert.AreEqual(GameManager.MissionVariant.BlanketCatch, screen.TileVariantAt(blanketSlot));
             Assert.IsTrue(screen.TileIsSelectedAt(blanketSlot));
+
+            // Tick Invasion alone occupies the new short third page.
+            game.SelectMission(GameManager.MissionVariant.TickInvasion);
+            yield return null;
+            int tickSlot = game.SelectedMissionIndex - 2 * GameManager.MissionSelectTilesPerPage;
+            Assert.AreEqual(2, game.SelectedMissionPage);
+            Assert.That(screen.PageLabelText, Does.Contain("Page 3 of 3"));
+            Assert.AreEqual(game.MissionSelectOptionCount - 2 * GameManager.MissionSelectTilesPerPage,
+                screen.ActiveTileCount, "The new short last page should only show Tick Invasion.");
+            Assert.AreEqual(GameManager.MissionVariant.TickInvasion, screen.TileVariantAt(tickSlot));
+            Assert.IsTrue(screen.TileIsSelectedAt(tickSlot));
 
             game.SelectMission(GameManager.MissionVariant.OperationPeeBreak);
             yield return null;
@@ -437,9 +449,11 @@ namespace CheddarAndCocoa.Tests
             // CF2.8's audit result: 22 missions with chip data (Pee Break from CF1.9 + 21 from this
             // roster pass) and exactly one documented text-only holdout (Backyard Rescue). Skunk
             // Blast Mayhem (2026-07-22) added a 23rd chipped mission, reusing Sock Panic's authored
-            // laundry-basket art for its own basket/pile rows.
+            // laundry-basket art for its own basket/pile rows. Tick Invasion (2026-07-22) has no
+            // bespoke groom/pool/erratic/Super-Tick art to reuse yet, so it stays text-only alongside
+            // Backyard Rescue rather than guessing at a mismatched icon.
             Assert.AreEqual(23, chippedCount, "Expected 23 missions to render team-plan chips.");
-            Assert.AreEqual(1, textOnlyCount, "Expected exactly one mission (Backyard Rescue) to stay text-only.");
+            Assert.AreEqual(2, textOnlyCount, "Expected Backyard Rescue and Tick Invasion to stay text-only.");
         }
 
         /// <summary>

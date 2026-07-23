@@ -99,6 +99,9 @@ namespace CheddarAndCocoa.Game
                 [GameManager.MissionVariant.SkunkBlastMayhem] = new Registration(
                     () => new SkunkBlastMayhemMissionController(),
                     MissionCatalog.BuildSkunkBlastMayhemDefinition),
+                [GameManager.MissionVariant.TickInvasion] = new Registration(
+                    () => new TickInvasionMissionController(),
+                    MissionCatalog.BuildTickInvasionDefinition),
             };
 
         public static IEnumerable<GameManager.MissionVariant> RegisteredVariants => Registrations.Keys;

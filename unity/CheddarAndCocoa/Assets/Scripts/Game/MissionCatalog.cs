@@ -83,6 +83,8 @@ namespace CheddarAndCocoa.Game
                     return new MissionPresentationProfile("Cheddar grabs and shake-gulps each chick; Cocoa bark-repels the diving parents.", "Feast + fend", "Oak nest, falling chicks, and parent dive lane", threats, ReadabilityRequirement.WarningVisible);
                 case GameManager.MissionVariant.SkunkBlastMayhem:
                     return new MissionPresentationProfile("Cheddar loudly lures the skunk's attention; Cocoa reads the tail tells and makes the clean snatch.", "Lure + snatch heist", "Backyard skunk guard post and an indoor laundry-pile de-skunk station", threats, ReadabilityRequirement.WarningVisible);
+                case GameManager.MissionVariant.TickInvasion:
+                    return new MissionPresentationProfile("Cheddar and Cocoa groom each other clean, bark to calm an erratic partner, and dive the pool when overwhelmed.", "Mutual grooming survival", "Per-dog tick meters, an erratic panic state, a pool dive station, and a Super Tick twist", dogs, ReadabilityRequirement.WarningVisible);
                 default:
                     return new MissionPresentationProfile("Cheddar and Cocoa use their shared dog verbs together.", "Co-op dog mission", "Readable greybox arena with objective markers", dogs);
             }
@@ -920,6 +922,68 @@ namespace CheddarAndCocoa.Game
                 ItemAccentColor = new Color(0.55f, 0.75f, 0.2f),
                 ItemSecondaryColor = new Color(0.75f, 0.85f, 1f),
                 ItemPopColor = new Color(1f, 0.86f, 0.28f)
+            };
+        }
+
+        internal static GameManager.MissionDefinition BuildTickInvasionDefinition(ArenaMissionTuning tuning)
+        {
+            const GameManager.MissionVariant variant = GameManager.MissionVariant.TickInvasion;
+            var balance = tuning.BalanceFor(variant);
+            return new GameManager.MissionDefinition
+            {
+                Variant = variant,
+                Name = "Tick Invasion",
+                IntroPrompt = "The backyard has exploded with ticks and they are crawling onto both dogs continuously! The only defense is mutual grooming - stand close and groom each other clean, but it transfers a few ticks to the groomer every time. Either dog can dive in the pool for an instant reset, but comes out wet, slow, and picking up ticks twice as fast for a while. Let either dog's tick meter max out and the invasion wins.",
+                ReadyScoreLabel = "READY FOR THE INVASION",
+                ItemRootName = "Tick",
+                ItemObjectName = "Tick Meter",
+                ItemWorldLabel = "Groom!",
+                ItemArrowLabel = "GROOM",
+                ItemCollectCueNoun = "the tick invasion",
+                CollectObjectiveFormat = "Survive the tick invasion {0}/{1}",
+                CollectedScoreLabel = "INFESTATION CLEARED",
+                ItemScore = balance.ItemScore,
+                SpawnedItemCount = balance.SpawnedItemCount,
+                ItemGoal = balance.ItemGoal,
+                RoundSeconds = balance.RoundSeconds,
+                PawfectScore = balance.PawfectScore,
+                HeroScore = balance.HeroScore,
+                SurvivorScore = balance.SurvivorScore,
+                UsesSquirrel = false,
+                RequiresPredator = false,
+                RequiresTug = false,
+                MaxStolenFood = balance.MaxStolenFood,
+                SquirrelPenalty = balance.SquirrelPenalty,
+                SquirrelScareScore = balance.SquirrelScareScore,
+                SquirrelObjectiveText = "Groom each other clean, bark to calm erratic ticks",
+                SquirrelStealingCue = "Ticks climbing fast - groom your partner before they go erratic!",
+                SquirrelStoleCue = "ERRATIC! Bark to hold them still, then groom the ticks off.",
+                SquirrelStealScoreLabel = "TICK OVERLOAD",
+                SquirrelScareScoreLabel = "GROOMED CLEAN",
+                SquirrelStealingActorLabel = "TICKS",
+                SquirrelDroppedActorLabel = "CALMED",
+                SquirrelStoleActorLabel = "ERRATIC!",
+                SquirrelMissPopLabel = "ERRATIC!",
+                SquirrelStealJuiceLabel = "ERRATIC!",
+                SquirrelScareJuiceLabel = "GROOMED!",
+                TugObjectiveText = "Groom each other, dive the pool if overwhelmed",
+                WaitingObjectiveText = "Stand close to your partner and groom the ticks off each other",
+                ClearObjectiveText = "Infestation cleared - replay Tick Invasion",
+                ClearBannerPrefix = "SCRATCH!",
+                ClearScoreLabel = "TICK INVASION CLEAR",
+                ReplayPrompt = "Press R / Enter / Start to replay Tick Invasion",
+                FailObjectiveText = "Mission failed - replay Tick Invasion",
+                GenericFailReason = "The ticks won the backyard.",
+                TimeFailReason = "The invasion ran the clock out before the dogs got ahead of it.",
+                StolenFailReason = "One dog's tick meter maxed out before the other could groom them clear.",
+                PredatorFailReason = "The ticks are the threat here, and there are too many of them.",
+                PawfectClearReason = "Cheddar and Cocoa groomed each other through the whole invasion without either dog ever going erratic.",
+                HeroClearReason = "They got scratched up and erratic once or twice, but never let the meter max out.",
+                BasicClearReason = "They survived the invasion, pool dips and all.",
+                ItemColor = new Color(0.62f, 0.42f, 0.18f),
+                ItemAccentColor = new Color(0.85f, 0.15f, 0.65f),
+                ItemSecondaryColor = new Color(0.3f, 0.65f, 0.95f),
+                ItemPopColor = new Color(0.42f, 0.85f, 0.5f)
             };
         }
 

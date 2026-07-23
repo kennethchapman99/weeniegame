@@ -180,6 +180,10 @@ namespace CheddarAndCocoa.Tests
             // A flawless run can grab the bird the moment the first lure lands, before any tail-lift
             // telegraph even fires - so the only *guaranteed* extra is the clear payoff itself.
             GameManager.MissionVariant.SkunkBlastMayhem => ScoreEventCatalog.BirdSecured.Points,
+            // Survive-the-round mission: the conservative floor counts only the single guaranteed
+            // clear-payoff event. Real play always needs several successful grooms to survive the
+            // full duration (ticks accumulate constantly), but those aren't a fixed guaranteed count.
+            GameManager.MissionVariant.TickInvasion => ScoreEventCatalog.InfestationCleared.Points,
             // Full 5-catch combo chain (70+95+120+145+170) plus the dinner-rush start bonus.
             GameManager.MissionVariant.KitchenFoodFrenzy => 600 + 100,
             _ => 0
