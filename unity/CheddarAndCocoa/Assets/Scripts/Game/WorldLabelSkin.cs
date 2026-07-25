@@ -149,11 +149,17 @@ namespace CheddarAndCocoa.Game
             }
             if (current > maxLine) maxLine = current;
 
-            float width = Mathf.Clamp(maxLine * 0.075f + (_scorePop ? 0.72f : 0.46f), _scorePop ? 0.95f : 0.82f, _scorePop ? 2.7f : 4.0f);
-            float height = Mathf.Clamp(lineCount * 0.31f + (_scorePop ? 0.42f : 0.2f), _scorePop ? 0.82f : 0.42f, _scorePop ? 1.7f : 1.8f);
+            // Non-score-pop plates are scaled by the same 1.35x factor as AddWorldLabel's text
+            // transform (GameManager.AddWorldLabel) so the plate keeps pace with the now-bigger
+            // text instead of clipping it. Score pops are a separate, already-legible transient
+            // style (GameManager.SpawnWorldPop sets its own characterSize) and are untouched.
+            float width = Mathf.Clamp(maxLine * (_scorePop ? 0.075f : 0.1f) + (_scorePop ? 0.72f : 0.62f),
+                _scorePop ? 0.95f : 1.1f, _scorePop ? 2.7f : 5.4f);
+            float height = Mathf.Clamp(lineCount * (_scorePop ? 0.31f : 0.42f) + (_scorePop ? 0.42f : 0.27f),
+                _scorePop ? 0.82f : 0.57f, _scorePop ? 1.7f : 2.43f);
             if (!_scorePop && SelectSpritePath(text, false) == FinalGameplayArt.WorldLabelWarning)
             {
-                height = Mathf.Max(height, 0.86f);
+                height = Mathf.Max(height, 1.16f);
             }
 
             Vector3 parentScale = transform.lossyScale;

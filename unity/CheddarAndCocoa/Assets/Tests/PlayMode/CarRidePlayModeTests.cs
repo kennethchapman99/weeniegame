@@ -167,6 +167,32 @@ namespace CheddarAndCocoa.Tests
                 Assert.AreEqual(DogReadabilityFeedback.Pose.Proud, feedback.CurrentPose);
         }
 
+        /// <summary>
+        /// Couch test 2026-07-24: "Not clear to me how cocoa 'Plants' so cheddar can duck
+        /// behind?" - the top HUD objective line used to read identically before and after Cocoa
+        /// braced, so Cheddar's player had no on-screen sign it was their turn. It must now change
+        /// the moment Cocoa plants, and revert to the generic prompt once her brace expires.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator CarRide_BrakeEvent_ObjectiveLabelUpdatesOnceCocoaPlants()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.CarRide);
+            yield return null;
+            var controller = (CarRideMissionController)_game.ActiveMissionController;
+
+            controller.ForceBeginRoadEvent(CarRideMissionController.RoadEventKind.Brake);
+            yield return null;
+            Assert.That(_game.ObjectiveLabel, Does.Contain("Cocoa brace, Cheddar tuck"),
+                "Baseline: neither dog has braced yet.");
+
+            int cocoaIndex = controller.DogIndexOf(DogId.Cocoa);
+            controller.ForceBrace(cocoaIndex);
+            Assert.That(_game.ObjectiveLabel, Does.Contain("PLANTED"),
+                "Once Cocoa plants, the same top HUD line players already read should say so.");
+            Assert.IsFalse(controller.CheddarTuckedForBrake);
+        }
+
         [UnityTest]
         public IEnumerator CarRide_BrakeRequiresCocoaAnchorThenNearbyCheddarTuck_AndRecoversNextBrake()
         {

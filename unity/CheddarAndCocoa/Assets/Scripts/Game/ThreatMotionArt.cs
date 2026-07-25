@@ -5,7 +5,7 @@ namespace CheddarAndCocoa.Game
     /// <summary>Stable Resources path contract for animated non-dog mission characters.</summary>
     public static class ThreatMotionArt
     {
-        public enum Actor { Unknown, Squirrel, Eagle, Coyote }
+        public enum Actor { Unknown, Squirrel, Eagle, Coyote, Skunk }
         public enum Clip { Idle, Run, Steal, Scared, Sweep, Attack, Patrol, Threaten, Retreat }
 
         public static string ResourcePath(Actor actor, Clip clip, int frame)
@@ -54,6 +54,9 @@ namespace CheddarAndCocoa.Game
             (Actor.Coyote, Clip.Threaten) => 8f,
             (Actor.Coyote, Clip.Retreat) => 9f,
             (Actor.Coyote, Clip.Patrol) => 6f,
+            (Actor.Skunk, Clip.Threaten) => 8f,
+            (Actor.Skunk, Clip.Retreat) => 6f,
+            (Actor.Skunk, Clip.Patrol) => 5f,
             _ => 4f
         };
 
@@ -71,6 +74,8 @@ namespace CheddarAndCocoa.Game
                 actor = Actor.Coyote;
             else if (upper.Contains("SQUIRREL"))
                 actor = Actor.Squirrel;
+            else if (upper.Contains("SKUNK") || upper.Contains("TAIL UP"))
+                actor = Actor.Skunk;
 
             if (actor == Actor.Squirrel)
             {
@@ -109,6 +114,20 @@ namespace CheddarAndCocoa.Game
                     : upper.Contains("BARK") || upper.Contains("PRESSURE") || upper.Contains("BREACH") ||
                       upper.Contains("LURE") || upper.Contains("BAIT")
                         ? Clip.Threaten
+                        : Clip.Patrol;
+                return true;
+            }
+
+            if (actor == Actor.Skunk)
+            {
+                // Skunk Blast Mayhem's SetActorState labels: "TAIL UP" is the spray telegraph
+                // (Threaten reuses its urgent, fast-cycling clip for the tail-lift raise), "GIVES
+                // UP"/retreat covers the post-heist retreat, everything else (calm guard/lured
+                // watch) is the idle patrol loop.
+                clip = upper.Contains("TAIL UP")
+                    ? Clip.Threaten
+                    : upper.Contains("GIVES UP") || upper.Contains("RETREAT")
+                        ? Clip.Retreat
                         : Clip.Patrol;
                 return true;
             }

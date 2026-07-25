@@ -26,6 +26,9 @@ namespace CheddarAndCocoa.Tests
             (ThreatMotionArt.Actor.Coyote, ThreatMotionArt.Clip.Patrol),
             (ThreatMotionArt.Actor.Coyote, ThreatMotionArt.Clip.Threaten),
             (ThreatMotionArt.Actor.Coyote, ThreatMotionArt.Clip.Retreat),
+            (ThreatMotionArt.Actor.Skunk, ThreatMotionArt.Clip.Patrol),
+            (ThreatMotionArt.Actor.Skunk, ThreatMotionArt.Clip.Threaten),
+            (ThreatMotionArt.Actor.Skunk, ThreatMotionArt.Clip.Retreat),
         };
 
         // ---- Pure pose math ----
@@ -113,6 +116,28 @@ namespace CheddarAndCocoa.Tests
             Assert.Greater(strike.Scale.y, 1.02f, "The dive stretches the body vertically.");
             Assert.AreEqual(1f, strike.Scale.x * strike.Scale.y, 0.001f,
                 "Dive stretch preserves volume so the eagle never reads squashed.");
+        }
+
+        [Test]
+        public void SkunkPoses_GuardShiverAndRetreatAnimate()
+        {
+            var guardTop = ThreatMotionPose.Evaluate(ThreatMotionArt.Actor.Skunk,
+                ThreatMotionArt.Clip.Patrol, 0.25f, mirrored: false);
+            Assert.Greater(guardTop.Offset.y, 0f, "The calm guard sway should breathe, not stay static.");
+
+            var shiverEarly = ThreatMotionPose.Evaluate(ThreatMotionArt.Actor.Skunk,
+                ThreatMotionArt.Clip.Threaten, 0.05f, mirrored: false);
+            var shiverLate = ThreatMotionPose.Evaluate(ThreatMotionArt.Actor.Skunk,
+                ThreatMotionArt.Clip.Threaten, 0.45f, mirrored: false);
+            Assert.Less(Mathf.Abs(shiverEarly.RotationDegrees), Mathf.Abs(shiverLate.RotationDegrees),
+                "The tail-lift shiver should sharpen as the danger clock closes in, not stay flat.");
+
+            var retreatEast = ThreatMotionPose.Evaluate(ThreatMotionArt.Actor.Skunk,
+                ThreatMotionArt.Clip.Retreat, 0.25f, mirrored: false);
+            var retreatWest = ThreatMotionPose.Evaluate(ThreatMotionArt.Actor.Skunk,
+                ThreatMotionArt.Clip.Retreat, 0.25f, mirrored: true);
+            Assert.Greater(retreatEast.RotationDegrees, 0f, "Giving up, the east-facing skunk leans away.");
+            Assert.Less(retreatWest.RotationDegrees, 0f, "The mirrored retreat leans the other way.");
         }
 
         [Test]

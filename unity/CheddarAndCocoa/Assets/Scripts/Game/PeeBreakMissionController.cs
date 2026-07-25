@@ -347,17 +347,20 @@ namespace CheddarAndCocoa.Game
         public bool IsFailed => false;
         public string FailReason => null;
 
+        // Couch test 2026-07-24: the top HUD line read "2/4 Cocoa STARE + Cheddar PRESENT LEASH /
+        // MISREADS 37" - a raw internal recovery counter with no cap or explanation leaking into
+        // player-facing text. Misreads still drives OutcomeSummary/scoring; it just no longer
+        // prints itself into the beat instruction line.
         public string ObjectiveLabel
         {
             get
             {
-                string recovery = Misreads > 0 ? $" / MISREADS {Misreads}" : string.Empty;
                 return CurrentBeat switch
                 {
-                    Beat.DoorStare => $"1/4 Cocoa holds DOOR STARE; Cheddar watches / no bark{recovery}",
-                    Beat.LeashMessage => $"2/4 Cocoa STARE + Cheddar PRESENT LEASH{recovery}",
-                    Beat.ChargerGambit => $"3/4 Cheddar BLOCK HALLWAY + Cocoa UNPLUG CHARGER{recovery}",
-                    Beat.UnitedBark => $"4/4 Hold STARE + LEASH, then BOTH BARK by the door{recovery}",
+                    Beat.DoorStare => "1/4 Cocoa holds DOOR STARE; Cheddar watches / no bark",
+                    Beat.LeashMessage => "2/4 Cocoa STARE + Cheddar PRESENT LEASH",
+                    Beat.ChargerGambit => "3/4 Cheddar BLOCK HALLWAY + Cocoa UNPLUG CHARGER",
+                    Beat.UnitedBark => "4/4 Hold STARE + LEASH, then BOTH BARK by the door",
                     _ => "DOOR OPEN - OUTSIDE!"
                 };
             }
@@ -1288,7 +1291,11 @@ namespace CheddarAndCocoa.Game
             renderer.color = color;
             renderer.sortingOrder = 3;
             marker.transform.localScale = scale;
-            worldLabel = _context.AddWorldLabel(marker, label, Vector3.up * 0.68f, 9, Color.white);
+            // Couch test 2026-07-24: "can't read the text on it (nor do I want to have to read
+            // small text to know what things are)" - fontSize 9 was far smaller than every other
+            // mission's world labels (16-24, see GameManager.AddWorldLabel call sites). Match the
+            // common 16pt baseline so DOOR/LEASH/CHARGER/MISREAD prompts are actually legible.
+            worldLabel = _context.AddWorldLabel(marker, label, Vector3.up * 0.68f, 16, Color.white);
             marker.SetActive(false);
             return marker;
         }
@@ -1298,7 +1305,11 @@ namespace CheddarAndCocoa.Game
             var marker = new GameObject(name);
             marker.transform.SetParent(parent.transform);
             marker.transform.localPosition = localPosition;
-            marker.transform.localRotation = Quaternion.Euler(0f, 0f, -28f);
+            // Couch test 2026-07-24: "this skewed white halo that moves around and sometimes
+            // follows me - I have no idea what it's for" - the -28deg tilt read as a stray,
+            // unexplained shape rather than a ball highlight. Upright, it stays a plain accent
+            // ring on the misread prop instead of a mystery object of its own.
+            marker.transform.localRotation = Quaternion.identity;
             marker.transform.localScale = scale;
             var renderer = marker.AddComponent<SpriteRenderer>();
             renderer.sprite = _context.RangeSprite ?? _context.ActorSprite;

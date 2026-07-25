@@ -56,6 +56,20 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(expected, clip, $"'{label}' should read as {expected}, not {clip}.");
         }
 
+        [TestCase("SKUNK GUARDING THE BIRD - STAY BACK!", ThreatMotionArt.Clip.Patrol)]
+        [TestCase("SKUNK FACING CHEDDAR - COCOA, GO!", ThreatMotionArt.Clip.Patrol)]
+        [TestCase("TAIL UP - SPRAY INCOMING!", ThreatMotionArt.Clip.Threaten)]
+        [TestCase("SKUNK GIVES UP - PRIZE'S GONE!", ThreatMotionArt.Clip.Retreat)]
+        public void SkunkLabels_MapToTheReadThatMatchesWhatIsHappening(string label, ThreatMotionArt.Clip expected)
+        {
+            // Couch test 2026-07-24: Skunk Blast Mayhem's shared PredatorObject had no Skunk actor
+            // at all, so every one of these labels fell through TryInfer to the hardcoded Eagle
+            // default and rendered a banking eagle instead of a skunk.
+            Assert.IsTrue(ThreatMotionArt.TryInfer(label, ThreatMotionArt.Actor.Eagle, out var actor, out var clip));
+            Assert.AreEqual(ThreatMotionArt.Actor.Skunk, actor);
+            Assert.AreEqual(expected, clip, $"'{label}' should read as {expected}, not {clip}.");
+        }
+
         [Test]
         public void RepurposedSquirrelActorMarkerLabels_StillFallBackInstead_OfIdleBreathingLikeASquirrel()
         {

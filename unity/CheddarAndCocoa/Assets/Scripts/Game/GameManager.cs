@@ -2195,6 +2195,15 @@ namespace CheddarAndCocoa.Game
             RequestRumble("bark", 0.08f, 0.18f, 0.08f);
             LogPlaytestEvent("Bark", DogName(dog));
 
+            // Couch test 2026-07-24 (Kitchen Falling Food Frenzy): "no food falls despite both
+            // dogs barking - not sure how to start." KitchenFoodFrenzyMissionController.HandleBark
+            // already sets a specific, actionable cue on a failed bark ("Cheddar must reach the
+            // COUNTER before barking food loose"), but the generic "solo WOOF" fallback below used
+            // to overwrite it on the very same frame whenever the dogs weren't huddled together -
+            // which in Kitchen they never are, by design (Cheddar owns the counter, Cocoa guards
+            // the bowl). Remember LastCue from just before the controller runs so that fallback can
+            // tell "the controller already explained why this failed" apart from "nothing did."
+            string cueBeforeControllerBark = LastCue;
             if (_activeMissionController != null)
             {
                 barkDidSomething = _activeMissionController.HandleBark(dogIndex);
@@ -2204,6 +2213,7 @@ namespace CheddarAndCocoa.Game
                 ScareSquirrel(_tuning.SingleBarkScareSeconds, $"{DogName(dog)} scared the squirrel!", true);
                 barkDidSomething = true;
             }
+            bool controllerExplainedBark = LastCue != cueBeforeControllerBark;
 
             if (_grabbedDog >= 0 && dogIndex != _grabbedDog &&
                 Vector2.Distance(dog.transform.position, _dogs[_grabbedDog].transform.position) < _tuning.RescueBarkRange)
@@ -2214,7 +2224,7 @@ namespace CheddarAndCocoa.Game
 
             if (Time.time < _nextUnitedBarkAt || !AllDogsBarkedRecently() || !DogsAreHuddled())
             {
-                if (!barkDidSomething && Time.time >= _teamBarkFeedbackUntil)
+                if (!barkDidSomething && !controllerExplainedBark && Time.time >= _teamBarkFeedbackUntil)
                 {
                     LastFeedback = FeedbackKind.SoloBark;
                     LastCue = $"{DogName(dog)} solo WOOF: emotionally powerful, mechanically suspicious.";
@@ -3678,7 +3688,12 @@ namespace CheddarAndCocoa.Game
             labelGo.transform.SetParent(parent.transform);
             labelGo.transform.localPosition = offset;
             labelGo.transform.localRotation = Quaternion.identity;
-            labelGo.transform.localScale = Vector3.one * 0.08f;
+            // Couch test 2026-07-24: "grey square with TINY words" was called out as a
+            // throughout-the-game legibility problem. Scaled up 35% from the original 0.08 - see
+            // WorldLabelSkin.ResizeForText, whose background-plate constants are scaled by the
+            // same factor so the plate keeps growing in lockstep with the text instead of the
+            // text overflowing a plate sized for the old, smaller scale.
+            labelGo.transform.localScale = Vector3.one * 0.108f;
 
             var label = labelGo.AddComponent<TextMesh>();
             label.text = text;

@@ -47,12 +47,11 @@ namespace CheddarAndCocoa.Tests
                 scaler.referenceResolution);
             Assert.Greater(screen.GetComponentsInChildren<TMP_Text>(true).Length, 20,
                 "Mission select copy should render through TextMeshPro.");
-            Assert.AreEqual("Cheddar + Cocoa Adventures", screen.TitleText);
-            Assert.That(screen.RecommendedHintText, Does.StartWith("START HERE:"));
-            Assert.That(screen.RecommendedHintText, Does.Contain(game.CouchTestFocusName));
+            // Couch test 2026-07-24: the "Cheddar + Cocoa Adventures" title banner and the
+            // "START HERE: ... four-part teamwork story" line were both flagged "Remove this" -
+            // only the controls hint remains up top now.
             Assert.That(screen.ControlsHintText, Does.Contain("Y selects Recommended"));
-            string playerFacingHeader =
-                $"{screen.TitleText} {screen.RecommendedHintText} {screen.ControlsHintText}".ToLowerInvariant();
+            string playerFacingHeader = screen.ControlsHintText.ToLowerInvariant();
             Assert.That(playerFacingHeader, Does.Not.Contain("couch test"));
             Assert.That(playerFacingHeader, Does.Not.Contain("family shortcut"));
             Assert.That(playerFacingHeader, Does.Not.Contain("f5"));
@@ -143,12 +142,13 @@ namespace CheddarAndCocoa.Tests
                 "Description text must remain readable from a couch instead of shrinking to 13pt.");
             Assert.GreaterOrEqual(screen.DetailHowToFontFloor, 19f,
                 "Team-plan text must remain readable from a couch instead of shrinking to 13pt.");
-            Assert.That(screen.TileStatusAt(peeBreakSlot), Does.StartWith("RECOMMENDED"),
-                "The deep slice should be visibly recommended without developer-facing couch-test language.");
-            Assert.IsFalse(screen.RecommendedButton.gameObject.activeSelf,
-                "Selecting the recommended adventure should collapse the two competing actions into one start button.");
+            // Couch test 2026-07-24: "remove the 'recommended, New' line - we don't need that" -
+            // the tile status line is now the plain NEW/RETRY/etc. status with no RECOMMENDED
+            // prefix; the accent strip/badge color and the detail panel's RECOMMENDED tag still
+            // carry that signal.
+            Assert.AreEqual("NEW", screen.TileStatusAt(peeBreakSlot));
             Assert.Greater(screen.StartButton.GetComponent<RectTransform>().rect.width, 800f,
-                "The recommended adventure should get one unambiguous full-width start action.");
+                "Every mission now gets one unambiguous full-width start action.");
         }
 
         [Test]
@@ -246,6 +246,13 @@ namespace CheddarAndCocoa.Tests
             Assert.That(screen.DetailNameText, Does.Contain(game.SelectedMissionName));
         }
 
+        /// <summary>
+        /// Couch test 2026-07-24: "Why both buttons here, shouldn't there just be 'Play
+        /// Mission'?" - the picker used to also show a "Play Recommended" button that jumped away
+        /// to Operation Pee Break regardless of which mission was on screen. That second button is
+        /// gone; the single start button always launches whatever mission is currently focused,
+        /// for both the recommended mission and every other one.
+        /// </summary>
         [UnityTest]
         public IEnumerator Screen_ButtonsDelegateToGameFlow()
         {
@@ -256,23 +263,21 @@ namespace CheddarAndCocoa.Tests
 
             game.SelectMission(GameManager.MissionVariant.SnackHeist);
             yield return null;
-            Assert.IsTrue(screen.RecommendedButton.gameObject.activeSelf,
-                "A one-action recommended front door should remain available while browsing the library.");
-            screen.RecommendedButton.onClick.Invoke();
-            yield return null;
-            Assert.AreEqual(GameManager.FlowState.Playing, game.CurrentFlow,
-                "Play Recommended should launch the recommended adventure directly.");
-            Assert.AreEqual(GameManager.MissionVariant.OperationPeeBreak, game.ActiveMissionVariant);
-
-            game.ForceGameOver();
-            game.ReturnToMissionSelect();
-            game.SelectMission(GameManager.MissionVariant.SnackHeist);
-            yield return null;
             screen.StartButton.onClick.Invoke();
             yield return null;
             Assert.AreEqual(GameManager.FlowState.Playing, game.CurrentFlow,
                 "The start button must start the selected mission.");
             Assert.AreEqual(GameManager.MissionVariant.SnackHeist, game.ActiveMissionVariant);
+
+            game.ForceGameOver();
+            game.ReturnToMissionSelect();
+            game.SelectMission(GameManager.MissionVariant.OperationPeeBreak);
+            yield return null;
+            screen.StartButton.onClick.Invoke();
+            yield return null;
+            Assert.AreEqual(GameManager.FlowState.Playing, game.CurrentFlow,
+                "The start button must also start the recommended mission when it's the one focused.");
+            Assert.AreEqual(GameManager.MissionVariant.OperationPeeBreak, game.ActiveMissionVariant);
         }
 
         /// <summary>

@@ -88,14 +88,15 @@ def badge_frame(draw: ImageDraw.ImageDraw):
 
 
 def button_primary(draw: ImageDraw.ImageDraw):
+    # Couch test 2026-07-24: the old tan/gold fill (#ffbf54) under the white bold TMP label read
+    # as low-contrast and "ugly" on a real TV. Swap to the same dark-teal + gold-outline language
+    # already used by panel_frame/badge_frame so white text has real contrast, and drop the muddy
+    # dark triangle "arrows" that made the shape read as clutter rather than a button.
     shadow(draw, (50, 178, 462, 344), 54)
-    draw.rounded_rectangle((62, 162, 450, 326), radius=36, fill=rgba("#ffbf54", 235),
-                           outline=rgba("#5d3619"), width=10)
-    draw.rounded_rectangle((88, 188, 424, 300), radius=26, fill=rgba("#fff3b4", 112),
-                           outline=rgba("#ffffff", 70), width=5)
-    draw.polygon([(104, 244), (150, 214), (150, 274)], fill=rgba("#18333a", 210))
-    draw.polygon([(408, 244), (362, 214), (362, 274)], fill=rgba("#18333a", 210))
-    draw.line((178, 244, 334, 244), fill=rgba("#18333a", 115), width=14)
+    draw.rounded_rectangle((62, 162, 450, 326), radius=36, fill=rgba("#18333a", 235),
+                           outline=rgba("#f6d86d"), width=10)
+    draw.rounded_rectangle((88, 188, 424, 300), radius=26, outline=rgba("#78d8df", 130), width=5)
+    draw.line((150, 244, 362, 244), fill=rgba("#f6d86d", 150), width=8)
 
 
 def overlay_panel(draw: ImageDraw.ImageDraw):

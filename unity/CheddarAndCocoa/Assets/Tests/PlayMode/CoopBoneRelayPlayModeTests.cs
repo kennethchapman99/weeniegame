@@ -282,6 +282,7 @@ namespace CheddarAndCocoa.Tests
                 if (cheddarBody != null) cheddarBody.linearVelocity = Vector2.zero;
                 yield return null;
             }
+            _cheddar.Interact(); // digging is an explicit Interact press, not an automatic proximity trigger
             Assert.GreaterOrEqual(_game.BoneRelayPuzzle.Finds, 1, "Digging the called mound should find a bone.");
         }
 

@@ -120,6 +120,26 @@ namespace CheddarAndCocoa.Game
                     return new Pose(new Vector2(0.02f * tremble, -0.035f), face * 2f * tremble,
                         Vector2.one);
                 }
+                case (ThreatMotionArt.Actor.Skunk, ThreatMotionArt.Clip.Patrol):
+                {
+                    // Calm guard stance: a slow watchful breathing sway, tail low.
+                    float sway = Mathf.Sin(p * TwoPi);
+                    return new Pose(new Vector2(0f, 0.015f * sway), face * 1.5f * sway, Vector2.one);
+                }
+                case (ThreatMotionArt.Actor.Skunk, ThreatMotionArt.Clip.Threaten):
+                {
+                    // Tail-lift telegraph: a building shiver that sharpens as the danger clock
+                    // closes in - the authored frames already carry the tail rising, this adds
+                    // the urgency between them.
+                    float shiver = Mathf.Sin(p * TwoPi * 5f) * Mathf.Clamp01(p * 3f);
+                    return new Pose(new Vector2(0f, 0.02f * shiver), face * 3f * shiver, Vector2.one);
+                }
+                case (ThreatMotionArt.Actor.Skunk, ThreatMotionArt.Clip.Retreat):
+                {
+                    // Gives up and waddles off: hunched, quick nervous back-pedal steps.
+                    float pedal = Mathf.Abs(Mathf.Sin(p * TwoPi * 3f));
+                    return new Pose(new Vector2(face * -0.03f, 0.025f * pedal), face * 4f, Vector2.one);
+                }
                 default:
                     return Pose.Identity;
             }

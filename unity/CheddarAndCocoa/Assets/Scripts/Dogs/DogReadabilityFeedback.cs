@@ -537,7 +537,10 @@ namespace CheddarAndCocoa.Dogs
                 authoredBase.z);
             _authoredPose.transform.localRotation = Quaternion.Euler(0f, 0f,
                 personality.RotationDegrees + actionRotation);
-            float jumpArc = _dog != null ? _dog.JumpHeight01 * 0.4f : 0f;
+            // Couch test 2026-07-24 (Car Ride Chaos): "Jumping doesn't make them jump much
+            // visually and almost no animation" - 0.4 units of rise at the arc's peak read as
+            // barely-there on a couch TV. Nearly doubled for a clearly readable hop.
+            float jumpArc = _dog != null ? _dog.JumpHeight01 * 0.75f : 0f;
             _authoredPose.transform.localPosition = new Vector3(actionOffset.x,
                 -0.12f + personality.VerticalOffset + actionOffset.y + jumpArc, -0.2f);
         }

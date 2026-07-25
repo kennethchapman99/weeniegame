@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace CheddarAndCocoa.Game
 {
-    public sealed class BoneRelayMissionController : IMissionController, IMissionSuccessPresentationController,
-        IMissionRoleOwner
+    public sealed class BoneRelayMissionController : IMissionController, IMissionInteractionController,
+        IMissionSuccessPresentationController, IMissionRoleOwner
     {
         private const float ScentRange = 3.5f;
         private const float DigRange = 3f;
@@ -27,7 +27,6 @@ namespace CheddarAndCocoa.Game
         private string[] _moundOverrideArt;
         private float[] _moundOverrideUntil;
         private int _lastActedMound = -1;
-        private int _diggerInside = -1;
         private int _findsSeen;
         private int _blindSeen;
         private int _wrongSeen;
@@ -80,7 +79,6 @@ namespace CheddarAndCocoa.Game
         {
             _seed = _context.Random().Next();
             _puzzle.Configure(MoundSpots.Length, FindsNeeded, _seed);
-            _diggerInside = -1;
             _findsSeen = 0;
             _blindSeen = 0;
             _wrongSeen = 0;
@@ -101,27 +99,6 @@ namespace CheddarAndCocoa.Game
                 return;
             }
             if (_failed || _mounds == null) return;
-
-            int reader = _context.IndexOfDog(DogId.Cocoa);
-            int digger = _context.IndexOfDog(DogId.Cheddar);
-            if (reader < 0 || digger < 0) return;
-
-            int inside = -1;
-            for (int i = 0; i < _mounds.Length; i++)
-            {
-                if (_mounds[i] == null || !_mounds[i].activeSelf) continue;
-                if (Vector2.Distance(_context.Dogs[digger].transform.position, _mounds[i].transform.position) <= DigRange)
-                { inside = i; break; }
-            }
-            if (inside >= 0 && inside != _diggerInside)
-            {
-                _lastActedMound = inside;
-                _puzzle.ActOn(inside);
-            }
-            _diggerInside = inside;
-
-            HandleProgress();
-            if (_failed) return;
             UpdateMoundVisuals();
         }
 
@@ -146,6 +123,34 @@ namespace CheddarAndCocoa.Game
             }
 
             RevealFromCocoaBark(dogIndex);
+            return true;
+        }
+
+        public bool HandleInteract(int dogIndex)
+        {
+            if (_puzzle.Solved || _failed || _mounds == null || dogIndex < 0 || dogIndex >= _context.Dogs.Length) return false;
+
+            if (_context.IndexOfDog(DogId.Cheddar) != dogIndex)
+            {
+                _context.MarkFailedInteraction(DogId.Cocoa, "Cocoa can't dig - that's Cheddar's job");
+                _context.SetCue("Cocoa can't dig - she's the nose, Cheddar's the one who digs the call.");
+                _context.SetJuice(GameManager.JuiceFeedbackKind.WarningMiss, "CHEDDAR DIGS!");
+                _context.SpawnWorldPop(_context.Dogs[dogIndex].transform.position + Vector3.up, "CHEDDAR'S JOB", new Color(1f, 0.72f, 0.25f));
+                return true;
+            }
+
+            int target = FindNearestActiveMoundInRange(dogIndex);
+            if (target < 0)
+            {
+                _context.MarkFailedInteraction(DogId.Cheddar, "get closer to a mound before digging");
+                _context.SetCue("Cheddar needs to be standing at a mound to dig.");
+                return true;
+            }
+
+            _lastActedMound = target;
+            _puzzle.ActOn(target);
+            HandleProgress();
+            if (!_failed) UpdateMoundVisuals();
             return true;
         }
 
@@ -402,6 +407,23 @@ namespace CheddarAndCocoa.Game
                 if (m == null || !m.activeSelf) continue;
                 float d = Vector2.Distance(pos, m.transform.position);
                 if (d < bestDist) { bestDist = d; best = m.transform; }
+            }
+            return best;
+        }
+
+        /// <summary>Nearest active mound within dig range, or -1 - the Interact-press dig target.</summary>
+        private int FindNearestActiveMoundInRange(int dogIndex)
+        {
+            if (_mounds == null || dogIndex < 0 || dogIndex >= _context.Dogs.Length || _context.Dogs[dogIndex] == null)
+                return -1;
+            Vector2 pos = _context.Dogs[dogIndex].transform.position;
+            int best = -1;
+            float bestDist = DigRange;
+            for (int i = 0; i < _mounds.Length; i++)
+            {
+                if (_mounds[i] == null || !_mounds[i].activeSelf) continue;
+                float d = Vector2.Distance(pos, _mounds[i].transform.position);
+                if (d <= bestDist) { bestDist = d; best = i; }
             }
             return best;
         }

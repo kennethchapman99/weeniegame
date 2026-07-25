@@ -24,7 +24,7 @@ namespace CheddarAndCocoa.Game
         private GameManager _game;
         private float _uiScale = 1f;
         private GUIStyle _hud, _big, _mid, _small, _overlay, _briefing, _resultHeadline, _resultSubtitle, _resultBody, _resultHint, _resultButton;
-        private GUIStyle _missionHud, _objectiveHud, _statusHud, _playerChip, _tutorialHeading, _promptGlyph, _promptText;
+        private GUIStyle _missionHud, _objectiveHud, _statusHud, _playerChip, _tutorialHeading, _promptGlyph, _promptText, _padLabel;
         private Texture2D _uiKitTexture;
         private Sprite _hudPanelFrame, _hudMissionTile, _hudMissionTileSelected, _hudBadgeFrame, _hudButtonPrimary, _hudOverlayPanel;
         private int _pauseSelection;
@@ -574,7 +574,7 @@ namespace CheddarAndCocoa.Game
                     instruction = "HOP OVER TROUBLE";
                     glyph = "A";
                     cheddarKey = "L-SHIFT";
-                    cocoaKey = "R-CTRL";
+                    cocoaKey = "/";
                     glyphColor = GlyphJump;
                     break;
                 case GameManager.TutorialActionStep.Wrestle:
@@ -582,7 +582,7 @@ namespace CheddarAndCocoa.Game
                     instruction = "TRY SOME SIBLING CHAOS";
                     glyph = "B";
                     cheddarKey = "Q";
-                    cocoaKey = "R-ALT";
+                    cocoaKey = "'";
                     glyphColor = GlyphWrestle;
                     break;
                 default:
@@ -683,7 +683,7 @@ namespace CheddarAndCocoa.Game
             float keyGap = 8f;
             float keyWidth = (box.width - 32f - keyGap * 7f) / 8f;
             string[] cheddarKeys = { "SPACE", "E", "L-SHIFT", "Q" };
-            string[] cocoaKeys = { "ENTER", "R-SHIFT", "R-CTRL", "R-ALT" };
+            string[] cocoaKeys = { "ENTER", "R-SHIFT", "/", "'" };
             for (int i = 0; i < verbList.Length; i++)
             {
                 DrawTintedRect(new Rect(box.x + 16f + i * (keyWidth + keyGap), keyRowY, keyWidth, 30f), verbList[i].color);
@@ -756,18 +756,23 @@ namespace CheddarAndCocoa.Game
             GUI.Label(new Rect(keyboardPanel.x + 10f, keyboardPanel.y + 4f, keyboardPanel.width - 20f, 28f),
                 "KEYBOARD", _hud);
             DrawKeyboardPlayer(keyboardPanel, keyboardPanel.y + 38f, "P1 CHEDDAR", "W A S D", "SPACE", "E", "L-SHIFT", "Q");
-            DrawKeyboardPlayer(keyboardPanel, keyboardPanel.y + 146f, "P2 COCOA", "ARROW KEYS", "ENTER", "R-SHIFT", "R-CTRL", "R-ALT");
+            DrawKeyboardPlayer(keyboardPanel, keyboardPanel.y + 146f, "P2 COCOA", "ARROW KEYS", "ENTER", "R-SHIFT", "/", "'");
 
             GUI.Label(new Rect(padPanel.x + 10f, padPanel.y + 4f, padPanel.width - 20f, 28f),
                 "NINTENDO SWITCH-STYLE CONTROLLER", _hud);
             DrawTintedRect(new Rect(padPanel.x + 54f, padPanel.y + 56f, padPanel.width - 108f, 158f),
                 new Color(0.12f, 0.16f, 0.19f, 0.98f));
             GUI.Label(new Rect(padPanel.x + 74f, padPanel.y + 72f, 128f, 54f), "LEFT STICK\nMOVE", _small);
-            float cx = padPanel.xMax - 144f;
+            // Couch test 2026-07-24: 50px horizontal leg spacing left "INTERACT" (the longest
+            // action word) overlapping the Y/A buttons' labels below it. Wider horizontal legs
+            // plus DrawPadButton's tighter, non-wrapping label box (_padLabel) give every label
+            // clear room; vertical offsets are unchanged so the diamond still fits the panel box.
+            float cx = padPanel.xMax - 150f;
             float cy = padPanel.y + 124f;
-            DrawPadButton(new Rect(cx - 50f, cy - 22f, 42f, 42f), "Y", "BARK", GlyphBark);
+            const float leg = 62f;
+            DrawPadButton(new Rect(cx - leg, cy - 22f, 42f, 42f), "Y", "BARK", GlyphBark);
             DrawPadButton(new Rect(cx, cy - 70f, 42f, 42f), "X", "INTERACT", GlyphInteract);
-            DrawPadButton(new Rect(cx + 50f, cy - 22f, 42f, 42f), "A", "JUMP", GlyphJump);
+            DrawPadButton(new Rect(cx + leg, cy - 22f, 42f, 42f), "A", "JUMP", GlyphJump);
             DrawPadButton(new Rect(cx, cy + 26f, 42f, 42f), "B", "WRESTLE", GlyphWrestle);
             // CF1.1: the card no longer auto-dismisses on a timer, so this is now the only way it
             // closes - say what accept does, not "early" (there's no longer a timer to beat).
@@ -796,7 +801,11 @@ namespace CheddarAndCocoa.Game
         {
             DrawTintedRect(rect, color);
             GUI.Label(rect, glyph, _promptGlyph);
-            GUI.Label(new Rect(rect.x - 18f, rect.yMax + 1f, rect.width + 36f, 22f), action, _small);
+            // Couch test 2026-07-24: was a wrapping 78px box overlapping the neighboring button's
+            // own label ("INTERACT" clipped/overlapped "JUMP"). _padLabel is smaller and never
+            // wraps, so a slightly narrower, taller box comfortably fits the longest action word
+            // ("INTERACT"/"WRESTLE") on one line without reaching into the next button's space.
+            GUI.Label(new Rect(rect.x - 10f, rect.yMax + 2f, rect.width + 20f, 20f), action, _padLabel);
         }
 
         private void DrawPauseMenu()
@@ -1127,6 +1136,12 @@ namespace CheddarAndCocoa.Game
             _tutorialHeading.wordWrap = true;
             _promptGlyph = new GUIStyle(GUI.skin.label) { fontSize = 18, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
             _promptGlyph.normal.textColor = Color.white;
+            // Couch test 2026-07-24: the controller diagram's "INTERACT" label (longest of the
+            // four action words) was overlapping/clipping against the neighboring button's label
+            // at _small's 16pt. A dedicated smaller, non-wrapping style keeps every action word on
+            // one line inside its own box.
+            _padLabel = new GUIStyle(GUI.skin.label) { fontSize = 13, alignment = TextAnchor.MiddleCenter, wordWrap = false };
+            _padLabel.normal.textColor = new Color(0.9f, 0.95f, 1f);
             _promptText = new GUIStyle(GUI.skin.label) { fontSize = 20, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleLeft };
             _promptText.normal.textColor = new Color(0.95f, 0.98f, 1f);
             _promptText.wordWrap = true;

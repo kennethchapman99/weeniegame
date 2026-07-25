@@ -37,6 +37,24 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual("skunk_blast_mayhem", _game.RuntimeSnapshot.MissionId);
         }
 
+        [UnityTest]
+        public IEnumerator SkunkBlast_PredatorObject_RendersAsSkunkNotEagle()
+        {
+            // Couch test 2026-07-24: "we need an animated skunk not an eagle" - the shared
+            // PredatorObject's ThreatReadabilityAnimator defaults to Eagle (GameManager.
+            // AddThreatAnimator), and none of this mission's labels said EAGLE/COYOTE/SQUIRREL, so
+            // it fell straight through to that Eagle default and rendered a banking eagle.
+            yield return LoadArena();
+
+            var motion = _game.PredatorObject.GetComponent<ThreatReadabilityAnimator>();
+            Assert.IsNotNull(motion, "Skunk Blast Mayhem reuses the shared PredatorObject, which must carry the animator.");
+            yield return null;
+            Assert.AreEqual("Skunk", motion.CurrentActorLabel,
+                "The skunk's own guard-idle label must resolve to the Skunk actor, not the Eagle default.");
+            Assert.AreEqual("Patrol", motion.CurrentClipLabel,
+                "The calm guard state should read as the Skunk's idle-guard clip.");
+        }
+
         [Test]
         public void SkunkBlast_RegistryContract_RoundTripsControllerAndDefinition()
         {

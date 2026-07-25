@@ -26,8 +26,12 @@ namespace CheddarAndCocoa.Input
     {
         /// <summary>Keyboard fallback layouts so the game is playable with no controllers. P1 = WASD,
         /// Space (bark), E (interact), Left-Shift (jump), Q (wrestle); P2 = arrow keys, Enter (bark),
-        /// Right-Shift (interact), Right-Ctrl (jump), Right-Alt (wrestle). <see cref="None"/> =
-        /// controller only.</summary>
+        /// Right-Shift (interact), Slash (jump), Quote (wrestle). <see cref="None"/> =
+        /// controller only.
+        /// Couch test 2026-07-24: P2 jump/wrestle used to be Right-Ctrl/Right-Alt, but many
+        /// MacBook keyboards have no physical Right Control key and an unreliable Right Option, so
+        /// those actions were simply unreachable. Slash/Quote sit right next to the arrow keys P2
+        /// already uses to move, are present on every keyboard, and aren't OS modifier keys.</summary>
         public enum KeyboardScheme { None, WasdSpace, ArrowsEnter }
 
         [SerializeField, Range(0f, 0.9f)] private float deadzone = 0.25f; // default mirrors balance.ts INPUT.gamepadDeadzone
@@ -99,8 +103,8 @@ namespace CheddarAndCocoa.Input
                     move += ReadKeys(kb.leftArrowKey, kb.rightArrowKey, kb.downArrowKey, kb.upArrowKey);
                     bark |= kb.enterKey.wasPressedThisFrame;
                     interact |= kb.rightShiftKey.wasPressedThisFrame;
-                    jump |= kb.rightCtrlKey.wasPressedThisFrame;
-                    wrestle |= kb.rightAltKey.wasPressedThisFrame;
+                    jump |= kb.slashKey.wasPressedThisFrame;
+                    wrestle |= kb.quoteKey.wasPressedThisFrame;
                 }
             }
 

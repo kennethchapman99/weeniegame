@@ -45,7 +45,13 @@ namespace CheddarAndCocoa.Game
         // change to DetailCoverFillsWidth/DetailCoverUsesTitleFreeCrop, both of which have large
         // margin to spare at these values.
         private const float DetailCoverHeight = 340f;
-        private const float TileArtworkZoom = 1.35f;
+        // Couch test 2026-07-24: "All of the tile pictures for levels are cut off on the right
+        // side" - 1.35x zoomed well past the minimum cover-fit scale, cropping characters off the
+        // edge that the (less-zoomed) detail panel still shows in full. Dropped toward the detail
+        // panel's near-1.0 zoom; kept just above ~1.09 (the point where the tile stops showing
+        // enough of the sprite to still crop the baked title ribbon at the bottom, guarded by
+        // TileCoverUsesTitleFreeCropAt) so both the crop complaint and the ribbon-crop contract hold.
+        private const float TileArtworkZoom = 1.15f;
         private const float TileArtworkVerticalShift = -0.12f;
         private const float DetailArtworkZoom = 1.05f;
         private const float DetailArtworkVerticalShift = -0.10f;
@@ -88,8 +94,6 @@ namespace CheddarAndCocoa.Game
             new Dictionary<GameManager.MissionVariant, Sprite>();
         private int _syncedSelection = -1;
 
-        private TextMeshProUGUI _title;
-        private TextMeshProUGUI _recommendedHint;
         private TextMeshProUGUI _controlsHint;
         private TextMeshProUGUI _sessionStats;
         private TextMeshProUGUI _pageLabel;
@@ -105,7 +109,6 @@ namespace CheddarAndCocoa.Game
         private TextMeshProUGUI _detailChallenge;
         private Button _startButton;
         private TextMeshProUGUI _startLabel;
-        private Button _recommendedButton;
         private readonly List<TeamPlanChipRow> _chipRows = new List<TeamPlanChipRow>();
         private float _howToAreaX, _howToAreaY, _howToAreaWidth, _howToAreaHeight;
 
@@ -115,9 +118,6 @@ namespace CheddarAndCocoa.Game
         public Canvas Canvas => _canvas;
         public int TileCapacity => GameManager.MissionSelectTilesPerPage;
         public Button StartButton => _startButton;
-        public Button RecommendedButton => _recommendedButton;
-        public string TitleText => _title != null ? _title.text : string.Empty;
-        public string RecommendedHintText => _recommendedHint != null ? _recommendedHint.text : string.Empty;
         public string ControlsHintText => _controlsHint != null ? _controlsHint.text : string.Empty;
         public string PageLabelText => _pageLabel != null ? _pageLabel.text : string.Empty;
         public string DetailNameText => _detailName != null ? _detailName.text : string.Empty;
@@ -270,26 +270,20 @@ namespace CheddarAndCocoa.Game
             BuildDetailPanel();
         }
 
+        // Couch test 2026-07-24: the "Cheddar + Cocoa Adventures" title banner and the
+        // "START HERE: ... four-part teamwork story" line were both flagged "Remove this" - the
+        // recommended mission is already communicated by the RECOMMENDED tile badge/detail chip,
+        // so the banner was pure redundant chrome eating the top of the screen.
         private void BuildHeader()
         {
-            _title = NewText("Title", _canvasRoot.transform, 46f,
-                new Color(1f, 0.95f, 0.4f), TextAlignmentOptions.Center, FontStyles.Bold);
-            Place(_title.rectTransform, 0f, 10f, ReferenceWidth, 56f);
-            _title.text = "Cheddar + Cocoa Adventures";
-
-            _recommendedHint = NewText("RecommendedHint", _canvasRoot.transform, 24f,
-                new Color(1f, 0.87f, 0.34f), TextAlignmentOptions.Center, FontStyles.Bold);
-            Place(_recommendedHint.rectTransform, 32f, 68f, ReferenceWidth - 64f, 30f);
-            _recommendedHint.text = $"START HERE: {_game.CouchTestFocusName} — a four-part teamwork story";
-
             _controlsHint = NewText("ControlsHint", _canvasRoot.transform, 19f,
                 new Color(0.9f, 0.95f, 1f), TextAlignmentOptions.Center);
-            Place(_controlsHint.rectTransform, 32f, 102f, ReferenceWidth - 64f, 26f);
+            Place(_controlsHint.rectTransform, 32f, 24f, ReferenceWidth - 64f, 26f);
             _controlsHint.text = "D-pad / arrow keys choose  •  A / Enter starts  •  Y selects Recommended";
 
             _sessionStats = NewText("SessionStats", _canvasRoot.transform, 18f,
                 new Color(0.72f, 0.82f, 0.88f), TextAlignmentOptions.Center);
-            Place(_sessionStats.rectTransform, 32f, 134f, ReferenceWidth - 64f, 24f);
+            Place(_sessionStats.rectTransform, 32f, 58f, ReferenceWidth - 64f, 24f);
         }
 
         private void BuildGrid()
@@ -441,16 +435,12 @@ namespace CheddarAndCocoa.Game
                 new Color(0.9f, 0.95f, 1f), TextAlignmentOptions.TopLeft);
             Place(_detailChallenge.rectTransform, x, challengeY, innerWidth, 28f);
 
-            _recommendedButton = BuildButton("RecommendedButton", x, buttonY, 300f, buttonHeight,
-                "Play Recommended", out _);
-            _recommendedButton.onClick.AddListener(() =>
-            {
-                _game.SelectCouchTestFocusMission();
-                _game.StartSelectedMission();
-            });
-
-            float startWidth = 330f;
-            _startButton = BuildButton("StartButton", x + innerWidth - startWidth, buttonY, startWidth, buttonHeight,
+            // Couch test 2026-07-24: "Why both buttons here, shouldn't there just be 'Play
+            // Mission'?" - the second "Play Recommended" button jumped away to a different
+            // mission than the one on screen, which read as confusing rather than helpful. One
+            // full-width primary action per screen now; the Y-button shortcut (see ControlsHint)
+            // still gets players to the recommended adventure from anywhere.
+            _startButton = BuildButton("StartButton", x, buttonY, innerWidth, buttonHeight,
                 string.Empty, out _startLabel);
             _startButton.onClick.AddListener(() => _game.StartSelectedMission());
         }
@@ -517,8 +507,10 @@ namespace CheddarAndCocoa.Game
             int page = _game.SelectedMissionPage;
             int pageStart = page * GameManager.MissionSelectTilesPerPage;
 
+            // Couch test 2026-07-24: the zero-state greeting line was flagged "Remove this" -
+            // stay silent until there's a real session stat to report.
             _sessionStats.text = _game.SessionMissionsPlayed == 0
-                ? "Pick an adventure, grab two controllers, and play together."
+                ? string.Empty
                 : $"Tonight: {_game.SessionMissionsPlayed} played • " +
                   $"{_game.SessionUniqueMissionsCompleted}/{count} explored • " +
                   $"{_game.SessionFlawlessClears} flawless";
@@ -544,10 +536,10 @@ namespace CheddarAndCocoa.Game
                 tile.BadgeCode.text = ArenaHud.MissionBadgeCodeFor(variant);
                 tile.Name.text = GameManager.BuildMissionDefinition(variant).Name;
                 tile.Name.color = selected ? new Color(1f, 0.92f, 0.42f) : new Color(0.95f, 0.98f, 1f);
-                string status = _game.MissionSelectStatusFor(variant);
-                tile.Status.text = variant == _game.CouchTestFocusVariant
-                    ? $"RECOMMENDED • {status}"
-                    : status;
+                // Couch test 2026-07-24: "remove the 'recommended, New' line - we don't need
+                // that" - the accent strip/badge color and the detail panel's RECOMMENDED tag
+                // already carry that signal without adding a second text line under every tile.
+                tile.Status.text = _game.MissionSelectStatusFor(variant);
                 tile.SelectionGlow.enabled = selected;
             }
 
@@ -632,18 +624,10 @@ namespace CheddarAndCocoa.Game
             float innerWidth = DetailWidth - pad * 2f;
             float buttonY = ContentTop + ContentHeight - pad - 64f;
             bool isRecommended = variant == _game.CouchTestFocusVariant;
-            _recommendedButton.gameObject.SetActive(!isRecommended);
-            if (isRecommended)
-            {
-                Place(_startButton.GetComponent<RectTransform>(), x, buttonY, innerWidth, 64f);
-                _startLabel.text = "Start Recommended Adventure";
-            }
-            else
-            {
-                const float startWidth = 330f;
-                Place(_startButton.GetComponent<RectTransform>(), x + innerWidth - startWidth, buttonY, startWidth, 64f);
-                _startLabel.text = $"Start {_game.SelectedMissionName}";
-            }
+            Place(_startButton.GetComponent<RectTransform>(), x, buttonY, innerWidth, 64f);
+            _startLabel.text = isRecommended
+                ? "Start Recommended Adventure"
+                : $"Start {_game.SelectedMissionName}";
         }
 
         /// <summary>

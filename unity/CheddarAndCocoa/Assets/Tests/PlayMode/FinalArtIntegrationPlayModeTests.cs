@@ -140,6 +140,10 @@ namespace CheddarAndCocoa.Tests
             foreach (int frame in new[] { 0, 1, 2, 3 })
                 Assert.IsNotNull(ThreatMotionArt.Load(ThreatMotionArt.Actor.Coyote, clip, frame),
                     $"Missing coyote motion frame {clip}/{frame}.");
+            foreach (var clip in new[] { ThreatMotionArt.Clip.Patrol, ThreatMotionArt.Clip.Threaten, ThreatMotionArt.Clip.Retreat })
+            foreach (int frame in new[] { 0, 1, 2, 3 })
+                Assert.IsNotNull(ThreatMotionArt.Load(ThreatMotionArt.Actor.Skunk, clip, frame),
+                    $"Missing skunk motion frame {clip}/{frame}.");
 
             Sprite motion = CharacterMotionArt.Load(DogId.Cheddar, CharacterMotionArt.Clip.RunStorybook,
                 CharacterMotionArt.Facing8.E, 0);
@@ -583,6 +587,12 @@ namespace CheddarAndCocoa.Tests
             yield return new WaitForSeconds(0.1f);
             AssertMissionProp("GateCrashGate", FinalGameplayArt.GateCrashGateClosed);
             AssertMissionProp("GateCrashToy", FinalGameplayArt.GateCrashToyWaiting);
+            // Couch test 2026-07-24: AssertMissionProp alone missed the gate rendering at a
+            // sub-pixel size (its non-uniform marker scale was compounding into the overlay's
+            // local scale), so it also needs the stricter world-width check TableStealthHuman
+            // uses below.
+            AssertWorldWidthAndProportions("GateCrashGate", 3.5f, 4.1f);
+            AssertWorldWidthAndProportions("GateCrashToy", 1.65f, 1.95f);
             game.ForceGateHold(true);
             AssertMissionProp("GateCrashGate", FinalGameplayArt.GateCrashGateHeld);
             game.GateCrashController.ForceGateCross(1.0f);

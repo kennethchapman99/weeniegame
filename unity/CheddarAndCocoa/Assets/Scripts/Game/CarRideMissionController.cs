@@ -102,8 +102,18 @@ namespace CheddarAndCocoa.Game
             {
                 if (IsPresentingSuccessfulOutcome)
                     return "We're home! Cocoa held the line - Cheddar survived the backseat rodeo!";
+                // Couch test 2026-07-24: "Not clear to me how cocoa 'Plants' so cheddar can duck
+                // behind?" - the brake instruction used to read identically whether or not Cocoa
+                // had already planted, so there was nothing telling Cheddar's player that step one
+                // was done and it was their turn. This is the same top HUD line players already
+                // read for every beat, so it updates the moment Cocoa braces instead of relying on
+                // the easy-to-miss dashboard label or the brief "COCOA PLANTS!" world-pop.
+                bool cocoaBracedForBrake = _phase == Phase.Telegraph && _currentEvent == RoadEventKind.Brake
+                    && BraceActive(_context.IndexOfDog(DogId.Cocoa), _context.Now());
                 string beat = _phase switch
                 {
+                    Phase.Telegraph when _currentEvent == RoadEventKind.Brake && cocoaBracedForBrake =>
+                        "Cocoa's PLANTED - Cheddar, get beside her and Interact to tuck in!",
                     Phase.Telegraph when _currentEvent == RoadEventKind.Brake && !_cheddarTuckedForBrake => "BRAKES AHEAD - Cocoa brace, Cheddar tuck!",
                     Phase.Telegraph when _currentEvent == RoadEventKind.Brake => "BRAKE TEAM READY - hold together!",
                     Phase.Telegraph => "Turn ahead - hold on!",

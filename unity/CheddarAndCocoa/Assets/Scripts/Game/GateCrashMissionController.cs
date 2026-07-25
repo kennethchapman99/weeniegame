@@ -351,8 +351,15 @@ namespace CheddarAndCocoa.Game
             _gateFloorAnchor.transform.SetParent(_gate.transform, false);
             _gateFloorAnchor.transform.localPosition = new Vector3(0f, -0.62f, 0f);
             _toy = NewMarker("GateCrashToy", new Color(0.6f, 0.8f, 1f), "TOY", Vector3.one * 1.2f, out _);
-            _gateArt = MissionPropArt.AttachObject(_gate, FinalGameplayArt.GateCrashGateClosed, 0.013f, 18, true);
-            _toyArt = MissionPropArt.AttachObject(_toy, FinalGameplayArt.GateCrashToyWaiting, 0.012f, 18, true);
+            // Couch test 2026-07-24: the gate's own (1.4, 4, 1) marker scale (a tall gameplay
+            // hitbox, not an art size) was compounding into AttachObject's uniform local scale,
+            // shrinking the promoted sprite to a sub-pixel speck - the gate never actually
+            // rendered, only its GATE label and paw meter did. AttachObjectAtWorldWidth cancels
+            // the marker's non-uniform scale and renders at an authored width instead, the same
+            // fix TableStealthMissionController already uses for its identically-shaped human
+            // marker.
+            _gateArt = MissionPropArt.AttachObjectAtWorldWidth(_gate, FinalGameplayArt.GateCrashGateClosed, 3.8f, 18, true);
+            _toyArt = MissionPropArt.AttachObjectAtWorldWidth(_toy, FinalGameplayArt.GateCrashToyWaiting, 1.8f, 18, true);
         }
 
         private GameObject NewMarker(string name, Color color, string label, Vector3 scale, out TextMesh worldLabel)

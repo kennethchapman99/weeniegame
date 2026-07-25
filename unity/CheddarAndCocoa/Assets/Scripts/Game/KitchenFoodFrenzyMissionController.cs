@@ -39,6 +39,7 @@ namespace CheddarAndCocoa.Game
         private float _telegraphUntil;
         private float _foodHideAt;
         private float _successHoldRemaining;
+        private bool[] _dogMountedCounter = System.Array.Empty<bool>();
 
         public GameManager.MissionVariant Variant => GameManager.MissionVariant.KitchenFoodFrenzy;
         public bool IsComplete => _state.Complete && _successHoldRemaining <= 0f;
@@ -87,6 +88,7 @@ namespace CheddarAndCocoa.Game
             _telegraphUntil = 0f;
             _foodHideAt = 0f;
             _successHoldRemaining = 0f;
+            _dogMountedCounter = _context.Dogs != null ? new bool[_context.Dogs.Length] : System.Array.Empty<bool>();
             _counterPosition = new Vector2(_context.Bounds.center.x, _context.Bounds.center.y + 8f);
             _safeZonePosition = new Vector2(_context.Bounds.center.x, _context.Bounds.center.y - 5f);
             _floorY = _context.Bounds.center.y - 7f;
@@ -99,6 +101,8 @@ namespace CheddarAndCocoa.Game
 
         public void Tick(float deltaTime, float now)
         {
+            EnforceCounterLedge();
+
             if (_state.Complete)
             {
                 _successHoldRemaining = Mathf.Max(0f, _successHoldRemaining - deltaTime);
@@ -467,6 +471,42 @@ namespace CheddarAndCocoa.Game
             HideFoodAfterSplat();
             UpdateMarkers(_context.Now());
             _context.LogObjectiveChanged();
+        }
+
+        /// <summary>
+        /// Couch test 2026-07-24: "Dogs shouldn't be able to run up the cupboard and counter,
+        /// they should be on the ground and have to jump to get up." Dogs otherwise have no
+        /// ground/collision concept at all (see DogController - pure top-down mover, jump is a
+        /// cosmetic sprite arc), so this is a Kitchen-only ledge: walking into the counter's
+        /// footprint while grounded gets pushed back to its edge; jumping across that edge
+        /// "mounts" the counter (matches the existing requirement that Cheddar stand right there
+        /// to bark food loose) and free movement resumes on top until the dog leaves the zone.
+        /// </summary>
+        private void EnforceCounterLedge()
+        {
+            var dogs = _context.Dogs;
+            if (dogs == null) return;
+            if (_dogMountedCounter.Length != dogs.Length) _dogMountedCounter = new bool[dogs.Length];
+
+            for (int i = 0; i < dogs.Length; i++)
+            {
+                var dog = dogs[i];
+                if (dog == null) continue;
+
+                Vector2 position = dog.transform.position;
+                float distance = Vector2.Distance(position, _counterPosition);
+                bool inZone = distance <= CounterRadius;
+
+                if (inZone && !_dogMountedCounter[i] && !dog.IsJumping)
+                {
+                    Vector2 away = position - _counterPosition;
+                    if (away.sqrMagnitude < 0.0001f) away = Vector2.down;
+                    dog.transform.position = _counterPosition + away.normalized * (CounterRadius + 0.05f);
+                    inZone = false;
+                }
+
+                _dogMountedCounter[i] = inZone;
+            }
         }
 
         private Vector2 FloorPosition() => new(_dropX, _floorY);

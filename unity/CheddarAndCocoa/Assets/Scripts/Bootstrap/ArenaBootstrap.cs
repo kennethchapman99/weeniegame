@@ -241,7 +241,11 @@ namespace CheddarAndCocoa.Bootstrap
             // presenting an undifferentiated green plane.
             Prop(root, "OpenLawnDistrict", F(0f, -0.02f), new Vector2(fieldWidth * 0.48f, fieldHeight * 0.42f), Hex("#4b8a3d66"), -10);
             Prop(root, "PicnicBlanket", F(-0.18f, -0.48f), new Vector2(fieldWidth * 0.12f, fieldHeight * 0.13f), Hex("#c96b55"), -9);
-            Prop(root, "Sandbox", F(0.18f, 0.34f), new Vector2(fieldWidth * 0.11f, fieldHeight * 0.12f), Hex("#c9a968"), -9);
+            // Couch test 2026-07-24: this sandbox used to sit at F(0.18, 0.34) - close enough to
+            // Bone Relay's NE mound (12, 6) and scent post (0, 9) that it read in-frame as an
+            // unexplained "weak set asset" crate during live play. Pushed further out along the
+            // same NE corner so it stays background yard dressing instead of Bone Relay clutter.
+            Prop(root, "Sandbox", F(0.32f, 0.56f), new Vector2(fieldWidth * 0.11f, fieldHeight * 0.12f), Hex("#c9a968"), -9);
             for (int i = 0; i < 9; i++)
             {
                 float t = i / 8f;

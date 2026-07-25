@@ -16,6 +16,169 @@ For current global character art direction, read `docs/ART-DIRECTION.md`. Backya
 playable proof of that direction, not the only place the direction applies. For future external
 sprite/audio collection before Unity import, use `docs/ASSET-CATALOG.md`.
 
+### Couch test 2026-07-24 fixes (CF3.1)
+
+A Word-doc couch report from a 10am session flagged issues across the main menu, controls, live
+Pee Break play, Kitchen Falling Food Frenzy, and Car Ride Chaos. Fixed in one pass, plus the
+"readable chaos" themes that showed up more than once (unexplained icons, text too small, debug
+counters leaking into player-facing copy, redundant buttons):
+
+- **Mission select screen** (`MissionSelectScreen.cs`): removed the "Cheddar + Cocoa Adventures" /
+  "START HERE..." title banner and the "Pick an adventure, grab two controllers..." zero-state
+  greeting (both flagged "Remove this"). Recolored the "Start Recommended Adventure" pill from a
+  low-contrast tan/gold fill to the same dark-teal + gold-outline language the rest of the HUD skin
+  already uses (`tools/art/generate_hud_skin_pack.py`). Dropped `TileArtworkZoom` from 1.35x to
+  1.15x so tile art stops over-cropping characters off the right edge (kept above the ~1.09x floor
+  that still crops the baked title ribbon). Removed the "RECOMMENDED • " prefix under tiles - the
+  accent color and the detail panel's own RECOMMENDED tag already carry that. Collapsed the
+  competing "Play Recommended" (jumps away to Pee Break) / "Start {Mission}" buttons into one
+  full-width primary action per screen; the Y-button shortcut still reaches the recommended
+  adventure from anywhere. Investigated the reported blank "YOUR TEAM PLAN" for Pee Break - the
+  chip-row content and its PlayMode coverage both show it populated; not reproduced from source, so
+  left as-is pending a real repro.
+- **Controls** (`GamepadPlayerInput.cs`, `ArenaHud.cs`): P2 (Cocoa) jump/wrestle were bound to
+  Right-Ctrl/Right-Alt, which many MacBook keyboards don't have (or intercept). Remapped to
+  Slash/Quote - present on every keyboard, sit right next to the arrow keys P2 already moves with,
+  and aren't OS modifier keys. Fixed the controller-diagram legend where "INTERACT" (the longest
+  action word) overlapped/clipped the neighboring buttons' labels: wider button spacing plus a
+  dedicated smaller non-wrapping label style (`_padLabel`, 13pt) instead of reusing 16pt `_small`.
+- **Operation Pee Break live play** (`PeeBreakMissionController.cs`): every world-label marker
+  (DOOR, LEASH, CHARGER, MISREAD, etc.) was rendering at fontSize 9 - far smaller than every other
+  mission's 16-24pt labels - matching "can't read the text on it." Bumped to 16pt. Un-skewed the
+  misread accent ring (was -28deg, read as a stray, unexplained shape - "this skewed white halo...
+  I have no idea what it's for"). Removed the raw `MISREADS {n}` counter from the top HUD
+  objective line (internal recovery counter with no cap/explanation leaking into player text);
+  `Misreads` still drives scoring/outcome, it just no longer prints itself.
+- **Kitchen Falling Food Frenzy** (`GameManager.cs`, `KitchenFoodFrenzyMissionController.cs`): found
+  the actual bug behind "no food falls despite both dogs barking - not sure how to start."
+  `KitchenFoodFrenzyMissionController.HandleBark` already sets a specific, actionable cue on a
+  failed bark ("Cheddar must reach the COUNTER..."), but `GameManager.OnDogBarked`'s generic
+  "solo WOOF" fallback overwrote it the same frame whenever the dogs aren't huddled - which in
+  Kitchen they never are, by design (Cheddar owns the counter, Cocoa guards the bowl 13+ units
+  away). `OnDogBarked` now tracks whether the controller already changed `LastCue` during
+  `HandleBark` and skips the generic fallback when it did. Separately, added a Kitchen-scoped ledge
+  so dogs can't just walk onto the counter/cupboard: `KitchenFoodFrenzyMissionController.Tick` now
+  pushes a grounded dog back to the counter's edge unless it's currently jumping; jumping across the
+  edge "mounts" the counter (matching the existing requirement that Cheddar stand right there to
+  bark) and free movement resumes until the dog leaves the zone. Covered by
+  `KitchenFrenzy_DogsAreGroundLockedAtTheCounterUnlessJumping`.
+- **Car Ride Chaos** (`CarRideMissionController.cs`, `DogReadabilityFeedback.cs`): the brake-brace
+  top HUD line read identically whether or not Cocoa had already planted, so Cheddar's player had
+  no on-screen sign it was their turn ("Not clear to me how cocoa 'Plants' so cheddar can duck
+  behind?"). `ObjectiveLabel` now switches to "Cocoa's PLANTED - Cheddar, get beside her and
+  Interact to tuck in!" the moment she braces. Covered by
+  `CarRide_BrakeEvent_ObjectiveLabelUpdatesOnceCocoaPlants`. Nearly doubled the jump arc's visual
+  rise (0.4 -> 0.75 units) so jumping reads as a clear hop instead of "almost no animation." Not
+  fixed this pass: the reported whitespace under Cheddar/Cocoa's sprites is a uniform ~24px
+  transparent export margin baked into the source PNGs (already pivot-compensated for correct
+  foot placement) - a source-art re-trim, not a code bug; flagged for the next art pass.
+
+Manual acceptance: open the mission picker cold and confirm no title banner/greeting line remain,
+tiles show more of the art without a right-edge crop, and only one Start button shows per mission.
+Plug in a keyboard-only P2 and confirm Slash jumps / Quote wrestles with no controller attached.
+Play Operation Pee Break and confirm every world label is legible from a normal couch distance and
+the top HUD line never shows a raw misread count. Play Kitchen Falling Food Frenzy: bark once from
+off the counter and confirm a specific on-screen reason appears (not a generic "solo WOOF"); try
+walking straight onto the counter and confirm it blocks until you jump. Play Car Ride Chaos through
+a brake event and confirm the top line changes the instant Cocoa braces, and that jumps over the
+sliding junk read as a clear hop.
+
+### Couch test 2026-07-24 10am fixes (CF3.2)
+
+The 10am couch-test Word doc flagged three more issues, all in Bone Detail and Skunk Blast Mayhem
+(the CF3.1 pass above covered the rest of that same report - mission select, controls, Pee Break,
+Kitchen, Car Ride):
+
+- **Skunk Blast Mayhem renders an eagle, not a skunk** ("no idea what is happening - we need an
+  animated skunk not an eagle"). Root cause: this mission reuses the shared `PredatorObject`
+  (`SkunkBlastMayhemMissionController._skunkObj = context.PredatorObject`), and
+  `GameManager.AddThreatAnimator` hardcodes that object's `ThreatReadabilityAnimator` default actor
+  to `Eagle` - there was no `Skunk` case in `ThreatMotionArt.Actor` at all, so every one of this
+  mission's actor-state labels fell through to the Eagle default and played its banking/sweep
+  frames. Added `Actor.Skunk`, keyword detection in `TryInfer` (`SKUNK` or `TAIL UP` - the tail-lift
+  danger telegraph doesn't say the word "skunk"), frame rates, and three procedural poses (calm
+  guard sway, building tail-lift shiver, hunched retreat) in `ThreatMotionPose`. Generated a
+  placeholder 512x384 flat-vector skunk motion pack (`tools/art/generate_skunk_motion_pack.py`,
+  12 frames across Patrol/Threaten/Retreat) matching the existing mission-prop flat-icon style -
+  **not** the painted Eagle/Coyote/Squirrel character tier, which was produced through the
+  project's separate AI image-generation pipeline (`docs/CHARACTER-MOTION-GENERATION.md`) this
+  script doesn't attempt to replicate. Promoting the skunk to that same painted fidelity is a
+  follow-up. Covered by `ThreatLabelInferencePlayModeTests.SkunkLabels_*`,
+  `ThreatMotionFidelityPlayModeTests.SkunkPoses_*`, and
+  `CoopSkunkBlastMayhemPlayModeTests.SkunkBlast_PredatorObject_RendersAsSkunkNotEagle`.
+- **Bone Detail's dig button did nothing** ("Interact does nothing - it should dig here"). Root
+  cause: `BoneRelayMissionController` dug mounds automatically on proximity (`Tick()` compared
+  distance every frame) while its world label reads "DIG?" - a button-prompt shape with no button
+  behind it. Converted digging to an explicit `IMissionInteractionController.HandleInteract`
+  action (Cheddar Interacts within range of the called mound), matching the same
+  Interact-to-act pattern Gate Crash and Skunk Blast Mayhem already use, instead of adding a
+  redundant auto-trigger under an affordance that promises a button. Covered by the updated
+  `CoopBoneRelayPlayModeTests.Bone_PositionDriven_ReadAtPostThenDigTheCall` (now presses Interact
+  instead of relying on proximity) and the rest of that suite, unchanged.
+- **World labels are tiny with a weak background plate** ("the location is a grey square with TINY
+  words, totally wrong way to signal to users... fix this as a pattern throughout the game"),
+  called out on both the Bone Detail dig markers and its scent post. This is the single shared
+  `GameManager.AddWorldLabel`/`WorldLabelSkin` call path every mission's identity markers go
+  through (DIG?, GATE, TOY, CHECKPOINT, SCENT POST, LEVER, and the rest), not a one-off. Scaled the
+  label transform 35% (0.08 -> 0.108) and proportionally scaled `WorldLabelSkin.ResizeForText`'s
+  background-plate constants by the same factor, so the plate grows in lockstep with the now-bigger
+  text instead of the text overflowing a plate sized for the old scale. This is a first pass on
+  size/legibility only; the deeper "strong indicator animations or look/feel" ask (background
+  contrast, iconography beyond the existing paw/command skins) is a separate follow-up.
+  `ActorSignalBadge`'s per-target pulsing icon (already used for "this is the active objective
+  right now") is unaffected and unchanged.
+- **Gate Crash's gate wasn't visible in the couch-test screenshot** and one other "weak set assets"
+  screenshot could not be matched to any current Bone Detail sprite. Not fixed this pass: the gate
+  art (`gate_crash_gate_closed.png`) loads correctly and is covered by a passing
+  `FinalArtIntegrationPlayModeTests` assertion, so this doesn't reproduce from source - needs a
+  live re-check on a fresh build before diagnosing further. **Both root-caused and fixed in CF3.3
+  below** - the couch-test doc's own screenshots turned out to hold the missing repro evidence.
+
+Manual acceptance: start Skunk Blast Mayhem and confirm the guarded bird's skunk renders as a
+black-and-white skunk (calm sway, then a rising tail during the danger telegraph, then a hunched
+retreat once the bird is grabbed) - never a banking eagle. Start Bone Relay/The Bone Detail, have
+Cocoa bark the scent call, walk Cheddar onto the called mound, and confirm walking alone does
+nothing but pressing Interact digs it. Walk up to any world-label marker (DIG?, GATE, CHECKPOINT,
+etc.) and confirm the text is legibly bigger than before at a normal couch distance.
+
+### Gate Crash's invisible gate + Bone Relay's stray sandbox (CF3.3, 2026-07-25)
+
+CF3.2 above left two couch-test items unresolved because static source reading alone didn't
+reproduce them. Re-opening the two "Couch test July24 10am" Word docs and extracting their
+embedded screenshots (rather than just their text) supplied the missing repro evidence for both:
+
+- **Gate Crash's gate never rendered - only its `GATE` label and paw-progress meter did.**
+  `GateCrashMissionController.BuildScene()` gives the gate marker a deliberately non-uniform scale,
+  `(1.4, 4, 1)`, to get a tall doorway-shaped gameplay hitbox - the same trick
+  `TableStealthMissionController` uses for its human. But Gate Crash then attached the real art with
+  plain `MissionPropArt.AttachObject`, which applies a uniform local scale that gets multiplied by
+  whatever non-uniform scale the parent marker has. The result: the promoted gate sprite rendered at
+  roughly 0.036 x 0.104 world units - a sub-pixel speck no couch-test player could ever see, while
+  the label/meter (which don't inherit the marker's art scale) rendered normally, making it look like
+  "the gate is just missing." `TableStealthMissionController` had already solved this exact problem
+  with `MissionPropArt.AttachObjectAtWorldWidth`, which cancels the marker's non-uniform scale and
+  renders the overlay at an authored world width instead - Gate Crash just never got that fix.
+  Switched both the gate and its toy to `AttachObjectAtWorldWidth` (3.8 and 1.8 world units). Added
+  `AssertWorldWidthAndProportions("GateCrashGate", ...)` /
+  `AssertWorldWidthAndProportions("GateCrashToy", ...)` to `FinalArtIntegrationPlayModeTests` so a
+  regression here fails a test instead of only a screenshot.
+- **A "weak set asset" screenshot near Bone Relay** (a tan crate with an oval, a red diagonal
+  stripe, and a blue triangle) turned out not to be Bone Relay art at all - it's the "Sandbox" yard
+  background decoration (`tools/art/generate_environment_prop_pack.py`'s `sandbox()`, exported as
+  `yard_sandbox.png`), which renders unconditionally in every mission (unlike Snack/Laundry/
+  threat-lane overlays, which are gated to their own mission). Its placeholder sat at world
+  `(10.8, 11.6)` (`ArenaBootstrap.cs`), close enough to Bone Relay's NE mound `(12, 6)` and scent
+  post `(0, 9)` that it landed in-frame during real Bone Relay play. Moved it further into the same
+  NE yard corner, to `(19.2, 19)`, clear of Bone Relay's action zone; `BackyardEnvironmentPlayModeTests`
+  doesn't assert an exact position so this didn't need a test change, and the existing
+  `AssertEnvironmentOverlay("Sandbox", ...)` coverage still passes.
+
+819/819 PlayMode tests green after both fixes (full suite, not just the touched files).
+
+Manual acceptance: start Gate Crash and confirm an actual wooden gate/fence renders where the
+`GATE` label points, both closed and held. Start Bone Relay/The Bone Detail and confirm no
+unexplained tan crate/sandbox prop appears near the scent post or the NE mound.
+
 ### Control card waits for explicit accept (CF1.1, 2026-07-20)
 
 The 2026-07-20 couch retest found the fixed-duration card (checklist #4/#5): "The control card
@@ -373,7 +536,7 @@ authoring pads remain available to an observer:
 | Table Stealth | Cocoa Interact-flops so Cheddar sneaks, or Cheddar Bark-burps so Cocoa sneaks | proximity alone cannot flop; sustained and burst routes swap the stealing role; human/steak/dog reactions plus STEAK SNEAK meter; exposures recover; stolen-steak payoff holds before results |
 | Switcheroo | Cheddar Bark-baits and peels away; Cocoa Interacts once at the exposed stash | proximity alone does nothing; decoy/stash reactions, guarded bonk, readable backfire/reset, and held cracked-stash payoff |
 | The Walk Campaign | Cocoa Interact-stares while Cheddar Interact-presents the leash | proximity alone does nothing; leaving breaks the pose; HUMAN GETS IT meter, escalating wrong-item gags, recoverable misreads, and held WALKIES payoff |
-| Bone Relay | Cocoa reaches the scent post and barks the call; Cheddar digs the signalled mound | proximity alone cannot reveal; post/called-mound/bone reactions, recoverable wrong dig, and held three-bone payoff |
+| Bone Relay | Cocoa reaches the scent post and barks the call; Cheddar Interacts to dig the signalled mound | proximity alone cannot reveal or dig; post/called-mound/bone reactions, recoverable wrong dig, and held three-bone payoff |
 | The Great Escape | alternate owner-only Interacts through the four ordered stations | proximity alone does nothing; named action/owner signals, wrong-paws CLANK, responsive settle-back redo, first-clear scoring, and held FREE DOGS payoff |
 | Chaos Machine | Cheddar Interact-pulls; named owners Interact-fire timed junctions while partners pre-position | proximity alone does nothing; distinct cause/effect props, wrong-paws coaching, exact jam/re-pull recovery, tactile stages, and held toy-launch payoff |
 | Blanket Catch | spread taut; Cocoa barks to call each drop; both slide under it | blanket tension, called-drop, catch/splat reactions, and held full-blanket payoff; early bark/rip recover safely |
@@ -770,7 +933,8 @@ in range (e.g. Backyard Rescue's rope tug); jump is now the real always-availabl
 - `DogReadabilityFeedback` gets a `Pose.Jump` (`"HOP!"`), and `DogActionFeedback` gets a `Jump` case
   in its per-dog personality table — Cheddar a quick popcorn hop, Cocoa a slower deliberate bound,
   matching every other action's Cheddar-chaos/Cocoa-control asymmetry.
-- Keyboard fallback: P1 Left-Shift, P2 Right-Ctrl (previously jump had no keyboard binding at all).
+- Keyboard fallback: P1 Left-Shift, P2 Slash (previously jump had no keyboard binding at all; P2
+  jump was originally bound to Right-Ctrl, remapped 2026-07-24 - see the couch-fix entry below).
 
 Covered by `JumpActionPlayModeTests` (arc ramps and lands, blocked while Busy, consumed from
 `MoveIntent`) and the `Jump` case added to `Profiles_PreserveDistinctCheddarAndCocoaIdentity`.
@@ -823,8 +987,9 @@ smallest tested version: make the button do something real now, skip the cuddle-
   unlike the predator-grab stun which needs a rescue bark) plus a knockback away from the winner, and
   the winner's velocity is damped on the flip.
 - No new readability pose needed — `Stunned` already renders via the existing `Pose.Stunned` path.
-- Keyboard fallback: P1 Q, P2 Right-Alt (previously wrestle had no keyboard binding at all, same gap
-  jump had).
+- Keyboard fallback: P1 Q, P2 Quote (previously wrestle had no keyboard binding at all, same gap
+  jump had; P2 wrestle was originally bound to Right-Alt, remapped 2026-07-24 - see the couch-fix
+  entry below).
 
 Not yet ported (tracked as further follow-up, not needed for the button to be real): cuddle-spot/dog-
 couch steal-on-win — no such system exists in this arena yet, so there's nothing to steal. Dust VFX

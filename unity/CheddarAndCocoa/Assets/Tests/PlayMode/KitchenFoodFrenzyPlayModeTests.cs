@@ -218,6 +218,46 @@ namespace CheddarAndCocoa.Tests
             Assert.IsFalse(food.activeSelf);
         }
 
+        /// <summary>
+        /// Couch test 2026-07-24: "Dogs shouldn't be able to run up the cupboard and counter,
+        /// they should be on the ground and have to jump to get up." Pins the KitchenFoodFrenzy-
+        /// scoped ledge added to fix it: walking straight onto the counter footprint gets pushed
+        /// back to its edge, jumping across the edge mounts it, and landing from that mounting
+        /// jump doesn't pop the dog back off.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator KitchenFrenzy_DogsAreGroundLockedAtTheCounterUnlessJumping()
+        {
+            yield return LoadKitchen();
+
+            var cheddar = FindDog(DogId.Cheddar);
+            Assert.IsNotNull(cheddar);
+
+            cheddar.transform.position = _game.KitchenCounterPosition;
+            yield return null;
+            Assert.Greater(Vector2.Distance(cheddar.transform.position, _game.KitchenCounterPosition), 3.6f,
+                "Walking onto the counter without jumping should be blocked.");
+
+            cheddar.transform.position = _game.KitchenCounterPosition + Vector2.left * 5f;
+            yield return null;
+            cheddar.Jump();
+            cheddar.transform.position = _game.KitchenCounterPosition;
+            yield return null;
+            Assert.LessOrEqual(Vector2.Distance(cheddar.transform.position, _game.KitchenCounterPosition), 0.01f,
+                "Jumping across the edge should mount the counter, not get pushed back.");
+
+            yield return new WaitForSeconds(0.6f);
+            Assert.LessOrEqual(Vector2.Distance(cheddar.transform.position, _game.KitchenCounterPosition), 0.01f,
+                "Landing from the mounting jump must not pop the dog back off the counter.");
+        }
+
+        private static DogController FindDog(DogId dogId)
+        {
+            foreach (var identity in Object.FindObjectsByType<DogIdentity>(FindObjectsSortMode.None))
+                if (identity.Id == dogId) return identity.GetComponent<DogController>();
+            return null;
+        }
+
         private IEnumerator LoadKitchen()
         {
             yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
