@@ -894,6 +894,56 @@ this arena not having that system yet (noted above). Covered by
 `DogFeedbackAction.Wrestle` case added to `Profiles_PreserveDistinctCheddarAndCocoaIdentity`. Suite
 green at `529/529`.
 
+### Jump actually reads as a hop, and Wrestle/Interact whiffs stop reading as dead buttons (2026-07-25)
+
+Owner report: jump barely lifted the sprite off the ground, and pressing Wrestle or Interact with
+nothing to act on (out of range, wrong role, defender busy/immune) played no animation at all — only
+the resolved/accepted case had any juice, so a miss looked identical to not pressing the button.
+
+- **Jump height is now tuned, not hardcoded**: the visual arc offset was a flat `JumpHeight01 * 0.4f`
+  regardless of dog. `DogTuning` gains `jumpHeight` (world units), and `DogReadabilityFeedback.
+  ApplyPersonalityMotion` reads it per-dog instead. Cheddar (`jumpHeight = 1.15`, `jumpDuration =
+  0.42s`) pops noticeably higher and snappier; Cocoa (`jumpHeight = 0.8`, `jumpDuration = 0.58s`)
+  bounds lower and more deliberately — the same chaos-puppy/controlled-queen split as every other
+  action pair, now also true of the arc itself and not just its squash timing.
+- **Landing squash**: `DogReadabilityFeedback` edge-detects the `IsJumping` `true -> false`
+  transition once per hop and plays a brief (0.18s) wide-and-flat touchdown squash on the authored
+  pose, so the landing reads as an impact instead of the sprite just snapping back to idle scale. A
+  small continuous peak scale bump (up to 1.1x at `JumpHeight01 = 1`) sells "leaping toward camera."
+- **Ground shadow**: a shrinking, fading ellipse appears under the dog for the duration of the hop,
+  reusing `PoolRuntimeArt.WaterBand()` (already built for the pool waterline) instead of authoring new
+  shadow art. This is the main fix for "doesn't look like it's actually jumping" — without a shadow,
+  a few tenths of a world unit of lift reads as noise; with one, the height is legible at a glance.
+- **Wrestle whiffs get their own beat**: `DogFeedbackAction` gains `WrestleMiss` — a quick,
+  particle-free swipe-and-recoil, distinct from the resolved `Wrestle` action's full dust burst.
+  `GameManager.OnDogWrestled` triggers it on the attacker for all three ways an attempt can go
+  nowhere (defender `Busy`, defender `Immune`, out of `wrestleRange`), so every wrestle press now
+  visibly does *something* on the attacker even when there's nothing to flip.
+- **Interact gets a resolved/missed split**: `DogFeedbackAction` gains `Interact` (a snappier,
+  particled grab/press beat layered under the existing squash-and-pop read — `ShowInteractAccepted`
+  now triggers both) and `InteractMiss` (a small particle-free reach). `MarkFailedInteraction` — the
+  single choke point every wrong-role/too-far/no-target coach beat already calls — now also plays
+  `ShowInteractMissed()` on that dog, so the audio-only "denied" cue finally has a physical read to
+  go with it.
+
+All four new/changed actions keep the file's Cheddar-snappier/Cocoa-heavier asymmetry (distinct
+signature, timing, and kick per dog); the two miss variants are deliberately particle-free so they
+can never be mistaken for a hit.
+
+Covered by: `Jump_RisesToTheTunedHeight_AndShowsAGroundShadowWhileAirborne`,
+`Jump_Landing_PlaysATouchdownSquash` (`JumpActionPlayModeTests`);
+`Wrestle_WhiffsWhenDogsAreFarApart_PlaysAMissReadOnTheAttacker`,
+`Wrestle_AgainstABusyDefender_PlaysAMissReadOnTheAttacker` (`WrestleActionPlayModeTests`); the
+`Interact`/`InteractMiss` assertions added to the existing Gate Crash fixtures in
+`InteractMicroAnimationPlayModeTests`; and `MissProfiles_HaveNoParticles_ButStayDistinctPerDog` plus
+`Trigger_BeginsTheSequence_ForNewTransientActions` (`DogActionFeedbackPlayModeTests`).
+
+Manual check: jump either dog and confirm a visibly higher hop with a shrinking ground shadow and a
+touchdown squash on landing, and that Cheddar's hop reads snappier/higher than Cocoa's. Press Wrestle
+with no one in range (or at a stunned/immune partner) and confirm the attacker still visibly swipes
+instead of doing nothing. Press Interact on the wrong dog or far from any target and confirm a small
+reach/miss beat plays alongside the existing "denied" audio cue.
+
 ### Sniff-around lead-in pacing beat (2026-07-04)
 
 > Historical note: the "briefing card is up (`IntroPromptSeconds`, 5s)" framing and the "Bark during

@@ -24,6 +24,7 @@ namespace CheddarAndCocoa.Tests
         [TestCase(DogFeedbackAction.Zoomies)]
         [TestCase(DogFeedbackAction.Jump)]
         [TestCase(DogFeedbackAction.Wrestle)]
+        [TestCase(DogFeedbackAction.Interact)]
         public void Profiles_PreserveDistinctCheddarAndCocoaIdentity(DogFeedbackAction action)
         {
             DogActionFeedbackStyle cheddar = DogActionFeedbackProfile.For(DogId.Cheddar, action);
@@ -37,6 +38,37 @@ namespace CheddarAndCocoa.Tests
                 "Cheddar should read as snappier while Cocoa remains grounded.");
             Assert.Greater(cheddar.ParticleCount, 0);
             Assert.Greater(cocoa.ParticleCount, 0);
+        }
+
+        /// <summary>
+        /// A whiffed Wrestle (out of range / defender busy / defender immune) and a rejected Interact
+        /// (wrong role / too far) still need to read as attempts, but must never be confused with the
+        /// resolved actions - no particle burst is the deliberate tell.
+        /// </summary>
+        [TestCase(DogFeedbackAction.WrestleMiss)]
+        [TestCase(DogFeedbackAction.InteractMiss)]
+        public void MissProfiles_HaveNoParticles_ButStayDistinctPerDog(DogFeedbackAction action)
+        {
+            DogActionFeedbackStyle cheddar = DogActionFeedbackProfile.For(DogId.Cheddar, action);
+            DogActionFeedbackStyle cocoa = DogActionFeedbackProfile.For(DogId.Cocoa, action);
+
+            Assert.AreEqual(0, cheddar.ParticleCount, "A miss must not spawn dust - only a lighter physical read.");
+            Assert.AreEqual(0, cocoa.ParticleCount);
+            Assert.AreNotEqual(cheddar.Signature, cocoa.Signature);
+            Assert.AreNotEqual(cheddar.Anticipation, cocoa.Anticipation);
+        }
+
+        [TestCase(DogFeedbackAction.WrestleMiss)]
+        [TestCase(DogFeedbackAction.Interact)]
+        [TestCase(DogFeedbackAction.InteractMiss)]
+        public void Trigger_BeginsTheSequence_ForNewTransientActions(DogFeedbackAction action)
+        {
+            DogActionFeedback feedback = MakeFeedback(DogId.Cheddar, out _, out _);
+
+            feedback.Trigger(action);
+
+            Assert.AreEqual(action, feedback.CurrentAction);
+            Assert.AreEqual(DogFeedbackPhase.Anticipation, feedback.CurrentPhase);
         }
 
         [Test]

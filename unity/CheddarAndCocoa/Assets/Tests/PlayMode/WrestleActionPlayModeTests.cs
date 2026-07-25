@@ -174,6 +174,45 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator Wrestle_WhiffsWhenDogsAreFarApart_PlaysAMissReadOnTheAttacker()
+        {
+            yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
+            yield return null;
+            yield return null;
+
+            var (cheddar, cocoa, game) = SetUpDogs();
+            yield return null;
+
+            cheddar.transform.position = Vector3.zero;
+            cocoa.transform.position = new Vector3(10f, 0f, 0f); // far outside wrestleRange
+
+            cheddar.Wrestle();
+
+            Assert.AreEqual(DogFeedbackAction.WrestleMiss, game.DogFeedback[0].ActionFeedback.CurrentAction,
+                "A whiff must still play a readable attempt, not silence.");
+        }
+
+        [UnityTest]
+        public IEnumerator Wrestle_AgainstABusyDefender_PlaysAMissReadOnTheAttacker()
+        {
+            yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
+            yield return null;
+            yield return null;
+
+            var (cheddar, cocoa, game) = SetUpDogs();
+            yield return null;
+
+            cheddar.transform.position = Vector3.zero;
+            cocoa.transform.position = new Vector3(0.3f, 0f, 0f); // in range, but rooted
+            cocoa.SetMode(MovementMode.Stunned);
+
+            cheddar.Wrestle();
+
+            Assert.AreEqual(DogFeedbackAction.WrestleMiss, game.DogFeedback[0].ActionFeedback.CurrentAction,
+                "Nothing to wrestle right now must still play a readable attempt, not silence.");
+        }
+
+        [UnityTest]
         public IEnumerator Wrestle_IsConsumedFromMoveIntent()
         {
             yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);

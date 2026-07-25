@@ -36,6 +36,8 @@ namespace CheddarAndCocoa.Tests
 
             Assert.IsTrue(game.GateCrashController.AnchorEngaged, "Sanity: this must be the genuine acceptance path.");
             Assert.IsTrue(cocoaFeedback.IsShowingInteractAccepted, "A genuinely accepted Interact must play the squash read.");
+            Assert.AreEqual(DogFeedbackAction.Interact, cocoaFeedback.ActionFeedback.CurrentAction,
+                "A genuinely accepted Interact should also play the fuller particled grab beat.");
         }
 
         [UnityTest]
@@ -55,6 +57,8 @@ namespace CheddarAndCocoa.Tests
             Assert.That(game.LastJuiceLabel, Does.Contain("COCOA"), "Sanity: this must be the coached-rejection path.");
             Assert.IsFalse(cheddarFeedback.IsShowingInteractAccepted,
                 "A wrong-role coached rejection must not also play the accepted-Interact squash.");
+            Assert.AreEqual(DogFeedbackAction.InteractMiss, cheddarFeedback.ActionFeedback.CurrentAction,
+                "A coached rejection still needs its own readable miss beat instead of silence.");
         }
 
         [UnityTest]
@@ -73,6 +77,8 @@ namespace CheddarAndCocoa.Tests
             Assert.IsFalse(game.GateCrashController.AnchorEngaged);
             Assert.IsFalse(cocoaFeedback.IsShowingInteractAccepted,
                 "A too-far rejection must not also play the accepted-Interact squash.");
+            Assert.AreEqual(DogFeedbackAction.InteractMiss, cocoaFeedback.ActionFeedback.CurrentAction,
+                "A too-far rejection still needs its own readable miss beat instead of silence.");
         }
 
         [UnityTest]
