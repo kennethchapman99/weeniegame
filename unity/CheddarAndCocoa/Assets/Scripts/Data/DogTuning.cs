@@ -90,6 +90,11 @@ namespace CheddarAndCocoa.Data
         [Header("Jump (prototype JUMP)")]
         [Tooltip("Arc duration. Prototype: 0.5s. Dodge predators when height>0.3 at the strike.")]
         public float jumpDuration = 0.5f;
+        [Tooltip("Visual arc peak height in world units - how high the hop actually reads on screen. " +
+            "Separate from JumpHeight01 (the 0..1 gameplay ramp used for the predator-dodge check), " +
+            "so this can be tuned purely for feel. Cheddar's chaos-puppy legs should kick noticeably " +
+            "higher than Cocoa's controlled queen bound.")]
+        public float jumpHeight = 0.95f;
 
         [Header("House traversal (prototype HOUSE.stairTime)")]
         [Tooltip("Stair traversal seconds. Prototype: Cheddar 0.5 / Cocoa 1.05 (Cheddar's real edge).")]

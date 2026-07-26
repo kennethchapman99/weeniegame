@@ -2264,12 +2264,14 @@ namespace CheddarAndCocoa.Game
             if (defender.Busy)
             {
                 attacker.ApplyWrestleCooldown(defender.WrestleWhiffCooldownSeconds);
+                if (DogFeedback[dogIndex] != null) DogFeedback[dogIndex].ActionFeedback?.Trigger(DogFeedbackAction.WrestleMiss);
                 return;
             }
 
             if (defender.Immune)
             {
                 attacker.ApplyWrestleCooldown(attacker.WrestleImmuneBlockedCooldownSeconds);
+                if (DogFeedback[dogIndex] != null) DogFeedback[dogIndex].ActionFeedback?.Trigger(DogFeedbackAction.WrestleMiss);
                 LastCue = $"{DogName(defender)} is too cozy to flip!";
                 LogPlaytestEvent("WrestleBlocked", LastCue);
                 return;
@@ -2281,6 +2283,7 @@ namespace CheddarAndCocoa.Game
                 // prototype's near-miss nudge - a whiff should still read as a real attempt.
                 attacker.ApplyWrestleLunge(defender.transform.position - attacker.transform.position);
                 attacker.ApplyWrestleCooldown(attacker.WrestleWhiffCooldownSeconds);
+                if (DogFeedback[dogIndex] != null) DogFeedback[dogIndex].ActionFeedback?.Trigger(DogFeedbackAction.WrestleMiss);
                 return;
             }
 
@@ -2595,6 +2598,11 @@ namespace CheddarAndCocoa.Game
             _interactionCoachedThisAttempt = true;
             RequestAudioCue(ArenaFeedbackCatalog.UiButtonDisabled);
             LogPlaytestEvent("InteractionMiss", $"{dogId}: {reason}");
+
+            // A rejected Interact still needs a readable "I tried" beat on the dog itself, not just
+            // an audio cue - otherwise a wrong-role/too-far press looks identical to no press at all.
+            int dogIndex = IndexOfDog(dogId);
+            if (dogIndex >= 0 && DogFeedback[dogIndex] != null) DogFeedback[dogIndex].ShowInteractMissed();
         }
 
         private static string RankForScore(int score, bool clear, MissionDefinition mission)
