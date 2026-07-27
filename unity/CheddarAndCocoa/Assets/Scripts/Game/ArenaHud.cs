@@ -218,8 +218,8 @@ namespace CheddarAndCocoa.Game
 
         private bool PauseHasActionRow =>
             _game != null && (_game.ActionTutorialAvailable || _game.FirstMissionControlStripAvailable);
-        private int PauseOptionCount => PauseHasActionRow ? 7 : 6;
-        private int PauseResumeIndex => PauseHasActionRow ? 4 : 3;
+        private int PauseOptionCount => PauseHasActionRow ? 8 : 7;
+        private int PauseResumeIndex => PauseHasActionRow ? 5 : 4;
 
         private void Update()
         {
@@ -258,9 +258,10 @@ namespace CheddarAndCocoa.Game
             if (option == 0) _game.SetAudioEnabled(!_game.AudioEnabled);
             else if (option == 1) _game.SetRumbleEnabled(!_game.RumbleEnabled);
             else if (option == 2) _game.SetCameraShakeEnabled(!_game.CameraShakeEnabled);
+            else if (option == 3) _game.SetButtonCoachEnabled(!_game.ButtonCoachEnabled);
             else
             {
-                int index = 3;
+                int index = 4;
                 if (_game.ActionTutorialAvailable)
                 {
                     if (option == index)
@@ -418,7 +419,12 @@ namespace CheddarAndCocoa.Game
             }
 
             DrawProductionGameplayHud();
+            // Draw order for the single bottom coaching slot, highest priority first: the Backyard
+            // Rescue progressive teaching tutorial, then the always-on Button Guide coach (default on,
+            // toggle in pause COMFORT), then the legacy first-mission fading strip for when the coach
+            // is turned off. Exactly one ever draws, so they never stack.
             if (_game.ShowActionTutorial) DrawActionTutorial();
+            else if (_game.ButtonCoachVisible) DrawButtonCoach();
             else if (_game.FirstMissionControlStripVisible) DrawFirstMissionControlStrip();
         }
 
@@ -696,6 +702,86 @@ namespace CheddarAndCocoa.Game
             GUI.color = previousColor;
         }
 
+        // Shared verb table for the always-on Button Guide coach: glyph, couch-word, action color,
+        // and the action-step identity so a mission's IMissionCoachHint can light the matching cell.
+        private static readonly (string glyph, string label, Color color, GameManager.TutorialActionStep step)[] CoachVerbs =
+        {
+            ("Y", "BARK", GlyphBark, GameManager.TutorialActionStep.Bark),
+            ("X", "USE", GlyphInteract, GameManager.TutorialActionStep.Interact),
+            ("A", "JUMP", GlyphJump, GameManager.TutorialActionStep.Jump),
+            ("B", "PLAY", GlyphWrestle, GameManager.TutorialActionStep.Wrestle),
+        };
+        private static readonly string[] CoachCheddarKeys = { "SPACE", "E", "L-SHIFT", "Q" };
+        private static readonly string[] CoachCocoaKeys = { "ENTER", "R-SHIFT", "/", "'" };
+
+        /// <summary>
+        /// Always-on couch coach (default on, toggle in pause COMFORT): a persistent, glanceable
+        /// per-player "which button does what" legend so a first-time couch player never has to
+        /// remember the pad layout mid-round. Answers "and when" honestly: it pulses "YOUR TURN" on
+        /// the player who owns the current hard-handoff step (IMissionRoleOwner) and rings the exact
+        /// button a mission truthfully asks for right now (IMissionCoachHint) - but it never invents a
+        /// highlight, so on movement/positioning beats it simply shows all four buttons and lets the
+        /// objective arrow lead. Reuses the same glyph colors and idiom as the briefing control card.
+        /// </summary>
+        private void DrawButtonCoach()
+        {
+            float w = Mathf.Min(940f, VirtualWidth - 32f);
+            const float h = 128f;
+            var box = new Rect((VirtualWidth - w) * 0.5f, VirtualHeight - h - 94f, w, h);
+            DrawHudOverlay(box);
+            DrawTintedRect(box, new Color(0.015f, 0.025f, 0.03f, 0.9f));
+            GUI.Label(new Rect(box.x + 16f, box.y + 6f, box.width * 0.5f, 24f), "BUTTON GUIDE", _tutorialHeading);
+            GUI.Label(new Rect(box.x + box.width * 0.5f - 16f, box.y + 8f, box.width * 0.5f, 22f),
+                "PAUSE ▸ GUIDE: OFF TO HIDE", _small);
+
+            var roleOwner = _game.CoachRoleOwnerDog;
+            const float colGap = 18f;
+            float colWidth = (box.width - 32f - colGap) * 0.5f;
+            var cheddarCol = new Rect(box.x + 16f, box.y + 34f, colWidth, h - 42f);
+            var cocoaCol = new Rect(cheddarCol.xMax + colGap, cheddarCol.y, colWidth, cheddarCol.height);
+            DrawCoachColumn(cheddarCol, "P1 CHEDDAR", CheddarAccent, CoachCheddarKeys,
+                _game.CoachActionFor(DogId.Cheddar), roleOwner == DogId.Cheddar);
+            DrawCoachColumn(cocoaCol, "P2 COCOA", CocoaAccent, CoachCocoaKeys,
+                _game.CoachActionFor(DogId.Cocoa), roleOwner == DogId.Cocoa);
+        }
+
+        private void DrawCoachColumn(Rect col, string player, Color accent, string[] keys,
+            GameManager.TutorialActionStep? coachAction, bool isTurn)
+        {
+            DrawTintedRect(col, new Color(0.04f, 0.07f, 0.09f, 0.9f));
+            DrawTintedRect(new Rect(col.x, col.y, 6f, col.height), accent);
+
+            float pulse = 0.5f + 0.5f * Mathf.Sin(Time.time * 6f);
+            if (isTurn)
+                DrawTintedRect(col, new Color(accent.r, accent.g, accent.b, 0.1f + pulse * 0.16f));
+            GUI.Label(new Rect(col.x + 16f, col.y + 4f, col.width - 130f, 24f), player, _small);
+            if (isTurn)
+                GUI.Label(new Rect(col.xMax - 128f, col.y + 4f, 118f, 24f), "◀ YOUR TURN", _small);
+
+            const float btnSize = 38f;
+            float btnGap = (col.width - 24f - btnSize * CoachVerbs.Length) / (CoachVerbs.Length - 1);
+            float rowY = col.y + 32f;
+            for (int i = 0; i < CoachVerbs.Length; i++)
+            {
+                var verb = CoachVerbs[i];
+                float bx = col.x + 12f + i * (btnSize + btnGap);
+                bool now = coachAction.HasValue && coachAction.Value == verb.step;
+                var rect = new Rect(bx, rowY, btnSize, btnSize);
+                if (now)
+                {
+                    // Ring the exact button the mission is asking for right now, so "which button
+                    // AND when" reads at a glance without hiding the other three.
+                    DrawTintedRect(new Rect(rect.x - 4f, rect.y - 4f, rect.width + 8f, rect.height + 8f),
+                        new Color(1f, 1f, 1f, 0.35f + pulse * 0.45f));
+                }
+                DrawPadButton(rect, verb.glyph, verb.label, verb.color);
+                var keyRect = new Rect(bx - btnGap * 0.5f, rowY + btnSize + 20f, btnSize + btnGap, 24f);
+                GUI.Label(keyRect, keys[i], _small);
+                if (now)
+                    GUI.Label(new Rect(rect.x - 10f, rect.y - 20f, rect.width + 20f, 18f), "NOW", _small);
+            }
+        }
+
         private void DrawMissionBriefing()
         {
             var layout = BuildMissionBriefingLayout(VirtualWidth, VirtualHeight);
@@ -822,9 +908,9 @@ namespace CheddarAndCocoa.Game
                 "The tiny dog emergency is safely frozen.", _mid);
 
             GUI.Label(new Rect(box.x + 30f, box.y + 104f, w - 60f, 28f), "COMFORT", _hud);
-            float settingGap = 12f;
-            float settingWidth = Mathf.Min(190f, (w - 72f - settingGap * 2f) / 3f);
-            float settingX = box.x + (w - settingWidth * 3f - settingGap * 2f) * 0.5f;
+            float settingGap = 10f;
+            float settingWidth = Mathf.Min(150f, (w - 60f - settingGap * 3f) / 4f);
+            float settingX = box.x + (w - settingWidth * 4f - settingGap * 3f) * 0.5f;
             if (DrawPauseButton(new Rect(settingX, box.y + 136f, settingWidth, 44f),
                 $"AUDIO: {(_game.AudioEnabled ? "ON" : "OFF")}", 0))
                 ActivatePauseOption(0);
@@ -834,8 +920,11 @@ namespace CheddarAndCocoa.Game
             if (DrawPauseButton(new Rect(settingX + (settingWidth + settingGap) * 2f, box.y + 136f, settingWidth, 44f),
                 $"SHAKE: {(_game.CameraShakeEnabled ? "ON" : "OFF")}", 2))
                 ActivatePauseOption(2);
+            if (DrawPauseButton(new Rect(settingX + (settingWidth + settingGap) * 3f, box.y + 136f, settingWidth, 44f),
+                $"GUIDE: {(_game.ButtonCoachEnabled ? "ON" : "OFF")}", 3))
+                ActivatePauseOption(3);
 
-            int actionIndex = 3;
+            int actionIndex = 4;
             if (_game.ActionTutorialAvailable)
             {
                 string tutorialLabel = _game.ShowActionTutorial ? "Skip Tutorial" : "Replay Tutorial";

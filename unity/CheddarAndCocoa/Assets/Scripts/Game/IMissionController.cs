@@ -111,6 +111,21 @@ namespace CheddarAndCocoa.Game
     }
 
     /// <summary>
+    /// Optional hook that lets a mission light up the exact action button a given dog should press
+    /// right now on the always-on Button Guide coach (see <see cref="ArenaHud"/>'s DrawButtonCoach).
+    /// Only implement it where the answer is genuinely truthful at that instant - a call-and-response
+    /// bark window, a "bark to knock the next one loose" wait state, etc. Missions whose real
+    /// moment-to-moment ask is movement/positioning (stand under the falling food, get to the zone)
+    /// should NOT implement this and simply leave the guide showing all four buttons, so the coach
+    /// never highlights a face button when the true action is the stick. Return null when no single
+    /// button is the answer for that dog right now.
+    /// </summary>
+    public interface IMissionCoachHint
+    {
+        GameManager.TutorialActionStep? CoachActionFor(int dogIndex);
+    }
+
+    /// <summary>
     /// Optional hook for hard-handoff co-op puzzles that already track a single current actor
     /// internally (e.g. an alternating-step sequence) but only expose it through per-dog copy text
     /// in <see cref="IMissionController.TryGetObjectiveTarget"/> - that call returns true for BOTH

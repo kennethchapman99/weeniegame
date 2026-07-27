@@ -5,7 +5,7 @@ namespace CheddarAndCocoa.Game
 {
     /// <summary>Complete runtime ownership for Kitchen Falling Food Frenzy.</summary>
     public sealed class KitchenFoodFrenzyMissionController : IMissionController,
-        IMissionSuccessPresentationController
+        IMissionSuccessPresentationController, IMissionCoachHint
     {
         private const float CounterRadius = 3.6f;
         private const float SafeZoneRadius = 3.0f;
@@ -161,6 +161,22 @@ namespace CheddarAndCocoa.Game
                     ? KitchenFoodFrenzyMissionState.FoodKind.Good
                     : KitchenFoodFrenzyMissionState.FoodKind.Bad);
             return ArmTelegraph(dogId, kind);
+        }
+
+        // Coach: light the scout dog's BARK button only during the "reset at counter, knock the next
+        // one loose" wait window - exactly when the objective reads "Cheddar: bark at the COUNTER".
+        // The sweeper's job is to stand under the falling food (positional), so it gets no highlight;
+        // once a drop is live or telegraphed nobody should be barking, so the light goes dark.
+        public GameManager.TutorialActionStep? CoachActionFor(int dogIndex)
+        {
+            if (dogIndex < 0 || _context?.Dogs == null || dogIndex >= _context.Dogs.Length) return null;
+            var identity = _context.Dogs[dogIndex] != null
+                ? _context.Dogs[dogIndex].GetComponent<DogIdentity>()
+                : null;
+            if (identity == null || identity.Id != _state.ScoutDog) return null;
+            bool waitingForBark = !_state.Complete && !IsPresentingSuccessfulOutcome &&
+                !_state.DropActive && !_state.TelegraphActive;
+            return waitingForBark ? GameManager.TutorialActionStep.Bark : (GameManager.TutorialActionStep?)null;
         }
 
         public void Cleanup()

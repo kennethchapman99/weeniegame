@@ -278,6 +278,11 @@ Record short notes after each mission. Do not interrupt play unless the session 
 - Did interact feel discoverable enough?
 - Could players replay or return to mission select?
 - Did the host need keyboard shortcuts to keep the session smooth?
+- **Button Guide coach (default ON):** did the persistent bottom per-player legend (Y BARK / X USE /
+  A JUMP / B PLAY, with keyboard keys) help a first-timer glance down and press the right button?
+  In Kitchen, did Cheddar's BARK button visibly light with a `NOW` ring during the wait window and
+  go dark once food was falling? On a handoff mission, did `◀ YOUR TURN` pulse on the right dog?
+  Once players had it, was pause ▸ **COMFORT ▸ GUIDE: OFF** an obvious way to hide it?
 
 ### Family Wow
 

@@ -16,6 +16,33 @@ For current global character art direction, read `docs/ART-DIRECTION.md`. Backya
 playable proof of that direction, not the only place the direction applies. For future external
 sprite/audio collection before Unity import, use `docs/ASSET-CATALOG.md`.
 
+### Always-on Button Guide coach (2026-07-27)
+
+Couch-test readability ask: a highly visual, always-available on-screen guide showing which button
+does what **and when**, toggleable off once players have it. Shipped as the **Button Guide** coach
+(`ArenaHud.DrawButtonCoach`, `GameManager.ButtonCoachEnabled`), on by default:
+
+- A persistent, glanceable bottom card with a per-player column (P1 Cheddar / P2 Cocoa), each
+  showing all four action buttons (Y BARK / X USE / A JUMP / B PLAY) with the keyboard key beneath.
+  Reuses the exact glyph colors and `DrawPadButton` idiom as the briefing control card.
+- **"And when," honestly:** it pulses `◀ YOUR TURN` on whichever dog owns the current hard-handoff
+  step via the existing accurate `IMissionRoleOwner` signal, and rings the **exact** button + a `NOW`
+  tag when a mission can truthfully name it through the new optional `IMissionCoachHint`
+  (`IMissionController.cs`). It never invents a highlight: on movement/positioning beats it just
+  shows all four buttons and lets the objective arrow lead, so it can't point at a face button when
+  the real action is the stick.
+- First truthful `IMissionCoachHint` wiring: **Kitchen Falling Food Frenzy** lights the scout's BARK
+  only during the "bark the next drop loose" wait window (never on the sweeper's positional catch,
+  and dark once a drop is telegraphed/falling). Other missions are fully served by the always-visible
+  four buttons plus the role-owner pulse; more missions can opt into precise hints later.
+- **Toggle in settings:** a fourth **GUIDE: ON/OFF** button in the pause **COMFORT** row
+  (`SetButtonCoachEnabled`), alongside Audio/Rumble/Shake and session-scoped exactly like them. The
+  coach supersedes the legacy first-mission fading control strip while enabled; turning it off
+  restores that strip's behavior. The Backyard Rescue progressive teaching tutorial still takes
+  priority over both, so only ever one bottom coaching card draws.
+
+Covered by `ButtonCoachPlayModeTests` (default-on/visibility-gate/toggle + Kitchen hint window).
+
 ### Couch test 2026-07-24 fixes (CF3.1)
 
 A Word-doc couch report from a 10am session flagged issues across the main menu, controls, live

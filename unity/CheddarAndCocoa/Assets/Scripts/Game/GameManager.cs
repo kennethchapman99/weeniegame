@@ -532,6 +532,13 @@ namespace CheddarAndCocoa.Game
         public bool AudioEnabled { get; private set; } = true;
         public bool RumbleEnabled { get; private set; } = true;
         public bool CameraShakeEnabled { get; private set; } = true;
+
+        // Always-on couch coach: a persistent, glanceable "which button does what" legend for both
+        // players, on by default so first-time couch players (Sue) never have to remember the pad
+        // layout mid-round, and toggle-off in the pause COMFORT row once they have it. Session-scoped
+        // exactly like the Audio/Rumble/Shake comfort toggles above (no PlayerPrefs infra exists yet;
+        // a whole couch sitting is one session, so this matches those and stays surgical).
+        public bool ButtonCoachEnabled { get; private set; } = true;
         public IReadOnlyList<string> AudioCueRequests => _audioCueRequests;
         public IReadOnlyList<string> RumbleRequests => _rumbleRequests;
         public string LastAudioCueRequested { get; private set; } = string.Empty;
@@ -1069,6 +1076,44 @@ namespace CheddarAndCocoa.Game
             }
             LogPlaytestEvent("CameraShake", enabled ? "enabled" : "disabled");
         }
+
+        public void SetButtonCoachEnabled(bool enabled)
+        {
+            ButtonCoachEnabled = enabled;
+            LogPlaytestEvent("ButtonCoach", enabled ? "enabled" : "disabled");
+        }
+
+        /// <summary>
+        /// True when the persistent Button Guide coach should draw: enabled, in live play, and not
+        /// during a card/overlay that already owns the screen (briefing, opening explainer, end
+        /// card). The Backyard Rescue progressive tutorial takes priority over it in ArenaHud's draw
+        /// order, so the two never stack.
+        /// </summary>
+        public bool ButtonCoachVisible =>
+            ButtonCoachEnabled && MissionActive() && !MissionBriefingVisible &&
+            !MissionOpeningPresentationVisible && !EndScreenVisible;
+
+        /// <summary>
+        /// The exact action button a dog should press right now, if the active mission can truthfully
+        /// say (via <see cref="IMissionCoachHint"/>); otherwise null and the coach just shows the dog
+        /// all four buttons without a false highlight.
+        /// </summary>
+        public TutorialActionStep? CoachActionFor(DogId dog)
+        {
+            if (_activeMissionController is IMissionCoachHint hint)
+            {
+                int index = IndexOfDog(dog);
+                if (index >= 0) return hint.CoachActionFor(index);
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// The dog whose turn it is on a hard-handoff mission (via <see cref="IMissionRoleOwner"/>),
+        /// used to pulse "YOUR TURN" on the coach; null on symmetric missions / between steps.
+        /// </summary>
+        public DogId? CoachRoleOwnerDog =>
+            (_activeMissionController as IMissionRoleOwner)?.RoleOwnerDog;
 
         public void RecordColdReadQuestion(string note = "what do I do?")
         {
