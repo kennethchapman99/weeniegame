@@ -116,6 +116,36 @@ namespace CheddarAndCocoa.Game
         public int GuidanceTier => _guidance.Tier;
         public float GuidanceStallSeconds => _guidance.StallSeconds;
         /// <summary>
+        /// True while the Tier-3 anti-stuck lesson owns the screen. This is intentionally distinct
+        /// from the player-requested pause menu: it snapshots only the current beat's objective and
+        /// current action hint, freezes the world, and consumes the resume press.
+        /// </summary>
+        public bool StruggleTutorialVisible { get; private set; }
+        public string StruggleTutorialObjectiveLabel { get; private set; } = string.Empty;
+        public DogId? StruggleTutorialRoleOwnerDog { get; private set; }
+        public int StruggleTutorialActivationCount { get; private set; }
+
+        private readonly TutorialActionStep?[] _struggleTutorialActions = new TutorialActionStep?[2];
+        private readonly string[] _struggleTutorialDogInstructions = new string[2];
+        private bool _struggleTutorialResumePending;
+        private int _struggleTutorialResumeFrame;
+
+        public TutorialActionStep? StruggleTutorialActionFor(DogId dog)
+        {
+            int index = IndexOfDog(dog);
+            return index >= 0 && index < _struggleTutorialActions.Length
+                ? _struggleTutorialActions[index]
+                : null;
+        }
+
+        public string StruggleTutorialInstructionFor(DogId dog)
+        {
+            int index = IndexOfDog(dog);
+            return index >= 0 && index < _struggleTutorialDogInstructions.Length
+                ? _struggleTutorialDogInstructions[index] ?? string.Empty
+                : string.Empty;
+        }
+        /// <summary>
         /// The dog whose objective target this frame is unambiguous (the other dog has no target of
         /// its own). Null whenever both dogs have a target - most missions hand a target to both dogs
         /// at once (with different copy telling one to stand down), which this deliberately does not
@@ -865,6 +895,7 @@ namespace CheddarAndCocoa.Game
         public void StartMission(MissionVariant variant)
         {
             bool startedFromMenu = MissionSelectVisible;
+            ClearStruggleTutorialForTransition();
             SetPaused(false);
             SelectMission(variant);
             if (startedFromMenu)
@@ -1091,7 +1122,7 @@ namespace CheddarAndCocoa.Game
         /// </summary>
         public bool ButtonCoachVisible =>
             ButtonCoachEnabled && MissionActive() && !MissionBriefingVisible &&
-            !MissionOpeningPresentationVisible && !EndScreenVisible;
+            !MissionOpeningPresentationVisible && !EndScreenVisible && !StruggleTutorialVisible;
 
         /// <summary>
         /// The exact action button a dog should press right now, if the active mission can truthfully
@@ -1491,6 +1522,7 @@ namespace CheddarAndCocoa.Game
                 _mission.GuidanceTier2Seconds, _mission.GuidanceTier3Seconds);
             _guidance.Reset();
             ResetGuidancePresentation();
+            StruggleTutorialActivationCount = 0;
             GuidanceTier2Activations = 0;
             GuidanceTier3Activations = 0;
             _attemptGuidanceActivationDetails.Clear();
@@ -1583,6 +1615,16 @@ namespace CheddarAndCocoa.Game
         private void Update()
         {
             TickFlowInput();
+            if (_struggleTutorialResumePending && Time.frameCount > _struggleTutorialResumeFrame)
+            {
+                _struggleTutorialResumePending = false;
+                if (MissionActive() && _inputs != null)
+                {
+                    foreach (var input in _inputs)
+                        if (input != null) input.enabled = true;
+                }
+            }
+            if (StruggleTutorialVisible) return;
             if (!MissionActive()) return;
 
             TickMissionSelectionKeys();
@@ -1641,6 +1683,7 @@ namespace CheddarAndCocoa.Game
             bool presentingEarnedSuccess = _activeMissionController is IMissionSuccessPresentationController successPresentation
                 && successPresentation.IsPresentingSuccessfulOutcome;
             if (!presentingEarnedSuccess) TickGuidance(Time.deltaTime);
+            if (StruggleTutorialVisible) return;
             if (!presentingEarnedSuccess) TimeRemaining -= Time.deltaTime;
             if (!presentingEarnedSuccess && TimeRemaining <= 0f)
             {
@@ -2567,7 +2610,10 @@ namespace CheddarAndCocoa.Game
 
         private void AddScore(int delta, string reason)
         {
-            _guidance.NotifyProgress();
+            // Only an earned gain proves forward progress. A penalty is evidence that the players
+            // may still be stuck; resetting the rescue ladder on every funny failure would prevent
+            // the struggle tutorial from ever appearing for a team repeatedly making the same miss.
+            _guidance.NotifyScoreDelta(delta);
             Score += delta;
             LastScoreDelta = delta;
             string sign = delta >= 0 ? "+" : "-";
@@ -2682,6 +2728,13 @@ namespace CheddarAndCocoa.Game
         {
             var kb = Keyboard.current;
             var pad = Gamepad.current;
+
+            if (StruggleTutorialVisible)
+            {
+                if (StruggleTutorialResumePressed(kb))
+                    ResumeStruggleTutorial();
+                return;
+            }
 
             bool pausePressed = (kb != null && kb.escapeKey.wasPressedThisFrame) ||
                                 (pad != null && pad.startButton.wasPressedThisFrame);
@@ -3065,6 +3118,88 @@ namespace CheddarAndCocoa.Game
             LogPlaytestEvent("Pause", paused ? "paused" : "resumed");
         }
 
+        private bool StruggleTutorialResumePressed(Keyboard keyboard)
+        {
+            if (keyboard != null &&
+                (keyboard.spaceKey.wasPressedThisFrame ||
+                 keyboard.eKey.wasPressedThisFrame ||
+                 keyboard.leftShiftKey.wasPressedThisFrame ||
+                 keyboard.qKey.wasPressedThisFrame ||
+                 keyboard.enterKey.wasPressedThisFrame ||
+                 keyboard.rightShiftKey.wasPressedThisFrame ||
+                 keyboard.slashKey.wasPressedThisFrame ||
+                 keyboard.quoteKey.wasPressedThisFrame))
+                return true;
+
+            foreach (var gamepad in Gamepad.all)
+            {
+                if (gamepad == null || !gamepad.added) continue;
+                if (gamepad.buttonWest.wasPressedThisFrame ||
+                    gamepad.buttonNorth.wasPressedThisFrame ||
+                    gamepad.buttonEast.wasPressedThisFrame ||
+                    gamepad.buttonSouth.wasPressedThisFrame)
+                    return true;
+            }
+
+            return false;
+        }
+
+        private void ShowStruggleTutorial()
+        {
+            if (StruggleTutorialVisible || !MissionActive() || _dogs == null) return;
+
+            StruggleTutorialObjectiveLabel = ObjectiveLabel;
+            StruggleTutorialRoleOwnerDog = CoachRoleOwnerDog;
+            for (int i = 0; i < _struggleTutorialActions.Length; i++)
+            {
+                _struggleTutorialActions[i] = i < _dogs.Length && _dogs[i] != null
+                    ? CoachActionFor(_dogs[i].GetComponent<DogIdentity>().Id)
+                    : null;
+                _struggleTutorialDogInstructions[i] =
+                    TryGetObjectiveTarget(i, out _, out string copy, out _) && !string.IsNullOrWhiteSpace(copy)
+                        ? copy
+                        : StruggleTutorialObjectiveLabel;
+            }
+
+            StruggleTutorialVisible = true;
+            StruggleTutorialActivationCount++;
+            Time.timeScale = 0f;
+            DisableDogInputs();
+            StopRumble();
+            RequestAudioCue(ArenaFeedbackCatalog.GuidanceRescueCall);
+            _guidanceLastTier = GuidanceTier;
+            LogPlaytestEvent("StruggleTutorial", $"shown @ {StruggleTutorialObjectiveLabel}");
+        }
+
+        /// <summary>
+        /// Closes the blocking anti-stuck lesson. Input components stay disabled until the next
+        /// frame so the face-button/key press used to resume cannot also fire the coached action.
+        /// </summary>
+        public void ResumeStruggleTutorial()
+        {
+            if (!StruggleTutorialVisible) return;
+
+            StruggleTutorialVisible = false;
+            Time.timeScale = 1f;
+            _struggleTutorialResumePending = true;
+            _struggleTutorialResumeFrame = Time.frameCount;
+            LogPlaytestEvent("StruggleTutorial", "resumed");
+        }
+
+        private void ClearStruggleTutorialForTransition()
+        {
+            StruggleTutorialVisible = false;
+            StruggleTutorialObjectiveLabel = string.Empty;
+            StruggleTutorialRoleOwnerDog = null;
+            _struggleTutorialResumePending = false;
+            Time.timeScale = 1f;
+            for (int i = 0; i < _struggleTutorialActions.Length; i++)
+            {
+                _struggleTutorialActions[i] = null;
+                _struggleTutorialDogInstructions[i] = string.Empty;
+            }
+        }
+
         private void SetMissionObjectsActive(bool active)
         {
             if (SquirrelObject != null) SquirrelObject.SetActive(active && _mission != null && _mission.UsesSquirrel);
@@ -3232,6 +3367,7 @@ namespace CheddarAndCocoa.Game
                 string detail = ObjectiveLabel;
                 _attemptGuidanceActivationDetails.Add($"T3 @ {detail}");
                 LogPlaytestEvent("GuidanceTier3", detail);
+                ShowStruggleTutorial();
             }
         }
 

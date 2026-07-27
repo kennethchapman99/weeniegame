@@ -16,6 +16,40 @@ For current global character art direction, read `docs/ART-DIRECTION.md`. Backya
 playable proof of that direction, not the only place the direction applies. For future external
 sprite/audio collection before Unity import, use `docs/ASSET-CATALOG.md`.
 
+### Struggle-triggered pause tutorial (2026-07-27)
+
+The shared guidance ladder now ends in a blocking, highly visual **PAWS A SECOND** lesson
+(`GameManager.StruggleTutorialVisible`, `ArenaHud.DrawStruggleTutorialOverlay`):
+
+- It does **not** appear during normal discovery or the first two anti-stuck steps. Tier 1 at 12
+  seconds remains an arrow/prop nudge; Tier 2 at 25 seconds remains live coaching. The lesson opens
+  only on the Tier-3 edge after 45 uninterrupted seconds without a positive score gain or an
+  objective change (mission definitions may tune those existing thresholds). Penalties and rejected
+  actions do not masquerade as progress, so repeatedly making the same mistake still reaches help.
+- Opening the lesson sets `Time.timeScale = 0`, disables both dog input components, stops rumble,
+  and holds the round clock/controller state. It is separate from the ordinary pause menu.
+- The full-screen card gives each player a large, color-coded current-action diagram. A truthful
+  `IMissionCoachHint` becomes the exact Switch-style face button plus keyboard key; a positional
+  job becomes a large left-stick/move-keys diagram aimed at the already-authored objective arrow.
+  The current role owner receives a pulsing **YOUR TURN** treatment.
+- The content is deliberately spoiler-safe: activation snapshots only `ObjectiveLabel`, each
+  dog's current `TryGetObjectiveTarget` copy, current `IMissionCoachHint`, and current
+  `IMissionRoleOwner`. It never reads the briefing plan, a future beat, clear/fail copy, hidden
+  actors, success presentation, or payoff state.
+- Any face-button action (or either player's matching keyboard action key) resumes. That input is
+  consumed: dog input stays disabled until the next frame, so pressing the illustrated button
+  cannot also act in the frozen world. The same Tier-3 state cannot nag again after resume; real
+  progress must reset the ladder before a later stall can show another lesson.
+
+Covered by `StruggleTutorialPlayModeTests` (Tier-2 non-trigger, Tier-3 freeze, current-only content,
+truthful button-vs-movement display, clock hold, consumed resume frame, and no-repeat contract).
+
+Manual acceptance: start Kitchen Falling Food Frenzy, make no progress for 45 seconds, and confirm
+the world/clock stop under a full-screen two-player card. Cheddar should see the large blue **Y /
+BARK** prompt while Cocoa sees the left-stick/arrow movement diagram. Confirm no later food drop,
+finale, or payoff is named. Resume with either player's shown action, confirm it does not fire into
+the mission on that same frame, then make progress and verify normal play continues.
+
 ### Always-on Button Guide coach (2026-07-27)
 
 Couch-test readability ask: a highly visual, always-available on-screen guide showing which button

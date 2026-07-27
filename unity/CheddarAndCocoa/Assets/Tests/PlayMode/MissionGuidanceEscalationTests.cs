@@ -68,6 +68,24 @@ namespace CheddarAndCocoa.Game.Tests
         }
 
         [Test]
+        public void NotifyScoreDelta_OnlyPositiveGainCountsAsProgress()
+        {
+            var guidance = new MissionGuidanceEscalation();
+            guidance.Configure(MissionGuidanceEscalation.MaxTier, 12f, 25f, 45f);
+            guidance.Tick(30f);
+
+            guidance.NotifyScoreDelta(-10);
+            guidance.NotifyScoreDelta(0);
+            Assert.AreEqual(2, guidance.Tier,
+                "Penalties and zero-point events are evidence of continued struggle, not progress.");
+            Assert.AreEqual(30f, guidance.StallSeconds);
+
+            guidance.NotifyScoreDelta(10);
+            Assert.AreEqual(0, guidance.Tier);
+            Assert.AreEqual(0f, guidance.StallSeconds);
+        }
+
+        [Test]
         public void Reset_ZeroesStallAndTier()
         {
             var guidance = new MissionGuidanceEscalation();

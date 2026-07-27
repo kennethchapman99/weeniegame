@@ -113,7 +113,7 @@ the correct base for the guidance-ladder work.
 and exposes an escalation tier (0–3).
 **Context:** see "The central design problem" in `docs/PRELAUNCH-PRODUCTION-PLAN.md` for tier
 semantics and default timings (12s / 25s / 45s). All 23 controllers already expose objective copy,
-score events, and snapshots; any of those changing counts as progress and resets to Tier 0.
+positive score gains, and snapshots; any of those changing counts as progress and resets to Tier 0.
 **Do:** implement a `MissionGuidanceEscalation` (name flexible) shared service owned by
 `GameManager`'s shared-service wiring, ticked only during active play. Freeze/reset it during
 briefing, opening explainer, sniff-around countdown, pause, held success payoffs, and end cards, and
@@ -149,7 +149,7 @@ against configurable 12s/25s/45s thresholds and a tier cap, with `NotifyProgress
   forced timestamps including boundaries, zero/negative-delta no-op, `NotifyProgress`/`Reset`, a
   Tier-2 cap never reaching 3, a Tier-0 cap staying at Discovery, custom timing overrides) plus
   `GuidanceEscalationPlayModeTests.cs` (9 scene-driven integration tests: mission-start-at-Tier-0,
-  forced-timestamp tier advance, a real score event (treat collect) resetting it, a real
+  forced-timestamp tier advance, a real positive score event (treat collect) resetting it, a real
   objective-copy-only change (`ForcePredatorWarning`, no score) resetting it, pause not accumulating,
   the sniff-around lead-in not accumulating (`LeadInSecondsOverride`), a real SnackHeist held-success
   payoff not accumulating, replay resetting it, and all 23 registered mission definitions defaulting

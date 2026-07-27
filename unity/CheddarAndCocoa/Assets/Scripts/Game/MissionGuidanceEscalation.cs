@@ -10,9 +10,10 @@ namespace CheddarAndCocoa.Game
     /// resetting, so a team that stalls right up to a freeze resumes at the same stall level after.
     /// Mission start/replay explicitly call <see cref="Reset"/> instead of relying on the freeze.
     ///
-    /// Any progress signal (a score event, an objective-copy change) calls <see cref="NotifyProgress"/>
-    /// and drops the tier back to 0 (Discovery). Tier thresholds and the per-mission tier ceiling are
-    /// data via <see cref="Configure"/>, not code branches - see
+    /// Any real progress signal (a positive score event or an objective-copy change) calls
+    /// <see cref="NotifyProgress"/> and drops the tier back to 0 (Discovery). Penalties and rejected
+    /// actions deliberately do not count as progress, so repeated mistakes can still reach Rescue.
+    /// Tier thresholds and the per-mission tier ceiling are data via <see cref="Configure"/>, not code branches - see
     /// <c>GameManager.MissionDefinition.GuidanceTierCap</c> and the matching timing fields.
     /// </summary>
     public sealed class MissionGuidanceEscalation
@@ -52,8 +53,17 @@ namespace CheddarAndCocoa.Game
             _tier = 0;
         }
 
-        /// <summary>Any progress signal (score event, objective-copy change) resets the ladder.</summary>
+        /// <summary>Any caller-confirmed progress signal resets the ladder.</summary>
         public void NotifyProgress() => Reset();
+
+        /// <summary>
+        /// Score-aware progress seam: only a positive gain proves the team moved forward. Zero or
+        /// negative deltas are not progress and leave the current stall evidence intact.
+        /// </summary>
+        public void NotifyScoreDelta(int delta)
+        {
+            if (delta > 0) Reset();
+        }
 
         /// <summary>
         /// Advances the stall clock by <paramref name="deltaTime"/>. Callers must skip this call

@@ -18,11 +18,19 @@ ownership: mission-specific lifecycle and state are mixed with shared session or
 - orchestration of the active mission controller;
 - mission selection and transition requests;
 - session flow, replay/next/select, and session summary;
+- shared cross-mission presentation flow, including the guidance ladder's Tier-3 blocking tutorial
+  freeze/resume lifecycle;
 - shared-service construction and wiring;
 - forwarding Unity lifecycle/input events into the active controller where appropriate.
 
 It must not own mission-specific setup, mutable state, ticking branches, input interpretation,
 cleanup, clear/fail rules, or mission snapshots.
+
+The shared struggle tutorial may snapshot only already-public current-beat signals
+(`ObjectiveLabel`, `TryGetObjectiveTarget`, `IMissionCoachHint`, and `IMissionRoleOwner`). Missions
+remain responsible for what the current objective/action truthfully is. The shared UI must not
+inspect controller concrete types, future beat configuration, hidden actors, success presentation,
+or payoff state to manufacture a solution; that boundary is the spoiler-safety contract.
 
 ### `IMissionController`
 

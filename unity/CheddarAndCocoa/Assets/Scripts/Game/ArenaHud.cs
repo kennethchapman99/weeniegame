@@ -366,7 +366,11 @@ namespace CheddarAndCocoa.Game
             Matrix4x4 previousMatrix = GUI.matrix;
             GUI.matrix = Matrix4x4.Scale(new Vector3(_uiScale, _uiScale, 1f)) * previousMatrix;
 
-            if (_game.IsPaused)
+            if (_game.StruggleTutorialVisible)
+            {
+                DrawStruggleTutorialOverlay();
+            }
+            else if (_game.IsPaused)
             {
                 DrawPauseMenu();
             }
@@ -448,6 +452,102 @@ namespace CheddarAndCocoa.Game
                 $"{_game.ActiveMissionName.ToUpperInvariant()}  •  WATCH THE PLAN", _mid);
             GUI.Label(new Rect(28f, bottom.y + 10f, VirtualWidth - 56f, 52f),
                 "BARK OR INTERACT TO SKIP  •  CONTROLS CARD NEXT", _mid);
+        }
+
+        /// <summary>
+        /// Tier-3 anti-stuck lesson. The world is frozen by GameManager while this owns the whole
+        /// screen. It only mirrors the current objective, current per-dog arrow copy, and an
+        /// IMissionCoachHint action that is truthful right now; it never reads briefing copy,
+        /// future beats, clear reasons, or payoff state.
+        /// </summary>
+        private void DrawStruggleTutorialOverlay()
+        {
+            DrawTintedRect(new Rect(0f, 0f, VirtualWidth, VirtualHeight),
+                new Color(0.005f, 0.01f, 0.015f, 0.96f));
+
+            var card = FitPanel(VirtualWidth, VirtualHeight, 1500f, 760f, 16f);
+            DrawHudOverlay(card);
+            DrawTintedRect(card, new Color(0.015f, 0.03f, 0.04f, 0.98f));
+            DrawTintedRect(new Rect(card.x, card.y, card.width, 12f),
+                new Color(1f, 0.78f, 0.18f, 0.95f));
+
+            float pulse = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 5f);
+            float sidePad = Mathf.Clamp(card.width * 0.03f, 20f, 44f);
+            GUI.Label(new Rect(card.x + sidePad, card.y + 22f, card.width - sidePad * 2f, 62f),
+                "Ⅱ  PAWS A SECOND — TIME IS PAUSED", _big);
+            GUI.Label(new Rect(card.x + sidePad, card.y + 86f, card.width - sidePad * 2f, 54f),
+                $"RIGHT NOW: {_game.StruggleTutorialObjectiveLabel}", _briefing);
+
+            float gap = Mathf.Clamp(card.width * 0.02f, 16f, 28f);
+            float dogCardWidth = (card.width - sidePad * 2f - gap) * 0.5f;
+            float dogTop = card.y + 150f;
+            float resumeHeight = 70f;
+            float resumeY = card.yMax - resumeHeight - 24f;
+            float dogHeight = Mathf.Max(250f, resumeY - dogTop - 20f);
+            var cheddarCard = new Rect(card.x + sidePad, dogTop, dogCardWidth, dogHeight);
+            var cocoaCard = new Rect(cheddarCard.xMax + gap, cheddarCard.y, dogCardWidth, cheddarCard.height);
+            DrawStruggleDogCard(cheddarCard, DogId.Cheddar, "P1  CHEDDAR", CheddarAccent,
+                CoachCheddarKeys, _game.StruggleTutorialRoleOwnerDog == DogId.Cheddar, pulse);
+            DrawStruggleDogCard(cocoaCard, DogId.Cocoa, "P2  COCOA", CocoaAccent,
+                CoachCocoaKeys, _game.StruggleTutorialRoleOwnerDog == DogId.Cocoa, pulse);
+
+            var resume = new Rect(card.x + card.width * 0.13f, resumeY, card.width * 0.74f, resumeHeight);
+            DrawTintedRect(new Rect(resume.x - 6f, resume.y - 6f, resume.width + 12f, resume.height + 12f),
+                new Color(1f, 1f, 1f, 0.18f + pulse * 0.24f));
+            DrawTintedRect(resume, new Color(0.12f, 0.42f, 0.24f, 0.98f));
+            GUI.Label(resume, "PRESS ANY Y / X / A / B ACTION  •  RESUME", _mid);
+        }
+
+        private void DrawStruggleDogCard(Rect rect, DogId dog, string player, Color accent,
+            string[] keys, bool ownsTurn, float pulse)
+        {
+            DrawTintedRect(rect, new Color(0.035f, 0.065f, 0.08f, 0.98f));
+            DrawTintedRect(new Rect(rect.x, rect.y, 12f, rect.height), accent);
+            if (ownsTurn)
+                DrawTintedRect(rect, new Color(accent.r, accent.g, accent.b, 0.08f + pulse * 0.13f));
+
+            GUI.Label(new Rect(rect.x + 28f, rect.y + 18f, rect.width - 56f, 42f),
+                ownsTurn ? $"{player}  •  YOUR TURN" : player, _tutorialHeading);
+
+            GameManager.TutorialActionStep? action = _game.StruggleTutorialActionFor(dog);
+            if (action.HasValue)
+            {
+                int actionIndex = Mathf.Clamp((int)action.Value, 0, CoachVerbs.Length - 1);
+                var verb = CoachVerbs[actionIndex];
+                float glyphSize = Mathf.Clamp(rect.width * 0.24f, 96f, 154f);
+                var glyph = new Rect(rect.x + 32f, rect.y + 78f, glyphSize, glyphSize);
+                DrawTintedRect(new Rect(glyph.x - 10f, glyph.y - 10f, glyph.width + 20f, glyph.height + 20f),
+                    new Color(1f, 1f, 1f, 0.25f + pulse * 0.35f));
+                DrawTintedRect(glyph, verb.color);
+                GUI.Label(glyph, verb.glyph, _promptGlyph);
+                GUI.Label(new Rect(glyph.x - 24f, glyph.yMax + 14f, glyph.width + 48f, 42f),
+                    $"PAD {verb.glyph}  /  {keys[actionIndex]}", _small);
+                GUI.Label(new Rect(glyph.xMax + 28f, glyph.y + 8f,
+                        Mathf.Max(100f, rect.xMax - glyph.xMax - 52f), 120f),
+                    $"PRESS {verb.label}", _big);
+            }
+            else
+            {
+                float stickSize = Mathf.Clamp(rect.width * 0.24f, 96f, 154f);
+                var stick = new Rect(rect.x + 32f, rect.y + 78f, stickSize, stickSize);
+                DrawTintedRect(new Rect(stick.x - 10f, stick.y - 10f, stick.width + 20f, stick.height + 20f),
+                    new Color(1f, 1f, 1f, 0.22f + pulse * 0.28f));
+                DrawTintedRect(stick, new Color(0.18f, 0.42f, 0.62f, 0.96f));
+                GUI.Label(stick, "↑\n← ● →\n↓", _promptGlyph);
+                GUI.Label(new Rect(stick.x - 24f, stick.yMax + 14f, stick.width + 48f, 42f),
+                    "LEFT STICK  /  MOVE KEYS", _small);
+                GUI.Label(new Rect(stick.xMax + 28f, stick.y + 8f,
+                        Mathf.Max(100f, rect.xMax - stick.xMax - 52f), 120f),
+                    "MOVE TO\nYOUR ARROW", _big);
+            }
+
+            float instructionHeight = Mathf.Clamp(rect.height * 0.24f, 72f, 94f);
+            var instruction = new Rect(rect.x + 24f, rect.yMax - instructionHeight - 22f,
+                rect.width - 48f, instructionHeight);
+            DrawTintedRect(instruction, new Color(0.01f, 0.02f, 0.025f, 0.82f));
+            GUI.Label(new Rect(instruction.x + 16f, instruction.y + 8f,
+                instruction.width - 32f, instruction.height - 16f),
+                _game.StruggleTutorialInstructionFor(dog), _promptText);
         }
 
         private void DrawProductionGameplayHud()

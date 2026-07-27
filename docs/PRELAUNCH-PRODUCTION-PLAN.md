@@ -64,7 +64,7 @@ missing is a single, roster-wide **guidance grammar** with a **stall-aware escal
 - **Tier 3 — Rescue (~45s):** the HUD objective line flashes with the owning dog named, plus a
   distinct "coach woof" audio cue. This is the ceiling — never auto-complete a step.
 
-Any progress signal (score event, objective-copy change, beat/stage advance) resets the ladder to
+Any real progress signal (positive score gain, objective-copy change, beat/stage advance) resets the ladder to
 Tier 0. The ladder is frozen during briefings, explainers, countdowns, held payoffs, end cards, and
 pause. Timings are tunable per mission; timing-critical windows may cap at Tier 2. F1 diagnostics
 remain unchanged and separate. The ladder state is observable in the F1 overlay and logged, so the

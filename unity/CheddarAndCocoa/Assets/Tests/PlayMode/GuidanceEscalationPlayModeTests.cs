@@ -65,8 +65,8 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(treat);
             treat.CollectBy(cheddar);
 
-            Assert.Greater(game.LastScoreDelta, 0, "The collect must actually bank score for this to be a score-event test.");
-            Assert.AreEqual(0, game.GuidanceTier, "A score event must drop the ladder back to Tier 0.");
+            Assert.Greater(game.LastScoreDelta, 0, "The collect must actually bank score for this to be a positive-score progress test.");
+            Assert.AreEqual(0, game.GuidanceTier, "A positive score gain must drop the ladder back to Tier 0.");
             Assert.AreEqual(0f, game.GuidanceStallSeconds);
         }
 
