@@ -6,18 +6,19 @@
 ## Locked preflight evidence
 
 - Player: `unity/builds/dev/CheddarAndCocoa-Arena.app`
-- Player executable built: 2026-07-21 with Unity 6000.4.2f1
-- Player executable SHA-256: `10369474d158a3d7ef0d7c8dbd9d38f012bacddbc0e10e4e70c75aee55336418`
+- Player executable built: 2026-07-27 with Unity 6000.4.2f1 from source commit
+  `a9cbd39c1fbb062c12bbb8ca017da0578e2f6ce3`
+- Player executable SHA-256: `299573912f545c6459b0dd78dd0d072d2193d72ed91cf771ea1cb35ccad50a98`
 - Packaged explainer SHA-256: `280de2f463f2f64d337937a16673c549a970e99a6d1c2bb3774a05b34d002e63` (unchanged
   since 2026-07-16 — the video asset itself was not touched by the couch-fix queue either;
   re-verified by rehashing `Assets/StreamingAssets/OperationPeeBreak/operation_pee_break_intro.mp4`
   directly during this refresh)
-- Full PlayMode result: 698/698 passed, 0 failed, 0 skipped, 2026-07-21 — reproduced clean on
-  **three consecutive runs** (this is the one task in the whole couch-fix queue where repeat runs
-  were explicitly worth doing, because it also verifies the flaky-test fix below)
+- Full PlayMode result: 822/822 passed, 0 failed, 0 skipped, 2026-07-27. The current run completed
+  cleanly after moving aside a stale generated Bee cache map that blocked Unity before compilation;
+  no source or test change was required. The earlier 698-test couch-fix baseline was also reproduced
+  cleanly on **three consecutive runs** because it verified the flaky-test fix documented below.
 - PlayMode result: `unity/playmode-results.xml`
-- PlayMode result SHA-256: `8f44f109d3e6310480427478cf35de7420cb395625f2ff4c19d8b7ae996bbce9`
-  (from the third of the three clean runs)
+- PlayMode result SHA-256: `32f3c06f6f58218b2ba08ef064e54feb66350a62e5f55af1f957291c3c7044a1`
 - Packaged-player startup smoke: passed against this rebuild
 - **This build now also includes the full 2026-07-20..07-21 couch-fix queue**
   (`docs/AGENT-WORK-QUEUE-COUCHFIX.md`, all rows DONE, status header COMPLETE), which answers the
