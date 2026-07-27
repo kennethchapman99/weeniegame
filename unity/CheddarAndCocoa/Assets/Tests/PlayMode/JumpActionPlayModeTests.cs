@@ -65,6 +65,78 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
+        public IEnumerator Jump_RisesToTheTunedHeight_AndShowsAGroundShadowWhileAirborne()
+        {
+            yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
+            yield return null;
+            yield return null;
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            game.StartMission(GameManager.MissionVariant.BackyardRescue);
+            yield return null;
+
+            var cheddarGo = GameObject.Find("Cheddar");
+            cheddarGo.GetComponent<CheddarAndCocoa.Input.GamepadPlayerInput>().enabled = false;
+            var dog = cheddarGo.GetComponent<DogController>();
+            var feedback = cheddarGo.GetComponent<DogReadabilityFeedback>();
+            var identity = cheddarGo.GetComponent<DogIdentity>();
+
+            Assert.IsFalse(feedback.JumpShadowVisible, "No shadow on the ground.");
+
+            dog.Jump();
+            dog.Tick(default, Time.deltaTime);
+            yield return null;
+            Assert.IsTrue(feedback.JumpShadowVisible, "A ground shadow should appear as soon as the dog leaves the ground.");
+
+            float peakY = feedback.AuthoredPoseLocalPosition.y;
+            float guard = 0f;
+            while (dog.IsJumping && guard < 2f)
+            {
+                dog.Tick(default, Time.deltaTime);
+                guard += Time.deltaTime;
+                yield return null;
+                peakY = Mathf.Max(peakY, feedback.AuthoredPoseLocalPosition.y);
+            }
+
+            float tunedHeight = identity.Tuning != null ? identity.Tuning.jumpHeight : 0.95f;
+            Assert.Greater(peakY, tunedHeight * 0.7f,
+                "The visual arc should actually read as a real hop, driven by DogTuning.jumpHeight - not a barely-visible nudge.");
+
+            yield return null;
+            Assert.IsFalse(feedback.JumpShadowVisible, "The shadow should disappear once the dog lands.");
+        }
+
+        [UnityTest]
+        public IEnumerator Jump_Landing_PlaysATouchdownSquash()
+        {
+            yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);
+            yield return null;
+            yield return null;
+
+            var game = Object.FindFirstObjectByType<GameManager>();
+            game.StartMission(GameManager.MissionVariant.BackyardRescue);
+            yield return null;
+
+            var cheddarGo = GameObject.Find("Cheddar");
+            cheddarGo.GetComponent<CheddarAndCocoa.Input.GamepadPlayerInput>().enabled = false;
+            var dog = cheddarGo.GetComponent<DogController>();
+            var feedback = cheddarGo.GetComponent<DogReadabilityFeedback>();
+
+            dog.Jump();
+            float guard = 0f;
+            while (dog.IsJumping && guard < 2f)
+            {
+                dog.Tick(default, Time.deltaTime);
+                guard += Time.deltaTime;
+                yield return null;
+            }
+
+            yield return null; // let Update() run the landing edge-detect this frame
+            Assert.IsTrue(feedback.IsShowingJumpLanding, "Landing should play a readable touchdown squash instead of just snapping to idle.");
+            Assert.AreNotEqual(Vector3.one, feedback.AuthoredPoseLocalScale, "The touchdown squash should visibly widen/flatten the art.");
+        }
+
+        [UnityTest]
         public IEnumerator Jump_IsBlockedWhileBusy()
         {
             yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);

@@ -14,7 +14,17 @@ namespace CheddarAndCocoa.Dogs
         Rescue,
         Zoomies,
         Jump,
-        Wrestle
+        Wrestle,
+        /// <summary>A wrestle attempt that never connects - out of range, defender busy, or defender
+        /// immune. A lighter, particle-free scramble so the button press still reads as a real
+        /// attempt instead of silence.</summary>
+        WrestleMiss,
+        /// <summary>A genuinely accepted Interact (grabbed/used something) - a snappier, particled
+        /// beat than the plain squash-and-pop read, matching the other resolved verbs.</summary>
+        Interact,
+        /// <summary>An Interact press that found nothing to do - wrong role, too far, already done.
+        /// A quick particle-free reach/nose-poke so a miss still reads as an attempt.</summary>
+        InteractMiss
     }
 
     public enum DogFeedbackPhase
@@ -122,6 +132,31 @@ namespace CheddarAndCocoa.Dogs
                         cheddar ? new Vector2(0.8f, 1.25f) : new Vector2(0.88f, 1.15f),
                         cheddar ? 14f : 8f, cheddar ? 10 : 8, 0f, primary, secondary,
                         cheddar ? "CHEDDAR SCRAMBLE DUST" : "COCOA GRAPPLE DUST");
+                case DogFeedbackAction.WrestleMiss:
+                    // The attacker still lunges (DogController.ApplyWrestleLunge / a busy-defender
+                    // no-op) - this is the readable "I tried" beat for that: a quick swipe-and-recoil
+                    // kick with no dust, distinct from the resolved Wrestle's full impact burst.
+                    return new DogActionFeedbackStyle(cheddar ? 0.03f : 0.045f, cheddar ? 0.06f : 0.08f, cheddar ? 0.14f : 0.18f,
+                        cheddar ? new Vector2(1.12f, 0.88f) : new Vector2(1.08f, 0.9f),
+                        cheddar ? new Vector2(0.92f, 1.12f) : new Vector2(0.95f, 1.06f),
+                        cheddar ? 10f : 5f, 0, 0f, primary, secondary,
+                        cheddar ? "CHEDDAR WHIFFED LUNGE" : "COCOA STOPPED SHORT");
+                case DogFeedbackAction.Interact:
+                    // A genuine grab/use: Cheddar snaps forward and bites down fast; Cocoa presses in
+                    // with a firmer, more deliberate paw - same asymmetry as every other resolved verb.
+                    return new DogActionFeedbackStyle(cheddar ? 0.04f : 0.07f, cheddar ? 0.07f : 0.1f, cheddar ? 0.14f : 0.2f,
+                        cheddar ? new Vector2(1.14f, 0.86f) : new Vector2(1.1f, 0.9f),
+                        cheddar ? new Vector2(0.88f, 1.22f) : new Vector2(0.94f, 1.14f),
+                        cheddar ? 8f : 3f, cheddar ? 5 : 4, 0f, primary, secondary,
+                        cheddar ? "CHEDDAR GRAB SNAP" : "COCOA STEADY PRESS");
+                case DogFeedbackAction.InteractMiss:
+                    // Nothing to grab: a small particle-free reach so the press still reads as an
+                    // attempt instead of dead silence. Noticeably smaller than the accepted Interact.
+                    return new DogActionFeedbackStyle(cheddar ? 0.05f : 0.08f, cheddar ? 0.05f : 0.07f, cheddar ? 0.1f : 0.14f,
+                        cheddar ? new Vector2(1.08f, 0.94f) : new Vector2(1.05f, 0.95f),
+                        cheddar ? new Vector2(0.97f, 1.05f) : new Vector2(0.98f, 1.03f),
+                        cheddar ? 4f : 2f, 0, 0f, primary, secondary,
+                        cheddar ? "CHEDDAR EMPTY PAW REACH" : "COCOA CURIOUS NOSE POKE");
                 default:
                     return new DogActionFeedbackStyle(0f, 0f, 0f, Vector2.one, Vector2.one,
                         0f, 0, 0f, primary, secondary, "IDLE");
@@ -178,7 +213,9 @@ namespace CheddarAndCocoa.Dogs
         public void Trigger(DogFeedbackAction action)
         {
             if (action != DogFeedbackAction.Bark && action != DogFeedbackAction.Rescue &&
-                action != DogFeedbackAction.Jump && action != DogFeedbackAction.Wrestle) return;
+                action != DogFeedbackAction.Jump && action != DogFeedbackAction.Wrestle &&
+                action != DogFeedbackAction.WrestleMiss && action != DogFeedbackAction.Interact &&
+                action != DogFeedbackAction.InteractMiss) return;
             Begin(action, true);
         }
 

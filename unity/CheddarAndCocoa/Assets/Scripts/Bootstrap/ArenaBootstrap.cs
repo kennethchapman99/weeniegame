@@ -113,6 +113,8 @@ namespace CheddarAndCocoa.Bootstrap
             t.inputDeadzone = 0.25f; t.acceleration = 34f; t.deceleration = 31f; t.turnResponsiveness = 46f; t.stopSpeed = 0.08f; t.runFeedbackSpeed = 0.22f;
             t.wrestleWinChance = 0.70f; t.stairTime = 0.5f;
             t.canChairLeap = true; t.barfChance = 0.18f; t.chewTime = 0.25f;
+            // Chaos puppy: quick, high popcorn hop - snappier arc, bigger visual height than Cocoa.
+            t.jumpDuration = 0.42f; t.jumpHeight = 1.15f;
             return t;
         }
 
@@ -126,6 +128,8 @@ namespace CheddarAndCocoa.Bootstrap
             t.inputDeadzone = 0.25f; t.acceleration = 29f; t.deceleration = 39f; t.turnResponsiveness = 52f; t.stopSpeed = 0.08f; t.runFeedbackSpeed = 0.22f;
             t.wrestleWinChance = 0.78f; t.stairTime = 1.05f;
             t.canChairLeap = false; t.barfChance = 0f; t.chewTime = 0.5f;
+            // Spot queen: slower, deliberate bound - longer arc, lower visual height than Cheddar.
+            t.jumpDuration = 0.58f; t.jumpHeight = 0.8f;
             return t;
         }
 

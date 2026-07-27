@@ -64,6 +64,9 @@ namespace CheddarAndCocoa.Dogs
         private SpriteRenderer _marker;
         private SpriteRenderer _intentArrow;
         private SpriteRenderer _waterBand;
+        private SpriteRenderer _jumpShadow;
+        private bool _wasJumping;
+        private float _jumpLandingStartedAt = -1f;
         private SpriteRenderer _authoredPose;
         private TextMesh _label;
         private MeshRenderer _labelRenderer;
@@ -101,6 +104,18 @@ namespace CheddarAndCocoa.Dogs
         public float StrategicLabelScale { get; private set; } = 1f;
         public bool UsesAuthoredPoseArt => _authoredPose != null && _authoredPose.sprite != null;
         public string AuthoredPoseSpriteName => UsesAuthoredPoseArt ? _authoredPose.sprite.name : string.Empty;
+        /// <summary>Test/debug readout: the authored pose art's render-local offset, including the
+        /// jump arc lift, so the jump height contract (tuning-driven, per-dog) is verifiable.</summary>
+        public Vector3 AuthoredPoseLocalPosition => _authoredPose != null ? _authoredPose.transform.localPosition : Vector3.zero;
+        /// <summary>Test/debug readout: the authored pose art's render-local scale, including the
+        /// jump takeoff/landing squash-stretch.</summary>
+        public Vector3 AuthoredPoseLocalScale => _authoredPose != null ? _authoredPose.transform.localScale : Vector3.one;
+        /// <summary>Test/debug readout: is the shrinking/fading ground shadow currently showing under
+        /// an airborne dog?</summary>
+        public bool JumpShadowVisible => _jumpShadow != null && _jumpShadow.enabled;
+        /// <summary>Test/debug readout: is the touchdown squash currently mid-beat?</summary>
+        public bool IsShowingJumpLanding =>
+            _jumpLandingStartedAt >= 0f && Time.time < _jumpLandingStartedAt + JumpLandingSquashDuration;
         public int MotionFrameIndex { get; private set; } = -1;
         public string MotionClipLabel { get; private set; } = string.Empty;
         public bool IsCarrying { get; private set; }
@@ -193,7 +208,16 @@ namespace CheddarAndCocoa.Dogs
             // uses get the authored paw-tap strip instead of replacing those more specific clips.
             if (CurrentPose == Pose.Idle || CurrentPose == Pose.Run || CurrentPose == Pose.Carry)
                 ForcePose(Pose.Interact, 0.38f);
+            _actionFeedback?.Trigger(DogFeedbackAction.Interact);
         }
+
+        /// <summary>
+        /// A2.2 counterpart: a genuinely-rejected Interact (nothing in range, wrong role, already
+        /// done) still needs a readable "I tried and nothing happened" beat, or a mistimed press
+        /// looks identical to not pressing at all. Lighter and particle-free versus
+        /// <see cref="ShowInteractAccepted"/> so a miss never reads as a hit.
+        /// </summary>
+        public void ShowInteractMissed() => _actionFeedback?.Trigger(DogFeedbackAction.InteractMiss);
 
         public void ShowWrestle(Vector2 faceDir)
         {
@@ -214,6 +238,21 @@ namespace CheddarAndCocoa.Dogs
             if (t >= 1f) return 1f;
             float amplitude = _identity != null && _identity.Id == DogId.Cheddar ? 0.2f : 0.12f;
             return 1f + Mathf.Sin(Mathf.Clamp01(t) * Mathf.PI) * amplitude;
+        }
+
+        private const float JumpLandingSquashDuration = 0.18f;
+
+        /// <summary>Classic squash-and-stretch touchdown: wide and flat right on landing, easing back
+        /// to normal. Fired once per landing (see the IsJumping edge-detect in AnimatePose) so the
+        /// tall in-air stretch reads as a real impact instead of just snapping back to idle scale.</summary>
+        private Vector2 JumpLandingSquash()
+        {
+            if (_jumpLandingStartedAt < 0f) return Vector2.one;
+            float t = (Time.time - _jumpLandingStartedAt) / JumpLandingSquashDuration;
+            if (t >= 1f) return Vector2.one;
+            float amplitude = (_identity != null && _identity.Id == DogId.Cheddar ? 0.24f : 0.16f) *
+                               (1f - Mathf.Clamp01(t));
+            return new Vector2(1f + amplitude, 1f - amplitude);
         }
 
         /// <summary>
@@ -302,10 +341,48 @@ namespace CheddarAndCocoa.Dogs
                 _actionFeedback.SetSustained(DogFeedbackAction.Zoomies, _dog.Zoomies);
                 _actionFeedback.Tick(Time.deltaTime);
             }
+            TickJumpLanding();
             var next = ChoosePose();
             ApplyPose(next);
             AnimatePose(next);
             TickWaterLook();
+            TickJumpShadow();
+        }
+
+        // --- Jump landing edge-detect: fires the touchdown squash exactly once per hop, right when
+        // DogController's arc reaches the ground, instead of guessing a fixed delay after Jump(). ---
+
+        private void TickJumpLanding()
+        {
+            bool isJumping = _dog.IsJumping;
+            if (_wasJumping && !isJumping) _jumpLandingStartedAt = Time.time;
+            _wasJumping = isJumping;
+        }
+
+        // --- Jump shadow: a shrinking/fading ground blob so the hop's height actually reads instead
+        // of just the dog sliding a few pixels up the screen. Reuses PoolRuntimeArt's soft radial
+        // ellipse (already built for the pool waterline) instead of authoring new shadow art. ---
+
+        private void TickJumpShadow()
+        {
+            bool jumping = _dog.IsJumping;
+            if (jumping && _jumpShadow == null)
+            {
+                var go = new GameObject("JumpShadow");
+                go.transform.SetParent(transform, false);
+                _jumpShadow = go.AddComponent<SpriteRenderer>();
+                _jumpShadow.sprite = PoolRuntimeArt.WaterBand();
+                _jumpShadow.sortingOrder = 29; // just under the authored pose (30)
+            }
+            if (_jumpShadow == null) return;
+            _jumpShadow.enabled = jumping;
+            if (!jumping) return;
+
+            float height01 = _dog.JumpHeight01;
+            float shrink = 1f - height01 * 0.4f;
+            _jumpShadow.transform.localPosition = new Vector3(0f, -0.56f, -0.05f);
+            _jumpShadow.transform.localScale = new Vector3(0.82f * shrink, 0.32f * shrink, 1f);
+            _jumpShadow.color = new Color(0f, 0f, 0f, 0.4f - height01 * 0.22f);
         }
 
         // --- Pool water read (couch test #4: "when a dog falls in they should look covered in
@@ -580,16 +657,28 @@ namespace CheddarAndCocoa.Dogs
             Vector2 actionOffset = _actionFeedback != null ? _actionFeedback.VisualOffset : Vector2.zero;
             float actionRotation = _actionFeedback != null ? _actionFeedback.VisualRotationDegrees : 0f;
             float interactSquash = InteractSquashScale();
+            Vector2 jumpLandingSquash = JumpLandingSquash();
+            float jumpHeight01 = _dog != null ? _dog.JumpHeight01 : 0f;
+            // A subtle peak scale bump on top of the height offset - the dog reads as leaping toward
+            // camera, not just sliding up the screen. Small enough not to fight the takeoff/landing
+            // squash-stretch driven by DogFeedbackAction.Jump's anticipation/impact phases.
+            float jumpBump = 1f + jumpHeight01 * 0.1f;
             _authoredPose.transform.localScale = new Vector3(
-                authoredBase.x * personality.Scale.x * barkPulse * actionScale.x * interactSquash,
-                authoredBase.y * personality.Scale.y * barkPulse * actionScale.y * interactSquash,
+                authoredBase.x * personality.Scale.x * barkPulse * actionScale.x * interactSquash *
+                    jumpLandingSquash.x * jumpBump,
+                authoredBase.y * personality.Scale.y * barkPulse * actionScale.y * interactSquash *
+                    jumpLandingSquash.y * jumpBump,
                 authoredBase.z);
             _authoredPose.transform.localRotation = Quaternion.Euler(0f, 0f,
                 personality.RotationDegrees + actionRotation);
             // Couch test 2026-07-24 (Car Ride Chaos): "Jumping doesn't make them jump much
             // visually and almost no animation" - 0.4 units of rise at the arc's peak read as
-            // barely-there on a couch TV. Nearly doubled for a clearly readable hop.
-            float jumpArc = _dog != null ? _dog.JumpHeight01 * 0.75f : 0f;
+            // barely-there on a couch TV. DogTuning-driven and per-dog asymmetric (Cheddar
+            // higher/snappier, Cocoa lower/deliberate) instead of a flat multiplier.
+            float jumpHeightUnits = _identity != null && _identity.Tuning != null
+                ? _identity.Tuning.jumpHeight
+                : 0.95f;
+            float jumpArc = jumpHeight01 * jumpHeightUnits;
             _authoredPose.transform.localPosition = new Vector3(actionOffset.x,
                 -0.12f + personality.VerticalOffset + actionOffset.y + jumpArc, -0.2f);
         }
