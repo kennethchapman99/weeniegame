@@ -36,7 +36,17 @@ namespace CheddarAndCocoa.Dogs
             /// motion strips (W covered by the existing E-facing mirror fallback) - see
             /// docs/ANIMATION-STATE-CATALOG.md.
             /// </summary>
-            Sniff
+            Sniff,
+            Comfort,
+            Flop,
+            Beg,
+            HeadTilt,
+            PawTap,
+            PushPull,
+            Hide,
+            WetShake,
+            Trapped,
+            Sleepy
         }
 
         private DogController _dog;
@@ -160,7 +170,14 @@ namespace CheddarAndCocoa.Dogs
         public void ShowProud() => ForcePose(Pose.Proud, 999f);
         public void ShowSad() => ForcePose(Pose.Sad, 999f);
         public void ShowPanic() => ForcePose(Pose.Sad, 0.6f);     // brief flinch (e.g. a thunderclap)
-        public void ShowComfort() => ForcePose(Pose.Proud, 0.5f); // brief reassurance while huddling
+        public void ShowComfort() => ForcePose(Pose.Comfort, 0.5f);
+        public void ShowFlop() => ForcePose(Pose.Flop, 0.25f);
+        public void ShowBeg() => ForcePose(Pose.Beg, 0.7f);
+        public void ShowHeadTilt() => ForcePose(Pose.HeadTilt, 0.7f);
+        public void ShowPushPull() => ForcePose(Pose.PushPull, 0.35f);
+        public void ShowHide() => ForcePose(Pose.Hide, 0.35f);
+        public void ShowTrapped() => ForcePose(Pose.Trapped, 0.35f);
+        public void ShowSleepy() => ForcePose(Pose.Sleepy, 1.2f);
 
         /// <summary>
         /// A2.2: a short paw-tap/nose-boop read on a genuinely-accepted Interact - a squash-and-pop
@@ -335,6 +352,7 @@ namespace CheddarAndCocoa.Dogs
             if (Time.time < _forcedPoseUntil) return _forcedPose;
             if (_dog.Mode == MovementMode.Stunned) return Pose.Stunned;
             if (_dog.Mode == MovementMode.Tug) return Pose.Tug;
+            if (_dog.Mode == MovementMode.Shaking) return Pose.WetShake;
             if (Time.time < _barkUntil) return Pose.Bark;
             if (_dog.IsJumping) return Pose.Jump;
             // Couch test #3 stretch: paddling dogs must not play the dry-land run frames. Bark
@@ -375,6 +393,10 @@ namespace CheddarAndCocoa.Dogs
                     Pose.Jump => new Color(0.85f, 0.65f, 1f),
                     Pose.Wrestle => new Color(1f, 0.62f, 0.28f),
                     Pose.Interact => new Color(0.45f, 1f, 0.86f),
+                    Pose.Comfort => new Color(1f, 0.72f, 0.84f),
+                    Pose.Flop => new Color(1f, 0.78f, 0.5f),
+                    Pose.Hide => new Color(0.65f, 0.9f, 0.72f),
+                    Pose.WetShake => new Color(0.55f, 0.85f, 1f),
                     _ => Color.white
                 };
             }
@@ -694,6 +716,16 @@ namespace CheddarAndCocoa.Dogs
             Pose.Wrestle => "PLAY POUNCE!",
             Pose.Interact => "PAW TAP!",
             Pose.Sniff => "SNIFF SNIFF...",
+            Pose.Comfort => "YOU'RE SAFE",
+            Pose.Flop => "BELLY RUB FLOP!",
+            Pose.Beg => "PRETTY PLEASE?",
+            Pose.HeadTilt => "HUH?",
+            Pose.PawTap => "PAW TAP!",
+            Pose.PushPull => "PUSH!",
+            Pose.Hide => "HIDE!",
+            Pose.WetShake => "SHAKE SHAKE!",
+            Pose.Trapped => "HELP!",
+            Pose.Sleepy => "SNOOZE...",
             _ => pose.ToString()
         };
 

@@ -19,6 +19,21 @@ namespace CheddarAndCocoa.Tests
         private DogController _cheddar;
         private DogController _cocoa;
 
+        [Test]
+        public void MissionActorFeedback_MapsSharedStateLanguageToReadableActing()
+        {
+            Assert.AreEqual(MissionActorFeedback.ActingProfile.Attend,
+                MissionActorFeedback.InferActingProfile("HUMAN WATCHING TABLE"));
+            Assert.AreEqual(MissionActorFeedback.ActingProfile.Celebrate,
+                MissionActorFeedback.InferActingProfile("WALKIES SUCCESS"));
+            Assert.AreEqual(MissionActorFeedback.ActingProfile.Alarm,
+                MissionActorFeedback.InferActingProfile("SPOTTED! DANGER"));
+            Assert.AreEqual(MissionActorFeedback.ActingProfile.Defeat,
+                MissionActorFeedback.InferActingProfile("COYOTE DRIVEN BACK"));
+            Assert.AreEqual(MissionActorFeedback.ActingProfile.Breathe,
+                MissionActorFeedback.InferActingProfile("CALM IDLE"));
+        }
+
         [UnityTest]
         public IEnumerator SquirrelSteal_ShowsDistanceIconSignal_WhileTextStaysContextual()
         {

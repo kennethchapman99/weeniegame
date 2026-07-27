@@ -18,7 +18,8 @@ for `Dig`/`Carry`/`Swim`/`Jump`** — all four silently default to `"idle"`/the 
 *if* a pose ever reaches that final fallback tier, what actually renders is a plain standing-idle
 image, not a distinct hold-frame for that pose.
 
-Only `DogReadabilityFeedback.Pose` values can be authored/animated at all today: `Idle, Run, Bark,
+At the time of the A2.1 audit, only `DogReadabilityFeedback.Pose` values could be authored:
+`Idle, Run, Bark,
 Tug, Dig, Carry, Stunned, Rescued, Proud, Sad, Swim, Jump` (12 values). Any mission verb without a
 `Pose` mapping renders as whatever pose was already active — no distinct read exists in code for it,
 full stop; that is the `missing` category below, not merely a low-frame-count `static fallback`.
@@ -41,25 +42,30 @@ sniff/hide/comfort art — the enum slot is already there).
 | rescued | 2 × 1 (E only) | **reused strip (E-facing, mirrored)** | 1 controller. |
 | sad | 2 × 1 (E only) | **reused strip (E-facing, mirrored)** | 1 controller (also backs `ShowPanic()`'s brief flinch, used in 7 files for thunderclap-style scares). |
 | stunned | 2 × 1 (E only) | **reused strip (E-facing, mirrored)** | Wrestle-loss / grabbed read. |
-| swim | none | **static fallback (= plain idle image)** | `Pose.Swim` has no `Clip` mapping (`TryClip` returns false) and no `FinalDogPoseArt`/`ArenaDogPoseSprites` case — a swimming dog currently renders as a standing-idle sprite with zero visual distinction, even though the backyard pool mechanic is live gameplay. |
-| jump | none | **static fallback (= plain idle image)** | Same gap as swim — `Pose.Jump` renders as plain idle. |
+| swim | 1 × 1 | **authored completion pose (2026-07-26)** | `Pose.Swim` uses a distinct paddling silhouette, mirrored west, while the waterline and tint stay layered above it. |
+| jump | 4 × 1 | **authored action strip (2026-07-26)** | `Pose.Jump` uses four distinct E-facing storybook frames, mirrors west, and follows normalized hop progress rather than wall-clock drift. |
 | interact (any mission's accept) | n/a | **fixed (A2.2, 2026-07-18)** | `GameManager.OnDogInteracted` now plays a squash-and-pop cosmetic tween on a genuine Interact acceptance, roster-wide, via one shared hook. Not a `Pose`/authored-art fix — a tween layered on top of whatever pose is already showing. |
 | sniff | 4 × 2 (E, S) | **authored strip (A2.4, 2026-07-18)** | `Pose.Sniff`/`Clip.Sniff` exist and `ScentSearchMissionController.Sniff()` calls `ShowSniff()` on both dogs' tracking beats. A2.3 wired the code path with no art (owner-supplied reference boards weren't available that session); A2.4 got hand-produced `cheddar_sniff_east_south_v01.png`/`cocoa_sniff_east_south_v01.png` boards from the owner and extracted real E/S frames through a new `export_character_sniff.py` (W covered by the existing E-facing mirror, same pattern as dig). |
 | groom (Tick Invasion) | 2 × 1 (E only) | **authored mission clip (2026-07-23 sheet correction)** | `CharacterMotionArt.Clip.Groom` is driven by controller-owned `DogGroomAnimation` after a successful mutual groom. It temporarily overrides the shared dog-art renderer rather than adding a global `Pose.Groom`; W is mirrored. Cheddar plays at 7 fps and Cocoa at 5.5 fps. Cocoa's pair was regenerated against her V02 sheet to remove noncanonical cream markings. |
-| comfort (as a distinct gesture) | n/a | **missing (aliased)** | `ShowComfort()` calls `ForcePose(Pose.Proud, 0.5f)` — a real gameplay signal fires, but it visually reads as "proud," not "comforting." |
-| dramatic flop (Table Stealth) | n/a | **missing** | No `Pose.Flop`; Cocoa's belly-flop distraction has no distinct pose while `_flopEngaged` is true. |
-| beg | n/a | **missing** | No `Pose.Beg` anywhere in the roster. |
-| head tilt | n/a | **missing** | No dedicated pose or gesture. |
-| paw tap | n/a | **missing** | No dedicated pose or gesture (A2.2's planned Interact micro-animation is the natural home for this). |
-| push / pull | n/a | **missing** | Distinct from tug; no separate pose exists (tug's rope-pulling read is the closest analog but isn't reused for generic push/pull). |
-| hide | n/a | **missing (enum only)** | `CharacterMotionArt.Clip.Hide` exists but is unreachable (no `Pose.Hide`, no assets). |
+| comfort (as a distinct gesture) | 1 × 1 | **authored completion pose (2026-07-26)** | Thunderstorm Comfort now selects `Pose.Comfort`; it no longer aliases Proud. |
+| dramatic flop (Table Stealth) | 1 × 1 | **authored completion pose (2026-07-26)** | Cocoa sustains `Pose.Flop` while the belly-rub distraction is engaged. |
+| beg | 1 × 1 | **authored seam (2026-07-26)** | Dedicated `Pose.Beg` and per-dog sprite are available to controllers. |
+| head tilt | 1 × 1 | **authored seam (2026-07-26)** | Dedicated `Pose.HeadTilt` and per-dog sprite are available to controllers. |
+| paw tap | 1 × 1 plus 4-frame Interact | **authored** | The four-frame Interact remains live; a single clean PawTap key is also available for held reads. |
+| push / pull | 1 × 1 | **authored seam (2026-07-26)** | Dedicated `Pose.PushPull` is distinct from rope tug. |
+| hide | 1 × 1 | **authored seam (2026-07-26)** | `Pose.Hide` closes the previously unreachable enum/resource gap. |
 | united bark | n/a | **reused (Bark)** | No separate pose; plays the same Bark strip as a solo bark, distinguished only by score/juice feedback, not the dog's own animation. |
 | grabbed | n/a | **reused (Stunned)** | No dedicated pose; predator-grab sequences read through the existing Stunned art. |
 | scared | n/a | **reused (Sad)** | `ShowPanic()` is literally `ForcePose(Pose.Sad, 0.6f)` — a brief flinch reusing the Sad art, not a distinct scared read. |
-| wet | n/a | **missing (separate system)** | Handled by `DogController`'s wet-timer/tint overlay (`ResetMissionOverlays`), not the `Pose` enum at all — real but architecturally outside this catalog's scope. |
-| trapped / held / sleepy | n/a | **missing** | No pose or gesture found for any of the three in current mission code. |
+| wet shake | 1 × 1 | **authored completion pose (2026-07-26)** | `MovementMode.Shaking` selects `Pose.WetShake`; the wet tint remains a compatible overlay. |
+| trapped / held / sleepy | 1 × 1 each | **authored seams (2026-07-26)** | Dedicated Trapped and Sleepy poses are available without adding mission state to `GameManager`. |
 
 ### Ranked gap list (signal impact — verbs missions require players to read, worst first)
+
+> Completion update (2026-07-26): Interact, Sniff, Comfort, dramatic flop, Swim, and Jump are
+> resolved. Carry remains intentionally partial-direction (E/N/S plus mirrored E diagonal fallback);
+> the newly authored Beg, HeadTilt, PawTap, PushPull, Hide, WetShake, Trapped, and Sleepy seams close
+> the original wishlist gaps without inventing new mission rules.
 
 1. **Interact** (A2.2's scope) — every one of the 23 missions' Interact-accept moments has zero
    distinct dog-side animation. Highest leverage: touches the entire roster through one shared

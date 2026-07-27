@@ -53,6 +53,7 @@ not override the active sequence or authorize mission expansion:
 - [Mechanics](MECHANICS.md), [Mechanic Modules](MECHANIC-MODULES.md),
   [Co-op Puzzle Primitives](COOP-PUZZLE-PRIMITIVES.md), [Co-op Puzzle Art Needs](COOP-PUZZLE-ART-NEEDS.md)
 - [Art Direction](ART-DIRECTION.md), [Art Integration Slice](ART-INTEGRATION-SLICE.md),
+  [Art and Animation Completion — 2026-07-26](ART-ANIMATION-COMPLETION-2026-07-26.md),
   [Art Source Inventory](ART-SOURCE-INVENTORY.md), [Asset Catalog](ASSET-CATALOG.md),
   [Asset Production Catalog](ASSET-PRODUCTION-CATALOG.md)
 - [Animation State Catalog](ANIMATION-STATE-CATALOG.md),

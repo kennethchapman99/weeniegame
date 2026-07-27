@@ -137,6 +137,9 @@ namespace CheddarAndCocoa.Game
             }
             else
                 _puzzle.SetBellyFlop(_flopEngaged && cocoaAtHuman);
+            if (_puzzle.BellyFlopped && _context.DogFeedback != null &&
+                distractor < _context.DogFeedback.Length)
+                _context.DogFeedback[distractor]?.ShowFlop();
 
             bool partnerAtSteak = _burpWindowForCocoa
                 ? Vector2.Distance(_context.Dogs[distractor].transform.position, _stealZone) <= SneakRange
@@ -219,6 +222,8 @@ namespace CheddarAndCocoa.Game
             _burpWindowForCocoa = false;
             _flopEngaged = true;
             _puzzle.SetBellyFlop(true);
+            if (_context.DogFeedback != null && dogIndex < _context.DogFeedback.Length)
+                _context.DogFeedback[dogIndex]?.ShowFlop();
             _context.SetCue("Cocoa flopped for belly rubs! Cheddar, sneak the steak while she stays planted.");
             _context.SetJuice(GameManager.JuiceFeedbackKind.SuccessPop, "BELLY-RUB DECOY!");
             _context.SpawnWorldPop(_humanZone, "BELLY UP!", new Color(0.35f, 1f, 0.78f));
@@ -283,6 +288,10 @@ namespace CheddarAndCocoa.Game
             _flopEngaged = flopped;
             if (flopped) _burpWindowForCocoa = false;
             _puzzle.SetBellyFlop(flopped);
+            int cocoa = _context.IndexOfDog(DogId.Cocoa);
+            if (flopped && cocoa >= 0 && _context.DogFeedback != null &&
+                cocoa < _context.DogFeedback.Length)
+                _context.DogFeedback[cocoa]?.ShowFlop();
             UpdateLabels();
         }
 

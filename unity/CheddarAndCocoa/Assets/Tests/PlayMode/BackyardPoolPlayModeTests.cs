@@ -211,8 +211,9 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(feedback);
             Assert.AreEqual(DogReadabilityFeedback.Pose.Swim, feedback.CurrentPose,
                 "Swimming dogs must show the paddle pose, not the run animation.");
-            Assert.AreEqual(-1, feedback.MotionFrameIndex,
-                "The dry-land frame strips must not drive a swimming dog.");
+            Assert.AreEqual(0, feedback.MotionFrameIndex,
+                "Swimming should use the authored paddle silhouette, never a dry-land frame.");
+            Assert.AreEqual("Swim", feedback.MotionClipLabel);
             Assert.That(feedback.MotionPersonalityLabel, Does.Contain("PADDLE"),
                 "The swim personality should read as paddling.");
 

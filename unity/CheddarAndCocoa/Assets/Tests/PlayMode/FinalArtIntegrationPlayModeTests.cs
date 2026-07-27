@@ -142,6 +142,23 @@ namespace CheddarAndCocoa.Tests
                             $"{dog}'s {clip} frames {prior} and {frame} must be distinct poses.");
                 }
             }
+            foreach (DogId dog in new[] { DogId.Cheddar, DogId.Cocoa })
+            foreach (var clip in new[] {
+                         CharacterMotionArt.Clip.Swim, CharacterMotionArt.Clip.Comfort,
+                         CharacterMotionArt.Clip.Flop, CharacterMotionArt.Clip.Beg,
+                         CharacterMotionArt.Clip.HeadTilt, CharacterMotionArt.Clip.PawTap,
+                         CharacterMotionArt.Clip.PushPull, CharacterMotionArt.Clip.Hide,
+                         CharacterMotionArt.Clip.WetShake, CharacterMotionArt.Clip.Trapped,
+                         CharacterMotionArt.Clip.Sleepy })
+            {
+                Sprite completionPose = CharacterMotionArt.Load(
+                    dog, clip, CharacterMotionArt.Facing8.E, 0);
+                Assert.IsNotNull(completionPose, $"Missing completion pose {dog}/{clip}.");
+                Assert.AreEqual(512, completionPose.rect.width);
+                Assert.AreEqual(384, completionPose.rect.height);
+                Assert.AreEqual(0, CharacterMotionArt.FrameAtTime(dog, clip, 999f),
+                    $"Single-key completion pose {dog}/{clip} must never request a missing frame.");
+            }
 
             foreach (var clip in new[] { ThreatMotionArt.Clip.Idle, ThreatMotionArt.Clip.Run, ThreatMotionArt.Clip.Steal })
             foreach (int frame in new[] { 0, 1, 2, 3 })

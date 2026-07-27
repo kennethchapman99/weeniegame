@@ -61,6 +61,9 @@ namespace CheddarAndCocoa.Tests
             Assert.That(_game.ObjectiveLabel.ToLowerInvariant(), Does.Contain("human"));
 
             _game.ForceTableFlop(true);   // Cocoa commits to the belly-flop distraction
+            Assert.AreEqual(DogReadabilityFeedback.Pose.Flop,
+                _cocoa.GetComponent<DogReadabilityFeedback>().CurrentPose,
+                "Cocoa's signature distraction must use her authored belly-flop silhouette.");
             _game.ForceTableSneak(2.0f);  // Cheddar sneaks the steak while the human is held (needs 1.5s)
 
             Assert.IsTrue(_game.TableStealthPuzzle.Solved);

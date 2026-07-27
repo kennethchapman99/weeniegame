@@ -10,7 +10,8 @@ namespace CheddarAndCocoa.Dogs
         public enum Clip
         {
             Idle, Run, RunStorybook, Bark, BarkStorybook, Tug, Dig, Carry, Herd, Hide,
-            Comfort, Groom, Stunned, Rescued, Proud, Sad, Sniff, Jump, Wrestle, Interact
+            Comfort, Groom, Stunned, Rescued, Proud, Sad, Sniff, Jump, Wrestle, Interact,
+            Swim, Flop, Beg, HeadTilt, PawTap, PushPull, WetShake, Trapped, Sleepy
         }
 
         public static string ResourcePath(DogId dog, Clip clip, Facing8 facing, int frame)
@@ -54,6 +55,17 @@ namespace CheddarAndCocoa.Dogs
                 case DogReadabilityFeedback.Pose.Jump: clip = Clip.Jump; return true;
                 case DogReadabilityFeedback.Pose.Wrestle: clip = Clip.Wrestle; return true;
                 case DogReadabilityFeedback.Pose.Interact: clip = Clip.Interact; return true;
+                case DogReadabilityFeedback.Pose.Swim: clip = Clip.Swim; return true;
+                case DogReadabilityFeedback.Pose.Comfort: clip = Clip.Comfort; return true;
+                case DogReadabilityFeedback.Pose.Flop: clip = Clip.Flop; return true;
+                case DogReadabilityFeedback.Pose.Beg: clip = Clip.Beg; return true;
+                case DogReadabilityFeedback.Pose.HeadTilt: clip = Clip.HeadTilt; return true;
+                case DogReadabilityFeedback.Pose.PawTap: clip = Clip.PawTap; return true;
+                case DogReadabilityFeedback.Pose.PushPull: clip = Clip.PushPull; return true;
+                case DogReadabilityFeedback.Pose.Hide: clip = Clip.Hide; return true;
+                case DogReadabilityFeedback.Pose.WetShake: clip = Clip.WetShake; return true;
+                case DogReadabilityFeedback.Pose.Trapped: clip = Clip.Trapped; return true;
+                case DogReadabilityFeedback.Pose.Sleepy: clip = Clip.Sleepy; return true;
                 default: clip = default; return false;
             }
         }
@@ -79,9 +91,11 @@ namespace CheddarAndCocoa.Dogs
                 Clip.Jump => dog == DogId.Cheddar ? 11f : 8.5f,
                 Clip.Wrestle => dog == DogId.Cheddar ? 12f : 9f,
                 Clip.Interact => dog == DogId.Cheddar ? 13f : 10f,
+                Clip.WetShake => dog == DogId.Cheddar ? 12f : 9f,
                 _ => 1f
             };
             int frame = Mathf.Max(0, Mathf.FloorToInt(Mathf.Max(0f, elapsedSeconds) * fps));
+            if (IsCompletionPose(clip)) return 0;
             if (clip == Clip.Bark) return Mathf.Min(3, frame);
             if (clip == Clip.Jump || clip == Clip.Wrestle || clip == Clip.Interact)
                 return Mathf.Min(3, frame);
@@ -91,6 +105,12 @@ namespace CheddarAndCocoa.Dogs
                 clip == Clip.Carry || clip == Clip.Stunned || clip == Clip.Rescued || clip == Clip.Proud || clip == Clip.Sad ? 2 : 4;
             return frame % frameCount;
         }
+
+        private static bool IsCompletionPose(Clip clip) =>
+            clip == Clip.Swim || clip == Clip.Comfort || clip == Clip.Flop ||
+            clip == Clip.Beg || clip == Clip.HeadTilt || clip == Clip.PawTap ||
+            clip == Clip.PushPull || clip == Clip.Hide || clip == Clip.WetShake ||
+            clip == Clip.Trapped || clip == Clip.Sleepy;
 
         public static Facing8 FacingForDirection(Vector2 direction, out bool mirror)
         {
@@ -133,6 +153,17 @@ namespace CheddarAndCocoa.Dogs
             Clip.Jump => DogReadabilityFeedback.Pose.Jump,
             Clip.Wrestle => DogReadabilityFeedback.Pose.Wrestle,
             Clip.Interact => DogReadabilityFeedback.Pose.Interact,
+            Clip.Swim => DogReadabilityFeedback.Pose.Swim,
+            Clip.Comfort => DogReadabilityFeedback.Pose.Comfort,
+            Clip.Flop => DogReadabilityFeedback.Pose.Flop,
+            Clip.Beg => DogReadabilityFeedback.Pose.Beg,
+            Clip.HeadTilt => DogReadabilityFeedback.Pose.HeadTilt,
+            Clip.PawTap => DogReadabilityFeedback.Pose.PawTap,
+            Clip.PushPull => DogReadabilityFeedback.Pose.PushPull,
+            Clip.Hide => DogReadabilityFeedback.Pose.Hide,
+            Clip.WetShake => DogReadabilityFeedback.Pose.WetShake,
+            Clip.Trapped => DogReadabilityFeedback.Pose.Trapped,
+            Clip.Sleepy => DogReadabilityFeedback.Pose.Sleepy,
             _ => DogReadabilityFeedback.Pose.Idle
         };
     }

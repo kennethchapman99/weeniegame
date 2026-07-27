@@ -1,0 +1,361 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="46" result="Passed" total="46" passed="46" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-07-27 02:07:27Z" end-time="2026-07-27 02:07:40Z" duration="12.0767256">
+  <test-suite type="TestSuite" id="1946" name="Cheddar and Cocoa" fullname="Cheddar and Cocoa" runstate="Runnable" testcasecount="822" result="Passed" start-time="2026-07-27 02:07:27Z" end-time="2026-07-27 02:07:40Z" duration="12.076726" total="46" passed="46" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="SetUpFixture" id="1001" name="CheddarAndCocoa.Tests.PlayMode.dll" fullname="PlayModeGlobalTestSetup" classname="PlayModeGlobalTestSetup" runstate="Runnable" testcasecount="822" result="Passed" start-time="2026-07-27 02:07:27Z" end-time="2026-07-27 02:07:40Z" duration="12.070175" total="46" passed="46" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="73343" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1939" name="CheddarAndCocoa" fullname="CheddarAndCocoa" runstate="Runnable" testcasecount="822" result="Passed" start-time="2026-07-27 02:07:27Z" end-time="2026-07-27 02:07:40Z" duration="12.066763" total="46" passed="46" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1942" name="Tests" fullname="CheddarAndCocoa.Tests" runstate="Runnable" testcasecount="812" result="Passed" start-time="2026-07-27 02:07:27Z" end-time="2026-07-27 02:07:40Z" duration="12.063674" total="46" passed="46" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1024" name="ActorSignalBadgePlayModeTests" fullname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests" classname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests" runstate="Runnable" testcasecount="24" result="Passed" start-time="2026-07-27 02:07:27Z" end-time="2026-07-27 02:07:31Z" duration="3.704650" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1037" name="BackyardRescue_EscapeGap_SignalsUntilTheGapDogHoldsIt" fullname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests.BackyardRescue_EscapeGap_SignalsUntilTheGapDogHoldsIt" methodname="BackyardRescue_EscapeGap_SignalsUntilTheGapDogHoldsIt" classname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests" runstate="Runnable" seed="952797291" result="Passed" start-time="2026-07-27 02:07:27Z" end-time="2026-07-27 02:07:29Z" duration="1.168971" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1048" name="BoneRelay_CalledMoundText_StaysDigQuestion_TheBadgeCarriesTheCall" fullname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests.BoneRelay_CalledMoundText_StaysDigQuestion_TheBadgeCarriesTheCall" methodname="BoneRelay_CalledMoundText_StaysDigQuestion_TheBadgeCarriesTheCall" classname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests" runstate="Runnable" seed="239968180" result="Passed" start-time="2026-07-27 02:07:29Z" end-time="2026-07-27 02:07:29Z" duration="0.063168" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1035" name="BoneRelay_SignalMovesFromScentPostToCalledMound" fullname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests.BoneRelay_SignalMovesFromScentPostToCalledMound" methodname="BoneRelay_SignalMovesFromScentPostToCalledMound" classname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests" runstate="Runnable" seed="1681191372" result="Passed" start-time="2026-07-27 02:07:29Z" end-time="2026-07-27 02:07:29Z" duration="0.038588" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1032" name="CarRide_DriverTelegraph_RaisesWarningSignal" fullname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests.CarRide_DriverTelegraph_RaisesWarningSignal" methodname="CarRide_DriverTelegraph_RaisesWarningSignal" classname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests" runstate="Runnable" seed="1156863530" result="Passed" start-time="2026-07-27 02:07:29Z" end-time="2026-07-27 02:07:29Z" duration="0.124574" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1034" name="ChaosMachine_DistanceSignalFollowsTheCascade" fullname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests.ChaosMachine_DistanceSignalFollowsTheCascade" methodname="ChaosMachine_DistanceSignalFollowsTheCascade" classname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests" runstate="Runnable" seed="995934078" result="Passed" start-time="2026-07-27 02:07:29Z" end-time="2026-07-27 02:07:29Z" duration="0.115720" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1046" name="CoyotesFence_ActiveWeakSpot_WarnsThenCommandsWhenPinned" fullname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests.CoyotesFence_ActiveWeakSpot_WarnsThenCommandsWhenPinned" methodname="CoyotesFence_ActiveWeakSpot_WarnsThenCommandsWhenPinned" classname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests" runstate="Runnable" seed="1193469575" result="Passed" start-time="2026-07-27 02:07:29Z" end-time="2026-07-27 02:07:29Z" duration="0.114616" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1045" name="EagleShadow_CoverPads_SignalUntilADogTucksIn" fullname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests.EagleShadow_CoverPads_SignalUntilADogTucksIn" methodname="EagleShadow_CoverPads_SignalUntilADogTucksIn" classname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests" runstate="Runnable" seed="2127096206" result="Passed" start-time="2026-07-27 02:07:29Z" end-time="2026-07-27 02:07:29Z" duration="0.087449" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1031" name="EagleShadow_TalonRescue_SignalsWigglePhaseThenPullWindow" fullname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests.EagleShadow_TalonRescue_SignalsWigglePhaseThenPullWindow" methodname="EagleShadow_TalonRescue_SignalsWigglePhaseThenPullWindow" classname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests" runstate="Runnable" seed="1346749471" result="Passed" start-time="2026-07-27 02:07:29Z" end-time="2026-07-27 02:07:29Z" duration="0.094578" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1040" name="GateCrash_HoldReleaseRhythm_AlternatesStationSignals" fullname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests.GateCrash_HoldReleaseRhythm_AlternatesStationSignals" methodname="GateCrash_HoldReleaseRhythm_AlternatesStationSignals" classname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests" runstate="Runnable" seed="1498119414" result="Passed" start-time="2026-07-27 02:07:29Z" end-time="2026-07-27 02:07:29Z" duration="0.073997" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1047" name="GateCrash_StationText_StaysIdentityOnly_AcrossTheHoldFlip" fullname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests.GateCrash_StationText_StaysIdentityOnly_AcrossTheHoldFlip" methodname="GateCrash_StationText_StaysIdentityOnly_AcrossTheHoldFlip" classname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests" runstate="Runnable" seed="1265882810" result="Passed" start-time="2026-07-27 02:07:29Z" end-time="2026-07-27 02:07:29Z" duration="0.050240" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1033" name="GreatEscape_ActiveStation_CarriesTheDistanceSignal" fullname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests.GreatEscape_ActiveStation_CarriesTheDistanceSignal" methodname="GreatEscape_ActiveStation_CarriesTheDistanceSignal" classname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests" runstate="Runnable" seed="1363646082" result="Passed" start-time="2026-07-27 02:07:29Z" end-time="2026-07-27 02:07:30Z" duration="0.097576" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1039" name="LeashWalk_CommandSignalRidesTheActiveCheckpoint" fullname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests.LeashWalk_CommandSignalRidesTheActiveCheckpoint" methodname="LeashWalk_CommandSignalRidesTheActiveCheckpoint" classname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests" runstate="Runnable" seed="1222802377" result="Passed" start-time="2026-07-27 02:07:30Z" end-time="2026-07-27 02:07:30Z" duration="0.077075" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1029" name="MarkTheYard_StealingProwl_RaisesDistanceSignal" fullname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests.MarkTheYard_StealingProwl_RaisesDistanceSignal" methodname="MarkTheYard_StealingProwl_RaisesDistanceSignal" classname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests" runstate="Runnable" seed="634293856" result="Passed" start-time="2026-07-27 02:07:30Z" end-time="2026-07-27 02:07:30Z" duration="0.667236" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1025" name="MissionActorFeedback_MapsSharedStateLanguageToReadableActing" fullname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests.MissionActorFeedback_MapsSharedStateLanguageToReadableActing" methodname="MissionActorFeedback_MapsSharedStateLanguageToReadableActing" classname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests" runstate="Runnable" seed="181887445" result="Passed" start-time="2026-07-27 02:07:30Z" end-time="2026-07-27 02:07:30Z" duration="0.001230" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1038" name="PeeBreak_BeatStations_SignalUntilTheirDogHoldsThem" fullname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests.PeeBreak_BeatStations_SignalUntilTheirDogHoldsThem" methodname="PeeBreak_BeatStations_SignalUntilTheirDogHoldsThem" classname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests" runstate="Runnable" seed="2001842286" result="Passed" start-time="2026-07-27 02:07:30Z" end-time="2026-07-27 02:07:30Z" duration="0.155577" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1027" name="PredatorWarning_ShowsWarningIcon_UntilHuddleBarkResolves" fullname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests.PredatorWarning_ShowsWarningIcon_UntilHuddleBarkResolves" methodname="PredatorWarning_ShowsWarningIcon_UntilHuddleBarkResolves" classname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests" runstate="Runnable" seed="1624019799" result="Passed" start-time="2026-07-27 02:07:30Z" end-time="2026-07-27 02:07:31Z" duration="0.099063" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[Cheddar] WOOF!
+[Cocoa] WOOF!
+]]></output>
+            </test-case>
+            <test-case id="1028" name="SignalBadge_KeepsFixedUprightWorldPose" fullname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests.SignalBadge_KeepsFixedUprightWorldPose" methodname="SignalBadge_KeepsFixedUprightWorldPose" classname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests" runstate="Runnable" seed="887877377" result="Passed" start-time="2026-07-27 02:07:31Z" end-time="2026-07-27 02:07:31Z" duration="0.091626" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1030" name="SockPanic_OpenBasketDiveWindow_RaisesCommandSignal" fullname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests.SockPanic_OpenBasketDiveWindow_RaisesCommandSignal" methodname="SockPanic_OpenBasketDiveWindow_RaisesCommandSignal" classname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests" runstate="Runnable" seed="795972066" result="Passed" start-time="2026-07-27 02:07:31Z" end-time="2026-07-27 02:07:31Z" duration="0.089939" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1036" name="SquirrelConspiracy_ActiveCutoff_CarriesTheDistanceSignal" fullname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests.SquirrelConspiracy_ActiveCutoff_CarriesTheDistanceSignal" methodname="SquirrelConspiracy_ActiveCutoff_CarriesTheDistanceSignal" classname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests" runstate="Runnable" seed="356758569" result="Passed" start-time="2026-07-27 02:07:31Z" end-time="2026-07-27 02:07:31Z" duration="0.071340" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1026" name="SquirrelSteal_ShowsDistanceIconSignal_WhileTextStaysContextual" fullname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests.SquirrelSteal_ShowsDistanceIconSignal_WhileTextStaysContextual" methodname="SquirrelSteal_ShowsDistanceIconSignal_WhileTextStaysContextual" classname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests" runstate="Runnable" seed="1535555764" result="Passed" start-time="2026-07-27 02:07:31Z" end-time="2026-07-27 02:07:31Z" duration="0.052966" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1042" name="Switcheroo_CommitWindow_MovesSignalFromDecoyToStash" fullname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests.Switcheroo_CommitWindow_MovesSignalFromDecoyToStash" methodname="Switcheroo_CommitWindow_MovesSignalFromDecoyToStash" classname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests" runstate="Runnable" seed="1486225007" result="Passed" start-time="2026-07-27 02:07:31Z" end-time="2026-07-27 02:07:31Z" duration="0.078913" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1041" name="TableStealth_SneakWindow_MovesSignalFromHumanToSteak" fullname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests.TableStealth_SneakWindow_MovesSignalFromHumanToSteak" methodname="TableStealth_SneakWindow_MovesSignalFromHumanToSteak" classname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests" runstate="Runnable" seed="1577454151" result="Passed" start-time="2026-07-27 02:07:31Z" end-time="2026-07-27 02:07:31Z" duration="0.107554" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1043" name="WalkCampaign_MessageHalves_SignalUntilTheirDogSendsThem" fullname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests.WalkCampaign_MessageHalves_SignalUntilTheirDogSendsThem" methodname="WalkCampaign_MessageHalves_SignalUntilTheirDogSendsThem" classname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests" runstate="Runnable" seed="87899084" result="Passed" start-time="2026-07-27 02:07:31Z" end-time="2026-07-27 02:07:31Z" duration="0.088092" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[Cheddar] interact (grab placeholder)
+]]></output>
+            </test-case>
+            <test-case id="1044" name="WeenieRoundup_CarriedWeenie_RaisesBringItHomeSignal" fullname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests.WeenieRoundup_CarriedWeenie_RaisesBringItHomeSignal" methodname="WeenieRoundup_CarriedWeenie_RaisesBringItHomeSignal" classname="CheddarAndCocoa.Tests.ActorSignalBadgePlayModeTests" runstate="Runnable" seed="2050848657" result="Passed" start-time="2026-07-27 02:07:31Z" end-time="2026-07-27 02:07:31Z" duration="0.087017" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1471" name="CoopTableStealthPlayModeTests" fullname="CheddarAndCocoa.Tests.CoopTableStealthPlayModeTests" classname="CheddarAndCocoa.Tests.CoopTableStealthPlayModeTests" runstate="Runnable" testcasecount="9" result="Passed" start-time="2026-07-27 02:07:31Z" end-time="2026-07-27 02:07:32Z" duration="0.990970" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1472" name="TableStealth_AppearsInMissionSelectRotation" fullname="CheddarAndCocoa.Tests.CoopTableStealthPlayModeTests.TableStealth_AppearsInMissionSelectRotation" methodname="TableStealth_AppearsInMissionSelectRotation" classname="CheddarAndCocoa.Tests.CoopTableStealthPlayModeTests" runstate="Runnable" seed="781917674" result="Passed" start-time="2026-07-27 02:07:31Z" end-time="2026-07-27 02:07:32Z" duration="0.438813" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1480" name="TableStealth_CheddarBarkBurp_OpensShortSneakWindowForCocoa" fullname="CheddarAndCocoa.Tests.CoopTableStealthPlayModeTests.TableStealth_CheddarBarkBurp_OpensShortSneakWindowForCocoa" methodname="TableStealth_CheddarBarkBurp_OpensShortSneakWindowForCocoa" classname="CheddarAndCocoa.Tests.CoopTableStealthPlayModeTests" runstate="Runnable" seed="1783548240" result="Passed" start-time="2026-07-27 02:07:32Z" end-time="2026-07-27 02:07:32Z" duration="0.069036" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[Cheddar] WOOF!
+]]></output>
+            </test-case>
+            <test-case id="1474" name="TableStealth_ClearPath_DistractThenSneakTheSteak" fullname="CheddarAndCocoa.Tests.CoopTableStealthPlayModeTests.TableStealth_ClearPath_DistractThenSneakTheSteak" methodname="TableStealth_ClearPath_DistractThenSneakTheSteak" classname="CheddarAndCocoa.Tests.CoopTableStealthPlayModeTests" runstate="Runnable" seed="913167256" result="Passed" start-time="2026-07-27 02:07:32Z" end-time="2026-07-27 02:07:32Z" duration="0.065567" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1476" name="TableStealth_FailPath_SpottedTooManyTimes" fullname="CheddarAndCocoa.Tests.CoopTableStealthPlayModeTests.TableStealth_FailPath_SpottedTooManyTimes" methodname="TableStealth_FailPath_SpottedTooManyTimes" classname="CheddarAndCocoa.Tests.CoopTableStealthPlayModeTests" runstate="Runnable" seed="550647720" result="Passed" start-time="2026-07-27 02:07:32Z" end-time="2026-07-27 02:07:32Z" duration="0.088599" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1477" name="TableStealth_HumanActorStatesShowDistractionSpottingAndOutcome" fullname="CheddarAndCocoa.Tests.CoopTableStealthPlayModeTests.TableStealth_HumanActorStatesShowDistractionSpottingAndOutcome" methodname="TableStealth_HumanActorStatesShowDistractionSpottingAndOutcome" classname="CheddarAndCocoa.Tests.CoopTableStealthPlayModeTests" runstate="Runnable" seed="373845206" result="Passed" start-time="2026-07-27 02:07:32Z" end-time="2026-07-27 02:07:32Z" duration="0.056714" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1479" name="TableStealth_PositionDriven_CocoaMustInteractFlop_ThenLeavingExposes" fullname="CheddarAndCocoa.Tests.CoopTableStealthPlayModeTests.TableStealth_PositionDriven_CocoaMustInteractFlop_ThenLeavingExposes" methodname="TableStealth_PositionDriven_CocoaMustInteractFlop_ThenLeavingExposes" classname="CheddarAndCocoa.Tests.CoopTableStealthPlayModeTests" runstate="Runnable" seed="587672482" result="Passed" start-time="2026-07-27 02:07:32Z" end-time="2026-07-27 02:07:32Z" duration="0.149446" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[Cocoa] interact (grab placeholder)
+]]></output>
+            </test-case>
+            <test-case id="1478" name="TableStealth_Replay_ResetsThePuzzle" fullname="CheddarAndCocoa.Tests.CoopTableStealthPlayModeTests.TableStealth_Replay_ResetsThePuzzle" methodname="TableStealth_Replay_ResetsThePuzzle" classname="CheddarAndCocoa.Tests.CoopTableStealthPlayModeTests" runstate="Runnable" seed="567142879" result="Passed" start-time="2026-07-27 02:07:32Z" end-time="2026-07-27 02:07:32Z" duration="0.039543" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1473" name="TableStealth_RunsThroughDedicatedController" fullname="CheddarAndCocoa.Tests.CoopTableStealthPlayModeTests.TableStealth_RunsThroughDedicatedController" methodname="TableStealth_RunsThroughDedicatedController" classname="CheddarAndCocoa.Tests.CoopTableStealthPlayModeTests" runstate="Runnable" seed="52888269" result="Passed" start-time="2026-07-27 02:07:32Z" end-time="2026-07-27 02:07:32Z" duration="0.038854" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1475" name="TableStealth_WrongDogAttempts_CoachRecoverably_ThenTheRealRolesStillWork" fullname="CheddarAndCocoa.Tests.CoopTableStealthPlayModeTests.TableStealth_WrongDogAttempts_CoachRecoverably_ThenTheRealRolesStillWork" methodname="TableStealth_WrongDogAttempts_CoachRecoverably_ThenTheRealRolesStillWork" classname="CheddarAndCocoa.Tests.CoopTableStealthPlayModeTests" runstate="Runnable" seed="12847049" result="Passed" start-time="2026-07-27 02:07:32Z" end-time="2026-07-27 02:07:32Z" duration="0.039555" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[Cocoa] WOOF!
+[Cheddar] interact (grab placeholder)
+]]></output>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1614" name="FinalArtIntegrationPlayModeTests" fullname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests" classname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests" runstate="Runnable" testcasecount="13" result="Passed" start-time="2026-07-27 02:07:32Z" end-time="2026-07-27 02:07:40Z" duration="7.353820" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1615" name="ArenaFinal_RequiredResourcesLoadAndMissingResourcesStayOptional" fullname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests.ArenaFinal_RequiredResourcesLoadAndMissingResourcesStayOptional" methodname="ArenaFinal_RequiredResourcesLoadAndMissingResourcesStayOptional" classname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests" runstate="Runnable" seed="1266787151" result="Passed" start-time="2026-07-27 02:07:32Z" end-time="2026-07-27 02:07:34Z" duration="1.547213" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1619" name="ArtReviewCapture_ClampsFocusToBoundsLikeTheRealCameraRig" fullname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests.ArtReviewCapture_ClampsFocusToBoundsLikeTheRealCameraRig" methodname="ArtReviewCapture_ClampsFocusToBoundsLikeTheRealCameraRig" classname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests" runstate="Runnable" seed="598145841" result="Passed" start-time="2026-07-27 02:07:34Z" end-time="2026-07-27 02:07:34Z" duration="0.001700" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1618" name="ArtReviewCapture_ParsesOnlyExplicitOutputArgument" fullname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests.ArtReviewCapture_ParsesOnlyExplicitOutputArgument" methodname="ArtReviewCapture_ParsesOnlyExplicitOutputArgument" classname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests" runstate="Runnable" seed="1379254799" result="Passed" start-time="2026-07-27 02:07:34Z" end-time="2026-07-27 02:07:34Z" duration="0.000191" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1623" name="BackyardRescue_UsesFinalSpritesWithoutReplacingGameplayObjects" fullname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests.BackyardRescue_UsesFinalSpritesWithoutReplacingGameplayObjects" methodname="BackyardRescue_UsesFinalSpritesWithoutReplacingGameplayObjects" classname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests" runstate="Runnable" seed="832200554" result="Passed" start-time="2026-07-27 02:07:34Z" end-time="2026-07-27 02:07:36Z" duration="2.175314" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[Cheddar] WOOF!
+]]></output>
+            </test-case>
+            <test-case id="1621" name="CharacterMotionArt_BuildsStableDirectionalPathsAndFallsBackSafely" fullname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests.CharacterMotionArt_BuildsStableDirectionalPathsAndFallsBackSafely" methodname="CharacterMotionArt_BuildsStableDirectionalPathsAndFallsBackSafely" classname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests" runstate="Runnable" seed="1212380461" result="Passed" start-time="2026-07-27 02:07:36Z" end-time="2026-07-27 02:07:36Z" duration="0.127819" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1617" name="FinalJuiceEffect_MapsGameplayFeedbackToDistinctReadableSprites" fullname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests.FinalJuiceEffect_MapsGameplayFeedbackToDistinctReadableSprites" methodname="FinalJuiceEffect_MapsGameplayFeedbackToDistinctReadableSprites" classname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests" runstate="Runnable" seed="499041029" result="Passed" start-time="2026-07-27 02:07:36Z" end-time="2026-07-27 02:07:36Z" duration="0.000185" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1625" name="GeneratedMissionPropPackPass2_CoversVisibleMissionFocusProps" fullname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests.GeneratedMissionPropPackPass2_CoversVisibleMissionFocusProps" methodname="GeneratedMissionPropPackPass2_CoversVisibleMissionFocusProps" classname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests" runstate="Runnable" seed="626665816" result="Passed" start-time="2026-07-27 02:07:36Z" end-time="2026-07-27 02:07:38Z" duration="2.159203" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1626" name="MissionLevelAreaArt_GivesKitchenAndCarDistinctNonblockingSpaces" fullname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests.MissionLevelAreaArt_GivesKitchenAndCarDistinctNonblockingSpaces" methodname="MissionLevelAreaArt_GivesKitchenAndCarDistinctNonblockingSpaces" classname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests" runstate="Runnable" seed="1246679992" result="Passed" start-time="2026-07-27 02:07:38Z" end-time="2026-07-27 02:07:38Z" duration="0.240944" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1627" name="MissionLevelAreaArt_StagesTableStealthChaosMachineThunderstormAndBlanketCatchIndoors" fullname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests.MissionLevelAreaArt_StagesTableStealthChaosMachineThunderstormAndBlanketCatchIndoors" methodname="MissionLevelAreaArt_StagesTableStealthChaosMachineThunderstormAndBlanketCatchIndoors" classname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests" runstate="Runnable" seed="1892341234" result="Passed" start-time="2026-07-27 02:07:38Z" end-time="2026-07-27 02:07:39Z" duration="0.439055" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1624" name="MissionThreatActors_UseAuthoredMotionAndMarkerFallbacks" fullname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests.MissionThreatActors_UseAuthoredMotionAndMarkerFallbacks" methodname="MissionThreatActors_UseAuthoredMotionAndMarkerFallbacks" classname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests" runstate="Runnable" seed="750312758" result="Passed" start-time="2026-07-27 02:07:39Z" end-time="2026-07-27 02:07:40Z" duration="0.641519" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1620" name="ObjectiveGuidance_UsesShortScentBreadcrumbsWithoutRevealingTheWholeRoute" fullname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests.ObjectiveGuidance_UsesShortScentBreadcrumbsWithoutRevealingTheWholeRoute" methodname="ObjectiveGuidance_UsesShortScentBreadcrumbsWithoutRevealingTheWholeRoute" classname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests" runstate="Runnable" seed="2143724714" result="Passed" start-time="2026-07-27 02:07:40Z" end-time="2026-07-27 02:07:40Z" duration="0.001197" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1616" name="RopeTugAndRopeComplete_AreVisuallyDistinct" fullname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests.RopeTugAndRopeComplete_AreVisuallyDistinct" methodname="RopeTugAndRopeComplete_AreVisuallyDistinct" classname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests" runstate="Runnable" seed="1744777046" result="Passed" start-time="2026-07-27 02:07:40Z" end-time="2026-07-27 02:07:40Z" duration="0.000572" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1622" name="ThreatMotionArt_BuildsStablePathsAndInfersReadableClips" fullname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests.ThreatMotionArt_BuildsStablePathsAndInfersReadableClips" methodname="ThreatMotionArt_BuildsStablePathsAndInfersReadableClips" classname="CheddarAndCocoa.Tests.FinalArtIntegrationPlayModeTests" runstate="Runnable" seed="541996348" result="Passed" start-time="2026-07-27 02:07:40Z" end-time="2026-07-27 02:07:40Z" duration="0.000273" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: /Users/kchapman/Weeniegame/unity/test-results/art-animation-completion-focused.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>
