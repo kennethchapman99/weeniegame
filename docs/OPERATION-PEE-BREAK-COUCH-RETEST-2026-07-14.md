@@ -6,20 +6,25 @@
 ## Locked preflight evidence
 
 - Player: `unity/builds/dev/CheddarAndCocoa-Arena.app`
-- Player executable built: 2026-07-27 with Unity 6000.4.2f1 from source commit
-  `a9cbd39c1fbb062c12bbb8ca017da0578e2f6ce3`
-- Player executable SHA-256: `299573912f545c6459b0dd78dd0d072d2193d72ed91cf771ea1cb35ccad50a98`
+- Player executable built: 2026-07-27 12:42 EDT with Unity 6000.4.2f1 from source commit
+  `96bd13d2b66b6b6ff33c006682c11a3b8c66c296`
+- Player executable SHA-256: `8a3baaa9db134f2e37a6a94bcf2ea42ea15b4c8a0bf11970ed3990d55cbfd1c7`
 - Packaged explainer SHA-256: `280de2f463f2f64d337937a16673c549a970e99a6d1c2bb3774a05b34d002e63` (unchanged
   since 2026-07-16 — the video asset itself was not touched by the couch-fix queue either;
   re-verified by rehashing `Assets/StreamingAssets/OperationPeeBreak/operation_pee_break_intro.mp4`
   directly during this refresh)
-- Full PlayMode result: 822/822 passed, 0 failed, 0 skipped, 2026-07-27. The current run completed
-  cleanly after moving aside a stale generated Bee cache map that blocked Unity before compilation;
-  no source or test change was required. The earlier 698-test couch-fix baseline was also reproduced
+- Full PlayMode result: 845/845 passed, 0 failed, 0 skipped, 2026-07-27. This includes the
+  deterministic contract that the 26-mission art-review pass emits 78 start/main/payoff frames plus
+  one shared struggle-tutorial UI frame. The earlier 698-test couch-fix baseline was also reproduced
   cleanly on **three consecutive runs** because it verified the flaky-test fix documented below.
 - PlayMode result: `unity/playmode-results.xml`
-- PlayMode result SHA-256: `32f3c06f6f58218b2ba08ef064e54feb66350a62e5f55af1f957291c3c7044a1`
+- PlayMode result SHA-256: `8f0e601f02bae11e11ab8d8b997be7818e12233b083dbef6e4e2d708ea91cc87`
 - Packaged-player startup smoke: passed against this rebuild
+- Packaged-player art review: 79/79 frames written with no logged exceptions/errors. The new
+  1920x1080 `00-operation-pee-break-struggle-tutorial.png` framebuffer capture includes the full
+  IMGUI card and was inspected at full resolution; title, current beat, both dog-job cards, movement
+  diagrams, and resume instruction are inside safe margins. PNG SHA-256:
+  `d3204fd87f9e9ee0c79aec9d59a4f3a892b70d3622d30596064a63321ddacc69`.
 - **This build now also includes the full 2026-07-20..07-21 couch-fix queue**
   (`docs/AGENT-WORK-QUEUE-COUCHFIX.md`, all rows DONE, status header COMPLETE), which answers the
   2026-07-20 couch playtest (`docs/COUCH-PLAYTEST-2026-07-20-PEE-BREAK.md`, gate PARTIAL) on top of
