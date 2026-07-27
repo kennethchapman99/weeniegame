@@ -2652,6 +2652,42 @@ Suggested feedback questions:
 - Did Replay, Next Mission, and Session Summary make sense?
 - What was funny or personal, and what felt like generic collecting?
 
+## Roster-wide character motion and ambient scenery pass (2026-07-26)
+
+All active missions inherit three new V02-identity-locked, four-frame east-facing strips for both
+dogs: jump, wrestle/play-pounce, and generic accepted Interact. Jump frames track the real hop arc;
+a resolved wrestle briefly poses both dogs before the loser transitions to the existing stun; and
+accepted generic interactions use a paw tap/boop while authored dig/sniff/tug reads remain stronger.
+West-facing action mirrors east. Cheddar overshoots with loose chaos-puppy timing; Cocoa stays
+planted and queenly.
+
+Shared authored scenery now receives restrained deterministic ambient motion on render-only
+children. Outdoor flowers/bushes/laundry sway, actionable scent/threat/payoff scenery breathes with
+a small glow, and static yard/building art plus every mission-owned indoor/car area plate receives a
+subtle light drift. Operation Pee Break's controller-owned living-room, success-room, and window
+plates use that same treatment, covering the bespoke interior outside the shared area-art builder.
+No gameplay root, collider, objective anchor, mission controller state, or camera bound moves.
+
+Manual acceptance:
+
+- In any outdoor mission, jump with each dog and confirm a readable crouch → airborne stretch/tuck
+  → landing sequence, with Cocoa's bound visibly more controlled than Cheddar's.
+- Put the dogs together and wrestle. Both should visibly enter the play-pounce/tumble strip before
+  exactly one dog settles into the stunned read. A far-away whiff still shows the attacker's pounce.
+- Trigger an ordinary accepted Interact and confirm the acting dog performs the paw-tap strip. Dig,
+  sniff, and tug interactions must keep their more specific animation instead.
+- Watch yard flowers/bushes and a live scent/threat cue for several seconds, then start Kitchen,
+  Table Stealth, Chaos Machine, Thunderstorm Comfort, Blanket Catch, Car Ride, and Operation Pee
+  Break. Scenery should feel gently alive without props drifting off their anchors, scenery
+  covering dogs, or the room pulsing distractingly.
+
+Automated evidence: full PlayMode suite **821/821 passed, 0 skipped** on 2026-07-26. Motion-resource
+coverage requires all 24 distinct 512x384 frames; action tests pin jump synchronization, two-dog
+wrestle acting, generic-versus-specific Interact priority, identity-asymmetric procedural motion,
+and collider-free outdoor/indoor scenery animation. The rebuilt macOS player passed startup smoke,
+and its `--arena-art-review` run wrote all **78/78** start/main/payoff frames; the review contact
+sheet is `captures/artwork-scenery-pass-2026-07-26/arena-art-review-contact-sheet.jpg`.
+
 ## Visual readability checklist
 
 Use this after any placeholder-art, authored-art, or sprite import change:

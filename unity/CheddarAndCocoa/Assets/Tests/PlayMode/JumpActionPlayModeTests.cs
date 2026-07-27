@@ -47,7 +47,11 @@ namespace CheddarAndCocoa.Tests
             yield return null;
             Assert.AreEqual(DogReadabilityFeedback.Pose.Jump, feedback.CurrentPose,
                 "The jump pose should be visible while airborne, not just logged.");
+            Assert.AreEqual("Jump", feedback.MotionClipLabel,
+                "The hop should use its authored four-frame strip, not the static idle fallback.");
+            Assert.GreaterOrEqual(feedback.MotionFrameIndex, 0);
             Assert.Greater(dog.JumpHeight01, 0f, "Height should ramp up mid-arc.");
+            Assert.Greater(dog.JumpProgress01, 0f, "The renderer needs normalized arc progress.");
 
             float guard = 0f;
             while (dog.IsJumping && guard < 2f)

@@ -232,7 +232,8 @@ Cheddar and Cocoa both need:
 - zoomies
 - skid
 - turn
-- jump / hop
+- jump / hop — **authored V03 east-facing four-frame strip live for both dogs; west mirrors east;
+  frame selection follows normalized gameplay arc progress rather than wall-clock looping**
 - land
 - swim
 - shake off
@@ -252,8 +253,11 @@ Cheddar and Cocoa both need:
 - comfort
 - beg
 - head tilt
-- paw tap
+- paw tap — **authored V03 east-facing four-frame generic accepted-Interact strip live for both
+  dogs; explicit dig/sniff/tug poses retain priority**
 - dramatic flop
+- wrestle / play-pounce — **authored V03 east-facing four-frame strip live for both dogs; both dogs
+  act a resolved flip before the loser settles into the stunned loop**
 
 ## Dog Status
 

@@ -67,6 +67,12 @@ namespace CheddarAndCocoa.Dogs
                     // splashing enthusiasm, barely any forward grace.
                     return Make(1.04f, 0.6f + Mathf.Abs(Wave(t, 12f)) * 0.05f,
                         Wave(t, 12f) * 5f, -0.24f + Wave(t, 12f) * 0.02f, "FRANTIC DOGGY-PADDLE");
+                case DogReadabilityFeedback.Pose.Jump:
+                    return Make(1.04f, 1.02f, Wave(t, 16f) * 3f, 0f, "POPCORN HOP");
+                case DogReadabilityFeedback.Pose.Wrestle:
+                    return Make(1.08f, 0.94f, Wave(t, 20f) * 5f, 0f, "CHAOS PLAY-POUNCE");
+                case DogReadabilityFeedback.Pose.Interact:
+                    return Make(1.04f, 1.02f, Wave(t, 12f) * 2f, 0f, "EAGER PAW-BOOP");
                 default:
                     return Make(1f, 1f, 0f, 0f, "CHAOS-PUPPY");
             }
@@ -99,6 +105,12 @@ namespace CheddarAndCocoa.Dogs
                     // Chin up, slow certain strokes: the queen glides where the puppy churns.
                     return Make(1.06f, 0.64f + Mathf.Abs(Wave(t, 4.5f)) * 0.03f,
                         Wave(t, 4.5f) * 2f, -0.22f + Wave(t, 4.5f) * 0.015f, "STATELY PADDLE");
+                case DogReadabilityFeedback.Pose.Jump:
+                    return Make(1.02f, 1f, Wave(t, 7f), 0f, "QUEENLY BOUND");
+                case DogReadabilityFeedback.Pose.Wrestle:
+                    return Make(1.08f, 0.92f, Wave(t, 8f) * 1.5f, -0.01f, "CONTROLLED GRAPPLE");
+                case DogReadabilityFeedback.Pose.Interact:
+                    return Make(1.06f, 0.98f, Wave(t, 5f) * 0.6f, 0f, "DELIBERATE PAW-TAP");
                 default:
                     return Make(1f, 1f, 0f, 0f, "VETERAN-QUEEN");
             }

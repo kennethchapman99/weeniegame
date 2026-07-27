@@ -220,8 +220,11 @@ namespace CheddarAndCocoa.Tests
             Assert.IsNotNull(windowArt, "The room should reuse the painterly backyard plate as a subdued, framed exterior view.");
             Assert.IsTrue(windowArt.activeSelf);
             Assert.AreNotSame(SpriteShapeCache.WhiteSquare, windowArt.GetComponent<SpriteRenderer>().sprite);
+            AssertPeeBreakAmbientScenery(windowArt);
             var livingRoom = FindLoadedObject("PeeBreakGeneratedLivingRoomArt");
             Assert.IsTrue(livingRoom.activeSelf, "The production living-room plate should be the dominant full-frame interior read.");
+            AssertPeeBreakAmbientScenery(livingRoom);
+            AssertPeeBreakAmbientScenery(FindLoadedObject("PeeBreakGeneratedLivingRoomSuccessArt"));
             Assert.AreEqual(1, livingRoom.GetComponent<SpriteRenderer>().sortingOrder,
                 "The opaque room plate must render above global yard dressing while staying below gameplay actors.");
             Assert.GreaterOrEqual(livingRoom.GetComponent<SpriteRenderer>().bounds.size.x, 34f,
@@ -269,6 +272,17 @@ namespace CheddarAndCocoa.Tests
                 "Normal play should keep the large target circle hidden even when its nearby text prompt appears.");
             Assert.Greater(Controller.SignalReactionCount, 0,
                 "Entering the correct station should trigger a prop/Teenager reaction animation.");
+        }
+
+        private static void AssertPeeBreakAmbientScenery(GameObject scenery)
+        {
+            Assert.IsNotNull(scenery);
+            Assert.IsNull(scenery.GetComponent<Collider2D>(),
+                $"{scenery.name} ambient art must not add gameplay collision.");
+            var ambient = scenery.GetComponent<SceneryAmbientMotion>();
+            Assert.IsNotNull(ambient, $"{scenery.name} should participate in the roster-wide scenery light pass.");
+            Assert.AreEqual(SceneryAmbientMotion.Profile.LightWash, ambient.MotionProfile);
+            Assert.IsTrue(ambient.PreservesGameplayAnchor);
         }
 
         /// <summary>

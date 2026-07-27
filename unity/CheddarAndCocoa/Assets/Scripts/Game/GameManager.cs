@@ -2299,6 +2299,12 @@ namespace CheddarAndCocoa.Game
             var winner = attackerWins ? attacker : defender;
             var loser = attackerWins ? defender : attacker;
 
+            Vector2 attackerToDefender = defender.transform.position - attacker.transform.position;
+            if (DogFeedback[dogIndex] != null)
+                DogFeedback[dogIndex].ShowWrestle(attackerToDefender);
+            if (DogFeedback[partnerIndex] != null)
+                DogFeedback[partnerIndex].ShowWrestle(-attackerToDefender);
+
             Vector2 knockDir = (Vector2)loser.transform.position - (Vector2)winner.transform.position;
             if (knockDir.sqrMagnitude < 0.0001f) knockDir = Vector2.right;
             knockDir.Normalize();

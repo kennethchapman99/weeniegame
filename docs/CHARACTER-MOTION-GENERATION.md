@@ -90,3 +90,24 @@ Cocoa's two bark and two grooming frames were also regenerated in this workflow 
 review found noncanonical cream drift. Her V02 sheet was authoritative; the previous frames supplied
 pose only. Chroma-key removal used the imagegen helper with a soft matte and despill before the bark
 and grooming normalizers aligned the corrected cutouts.
+
+## V03 jump, wrestle, and accepted-interact generation
+
+On 2026-07-26 the built-in image-generation workflow produced one strict 4x3 action board per dog,
+using each dog's V02 model sheet as the hard identity reference. Rows are jump, wrestle/play, and
+generic accepted Interact; each row contains anticipation, action, impact, and recovery. Cheddar's
+board uses loose head-led overcommit, while Cocoa's keeps planted, controlled arcs and preserves her
+uniform chocolate coat and teal collar without cream/white drift.
+
+The source boards use a flat magenta key. The shared imagegen chroma-removal helper produced reviewed
+true-alpha boards. The first contact sheet caught two detached Cheddar generation specks; the
+exporter now removes only disconnected components smaller than two percent of the primary
+silhouette, then normalizes all 24 frames to 512x384 with baseline Y=360. Runtime east frames live
+under each dog's `Motion/` folder and mirror west. `tools/art/export_character_jump_wrestle_interact.py`
+rebuilds the frames and `captures/character-motion-jump-wrestle-interact-v03.png` is the promotion
+contact sheet.
+
+Runtime synchronization is action-specific: jump chooses one of four frames from
+`DogController.JumpProgress01`; wrestle and Interact start their one-shot clocks when the pose is
+forced and hold the recovery frame instead of looping. Generic accepted Interact never replaces
+specific dig, sniff, or tug acting.

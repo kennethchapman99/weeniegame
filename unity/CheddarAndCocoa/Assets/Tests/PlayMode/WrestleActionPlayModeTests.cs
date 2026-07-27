@@ -58,6 +58,11 @@ namespace CheddarAndCocoa.Tests
             Assert.IsTrue(cheddar.WrestleOnCooldown, "A resolved attempt must cooldown the attacker.");
             Assert.AreNotEqual(cheddar.IsWrestleStunned, cocoa.IsWrestleStunned,
                 "Exactly one dog should be stunned by a resolved wrestle - never both, never neither.");
+            Assert.AreEqual(DogReadabilityFeedback.Pose.Wrestle,
+                cheddar.GetComponent<DogReadabilityFeedback>().CurrentPose);
+            Assert.AreEqual(DogReadabilityFeedback.Pose.Wrestle,
+                cocoa.GetComponent<DogReadabilityFeedback>().CurrentPose,
+                "Both dogs should act the flip before the loser settles into the stunned loop.");
 
             float guard = 0f;
             while ((cheddar.IsWrestleStunned || cocoa.IsWrestleStunned) && guard < 3f)

@@ -409,6 +409,8 @@ namespace CheddarAndCocoa.Game
             renderer.sprite = sprite;
             renderer.sortingOrder = sortingOrder;
             renderer.color = tint;
+            go.AddComponent<SceneryAmbientMotion>().Configure(
+                EnvironmentMotionProfile(targetName), SceneryAmbientMotion.SeedFor(targetName));
 
             if (target.TryGetComponent<SpriteRenderer>(out var fallback) &&
                 SpriteShapeCache.IsPlaceholder(fallback.sprite))
@@ -447,6 +449,8 @@ namespace CheddarAndCocoa.Game
             renderer.sprite = sprite;
             renderer.sortingOrder = sortingOrder;
             renderer.color = tint;
+            go.AddComponent<SceneryAmbientMotion>().Configure(
+                SceneryAmbientMotion.Profile.LightWash, SceneryAmbientMotion.SeedFor(targetName));
 
             OverlayCount++;
             BuildingArtOverlayCount++;
@@ -467,8 +471,21 @@ namespace CheddarAndCocoa.Game
             sr.sprite = sprite;
             sr.sortingOrder = sortingOrder;
             sr.color = tint;
+            go.AddComponent<SceneryAmbientMotion>().Configure(
+                SceneryAmbientMotion.Profile.LightWash, SceneryAmbientMotion.SeedFor(name));
             OverlayCount++;
             BuildingArtOverlayCount++;
+        }
+
+        private static SceneryAmbientMotion.Profile EnvironmentMotionProfile(string targetName)
+        {
+            if (targetName.Contains("Flower") || targetName.Contains("Bush") ||
+                targetName.Contains("Laundry"))
+                return SceneryAmbientMotion.Profile.Breeze;
+            if (targetName.Contains("Scent") || targetName.Contains("Threat") ||
+                targetName.Contains("Payoff") || targetName.Contains("BackDoor"))
+                return SceneryAmbientMotion.Profile.GuidanceGlow;
+            return SceneryAmbientMotion.Profile.LightWash;
         }
 
         private void ReactToFeedback(GameManager.FeedbackKind feedback)

@@ -224,6 +224,10 @@ namespace CheddarAndCocoa.Game
             renderer.sprite = sprite;
             renderer.sortingOrder = sortingOrder;
             renderer.color = tint;
+            // Indoor/car scenery gets a restrained light drift. The render child changes color
+            // only; mission positions, collision, camera bounds, and scrolling remain untouched.
+            go.AddComponent<SceneryAmbientMotion>().Configure(
+                SceneryAmbientMotion.Profile.LightWash, SceneryAmbientMotion.SeedFor(name));
             PlateCount++;
             return go;
         }

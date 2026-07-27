@@ -7,7 +7,11 @@ namespace CheddarAndCocoa.Dogs
     public static class CharacterMotionArt
     {
         public enum Facing8 { E, SE, S, SW, W, NW, N, NE }
-        public enum Clip { Idle, Run, RunStorybook, Bark, BarkStorybook, Tug, Dig, Carry, Herd, Hide, Comfort, Groom, Stunned, Rescued, Proud, Sad, Sniff }
+        public enum Clip
+        {
+            Idle, Run, RunStorybook, Bark, BarkStorybook, Tug, Dig, Carry, Herd, Hide,
+            Comfort, Groom, Stunned, Rescued, Proud, Sad, Sniff, Jump, Wrestle, Interact
+        }
 
         public static string ResourcePath(DogId dog, Clip clip, Facing8 facing, int frame)
         {
@@ -47,6 +51,9 @@ namespace CheddarAndCocoa.Dogs
                 case DogReadabilityFeedback.Pose.Proud: clip = Clip.Proud; return true;
                 case DogReadabilityFeedback.Pose.Sad: clip = Clip.Sad; return true;
                 case DogReadabilityFeedback.Pose.Sniff: clip = Clip.Sniff; return true;
+                case DogReadabilityFeedback.Pose.Jump: clip = Clip.Jump; return true;
+                case DogReadabilityFeedback.Pose.Wrestle: clip = Clip.Wrestle; return true;
+                case DogReadabilityFeedback.Pose.Interact: clip = Clip.Interact; return true;
                 default: clip = default; return false;
             }
         }
@@ -69,10 +76,15 @@ namespace CheddarAndCocoa.Dogs
                 Clip.Proud => dog == DogId.Cheddar ? 5f : 3.5f,
                 Clip.Sad => 2.5f,
                 Clip.Sniff => dog == DogId.Cheddar ? 4f : 3f, // deliberate/investigative, slower than dig
+                Clip.Jump => dog == DogId.Cheddar ? 11f : 8.5f,
+                Clip.Wrestle => dog == DogId.Cheddar ? 12f : 9f,
+                Clip.Interact => dog == DogId.Cheddar ? 13f : 10f,
                 _ => 1f
             };
             int frame = Mathf.Max(0, Mathf.FloorToInt(Mathf.Max(0f, elapsedSeconds) * fps));
             if (clip == Clip.Bark) return Mathf.Min(3, frame);
+            if (clip == Clip.Jump || clip == Clip.Wrestle || clip == Clip.Interact)
+                return Mathf.Min(3, frame);
             int frameCount = clip == Clip.Tug ? 3 :
                 clip == Clip.BarkStorybook ? 2 :
                 clip == Clip.Groom ? 2 :
@@ -118,6 +130,9 @@ namespace CheddarAndCocoa.Dogs
             Clip.Proud => DogReadabilityFeedback.Pose.Proud,
             Clip.Sad => DogReadabilityFeedback.Pose.Sad,
             Clip.Sniff => DogReadabilityFeedback.Pose.Sniff,
+            Clip.Jump => DogReadabilityFeedback.Pose.Jump,
+            Clip.Wrestle => DogReadabilityFeedback.Pose.Wrestle,
+            Clip.Interact => DogReadabilityFeedback.Pose.Interact,
             _ => DogReadabilityFeedback.Pose.Idle
         };
     }

@@ -29,6 +29,8 @@ namespace CheddarAndCocoa.Dogs
             Sad,
             Swim,
             Jump,
+            Wrestle,
+            Interact,
             /// <summary>
             /// A2.3: wired into Scent Search's Sniff() verb. A2.4 (2026-07-18) added authored E/S
             /// motion strips (W covered by the existing E-facing mirror fallback) - see
@@ -60,6 +62,7 @@ namespace CheddarAndCocoa.Dogs
         private Vector2 _lastIntentDir = Vector2.right;
         private Pose _forcedPose;
         private float _forcedPoseUntil;
+        private float _forcedPoseStartedAt;
         private float _barkUntil;
         private float _barkStartedAt;
         private DogVisualSlot _art;
@@ -131,6 +134,7 @@ namespace CheddarAndCocoa.Dogs
             _showcasePolish.Begin();
             _dog.OnBark += OnBark;
             _dog.OnJump += OnJump;
+            _dog.OnWrestle += OnWrestle;
             ApplyPose(Pose.Idle);
         }
 
@@ -165,7 +169,20 @@ namespace CheddarAndCocoa.Dogs
         /// snappier than Cocoa's (chaos-puppy vs. veteran-queen identity), matching every other
         /// per-dog readability split in this file.
         /// </summary>
-        public void ShowInteractAccepted() => _interactSquashStartedAt = Time.time;
+        public void ShowInteractAccepted()
+        {
+            _interactSquashStartedAt = Time.time;
+            // Explicit mission verbs already own stronger reads (dig/sniff/tug). Generic accepted
+            // uses get the authored paw-tap strip instead of replacing those more specific clips.
+            if (CurrentPose == Pose.Idle || CurrentPose == Pose.Run || CurrentPose == Pose.Carry)
+                ForcePose(Pose.Interact, 0.38f);
+        }
+
+        public void ShowWrestle(Vector2 faceDir)
+        {
+            if (faceDir.sqrMagnitude > 0.0001f) _lastIntentDir = faceDir.normalized;
+            ForcePose(Pose.Wrestle, 0.42f);
+        }
 
         /// <summary>Test/debug readout: is the accepted-Interact squash currently mid-beat?</summary>
         public bool IsShowingInteractAccepted =>
@@ -237,6 +254,7 @@ namespace CheddarAndCocoa.Dogs
             {
                 _dog.OnBark -= OnBark;
                 _dog.OnJump -= OnJump;
+                _dog.OnWrestle -= OnWrestle;
             }
         }
 
@@ -248,10 +266,12 @@ namespace CheddarAndCocoa.Dogs
         }
 
         private void OnJump(DogId _) => _actionFeedback?.Trigger(DogFeedbackAction.Jump);
+        private void OnWrestle(DogId _) => ForcePose(Pose.Wrestle, 0.42f);
 
         private void ForcePose(Pose pose, float seconds)
         {
             _forcedPose = pose;
+            _forcedPoseStartedAt = Time.time;
             _forcedPoseUntil = Time.time + seconds;
             ApplyPose(pose);
         }
@@ -353,6 +373,8 @@ namespace CheddarAndCocoa.Dogs
                     Pose.Dig => new Color(0.92f, 0.68f, 0.34f),
                     Pose.Carry => new Color(1f, 0.78f, 0.3f),
                     Pose.Jump => new Color(0.85f, 0.65f, 1f),
+                    Pose.Wrestle => new Color(1f, 0.62f, 0.28f),
+                    Pose.Interact => new Color(0.45f, 1f, 0.86f),
                     _ => Color.white
                 };
             }
@@ -471,8 +493,13 @@ namespace CheddarAndCocoa.Dogs
 
             bool isBarkClip = clip == CharacterMotionArt.Clip.Bark ||
                               clip == CharacterMotionArt.Clip.BarkStorybook;
-            float elapsed = isBarkClip ? Time.time - _barkStartedAt : Time.time;
-            int frame = CharacterMotionArt.FrameAtTime(_identity.Id, clip, elapsed);
+            float elapsed = isBarkClip ? Time.time - _barkStartedAt :
+                clip == CharacterMotionArt.Clip.Wrestle || clip == CharacterMotionArt.Clip.Interact
+                    ? Time.time - _forcedPoseStartedAt
+                    : Time.time;
+            int frame = clip == CharacterMotionArt.Clip.Jump && _dog != null
+                ? Mathf.Clamp(Mathf.FloorToInt(_dog.JumpProgress01 * 4f), 0, 3)
+                : CharacterMotionArt.FrameAtTime(_identity.Id, clip, elapsed);
             CharacterMotionArt.Facing8 facing = CharacterMotionArt.FacingForDirection(_lastIntentDir, out bool mirror);
             Sprite sprite = CharacterMotionArt.Load(_identity.Id, clip, facing, frame);
             if (sprite == null && facing != CharacterMotionArt.Facing8.E)
@@ -664,6 +691,8 @@ namespace CheddarAndCocoa.Dogs
             Pose.Sad => "SAD FLOP",
             Pose.Swim => "PADDLE PADDLE",
             Pose.Jump => "HOP!",
+            Pose.Wrestle => "PLAY POUNCE!",
+            Pose.Interact => "PAW TAP!",
             Pose.Sniff => "SNIFF SNIFF...",
             _ => pose.ToString()
         };

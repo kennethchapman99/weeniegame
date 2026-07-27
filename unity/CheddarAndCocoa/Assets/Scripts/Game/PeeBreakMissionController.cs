@@ -1200,6 +1200,9 @@ namespace CheddarAndCocoa.Game
             renderer.sprite = sprite;
             renderer.color = Color.white;
             renderer.sortingOrder = sortingOrder;
+            scenery.AddComponent<SceneryAmbientMotion>().Configure(
+                SceneryAmbientMotion.Profile.LightWash,
+                SceneryAmbientMotion.SeedFor(name));
             scenery.SetActive(false);
             return scenery;
         }

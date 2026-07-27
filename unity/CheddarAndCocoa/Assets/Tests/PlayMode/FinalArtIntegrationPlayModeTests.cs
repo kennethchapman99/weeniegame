@@ -124,6 +124,24 @@ namespace CheddarAndCocoa.Tests
             foreach (int frame in new[] { 0, 1 })
                 Assert.IsNotNull(CharacterMotionArt.Load(dog, CharacterMotionArt.Clip.Carry,
                     CharacterMotionArt.Facing8.E, frame), $"Missing carry frame {dog}/{frame}.");
+            foreach (DogId dog in new[] { DogId.Cheddar, DogId.Cocoa })
+            foreach (var clip in new[] { CharacterMotionArt.Clip.Jump, CharacterMotionArt.Clip.Wrestle,
+                         CharacterMotionArt.Clip.Interact })
+            {
+                var frames = new Sprite[4];
+                for (int frame = 0; frame < frames.Length; frame++)
+                {
+                    frames[frame] = CharacterMotionArt.Load(
+                        dog, clip, CharacterMotionArt.Facing8.E, frame);
+                    Assert.IsNotNull(frames[frame], $"Missing action frame {dog}/{clip}/{frame}.");
+                    Assert.AreEqual(512, frames[frame].rect.width);
+                    Assert.AreEqual(384, frames[frame].rect.height);
+                    for (int prior = 0; prior < frame; prior++)
+                        Assert.AreNotEqual(frames[prior].texture.imageContentsHash,
+                            frames[frame].texture.imageContentsHash,
+                            $"{dog}'s {clip} frames {prior} and {frame} must be distinct poses.");
+                }
+            }
 
             foreach (var clip in new[] { ThreatMotionArt.Clip.Idle, ThreatMotionArt.Clip.Run, ThreatMotionArt.Clip.Steal })
             foreach (int frame in new[] { 0, 1, 2, 3 })
@@ -302,6 +320,9 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(0, CharacterMotionArt.FrameAtTime(DogId.Cheddar, CharacterMotionArt.Clip.Tug, 1f / 3f));
             Assert.AreEqual(1, CharacterMotionArt.FrameAtTime(DogId.Cheddar, CharacterMotionArt.Clip.Proud, 0.2f));
             Assert.AreEqual(0, CharacterMotionArt.FrameAtTime(DogId.Cheddar, CharacterMotionArt.Clip.Proud, 0.4f));
+            Assert.AreEqual(3, CharacterMotionArt.FrameAtTime(
+                DogId.Cheddar, CharacterMotionArt.Clip.Interact, 10f),
+                "One-shot action strips should hold their recovery frame instead of looping.");
             Assert.AreEqual(CharacterMotionArt.Facing8.NE,
                 CharacterMotionArt.FacingForDirection(new Vector2(-1f, 1f), out bool mirror));
             Assert.IsTrue(mirror);
@@ -908,6 +929,10 @@ namespace CheddarAndCocoa.Tests
             Assert.LessOrEqual(renderer.sortingOrder, expectedMaxSortingOrder,
                 $"{childName} should stay behind dogs, markers, and warning art.");
             Assert.IsNull(child.GetComponent<Collider2D>(), $"{childName} must not add gameplay collision.");
+            var ambient = child.GetComponent<SceneryAmbientMotion>();
+            Assert.IsNotNull(ambient, $"{childName} should participate in the shared indoor scenery light pass.");
+            Assert.AreEqual(SceneryAmbientMotion.Profile.LightWash, ambient.MotionProfile);
+            Assert.IsTrue(ambient.PreservesGameplayAnchor);
         }
 
         private static void AssertLevelAreaHasNoPrimitiveSquareMarkers(GameObject root)

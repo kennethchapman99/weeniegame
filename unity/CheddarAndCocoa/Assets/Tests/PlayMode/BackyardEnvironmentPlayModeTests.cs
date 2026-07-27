@@ -879,6 +879,10 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(expectedSpriteName, renderer.sprite.name);
             Assert.AreNotSame(SpriteShapeCache.WhiteSquare, renderer.sprite,
                 $"{objectName} overlay should not use the runtime white square.");
+            var ambient = overlay.GetComponent<SceneryAmbientMotion>();
+            Assert.IsNotNull(ambient, $"{objectName} should participate in the shared ambient scenery pass.");
+            Assert.IsTrue(ambient.PreservesGameplayAnchor,
+                $"{objectName} ambient motion must stay on a collider-free render child.");
             var fallback = target.GetComponent<SpriteRenderer>();
             Assert.IsNotNull(fallback);
             Assert.LessOrEqual(fallback.color.a, 0.001f,
@@ -898,6 +902,8 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(expectedSpriteName, renderer.sprite.name);
             Assert.AreNotSame(SpriteShapeCache.WhiteSquare, renderer.sprite,
                 $"{objectName} building overlay should not use the runtime white square.");
+            Assert.IsNotNull(overlay.GetComponent<SceneryAmbientMotion>(),
+                $"{objectName} building art should share the restrained scenery light pass.");
         }
 
         private static void AssertWorldBuildingArt(string objectName, string expectedSpriteName)
@@ -911,6 +917,8 @@ namespace CheddarAndCocoa.Tests
             Assert.AreEqual(expectedSpriteName, renderer.sprite.name);
             Assert.AreNotSame(SpriteShapeCache.WhiteSquare, renderer.sprite,
                 $"{objectName} should not use the runtime white square.");
+            Assert.IsNotNull(go.GetComponent<SceneryAmbientMotion>(),
+                $"{objectName} world building should share the restrained scenery light pass.");
         }
 
     }

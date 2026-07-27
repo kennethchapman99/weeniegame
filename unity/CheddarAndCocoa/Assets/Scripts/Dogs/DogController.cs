@@ -84,6 +84,8 @@ namespace CheddarAndCocoa.Dogs
         private float _jumpT;                       // counts down from jumpDuration to 0 while jumping
         public bool IsJumping => _jumpT > 0f;
         public float JumpHeight01 { get; private set; } // 0..1 arc height, sin(pi * elapsed/duration)
+        /// <summary>Normalized 0..1 travel through the current hop, used only to synchronize art.</summary>
+        public float JumpProgress01 { get; private set; }
         private float _wrestleStunT;                 // counts down from wrestleLoserStun to 0 while flipped
         public bool IsWrestleStunned => _wrestleStunT > 0f;
         private float _wrestleCooldownUntil;          // Time.time the next wrestle attempt is allowed
@@ -299,6 +301,7 @@ namespace CheddarAndCocoa.Dogs
             {
                 float duration = tuning != null ? Mathf.Max(0.0001f, tuning.jumpDuration) : 0.5f;
                 _jumpT = Mathf.Max(0f, _jumpT - dt);
+                JumpProgress01 = Mathf.Clamp01(1f - _jumpT / duration);
                 // Snap the landing frame to exactly 0 rather than Sin(PI), which floats a tiny
                 // nonzero value (~-8.7e-8) instead of a clean touchdown.
                 JumpHeight01 = _jumpT <= 0f ? 0f : Mathf.Sin(Mathf.PI * (1f - _jumpT / duration));
@@ -306,6 +309,7 @@ namespace CheddarAndCocoa.Dogs
             else
             {
                 JumpHeight01 = 0f;
+                JumpProgress01 = 0f;
             }
 
             if (_wrestleStunT > 0f)

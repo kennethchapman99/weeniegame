@@ -94,6 +94,26 @@ namespace CheddarAndCocoa.Tests
             Assert.IsFalse(cocoaFeedback.IsShowingInteractAccepted, "The squash read must clear itself after its short beat.");
         }
 
+        [UnityTest]
+        public IEnumerator GenericAcceptedInteract_PlaysAuthoredPawTap_WithoutReplacingSpecificVerbs()
+        {
+            yield return LoadArena();
+            var cocoaFeedback = FindDog(DogId.Cocoa).GetComponent<DogReadabilityFeedback>();
+
+            cocoaFeedback.ClearMissionPose();
+            cocoaFeedback.ShowInteractAccepted();
+            yield return null;
+
+            Assert.AreEqual(DogReadabilityFeedback.Pose.Interact, cocoaFeedback.CurrentPose);
+            Assert.AreEqual("Interact", cocoaFeedback.MotionClipLabel);
+            Assert.GreaterOrEqual(cocoaFeedback.MotionFrameIndex, 0);
+
+            cocoaFeedback.ShowDig();
+            cocoaFeedback.ShowInteractAccepted();
+            Assert.AreEqual(DogReadabilityFeedback.Pose.Dig, cocoaFeedback.CurrentPose,
+                "The generic paw tap must not erase a more specific accepted dig animation.");
+        }
+
         private static IEnumerator LoadArena()
         {
             yield return SceneManager.LoadSceneAsync("ArenaScene", LoadSceneMode.Single);

@@ -61,6 +61,26 @@ namespace CheddarAndCocoa.Tests
             Assert.Greater(Mathf.Abs(cheddarCarry.VerticalOffset), Mathf.Abs(cocoaCarry.VerticalOffset));
         }
 
+        [Test]
+        public void NewActionStrips_KeepChaosPuppyAndVeteranQueenMotionDistinct()
+        {
+            var cheddarWrestle = DogMotionPersonality.At(DogId.Cheddar,
+                DogReadabilityFeedback.Pose.Wrestle, 0.2f, 0f, false);
+            var cocoaWrestle = DogMotionPersonality.At(DogId.Cocoa,
+                DogReadabilityFeedback.Pose.Wrestle, 0.2f, 0f, false);
+            var cheddarInteract = DogMotionPersonality.At(DogId.Cheddar,
+                DogReadabilityFeedback.Pose.Interact, 0.2f, 0f, false);
+            var cocoaInteract = DogMotionPersonality.At(DogId.Cocoa,
+                DogReadabilityFeedback.Pose.Interact, 0.2f, 0f, false);
+
+            Assert.AreEqual("CHAOS PLAY-POUNCE", cheddarWrestle.Signature);
+            Assert.AreEqual("CONTROLLED GRAPPLE", cocoaWrestle.Signature);
+            Assert.AreEqual("EAGER PAW-BOOP", cheddarInteract.Signature);
+            Assert.AreEqual("DELIBERATE PAW-TAP", cocoaInteract.Signature);
+            Assert.Greater(Mathf.Abs(cheddarWrestle.RotationDegrees),
+                Mathf.Abs(cocoaWrestle.RotationDegrees));
+        }
+
         [TestCase(1f, 0f, "E")]
         [TestCase(-1f, 0f, "W")]
         [TestCase(1f, 1f, "NE")]
