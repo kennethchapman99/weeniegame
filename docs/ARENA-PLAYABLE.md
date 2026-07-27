@@ -36,13 +36,20 @@ The shared guidance ladder now ends in a blocking, highly visual **PAWS A SECOND
   dog's current `TryGetObjectiveTarget` copy, current `IMissionCoachHint`, and current
   `IMissionRoleOwner`. It never reads the briefing plan, a future beat, clear/fail copy, hidden
   actors, success presentation, or payoff state.
+- Showcase missions now supply state-and-range-gated button truth: Pee Break reveals the final Bark
+  only after both climax stations are held; Car Ride walks Cocoa-Interact → nearby
+  Cheddar-Interact in order and shows Jump only near live sliding junk; Baby Bird shows Cheddar's
+  grab/shake Interact and Cocoa's Bark only in repel range; Gate Crash shows Interact only when
+  Cocoa reaches the floor anchor. Every setup/travel gap remains a movement diagram.
 - Any face-button action (or either player's matching keyboard action key) resumes. That input is
   consumed: dog input stays disabled until the next frame, so pressing the illustrated button
   cannot also act in the frozen world. The same Tier-3 state cannot nag again after resume; real
   progress must reset the ladder before a later stall can show another lesson.
 
 Covered by `StruggleTutorialPlayModeTests` (Tier-2 non-trigger, Tier-3 freeze, current-only content,
-truthful button-vs-movement display, clock hold, consumed resume frame, and no-repeat contract).
+truthful button-vs-movement display, clock hold, consumed resume frame, and no-repeat contract) and
+`ShowcaseCoachHintPlayModeTests` (Pee Break climax gating, Car Ride handoff order, Baby Bird
+range-gated actions, and Gate Crash anchor gating).
 
 Manual acceptance: start Kitchen Falling Food Frenzy, make no progress for 45 seconds, and confirm
 the world/clock stop under a full-screen two-player card. Cheddar should see the large blue **Y /
@@ -65,10 +72,10 @@ does what **and when**, toggleable off once players have it. Shipped as the **Bu
   (`IMissionController.cs`). It never invents a highlight: on movement/positioning beats it just
   shows all four buttons and lets the objective arrow lead, so it can't point at a face button when
   the real action is the stick.
-- First truthful `IMissionCoachHint` wiring: **Kitchen Falling Food Frenzy** lights the scout's BARK
-  only during the "bark the next drop loose" wait window (never on the sweeper's positional catch,
-  and dark once a drop is telegraphed/falling). Other missions are fully served by the always-visible
-  four buttons plus the role-owner pulse; more missions can opt into precise hints later.
+- Truthful `IMissionCoachHint` wiring covers **Kitchen Falling Food Frenzy**, **Operation Pee
+  Break**, **Car Ride Chaos**, **Baby Bird Bedlam**, and **Gate Crash**. Each controller exposes
+  only actions its current state and range checks will accept; movement/setup/hold states return
+  no button rather than inventing one.
 - **Toggle in settings:** a fourth **GUIDE: ON/OFF** button in the pause **COMFORT** row
   (`SetButtonCoachEnabled`), alongside Audio/Rumble/Shake and session-scoped exactly like them. The
   coach supersedes the legacy first-mission fading control strip while enabled; turning it off

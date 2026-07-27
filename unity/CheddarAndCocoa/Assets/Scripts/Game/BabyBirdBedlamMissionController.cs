@@ -12,7 +12,7 @@ namespace CheddarAndCocoa.Game
     /// while replacing its generic eagle presentation with mission-specific mother-bird art.
     /// </summary>
     public sealed class BabyBirdBedlamMissionController : IMissionController, IMissionInteractionController,
-        IMissionSuccessPresentationController
+        IMissionSuccessPresentationController, IMissionCoachHint
     {
         private const int ChicksNeeded = 4;
         private const int ShakesNeeded = 3;
@@ -318,6 +318,36 @@ namespace CheddarAndCocoa.Game
             }
 
             return target != null;
+        }
+
+        public GameManager.TutorialActionStep? CoachActionFor(int dogIndex)
+        {
+            if (_puzzle.Solved || _failed || _context?.Dogs == null ||
+                dogIndex < 0 || dogIndex >= _context.Dogs.Length)
+                return null;
+
+            bool isCheddar = _context.IndexOfDog(DogId.Cheddar) == dogIndex;
+            if (isCheddar)
+            {
+                if (_puzzle.Chick == CoopFeastGuardPuzzle.ChickState.Held)
+                    return GameManager.TutorialActionStep.Interact;
+                if (_puzzle.Chick == CoopFeastGuardPuzzle.ChickState.Grounded)
+                {
+                    bool inGrabRange = Vector2.Distance(_context.Dogs[dogIndex].transform.position,
+                        new Vector2(_chickX, GroundY)) <= GrabRange;
+                    return inGrabRange
+                        ? GameManager.TutorialActionStep.Interact
+                        : (GameManager.TutorialActionStep?)null;
+                }
+                return null;
+            }
+
+            if (!_puzzle.DiveActive || _context.PredatorObject == null) return null;
+            bool inRepelRange = Vector2.Distance(_context.Dogs[dogIndex].transform.position,
+                _context.PredatorObject.transform.position) <= BarkRepelRange;
+            return inRepelRange
+                ? GameManager.TutorialActionStep.Bark
+                : (GameManager.TutorialActionStep?)null;
         }
 
         public MissionRuntimeSnapshot CreateSnapshot(int score, float timeRemaining, GameManager.MissionOutcome outcome) =>

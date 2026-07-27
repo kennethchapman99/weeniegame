@@ -9,7 +9,7 @@ namespace CheddarAndCocoa.Game
     /// snaps end the run.
     /// </summary>
     public sealed class GateCrashMissionController : IMissionController, IMissionInteractionController,
-        IMissionPressureHud, IMissionSuccessPresentationController
+        IMissionPressureHud, IMissionSuccessPresentationController, IMissionCoachHint
     {
         private const float HoldRange = 4f;
         private const float CrossRange = 4f;
@@ -230,6 +230,20 @@ namespace CheddarAndCocoa.Game
                 copy = "SQUEEZE THROUGH";
             }
             return target != null;
+        }
+
+        public GameManager.TutorialActionStep? CoachActionFor(int dogIndex)
+        {
+            if (_puzzle.Solved || _failed || _puzzle.Held || _context?.Dogs == null ||
+                dogIndex < 0 || dogIndex >= _context.Dogs.Length ||
+                _context.IndexOfDog(DogId.Cocoa) != dogIndex)
+                return null;
+
+            bool atAnchor = Vector2.Distance(_context.Dogs[dogIndex].transform.position,
+                GateFloorAnchor) <= HoldRange;
+            return atAnchor
+                ? GameManager.TutorialActionStep.Interact
+                : (GameManager.TutorialActionStep?)null;
         }
 
         public MissionRuntimeSnapshot CreateSnapshot(int score, float timeRemaining, GameManager.MissionOutcome outcome) =>

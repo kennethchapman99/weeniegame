@@ -10,7 +10,8 @@ namespace CheddarAndCocoa.Game
     /// to convince the Teenager to open the door. Misreads reset the current attempt, never the run.
     /// </summary>
     public sealed class PeeBreakMissionController : IMissionController, IMissionSuccessPresentationController,
-        IMissionInteractionController, IMissionPressureHud, IMissionBeatProgressHud, IMissionOpeningPresentationController
+        IMissionInteractionController, IMissionPressureHud, IMissionBeatProgressHud,
+        IMissionOpeningPresentationController, IMissionCoachHint
     {
         public enum Beat
         {
@@ -553,6 +554,24 @@ namespace CheddarAndCocoa.Game
                     break;
             }
             return target != null;
+        }
+
+        /// <summary>
+        /// The first three beats are entirely positional, so the stick/arrow remains the honest
+        /// coach. Only light BARK once both climax stations are already held; revealing it earlier
+        /// would skip the authored setup and turn the payoff into a premature button prompt.
+        /// </summary>
+        public GameManager.TutorialActionStep? CoachActionFor(int dogIndex)
+        {
+            if (DoorOpen || CurrentBeat != Beat.UnitedBark || _context?.Dogs == null ||
+                dogIndex < 0 || dogIndex >= _context.Dogs.Length)
+                return null;
+
+            bool setupHeld = DogAt(DogId.Cheddar, _leashPosition) &&
+                DogAt(DogId.Cocoa, DoorStareAnchor);
+            return setupHeld
+                ? GameManager.TutorialActionStep.Bark
+                : (GameManager.TutorialActionStep?)null;
         }
 
         public MissionRuntimeSnapshot CreateSnapshot(int score, float timeRemaining, GameManager.MissionOutcome outcome) =>

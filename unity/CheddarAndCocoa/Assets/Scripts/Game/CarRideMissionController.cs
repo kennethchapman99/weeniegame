@@ -15,7 +15,8 @@ namespace CheddarAndCocoa.Game
     /// slides least — she holds the line while he does the acrobatics.
     /// </summary>
     public sealed class CarRideMissionController : IMissionController, IMissionInteractionController,
-        IMissionUnitedBarkListener, IMissionPressureHud, IMissionSuccessPresentationController
+        IMissionUnitedBarkListener, IMissionPressureHud, IMissionSuccessPresentationController,
+        IMissionCoachHint
     {
         public enum RoadEventKind { TurnLeft, TurnRight, Brake }
         private enum Phase { Cruise, Telegraph, Turning, BrakeSettle }
@@ -346,6 +347,46 @@ namespace CheddarAndCocoa.Game
             copy = string.Empty;
             hideDistance = 1.4f;
             return false;
+        }
+
+        public GameManager.TutorialActionStep? CoachActionFor(int dogIndex)
+        {
+            if (_state.ReadyToClear() || IsFailed || _context?.Dogs == null ||
+                dogIndex < 0 || dogIndex >= _context.Dogs.Length)
+                return null;
+
+            if (_phase == Phase.Telegraph)
+            {
+                if (_currentEvent != RoadEventKind.Brake)
+                    return GameManager.TutorialActionStep.Interact;
+
+                DogId dog = DogIdAt(dogIndex);
+                int cocoa = _context.IndexOfDog(DogId.Cocoa);
+                bool cocoaPlanted = cocoa >= 0 && BraceActive(cocoa, _context.Now());
+                if (dog == DogId.Cocoa)
+                    return cocoaPlanted ? (GameManager.TutorialActionStep?)null : GameManager.TutorialActionStep.Interact;
+
+                if (!cocoaPlanted || _cheddarTuckedForBrake || cocoa < 0)
+                    return null;
+                bool besideCocoa = Vector2.Distance(_context.Dogs[dogIndex].transform.position,
+                    _context.Dogs[cocoa].transform.position) <= PartnerBraceRange;
+                return besideCocoa
+                    ? GameManager.TutorialActionStep.Interact
+                    : (GameManager.TutorialActionStep?)null;
+            }
+
+            if (_phase == Phase.Turning)
+            {
+                Vector2 dogPosition = _context.Dogs[dogIndex].transform.position;
+                foreach (var obstacle in _obstacles)
+                {
+                    if (obstacle != null && obstacle.activeSelf &&
+                        Vector2.Distance(dogPosition, obstacle.transform.position) <= ObstacleBonkRadius + 1.25f)
+                        return GameManager.TutorialActionStep.Jump;
+                }
+            }
+
+            return null;
         }
 
         public MissionRuntimeSnapshot CreateSnapshot(int score, float timeRemaining, GameManager.MissionOutcome outcome) =>
