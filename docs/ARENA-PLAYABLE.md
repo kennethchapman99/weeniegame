@@ -49,7 +49,10 @@ The shared guidance ladder now ends in a blocking, highly visual **PAWS A SECOND
 Covered by `StruggleTutorialPlayModeTests` (Tier-2 non-trigger, Tier-3 freeze, current-only content,
 truthful button-vs-movement display, clock hold, consumed resume frame, and no-repeat contract) and
 `ShowcaseCoachHintPlayModeTests` (Pee Break climax gating, Car Ride handoff order, Baby Bird
-range-gated actions, and Gate Crash anchor gating).
+range-gated actions, and Gate Crash anchor gating). The packaged-player `--arena-art-review` pass
+also emits `00-operation-pee-break-struggle-tutorial.png` from the finished screen framebuffer.
+Unlike its camera-only mission PPMs, this frame includes IMGUI and makes the full two-player card a
+required visual-review surface; a 26-mission run now produces 79 frames total.
 
 Manual acceptance: start Kitchen Falling Food Frenzy, make no progress for 45 seconds, and confirm
 the world/clock stop under a full-screen two-player card. Cheddar should see the large blue **Y /

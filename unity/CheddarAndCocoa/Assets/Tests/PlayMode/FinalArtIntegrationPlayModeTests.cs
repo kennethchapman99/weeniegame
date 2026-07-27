@@ -240,6 +240,17 @@ namespace CheddarAndCocoa.Tests
         }
 
         [Test]
+        public void ArtReviewCapture_IncludesSharedStruggleTutorialFrame()
+        {
+            int missionCount = System.Enum.GetValues(typeof(GameManager.MissionVariant)).Length;
+
+            Assert.AreEqual(missionCount * 3 + 1, ArenaArtReviewCapture.ExpectedCaptureCount(missionCount),
+                "The roster's start/main/payoff triplets need one additional screen-frame proof for the shared Tier-3 tutorial.");
+            Assert.That(ArenaArtReviewCapture.StruggleTutorialCaptureFileName, Does.EndWith(".png"),
+                "The UI proof must use a screen capture format that includes IMGUI, not the camera-only PPM path.");
+        }
+
+        [Test]
         public void ArtReviewCapture_ClampsFocusToBoundsLikeTheRealCameraRig()
         {
             var bounds = new Rect(-20f, -12f, 40f, 24f); // matches Rect(x,y,w,h): x in [-20,20], y in [-12,12]

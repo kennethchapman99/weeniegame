@@ -128,6 +128,11 @@ Pee-Break-only — both are things a normal single-mission session will naturall
   reminder fades out (or either player skips it) before it's fully read, open pause — a
   **Show Control Reminder** option should now be available to bring it back, instead of it being
   gone for the rest of the session.
+- **Tier-3 struggle lesson.** If either beat reaches the final anti-stuck tier, confirm the
+  full-screen **PAWS A SECOND** card freezes the clock, gives each player a large current-job
+  diagram, and resumes cleanly from either player's face-button press without also firing that
+  action into the mission. Before the session, inspect the packaged art-review frame
+  `00-operation-pee-break-struggle-tutorial.png` at normal TV distance.
 
 ## Live confusion, coaching, failures, and reactions
 

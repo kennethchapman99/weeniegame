@@ -13,6 +13,8 @@ namespace CheddarAndCocoa.Game
     public sealed class ArenaArtReviewCapture : MonoBehaviour
     {
         public const string ArgumentPrefix = "--arena-art-review=";
+        public const string StruggleTutorialCaptureFileName = "00-operation-pee-break-struggle-tutorial.png";
+        public const int SharedUiReviewFrameCount = 1;
         private GameManager _game;
         private string _outputDirectory;
         private Vector2? _focusOverride;
@@ -75,6 +77,22 @@ namespace CheddarAndCocoa.Game
                 }
                 FocusCameraOnActiveMission(variant);
                 yield return new WaitForSecondsRealtime(0.08f);
+
+                // The ordinary three-frame mission pass uses Camera.Render so it can enforce a
+                // stable 1920x1080 art-review resolution. IMGUI is composed after camera rendering,
+                // however, so those frames cannot prove the new full-screen Tier-3 couch lesson.
+                // Capture that one shared UI state from the finished screen framebuffer instead.
+                if (variant == GameManager.MissionVariant.OperationPeeBreak)
+                {
+                    _game.ForceGuidanceStall(MissionGuidanceEscalation.DefaultTier3Seconds);
+                    yield return null;
+                    yield return CaptureScreen(StruggleTutorialCaptureFileName);
+                    manifest.AppendLine(
+                        $"- `{StruggleTutorialCaptureFileName}` — OperationPeeBreak Tier-3 PAWS A SECOND couch tutorial");
+                    _game.ResumeStruggleTutorial();
+                    yield return null;
+                }
+
                 string start = $"{index:00}-{slug}-start.ppm";
                 yield return Capture(start);
                 manifest.AppendLine($"- `{start}` — {variant} start");
@@ -101,6 +119,9 @@ namespace CheddarAndCocoa.Game
             Debug.Log($"Arena art review captures complete: {_outputDirectory}");
             Application.Quit();
         }
+
+        public static int ExpectedCaptureCount(int missionCount) =>
+            Mathf.Max(0, missionCount) * 3 + SharedUiReviewFrameCount;
 
         private void DriveMainInteraction(GameManager.MissionVariant variant)
         {
@@ -494,6 +515,28 @@ namespace CheddarAndCocoa.Game
             RenderTexture.active = previousActive;
             target.Release();
             Destroy(target);
+            Destroy(texture);
+            yield return null;
+        }
+
+        private IEnumerator CaptureScreen(string fileName)
+        {
+            string path = Path.Combine(_outputDirectory, fileName);
+            if (File.Exists(path)) File.Delete(path);
+
+            // Read the finished backbuffer after IMGUI; Camera.Render (used by Capture above) does
+            // not include it. This stays on the already-referenced Texture/ImageConversion path
+            // rather than pulling Unity's separate ScreenCapture module into the gameplay assembly.
+            yield return new WaitForEndOfFrame();
+            int width = Mathf.Max(1, Screen.width);
+            int height = Mathf.Max(1, Screen.height);
+            RenderTexture previousActive = RenderTexture.active;
+            RenderTexture.active = null;
+            var texture = new Texture2D(width, height, TextureFormat.RGB24, false);
+            texture.ReadPixels(new Rect(0f, 0f, width, height), 0, 0);
+            texture.Apply();
+            File.WriteAllBytes(path, texture.EncodeToPNG());
+            RenderTexture.active = previousActive;
             Destroy(texture);
             yield return null;
         }
