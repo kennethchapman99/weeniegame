@@ -7,7 +7,7 @@
 Round/level concepts captured for later. The data-driven scene + (M7) room-schema seams are
 designed so a new level is mostly a `SceneDef` + painter + a few systems, not engine surgery.
 
-> **Newest ideas live in the design bible's idea bank**
+> **Newest ideas live in the design bible's idea bank or linked detailed briefs**
 > ([`GAME-DESIGN-BIBLE.md`](GAME-DESIGN-BIBLE.md), "Level and chapter ideas"), including:
 > - **#21 Tick Invasion** — mutual-grooming survival mission; build in progress 2026-07-22.
 > - **#22 Skunk Blast Mayhem** (2026-07-22) — a skunk guards a dead-bird treasure; lure/grab heist
@@ -16,7 +16,8 @@ designed so a new level is mostly a `SceneDef` + painter + a few systems, not en
 > - **#23 Burr Maze** (2026-07-22, owner pitch) — top-down hedge maze thick with burrs, patrolled
 >   by the neighbor's cat Metal-Gear-Solid style (vision cones, patrol routes, hiding spots);
 >   accumulated burrs slow/rustle a dog until the partner holds still to pick them clean. Built
->   2026-07-22 as `BurrMazeMissionController`.
+>   2026-07-22 as `BurrMazeMissionController`. Detailed brief:
+>   [`LEVEL-IDEA-BURR-MAZE.md`](LEVEL-IDEA-BURR-MAZE.md) ("Operation Sticky Coat").
 
 ---
 
