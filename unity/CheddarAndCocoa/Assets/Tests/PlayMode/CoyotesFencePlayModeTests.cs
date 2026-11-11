@@ -264,6 +264,78 @@ namespace CheddarAndCocoa.Tests
                 "A fresh attempt should not start with gap 1 already showing last run's breached art.");
         }
 
+        [UnityTest]
+        public IEnumerator CoyotesFence_Scout_OnlyCheddarsBarkChasesIt()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.CoyotesFence);
+            yield return null;
+
+            var controller = (CoyotesFenceMissionController)_game.ActiveMissionController;
+            _game.ForceCoyoteBarkPressure(DogId.Cocoa);
+            _game.ForceCoyoteRepair(DogId.Cheddar);
+            controller.ForceScout();
+            Assert.IsTrue(controller.Pack.ScoutActive);
+
+            // Cocoa's bark is for the big coyote - the yappy scout ignores her.
+            _cocoa.transform.position = controller.Pack.ScoutPosition;
+            _cocoa.Bark();
+            Assert.IsTrue(controller.Pack.ScoutActive, "Cocoa cannot chase the scout; that's Cheddar's charge.");
+
+            _cocoa.transform.position = controller.Pack.ScoutPosition + Vector2.left * 20f;
+            _cheddar.transform.position = controller.Pack.ScoutPosition;
+            _cheddar.Bark();
+            Assert.IsFalse(controller.Pack.ScoutActive, "Cheddar's bark in range should send the scout running.");
+            Assert.AreEqual(1, controller.Pack.ScoutsChased);
+            Assert.That(_game.LastJuiceLabel, Does.Contain("SCOUT"));
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator CoyotesFence_FakeSnack_LuresCheddar_UntilCocoaBarksLeaveIt()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.CoyotesFence);
+            yield return null;
+
+            var controller = (CoyotesFenceMissionController)_game.ActiveMissionController;
+            _game.ForceCoyoteFakeSnack();
+            Assert.IsTrue(_game.CoyotesFenceState.FakeSnackActive);
+
+            Vector2 bait = controller.Pack.BaitPosition;
+            Vector2 inward = ((Vector2)_game.ArenaBounds.center - bait).normalized;
+            _cheddar.transform.position = bait + inward * 4f;
+            yield return null;
+
+            Assert.IsTrue(controller.Pack.CheddarLured, "Cheddar inside the bait's smell radius should get dragged toward it.");
+            Assert.That(_game.ObjectiveLabel, Does.Contain("LEAVE IT"));
+
+            _cocoa.transform.position = _cheddar.transform.position + Vector3.right * 1.5f;
+            _cocoa.Bark();
+
+            Assert.IsFalse(controller.Pack.CheddarLured);
+            Assert.IsFalse(_game.CoyotesFenceState.FakeSnackActive, "Cocoa's LEAVE IT should end the lure.");
+            Assert.That(_game.LastJuiceLabel, Does.Contain("LEAVE IT"));
+        }
+
+        [UnityTest]
+        public IEnumerator CoyotesFence_WeakSpots_AreSeededPerAttempt_AndStayOnTheFence()
+        {
+            yield return LoadArena();
+            _game.StartMission(GameManager.MissionVariant.CoyotesFence);
+            yield return null;
+
+            var gaps = _game.FenceGaps;
+            Assert.AreEqual(4, gaps.Length);
+            Rect bounds = _game.ArenaBounds;
+            foreach (var gap in gaps)
+            {
+                float edge = Mathf.Min(gap.x - bounds.xMin, bounds.xMax - gap.x, bounds.yMax - gap.y);
+                Assert.Less(edge, 4f, $"Weak spot {gap} should sit on the left, back or right fence.");
+                Assert.IsFalse(BackyardPoolZone.WaterRect.Contains(gap), "A weak spot must never land in the pool.");
+            }
+        }
+
         private IEnumerator LoadArena()
         {
             _game = null;

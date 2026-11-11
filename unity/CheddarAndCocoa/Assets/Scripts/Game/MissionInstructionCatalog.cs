@@ -21,9 +21,9 @@ namespace CheddarAndCocoa.Game
                 case GameManager.MissionVariant.SquirrelConspiracy:
                     return "A suspicious squirrel has been plotting in the yard. Cheddar and Cocoa herd it around its route, cut off its escape, and crack open its hidden stash.";
                 case GameManager.MissionVariant.EagleShadowPanic:
-                    return "A huge eagle shadow sweeps the whole yard. Both dogs dive for cover, Cheddar wiggles free through Cocoa's timed pulls, then they face the eagle down together.";
+                    return "A huge eagle shadow sweeps the yard while the dogs' favourite toys lie out on the lawn. Dash out between passes, haul the toys back into the bushes, decoy the eagle with a bark from cover, and pull each other free when the talons grab.";
                 case GameManager.MissionVariant.CoyotesFence:
-                    return "Coyotes are testing the fence line. Cheddar and Cocoa split up to pin the intruder with bark pressure and patch every weak spot before the yard is breached.";
+                    return "A coyote pack is digging under the fence. Cocoa pins the digger with her bark while Cheddar kicks the dirt back in - but the coyote dodges guarded holes, sends a scout, and tosses bait to split them up.";
                 case GameManager.MissionVariant.WeenieRoundup:
                     return "A whole litter of scattered weenies needs herding home. Cheddar and Cocoa carry them one by one back to the home bowl before time runs out.";
                 case GameManager.MissionVariant.ScentSearch:
@@ -123,19 +123,19 @@ namespace CheddarAndCocoa.Game
                 case GameManager.MissionVariant.EagleShadowPanic:
                     return new[]
                     {
-                        "A completed sweep crosses the whole yard: both dogs must be inside HIDE HERE cover when it resolves (2 clean hides opens the rescue).",
-                        "The eagle then snatches Cheddar. He Interacts to WIGGLE the grip open; Cocoa gets close and Interacts to PULL during that short window.",
-                        "Repeat the wiggle/pull handoff three times, then huddle both dogs and bark together for the united-front finish.",
-                        "Three exposures caught in the open ends the mission."
+                        "Dash out between shadow passes, run over a toy to grab it, and carry it back into HIDE HERE cover - the rope toy needs BOTH dogs carrying it.",
+                        "A dog caught in the open gets GRABBED: it Interacts to WIGGLE the grip open, the partner runs over and Interacts to PULL in the window - too slow and it's carried off.",
+                        "Bark from inside a bush to DECOY the eagle and freeze the shadow (Cocoa's decoy lasts longer); barking out in the open makes it dive faster.",
+                        "Clear 2 toy runs, then free Cheddar from the final snatch and bark together. Three carry-offs ends the mission."
                     };
                 case GameManager.MissionVariant.CoyotesFence:
                     return new[]
                     {
-                        "Cocoa is the steady sentinel: get near the coyote and BARK to pin it for a short opening.",
-                        "Cheddar is the digger: reach the active WEAK SPOT and Interact before Cocoa's pin expires.",
-                        "Neither dog can perform both jobs, and out-of-range barks do not pin the coyote; repin and recover if the opening closes.",
-                        "Cocoa barks away the fake snack lure instead of letting Cheddar take the bait.",
-                        "After enough repairs, both dogs bark together to block the final push; 3 breaches ends the mission."
+                        "Cocoa is the sentinel: when the coyote starts DIGGING (watch the meter), get close and BARK to pin it off the hole.",
+                        "Cheddar is the digger: only while it's pinned, reach the WEAK SPOT and Interact to kick the dirt back in.",
+                        "Neither dog can do both jobs - and the coward won't dig where Cocoa is already standing guard, and feints from wave two. Lurk, don't camp.",
+                        "Before the last repair it tosses a FAKE SNACK: if Cheddar gets dragged toward it, Cocoa barks LEAVE IT right next to him.",
+                        "From wave two a SCOUT digs a second hole - only Cheddar's yappy bark chases it. Patch 3 holes, then bark together to stop the final push; 3 breaches ends it."
                     };
                 case GameManager.MissionVariant.WeenieRoundup:
                     return new[]

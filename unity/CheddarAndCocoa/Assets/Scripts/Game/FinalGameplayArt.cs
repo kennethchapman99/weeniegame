@@ -160,11 +160,17 @@ namespace CheddarAndCocoa.Game
         public const string EagleShadowTalonGripClosed = Root + "/Props/EagleShadow/eagle_shadow_talon_grip_closed";
         public const string EagleShadowTalonGripOpen = Root + "/Props/EagleShadow/eagle_shadow_talon_grip_open";
         public const string EagleShadowTalonGripFreed = Root + "/Props/EagleShadow/eagle_shadow_talon_grip_freed";
+        public const string EagleShadowToyBall = Root + "/Props/EagleShadow/eagle_shadow_toy_ball";
+        public const string EagleShadowToyDuck = Root + "/Props/EagleShadow/eagle_shadow_toy_duck";
+        public const string EagleShadowToyBone = Root + "/Props/EagleShadow/eagle_shadow_toy_bone";
+        public const string EagleShadowColumn = Root + "/Props/EagleShadow/eagle_shadow_column";
         public const string CoyotesFenceGapOpen = Root + "/Props/CoyotesFence/coyotes_fence_gap_open";
         public const string CoyotesFenceGapPinned = Root + "/Props/CoyotesFence/coyotes_fence_gap_pinned";
         public const string CoyotesFenceGapRepaired = Root + "/Props/CoyotesFence/coyotes_fence_gap_repaired";
         public const string CoyotesFenceGapBreached = Root + "/Props/CoyotesFence/coyotes_fence_gap_breached";
         public const string CoyotesFenceFakeSnack = Root + "/Props/CoyotesFence/coyotes_fence_fake_snack";
+        public const string CoyotesFenceDigging = Root + "/Props/CoyotesFence/coyotes_fence_digging";
+        public const string CoyotesFenceScout = Root + "/Props/CoyotesFence/coyotes_fence_scout";
         public const string WeenieRoundupLoose = Root + "/Props/WeenieRoundup/weenie_roundup_loose";
         public const string WeenieRoundupCarried = Root + "/Props/WeenieRoundup/weenie_roundup_carried";
         public const string WeenieRoundupDropped = Root + "/Props/WeenieRoundup/weenie_roundup_dropped";
@@ -376,8 +382,9 @@ namespace CheddarAndCocoa.Game
             SquirrelConspiracyStashCracked, EagleShadowCoverSafe,
             EagleShadowCoverSpotted, EagleShadowTalonGripClosed,
             EagleShadowTalonGripOpen, EagleShadowTalonGripFreed,
+            EagleShadowToyBall, EagleShadowToyDuck, EagleShadowToyBone, EagleShadowColumn,
             CoyotesFenceGapOpen, CoyotesFenceGapPinned, CoyotesFenceGapRepaired,
-            CoyotesFenceGapBreached, CoyotesFenceFakeSnack
+            CoyotesFenceGapBreached, CoyotesFenceFakeSnack, CoyotesFenceDigging, CoyotesFenceScout
         };
 
         public static readonly string[] AdventureP0Pack =

@@ -595,8 +595,8 @@ authoring pads remain available to an observer:
 | Snack Heist | Cheddar steals while Cocoa bark-guards the squirrel | wrong roles coach cleanly; the watched final snack and held stash payoff enforce the handoff |
 | Sock Panic | Cocoa anchors the basket while Cheddar dives for and returns the sock | basket/sock pulse and fumble feedback; broken hold, wrong grab, or timeout resets the beat |
 | Squirrel Conspiracy | Cheddar herds into Cocoa's cutoff, then Cocoa cracks the stash | escaped solo herds, squirrel/cutoff/stash reactions, and recoverable taunts |
-| Eagle Shadow Panic | both hide, Cheddar wiggles, Cocoa pulls, both united-bark | sweep/cover/talon reactions; open-ground exposure and mistimed pulls recover clearly |
-| Coyote Fence Defense | Cocoa bark-pins, Cheddar repairs, both finish with united bark | timed pin, moving gap, lure, and breach feedback make every recovery legible |
+| Eagle Shadow Panic | dash out for toys between passes, carry the rope together, decoy-bark from cover, wiggle/pull each other out of live grabs, united-bark | shadow column, carry-off meter, decoy/alert juice, toys-saved progress; grabs and mistimed pulls recover clearly |
+| Coyote Fence Defense | Cocoa lurks and bark-pins the digger, Cheddar fills, chases the scout and resists the bait (Cocoa: LEAVE IT), both block the final push | dig meter, guarded/feint pops, scout and bait actors, timed final push; every breach recovers legibly |
 | Weenie Roundup | split four small carries, then Cocoa steadies Cheddar's jumbo haul | visible cargo, recoverable separation fumble, bowl reaction, and held live payoff |
 | Scent Search | Cheddar points broadly, Cocoa tracks/calls, Cheddar digs | directional bark, hot/cold search, recoverable role coaching, and held cache reveal |
 | Thunderstorm Comfort | Cocoa reassures, Cheddar answers, both hold the huddle | ordered bark window, PANIC meter, recoverable missed clap, and held storm-passed payoff |
@@ -1603,41 +1603,35 @@ Manual check: press **4**. Bark as Cocoa and confirm she cannot replace Cheddar'
 
 ### Eagle Shadow Panic
 
-Eagle Shadow Panic is the second production-mission slice using `ThreatSweepMissionState`. A sweeping eagle shadow crosses the whole yard; Cheddar and Cocoa must both be inside cover when each pass resolves. After two clean hides the eagle snatches Cheddar: he Interacts to wiggle the talon grip open, Cocoa gets close and Interacts to pull during the short window, and three successful handoffs free him. They then huddle for a united-front bark circle to drive the eagle off. Three exposures caught in the open end the run.
+**Rebuilt 2026-11-11 as a co-op "Shadow Run"** (`CoopShadowRunPuzzle`, pure logic + unit tests). The dogs' toys are scattered on the open lawn and a sweeping eagle **SHADOW COLUMN** (a tall dark band with a wing silhouette) crosses the yard left/right, banking for ~2s at each edge. Dogs are safe only inside a **HIDE HERE** bush. Between passes they dash out, run over a toy to pick it up, and carry it back into any bush to stash it. Run 1 is two small toys; run 2 adds a **ROPE TOY** that only moves when BOTH dogs are holding it (and drags at 0.8x). Clearing two toy runs opens the original finale: the eagle snatches Cheddar, he wiggles while Cocoa pulls in the window, then the pair huddles for the united-front bark.
 
-Readable differences:
+Co-op beats and dog identity:
 
-- The predator actor is the **EAGLE SHADOW SWEEP** threat and the shared secondary actor carries the authored open/closed **TALON GRIP** states during Cheddar's rescue (no spawned collectibles or squirrel-steal loop).
-- Objective text moves through three phases: both dogs hide (`safe hides x/2, exposures x/3`), Cheddar-wiggle/Cocoa-pull rescue, and the final `United-front bark circle`.
-- The rescue objective only opens after `2` genuine covered passes; standing in open ground away from the eagle's endpoint no longer grants a free safe hide.
-- Unique scoring/events include **SAFE HIDE**, **SHADOW DISTRACTED**, **EAGLE SPOOK** (exposure penalty), **TOY RESCUED**, **UNITED FRONT**, and **SHADOW PANIC CLEAR**.
-- The final united bark holds a short live proud-pose/eagle-retreat payoff before **EAGLE DRIVEN OFF!**; the end summary reads **Backyard Defenders**.
-- Fail reason calls out the eagle shadow catching dogs in the open too many times (**Shadow Trouble** summary).
+- **Live grab, not instant fail.** A dog caught under the shadow in the open is GRABBED and starts being lifted away (carry-off meter ~9s). The grabbed dog Interacts to **WIGGLE** the grip open; the partner runs over (within 3.5) and Interacts to **PULL** inside the window. Two landed pulls free them. Only a carry-off costs a strike; three strikes fail the run.
+- **Decoy bark (bark is gameplay).** Barking from inside a bush freezes the shadow — Cocoa's veteran decoy holds 2.4s, Cheddar's 1.2s, shared 5s cooldown. Barking out in the open does the opposite: the eagle hears it and speeds up 1.5x for 2s.
+- **Readable timing.** A shadow-proximity meter (`SHADOW`/`CARRY-OFF`) and `TOYS SAVED x/5` beat progress sit in the HUD; toys signal until stashed; the shadow fades while banking so players learn the safe window.
+- **Replayable.** Each attempt is seeded: toy placements (localised near a home bush, kept out of the pool), sweep start side, and pass wobble all change. Pacing bot over 25 seeds: median ~38s, worst ~56s for both toy runs, inside the 105s round.
 
-In real-time play the hide phase is spatial: three labeled **HIDE HERE** cover zones sit in the yard and the eagle shadow physically sweeps left/right across the field. Because one pass traverses the full play band, every dog outside cover when the pass completes is exposed. Both dogs safely covered scores one hide; two clean hides open the rescue.
+The deterministic test/pacing hooks are `ForceEagleShadowSafeHide()` (clears the current toy run), `ForceEagleShadowExposure()` (a strike), `ForceEagleShadowSweepPass()` (drags the shadow over the dogs now: a dog in the open is grabbed, dogs in cover are passed over), controller `ForceCarryOff()`, `ForceEagleShadowRescue(dog)` (frees a live grab or the finale snatch), and `ForceEagleShadowUnitedFront()`. `ShadowRun` exposes the puzzle for tests.
 
-The deterministic test/pacing hooks are `ForceEagleShadowSafeHide()`, `ForceEagleShadowExposure()`, `ForceEagleShadowSweepPass()`, `ForceEagleShadowRescue(dog)`, and `ForceEagleShadowUnitedFront()` (`EagleCoverZones` exposes the cover positions); in normal play the final united-front phase also resolves through the existing huddled united-bark path.
-
-Manual check: press **5**. Leave either dog in open ground through a completed sweep—even away from the eagle's final edge position—and confirm it records an exposure. Put both dogs in cover for two passes. Confirm Cheddar is pinned in the talons, Cocoa cannot pull from far away, a Cocoa pull without Cheddar's fresh wiggle misses recoverably, and three timed wiggle/pull handoffs free him. Huddle and bark together, verify the live eagle-retreat payoff precedes **Backyard Defenders**, then force three exposures and confirm replay resets the counters and all cover art to calm Safe states.
+Manual check: press **5**. (1) Stay in the start bush and watch one full pass — no grab. (2) Run out during a pass: confirm the talons GRAB you, the CARRY-OFF meter fills, and the partner can pull you free only after your wiggle (an early pull says MISTIMED). Let one run out and confirm a strike + Spotted cover art. (3) Bark as Cocoa from a bush — the shadow freezes (DECOY!); bark in the open — IT HEARD YOU! (4) Grab a toy, carry it into a bush, confirm TOYS SAVED ticks. (5) In run 2, confirm the rope only moves with both dogs on it. (6) After two runs, finish the wiggle/pull snatch and the united bark, and confirm **Backyard Defenders**. Restart and confirm toys move and cover art resets to Safe.
 
 ### Coyotes at the Fence
 
-Coyotes at the Fence is the third production-mission slice using `PatrolDefenseMissionState`. Cocoa uses her territory-queen steadiness to get within bark range and **BARK-PIN** the coyote, creating a `2.25`-second opening. Cheddar uses his digging energy to reach the active **WEAK SPOT** and Interact before that opening closes. Roles are enforced: the same dog cannot create and cash out the opening, and an across-the-yard bark does nothing. A late **fake snack lure** targets Cheddar's impulse control and is defused by Cocoa's bark. After three repaired gaps, both dogs bark down the final coyote push. Three breaches end the run.
+**Rebuilt 2026-11-11 as a co-op "Pack Defense"** (`CoopPackDefensePuzzle`, pure logic + unit tests). Four **WEAK SPOTS** sit on the left, back and right fence — one per stretch, jittered per attempt, never in a corner or behind the pool. The coyote prowls outside the fence to the active spot and **DIGS** against a visible meter (8s, then 6.5s, then 5s per wave). Cocoa barks in range to **PIN** it off the hole (2.6s); only while it is pinned can Cheddar Interact at the hole to fill it. Three repairs start a timed **FINAL PUSH** (8s): huddle and bark together or it breaks through (a breach) and comes again.
 
-Readable differences:
+Co-op beats and dog identity:
 
-- The predator actor is repurposed as the **COYOTE AT THE FENCE** and the squirrel actor as the moving **WEAK SPOT / FILL DIRT** marker (no spawned collectibles or squirrel-steal loop).
-- Objective arrows split by identity: Cocoa tracks **BARK-PIN COYOTE** while Cheddar sees **WAIT FOR COCOA PIN**, then **INTERACT: FILL DIRT** during the live opening.
-- Objective text moves through patrol (`fence gap n, repairs x/3, breaches x/3`), timed pin (`Cheddar fill NOW`), lure, and final-push (`both dogs bark together`) states.
-- Wrong-role, out-of-range, late, and no-pressure attempts are rejected with actionable recovery copy.
-- Unique scoring/events include **FENCE HELD**, **DIRT FILLED**, **COYOTE BLOCKED**, **FAKE SNACK BAIT**, **COYOTE BREACH** (penalty), and **YARD DEFENDED**.
-- The final united bark holds a short live proud-pose/coyote-retreat payoff before **YARD DEFENDED!**; the clear summary reads **Fence Guardians**, while a breach fail reads **Needs More Patrols**.
+- **The coward reads Cocoa.** If Cocoa is already standing guard (within 7) when the coyote arrives at an undug hole, it slinks off to the next unguarded spot (GUARDED!). From wave two it also **FEINTS** toward one hole and cuts back. The pair has to lurk and pounce, not camp.
+- **SCOUT (Cheddar's job).** From wave two a smaller scout digs a second hole (11s). Only Cheddar's yappy bark within range chases it; Cocoa's bark does nothing to it. Ignored, it breaches.
+- **FAKE SNACK (Cocoa's job).** Before the last repair the coyote tosses bait onto the lawn. Cheddar within 7 is LURED — slowed and dragged toward it. Cocoa barks **LEAVE IT** within 6 of him to snap him out; if he eats it the coyote's dig jumps ahead. Pinning the coyote also ends the lure.
+- **Roles are enforced.** Cheddar's bark at the big coyote coaches "COCOA: PIN THE COYOTE!"; Cocoa's Interact at a hole coaches "CHEDDAR: FILL THE GAP!"; out-of-range pins and fills without a pin are rejected with recovery copy.
+- **HUD.** `COYOTE DIGGING` / `PINNED` / `FINAL PUSH` meter; the active weak spot shows warning while loose and command while pinned. New art: `coyotes_fence_digging`, `coyotes_fence_scout`.
+- **Replayable.** Seeded weak-spot layout and walk direction, feints, and bait placement. Pacing bot over 60 seeds: median ~28s, p90 ~46s, worst ~49s, ~1 breach per run, inside the 90s round.
 
-In real-time play the coyote physically prowls toward the active **WEAK SPOT** (one of four labeled fence gaps around the yard). Cocoa's live bark pin drives it back if it reaches the gap; an unguarded gap breaches. After a breach, both the logical target and visible weak-spot marker advance together to the next gap.
+The deterministic test/pacing hooks are `ForceCoyoteBarkPressure(dog)` (Cocoa pins regardless of distance), `ForceCoyoteRepair(dog)`, `ForceCoyoteBreach()`, `ForceCoyoteFakeSnack()`, `ForceCoyoteProwlReach()` (pinned → driven back, else breach), `ForceCoyoteFinalBlock()`, plus controller `ForceScout()` / `ForcePressureTimeout()`. `FenceGaps` exposes the seeded positions; `Pack` exposes the puzzle.
 
-The deterministic test/pacing hooks are `ForceCoyoteBarkPressure(dog)`, `ForceCoyoteRepair(dog)`, `ForceCoyoteBreach()`, `ForceCoyoteFakeSnack()`, `ForceCoyoteProwlReach()`, and `ForceCoyoteFinalBlock()` (`FenceGaps` exposes the gap positions); in normal play barking pins the coyote and the final push also resolves through the existing huddled united-bark path.
-
-Manual check: press **6**. Confirm Cheddar's bark and Cocoa's dirt-fill attempt cannot replace their partner's role, and that Cocoa cannot pin from outside bark range. Bark nearby as Cocoa, then Interact at the weak spot as Cheddar before the opening closes. Let one pin expire and confirm Cheddar gets recovery guidance instead of progress. Force one breach and verify the active weak-spot marker moves to the new logical gap. Repair three gaps, huddle and bark together, and verify the live coyote-retreat payoff precedes **Fence Guardians**. Confirm three breaches fail and replay resets counters and every gap to neutral Open art.
+Manual check: press **6**. (1) Stand Cocoa right on the active hole — confirm the coyote goes elsewhere (GUARDED!). (2) Hang back, pin it once it starts DIGGING, fill with Cheddar inside the pin. (3) Bark as Cheddar at the coyote and Interact as Cocoa at the hole — both coach the right partner. (4) After the first repair, wait for SCOUT and chase it with Cheddar; confirm Cocoa's bark doesn't. (5) Before the last repair walk Cheddar near the bait — confirm he's dragged until Cocoa barks LEAVE IT. (6) Let the final push run out once (breach + retry), then block it, confirm **Fence Guardians**. Restart and confirm the weak spots moved and art resets to Open.
 
 ### Weenie Roundup
 

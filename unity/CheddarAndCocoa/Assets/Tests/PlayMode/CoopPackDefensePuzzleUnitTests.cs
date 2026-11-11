@@ -68,6 +68,23 @@ namespace CheddarAndCocoa.Tests
         }
 
         [Test]
+        public void Gaps_SpanTheWholeFence_EverySeed()
+        {
+            // The pair must defend both side fences and the back - never a single clustered corner.
+            for (int seed = 0; seed < 60; seed++)
+            {
+                var p = Make(seed);
+                float min = float.MaxValue, max = float.MinValue;
+                for (int i = 0; i < p.GapCount; i++)
+                {
+                    min = Mathf.Min(min, p.GapPosition(i).x);
+                    max = Mathf.Max(max, p.GapPosition(i).x);
+                }
+                Assert.GreaterOrEqual(max - min, Yard.width * 0.9f, $"seed {seed}: weak spots should span the yard.");
+            }
+        }
+
+        [Test]
         public void SameSeed_SameLayout_DifferentSeeds_Vary()
         {
             var a = Make(10);

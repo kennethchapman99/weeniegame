@@ -44,9 +44,9 @@ namespace CheddarAndCocoa.Game
                 case GameManager.MissionVariant.SquirrelConspiracy:
                     return new MissionPresentationProfile("Cheddar pressures the squirrel into Cocoa's held cutoff, then Cocoa cracks the stash.", "Herd + cutoff", "Fence route, stash reveal, and cutoff markers", threats, ReadabilityRequirement.WarningVisible);
                 case GameManager.MissionVariant.EagleShadowPanic:
-                    return new MissionPresentationProfile("Both dogs hide, then Cocoa rescues Cheddar before the united-bark finish.", "Hide + rescue", "Eagle sweep lane, cover bands, and rescue circle", threats, ReadabilityRequirement.WarningVisible);
+                    return new MissionPresentationProfile("Dash out for the toys between shadow passes, decoy from the bushes, and pull each other out of the talons.", "Dash + rescue", "Sweeping shadow column, bush cover, toys on the lawn, and talon grabs", threats, ReadabilityRequirement.WarningVisible);
                 case GameManager.MissionVariant.CoyotesFence:
-                    return new MissionPresentationProfile("Cocoa bark-pins the coyote while Cheddar races to fill each weak spot.", "Pin + repair", "Fence pressure lane, weak gaps, timed pin, and fake lure", threats, ReadabilityRequirement.WarningVisible);
+                    return new MissionPresentationProfile("Cocoa bark-pins the digging coyote while Cheddar fills the hole, chases the scout, and resists the bait.", "Pin + repair", "Seeded weak spots, dig meter, scout, bait, and a timed final push", threats, ReadabilityRequirement.WarningVisible);
                 case GameManager.MissionVariant.WeenieRoundup:
                     return new MissionPresentationProfile("Split the small carries, then Cocoa steadies the jumbo while Cheddar hauls it home.", "Carry + steady", "Bowl lane, four small carries, and a two-dog jumbo route", dogs);
                 case GameManager.MissionVariant.ScentSearch:
@@ -1617,7 +1617,7 @@ namespace CheddarAndCocoa.Game
             {
                 Variant = variant,
                 Name = "Eagle Shadow Panic",
-                IntroPrompt = "Cheddar + Cocoa must hide from the sweeping eagle shadow. Hide twice and the eagle swoops and SNATCHES Cheddar - he wiggles (Tug/Rescue) to crack the talon grip while Cocoa pulls him free in the window. Then form a united-front bark circle to drive the eagle off.",
+                IntroPrompt = "The eagle's shadow sweeps the yard and your toys are out on the lawn! Dash out between passes, grab them and bring them back into the bushes (the rope needs both of you). Caught in the open? Wiggle - your partner pulls you free. Bark from a bush to decoy it. Two toy runs, one last rescue, then bark together.",
                 ReadyScoreLabel = "READY TO DODGE THE SHADOW",
                 ItemRootName = "Shadow Cover",
                 ItemObjectName = "Cover Spot",
@@ -1679,7 +1679,7 @@ namespace CheddarAndCocoa.Game
             {
                 Variant = variant,
                 Name = "Coyotes at the Fence",
-                IntroPrompt = "Cocoa gets close and BARK-pins the coyote for a short opening; Cheddar Interacts at the weak spot before it closes. Repair three gaps, then unite-bark the final push.",
+                IntroPrompt = "A coyote is digging under the fence! Cocoa: when it digs, get close and BARK to pin it. Cheddar: while it's pinned, Interact at the weak spot to fill it. It dodges guarded holes, sends a scout only Cheddar can chase, and tosses bait - Cocoa barks LEAVE IT. Fill 3 holes, then bark together.",
                 ReadyScoreLabel = "READY TO HOLD THE FENCE",
                 ItemRootName = "Fence Weak Spots",
                 ItemObjectName = "Weak Spot",

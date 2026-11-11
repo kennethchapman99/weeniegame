@@ -671,18 +671,21 @@ namespace CheddarAndCocoa.Game
                 return true;
             }
 
-            float span = Mathf.Lerp(38f, 48f, (float)random.NextDouble());
-            float maxStart = Mathf.Max(0f, total - span * (count - 1) - 4f);
-            float start = 4f + (float)random.NextDouble() * Mathf.Max(0f, maxStart - 4f);
+            // One weak spot per stretch of fence (left side ... back ... right side), jittered inside
+            // its stretch: every attempt moves the holes, but the pair always has to cover the whole
+            // fence line instead of camping one corner. A seeded walk direction flips which side
+            // the coyote opens on.
+            float slot = total / count;
             bool reverse = random.Next(2) == 1;
             gaps = new Vector2[count];
             normals = new Vector2[count];
             for (int i = 0; i < count; i++)
             {
-                float s = start + i * span;
-                if (reverse) s = total - s;
-                // Slide off corners / the keep-out region along the fence, in walking direction.
-                float step = reverse ? -1f : 1f;
+                int slotIndex = reverse ? count - 1 - i : i;
+                float s = slot * (slotIndex + Mathf.Lerp(0.35f, 0.65f, (float)random.NextDouble()));
+                // Slide off corners / the keep-out region along the fence, toward the slot centre.
+                float centre = slot * (slotIndex + 0.5f);
+                float step = s < centre ? 1f : -1f;
                 for (int nudge = 0; nudge < 40 && !Usable(s); nudge++) s += step;
                 s = Mathf.Clamp(s, 0f, total - 0.01f);
                 gaps[i] = PointAt(s, out normals[i]);

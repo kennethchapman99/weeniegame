@@ -145,9 +145,10 @@ namespace CheddarAndCocoa.Game
             SurvivorScore = 350
         };
 
+        // Two toy runs (bot median ~38s, worst ~56s) plus the snatch rescue and united front.
         public MissionBalance EagleShadowPanic = new MissionBalance
         {
-            RoundSeconds = 70f,
+            RoundSeconds = 105f,
             SpawnedItemCount = 0,
             ItemGoal = 1,
             ItemScore = 0,
@@ -159,9 +160,10 @@ namespace CheddarAndCocoa.Game
             SurvivorScore = 350
         };
 
+        // Three pinned repairs + scout/lure beats (bot median ~28s, worst ~49s) plus the final push.
         public MissionBalance CoyotesFence = new MissionBalance
         {
-            RoundSeconds = 80f,
+            RoundSeconds = 90f,
             SpawnedItemCount = 0,
             ItemGoal = 1,
             ItemScore = 0,
