@@ -141,6 +141,7 @@ namespace CheddarAndCocoa.Game
         private bool _ropePartnerCueSent;
         private DogId? _grabbedDog;
         private int _lastAnchor = -1;
+        private Rect _keepOut;
 
         /// <summary>Index of the run in progress (0-based); equals <see cref="RunCount"/> once complete.</summary>
         public int RunIndex { get; private set; }
@@ -214,6 +215,12 @@ namespace CheddarAndCocoa.Game
             _ropeInRun = (bool[])ropeInRun.Clone();
             _sweepSpeedPerRun = (float[])sweepSpeedPerRun.Clone();
         }
+
+        /// <summary>
+        /// A region toys must never spawn in or be dropped into (the backyard pool: a toy floating in
+        /// the deep end is not a fair ask). Pass a zero-size rect to clear it.
+        /// </summary>
+        public void ConfigureKeepOut(Rect keepOut) => _keepOut = keepOut;
 
         /// <summary>Optional feel tuning; every argument keeps its current value when left at its default.</summary>
         public void ConfigureFeel(float shadowHalfWidth = -1f, float edgePauseSeconds = -1f, float spotDwellSeconds = -1f,
@@ -766,6 +773,7 @@ namespace CheddarAndCocoa.Game
                     float reach = Mathf.Lerp(minReach, maxReach, (float)_random.NextDouble()) + RunIndex;
                     position = ClampToLawn(cover + direction * reach);
                     if (NearestCoverDistance(position) < _coverRadius + 5f) continue;
+                    if (InKeepOut(position)) continue;
                     bool crowded = false;
                     for (int j = 0; j < _toys.Count; j++)
                         if (Vector2.Distance(position, _toys[j].Position) < 6f) { crowded = true; break; }
@@ -778,9 +786,27 @@ namespace CheddarAndCocoa.Game
         private Vector2 ClampToLawn(Vector2 position)
         {
             const float margin = 3f;
-            return new Vector2(
+            var clamped = new Vector2(
                 Mathf.Clamp(position.x, _yard.xMin + margin, _yard.xMax - margin),
                 Mathf.Clamp(position.y, _yard.yMin + margin, _yard.yMax - margin));
+            if (!InKeepOut(clamped)) return clamped;
+            // Nudge a dropped toy out to the nearest dry edge of the keep-out region.
+            const float lip = 2.5f;
+            float left = clamped.x - _keepOut.xMin, right = _keepOut.xMax - clamped.x;
+            float down = clamped.y - _keepOut.yMin, up = _keepOut.yMax - clamped.y;
+            float min = Mathf.Min(Mathf.Min(left, right), Mathf.Min(down, up));
+            if (min == left) clamped.x = _keepOut.xMin - lip;
+            else if (min == right) clamped.x = _keepOut.xMax + lip;
+            else if (min == down) clamped.y = _keepOut.yMin - lip;
+            else clamped.y = _keepOut.yMax + lip;
+            return clamped;
+        }
+
+        private bool InKeepOut(Vector2 position)
+        {
+            if (_keepOut.width <= 0f || _keepOut.height <= 0f) return false;
+            return position.x > _keepOut.xMin - 1.5f && position.x < _keepOut.xMax + 1.5f &&
+                position.y > _keepOut.yMin - 1.5f && position.y < _keepOut.yMax + 1.5f;
         }
     }
 }

@@ -15,10 +15,12 @@ namespace CheddarAndCocoa.Tests
     public sealed class CoopShadowRunPuzzleUnitTests
     {
         private static readonly Rect Yard = new Rect(-60f, -34f, 120f, 68f);
+        // The backyard pool (BackyardPoolZone.WaterRect): toys must never land in it.
+        private static readonly Rect Pool = new Rect(-35f, 3f, 34f, 23f);
         private static readonly Vector2[] Covers =
         {
             new Vector2(-42f, -21.76f), new Vector2(42f, -21.76f), new Vector2(0f, 23.12f),
-            new Vector2(-21.6f, 3.4f), new Vector2(21.6f, 3.4f)
+            new Vector2(-30f, -5.1f), new Vector2(21.6f, 3.4f)
         };
 
         private static CoopShadowRunPuzzle Make(int seed = 7, float edgePause = 0f)
@@ -27,6 +29,7 @@ namespace CheddarAndCocoa.Tests
             p.Configure(Yard, -58.5f, 58.5f, Covers, 3f,
                 new[] { 2, 3 }, new[] { false, true }, new[] { 11f, 13.5f });
             p.ConfigureFeel(edgePauseSeconds: edgePause);
+            p.ConfigureKeepOut(Pool);
             p.Reset(seed);
             return p;
         }
@@ -78,6 +81,7 @@ namespace CheddarAndCocoa.Tests
                         Assert.Greater(p.NearestCoverDistance(toy), p.CoverRadius + 3f,
                             $"seed {seed}: toys should sit a real dash out from cover.");
                         Assert.IsTrue(Yard.Contains(toy), $"seed {seed}: toys must stay inside the yard.");
+                        Assert.IsFalse(Pool.Contains(toy), $"seed {seed}: a toy must never spawn in the pool.");
                     }
                     p.ForceClearRun();
                 }
@@ -424,6 +428,7 @@ namespace CheddarAndCocoa.Tests
             p.Configure(Yard, -58.5f, 58.5f, Covers, 3f,
                 new[] { 2, 3 }, new[] { false, true }, new[] { run1Speed, run2Speed });
             p.ConfigureFeel(edgePauseSeconds: edgePause);
+            p.ConfigureKeepOut(Pool);
             p.Reset(seed);
             Vector2 cheddar = Covers[2];
             Vector2 cocoa = Covers[2] + Vector2.right;
