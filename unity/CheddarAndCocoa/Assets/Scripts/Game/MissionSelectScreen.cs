@@ -747,21 +747,21 @@ namespace CheddarAndCocoa.Game
                 case GameManager.MissionVariant.EagleShadowPanic:
                     return new[]
                     {
-                        FinalGameplayArt.EagleShadowCoverSafe,       // "inside HIDE HERE cover"
-                        FinalGameplayArt.EagleShadowTalonGripOpen,   // "WIGGLE the grip open"
-                        FinalGameplayArt.EagleShadowTalonGripFreed,  // "wiggle/pull handoff...finish"
-                        FinalGameplayArt.EagleShadowCoverSpotted,    // "exposures caught in the open"
+                        FinalGameplayArt.EagleShadowToyBall,         // "grab it, carry it back into cover"
+                        FinalGameplayArt.EagleShadowTalonGripOpen,   // "GRABBED... WIGGLE the grip open"
+                        FinalGameplayArt.EagleShadowCoverSafe,       // "bark from inside a bush to DECOY"
+                        FinalGameplayArt.EagleShadowTalonGripFreed,  // "free Cheddar from the final snatch"
                     };
 
                 case GameManager.MissionVariant.CoyotesFence:
                     return new[]
                     {
-                        // CoyotesFenceMissionController applies GapPinned to the PREDATOR object
-                        // itself the instant a bark pins it (line-verified), so this is literally
-                        // what the coyote looks like during "BARK to pin it".
+                        // CoyotesFenceMissionController paints GapPinned onto the active weak spot
+                        // the instant Cocoa's bark pins the coyote, so this is literally what the
+                        // hole looks like during "BARK to pin it".
                         FinalGameplayArt.CoyotesFenceGapPinned,
                         FinalGameplayArt.CoyotesFenceGapOpen, // the active "WEAK SPOT"
-                        null, // "neither dog can perform both jobs..." - no distinct visual
+                        null, // "neither dog can do both jobs... lurk, don't camp" - a rule, no distinct visual
                         FinalGameplayArt.CoyotesFenceFakeSnack, // "the fake snack lure"
                     };
 

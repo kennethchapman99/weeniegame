@@ -196,7 +196,7 @@ namespace CheddarAndCocoa.Tests
         }
 
         [UnityTest]
-        public IEnumerator EagleShadowPanic_SweepGeometry_CoverHidesAndOpenGroundExposes()
+        public IEnumerator EagleShadowPanic_SweepGeometry_CoverHidesAndOpenGroundGetsGrabbed()
         {
             yield return LoadArena();
             var game = _game;
@@ -204,29 +204,113 @@ namespace CheddarAndCocoa.Tests
             game.StartMission(GameManager.MissionVariant.EagleShadowPanic);
             yield return null;
 
+            var controller = (EagleShadowPanicMissionController)game.ActiveMissionController;
             var zones = game.EagleCoverZones;
             Assert.Greater(zones.Length, 0);
+            Assert.IsTrue(controller.InShadowRun);
 
-            // Both dogs tucked into a cover zone with the shadow passing over it: a clean safe hide.
+            // Both dogs tucked into a bush with the shadow dragged straight over them: nobody grabbed.
             var cover = zones[0];
             _cheddar.transform.position = new Vector3(cover.x, cover.y, 0f);
             _cocoa.transform.position = new Vector3(cover.x, cover.y, 0f);
-            game.PredatorObject.transform.position = new Vector3(cover.x, game.PredatorObject.transform.position.y, 0f);
             game.ForceEagleShadowSweepPass();
             yield return null;
 
-            Assert.AreEqual(1, game.EagleShadowPanicState.SafeHides);
+            Assert.IsFalse(controller.ShadowRun.GrabActive, "The shadow passing over a bush must not grab a hidden dog.");
             Assert.AreEqual(0, game.EagleShadowPanicState.Exposures);
 
-            // A completed sweep crossed the entire yard: open-ground dogs are exposed even though
-            // the eagle actor has reached the far edge and is no longer directly above them.
-            _cheddar.transform.position = new Vector3(0f, 0f, 0f);
-            _cocoa.transform.position = new Vector3(0f, 0f, 0f);
-            game.PredatorObject.transform.position = new Vector3(50f, game.PredatorObject.transform.position.y, 0f);
+            // Out on the open lawn the shadow grabs - a live rescue chance, not an instant strike.
+            Vector2 open = OpenLawnSpot(controller);
+            _cheddar.transform.position = open;
+            _cocoa.transform.position = open + Vector2.right * 8f;
             game.ForceEagleShadowSweepPass();
+
+            Assert.IsTrue(controller.ShadowRun.GrabActive, "A dog caught in the open should be grabbed by the talons.");
+            Assert.AreEqual(DogId.Cheddar, controller.ShadowRun.GrabbedDog);
+            Assert.AreEqual(0, game.EagleShadowPanicState.Exposures,
+                "A grab is a rescue window; only a carry-off costs a strike.");
+
+            // Nobody came to help: the eagle carries him off and the pair takes a strike.
+            controller.ForceCarryOff();
             yield return null;
 
+            Assert.IsFalse(controller.ShadowRun.GrabActive);
             Assert.AreEqual(1, game.EagleShadowPanicState.Exposures);
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, game.Outcome);
+        }
+
+        [UnityTest]
+        public IEnumerator EagleShadowPanic_LiveGrab_WiggleAndPartnerPullFreeTheDogWithoutAStrike()
+        {
+            yield return LoadArena();
+            var game = _game;
+
+            game.StartMission(GameManager.MissionVariant.EagleShadowPanic);
+            yield return null;
+
+            var controller = (EagleShadowPanicMissionController)game.ActiveMissionController;
+            Vector2 open = OpenLawnSpot(controller);
+            _cheddar.transform.position = open;
+            _cocoa.transform.position = open + Vector2.right * 8f;
+            game.ForceEagleShadowSweepPass();
+            Assert.IsTrue(controller.ShadowRun.GrabActive);
+
+            // Cocoa sprints in; a pull before Cheddar's wiggle is mistimed.
+            _cocoa.transform.position = controller.LiveGrabPosition + Vector2.right * 1f;
+            _cocoa.Interact();
+            Assert.That(game.LastJuiceLabel, Does.Contain("MISTIMED"));
+            Assert.IsTrue(controller.ShadowRun.GrabActive);
+
+            int needed = controller.ShadowRun.GrabRescue.PullsNeeded;
+            for (int i = 0; i < needed; i++)
+            {
+                _cheddar.Interact();   // the grabbed dog wiggles the grip open
+                Assert.IsTrue(controller.ShadowRun.GrabRescue.WindowOpen);
+                _cocoa.transform.position = controller.LiveGrabPosition + Vector2.right * 1f;
+                _cocoa.Interact();     // partner pulls inside the window
+                yield return null;
+            }
+
+            Assert.IsFalse(controller.ShadowRun.GrabActive, "Wiggle + in-window pulls should free the grabbed dog.");
+            Assert.AreEqual(0, game.EagleShadowPanicState.Exposures, "A rescued grab costs no strike.");
+            Assert.AreEqual(GameManager.MissionOutcome.InProgress, game.Outcome);
+        }
+
+        [UnityTest]
+        public IEnumerator EagleShadowPanic_DecoyBark_FromCoverStallsTheShadow_ButBarkingInTheOpenAlertsIt()
+        {
+            yield return LoadArena();
+            var game = _game;
+
+            game.StartMission(GameManager.MissionVariant.EagleShadowPanic);
+            yield return null;
+
+            var controller = (EagleShadowPanicMissionController)game.ActiveMissionController;
+            var cover = game.EagleCoverZones[0];
+            _cheddar.transform.position = new Vector3(cover.x, cover.y, 0f);
+            _cocoa.transform.position = new Vector3(cover.x, cover.y, 0f);
+
+            _cocoa.Bark();
+            Assert.IsTrue(controller.ShadowRun.DecoyActive, "Cocoa's bark from a bush should decoy the eagle.");
+            Assert.Greater(controller.ShadowRun.DecoyCooldownRemaining, 0f, "The decoy should go on cooldown.");
+            Assert.AreEqual("DECOY!", game.LastJuiceLabel);
+
+            yield return null;
+            Vector2 open = OpenLawnSpot(controller);
+            _cocoa.transform.position = open;
+            _cocoa.Bark();
+            Assert.IsTrue(controller.ShadowRun.EagleAlerted, "Barking out in the open should draw the eagle in faster.");
+            Assert.That(game.LastJuiceLabel, Does.Contain("HEARD"));
+        }
+
+        private static Vector2 OpenLawnSpot(EagleShadowPanicMissionController controller)
+        {
+            // Lower-middle lawn: well clear of every bush and the pool.
+            foreach (var candidate in new[] { new Vector2(8f, -24f), new Vector2(-8f, -24f), new Vector2(12f, 20f), new Vector2(40f, -20f) })
+                if (!controller.ShadowRun.IsInCover(candidate) && !BackyardPoolZone.WaterRect.Contains(candidate))
+                    return candidate;
+            Assert.Fail("No open-lawn test spot found.");
+            return Vector2.zero;
         }
 
         [UnityTest]

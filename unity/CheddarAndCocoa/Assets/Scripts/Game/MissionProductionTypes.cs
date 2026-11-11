@@ -95,9 +95,9 @@ namespace CheddarAndCocoa.Game
             "Eagle Shadow Panic",
             ProductionMissionPack.Backyard,
             ProductionMechanicModule.ThreatSweep,
-            "Hide from the sweeping shadow, rescue the toy, and form a united-front bark circle.",
+            "Save the toys between shadow passes, rescue grabbed partners, and form a united-front bark circle.",
             "Complete the final united-front bark after the rescue objective.",
-            "Too many shadow exposures or the timer expires.");
+            "Too many carry-offs or the timer expires.");
 
         public static readonly ProductionMissionSpec WeenieRoundup = new(
             "weenie_roundup",
@@ -158,7 +158,7 @@ namespace CheddarAndCocoa.Game
             "Coyotes at the Fence",
             ProductionMissionPack.Backyard,
             ProductionMechanicModule.PatrolDefense,
-            "Patrol fence gaps, bark pressure, and fill weak spots together.",
+            "Pin the digging coyote, fill weak spots, chase the scout, and resist the bait together.",
             "Repair enough weak spots and block the final coyote pressure.",
             "The coyote breaches the fence or isolates a dog too many times.");
 

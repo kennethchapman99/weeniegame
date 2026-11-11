@@ -4,6 +4,32 @@
 
 ## Current status
 
+### Eagle Shadow Panic + Coyotes at the Fence deep rebuild (2026-11-11)
+
+Owner asked for two levels to be vastly improved: challenging, fun, two-player co-op in nature,
+replayable and intuitive. Both backyard predator missions were rebuilt on new pure-logic puzzles with
+NUnit coverage, keeping every existing `GameManager` hook name and the controller boundary (no new
+`GameManager` branches; mission logic lives in the controllers and puzzles).
+
+- **Eagle Shadow Panic → Shadow Run** (`CoopShadowRunPuzzle`, 24 unit tests). The "stand in cover
+  when a pass resolves" check is replaced by a sweeping shadow column the dogs must dodge while
+  dashing out to rescue toys (two runs, rope toy needs both dogs). Open-ground contact is a live
+  talon GRAB the partner can wiggle/pull free; only a carry-off is a strike. Barking from cover
+  decoys the shadow (Cocoa 2.4s vs Cheddar 1.2s); barking in the open alerts it. Seeded per attempt.
+  Round 70s → 105s.
+- **Coyotes at the Fence → Pack Defense** (`CoopPackDefensePuzzle`, 20 unit tests). Seeded weak
+  spots on every fence stretch, a dig meter that tightens each wave, a coward coyote that avoids holes
+  Cocoa is guarding and feints, a scout only Cheddar can chase, a bait lure only Cocoa's LEAVE IT bark
+  breaks, and a timed final push that breaches on failure and retries. Round 80s → 90s.
+- New art (house flat-icon style, 512px, ppu 256): `eagle_shadow_toy_ball|toy_duck|toy_bone|column`,
+  `coyotes_fence_digging|scout`, registered in `FinalGameplayArt.ThreatConspiracyP0Pack`.
+- Tests: both puzzle suites run headless (193/193 unit tests green in a Roslyn harness against Unity
+  stubs). PlayMode: `EagleShadowPanic_SweepGeometry_*` rewritten for grab semantics; added live-grab
+  rescue, decoy/alert, coyote scout, LEAVE IT lure, and seeded-layout tests. PlayMode suites were
+  compile-checked only — **run the full PlayMode suite in Unity before merging.**
+- Copy: briefing, how-to bullets, presentation profiles, production specs, and select-screen chip
+  icons updated; ARENA-PLAYABLE manual checks rewritten for both missions.
+
 ### Burr Maze shipped as mission #26 (2026-07-22)
 
 Owner authorized building idea-bank #23 (Burr Maze) from `docs/GAME-DESIGN-BIBLE.md`. Shipped as
